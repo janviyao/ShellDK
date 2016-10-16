@@ -236,7 +236,7 @@ nnoremap <silent> <Leader>qn :silent! cn!<CR>
 nnoremap <silent> <Leader>qp :silent! cp!<CR>
 
 "搜索光标下单词
-nnoremap <silent> <Leader>rg :Rgrep<CR>
+nnoremap <silent> <Leader>sw :Rgrep<CR>
 
 "格式化当前文件
 nnoremap <silent> <Leader>ff :call FileRefresh()<CR>

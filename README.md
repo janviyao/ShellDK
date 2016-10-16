@@ -1,4 +1,4 @@
 # vim
-my vimrc configure.
+Personal VIM configure.
 
-please hold me.
+Use it to meet any issue, Pleae connect me with QQ 9971289.
