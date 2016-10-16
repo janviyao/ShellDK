@@ -66,6 +66,8 @@ set switchbuf=useopen                                      "显示已打开窗�
 set matchpairs=(:),{:},[:],<:>                             "匹配括号的规则，增加针对html的<>
 set completeopt=longest,menu                               "关掉智能补全时的预览窗口
 
+set viminfo=!,%,'1000,<1000,s1024,:100,f1                  "viminfo文件保存的信息选项
+
 "自动保存文件
 set updatetime=1000
 autocmd CursorHoldI * silent w
@@ -326,6 +328,48 @@ function! GetFuncRange()
     return funcStart . "," . funcEnd 
 endfunction
 
+"格式化语言
+function! FormatLanguage()
+    let startLine = 0 
+    let endLine = 0 
+    let rangeStr = GetInputStr("Input Format Range (separated with comma): ", GetFuncRange(), "")
+    if strlen(rangeStr) == 0
+        let rangeStr="1,$"
+    endif
+
+    if stridx(rangeStr, ',') > 0
+        let rangeStr = rangeStr . "," 
+        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
+        if matchstr(lineNum, '\d\+') != ''
+            let startLine = str2nr(lineNum)
+        else
+            return 
+        endif
+
+        let rangeStr = strpart(rangeStr, stridx(rangeStr, ',') + 1)
+        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
+        if matchstr(lineNum, '\d\+') != ''
+            let endLine = str2nr(lineNum)
+        else
+            if lineNum == '$'
+                let rowCurNum = line(".")
+                let colCurNum = col(".")
+                silent! execute "normal G"
+                let endLine = line(".")
+            else
+                return
+            endif
+        endif
+    else
+        return
+    endif
+
+    let rangeStr = startLine.",".endLine
+
+    "格式化文件
+    silent! execute rangeStr."!astyle --style=ansi --indent=spaces=4 -p -U -S --suffix=none --convert-tabs"
+endfunction
+
 "格式化并刷新
 function! FileRefresh()
     "保存标签位置，格式化后恢复
@@ -337,6 +381,14 @@ function! FileRefresh()
     silent! execute 'w'
     "重新加载当前文件
     silent! execute 'e' 
+
+    "格式化语言
+    silent! execute 'call FormatLanguage()'
+    "保存当前文件
+    silent! execute 'w'
+    "重新加载当前文件
+    silent! execute 'e' 
+
     "加载恢复
     silent! execute 'call RestoreLoad()'
 
@@ -976,6 +1028,8 @@ Bundle "scrooloose/nerdcommenter"
 " 绑定 关键字高亮显示 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "mbriggs/mark.vim"
+let g:mwAutoLoadMarks = 1                                  "自动加载高亮
+let g:mwAutoSaveMarks = 1                                  "自动保存高亮
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 单词或行自动包围 插件
