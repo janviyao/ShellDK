@@ -854,7 +854,7 @@ let NERDTreeIgnore = ['\.vim$', '\~$', 'cscope\.*', 'tags[[file]]', '\.git*', '\
 Bundle "kien/ctrlp.vim"
 
 let g:ctrlp_cache_dir = GetVimDir(1,"ctrlpcache")          "设置存储缓存文件的目录
-let g:ctrlp_root_markers = ['tags', 'cscope.out']          "设置自定义的根目录标记作为对默认标记
+let g:ctrlp_root_markers = ['tags', 'cscope.out']          "设置自定义的根目录标记作为默认标记
 let g:ctrlp_use_caching = 1                                "启用/禁用每个会话的缓存
 let g:ctrlp_clear_cache_on_exit = 0                        "通过退出Vim时不删除缓存文件来启用跨回话的缓存
 let g:ctrlp_max_files = 0                                  "扫描文件的最大数量，设置为0时不进行限制
