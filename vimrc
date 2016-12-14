@@ -611,7 +611,7 @@ let g:isDeleteSave = 0
 "工程控制
 function! LoadProject(opmode) 
     if a:opmode == "create"
-        let defaultStr = "c\\|cpp\\|java\\|h\\|s\\|S"
+        let defaultStr = "c\\|cpp\\|cc\\|java\\|hpp\\|h\\|s\\|S"
 
         let findStr = GetInputStr("Input file type (separated with comma) to parse: ", "", "")
         if strlen(findStr) > 0
