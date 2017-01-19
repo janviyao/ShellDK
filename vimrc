@@ -566,7 +566,7 @@ endfunction
 "窗口控制
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
-        silent! execute 'TlistClose'
+        silent! execute 'TagbarClose'
         silent! execute 'cclose'
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
@@ -582,15 +582,15 @@ function! ToggleWindow(ccmd)
             silent! execute 'bw! '.benr
         endif
 
-        silent! execute "TlistToggle"
+        silent! execute "TagbarToggle"
     elseif a:ccmd == "be"
-        silent! execute 'TlistClose'
+        silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'cclose'
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qf"
-        silent! execute 'TlistClose'
+        silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
@@ -873,24 +873,41 @@ let g:ctrlp_custom_ignore = {'dir': '\v[\/]\.(git|repo|svn)$', 'file': '\v(\.exe
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 TAG列表显示 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Bundle "taglist.vim"
+Bundle "majutsushi/tagbar"
 
-let Tlist_Sort_Type = "order"                              "两种排序方式：name,order
-let Tlist_Auto_Highlight_Tag = 1                           "自动高亮标签
-let Tlist_Auto_Update = 1                                  "修改文件自动更新标签
-let Tlist_Close_On_Select = 1                              "选择tag后关闭taglist窗口
-let Tlist_Compact_Format = 1                               "移除不同标签间空行
-let Tlist_Display_Prototype = 0                            "不显示标签或原型
-let Tlist_Enable_Fold_Column = 1                           "显示折叠
-let Tlist_File_Fold_Auto_Close = 1                         "显示当前文件tag，其它文件的tag都被折叠起来
-let Tlist_GainFocus_On_ToggleOpen = 1                      "打开taglist，切换焦点到taglist窗口
-let Tlist_Inc_Winwidth = 1                                 "自动调整taglist窗口宽度
-let Tlist_Process_File_Always = 1                          "taglist窗口关闭时继续解析
-let Tlist_Use_SingleClick = 1                              "支持单击tag跳转，缺省双击
-let Tlist_Show_One_File = 1                                "只显示当前文件tag
-let Tlist_Use_Horiz_Window = 0                             "垂直分隔窗口
-let Tlist_Use_Right_Window = 0                             "窗口显示在左侧
-let Tlist_WinWidth = 50                                    "垂直分隔时窗口宽度
+let g:tagbar_left = 1                                       "窗口放置左侧
+let g:tagbar_width = 60                                     "窗口的宽度
+let g:tagbar_zoomwidth = 0                                  "窗口放大时，显示的最大宽度：0：最大tag宽度，1：能得到的最大宽度，>1：实际宽度值
+let g:tagbar_autoclose = 1                                  "跳转到tag时，自动关闭窗口
+let g:tagbar_autofocus = 1                                  "窗口打开时，光标自动移动到窗口内
+let g:tagbar_sort = 0                                       "按文件顺序显示tag
+let g:tagbar_compact = 1                                    "不显示顶部的简短帮忙信息
+let g:tagbar_indent = 2                                     "每级缩进空格数
+let g:tagbar_show_visibility = 1                            "显示可见符号，例如c++的public、private、protected等
+let g:tagbar_show_linenumbers = 0                           "显示行数，0：不显示行数，1：显示绝对行数，2：显示相对行数，-1：使用全局行数设置
+let g:tagbar_hide_nonpublic = 0                             "显示非public标识符
+let g:tagbar_singleclick = 0                                "关闭单击跳转
+let g:tagbar_autoshowtag = 0                                "自动打开关闭状态的折叠
+let g:tagbar_autopreview = 0                                "在预览窗口自动显示光标下的tag
+let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
+
+"Bundle 'taglist.vim'
+"let Tlist_Sort_Type = "order"                              "两种排序方式：name,order
+"let Tlist_Auto_Highlight_Tag = 1                           "自动高亮标签
+"let Tlist_Auto_Update = 1                                  "修改文件自动更新标签
+"let Tlist_Close_On_Select = 1                              "选择tag后关闭taglist窗口
+"let Tlist_Compact_Format = 1                               "移除不同标签间空行
+"let Tlist_Display_Prototype = 0                            "不显示标签或原型
+"let Tlist_Enable_Fold_Column = 1                           "显示折叠
+"let Tlist_File_Fold_Auto_Close = 1                         "显示当前文件tag，其它文件的tag都被折叠起来
+"let Tlist_GainFocus_On_ToggleOpen = 1                      "打开taglist，切换焦点到taglist窗口
+"let Tlist_Inc_Winwidth = 1                                 "自动调整taglist窗口宽度
+"let Tlist_Process_File_Always = 1                          "taglist窗口关闭时继续解析
+"let Tlist_Use_SingleClick = 1                              "支持单击tag跳转，缺省双击
+"let Tlist_Show_One_File = 1                                "只显示当前文件tag
+"let Tlist_Use_Horiz_Window = 0                             "垂直分隔窗口
+"let Tlist_Use_Right_Window = 0                             "窗口显示在左侧
+"let Tlist_WinWidth = 50                                    "垂直分隔时窗口宽度
 "let Tlist_WinHeight = 20                                  "水平分隔时窗口高度
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
