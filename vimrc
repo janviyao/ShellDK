@@ -876,7 +876,7 @@ let g:ctrlp_custom_ignore = {'dir': '\v[\/]\.(git|repo|svn)$', 'file': '\v(\.exe
 Bundle "majutsushi/tagbar"
 
 let g:tagbar_left = 1                                       "窗口放置左侧
-let g:tagbar_width = 60                                     "窗口的宽度
+let g:tagbar_width = 50                                     "窗口的宽度
 let g:tagbar_zoomwidth = 0                                  "窗口放大时，显示的最大宽度：0：最大tag宽度，1：能得到的最大宽度，>1：实际宽度值
 let g:tagbar_autoclose = 1                                  "跳转到tag时，自动关闭窗口
 let g:tagbar_autofocus = 1                                  "窗口打开时，光标自动移动到窗口内
