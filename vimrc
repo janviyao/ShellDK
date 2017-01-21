@@ -266,6 +266,9 @@ nnoremap <silent> <Leader>qf :call ToggleWindow("qf")<CR>  "切换QickFix
 nnoremap <silent> <Leader>be :call ToggleWindow("be")<CR>  "切换BufExplorer
 nnoremap <silent> <Leader>nt :call ToggleWindow("nt")<CR>  "切换NERDTree
 
+"扩展跳转功能
+nnoremap <Leader>tj  :tj <C-R>=expand("<cword>")<CR>
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 设置CSCOPE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
