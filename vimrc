@@ -703,7 +703,7 @@ endfunction
 "VIM退出事件
 function! LeaveHandler()
     if filereadable("tags") && filereadable("cscope.out")
-        silent! execute 'TlistClose'
+        silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'SrcExplClose'
         silent! execute 'CtrlSFClose'
