@@ -277,14 +277,45 @@ set csprg=/usr/bin/cscope                                  "制定cscope命令
 set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
 set cst                                                    "同时搜索tag文件和cscope数据库
 
-nmap <C-_>s :cs find s <C-R>=expand("<cword>")<CR><CR>     "查找符号
-nmap <C-_>g :cs find g <C-R>=expand("<cword>")<CR><CR>     "查找定义
-nmap <C-_>c :cs find c <C-R>=expand("<cword>")<CR><CR>     "查找调用这个函数的函数
-nmap <C-_>d :cs find d <C-R>=expand("<cword>")<CR><CR>     "查找被这个函数调用的函数
-nmap <C-_>t :cs find t <C-R>=expand("<cword>")<CR><CR>     "查找这个字符串
-nmap <C-_>e :cs find e <C-R>=expand("<cword>")<CR><CR>     "查找这个egrep匹配模式
-nmap <C-_>f :cs find f <C-R>=expand("<cfile>")<CR><CR>     "查找同名文件
-nmap <C-_>i :cs find i <C-R>=expand("<cfile>")<CR><CR>     "查找包含这个文件的文件
+nmap <silent> <C-_>s :call CSFind('fs')<CR>                "查找符号
+nmap <silent> <C-_>g :call CSFind('fg')<CR>                "查找定义
+nmap <silent> <C-_>c :call CSFind('fc')<CR>                "查找调用这个函数的函数
+nmap <silent> <C-_>d :call CSFind('fd')<CR>                "查找被这个函数调用的函数
+nmap <silent> <C-_>t :call CSFind('ft')<CR>                "查找这个字符串
+nmap <silent> <C-_>e :call CSFind('fe')<CR>                "查找这个egrep匹配模式
+nmap <silent> <C-_>f :call CSFind('ff')<CR>                "查找同名文件
+nmap <silent> <C-_>i :call CSFind('fi')<CR>                "查找包含这个文件的文件
+
+"CS命令
+function! CSFind(ccmd)
+    silent! execute 'call ToggleWindow("allclose")'
+
+    if a:ccmd == "fs"
+        let csarg=expand('<cword>')
+        silent! execute "cs find s ".csarg 
+    elseif a:ccmd == "fg"
+        let csarg=expand('<cword>')
+        silent! execute "cs find g ".csarg 
+    elseif a:ccmd == "fc"
+        let csarg=expand('<cword>')
+        silent! execute "cs find c ".csarg 
+    elseif a:ccmd == "fd"
+        let csarg=expand('<cword>')
+        silent! execute "cs find d ".csarg 
+    elseif a:ccmd == "ft"
+        let csarg=expand('<cword>')
+        silent! execute "cs find t ".csarg 
+    elseif a:ccmd == "fe"
+        let csarg=expand('<cword>')
+        silent! execute "cs find e ".csarg 
+    elseif a:ccmd == "ff"
+        let csarg=expand('<cfile>')
+        silent! execute "cs find f ".csarg 
+    elseif a:ccmd == "fi"
+        let csarg=expand('<cfile>')
+        silent! execute "cs find i ".csarg 
+    endif
+endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 函数列表 
@@ -570,7 +601,9 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        silent! execute 'cclose'
+        if exists("g:qfix_win")
+            silent! execute 'cclose'
+        endif
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
             silent! execute 'bw! '.benr
@@ -579,7 +612,9 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        silent! execute 'cclose'
+        if exists("g:qfix_win")
+            silent! execute 'cclose'
+        endif
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
             silent! execute 'bw! '.benr
@@ -589,7 +624,9 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        silent! execute 'cclose'
+        if exists("g:qfix_win")
+            silent! execute 'cclose'
+        endif
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qf"
@@ -604,6 +641,17 @@ function! ToggleWindow(ccmd)
             silent! execute 'cclose'
         else
             silent! execute 'copen 15'
+        endif
+    elseif a:ccmd == "allclose"
+        silent! execute 'TagbarClose'
+        silent! execute 'NERDTreeClose'
+        if exists("g:qfix_win")
+            silent! execute 'cclose'
+        endif
+
+        let benr = bufnr("[BufExplorer]")
+        if bufname(benr) == "[BufExplorer]"
+            silent! execute 'bw! '.benr
         endif
     endif
 endfunction
