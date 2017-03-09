@@ -239,7 +239,7 @@ nnoremap <silent> <Leader>qp :silent! cp!<CR>
 nnoremap <silent> <Leader>rg :Rgrep<CR>
 
 "格式化当前文件
-nnoremap <silent> <Leader>ff :call FileRefresh()<CR>
+nnoremap <silent> <Leader>ff :call FileFormat()<CR>
 
 "显示当前行所在函数名,等同于df命令
 nnoremap <silent> <Leader>fn :call ShowFuncName()<CR>
@@ -277,14 +277,15 @@ set csprg=/usr/bin/cscope                                  "制定cscope命令
 set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
 set cst                                                    "同时搜索tag文件和cscope数据库
 
-nmap <silent> <C-_>s :call CSFind('fs')<CR>                "查找符号
-nmap <silent> <C-_>g :call CSFind('fg')<CR>                "查找定义
-nmap <silent> <C-_>c :call CSFind('fc')<CR>                "查找调用这个函数的函数
-nmap <silent> <C-_>d :call CSFind('fd')<CR>                "查找被这个函数调用的函数
-nmap <silent> <C-_>t :call CSFind('ft')<CR>                "查找这个字符串
-nmap <silent> <C-_>e :call CSFind('fe')<CR>                "查找这个egrep匹配模式
-nmap <silent> <C-_>f :call CSFind('ff')<CR>                "查找同名文件
-nmap <silent> <C-_>i :call CSFind('fi')<CR>                "查找包含这个文件的文件
+nmap <silent> <Leader>cfs :call CSFind('fs')<CR>           "查找符号
+nmap <silent> <Leader>cfg :call CSFind('fg')<CR>           "查找定义
+nmap <silent> <Leader>cfc :call CSFind('fc')<CR>           "查找调用这个函数的函数
+nmap <silent> <Leader>cfd :call CSFind('fd')<CR>           "查找被这个函数调用的函数
+nmap <silent> <Leader>cft :call CSFind('ft')<CR>           "查找这个字符串
+nmap <silent> <Leader>cfe :call CSFind('fe')<CR>           "查找这个egrep匹配模式
+nmap <silent> <Leader>cff :call CSFind('ff')<CR>           "查找同名文件
+nmap <silent> <Leader>cfi :call CSFind('fi')<CR>           "查找包含这个文件的文件
+nmap <Leader>css  :cs find s <C-R>=expand("<cword>")<CR>
 
 "CS命令
 function! CSFind(ccmd)
@@ -315,6 +316,8 @@ function! CSFind(ccmd)
         let csarg=expand('<cfile>')
         silent! execute "cs find i ".csarg 
     endif
+
+    silent! execute 'call ToggleWindow("qf")'
 endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -335,13 +338,28 @@ function! GetInputStr(prompt, default, type)
     return cmd
 endfunction
 
+function! GetFuncReg()
+    let reg_header="^\\("
+
+    let reg_if="\\(\\(\\s*if\\s*\\)\\@!.*\\)"
+    let reg_switch="\\(\\(\\s*switch\\s*\\)\\@!.*\\)"
+    let reg_while="\\(\\(\\s*while\\s*\\)\\@!.*\\)"
+
+    let reg_footer="\\)([^;+-=!<>()]*)\\_s*{"
+
+    let find_reg=reg_header.reg_if."\\&".reg_switch."\\&".reg_while.reg_footer
+    
+    return find_reg
+endfunction
+
 "状态栏显示当前行所在函数名
 function! ShowFuncName()
     let rowNum = line(".")
     let colNum = col(".")
 
     echohl ModeMsg
-    echo getline(search("^[^ \t#/]\\{2}.*[^:]\s*$", 'bW'))
+    let func_reg=GetFuncReg()
+    echo getline(search(func_reg, 'bW'))
     echohl None
 
     call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
@@ -352,13 +370,14 @@ function! GetFuncRange()
     let rowNum = line(".")
     let colNum = col(".")
 
-    let funcStart = search("^[^ \t#/]\\{2}.*[^:]\s*$", 'bW')
+    let func_reg=GetFuncReg()
+    let funcStart = search(func_reg, 'bW')
     silent! execute 'normal ^'
     call search("{", 'c')
     silent! execute 'normal %'
     let funcEnd = line(".")
-    call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
 
+    call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
     return funcStart . "," . funcEnd 
 endfunction
 
@@ -405,7 +424,7 @@ function! FormatLanguage()
 endfunction
 
 "格式化并刷新
-function! FileRefresh()
+function! FileFormat()
     "保存标签位置，格式化后恢复
     normal! ma
 
