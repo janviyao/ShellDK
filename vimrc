@@ -69,8 +69,8 @@ set completeopt=longest,menu                               "关掉智能补全�
 set viminfo=!,'1000,<1000,s1024,:100,f1                  "viminfo文件保存的信息选项
 
 "自动保存文件
-set updatetime=1000
-autocmd CursorHoldI * silent w
+"set updatetime=1000
+"autocmd CursorHoldI * silent w
 
 "持久化的undo机制：保存文件修改的撤消/重做
 set undodir=~/.vimSession/undodir
