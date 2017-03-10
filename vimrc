@@ -225,6 +225,9 @@ nnoremap <silent> <Leader>L <C-w>L                         "当前窗口移到�
 nnoremap <silent> <Leader>J <C-w>J                         "当前窗口移到最上面
 nnoremap <silent> <Leader>K <C-w>K                         "当前窗口移到最下面
 
+"单词搜索
+nnoremap <silent> <Leader>fw :call SearchWord()<CR>          "搜索当前光标下单词
+
 "快速移动
 nnoremap <silent> <C-h> 6h
 nnoremap <silent> <C-l> 6l
@@ -235,24 +238,24 @@ nnoremap <silent> <C-k> 6k
 nnoremap <silent> <Leader>qn :silent! cn!<CR>
 nnoremap <silent> <Leader>qp :silent! cp!<CR>
 
+"替换当前光标下单词为复制寄存器内容
+nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
+
 "搜索光标下单词
 nnoremap <silent> <Leader>rg :Rgrep<CR>
-
-"格式化当前文件
-nnoremap <silent> <Leader>ff :call FileFormat()<CR>
-
-"显示当前行所在函数名,等同于df命令
-nnoremap <silent> <Leader>fn :call ShowFuncName()<CR>
 
 "替换字符串
 nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
 
-"替换当前光标下单词为复制寄存器内容
-nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
+"显示当前行所在函数名,等同于df命令
+nnoremap <silent> <Leader>sfn :call ShowFuncName()<CR>
 
 "跳转到函数指定位置
-nnoremap <silent> <Leader>fs  :call JumpFunctionPos("s")<CR> 
-nnoremap <silent> <Leader>fe  :call JumpFunctionPos("e")<CR> 
+nnoremap <silent> <Leader>jfs  :call JumpFunctionPos("s")<CR> 
+nnoremap <silent> <Leader>jfe  :call JumpFunctionPos("e")<CR> 
+
+"格式化当前文件
+nnoremap <silent> <Leader>cf :call CodeFormat()<CR>
 
 "清除工程相关文件
 nnoremap <silent> <Leader><F11> :call LoadProject("delete")<CR>
@@ -277,15 +280,15 @@ set csprg=/usr/bin/cscope                                  "制定cscope命令
 set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
 set cst                                                    "同时搜索tag文件和cscope数据库
 
-nmap <silent> <Leader>cfs :call CSFind('fs')<CR>           "查找符号
-nmap <silent> <Leader>cfg :call CSFind('fg')<CR>           "查找定义
-nmap <silent> <Leader>cfc :call CSFind('fc')<CR>           "查找调用这个函数的函数
-nmap <silent> <Leader>cfd :call CSFind('fd')<CR>           "查找被这个函数调用的函数
-nmap <silent> <Leader>cft :call CSFind('ft')<CR>           "查找这个字符串
-nmap <silent> <Leader>cfe :call CSFind('fe')<CR>           "查找这个egrep匹配模式
-nmap <silent> <Leader>cff :call CSFind('ff')<CR>           "查找同名文件
-nmap <silent> <Leader>cfi :call CSFind('fi')<CR>           "查找包含这个文件的文件
-nmap <Leader>css  :cs find s <C-R>=expand("<cword>")<CR>
+nmap <silent> <Leader>fs :call CSFind('fs')<CR>           "查找符号
+nmap <silent> <Leader>fg :call CSFind('fg')<CR>           "查找定义
+nmap <silent> <Leader>fc :call CSFind('fc')<CR>           "查找调用这个函数的函数
+nmap <silent> <Leader>fd :call CSFind('fd')<CR>           "查找被这个函数调用的函数
+nmap <silent> <Leader>ft :call CSFind('ft')<CR>           "查找这个字符串
+nmap <silent> <Leader>fe :call CSFind('fe')<CR>           "查找这个egrep匹配模式
+nmap <silent> <Leader>ff :call CSFind('ff')<CR>           "查找同名文件
+nmap <silent> <Leader>fi :call CSFind('fi')<CR>           "查找包含这个文件的文件
+nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 
 "CS命令
 function! CSFind(ccmd)
@@ -338,17 +341,26 @@ function! GetInputStr(prompt, default, type)
     return cmd
 endfunction
 
+"查找光标下单词
+function! SearchWord()
+    let fargs=expand('<cword>')
+    "搜索模式寄存器赋值
+    let @/="\\<".fargs."\\>"    
+    silent! execute 'normal n'
+endfunction
+
+"获取函数头正则表达式
 function! GetFuncReg()
+    let not_in_bracket="[^;+\\-=!<>()]*"
     let reg_header="^\\("
 
     let reg_if="\\(\\(\\s*if\\s*\\)\\@!.*\\)"
     let reg_switch="\\(\\(\\s*switch\\s*\\)\\@!.*\\)"
     let reg_while="\\(\\(\\s*while\\s*\\)\\@!.*\\)"
 
-    let reg_footer="\\)([^;+-=!<>()]*)\\_s*{"
+    let reg_footer="\\)(\\(".not_in_bracket."\\n*\\)*".not_in_bracket.")\\_s*{"
 
     let find_reg=reg_header.reg_if."\\&".reg_switch."\\&".reg_while.reg_footer
-    
     return find_reg
 endfunction
 
@@ -359,7 +371,14 @@ function! ShowFuncName()
 
     echohl ModeMsg
     let func_reg=GetFuncReg()
-    echo getline(search(func_reg, 'bW'))
+    let headStart = search(func_reg, 'bW')
+    silent! execute 'normal ^'
+    call search("{", 'c')
+    let headEnd = line(".")
+    while headStart <= headEnd  
+        echo getline(headStart)
+        let headStart = headStart + 1
+    endwhile
     echohl None
 
     call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
@@ -424,7 +443,7 @@ function! FormatLanguage()
 endfunction
 
 "格式化并刷新
-function! FileFormat()
+function! CodeFormat()
     "保存标签位置，格式化后恢复
     normal! ma
 
