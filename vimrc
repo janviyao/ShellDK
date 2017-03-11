@@ -360,7 +360,6 @@ function! GetFuncReg()
     let reg_footer="\\_s*\\(const\\)\\?\\_s*{"
 
     let find_reg=reg_header.reg_body.reg_footer
-    echo find_reg
     return find_reg
 endfunction
 
