@@ -353,9 +353,9 @@ endfunction
 
 "获取函数头正则表达式
 function! GetFuncReg()
-    let not_in_bracket="[^;+\\-=!()]*"
+    let not_in_bracket="[^;+\\-=!/(){}]*"
 
-    let reg_header="^\\(\\s*\\(if\\|for\\|while\\|switch\\)\\s*\\)\\@!.*"
+    let reg_header="^\\(\\s*\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\)\\s*\\)\\@!.*"
     let reg_body="(\\(".not_in_bracket."\\n*\\)*".not_in_bracket.")"
     let reg_footer="\\_s*\\(const\\)\\?\\_s*{"
 
