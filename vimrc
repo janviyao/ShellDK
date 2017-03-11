@@ -225,8 +225,8 @@ nnoremap <silent> <Leader>L <C-w>L                         "当前窗口移到�
 nnoremap <silent> <Leader>J <C-w>J                         "当前窗口移到最上面
 nnoremap <silent> <Leader>K <C-w>K                         "当前窗口移到最下面
 
-"单词搜索
-nnoremap <silent> <Leader>fw :call SearchWord()<CR>          "搜索当前光标下单词
+"搜索光标下单词
+nnoremap <silent> <Leader>fw :call SearchWord()<CR>
 
 "快速移动
 nnoremap <silent> <C-h> 6h
@@ -294,33 +294,35 @@ nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 function! CSFind(ccmd)
     silent! execute 'call ToggleWindow("allclose")'
 
+    let csarg=expand('<cword>')
     if a:ccmd == "fs"
-        let csarg=expand('<cword>')
         silent! execute "cs find s ".csarg 
     elseif a:ccmd == "fg"
-        let csarg=expand('<cword>')
         silent! execute "cs find g ".csarg 
     elseif a:ccmd == "fc"
-        let csarg=expand('<cword>')
         silent! execute "cs find c ".csarg 
     elseif a:ccmd == "fd"
-        let csarg=expand('<cword>')
         silent! execute "cs find d ".csarg 
     elseif a:ccmd == "ft"
-        let csarg=expand('<cword>')
         silent! execute "cs find t ".csarg 
     elseif a:ccmd == "fe"
-        let csarg=expand('<cword>')
         silent! execute "cs find e ".csarg 
     elseif a:ccmd == "ff"
         let csarg=expand('<cfile>')
-        silent! execute "cs find f ".csarg 
+        execute "cs find f ".csarg 
     elseif a:ccmd == "fi"
         let csarg=expand('<cfile>')
         silent! execute "cs find i ".csarg 
     endif
 
-    silent! execute 'call ToggleWindow("qf")'
+    let itemCount=0
+    for item in getqflist()
+        let itemCount = itemCount + 1
+        if itemCount > 1
+            silent! execute 'call ToggleWindow("qf")'
+            break
+        endif
+    endfor
 endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -343,9 +345,9 @@ endfunction
 
 "查找光标下单词
 function! SearchWord()
-    let fargs=expand('<cword>')
+    let fargs="\\<".expand('<cword>')."\\>"
     "搜索模式寄存器赋值
-    let @/="\\<".fargs."\\>"    
+    call setreg("/", fargs)
     silent! execute 'normal n'
 endfunction
 
