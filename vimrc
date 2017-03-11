@@ -235,8 +235,8 @@ nnoremap <silent> <C-j> 6j
 nnoremap <silent> <C-k> 6k
 
 "切换下一条quickfix记录
-nnoremap <silent> <Leader>qn :silent! cn!<CR>
-nnoremap <silent> <Leader>qp :silent! cp!<CR>
+nnoremap <silent> <Leader>qf :silent! cn!<CR>
+nnoremap <silent> <Leader>qb :silent! cp!<CR>
 
 "替换当前光标下单词为复制寄存器内容
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
@@ -251,8 +251,8 @@ nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
 nnoremap <silent> <Leader>sfn :call ShowFuncName()<CR>
 
 "跳转到函数指定位置
-nnoremap <silent> <Leader>jfs  :call JumpFunctionPos("s")<CR> 
-nnoremap <silent> <Leader>jfe  :call JumpFunctionPos("e")<CR> 
+nnoremap <silent> <Leader>jfs  :call JumpFunctionPos("jfs")<CR> 
+nnoremap <silent> <Leader>jfe  :call JumpFunctionPos("jfe")<CR> 
 
 "格式化当前文件
 nnoremap <silent> <Leader>cf :call CodeFormat()<CR>
@@ -265,7 +265,7 @@ nnoremap <silent> <Leader><F12> :call LoadProject("create")<CR>
 
 "窗口切换
 nnoremap <silent> <Leader>tl :call ToggleWindow("tl")<CR>  "切换TagsList
-nnoremap <silent> <Leader>qf :call ToggleWindow("qf")<CR>  "切换QickFix
+nnoremap <silent> <Leader>qo :call ToggleWindow("qo")<CR>  "切换QickFix
 nnoremap <silent> <Leader>be :call ToggleWindow("be")<CR>  "切换BufExplorer
 nnoremap <silent> <Leader>nt :call ToggleWindow("nt")<CR>  "切换NERDTree
 
@@ -319,7 +319,7 @@ function! CSFind(ccmd)
     for item in getqflist()
         let itemCount = itemCount + 1
         if itemCount > 1
-            silent! execute 'call ToggleWindow("qf")'
+            silent! execute 'call ToggleWindow("qo")'
             break
         endif
     endfor
@@ -494,9 +494,9 @@ function! JumpFunctionPos(pos)
         endif
     endif
 
-    if a:pos == 's'
+    if a:pos == 'jfs'
         call cursor(startLine, 1)
-    elseif a:pos == 'e'
+    elseif a:pos == 'jfe'
         call cursor(endLine, 1)
     endif
 endfunction
@@ -669,7 +669,7 @@ function! ToggleWindow(ccmd)
         endif
 
         silent! execute "BufExplorer"
-    elseif a:ccmd == "qf"
+    elseif a:ccmd == "qo"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         let benr = bufnr("[BufExplorer]")
