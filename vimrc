@@ -351,17 +351,27 @@ function! SearchWord()
     silent! execute 'normal n'
 endfunction
 
-"获取函数头正则表达式
-function! GetFuncReg()
-    let line_end="\\s*\\r\\?\\n\\?\\s*"
-    let not_in_bracket="[^;+\\-=!/(){}]*"
+"获取函数头开始行
+function! GetFuncStart()
+    let line_end="\\(\\s*\\r\\?\\n\\?\\s*\\)*"
+    let not_in_bracket="[^;+\\-=!/(){}]"
 
-    let reg_header="^\\(\\s*\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\)\\s*\\)\\@!.*"
-    let reg_body="(\\(".not_in_bracket."\\n*\\)*".not_in_bracket.")".line_end
-    let reg_footer="\\(const\\)\\?".line_end."{"
+    let func_name="\\w\\+\\(::\\w\\+\\)\\?".line_end
+    let func_args="(\\(".not_in_bracket."*\\n*\\)*".not_in_bracket."*)".line_end
+    let func_brace="\\(const\\)\\?".line_end."{"
 
-    let find_reg=reg_header.reg_body.reg_footer
-    return find_reg
+    let func_reg=func_name.func_args.func_brace
+    let exclude_reg="\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\)\\s*(.*)".line_end."{"
+
+    let find_line=search(func_reg, 'bW')
+    let find_str=getline(find_line)
+    while matchstr(find_str, exclude_reg) != ""
+        let find_line=search(func_reg, 'bW')
+        let find_str=getline(find_line)
+    endwhile
+
+    let func_start = line(".")
+    return func_start
 endfunction
 
 "状态栏显示当前行所在函数名
@@ -370,8 +380,7 @@ function! ShowFuncName()
     let colNum = col(".")
 
     echohl ModeMsg
-    let func_reg=GetFuncReg()
-    let headStart = search(func_reg, 'bW')
+    let headStart = GetFuncStart()
     silent! execute 'normal ^'
     call search("{", 'c')
     let headEnd = line(".")
@@ -389,8 +398,7 @@ function! GetFuncRange()
     let rowNum = line(".")
     let colNum = col(".")
 
-    let func_reg=GetFuncReg()
-    let funcStart = search(func_reg, 'bW')
+    let funcStart = GetFuncStart()
     silent! execute 'normal ^'
     call search("{", 'c')
     silent! execute 'normal %'
