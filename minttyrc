@@ -1,0 +1,17 @@
+BoldAsFont=-1
+CursorColour=255,0,0
+Font=Consolas
+FontHeight=12
+FontWeight=700
+FontIsBold=yes
+Locale=zh_CN
+Charset=UTF-8
+Columns=100
+Rows=30
+ScrollbackLines=99999999
+Language=@
+BackgroundColour=38,38,38
+CursorType=block
+Transparency=glass
+OpaqueWhenFocused=yes
+Scrollbar=none
