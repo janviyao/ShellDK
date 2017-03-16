@@ -353,12 +353,12 @@ endfunction
 
 "获取函数头开始行
 function! GetFuncStart()
-    let line_end="\\(\\s*\\r\\?\\n\\?\\s*\\)*"
+    let line_end="\\s*\\r\\?\\n\\?\\s*"
     let not_in_bracket="[^;+\\-=!/(){}]"
 
-    let func_name="\\w\\+\\(::\\w\\+\\)\\?".line_end
+    let func_name="^\\(\\s*\\~\\?\\w\\+\\s*\\)\\+\\(::\\~\\?\\w\\+\\)\\?".line_end
     let func_args="(\\(".not_in_bracket."*\\n*\\)*".not_in_bracket."*)".line_end
-    let func_brace="\\(const\\)\\?".line_end."{"
+    let func_brace="\\(:\\(".line_end."\\w\\+(\\(".line_end."[^{}]*".line_end."\\)\\+),\\?".line_end."\\)\\+\\)\\?{"
 
     let func_reg=func_name.func_args.func_brace
     let exclude_reg="\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\)\\s*(.*)".line_end."{"
