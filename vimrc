@@ -194,7 +194,7 @@ augroup QFixToggle
 augroup END
 
 "恢复命令栏默认高度
-autocmd CursorMoved * if exists("g:show_func") | unlet! g:show_func | set cmdheight=1 | endif
+autocmd CursorMoved * if exists("g:show_func") | unlet! g:show_func | set cmdheight=1 | echo '' | endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 设置快捷键
