@@ -107,7 +107,7 @@ set pastetoggle=<F10>                                      "<F10>打开或关闭
 " 状态栏设置 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set cursorline                                             "行高亮
-"set cursorcolumn                                          "列高亮
+set cursorcolumn                                           "列高亮
 "set showcmd                                               "在状态栏显示正在输入的命令
 "set cmdheight=1                                           "命令行高度，默认为1
 
@@ -192,6 +192,9 @@ augroup QFixToggle
     autocmd BufWinEnter quickfix let g:qfix_win = bufnr("$")
     autocmd BufWinLeave * if exists("g:qfix_win") && expand("<abuf>") == g:qfix_win | unlet! g:qfix_win | endif
 augroup END
+
+"恢复命令栏默认高度
+autocmd CursorMoved * if exists("g:show_func") | unlet! g:show_func | set cmdheight=1 | endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 设置快捷键
@@ -353,7 +356,7 @@ function! SearchWord()
 endfunction
 
 "获取函数头开始行
-function! GetFuncStart()
+function! JumpFuncStart()
     let line_end="\\s*\\r\\?\\n\\?\\s*"
     let not_in_bracket="[^;+\\-=!/(){}]"
 
@@ -381,11 +384,22 @@ function! ShowFuncName()
     let rowNum = line(".")
     let colNum = col(".")
 
-    echohl ModeMsg
-    let headStart = GetFuncStart()
+    let headStart = JumpFuncStart()
     silent! execute 'normal ^'
     call search("{", 'c')
     let headEnd = line(".")
+
+    let headHeight = 0
+    let saveStart=headStart
+    while headStart <= headEnd  
+        let headHeight = headHeight + 1
+        let headStart = headStart + 1
+    endwhile
+    silent! execute 'set cmdheight='.headHeight
+    let g:show_func=headHeight
+
+    let headStart = saveStart
+    echohl ModeMsg
     while headStart <= headEnd  
         echo getline(headStart)
         let headStart = headStart + 1
@@ -400,7 +414,7 @@ function! GetFuncRange()
     let rowNum = line(".")
     let colNum = col(".")
 
-    let funcStart = GetFuncStart()
+    let funcStart = JumpFuncStart()
     silent! execute 'normal ^'
     call search("{", 'c')
     silent! execute 'normal %'
@@ -481,31 +495,14 @@ endfunction
 
 "跳转到函数指定位置
 function! JumpFunctionPos(pos)
-    let startLine = 0 
-    let endLine = 0 
-    let rangeStr = GetFuncRange()
-    if stridx(rangeStr, ',') > 0
-        let rangeStr = rangeStr . "," 
-        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
-        if matchstr(lineNum, '\d\+') != ''
-            let startLine = str2nr(lineNum)
-        else
-            return 
-        endif
-
-        let rangeStr = strpart(rangeStr, stridx(rangeStr, ',') + 1)
-        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
-        if matchstr(lineNum, '\d\+') != ''
-            let endLine = str2nr(lineNum)
-        else
-            return 
-        endif
-    endif
-
     if a:pos == 'jfs'
-        call cursor(startLine, 1)
+        silent! execute 'call JumpFuncStart()'
+        silent! execute 'normal ^'
     elseif a:pos == 'jfe'
-        call cursor(endLine, 1)
+        silent! execute 'call JumpFuncStart()'
+        silent! execute 'normal ^'
+        call search("{", 'c')
+        silent! execute 'normal %'
     endif
 endfunction
 
