@@ -357,11 +357,12 @@ function! GetFuncStart()
     let line_end="\\s*\\r\\?\\n\\?\\s*"
     let not_in_bracket="[^;+\\-=!/(){}]"
 
-    let func_name="^\\(\\s*[\\~\\*]\\?\\w\\+\\s*\\)\\+\\(::\\~\\?\\w\\+\\)\\?".line_end
+    let func_name="^\\(\\s*[\\~\\*:]*\\s*\\w\\+\\s*\\)\\+\\(::\\~\\?\\w\\+\\)\\?".line_end
     let func_args="(\\(".not_in_bracket."*".line_end.",\\?".line_end."\\)*)".line_end
-    let func_brace="\\(:\\(".line_end."\\w\\+(\\(".line_end."[^{}]*".line_end."\\)\\+),\\?".line_end."\\)\\+\\)\\?{"
+    let func_its_cpp="\\(:\\(".line_end."\\w\\+(\\(".line_end."[^{}]*".line_end."\\)\\+),\\?".line_end."\\)\\+\\)\\?".line_end
+    let func_limit="\\(\\s*const\\s*\\)\\?".line_end."{"
 
-    let func_reg=func_name.func_args.func_brace
+    let func_reg=func_name.func_args.func_its_cpp.func_limit
     let exclude_reg="\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\|catch\\)\\s*(.*)".line_end."{"
 
     let find_line=search(func_reg, 'bW')
