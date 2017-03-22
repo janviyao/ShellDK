@@ -293,6 +293,7 @@ nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 "CS命令
 function! CSFind(ccmd)
     silent! execute 'call ToggleWindow("allclose")'
+    silent! execute 'call setqflist([], "r")'
 
     let csarg=expand('<cword>')
     if a:ccmd == "fs"
