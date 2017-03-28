@@ -107,7 +107,7 @@ set pastetoggle=<F10>                                      "<F10>打开或关闭
 " 状态栏设置 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set cursorline                                             "行高亮
-set cursorcolumn                                           "列高亮
+"set cursorcolumn                                          "列高亮
 "set showcmd                                               "在状态栏显示正在输入的命令
 "set cmdheight=1                                           "命令行高度，默认为1
 
