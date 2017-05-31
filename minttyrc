@@ -12,6 +12,6 @@ ScrollbackLines=99999999
 Language=@
 BackgroundColour=38,38,38
 CursorType=block
-Transparency=glass
+Transparency=off
 OpaqueWhenFocused=yes
 Scrollbar=none
