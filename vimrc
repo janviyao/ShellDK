@@ -976,14 +976,14 @@ let g:tagbar_width = 50                                     "窗口的宽度
 let g:tagbar_zoomwidth = 0                                  "窗口放大时，显示的最大宽度：0：最大tag宽度，1：能得到的最大宽度，>1：实际宽度值
 let g:tagbar_autoclose = 1                                  "跳转到tag时，自动关闭窗口
 let g:tagbar_autofocus = 1                                  "窗口打开时，光标自动移动到窗口内
-let g:tagbar_sort = 0                                       "按文件顺序显示tag
+let g:tagbar_sort = 1                                       "按文件顺序显示tag
 let g:tagbar_compact = 1                                    "不显示顶部的简短帮忙信息
 let g:tagbar_indent = 2                                     "每级缩进空格数
 let g:tagbar_show_visibility = 1                            "显示可见符号，例如c++的public、private、protected等
 let g:tagbar_show_linenumbers = 0                           "显示行数，0：不显示行数，1：显示绝对行数，2：显示相对行数，-1：使用全局行数设置
 let g:tagbar_hide_nonpublic = 0                             "显示非public标识符
 let g:tagbar_singleclick = 0                                "关闭单击跳转
-let g:tagbar_autoshowtag = 0                                "自动打开关闭状态的折叠
+let g:tagbar_autoshowtag = 1                                "自动打开关闭状态的折叠
 let g:tagbar_autopreview = 0                                "在预览窗口自动显示光标下的tag
 let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
 
