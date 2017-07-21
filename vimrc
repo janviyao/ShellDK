@@ -627,18 +627,12 @@ endfunction
 
 "恢复加载
 function! RestoreLoad()
-    highlight cursorline ctermbg=241
-    highlight statusline ctermfg=110 ctermbg=20
-
     if !exists("autocommands_loaded")
         "防止多次加载                                                                                            
         let autocommands_loaded = 1
 
         "创建文件修改回退目录
         let dirStr=GetVimDir(0,"undodir")
-
-        "解决marker插件失效
-        source ~/.vim/plugin/mark.vim
     endif
 endfunction
 

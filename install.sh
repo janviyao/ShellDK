@@ -13,7 +13,7 @@ NEED_DIR=${CUR_DIR#${HOME_DIR}}
 
 ln -s ${NEED_DIR}/vimrc ~/.vimrc
 ln -s ${NEED_DIR}/bashrc ~/.bashrc
-ln -s ${NEED_DIR}/bashrc ~/.bash_profile
+ln -s ${NEED_DIR}/bash_profile ~/.bash_profile
 source ~/.bashrc
 source ~/.bash_profile
 ln -s ${NEED_DIR}/minttyrc ~/.minttyrc
