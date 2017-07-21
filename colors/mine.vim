@@ -2,14 +2,14 @@
 "
 "hi clear
 
-if version > 580
-    " no guarantees for version 5.8 and below, but this makes it stop
-    " complaining
-    hi clear
-    if exists("syntax_on")
-        syntax reset
-    endif
-endif
+"if version > 580
+"    " no guarantees for version 5.8 and below, but this makes it stop
+"    " complaining
+"    hi clear
+"    if exists("syntax_on")
+"        syntax reset
+"    endif
+"endif
 let g:colors_name="mine"
 
 highlight Boolean guifg=#ae81ff ctermfg=141
