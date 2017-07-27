@@ -1,9 +1,13 @@
 #set -x
+CUR_DIR=`pwd`
 cd ~
 HOME_DIR=`pwd`/
+CAMP_DIR=${CUR_DIR#${HOME_DIR}}
 
 # Collect dirs and files 
-C_WHAT=".vim"
+C_WHAT="${CAMP_DIR}"
+C_WHAT="${C_WHAT} .vim"
+C_WHAT="${C_WHAT} .vimrc"
 C_WHAT="${C_WHAT} .vimrc"
 C_WHAT="${C_WHAT} .bashrc"
 C_WHAT="${C_WHAT} .bash_profile"

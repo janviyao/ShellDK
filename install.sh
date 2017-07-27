@@ -10,21 +10,21 @@ rm -f ~/.inputrc
 #2. prepare environment
 cd ~
 HOME_DIR=`pwd`/
-NEED_DIR=${CUR_DIR#${HOME_DIR}}
+CAMP_DIR=${CUR_DIR#${HOME_DIR}}
 
-ln -s ${NEED_DIR}/vimrc ~/.vimrc
-ln -s ${NEED_DIR}/bashrc ~/.bashrc
-ln -s ${NEED_DIR}/bash_profile ~/.bash_profile
-ln -s ${NEED_DIR}/minttyrc ~/.minttyrc
-ln -s ${NEED_DIR}/inputrc ~/.inputrc
+ln -s ${CAMP_DIR}/vimrc ~/.vimrc
+ln -s ${CAMP_DIR}/bashrc ~/.bashrc
+ln -s ${CAMP_DIR}/bash_profile ~/.bash_profile
+ln -s ${CAMP_DIR}/minttyrc ~/.minttyrc
+ln -s ${CAMP_DIR}/inputrc ~/.inputrc
 
 source ~/.bashrc
 source ~/.bash_profile
 source ~/.minttyrc
 
 mkdir -p ~/.vim
-cp -fr ${NEED_DIR}/colors ~/.vim
-cp -fr ${NEED_DIR}/syntax ~/.vim
+cp -fr ${CAMP_DIR}/colors ~/.vim
+cp -fr ${CAMP_DIR}/syntax ~/.vim
 
 #3. install bundle plugin
 git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
