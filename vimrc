@@ -970,7 +970,7 @@ let g:tagbar_width = 50                                     "窗口的宽度
 let g:tagbar_zoomwidth = 0                                  "窗口放大时，显示的最大宽度：0：最大tag宽度，1：能得到的最大宽度，>1：实际宽度值
 let g:tagbar_autoclose = 1                                  "跳转到tag时，自动关闭窗口
 let g:tagbar_autofocus = 1                                  "窗口打开时，光标自动移动到窗口内
-let g:tagbar_sort = 1                                       "按文件顺序显示tag
+let g:tagbar_sort = 0                                       "按文件顺序显示tag
 let g:tagbar_compact = 1                                    "不显示顶部的简短帮忙信息
 let g:tagbar_indent = 2                                     "每级缩进空格数
 let g:tagbar_show_visibility = 1                            "显示可见符号，例如c++的public、private、protected等
@@ -998,7 +998,7 @@ let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
 "let Tlist_Use_Horiz_Window = 0                             "垂直分隔窗口
 "let Tlist_Use_Right_Window = 0                             "窗口显示在左侧
 "let Tlist_WinWidth = 50                                    "垂直分隔时窗口宽度
-"let Tlist_WinHeight = 20                                  "水平分隔时窗口高度
+"let Tlist_WinHeight = 20                                   "水平分隔时窗口高度
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 C文件与H文件相互转化 插件
