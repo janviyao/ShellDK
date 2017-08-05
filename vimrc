@@ -366,7 +366,7 @@ function! JumpFuncStart()
     let func_limit="\\(\\s*const\\s*\\)\\?".line_end."{"
 
     let func_reg=func_name.func_args.func_its_cpp.func_limit
-    let exclude_reg="\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\|catch\\)\\s*(.*)".line_end."{"
+    let exclude_reg="\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\|catch\\)\\s*(.*)".line_end."{\\?"
 
     let find_line=search(func_reg, 'bW')
     let find_str=getline(find_line)
