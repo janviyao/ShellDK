@@ -27,5 +27,23 @@ mkdir -p ~/.vim
 cp -fr ${CAMP_DIR}/colors ~/.vim
 cp -fr ${CAMP_DIR}/syntax ~/.vim
 
+# install astyle
+cd ${CUR_DIR}/tools
+tar -xzf astyle_*.tar.gz
+
+cd astyle/build/gcc
+make
+
+cp -f bin/astyle* /usr/bin/
+chmod 777 /usr/bin/astyle*
+
+cd ${CUR_DIR}/tools
+rm -fr astyle/
+
+# install ack-grep
+cd ${CUR_DIR}/tools
+cp -f ack-* /usr/bin/ack-grep
+chmod 777 /usr/bin/ack-grep
+
 # install bundle plugin
 git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
