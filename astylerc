@@ -1,0 +1,6 @@
+# astyle config
+--style=ansi 
+--indent=spaces=4 
+-p -U -S 
+--suffix=none 
+--convert-tabs

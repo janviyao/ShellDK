@@ -424,7 +424,7 @@ function! GetFuncRange()
     return funcStart . "," . funcEnd 
 endfunction
 
-"格式化语言
+"格式化代码
 function! FormatLanguage()
     let startLine = 0 
     let endLine = 0 
@@ -463,7 +463,8 @@ function! FormatLanguage()
     let rangeStr = startLine.",".endLine
 
     "格式化文件
-    silent! execute rangeStr."!astyle --style=ansi --indent=spaces=4 -p -U -S --suffix=none --convert-tabs"
+    let as_config = expand('$HOME/').".astylerc"
+    silent! execute rangeStr."!astyle --options=".as_config
 endfunction
 
 "格式化并刷新
@@ -484,9 +485,6 @@ function! CodeFormat()
     silent! execute 'w'
     "重新加载当前文件
     silent! execute 'e' 
-
-    "加载恢复
-    silent! execute 'call RestoreLoad()'
 
     "恢复文件行位置
     silent! normal! g`a
