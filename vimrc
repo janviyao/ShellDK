@@ -1115,8 +1115,8 @@ nnoremap <C-F>o :CtrlSFToggle<CR>
 inoremap <C-F>o <Esc>:CtrlSFToggle<CR>
 let g:ctrlsf_auto_close = 1                                "选中文件后自动关闭预览窗口
 let g:ctrlsf_regex_pattern = 1                             "默认以正则表达式搜索
-let g:ctrlsf_indent = 0                                    "在原文本缩进基础上增加缩进后显示
-let g:ctrlsf_winsize = '100%'                              "搜索结果显示窗口大小
+let g:ctrlsf_indent = 2                                    "在原文本缩进基础上增加缩进后显示
+let g:ctrlsf_winsize = '50%'                               "搜索结果显示窗口大小
 let g:ctrlsf_case_sensitive = 'yes'                        "搜索大小写敏感
 let g:ctrlsf_context = '-B 5 -A 3'                         "匹配行前后上下文显示行数配置
 let g:ctrlsf_position = 'left'                             "结果窗口显示位置
