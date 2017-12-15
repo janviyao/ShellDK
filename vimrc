@@ -869,6 +869,7 @@ endfunction
 " c) 指定非Github的Git仓库的插件，需要使用git地址，如：Bundle 'git://git.wincent.com/command-t.git'
 " d) 指定本地Git仓库中的插件，如：Bundle 'file:///Users/gmarik/path/to/plugin'
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let load_light=$VIM_LIGHT
 filetype off
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
@@ -1062,18 +1063,19 @@ let g:gundo_close_on_revert = 1                            "恢复之后自动�
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动补全 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Bundle "Shougo/neocomplete.vim"
+if load_light == 0
+    Bundle "Shougo/neocomplete.vim"
 
-inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-inoremap <expr><CR>  pumvisible() ? "\<C-y>" : "\<CR>"
-let g:neocomplete#enable_at_startup = 1                    "启用该插件
-let g:neocomplete#sources#syntax#min_keyword_length = 3    "缓存的最小关键字长度
-let g:neocomplete#enable_ignore_case = 1                   "输入关键字忽略大小写
-let g:neocomplete#enable_smart_case = 1                    "输入存在大写时，不忽略大小写
-let g:neocomplete#enable_auto_select = 1                   "自动指示第一个候选
-let g:neocomplete#enable_auto_delimiter = 1                "自动插入路径分隔符
-let g:neocomplete#enable_auto_close_preview = 1            "自动关闭候选窗口
-
+    inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+    inoremap <expr><CR>  pumvisible() ? "\<C-y>" : "\<CR>"
+    let g:neocomplete#enable_at_startup = 1                    "启用该插件
+    let g:neocomplete#sources#syntax#min_keyword_length = 3    "缓存的最小关键字长度
+    let g:neocomplete#enable_ignore_case = 1                   "输入关键字忽略大小写
+    let g:neocomplete#enable_smart_case = 1                    "输入存在大写时，不忽略大小写
+    let g:neocomplete#enable_auto_select = 1                   "自动指示第一个候选
+    let g:neocomplete#enable_auto_delimiter = 1                "自动插入路径分隔符
+    let g:neocomplete#enable_auto_close_preview = 1            "自动关闭候选窗口
+endif
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 代码片段 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
