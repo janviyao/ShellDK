@@ -81,6 +81,34 @@ cd ${CUR_DIR}/tools
 cp -f ack-* /usr/bin/ack-grep
 chmod 777 /usr/bin/ack-grep
 
+# install tig
+cd ${CUR_DIR}/tools
+tar -xzf libiconv-1.15.tar.gz
+cd libiconv-1.15
+./configure --prefix=/usr/local
+make
+make install
+
+cd ${CUR_DIR}/tools
+rm -fr libiconv-1.15
+
+tar -xzf ncurses-6.1.tar.gz
+cd ncurses-6.1
+./configure
+make
+make install
+
+cd ${CUR_DIR}/tools
+rm -fr ncurses-6.1
+
+unzip tig-master.zip
+cd tig-master
+make prefix=/usr/local
+make install prefix=/usr/local
+
+cd ${CUR_DIR}/tools
+rm -fr tig-master
+
 # install bundle plugin
 if [ ! -d ~/.vim/bundle/vundle ]; then
     git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
