@@ -3,9 +3,9 @@ CUR_DIR=`pwd`
 cd ~
 HOME_DIR=`pwd`/
 CAMP_DIR=${CUR_DIR#${HOME_DIR}}
-CLEAN=$1
+OPTYPE=$1
 
-if [ "${CLEAN}" = "clean" ]
+if [ "${OPTYPE}" = "clean" ]
 then
     # remove current environment
     rm -fr ~/.vim
@@ -17,6 +17,32 @@ then
     rm -f ~/.minttyrc
     rm -f ~/.inputrc
     rm -f ~/.astylerc
+    exit
+fi
+
+if [ "${OPTYPE}" = "vim" ]
+then
+    # install vim
+    cd ${CUR_DIR}/tools
+    rpm -ivh readline-devel-6.2-9.el7.x86_64.rpm --nodeps --force
+    rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+    rpm -ivh lua-devel-5.1.4-14.el7.x86_64.rpm --nodeps --force
+
+    #tar -xzf lua-5.3.3.tar.gz
+    #cd lua-5.3.3
+    #make linux && make install
+
+    #cd ${CUR_DIR}/tools
+    #rm -fr lua-5.3.3
+
+    tar -xzf vim-8.1.0152.tar.gz
+    cd vim-8.1.0152
+    ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
+    make && make install
+
+    cd ${CUR_DIR}/tools
+    rm -fr vim-8.1.0152
+
     exit
 fi
 
