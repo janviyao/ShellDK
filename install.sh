@@ -46,6 +46,32 @@ then
     exit
 fi
 
+if [ "${OPTYPE}" = "tig" ]
+then
+    # install tig
+    cd ${CUR_DIR}/tools
+    tar -xzf libiconv-1.15.tar.gz
+    cd libiconv-1.15
+    ./configure --prefix=/usr
+    make && make install
+
+    cd ${CUR_DIR}/tools
+    rm -fr libiconv-1.15
+
+    rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+    rpm -ivh ncurses-libs-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+
+    tar -xzf tig-2.3.3.tar.gz
+    cd tig-2.3.3
+    make configure
+    ./configure --prefix=/usr
+    make && make install
+
+    cd ${CUR_DIR}/tools
+    rm -fr tig-2.3.3
+    exit
+fi
+
 # prepare environment
 if [ ! -f ~/.vimrc ]; then
     ln -s ${CAMP_DIR}/vimrc ~/.vimrc
@@ -106,28 +132,6 @@ rm -fr astyle/
 cd ${CUR_DIR}/tools
 cp -f ack-* /usr/bin/ack-grep
 chmod 777 /usr/bin/ack-grep
-
-# install tig
-cd ${CUR_DIR}/tools
-tar -xzf libiconv-1.15.tar.gz
-cd libiconv-1.15
-./configure --prefix=/usr
-make && make install
-
-cd ${CUR_DIR}/tools
-rm -fr libiconv-1.15
-
-rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-rpm -ivh ncurses-libs-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-
-tar -xzf tig-2.3.3.tar.gz
-cd tig-2.3.3
-make configure
-./configure --prefix=/usr
-make && make install
-
-cd ${CUR_DIR}/tools
-rm -fr tig-2.3.3
 
 # install bundle plugin
 if [ ! -d ~/.vim/bundle/vundle ]; then
