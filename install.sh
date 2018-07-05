@@ -85,29 +85,23 @@ chmod 777 /usr/bin/ack-grep
 cd ${CUR_DIR}/tools
 tar -xzf libiconv-1.15.tar.gz
 cd libiconv-1.15
-./configure --prefix=/usr/local
-make
-make install
+./configure --prefix=/usr
+make && make install
 
 cd ${CUR_DIR}/tools
 rm -fr libiconv-1.15
 
-tar -xzf ncurses-6.1.tar.gz
-cd ncurses-6.1
-./configure
-make
-make install
+rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+rpm -ivh ncurses-libs-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+
+tar -xzf tig-2.3.3.tar.gz
+cd tig-2.3.3
+make configure
+./configure --prefix=/usr
+make && make install
 
 cd ${CUR_DIR}/tools
-rm -fr ncurses-6.1
-
-unzip tig-master.zip
-cd tig-master
-make prefix=/usr/local
-make install prefix=/usr/local
-
-cd ${CUR_DIR}/tools
-rm -fr tig-master
+rm -fr tig-2.3.3
 
 # install bundle plugin
 if [ ! -d ~/.vim/bundle/vundle ]; then
