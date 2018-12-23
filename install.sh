@@ -24,9 +24,20 @@ if [ "${OPTYPE}" = "vim" ]
 then
     # install vim
     cd ${CUR_DIR}/tools
-    rpm -ivh readline-devel-6.2-9.el7.x86_64.rpm --nodeps --force
-    rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-    rpm -ivh lua-devel-5.1.4-14.el7.x86_64.rpm --nodeps --force
+    IS_INSTALL=`rpm -qa | grep readline-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh readline-devel-6.2-9.el7.x86_64.rpm --nodeps --force
+    fi
+
+    IS_INSTALL=`rpm -qa | grep ncurses-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+    fi
+
+    IS_INSTALL=`rpm -qa | grep lua-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh lua-devel-5.1.4-14.el7.x86_64.rpm --nodeps --force
+    fi
 
     #tar -xzf lua-5.3.3.tar.gz
     #cd lua-5.3.3
@@ -39,6 +50,9 @@ then
     cd vim-8.1.0152
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
     make && make install
+    if [$? -ne 0 ]; then
+        exit -1
+    fi
 
     cd ${CUR_DIR}/tools
     rm -fr vim-8.1.0152
@@ -54,18 +68,31 @@ then
     cd libiconv-1.15
     ./configure --prefix=/usr
     make && make install
+    if [$? -ne 0 ]; then
+        exit -1
+    fi
 
     cd ${CUR_DIR}/tools
     rm -fr libiconv-1.15
 
-    rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-    rpm -ivh ncurses-libs-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+    IS_INSTALL=`rpm -qa | grep ncurses-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+    fi
+
+    IS_INSTALL=`rpm -qa | grep ncurses-libs`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh ncurses-libs-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
+    fi
 
     tar -xzf tig-2.3.3.tar.gz
     cd tig-2.3.3
     make configure
     ./configure --prefix=/usr
     make && make install
+    if [$? -ne 0 ]; then
+        exit -1
+    fi
 
     cd ${CUR_DIR}/tools
     rm -fr tig-2.3.3
@@ -121,6 +148,9 @@ tar -xzf astyle_*.tar.gz
 
 cd astyle/build/gcc
 make
+if [$? -ne 0 ]; then
+    exit -1
+fi
 
 cp -f bin/astyle* /usr/bin/
 chmod 777 /usr/bin/astyle*
