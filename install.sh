@@ -5,8 +5,8 @@ HOME_DIR=`pwd`/
 CAMP_DIR=${CUR_DIR#${HOME_DIR}}
 OPTYPE=$1
 
+# remove current environment
 if [ "${OPTYPE}" = "clean" ]; then
-    # remove current environment
     rm -fr ~/.vim
     rm -fr ~/.vimSession
     rm -f ~/.vimrc
@@ -16,11 +16,11 @@ if [ "${OPTYPE}" = "clean" ]; then
     rm -f ~/.minttyrc
     rm -f ~/.inputrc
     rm -f ~/.astylerc
-    exit
+    exit 0
 fi
 
+# install vim
 if [ "${OPTYPE}" = "vim" -o "${OPTYPE}" = "all" ]; then
-    # install vim
     cd ${CUR_DIR}/tools
     IS_INSTALL=`rpm -qa | grep readline-devel`
     if [ -z "${IS_INSTALL}" ]; then
@@ -58,8 +58,8 @@ if [ "${OPTYPE}" = "vim" -o "${OPTYPE}" = "all" ]; then
     exit
 fi
 
+# install tig
 if [ "${OPTYPE}" = "tig" -o "${OPTYPE}" = "all" ]; then
-    # install tig
     cd ${CUR_DIR}/tools
     tar -xzf libiconv-1.15.tar.gz
     cd libiconv-1.15
