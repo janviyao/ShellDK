@@ -62,7 +62,7 @@ if [ "${OPTYPE}" = "tig" -o "${OPTYPE}" = "all" ]; then
     cd libiconv-1.15
     ./configure --prefix=/usr
     make && make install
-    if [$? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         exit -1
     fi
 
@@ -84,7 +84,7 @@ if [ "${OPTYPE}" = "tig" -o "${OPTYPE}" = "all" ]; then
     make configure
     ./configure --prefix=/usr
     make && make install
-    if [$? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         exit -1
     fi
 
@@ -149,7 +149,7 @@ if [ "${OPTYPE}" = "astyle" -o "${OPTYPE}" = "all" ]; then
 
     cd astyle/build/gcc
     make
-    if [$? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         exit -1
     fi
 
