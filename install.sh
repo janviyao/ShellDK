@@ -48,7 +48,7 @@ if [ "${OPTYPE}" = "vim" -o "${OPTYPE}" = "all" ]; then
     cd vim-8.1.0152
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
     make && make install
-    if [$? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         exit -1
     fi
 
