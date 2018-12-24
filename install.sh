@@ -16,7 +16,6 @@ if [ "${OPTYPE}" = "clean" ]; then
     rm -f ~/.minttyrc
     rm -f ~/.inputrc
     rm -f ~/.astylerc
-    exit 0
 fi
 
 # install vim
@@ -54,8 +53,6 @@ if [ "${OPTYPE}" = "vim" -o "${OPTYPE}" = "all" ]; then
 
     cd ${CUR_DIR}/tools
     rm -fr vim-8.1.0152
-
-    exit
 fi
 
 # install tig
@@ -93,7 +90,6 @@ if [ "${OPTYPE}" = "tig" -o "${OPTYPE}" = "all" ]; then
 
     cd ${CUR_DIR}/tools
     rm -fr tig-2.3.3
-    exit
 fi
 
 # prepare environment
