@@ -1,140 +1,14 @@
-#set -x
+#!/bin/sh
 ROOT_DIR=$(cd `dirname $0`;pwd)
-OPTYPE=$1
-
-# remove current environment
-if [ "${OPTYPE}" = "clean" ]; then
-    rm -fr ~/.vim
-    rm -fr ~/.vimSession
-    rm -f ~/.vimrc
-    rm -f ~/.viminfo
-    rm -f ~/.bashrc
-    rm -f ~/.bash_profile
-    rm -f ~/.minttyrc
-    rm -f ~/.inputrc
-    rm -f ~/.astylerc
+LAST_CHAR="${ROOT_DIR: -1}"
+if [ ${LAST_CHAR} == '/' ]; then
+    ROOT_DIR=${ROOT_DIR%?}
 fi
 
-# install vim
-if [ "${OPTYPE}" = "vim" -o "${OPTYPE}" = "all" ]; then
+config_env()
+{
     cd ${ROOT_DIR}/tools
-    IS_INSTALL=`rpm -qa | grep readline-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh readline-devel-6.2-9.el7.x86_64.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            exit -1
-        fi
-    fi
 
-    IS_INSTALL=`rpm -qa | grep ncurses-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep lua-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh lua-devel-5.1.4-14.el7.x86_64.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            exit -1
-        fi
-    fi
-
-    #tar -xzf lua-5.3.3.tar.gz
-    #cd lua-5.3.3
-    #make linux && make install
-
-    #cd ${ROOT_DIR}/tools
-    #rm -fr lua-5.3.3
-
-    tar -xzf vim-8.1.0152.tar.gz
-    cd vim-8.1.0152
-    ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    make -j 2
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    make install
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/tools
-    rm -fr vim-8.1.0152
-fi
-
-# install tig
-if [ "${OPTYPE}" = "tig" -o "${OPTYPE}" = "all" ]; then
-    cd ${ROOT_DIR}/tools
-    tar -xzf libiconv-1.15.tar.gz
-    cd libiconv-1.15
-
-    ./configure --prefix=/usr
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    make -j 2
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    make install
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/tools
-    rm -fr libiconv-1.15
-
-    IS_INSTALL=`rpm -qa | grep ncurses-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh ncurses-devel-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep ncurses-libs`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh ncurses-libs-5.9-13.20130511.el7.x86_64.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            exit -1
-        fi
-    fi
-
-    tar -xzf tig-2.3.3.tar.gz
-    cd tig-2.3.3
-
-    make configure
-    ./configure --prefix=/usr
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    make -j 2
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    make install
-    if [ $? -ne 0 ]; then
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/tools
-    rm -fr tig-2.3.3
-fi
-
-# prepare environment
-if [ "${OPTYPE}" = "env" -o "${OPTYPE}" = "all" ]; then
     if [ ! -f ~/.vimrc ]; then
         ln -s ${ROOT_DIR}/vimrc ~/.vimrc
     fi
@@ -181,16 +55,157 @@ if [ "${OPTYPE}" = "env" -o "${OPTYPE}" = "all" ]; then
     if [ ! -d ~/.vim/bundle/vundle ]; then
         git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
     fi
-fi
+}
 
-# install astyle
-if [ "${OPTYPE}" = "astyle" -o "${OPTYPE}" = "all" ]; then
+clean_env()
+{
+    rm -fr ~/.vim
+    rm -fr ~/.vimSession
+    rm -f ~/.vimrc
+    rm -f ~/.viminfo
+    rm -f ~/.bashrc
+    rm -f ~/.bash_profile
+    rm -f ~/.minttyrc
+    rm -f ~/.inputrc
+    rm -f ~/.astylerc
+}
+
+install_deps()
+{
+    cd ${ROOT_DIR}/tools
+    IS_INSTALL=`rpm -qa | grep readline-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh readline-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: readline-devel fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep ncurses-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh ncurses-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: ncurses-devel fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep ncurses-libs`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh ncurses-libs-*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: ncurses-libs fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep lua-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh lua-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: lua-devel fail"
+            exit -1
+        fi
+    fi
+
+    #tar -xzf lua-5.3.3.tar.gz
+    #cd lua-5.3.3
+    #make linux && make install
+
+    #cd ${ROOT_DIR}/tools
+    #rm -fr lua-5.3.3
+
+    tar -xzf libiconv-*.tar.gz
+    cd libiconv-*
+
+    ./configure --prefix=/usr
+    if [ $? -ne 0 ]; then
+        echo "===Configure: libiconv fail"
+        exit -1
+    fi
+
+    make -j 2
+    if [ $? -ne 0 ]; then
+        echo "===Make: libiconv fail"
+        exit -1
+    fi
+
+    make install
+    if [ $? -ne 0 ]; then
+        echo "===Install: libiconv fail"
+        exit -1
+    fi
+
+    cd ${ROOT_DIR}/tools
+    rm -fr libiconv-*/
+}
+
+install_vim()
+{
+    cd ${ROOT_DIR}/tools
+    tar -xzf vim-*.tar.gz
+    cd vim-*
+    ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
+    if [ $? -ne 0 ]; then
+        echo "===Configure: vim fail"
+        exit -1
+    fi
+
+    make -j 2
+    if [ $? -ne 0 ]; then
+        echo "===Make: vim fail"
+        exit -1
+    fi
+
+    make install
+    if [ $? -ne 0 ]; then
+        echo "===Install: vim fail"
+        exit -1
+    fi
+
+    cd ${ROOT_DIR}/tools
+    rm -fr vim-*/
+}
+
+install_tig()
+{
+    cd ${ROOT_DIR}/tools
+    tar -xzf tig-*.tar.gz
+    cd tig-*
+
+    make configure
+    ./configure --prefix=/usr
+    if [ $? -ne 0 ]; then
+        echo "===Configure: tig fail"
+        exit -1
+    fi
+
+    make -j 2
+    if [ $? -ne 0 ]; then
+        echo "===Make: tig fail"
+        exit -1
+    fi
+
+    make install
+    if [ $? -ne 0 ]; then
+        echo "===Install: tig fail"
+        exit -1
+    fi
+
+    cd ${ROOT_DIR}/tools
+    rm -fr tig-*/
+}
+
+install_astyle()
+{
     cd ${ROOT_DIR}/tools
     tar -xzf astyle_*.tar.gz
     cd astyle/build/gcc
 
     make -j 2
     if [ $? -ne 0 ]; then
+        echo "===Make: astyle fail"
         exit -1
     fi
 
@@ -199,11 +214,46 @@ if [ "${OPTYPE}" = "astyle" -o "${OPTYPE}" = "all" ]; then
 
     cd ${ROOT_DIR}/tools
     rm -fr astyle/
-fi
+}
 
-# install ack-grep
-if [ "${OPTYPE}" = "astyle" -o "${OPTYPE}" = "all" ]; then
+install_ack()
+{
     cd ${ROOT_DIR}/tools
     cp -f ack-* /usr/bin/ack-grep
     chmod 777 /usr/bin/ack-grep
-fi
+}
+
+OPTYPE=$1
+case "${OPTYPE}" in
+    "clean")
+        clean_env
+        ;;
+    "env")
+        config_env 
+        ;;
+    "vim")
+        install_deps
+        install_vim
+        ;;
+    "tig")
+        install_deps
+        install_tig 
+        ;;
+    "astyle")
+        install_astyle 
+        ;;
+    "ack")
+        install_ack
+        ;;
+    "all")
+        install_deps
+        install_vim
+        install_tig 
+        install_ack
+        install_astyle 
+        config_env 
+        ;;
+    *)
+        echo "===Para: ${OPTYPE} err"
+esac
+
