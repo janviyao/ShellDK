@@ -139,6 +139,9 @@ install_deps()
 
     cd ${ROOT_DIR}/tools
     rm -fr libiconv-*/
+
+    echo "/usr/local/lib" >> /etc/ld.so.conf
+    ldconfig
 }
 
 install_vim()
