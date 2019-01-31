@@ -59,7 +59,7 @@ config_env()
 
 clean_env()
 {
-    rm -fr ~/.vim
+    #rm -fr ~/.vim
     rm -fr ~/.vimSession
     rm -f ~/.vimrc
     rm -f ~/.viminfo
