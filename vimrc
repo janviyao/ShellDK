@@ -323,6 +323,9 @@ function! CSFind(ccmd)
     for item in getqflist()
         let itemCount = itemCount + 1
         if itemCount > 1
+            if exists("g:qfix_win")
+                unlet! g:qfix_win
+            endif
             silent! execute 'call ToggleWindow("qo")'
             break
         endif
@@ -640,7 +643,9 @@ function! ToggleWindow(ccmd)
         silent! execute 'TagbarClose'
         if exists("g:qfix_win")
             silent! execute 'cclose'
+            unlet! g:qfix_win
         endif
+
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
             silent! execute 'bw! '.benr
@@ -651,7 +656,9 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         if exists("g:qfix_win")
             silent! execute 'cclose'
+            unlet! g:qfix_win
         endif
+
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
             silent! execute 'bw! '.benr
@@ -661,8 +668,10 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
+
         if exists("g:qfix_win")
             silent! execute 'cclose'
+            unlet! g:qfix_win
         endif
 
         silent! execute "BufExplorer"
@@ -676,14 +685,18 @@ function! ToggleWindow(ccmd)
 
         if exists("g:qfix_win")
             silent! execute 'cclose'
+            unlet! g:qfix_win
         else
             silent! execute 'copen 15'
+            let g:qfix_win = bufnr("$")
         endif
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
+
         if exists("g:qfix_win")
             silent! execute 'cclose'
+            unlet! g:qfix_win
         endif
 
         let benr = bufnr("[BufExplorer]")
