@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ROOT_DIR=$(cd `dirname $0`;pwd)
 LAST_CHAR="${ROOT_DIR: -1}"
 if [ ${LAST_CHAR} == '/' ]; then
@@ -50,11 +50,13 @@ config_env()
     mkdir -p ~/.vim
     cp -fr ${ROOT_DIR}/colors ~/.vim
     cp -fr ${ROOT_DIR}/syntax ~/.vim
-
+    
     # install bundle plugin
     if [ ! -d ~/.vim/bundle/vundle ]; then
         git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+        sudo vim +BundleInstall +q +q
     fi
+    sudo vim +BundleUpdate +q +q
 }
 
 clean_env()
