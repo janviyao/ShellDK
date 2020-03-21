@@ -5,6 +5,31 @@ if [ ${LAST_CHAR} == '/' ]; then
     ROOT_DIR=${ROOT_DIR%?}
 fi
 
+NEED_OP=""
+NEED_NET=""
+while [ -n "$1" ]; do
+	need_shift=0
+    case "$1" in
+		--op) NEED_OP="$2"; need_shift=1; shift;;
+		-n) NEED_NET="$2"; need_shift=1; shift;;
+		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
+        #--net) NEED_NET="true"; shift;;
+        *) echo "unkown para: $1"; exit 1; break;;
+    esac
+	
+	if [ ${need_shift} -eq 1 ]; then
+		shift
+	fi
+done
+
+if [ -z "${NEED_NET}" ]; then
+    NEED_NET="-1"
+fi
+
+if [ -z "${NEED_OP}" ]; then
+    NEED_OP="env"
+fi
+
 function check_net()   
 {   
     timeout=5 
@@ -17,6 +42,19 @@ function check_net()
         return -1
     fi 
 }
+
+echo "===Install Oper: ${NEED_OP}"
+echo "===Need Network: ${NEED_NET}"
+IS_NET_OK=-1
+if [ "x${NEED_NET}" = "x1" -o "x${NEED_NET}" = "xtrue" -o "x${NEED_NET}" = "xTrue" -o "x${NEED_NET}" = "xTRUE" -o "x${NEED_NET}" = "xY" -o "x${NEED_NET}" = "xy" ]; then
+    check_net
+    IS_NET_OK=$?
+    if [ ${IS_NET_OK} -eq 0 ]; then
+        echo "===Network: Ok"
+    else
+        echo "===Network: Fail"
+    fi
+fi
 
 function deploy_env()
 {
@@ -64,8 +102,7 @@ function deploy_env()
     cp -fr ${ROOT_DIR}/colors ~/.vim
     cp -fr ${ROOT_DIR}/syntax ~/.vim
     
-    check_net
-    if [ $? -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 0 ]; then
         # install bundle plugin
         if [ ! -d ~/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
@@ -143,7 +180,7 @@ function install_deps()
         exit -1
     fi
 
-    make -j 2
+    make -j 6
     if [ $? -ne 0 ]; then
         echo "===Make: libiconv fail"
         exit -1
@@ -166,8 +203,7 @@ function install_ctags()
 {
     cd ${ROOT_DIR}/tools
 
-    check_net
-    if [ $? -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 0 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
         tar -xzf ctags-*.tar.gz
@@ -207,8 +243,7 @@ function install_cscope()
 {
     cd ${ROOT_DIR}/tools
 
-    check_net
-    if [ $? -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 0 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
         tar -xzf cscope-*.tar.gz
@@ -242,8 +277,7 @@ function install_vim()
 {
     cd ${ROOT_DIR}/tools
 
-    check_net
-    if [ $? -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 0 ]; then
         git clone https://github.com/vim/vim.git vim
     else
         tar -xzf vim-*.tar.gz
@@ -257,7 +291,7 @@ function install_vim()
         exit -1
     fi
 
-    make -j 2
+    make -j 6
     if [ $? -ne 0 ]; then
         echo "===Make: vim fail"
         exit -1
@@ -277,8 +311,7 @@ function install_tig()
 {
     cd ${ROOT_DIR}/tools
 
-    check_net
-    if [ $? -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 0 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
         tar -xzf tig-*.tar.gz
@@ -293,7 +326,7 @@ function install_tig()
         exit -1
     fi
 
-    make -j 2
+    make -j 6
     if [ $? -ne 0 ]; then
         echo "===Make: tig fail"
         exit -1
@@ -313,8 +346,7 @@ function install_astyle()
 {
     cd ${ROOT_DIR}/tools
 
-    check_net
-    if [ $? -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 0 ]; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
         cd astyle*/AStyle/build/gcc
     else
@@ -322,7 +354,7 @@ function install_astyle()
         cd astyle*/build/gcc
     fi
 
-    make -j 2
+    make -j 6
     if [ $? -ne 0 ]; then
         echo "===Make: astyle fail"
         exit -1
@@ -354,7 +386,7 @@ function install_usage()
     echo "install.sh all      @install all vim's package"
 }
 
-OPTYPE=$1
+OPTYPE=${NEED_OP}
 case "${OPTYPE}" in
     "clean")
         clean_env
@@ -384,9 +416,9 @@ case "${OPTYPE}" in
         ;;
     "all")
         install_deps
+        install_vim
         install_ctags
         install_cscope
-        install_vim
         install_tig 
         install_ack
         install_astyle 
