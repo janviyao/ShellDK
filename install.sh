@@ -216,7 +216,7 @@ function install_cscope()
 
     cd cscope*/
 
-    ./configure CC=c99 CFLAGS=-g LIBS=-lposix 
+    ./configure
     if [ $? -ne 0 ]; then
         echo "===Configure: cscope fail"
         exit -1
@@ -250,6 +250,7 @@ function install_vim()
     fi
 
     cd vim*/
+
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
     if [ $? -ne 0 ]; then
         echo "===Configure: vim fail"
@@ -383,6 +384,8 @@ case "${OPTYPE}" in
         ;;
     "all")
         install_deps
+        install_ctags
+        install_cscope
         install_vim
         install_tig 
         install_ack
