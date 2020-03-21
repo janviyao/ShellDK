@@ -5,6 +5,19 @@ if [ ${LAST_CHAR} == '/' ]; then
     ROOT_DIR=${ROOT_DIR%?}
 fi
 
+function check_net()   
+{   
+    timeout=5 
+    target=https://github.com
+
+    ret_code=`curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1`   
+    if [ "x$ret_code" = "x200" ]; then   
+        return 0
+    else   
+        return -1
+    fi 
+}
+
 function deploy_env()
 {
     cd ${ROOT_DIR}/tools
@@ -51,12 +64,15 @@ function deploy_env()
     cp -fr ${ROOT_DIR}/colors ~/.vim
     cp -fr ${ROOT_DIR}/syntax ~/.vim
     
-    # install bundle plugin
-    if [ ! -d ~/.vim/bundle/vundle ]; then
-        git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
-        sudo vim +BundleInstall +q +q
+    check_net
+    if [ $? -eq 0 ]; then
+        # install bundle plugin
+        if [ ! -d ~/.vim/bundle/vundle ]; then
+            git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+            sudo vim +BundleInstall +q +q
+        fi
+        sudo vim +BundleUpdate +q +q
     fi
-    sudo vim +BundleUpdate +q +q
 }
 
 function clean_env()
@@ -146,11 +162,88 @@ function install_deps()
     ldconfig
 }
 
+function install_ctags()
+{
+    cd ${ROOT_DIR}/tools
+
+    check_net
+    if [ $? -eq 0 ]; then
+        git clone https://github.com/universal-ctags/ctags.git ctags
+    else
+        tar -xzf ctags-*.tar.gz
+    fi
+
+    cd ctags*/
+
+    ./autogen.sh
+    if [ $? -ne 0 ]; then
+        echo "===Autogen: ctags fail"
+        exit -1
+    fi
+
+    ./configure --prefix=/usr
+    if [ $? -ne 0 ]; then
+        echo "===Configure: ctags fail"
+        exit -1
+    fi
+
+    make -j 6
+    if [ $? -ne 0 ]; then
+        echo "===Make: ctags fail"
+        exit -1
+    fi
+
+    make install
+    if [ $? -ne 0 ]; then
+        echo "===Install: ctags fail"
+        exit -1
+    fi
+
+    cd ${ROOT_DIR}/tools
+    rm -fr ctags*/
+}
+
+function install_cscope()
+{
+    cd ${ROOT_DIR}/tools
+
+    tar -xzf cscope-*.tar.gz
+    cd cscope*/
+
+    ./configure CC=c99 CFLAGS=-g LIBS=-lposix 
+    if [ $? -ne 0 ]; then
+        echo "===Configure: ctags fail"
+        exit -1
+    fi
+
+    make -j 6
+    if [ $? -ne 0 ]; then
+        echo "===Make: ctags fail"
+        exit -1
+    fi
+
+    make install
+    if [ $? -ne 0 ]; then
+        echo "===Install: ctags fail"
+        exit -1
+    fi
+
+    cd ${ROOT_DIR}/tools
+    rm -fr cscope*/
+}
+
 function install_vim()
 {
     cd ${ROOT_DIR}/tools
-    tar -xzf vim-*.tar.gz
-    cd vim-*
+
+    check_net
+    if [ $? -eq 0 ]; then
+        git clone https://github.com/vim/vim.git vim
+    else
+        tar -xzf vim-*.tar.gz
+    fi
+
+    cd vim*/
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
     if [ $? -ne 0 ]; then
         echo "===Configure: vim fail"
@@ -170,14 +263,21 @@ function install_vim()
     fi
 
     cd ${ROOT_DIR}/tools
-    rm -fr vim-*/
+    rm -fr vim*/
 }
 
 function install_tig()
 {
     cd ${ROOT_DIR}/tools
-    tar -xzf tig-*.tar.gz
-    cd tig-*
+
+    check_net
+    if [ $? -eq 0 ]; then
+        git clone https://github.com/jonas/tig.git tig
+    else
+        tar -xzf tig-*.tar.gz
+    fi
+
+    cd tig*/
 
     make configure
     ./configure --prefix=/usr
@@ -199,14 +299,21 @@ function install_tig()
     fi
 
     cd ${ROOT_DIR}/tools
-    rm -fr tig-*/
+    rm -fr tig*/
 }
 
 function install_astyle()
 {
     cd ${ROOT_DIR}/tools
-    tar -xzf astyle_*.tar.gz
-    cd astyle/build/gcc
+
+    check_net
+    if [ $? -eq 0 ]; then
+        svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
+        cd astyle*/AStyle/build/gcc
+    else
+        tar -xzf astyle_*.tar.gz
+        cd astyle*/build/gcc
+    fi
 
     make -j 2
     if [ $? -ne 0 ]; then
@@ -218,7 +325,7 @@ function install_astyle()
     chmod 777 /usr/bin/astyle*
 
     cd ${ROOT_DIR}/tools
-    rm -fr astyle/
+    rm -fr astyle*/
 }
 
 function install_ack()
