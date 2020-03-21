@@ -361,6 +361,12 @@ case "${OPTYPE}" in
     "env")
         deploy_env 
         ;;
+    "ctags")
+        install_ctags
+        ;;
+    "cscope")
+        install_cscope
+        ;;
     "vim")
         install_deps
         install_vim
