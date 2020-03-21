@@ -207,24 +207,30 @@ function install_cscope()
 {
     cd ${ROOT_DIR}/tools
 
-    tar -xzf cscope-*.tar.gz
+    check_net
+    if [ $? -eq 0 ]; then
+        git clone https://git.code.sf.net/p/cscope/cscope cscope
+    else
+        tar -xzf cscope-*.tar.gz
+    fi
+
     cd cscope*/
 
     ./configure CC=c99 CFLAGS=-g LIBS=-lposix 
     if [ $? -ne 0 ]; then
-        echo "===Configure: ctags fail"
+        echo "===Configure: cscope fail"
         exit -1
     fi
 
     make -j 6
     if [ $? -ne 0 ]; then
-        echo "===Make: ctags fail"
+        echo "===Make: cscope fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: ctags fail"
+        echo "===Install: cscope fail"
         exit -1
     fi
 
