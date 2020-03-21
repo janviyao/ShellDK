@@ -5,7 +5,7 @@ if [ ${LAST_CHAR} == '/' ]; then
     ROOT_DIR=${ROOT_DIR%?}
 fi
 
-config_env()
+function deploy_env()
 {
     cd ${ROOT_DIR}/tools
 
@@ -59,7 +59,7 @@ config_env()
     sudo vim +BundleUpdate +q +q
 }
 
-clean_env()
+function clean_env()
 {
     #rm -fr ~/.vim
     rm -fr ~/.vimSession
@@ -72,7 +72,7 @@ clean_env()
     rm -f ~/.astylerc
 }
 
-install_deps()
+function install_deps()
 {
     cd ${ROOT_DIR}/tools
     IS_INSTALL=`rpm -qa | grep readline-devel`
@@ -146,7 +146,7 @@ install_deps()
     ldconfig
 }
 
-install_vim()
+function install_vim()
 {
     cd ${ROOT_DIR}/tools
     tar -xzf vim-*.tar.gz
@@ -173,7 +173,7 @@ install_vim()
     rm -fr vim-*/
 }
 
-install_tig()
+function install_tig()
 {
     cd ${ROOT_DIR}/tools
     tar -xzf tig-*.tar.gz
@@ -202,7 +202,7 @@ install_tig()
     rm -fr tig-*/
 }
 
-install_astyle()
+function install_astyle()
 {
     cd ${ROOT_DIR}/tools
     tar -xzf astyle_*.tar.gz
@@ -221,11 +221,23 @@ install_astyle()
     rm -fr astyle/
 }
 
-install_ack()
+function install_ack()
 {
     cd ${ROOT_DIR}/tools
     cp -f ack-* /usr/bin/ack-grep
     chmod 777 /usr/bin/ack-grep
+}
+
+function install_usage()
+{
+    echo "=================== Usage ==================="
+    echo "install.sh clean    @clean vim environment"
+    echo "install.sh env      @deploy vim's usage environment"
+    echo "install.sh vim      @install vim package"
+    echo "install.sh tig      @install tig package"
+    echo "install.sh astyle   @install astyle package"
+    echo "install.sh ack      @install ack package"
+    echo "install.sh all      @install all vim's package"
 }
 
 OPTYPE=$1
@@ -234,7 +246,7 @@ case "${OPTYPE}" in
         clean_env
         ;;
     "env")
-        config_env 
+        deploy_env 
         ;;
     "vim")
         install_deps
@@ -256,9 +268,8 @@ case "${OPTYPE}" in
         install_tig 
         install_ack
         install_astyle 
-        config_env 
+        deploy_env 
         ;;
     *)
-        echo "===Para: ${OPTYPE} err"
+        install_usage
 esac
-
