@@ -1092,7 +1092,7 @@ endif
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 代码片段 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Bundle "SirVer/ultisnips"
+"Bundle "SirVer/ultisnips"
 Bundle "honza/vim-snippets"
 
 let g:UltiSnipsExpandTrigger="<C-y>"
