@@ -13,17 +13,49 @@ if [ $UID -ne 0 ]; then
     fi
 fi
 
-NEED_OP=""
-NEED_NET=""
+declare -A funcMap
+funcMap["env"]="deploy_env update_env"
+funcMap["update"]="update_env"
+funcMap["clean"]="clean_env"
+funcMap["vim"]="inst_deps inst_vim"
+funcMap["ctags"]=inst_ctags
+funcMap["cscope"]=inst_cscope
+funcMap["tig"]="inst_deps inst_tig"
+funcMap["ack"]=inst_ack
+funcMap["astyle"]=inst_astyle
+funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack"
 
+function inst_usage()
+{
+    echo "=================== Usage ==================="
+    echo "install.sh -n true     @all installation packages from net"
+    echo "install.sh -o clean    @clean vim environment"
+    echo "install.sh -o env      @deploy vim's usage environment"
+    echo "install.sh -o vim      @install vim package"
+    echo "install.sh -o tig      @install tig package"
+    echo "install.sh -o astyle   @install astyle package"
+    echo "install.sh -o ack      @install ack package"
+    echo "install.sh -o all      @install all vim's package"
+
+    echo ""
+    echo "=================== Opers ==================="
+    for key in ${!funcMap[@]};
+    do
+        printf "Op: %-10s Funcs: %s\n" ${key} "${funcMap[${key}]}"
+    done
+}
+
+NEED_OP=""
+NEED_NET=-1
 while [ -n "$1" ]; do
 	need_shift=0
     case "$1" in
+		-o) NEED_OP="$2"; need_shift=1; shift;;
 		--op) NEED_OP="$2"; need_shift=1; shift;;
 		-n) NEED_NET="$2"; need_shift=1; shift;;
 		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
         #--net) NEED_NET="true"; shift;;
-        *) echo "unkown para: $1"; exit 1; break;;
+        *) echo "===unkown para: $1"; echo ""; inst_usage; exit 1; break;;
     esac
 	
 	if [ ${need_shift} -eq 1 ]; then
@@ -31,14 +63,23 @@ while [ -n "$1" ]; do
 	fi
 done
 
-if [ -z "${NEED_NET}" ]; then
-    NEED_NET="-1"
+OP_MATCH=0
+for key in ${!funcMap[@]};
+do
+    if [ "x${key}" != "x${NEED_OP}" ]; then
+        let OP_MATCH=OP_MATCH+1
+    fi
+done
+
+if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
+    echo "===unkown op: ${NEED_OP}"
+    echo ""
+    inst_usage
+    exit -1
 fi
 
-if [ -z "${NEED_OP}" ]; then
-    NEED_OP="env"
-fi
-
+echo "===Install Op: ${NEED_OP}"
+echo "===Need Netwk: ${NEED_NET}"
 function check_net()   
 {   
     timeout=5 
@@ -52,16 +93,14 @@ function check_net()
     fi 
 }
 
-echo "===Install Oper: ${NEED_OP}"
-echo "===Need Network: ${NEED_NET}"
 IS_NET_OK=-1
 if [ "x${NEED_NET}" = "x1" -o "x${NEED_NET}" = "xtrue" -o "x${NEED_NET}" = "xTrue" -o "x${NEED_NET}" = "xTRUE" -o "x${NEED_NET}" = "xY" -o "x${NEED_NET}" = "xy" ]; then
     check_net
     IS_NET_OK=$?
     if [ ${IS_NET_OK} -eq 0 ]; then
-        echo "===Network: Ok"
+        echo "===Netwk ping: Ok"
     else
-        echo "===Network: Fail"
+        echo "===Netwk ping: Fail"
     fi
 fi
 
@@ -109,22 +148,36 @@ function deploy_env()
     # build vim-work environment
     mkdir -p ~/.vim
     cp -fr ${ROOT_DIR}/colors ~/.vim
-    cp -fr ${ROOT_DIR}/syntax ~/.vim
-    
+    cp -fr ${ROOT_DIR}/syntax ~/.vim    
+
+    if [ ! -d ~/.vim/bundle/vundle ]; then
+        cd ${ROOT_DIR}/tools
+        if [ -f bundle.tar.gz ]; then
+            tar -xzf bundle.tar.gz
+            mv bundle ~/.vim/
+        fi
+    fi
+}
+
+function update_env()
+{
     if [ ${IS_NET_OK} -eq 0 ]; then
-        # install bundle plugin
+        NEED_UPDATE=1
         if [ ! -d ~/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
             ${NEED_SUDO} vim +BundleInstall +q +q
+            NEED_UPDATE=0
         fi
 
-        ${NEED_SUDO} vim +BundleUpdate +q +q
+        if [ ${NEED_UPDATE} -eq 1 ]; then
+            ${NEED_SUDO} vim +BundleUpdate +q +q
+        fi
     fi
 }
 
 function clean_env()
 {
-    #rm -fr ~/.vim
+    rm -fr ~/.vim
     rm -fr ~/.vimSession
     rm -f ~/.vimrc
     rm -f ~/.viminfo
@@ -135,7 +188,7 @@ function clean_env()
     rm -f ~/.astylerc
 }
 
-function install_deps()
+function inst_deps()
 {
     cd ${ROOT_DIR}/tools
     IS_INSTALL=`rpm -qa | grep readline-devel`
@@ -209,7 +262,7 @@ function install_deps()
     ldconfig
 }
 
-function install_ctags()
+function inst_ctags()
 {
     cd ${ROOT_DIR}/tools
 
@@ -249,7 +302,7 @@ function install_ctags()
     rm -fr ctags*/
 }
 
-function install_cscope()
+function inst_cscope()
 {
     cd ${ROOT_DIR}/tools
 
@@ -283,7 +336,7 @@ function install_cscope()
     rm -fr cscope*/
 }
 
-function install_vim()
+function inst_vim()
 {
     cd ${ROOT_DIR}/tools
 
@@ -317,7 +370,7 @@ function install_vim()
     rm -fr vim*/
 }
 
-function install_tig()
+function inst_tig()
 {
     cd ${ROOT_DIR}/tools
 
@@ -352,7 +405,7 @@ function install_tig()
     rm -fr tig*/
 }
 
-function install_astyle()
+function inst_astyle()
 {
     cd ${ROOT_DIR}/tools
 
@@ -377,63 +430,22 @@ function install_astyle()
     rm -fr astyle*/
 }
 
-function install_ack()
+function inst_ack()
 {
     cd ${ROOT_DIR}/tools
     cp -f ack-* /usr/bin/ack-grep
     chmod 777 /usr/bin/ack-grep
 }
 
-function install_usage()
-{
-    echo "=================== Usage ==================="
-    echo "install.sh clean    @clean vim environment"
-    echo "install.sh env      @deploy vim's usage environment"
-    echo "install.sh vim      @install vim package"
-    echo "install.sh tig      @install tig package"
-    echo "install.sh astyle   @install astyle package"
-    echo "install.sh ack      @install ack package"
-    echo "install.sh all      @install all vim's package"
-}
-
-OPTYPE=${NEED_OP}
-case "${OPTYPE}" in
-    "clean")
-        clean_env
-        ;;
-    "env")
-        deploy_env 
-        ;;
-    "ctags")
-        install_ctags
-        ;;
-    "cscope")
-        install_cscope
-        ;;
-    "vim")
-        install_deps
-        install_vim
-        ;;
-    "tig")
-        install_deps
-        install_tig 
-        ;;
-    "astyle")
-        install_astyle 
-        ;;
-    "ack")
-        install_ack
-        ;;
-    "all")
-        install_deps
-        install_vim
-        install_ctags
-        install_cscope
-        install_tig 
-        install_ack
-        install_astyle 
-        deploy_env 
-        ;;
-    *)
-        install_usage
-esac
+for key in ${!funcMap[@]};
+do
+    if [ x"${key}" = x"${NEED_OP}" ]; then
+        printf "===Op: %-6s ===Funcs: %s\n" ${key} "${funcMap[${key}]}"
+        for func in ${funcMap[${key}]};
+        do
+            ${func}
+            echo "===done: ${func}"
+        done
+        break
+    fi
+done
