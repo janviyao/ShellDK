@@ -5,8 +5,17 @@ if [ ${LAST_CHAR} == '/' ]; then
     ROOT_DIR=${ROOT_DIR%?}
 fi
 
+NEED_SUDO=
+if [ $UID -ne 0 ]; then
+    which sudo &> /dev/null
+    if [ $? -eq 0 ]; then
+        NEED_SUDO=sudo
+    fi
+fi
+
 NEED_OP=""
 NEED_NET=""
+
 while [ -n "$1" ]; do
 	need_shift=0
     case "$1" in
@@ -106,9 +115,10 @@ function deploy_env()
         # install bundle plugin
         if [ ! -d ~/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
-            sudo vim +BundleInstall +q +q
+            ${NEED_SUDO} vim +BundleInstall +q +q
         fi
-        sudo vim +BundleUpdate +q +q
+
+        ${NEED_SUDO} vim +BundleUpdate +q +q
     fi
 }
 
