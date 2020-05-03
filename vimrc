@@ -57,16 +57,16 @@ set confirm                                                "在处理未保存�
 set hidden                                                 "允许在有未保存的修改时切换缓冲区
 set wildmenu                                               "命令行TAB自动完成以及备选提示
 
-"set mouse-=a                                               "在所有的模式下面打开鼠标
+"set mouse-=a                                              "在所有的模式下面打开鼠标
 "set selection=exclusive
 "set selectmode=mouse,key
 
-set scrolloff=10                                           "光标上下最少保留屏幕行数
+set scrolloff=3                                            "光标上下最少保留屏幕行数
 set switchbuf=useopen                                      "显示已打开窗口，快速修复缓冲区，而不是打开新文件
 set matchpairs=(:),{:},[:],<:>                             "匹配括号的规则，增加针对html的<>
 set completeopt=longest,menu                               "关掉智能补全时的预览窗口
 
-set viminfo=!,'1000,<1000,s1024,:100,f1                  "viminfo文件保存的信息选项
+set viminfo=!,'1000,<1000,s1024,:100,f1                    "viminfo文件保存的信息选项
 
 "自动保存文件
 "set updatetime=1000
@@ -107,7 +107,7 @@ set pastetoggle=<F10>                                      "<F10>打开或关闭
 " 状态栏设置 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set cursorline                                             "行高亮
-"set cursorcolumn                                          "列高亮
+set cursorcolumn                                           "列高亮
 "set showcmd                                               "在状态栏显示正在输入的命令
 "set cmdheight=1                                           "命令行高度，默认为1
 
@@ -178,6 +178,9 @@ autocmd InsertLeave * set imdisable
 
 "vimrc文件修改之后自动加载
 autocmd BufWritePost .vimrc source ~/.vimrc
+
+"bashrc文件修改之后自动加载
+autocmd BufWritePost .bashrc source ~/.bashrc
 
 "让vim记忆上次编辑文件的位置
 autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | silent! execute "normal g'\"" | endif
