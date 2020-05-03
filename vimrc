@@ -4,6 +4,23 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+function PrintMsg(type, msg)
+    if a:type == 'error'
+        echohl ErrorMsg | echo a:msg
+    else
+        echohl WarningMsg | echo a:msg
+    endif
+endfunction
+
+function! CloseQfix(force)
+    if exists("g:qfix_win")
+        if &buftype != 'quickfix' || a:force == 1
+            silent! execute 'cclose'
+            unlet! g:qfix_win
+        endif
+    endif
+endfunction
+
 "获取VIM工作目录
 function! GetVimDir(work, dir)
     let makdir = expand('$HOME/.vimSession/')
@@ -107,7 +124,7 @@ set pastetoggle=<F10>                                      "<F10>打开或关闭
 " 状态栏设置 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 set cursorline                                             "行高亮
-set cursorcolumn                                           "列高亮
+"set cursorcolumn                                          "列高亮
 "set showcmd                                               "在状态栏显示正在输入的命令
 "set cmdheight=1                                           "命令行高度，默认为1
 
@@ -192,12 +209,20 @@ autocmd VimLeave * call LeaveHandler()
 "跟踪quickfix窗口状态
 augroup QFixToggle
     autocmd!
+    autocmd BufReadPost quickfix let g:qfix_win = bufnr('$')
     autocmd BufWinEnter quickfix let g:qfix_win = bufnr("$")
-    autocmd BufWinLeave * if exists("g:qfix_win") && expand("<abuf>") == g:qfix_win | unlet! g:qfix_win | endif
+    autocmd BufWinLeave quickfix if exists("g:qfix_win") && expand("<abuf>") == g:qfix_win | unlet! g:qfix_win | endif
+
+    "关闭quickfix窗口
+    autocmd CursorMoved * call CloseQfix(0)
 augroup END
 
 "恢复命令栏默认高度
-autocmd CursorMoved * if exists("g:show_func") | unlet! g:show_func | set cmdheight=1 | echo '' | endif
+autocmd CursorMoved * if exists("g:show_func") 
+                      \| unlet! g:show_func 
+                      \| set cmdheight=1 
+                      \| echo '' 
+                      \| endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 设置快捷键
@@ -640,27 +665,27 @@ function! RestoreLoad()
     endif
 endfunction
 
+"关闭BufExplorer
+function! CloseBufExp()
+    let benr = bufnr("BufExplorer")
+    if bufname(benr) == "[BufExplorer]"
+        silent! execute 'bwipeout! '.benr
+    endif
+    "silent! execute "ToggleBufExplorer"
+endfunction
+
 "窗口控制
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        if exists("g:qfix_win")
-            silent! execute 'cclose'
-            unlet! g:qfix_win
-        endif
-
-        let benr = bufnr("[BufExplorer]")
-        if bufname(benr) == "[BufExplorer]"
-            silent! execute 'bw! '.benr
-        endif
-
+        call CloseQfix(1) 
+        call CloseBufExp()
+        
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        if exists("g:qfix_win")
-            silent! execute 'cclose'
-            unlet! g:qfix_win
-        endif
+        call CloseQfix(1) 
+        call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
         if bufname(benr) == "[BufExplorer]"
@@ -671,21 +696,14 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-
-        if exists("g:qfix_win")
-            silent! execute 'cclose'
-            unlet! g:qfix_win
-        endif
+        call CloseQfix(1) 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        let benr = bufnr("[BufExplorer]")
-        if bufname(benr) == "[BufExplorer]"
-            silent! execute 'bw! '.benr
-        endif
-
+        call CloseBufExp()
+        
         if exists("g:qfix_win")
             silent! execute 'cclose'
             unlet! g:qfix_win
@@ -696,16 +714,8 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-
-        if exists("g:qfix_win")
-            silent! execute 'cclose'
-            unlet! g:qfix_win
-        endif
-
-        let benr = bufnr("[BufExplorer]")
-        if bufname(benr) == "[BufExplorer]"
-            silent! execute 'bw! '.benr
-        endif
+        call CloseQfix(1) 
+        call CloseBufExp()
     endif
 endfunction
 
