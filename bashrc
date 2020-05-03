@@ -93,12 +93,12 @@ export VIM_LIGHT=0
 
 # Some more ls aliases
 alias ls='ls --color'
-alias la='ls --color -A'
-alias ll='ls --color -Alh'
-alias llt='ls --color -Alht'
+alias la='ls --color -Alh'
+alias ll='ls --color -lh'
+alias llt='ls --color -lht'
 
 alias LS='ls --color'
-alias LL='ls --color -Al'
+alias LL='ls --color -lh'
 ################################################ End: Added by Janvi Yao ##################################################
 # Some example alias instructions
 # If these are enabled they will be used instead of any instructions
