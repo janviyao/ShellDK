@@ -94,6 +94,7 @@ export VIM_LIGHT=0
 # Some more ls aliases
 alias ls='ls --color'
 alias la='ls --color -Alh'
+alias lat='ls --color -Alht'
 alias ll='ls --color -lh'
 alias llt='ls --color -lht'
 
