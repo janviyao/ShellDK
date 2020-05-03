@@ -769,7 +769,7 @@ function! LoadProject(opmode)
             let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
         endwhile
 
-        silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files"
+        silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
         silent! execute "!cscope -ckbq -i cscope.files"
 
         silent! execute "!rm -f ncscope.*"

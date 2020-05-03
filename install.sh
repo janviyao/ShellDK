@@ -14,7 +14,7 @@ if [ $UID -ne 0 ]; then
 fi
 
 declare -A funcMap
-funcMap["env"]="deploy_env update_env"
+funcMap["env"]="clean_env deploy_env update_env"
 funcMap["update"]="update_env"
 funcMap["clean"]="clean_env"
 funcMap["vim"]="inst_deps inst_vim"
@@ -23,7 +23,7 @@ funcMap["cscope"]=inst_cscope
 funcMap["tig"]="inst_deps inst_tig"
 funcMap["ack"]=inst_ack
 funcMap["astyle"]=inst_astyle
-funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack"
+funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env update_env"
 
 function inst_usage()
 {
@@ -165,12 +165,12 @@ function update_env()
         NEED_UPDATE=1
         if [ ! -d ~/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
-            ${NEED_SUDO} vim +BundleInstall +q +q
+            vim +BundleInstall +q +q
             NEED_UPDATE=0
         fi
 
         if [ ${NEED_UPDATE} -eq 1 ]; then
-            ${NEED_SUDO} vim +BundleUpdate +q +q
+            vim +BundleUpdate +q +q
         fi
     fi
 }
