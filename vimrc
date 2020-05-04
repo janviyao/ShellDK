@@ -4,7 +4,7 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
-function PrintMsg(type, msg)
+function! PrintMsg(type, msg)
     if a:type == 'error'
         echohl ErrorMsg | echo a:msg
     else
@@ -137,7 +137,11 @@ set laststatus=2
 "set statusline=%F%m%r%h%w%*%=[%{&ff}:%Y]\ [%l:%v]\ [%p%%]\ [%{strftime(\"%Y-%m-%d\ %H:%M\")}]
 
 "可视模式
-highlight Visual ctermbg=241
+highlight CursorLine   cterm=NONE ctermbg=53  ctermfg=NONE
+highlight CursorColumn cterm=NONE ctermbg=53  ctermfg=NONE
+highlight Visual       cterm=NONE ctermbg=241 ctermfg=NONE
+autocmd InsertEnter * highlight CursorLine ctermbg=239 ctermfg=NONE
+autocmd InsertLeave * highlight CursorLine ctermbg=53 ctermfg=NONE
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 编码设置
@@ -769,7 +773,7 @@ function! LoadProject(opmode)
             let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
         endwhile
 
-        silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
+        silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files"
         silent! execute "!cscope -ckbq -i cscope.files"
 
         silent! execute "!rm -f ncscope.*"
