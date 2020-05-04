@@ -6,16 +6,16 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 function! PrintMsg(type, msg)
     if a:type == 'error'
-        echohl ErrorMsg | echom a:msg
+        echohl ErrorMsg | echo a:msg
     else
-        echohl WarningMsg | echom a:msg
+        echohl WarningMsg | echo a:msg
     endif
 endfunction
 
-function! GetCmdResult(cmd, args)
-    let resStr = system(a:cmd, a:args)
-    PrintMsg(resStr)
-    return resStr
+function! GetResultIndex(cmd, substr)
+    let resStr = system(a:cmd)
+    let idx = match(resStr, a:substr)
+    return idx
 endfunction
 
 function! CloseQfix(force)
@@ -143,11 +143,11 @@ set laststatus=2
 "set statusline=%F%m%r%h%w%*%=[%{&ff}:%Y]\ [%l:%v]\ [%p%%]\ [%{strftime(\"%Y-%m-%d\ %H:%M\")}]
 
 "可视模式
-highlight CursorLine   cterm=NONE ctermbg=53  ctermfg=NONE
-highlight CursorColumn cterm=NONE ctermbg=53  ctermfg=NONE
+"highlight CursorLine   cterm=NONE ctermbg=239  ctermfg=NONE
+"highlight CursorColumn cterm=NONE ctermbg=239  ctermfg=NONE
 highlight Visual       cterm=NONE ctermbg=241 ctermfg=NONE
-autocmd InsertEnter * highlight CursorLine ctermbg=239 ctermfg=NONE
-autocmd InsertLeave * highlight CursorLine ctermbg=53 ctermfg=NONE
+"autocmd InsertEnter * highlight CursorLine ctermbg=53 ctermfg=NONE
+"autocmd InsertLeave * highlight CursorLine ctermbg=239 ctermfg=NONE
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 编码设置
