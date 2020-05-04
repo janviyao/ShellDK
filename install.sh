@@ -1,8 +1,9 @@
 #!/bin/bash
 ROOT_DIR=$(cd `dirname $0`;pwd)
 LAST_CHAR="${ROOT_DIR: -1}"
+LAST_CHAR=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_CHAR} == '/' ]; then
-    ROOT_DIR=${ROOT_DIR%?}
+    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
 NEED_SUDO=
@@ -118,26 +119,32 @@ function deploy_env()
     cd ${ROOT_DIR}/tools
 
     if [ ! -f ~/.vimrc ]; then
+        echo "===create slink: .vimrc"
         ln -s ${ROOT_DIR}/vimrc ~/.vimrc
     fi
 
     if [ ! -f ~/.bashrc ]; then
+        echo "===create slink: .bashrc"
         ln -s ${ROOT_DIR}/bashrc ~/.bashrc
     fi
 
     if [ ! -f ~/.bash_profile ]; then
+        echo "===create slink: .bash_profile"
         ln -s ${ROOT_DIR}/bash_profile ~/.bash_profile
     fi
 
     if [ ! -f ~/.minttyrc ]; then
+        echo "===create slink: .minttyrc"
         ln -s ${ROOT_DIR}/minttyrc ~/.minttyrc
     fi
 
     if [ ! -f ~/.inputrc ]; then
+        echo "===create slink: .inputrc"
         ln -s ${ROOT_DIR}/inputrc ~/.inputrc
     fi
 
     if [ ! -f ~/.astylerc ]; then
+        echo "===create slink: .astylerc"
         ln -s ${ROOT_DIR}/astylerc ~/.astylerc
     fi
 
