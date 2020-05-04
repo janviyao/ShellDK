@@ -14,7 +14,7 @@ if [ $UID -ne 0 ]; then
 fi
 
 declare -A funcMap
-funcMap["env"]="clean_env deploy_env update_env"
+funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
 funcMap["clean"]="clean_env"
 funcMap["vim"]="inst_deps inst_vim"
@@ -23,7 +23,17 @@ funcMap["cscope"]=inst_cscope
 funcMap["tig"]="inst_deps inst_tig"
 funcMap["ack"]=inst_ack
 funcMap["astyle"]=inst_astyle
-funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env update_env"
+funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
+
+function bool_v()
+{
+    para=$1
+    if [ "${para,,}" == "yes" -o "${para,,}" == "true" -o "${para,,}" == "y" -o "${para,,}" == "1" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
 
 function inst_usage()
 {
@@ -87,17 +97,16 @@ function check_net()
 
     ret_code=`curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1`   
     if [ "x$ret_code" = "x200" ]; then   
-        return 0
+        return 1
     else   
-        return -1
+        return 0
     fi 
 }
 
-IS_NET_OK=-1
-if [ "x${NEED_NET}" = "x1" -o "x${NEED_NET}" = "xtrue" -o "x${NEED_NET}" = "xTrue" -o "x${NEED_NET}" = "xTRUE" -o "x${NEED_NET}" = "xY" -o "x${NEED_NET}" = "xy" ]; then
-    check_net
-    IS_NET_OK=$?
-    if [ ${IS_NET_OK} -eq 0 ]; then
+IS_NET_OK=$(bool_v "${NEED_NET}"; echo $?)
+if [ ${IS_NET_OK} -eq 1 ]; then
+    IS_NET_OK=$(check_net; echo $?)
+    if [ ${IS_NET_OK} -eq 1 ]; then
         echo "===Netwk ping: Ok"
     else
         echo "===Netwk ping: Fail"
