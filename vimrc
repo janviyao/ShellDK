@@ -6,10 +6,16 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 function! PrintMsg(type, msg)
     if a:type == 'error'
-        echohl ErrorMsg | echo a:msg
+        echohl ErrorMsg | echom a:msg
     else
-        echohl WarningMsg | echo a:msg
+        echohl WarningMsg | echom a:msg
     endif
+endfunction
+
+function! GetCmdResult(cmd, args)
+    let resStr = system(a:cmd, a:args)
+    PrintMsg(resStr)
+    return resStr
 endfunction
 
 function! CloseQfix(force)
@@ -773,7 +779,11 @@ function! LoadProject(opmode)
             let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
         endwhile
 
-        silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files"
+        if has("linux") 
+            silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
+        else
+            silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files"
+        endif
         silent! execute "!cscope -ckbq -i cscope.files"
 
         silent! execute "!rm -f ncscope.*"

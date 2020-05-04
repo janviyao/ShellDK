@@ -96,9 +96,9 @@ highlight TabLine guifg=#808080 guibg=#1b1d1e gui=NONE ctermfg=244 ctermbg=234 c
 
 highlight Normal guifg=#f8f8f2 guibg=#272822 ctermfg=231 ctermbg=235
 highlight Comment guifg=#75715e ctermfg=242
-highlight CursorLine guibg=#3e3d32 ctermbg=237 cterm=NONE
+"highlight CursorLine guibg=#3e3d32 ctermbg=237 cterm=NONE
 highlight CursorLineNr guifg=#fd971f gui=NONE ctermfg=208 cterm=NONE
-highlight CursorColumn guibg=#3e3d32 ctermbg=237
+"highlight CursorColumn guibg=#3e3d32 ctermbg=237
 highlight ColorColumn guibg=#3b3a32 ctermbg=237
 highlight LineNr guifg=#bcbcbc guibg=#3b3a32 ctermfg=250 ctermbg=237
 highlight NonText guifg=#75715e ctermfg=242
