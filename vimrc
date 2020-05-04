@@ -143,10 +143,10 @@ set laststatus=2
 "set statusline=%F%m%r%h%w%*%=[%{&ff}:%Y]\ [%l:%v]\ [%p%%]\ [%{strftime(\"%Y-%m-%d\ %H:%M\")}]
 
 "可视模式
-"highlight CursorLine   cterm=NONE ctermbg=239  ctermfg=NONE
-"highlight CursorColumn cterm=NONE ctermbg=239  ctermfg=NONE
-highlight Visual       cterm=NONE ctermbg=241 ctermfg=NONE
-"autocmd InsertEnter * highlight CursorLine ctermbg=53 ctermfg=NONE
+"highlight CursorLine   cterm=NONE ctermbg=239 ctermfg=NONE
+"highlight CursorColumn cterm=NONE ctermbg=239 ctermfg=NONE
+"highlight Visual       cterm=NONE ctermbg=241 ctermfg=NONE
+"autocmd InsertEnter * highlight CursorLine ctermbg=53  ctermfg=NONE
 "autocmd InsertLeave * highlight CursorLine ctermbg=239 ctermfg=NONE
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 

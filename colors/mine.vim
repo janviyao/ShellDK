@@ -87,7 +87,7 @@ highlight Underlined guifg=#808080 gui=underline ctermfg=244 cterm=underline
 
 highlight VertSplit guifg=#808080 guibg=#080808 gui=bold ctermfg=244 ctermbg=232 cterm=bold
 highlight VisualNOS guibg=#403d3d ctermbg=237
-highlight Visual guibg=#403d3d ctermbg=237
+highlight Visual guibg=#403d3d cterm=NONE ctermbg=241 ctermfg=NONE
 highlight WarningMsg guifg=#ffffff guibg=#333333 gui=bold ctermfg=231 ctermbg=236 cterm=bold
 highlight WildMenu guifg=#66d9ef guibg=#000000 ctermfg=45 ctermbg=16
 
