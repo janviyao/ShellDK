@@ -221,7 +221,6 @@ augroup QFixToggle
     autocmd!
     autocmd BufReadPost quickfix let g:qfix_win = bufnr('$')
     autocmd BufWinEnter quickfix let g:qfix_win = bufnr("$")
-    autocmd BufWinLeave quickfix if exists("g:qfix_win") && expand("<abuf>") == g:qfix_win | unlet! g:qfix_win | endif
 
     "关闭quickfix窗口
     autocmd CursorMoved * call CloseQfix(0)
