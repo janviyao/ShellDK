@@ -1194,6 +1194,95 @@ Bundle "tpope/vim-surround"
 Bundle "tpope/vim-fugitive"
 Bundle "gregsexton/gitv"
 
+"动态显示Git状态
+Bundle "airblade/vim-gitgutter"
+
+"定义每行处理接口
+function! GlobalChangedLines(ex_cmd)
+    for hunk in GitGutterGetHunks()
+        for lnum in range(hunk[2], hunk[2]+hunk[3]-1)
+            let cursor = getcurpos()
+            silent! execute lnum.a:ex_cmd
+            call setpos('.', cursor)
+        endfor
+    endfor
+endfunction
+command -nargs=1 Glines call GlobalChangedLines(<q-args>)
+"示例 :Glines s/\s\+$//                                    "清除行尾空格
+
+"循环跳转
+function! GitGutterNextHunkCycle()
+    let linenr = line('.')
+    silent! GitGutterNextHunk
+    if line('.') == linenr 
+        normal! gg
+        GitGutterNextHunk
+    endif
+endfunction
+
+function! GitGutterPrevHunkCycle()
+    let linenr = line('.')
+    silent! GitGutterPrevHunk 
+    if line('.') == linenr 
+        normal! G
+        GitGutterPrevHunk 
+    endif
+endfunction
+
+function! GitGutterNextHunkAllBuffers()
+    let linenr = line('.')
+    GitGutterNextHunk
+    if line('.') != linenr 
+        return
+    endif
+
+    let bufnr = bufnr('')
+    while 1
+        bnext
+        if bufnr('') == bufnr
+            return
+        endif
+        if !empty(GitGutterGetHunks())
+            normal! gg
+            GitGutterNextHunk
+            return
+        endif
+    endwhile
+endfunction
+
+function! GitGutterPrevHunkAllBuffers()
+    let linenr = line('.')
+    GitGutterPrevHunk
+    if line('.') != linenr 
+        return
+    endif
+
+    let bufnr = bufnr('')
+    while 1
+        bprevious
+        if bufnr('') == bufnr
+            return
+        endif
+        if !empty(GitGutterGetHunks())
+            normal! G
+            GitGutterPrevHunk
+            return
+        endif
+    endwhile
+endfunction
+
+nmap <silent> ]g :call GitGutterNextHunkCycle()<CR>
+nmap <silent> [g :call GitGutterPrevHunkCycle()<CR>
+nmap <silent> ]ga :call GitGutterNextHunkAllBuffers()<CR>
+nmap <silent> [ga :call GitGutterPrevHunkAllBuffers()<CR>
+nmap <silent> <Leader>gg :GitGutterToggle<CR>
+
+"执行写操作时更新签名列
+autocmd BufWritePost * GitGutter
+highlight GitGutterAdd    guifg=#009900 ctermfg=2
+highlight GitGutterChange guifg=#bbbb00 ctermfg=3
+highlight GitGutterDelete guifg=#ff2222 ctermfg=1
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 多光标选择 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
