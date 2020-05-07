@@ -976,6 +976,21 @@ let NERDTreeShowHidden = 0                                 "不显示隐藏文�
 "忽略指定文件
 let NERDTreeIgnore = ['\.vim$', '\~$', 'cscope\.*', 'tags[[file]]', '\.git*', '\.repo$[[dir]]'] 
 
+"在NERDTree上显示Git状态
+Bundle "Xuyuanp/nerdtree-git-plugin"
+let g:NERDTreeIndicatorMapCustom = {
+            \ "Modified"  : "✹",
+            \ "Staged"    : "✚",
+            \ "Untracked" : "✭",
+            \ "Renamed"   : "➜",
+            \ "Unmerged"  : "═",
+            \ "Deleted"   : "✖",
+            \ "Dirty"     : "✗",
+            \ "Clean"     : "✔︎",
+            \ 'Ignored'   : '☒',
+            \ "Unknown"   : "?"
+            \ }
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 模糊查找文件 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
