@@ -1188,7 +1188,7 @@ let g:ctrlsf_selected_line_hl = 'op'                       "在预览窗口和�
 if executable('ag')
     let g:ctrlsf_ackprg = 'ag'                             "指定后端搜索工具
 else
-    let g:ctrlsf_ackprg = '/usr/bin/ack-grep'              "指定后端搜索工具
+    let g:ctrlsf_ackprg = 'ack-grep'                       "指定后端搜索工具
 endif
 let g:ctrlsf_ignore_dir = ['.git', '.repo', '.svn']
 

@@ -243,6 +243,15 @@ function inst_deps()
         fi
     fi
 
+    IS_INSTALL=`rpm -qa | grep xz-libs`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh xz-*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: xz-lzma fail"
+            exit -1
+        fi
+    fi
+
     #tar -xzf lua-5.3.3.tar.gz
     #cd lua-5.3.3
     #make linux && make install
@@ -466,25 +475,24 @@ function inst_ack()
 
     ./configure
     if [ $? -ne 0 ]; then
-        echo "===Configure: tig fail"
+        echo "===Configure: ag fail"
         exit -1
     fi
 
     make -j 6
     if [ $? -ne 0 ]; then
-        echo "===Make: tig fail"
+        echo "===Make: ag fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: tig fail"
+        echo "===Install: ag fail"
         exit -1
     fi
 
     cd ${ROOT_DIR}/tools
     rm -fr the_silver_searcher-*/
-
 }
 
 for key in ${!funcMap[@]};
