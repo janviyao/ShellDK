@@ -1177,13 +1177,6 @@ let g:SrcExpl_isUpdateTags = 0                             "不允许更新tags�
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "dyng/ctrlsf.vim"
 
-nmap     <C-F>f <Plug>CtrlSFPrompt
-vmap     <C-F>v <Plug>CtrlSFVwordPath
-vmap     <C-F>V <Plug>CtrlSFVwordExec
-nmap     <C-F>c <Plug>CtrlSFCwordPath
-nmap     <C-F>p <Plug>CtrlSFPwordPath
-nnoremap <C-F>o :CtrlSFToggle<CR>
-inoremap <C-F>o <Esc>:CtrlSFToggle<CR>
 let g:ctrlsf_auto_close = 1                                "选中文件后自动关闭预览窗口
 let g:ctrlsf_regex_pattern = 1                             "默认以正则表达式搜索
 let g:ctrlsf_indent = 2                                    "在原文本缩进基础上增加缩进后显示
@@ -1192,8 +1185,21 @@ let g:ctrlsf_case_sensitive = 'yes'                        "搜索大小写敏�
 let g:ctrlsf_context = '-B 5 -A 3'                         "匹配行前后上下文显示行数配置
 let g:ctrlsf_position = 'left'                             "结果窗口显示位置
 let g:ctrlsf_selected_line_hl = 'op'                       "在预览窗口和目标文件同时高亮行
-let g:ctrlsf_ackprg = '/usr/bin/ack-grep'                  "指定后端搜索工具
+if executable('ag')
+    let g:ctrlsf_ackprg = 'ag'                             "指定后端搜索工具
+else
+    let g:ctrlsf_ackprg = '/usr/bin/ack-grep'              "指定后端搜索工具
+endif
 let g:ctrlsf_ignore_dir = ['.git', '.repo', '.svn']
+
+nmap     <C-F>f <Plug>CtrlSFPrompt
+vmap     <C-F>f <Plug>CtrlSFVwordPath
+vmap     <C-F>F <Plug>CtrlSFVwordExec
+nmap     <C-F>n <Plug>CtrlSFCwordPath
+nmap     <C-F>p <Plug>CtrlSFPwordPath
+nnoremap <C-F>o :CtrlSFOpen<CR>
+nnoremap <C-F>t :CtrlSFToggle<CR>
+inoremap <C-F>t <Esc>:CtrlSFToggle<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 NerdCommenter自动注释 插件
@@ -1332,9 +1338,13 @@ let g:multi_cursor_quit_key            = '<Esc>'	       "退出
 " 绑定 选择区域增加或缩小 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "Yggdroot/indentLine"
-let g:indentLine_enabled = 0
+let g:indentLine_enabled = 1
+let g:indentLine_setColors = 1
+let g:indentLine_color_term = 239
+let g:indentLine_bgcolor_term = 202
+let g:indentLine_char_list = ['|', '¦', '┆', '┊']
 
-map <silent> <Leader>il :IndentLinesToggle<CR>
+nnoremap <silent> <Leader>il :IndentLinesToggle<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 选择区域增加或缩小 插件
