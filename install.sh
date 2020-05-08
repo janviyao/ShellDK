@@ -18,12 +18,14 @@ declare -A funcMap
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
 funcMap["clean"]="clean_env"
-funcMap["vim"]="inst_deps inst_vim"
-funcMap["ctags"]=inst_ctags
-funcMap["cscope"]=inst_cscope
-funcMap["tig"]="inst_deps inst_tig"
-funcMap["ack"]=inst_ack
-funcMap["astyle"]=inst_astyle
+funcMap["vim"]="inst_vim"
+funcMap["ctags"]="inst_ctags"
+funcMap["cscope"]="inst_cscope"
+funcMap["tig"]="inst_tig"
+funcMap["ack"]="inst_ack"
+funcMap["astyle"]="inst_astyle"
+funcMap["deps"]="inst_deps"
+funcMap["install"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack"
 funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
 
 function bool_v()
