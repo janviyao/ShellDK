@@ -960,6 +960,15 @@ let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn'        "不匹配指定目�
 let Grep_Skip_Files = '*.bak *~ .git* tags cscope.*'       "不匹配指定文件
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+" 绑定 快速搜索 插件
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"install tools/the_silver_searcher-2.2.0.tar.gz
+if executable('ag')
+    let g:ackprg = 'ag --vimgrep'
+endif
+Bundle "mileszs/ack.vim"
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 文件资源管理 插件
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 Bundle "scrooloose/nerdtree"
@@ -1130,6 +1139,12 @@ if load_light == 0
     let g:neocomplete#enable_auto_delimiter = 1                "自动插入路径分隔符
     let g:neocomplete#enable_auto_close_preview = 1            "自动关闭候选窗口
 endif
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+" 绑定 自动补全符号 插件
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Bundle "Raimondi/delimitMate"
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 代码片段 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -1303,10 +1318,23 @@ highlight GitGutterDelete guifg=#ff2222 ctermfg=1
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "terryma/vim-multiple-cursors"
 
+let g:multi_cursor_use_default_mapping = 0
+let g:multi_cursor_start_word_key      = '<C-n>'	       "选中一个
+let g:multi_cursor_select_all_word_key = '<A-n>'	       "全选匹配的字符
+let g:multi_cursor_start_key           = 'g<C-n>'
+let g:multi_cursor_select_all_key      = 'g<A-n>'
+let g:multi_cursor_next_key            = '<C-n>'
+let g:multi_cursor_prev_key            = '<C-p>'	       "回到上一个
+let g:multi_cursor_skip_key            = '<C-x>'	       "跳过当前选中, 选中下一个
+let g:multi_cursor_quit_key            = '<Esc>'	       "退出
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
-" 绑定 自动补全符号 插件
+" 绑定 选择区域增加或缩小 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Bundle "Raimondi/delimitMate"
+Bundle "Yggdroot/indentLine"
+let g:indentLine_enabled = 0
+
+map <silent> <Leader>il :IndentLinesToggle<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 选择区域增加或缩小 插件

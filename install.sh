@@ -448,9 +448,43 @@ function inst_astyle()
 
 function inst_ack()
 {
+    # install ack
     cd ${ROOT_DIR}/tools
     cp -f ack-* /usr/bin/ack-grep
     chmod 777 /usr/bin/ack-grep
+    
+    # install ag
+    if [ ${IS_NET_OK} -eq 0 ]; then
+        git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
+    else
+        tar -xzf the_silver_searcher-*.tar.gz
+    fi
+
+    cd the_silver_searcher-*/
+
+    sh autogen.sh
+
+    ./configure
+    if [ $? -ne 0 ]; then
+        echo "===Configure: tig fail"
+        exit -1
+    fi
+
+    make -j 6
+    if [ $? -ne 0 ]; then
+        echo "===Make: tig fail"
+        exit -1
+    fi
+
+    make install
+    if [ $? -ne 0 ]; then
+        echo "===Install: tig fail"
+        exit -1
+    fi
+
+    cd ${ROOT_DIR}/tools
+    rm -fr the_silver_searcher-*/
+
 }
 
 for key in ${!funcMap[@]};
