@@ -57,7 +57,7 @@ function inst_usage()
 }
 
 NEED_OP=""
-NEED_NET=-1
+NEED_NET=0
 while [ -n "$1" ]; do
 	need_shift=0
     case "$1" in
@@ -177,7 +177,7 @@ function deploy_env()
 
 function update_env()
 {
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         NEED_UPDATE=1
         if [ ! -d ~/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
@@ -282,7 +282,7 @@ function inst_ctags()
 {
     cd ${ROOT_DIR}/tools
 
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
         tar -xzf ctags-*.tar.gz
@@ -322,7 +322,7 @@ function inst_cscope()
 {
     cd ${ROOT_DIR}/tools
 
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
         tar -xzf cscope-*.tar.gz
@@ -356,7 +356,7 @@ function inst_vim()
 {
     cd ${ROOT_DIR}/tools
 
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/vim/vim.git vim
     else
         tar -xzf vim-*.tar.gz
@@ -390,7 +390,7 @@ function inst_tig()
 {
     cd ${ROOT_DIR}/tools
 
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
         tar -xzf tig-*.tar.gz
@@ -425,7 +425,7 @@ function inst_astyle()
 {
     cd ${ROOT_DIR}/tools
 
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
         cd astyle*/AStyle/build/gcc
     else
@@ -454,7 +454,7 @@ function inst_ack()
     chmod 777 /usr/bin/ack-grep
     
     # install ag
-    if [ ${IS_NET_OK} -eq 0 ]; then
+    if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
         tar -xzf the_silver_searcher-*.tar.gz
