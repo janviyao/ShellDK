@@ -245,9 +245,18 @@ function inst_deps()
 
     IS_INSTALL=`rpm -qa | grep xz-libs`
     if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh xz-*.rpm --nodeps --force
+        rpm -ivh xz-libs*.rpm --nodeps --force
         if [ $? -ne 0 ]; then
-            echo "===Install: xz-lzma fail"
+            echo "===Install: xz-libs fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep xz-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh xz-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: xz-devel fail"
             exit -1
         fi
     fi
