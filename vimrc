@@ -5,10 +5,12 @@
 " 公共函数列表 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 function! PrintMsg(type, msg)
-    if a:type == 'error'
+    if a:type == "error"
         echohl ErrorMsg | echo a:msg
-    else
+    elseif a:type == "warn" 
         echohl WarningMsg | echo a:msg
+    else
+        :echom a:msg
     endif
 endfunction
 
@@ -550,6 +552,7 @@ function! ReplaceWord()
     let colNum = col(".")
 
     let oldStr = expand('<cword>')
+    let oldStr = trim(oldStr)
     let lineStr = getline(rowNum)
 
     let index = stridx(lineStr, oldStr) + 1 
@@ -562,8 +565,13 @@ function! ReplaceWord()
         silent! execute "normal ".strlen(oldStr)."x"
         silent! execute "normal \"0P"
     endif
-
-    call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
+    
+    if colNum > 1
+        let colNum = colNum - 1
+        call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
+    else
+        call cursor(rowNum, colNum)
+    endif
 endfunction
 
 "全局替换
@@ -893,7 +901,6 @@ endfunction
 
 "完整路径标签
 function! FullTabLabel(n)
-
     let buflist = tabpagebuflist(a:n) 
     let winnr = tabpagewinnr(a:n)
 
@@ -1338,10 +1345,10 @@ let g:multi_cursor_quit_key            = '<Esc>'	       "退出
 " 绑定 选择区域增加或缩小 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "Yggdroot/indentLine"
-let g:indentLine_enabled = 1
+let g:indentLine_enabled = 0
 let g:indentLine_setColors = 1
-let g:indentLine_color_term = 239
-let g:indentLine_bgcolor_term = 202
+let g:indentLine_color_term = 0
+let g:indentLine_bgcolor_term = 220
 let g:indentLine_char_list = ['|', '¦', '┆', '┊']
 
 nnoremap <silent> <Leader>il :IndentLinesToggle<CR>
@@ -1360,6 +1367,11 @@ Bundle "vim-scripts/matchit.zip"
 " 绑定 文本对齐 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "godlygeek/tabular"
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+" 绑定 :XtermColorTable颜色表 插件
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Bundle "guns/xterm-color-table.vim"
 
 "开启插件
 filetype plugin indent on
