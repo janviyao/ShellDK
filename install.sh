@@ -245,6 +245,24 @@ function inst_deps()
         fi
     fi
 
+    IS_INSTALL=`rpm -qa | grep python-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh python-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: python-devel fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep python3-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh python3-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: python3-devel fail"
+            exit -1
+        fi
+    fi
+
     IS_INSTALL=`rpm -qa | grep xz-libs`
     if [ -z "${IS_INSTALL}" ]; then
         rpm -ivh xz-libs*.rpm --nodeps --force
@@ -384,7 +402,12 @@ function inst_vim()
 
     cd vim*/
 
-    ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset --enable-largefile --enable-luainterp=yes --enable-pythoninterp=yes --disable-gui --disable-netbeans 
+    ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset \
+        --enable-largefile \
+        --enable-luainterp=yes \
+        --enable-pythoninterp=yes \
+        --enable-python3interp=yes \
+        --disable-gui --disable-netbeans 
     if [ $? -ne 0 ]; then
         echo "===Configure: vim fail"
         exit -1
