@@ -281,6 +281,24 @@ function inst_deps()
         fi
     fi
 
+    IS_INSTALL=`rpm -qa | grep libiconv`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh libiconv-*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: libiconv fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep libiconv-devel`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh libiconv-devel*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: libiconv-devel fail"
+            exit -1
+        fi
+    fi
+
     #tar -xzf lua-5.3.3.tar.gz
     #cd lua-5.3.3
     #make linux && make install
@@ -288,29 +306,29 @@ function inst_deps()
     #cd ${ROOT_DIR}/tools
     #rm -fr lua-5.3.3
 
-    tar -xzf libiconv-*.tar.gz
-    cd libiconv-*
+    #tar -xzf libiconv-*.tar.gz
+    #cd libiconv-*
 
-    ./configure --prefix=/usr
-    if [ $? -ne 0 ]; then
-        echo "===Configure: libiconv fail"
-        exit -1
-    fi
+    #./configure --prefix=/usr
+    #if [ $? -ne 0 ]; then
+    #    echo "===Configure: libiconv fail"
+    #    exit -1
+    #fi
 
-    make -j 6
-    if [ $? -ne 0 ]; then
-        echo "===Make: libiconv fail"
-        exit -1
-    fi
+    #make -j 6
+    #if [ $? -ne 0 ]; then
+    #    echo "===Make: libiconv fail"
+    #    exit -1
+    #fi
 
-    make install
-    if [ $? -ne 0 ]; then
-        echo "===Install: libiconv fail"
-        exit -1
-    fi
+    #make install
+    #if [ $? -ne 0 ]; then
+    #    echo "===Install: libiconv fail"
+    #    exit -1
+    #fi
 
-    cd ${ROOT_DIR}/tools
-    rm -fr libiconv-*/
+    #cd ${ROOT_DIR}/tools
+    #rm -fr libiconv-*/
 
     echo "/usr/local/lib" >> /etc/ld.so.conf
     ldconfig
