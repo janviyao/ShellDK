@@ -49,6 +49,7 @@ function inst_usage()
     echo "install.sh -o astyle   @install astyle package"
     echo "install.sh -o ack      @install ack package"
     echo "install.sh -o all      @install all vim's package"
+    echo "install.sh -j num      @install with thread-num"
 
     echo ""
     echo "=================== Opers ==================="
@@ -59,11 +60,13 @@ function inst_usage()
 }
 
 NEED_OP=""
+NEED_TD=8
 NEED_NET=0
 while [ -n "$1" ]; do
 	need_shift=0
     case "$1" in
 		-o) NEED_OP="$2"; need_shift=1; shift;;
+		-j) NEED_TD="$2"; need_shift=1; shift;;
 		--op) NEED_OP="$2"; need_shift=1; shift;;
 		-n) NEED_NET="$2"; need_shift=1; shift;;
 		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
@@ -92,6 +95,7 @@ if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
 fi
 
 echo "===Install Op: ${NEED_OP}"
+echo "===Install Td: ${NEED_TD}"
 echo "===Need Netwk: ${NEED_NET}"
 function check_net()   
 {   
@@ -315,7 +319,7 @@ function inst_deps()
     #    exit -1
     #fi
 
-    #make -j 6
+    #make -j ${NEED_TD}
     #if [ $? -ne 0 ]; then
     #    echo "===Make: libiconv fail"
     #    exit -1
@@ -359,7 +363,7 @@ function inst_ctags()
         exit -1
     fi
 
-    make -j 6
+    make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
         echo "===Make: ctags fail"
         exit -1
@@ -393,7 +397,7 @@ function inst_cscope()
         exit -1
     fi
 
-    make -j 6
+    make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
         echo "===Make: cscope fail"
         exit -1
@@ -432,7 +436,7 @@ function inst_vim()
         exit -1
     fi
 
-    make -j 6
+    make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
         echo "===Make: vim fail"
         exit -1
@@ -467,7 +471,7 @@ function inst_tig()
         exit -1
     fi
 
-    make -j 6
+    make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
         echo "===Make: tig fail"
         exit -1
@@ -495,7 +499,7 @@ function inst_astyle()
         cd astyle*/build/gcc
     fi
 
-    make -j 6
+    make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
         echo "===Make: astyle fail"
         exit -1
@@ -532,7 +536,7 @@ function inst_ack()
         exit -1
     fi
 
-    make -j 6
+    make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
         echo "===Make: ag fail"
         exit -1
