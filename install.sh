@@ -330,6 +330,7 @@ function inst_deps()
     #cd ${ROOT_DIR}/tools
     #rm -fr libiconv-*/
 
+    sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
     echo "/usr/local/lib" >> /etc/ld.so.conf
     ldconfig
 }
