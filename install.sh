@@ -258,11 +258,29 @@ function inst_deps()
         fi
     fi
 
+    IS_INSTALL=`rpm -qa | grep python-libs`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh python-libs*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: python-libs fail"
+            exit -1
+        fi
+    fi
+
     IS_INSTALL=`rpm -qa | grep python3-devel`
     if [ -z "${IS_INSTALL}" ]; then
         rpm -ivh python3-devel*.rpm --nodeps --force
         if [ $? -ne 0 ]; then
             echo "===Install: python3-devel fail"
+            exit -1
+        fi
+    fi
+
+    IS_INSTALL=`rpm -qa | grep python3-libs`
+    if [ -z "${IS_INSTALL}" ]; then
+        rpm -ivh python3-libs*.rpm --nodeps --force
+        if [ $? -ne 0 ]; then
+            echo "===Install: python3-libs fail"
             exit -1
         fi
     fi
