@@ -240,7 +240,7 @@ autocmd CursorMoved * if exists("g:show_func")
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 vnoremap <silent> <C-c> y                                  "复制
 nnoremap <silent> <C-c> yiw                                "复制
-noremap  <silent> <C-v> p                                  "粘贴
+"noremap  <silent> <C-v> p                                  "粘贴
 vnoremap <silent> <C-x> d                                  "剪切
 nnoremap <silent> <C-x> diw                                "剪切
 nnoremap <silent> <C-a> ggvG$                              "全选
@@ -268,7 +268,8 @@ nnoremap <silent> <Leader>J <C-w>J                         "当前窗口移到�
 nnoremap <silent> <Leader>K <C-w>K                         "当前窗口移到最下面
 
 "搜索光标下单词
-nnoremap <silent> <Leader>fw :call SearchWord()<CR>
+nnoremap <silent> <Leader>fw :call SearchLetters("word")<CR>
+nnoremap <silent> //         :call SearchLetters("any")<CR>
 
 "快速移动
 nnoremap <silent> <C-h> 6h
@@ -390,8 +391,12 @@ function! GetInputStr(prompt, default, type)
 endfunction
 
 "查找光标下单词
-function! SearchWord()
-    let fargs="\\<".expand('<cword>')."\\>"
+function! SearchLetters(type)
+    let fargs=expand('<cword>')
+    if a:type == "word"
+        let fargs="\\<".fargs."\\>"
+    endif
+
     "搜索模式寄存器赋值
     call setreg("/", fargs)
     silent! execute 'normal n'
