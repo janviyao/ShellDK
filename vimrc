@@ -9,8 +9,12 @@ function! PrintMsg(type, msg)
         echohl ErrorMsg | echo a:msg
     elseif a:type == "warn" 
         echohl WarningMsg | echo a:msg
+    elseif a:type == "debug" 
+        redir >> vim.debug
+        echo a:msg
+        redir end
     else
-        :echom a:msg
+        echom a:msg
     endif
 endfunction
 
@@ -767,7 +771,10 @@ function! LoadProject(opmode)
                         \ "> cscope.files"
         else
             while includeStr != ''
-                let includeStr = "./".includeStr                
+                let firstidx = stridx(includeStr, "/")
+                if firstidx != 0
+                    let includeStr = "./".includeStr                
+                endif
 
                 silent! execute "!find ".includeStr." -type f ".
                             \ "-regex '.+\\.\\(".findStr."\\)' ".
@@ -790,6 +797,26 @@ function! LoadProject(opmode)
 
             let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
         endwhile
+        
+        for line in readfile(".gitignore", '')
+            if strlen(line) == 0
+                continue
+            endif
+
+            let firstidx = strridx(line, ".")
+            if firstidx != 0
+                let line = substitute(line, "\\.", "\\\\\\\\.", 'g')                
+            endif
+            "call PrintMsg("debug", "===".line)
+
+            silent! execute "!grep -n -E \"".line."\" cscope.files | awk -F: '{print $1}' > rm.line"
+            let rmcnt = 0
+            for linenum in readfile("rm.line", '')
+                let linenum = linenum - rmcnt
+                silent! execute "!sed -i '".linenum."d' cscope.files"
+                let rmcnt = rmcnt + 1
+            endfor
+        endfor
 
         if has("linux") 
             silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
@@ -798,6 +825,7 @@ function! LoadProject(opmode)
         endif
         silent! execute "!cscope -ckbq -i cscope.files"
 
+        silent! execute "!rm -f rm.line"
         silent! execute "!rm -f ncscope.*"
         silent! execute "!rm -f cscope.files"
         silent! execute "qa"
