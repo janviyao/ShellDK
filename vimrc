@@ -339,7 +339,7 @@ nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 
 "CS命令
 function! CSFind(ccmd)
-    silent! execute 'call ToggleWindow("allclose")'
+    call ToggleWindow("allclose")
     silent! execute 'call setqflist([], "r")'
 
     let csarg=expand('<cword>')
@@ -370,7 +370,7 @@ function! CSFind(ccmd)
             if exists("g:qfix_win")
                 unlet! g:qfix_win
             endif
-            silent! execute 'call ToggleWindow("qo")'
+            call ToggleWindow("qo")
             break
         endif
     endfor
@@ -438,8 +438,8 @@ function! ShowFuncName()
     let headStart = JumpFuncStart()
     silent! execute 'normal ^'
     call search("{", 'c')
-    let headEnd = line(".")
 
+    let headEnd = line(".")
     let headHeight = 0
     let saveStart=headStart
     while headStart <= headEnd  
@@ -531,7 +531,7 @@ function! CodeFormat()
     silent! execute 'e' 
 
     "格式化语言
-    silent! execute 'call FormatLanguage()'
+    call FormatLanguage()
     "保存当前文件
     silent! execute 'w'
     "重新加载当前文件
@@ -545,10 +545,10 @@ endfunction
 "跳转到函数指定位置
 function! JumpFunctionPos(pos)
     if a:pos == 'jfs'
-        silent! execute 'call JumpFuncStart()'
+        call JumpFuncStart()
         silent! execute 'normal ^'
     elseif a:pos == 'jfe'
-        silent! execute 'call JumpFuncStart()'
+        call JumpFuncStart()
         silent! execute 'normal ^'
         call search("{", 'c')
         silent! execute 'normal %'
@@ -748,6 +748,52 @@ endfunction
 "自定义变量
 let g:isDeleteSave = 0
 
+function! RemoveGitignore(findFile)
+    for line in readfile(".gitignore", '')
+        if strlen(line) == 0
+            continue
+        endif
+
+        "call PrintMsg("debug", "O===".line)
+        let firstidx = stridx(line, "!")
+        if firstidx == 0
+            continue
+        endif
+
+        let firstidx = stridx(line, "/")
+        if firstidx == 0
+            let line = "^".line
+        endif
+
+        let firstidx = strridx(line, ".")
+        if firstidx >= 0
+            let line = substitute(line, "\\.", "\\\\\\\\.", 'g')
+            let line = line."$"
+        endif
+
+        let firstidx = stridx(line, "*")
+        if firstidx >= 0
+            let line = substitute(line, "*", ".*", 'g')
+        endif
+
+        let firstidx = stridx(line, "?")
+        if firstidx >= 0
+            let line = substitute(line, "?", ".", 'g')
+        endif
+
+        "call PrintMsg("debug", "M===".line)
+
+        silent! execute "!grep -n -E \"".line."\" ".a:findFile." | awk -F: '{print $1}' > rm.line"
+        let rmcnt = 0
+        for linenum in readfile("rm.line", '')
+            "call PrintMsg("debug", "D===".linenum)
+            let linenum = linenum - rmcnt
+            silent! execute "!sed -i '".linenum."d' ".a:findFile
+            let rmcnt = rmcnt + 1
+        endfor
+    endfor
+endfunction
+
 "工程控制
 function! LoadProject(opmode) 
     if a:opmode == "create"
@@ -764,59 +810,28 @@ function! LoadProject(opmode)
         silent! execute "!rm -f cscope.*"
         silent! execute "!rm -f ncscope.*"
 
+        silent! execute "!find . -type f -regex '.+\\.\\(".findStr."\\)' > cscope.files"
+
         let includeStr = GetInputStr("Input search directory: ", "", "dir")
-        if includeStr == ""
-            silent! execute "!find . -type f ".
-                        \ "-regex '.+\\.\\(".findStr."\\)' ".
-                        \ "> cscope.files"
-        else
-            while includeStr != ''
-                let firstidx = stridx(includeStr, "/")
-                if firstidx != 0
-                    let includeStr = "./".includeStr                
-                endif
+        while strlen(includeStr) > 0
+            silent! execute "!find ".includeStr." -type f -regex '.+\\.\\(".findStr."\\)' >> cscope.files"
+            let includeStr = GetInputStr("Input search directory: ", "", "dir")
+        endwhile
 
-                silent! execute "!find ".includeStr." -type f ".
-                            \ "-regex '.+\\.\\(".findStr."\\)' ".
-                            \ ">> cscope.files"
-
-                let includeStr = GetInputStr("Input search directory: ", "", "dir")
-            endwhile
-
-            silent! execute "!sort -u cscope.files > cscope.files.tmp"
-            silent! execute "!mv cscope.files.tmp cscope.files"
-        endif
+        silent! execute "!sort -u cscope.files > cscope.files.tmp"
+        silent! execute "!mv cscope.files.tmp cscope.files"
 
         "删除cscope.files中无用文件
         let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
-        while excludeStr != ''
+        while strlen(excludeStr) > 0
             let excludeStr = substitute(excludeStr, $HOME."/", "", 'g')                
             let excludeStr = substitute(excludeStr, "/", "\\\\/", 'g')                
 
             silent! execute "!sed -i '/".excludeStr."/d' cscope.files"
-
             let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
         endwhile
         
-        for line in readfile(".gitignore", '')
-            if strlen(line) == 0
-                continue
-            endif
-
-            let firstidx = strridx(line, ".")
-            if firstidx != 0
-                let line = substitute(line, "\\.", "\\\\\\\\.", 'g')                
-            endif
-            "call PrintMsg("debug", "===".line)
-
-            silent! execute "!grep -n -E \"".line."\" cscope.files | awk -F: '{print $1}' > rm.line"
-            let rmcnt = 0
-            for linenum in readfile("rm.line", '')
-                let linenum = linenum - rmcnt
-                silent! execute "!sed -i '".linenum."d' cscope.files"
-                let rmcnt = rmcnt + 1
-            endfor
-        endfor
+        call RemoveGitignore("cscope.files")
 
         if has("linux") 
             silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
@@ -852,7 +867,7 @@ function! EnterHandler()
     endif
 
     if filereadable("tags") && filereadable("cscope.out")
-        silent! execute "call LoadProject(\"load\")"
+        call LoadProject("load")
 
         if filereadable(GetVimDir(1,"sessions")."/session.vim")
             silent! execute "source ".GetVimDir(1,"sessions")."/session.vim"
@@ -861,7 +876,7 @@ function! EnterHandler()
             silent! execute "rviminfo ".GetVimDir(1,"sessions")."/session.viminfo"
         endif
 
-        silent! execute 'call RestoreLoad()'
+        call RestoreLoad()
     endif
 endfunction
 
@@ -1027,7 +1042,7 @@ let NERDTreeIgnore = ['\.vim$', '\~$', 'cscope\.*', 'tags[[file]]', '\.git*', '\
 
 "在NERDTree上显示Git状态
 Bundle "Xuyuanp/nerdtree-git-plugin"
-let g:NERDTreeIndicatorMapCustom = {
+let g:NERDTreeGitStatusIndicatorMapCustom = {
             \ "Modified"  : "✹",
             \ "Staged"    : "✚",
             \ "Untracked" : "✭",
