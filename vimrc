@@ -760,6 +760,11 @@ function! RemoveGitignore(findFile)
             continue
         endif
 
+        let firstidx = stridx(line, "#")
+        if firstidx == 0
+            continue
+        endif
+
         let firstidx = stridx(line, "/")
         if firstidx == 0
             let line = "^".line
@@ -769,11 +774,14 @@ function! RemoveGitignore(findFile)
         if firstidx >= 0
             let line = substitute(line, "\\.", "\\\\\\\\.", 'g')
             let line = line."$"
+            if firstidx == 0
+                let line = "^".line
+            endif
         endif
 
         let firstidx = stridx(line, "*")
         if firstidx >= 0
-            let line = substitute(line, "*", ".*", 'g')
+            let line = substitute(line, "*", "\\\\w*", 'g')
         endif
 
         let firstidx = stridx(line, "?")
@@ -831,6 +839,7 @@ function! LoadProject(opmode)
             let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
         endwhile
         
+        silent! execute '!sed -i "s/\.\///g" cscope.files'
         call RemoveGitignore("cscope.files")
 
         if has("linux") 
