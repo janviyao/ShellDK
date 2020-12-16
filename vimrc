@@ -835,11 +835,7 @@ function! LoadProject(opmode)
         else
             let findStr = defaultStr
         endif
-
-        silent! execute "!rm -f tags"
-        silent! execute "!rm -f cscope.*"
-        silent! execute "!rm -f ncscope.*"
-
+ 
         silent! execute "!find . -type f -regex '.+\\.\\(".findStr."\\)' > cscope.files"
 
         let includeStr = GetInputStr("Input search directory: ", "", "dir")
@@ -863,6 +859,10 @@ function! LoadProject(opmode)
         
         silent! execute '!sed -i "s/\.\///g" cscope.files'
         call RemoveGitignore("cscope.files")
+
+        silent! execute "!rm -f tags"
+        silent! execute "!rm -f cscope.*out"
+        silent! execute "!rm -f ncscope.*"
 
         if has("linux") 
             silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
