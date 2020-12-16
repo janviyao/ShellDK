@@ -572,14 +572,30 @@ function! ReplaceWord()
     if index >= 1
         call cursor(rowNum, index)
         silent! execute "normal ".strlen(oldStr)."x"
-        silent! execute "normal \"0P"
+        let curCol = col(".")
+        if curCol < index
+            silent! execute "normal \"0p"
+        else
+            silent! execute "normal \"0P"
+        endif
     endif
     
-    if colNum > 1
+    silent! execute "normal $"
+    let tailCol = col(".") 
+    if colNum <= tailCol
         let colNum = colNum - 1
-        call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
+        if colNum <= 0
+            silent! execute "normal ^"
+        else
+            call cursor(rowNum, colNum)
+        endif
     else
-        call cursor(rowNum, colNum)
+        let index = index - 1
+        if index <= 0
+            silent! execute "normal ^"
+        else
+            call cursor(rowNum, index)
+        endif
     endif
 endfunction
 
@@ -749,56 +765,62 @@ endfunction
 let g:isDeleteSave = 0
 
 function! RemoveGitignore(findFile)
-    for line in readfile(".gitignore", '')
-        if strlen(line) == 0
+    for gitline in readfile(".gitignore", '')
+        if strlen(gitline) == 0
             continue
         endif
 
-        "call PrintMsg("debug", "O===".line)
-        let firstidx = stridx(line, "!")
+        "call PrintMsg("debug", "O===".gitline)
+        let firstidx = stridx(gitline, "!")
         if firstidx == 0
             continue
         endif
 
-        let firstidx = stridx(line, "#")
+        let firstidx = stridx(gitline, "#")
         if firstidx == 0
             continue
         endif
 
-        let firstidx = stridx(line, "/")
+        let firstidx = stridx(gitline, "/")
         if firstidx == 0
-            let line = "^".line
+            let gitline = "^".gitline
         endif
 
-        let firstidx = strridx(line, ".")
-        if firstidx >= 0
-            let line = substitute(line, "\\.", "\\\\\\\\.", 'g')
-            let line = line."$"
-            if firstidx == 0
-                let line = "^".line
+        let lastidx = strridx(gitline, ".")
+        if lastidx >= 0
+            let gitline = substitute(gitline, "\\.", "\\\\.", 'g')
+            let gitline = gitline."$"
+            if lastidx == 0
+                let gitline = "^".gitline
             endif
         endif
 
-        let firstidx = stridx(line, "*")
+        let firstidx = stridx(gitline, "*")
         if firstidx >= 0
-            let line = substitute(line, "*", "\\\\w*", 'g')
+            let gitline = substitute(gitline, "*", ".*", 'g')
         endif
 
-        let firstidx = stridx(line, "?")
+        let firstidx = stridx(gitline, "?")
         if firstidx >= 0
-            let line = substitute(line, "?", ".", 'g')
+            let line = substitute(gitline, "?", ".", 'g')
+        endif
+        
+        if isdirectory(gitline)
+            let gitline = substitute(gitline, "\\/", "\\\\/", 'g')
+            let gitline = "^".gitline
+            let lastidx = strridx(gitline, "/") + 1
+            if lastidx != strlen(gitline)
+                let gitline = gitline."\\/"
+            endif
+        else
+            let firstidx = stridx(gitline, "/")
+            if firstidx >= 0
+                let gitline = substitute(gitline, "\\/", "\\\\/", 'g')
+            endif
         endif
 
-        "call PrintMsg("debug", "M===".line)
-
-        silent! execute "!grep -n -E \"".line."\" ".a:findFile." | awk -F: '{print $1}' > rm.line"
-        let rmcnt = 0
-        for linenum in readfile("rm.line", '')
-            "call PrintMsg("debug", "D===".linenum)
-            let linenum = linenum - rmcnt
-            silent! execute "!sed -i '".linenum."d' ".a:findFile
-            let rmcnt = rmcnt + 1
-        endfor
+        "call PrintMsg("debug", "M===".gitline)
+        silent! execute "!sed -i '/".gitline."/d' ".a:findFile
     endfor
 endfunction
 
