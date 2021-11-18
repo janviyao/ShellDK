@@ -6,6 +6,13 @@ if [ ${LAST_CHAR} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
+ECHO_PRE="=================="
+ECHO_SUF="=================="
+function loger()
+{
+    echo "${ECHO_PRE} $1 ${ECHO_SUF}"
+}
+
 NEED_SUDO=
 if [ $UID -ne 0 ]; then
     which sudo &> /dev/null
@@ -13,6 +20,8 @@ if [ $UID -ne 0 ]; then
         NEED_SUDO=sudo
     fi
 fi
+
+rpmDeps="readline-devel ncurses-devel ncurses-libs lua-devel python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv libiconv-devel pcre-devel"
 
 declare -A funcMap
 funcMap["env"]="deploy_env"
@@ -71,7 +80,7 @@ while [ -n "$1" ]; do
 		-n) NEED_NET="$2"; need_shift=1; shift;;
 		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
         #--net) NEED_NET="true"; shift;;
-        *) echo "===unkown para: $1"; echo ""; inst_usage; exit 1; break;;
+        *) loger "unkown para: $1"; echo ""; inst_usage; exit 1; break;;
     esac
 	
 	if [ ${need_shift} -eq 1 ]; then
@@ -88,15 +97,15 @@ do
 done
 
 if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
-    echo "===unkown op: ${NEED_OP}"
+    loger "unkown op: ${NEED_OP}"
     echo ""
     inst_usage
     exit -1
 fi
 
-echo "===Install Op: ${NEED_OP}"
-echo "===Install Td: ${NEED_TD}"
-echo "===Need Netwk: ${NEED_NET}"
+loger "Install Op: ${NEED_OP}"
+loger "Install Td: ${NEED_TD}"
+loger "Need Netwk: ${NEED_NET}"
 function check_net()   
 {   
     timeout=5 
@@ -114,9 +123,9 @@ IS_NET_OK=$(bool_v "${NEED_NET}"; echo $?)
 if [ ${IS_NET_OK} -eq 1 ]; then
     IS_NET_OK=$(check_net; echo $?)
     if [ ${IS_NET_OK} -eq 1 ]; then
-        echo "===Netwk ping: Ok"
+        loger "Netwk ping: Ok"
     else
-        echo "===Netwk ping: Fail"
+        loger "Netwk ping: Fail"
     fi
 fi
 
@@ -125,32 +134,32 @@ function deploy_env()
     cd ${ROOT_DIR}/tools
 
     if [ ! -f ~/.vimrc ]; then
-        echo "===create slink: .vimrc"
+        loger "create slink: .vimrc"
         ln -s ${ROOT_DIR}/vimrc ~/.vimrc
     fi
 
     if [ ! -f ~/.bashrc ]; then
-        echo "===create slink: .bashrc"
+        loger "create slink: .bashrc"
         ln -s ${ROOT_DIR}/bashrc ~/.bashrc
     fi
 
     if [ ! -f ~/.bash_profile ]; then
-        echo "===create slink: .bash_profile"
+        loger "create slink: .bash_profile"
         ln -s ${ROOT_DIR}/bash_profile ~/.bash_profile
     fi
 
     if [ ! -f ~/.minttyrc ]; then
-        echo "===create slink: .minttyrc"
+        loger "create slink: .minttyrc"
         ln -s ${ROOT_DIR}/minttyrc ~/.minttyrc
     fi
 
     if [ ! -f ~/.inputrc ]; then
-        echo "===create slink: .inputrc"
+        loger "create slink: .inputrc"
         ln -s ${ROOT_DIR}/inputrc ~/.inputrc
     fi
 
     if [ ! -f ~/.astylerc ]; then
-        echo "===create slink: .astylerc"
+        loger "create slink: .astylerc"
         ln -s ${ROOT_DIR}/astylerc ~/.astylerc
     fi
 
@@ -213,114 +222,17 @@ function clean_env()
 function inst_deps()
 {
     cd ${ROOT_DIR}/tools
-    IS_INSTALL=`rpm -qa | grep readline-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh readline-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: readline-devel fail"
-            exit -1
+    for rpmf in ${rpmDeps};
+    do
+        IS_INSTALL=`rpm -qa | grep ${rpmf}`
+        if [ -z "${IS_INSTALL}" ]; then
+            rpm -ivh ${rpmf}*.rpm --nodeps --force
+            if [ $? -ne 0 ]; then
+                loger "Install: readline-devel fail"
+                exit -1
+            fi
         fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep ncurses-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh ncurses-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: ncurses-devel fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep ncurses-libs`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh ncurses-libs-*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: ncurses-libs fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep lua-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh lua-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: lua-devel fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep python-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh python-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: python-devel fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep python-libs`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh python-libs*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: python-libs fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep python3-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh python3-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: python3-devel fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep python3-libs`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh python3-libs*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: python3-libs fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep xz-libs`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh xz-libs*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: xz-libs fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep xz-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh xz-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: xz-devel fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep libiconv`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh libiconv-*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: libiconv fail"
-            exit -1
-        fi
-    fi
-
-    IS_INSTALL=`rpm -qa | grep libiconv-devel`
-    if [ -z "${IS_INSTALL}" ]; then
-        rpm -ivh libiconv-devel*.rpm --nodeps --force
-        if [ $? -ne 0 ]; then
-            echo "===Install: libiconv-devel fail"
-            exit -1
-        fi
-    fi
-
+    done
     #tar -xzf lua-5.3.3.tar.gz
     #cd lua-5.3.3
     #make linux && make install
@@ -333,19 +245,19 @@ function inst_deps()
 
     #./configure --prefix=/usr
     #if [ $? -ne 0 ]; then
-    #    echo "===Configure: libiconv fail"
+    #    loger "Configure: libiconv fail"
     #    exit -1
     #fi
 
     #make -j ${NEED_TD}
     #if [ $? -ne 0 ]; then
-    #    echo "===Make: libiconv fail"
+    #    loger "Make: libiconv fail"
     #    exit -1
     #fi
 
     #make install
     #if [ $? -ne 0 ]; then
-    #    echo "===Install: libiconv fail"
+    #    loger "Install: libiconv fail"
     #    exit -1
     #fi
 
@@ -371,25 +283,25 @@ function inst_ctags()
 
     ./autogen.sh
     if [ $? -ne 0 ]; then
-        echo "===Autogen: ctags fail"
+        loger "Autogen: ctags fail"
         exit -1
     fi
 
     ./configure --prefix=/usr
     if [ $? -ne 0 ]; then
-        echo "===Configure: ctags fail"
+        loger "Configure: ctags fail"
         exit -1
     fi
 
     make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
-        echo "===Make: ctags fail"
+        loger "Make: ctags fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: ctags fail"
+        loger "Install: ctags fail"
         exit -1
     fi
 
@@ -411,19 +323,19 @@ function inst_cscope()
 
     ./configure
     if [ $? -ne 0 ]; then
-        echo "===Configure: cscope fail"
+        loger "Configure: cscope fail"
         exit -1
     fi
 
     make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
-        echo "===Make: cscope fail"
+        loger "Make: cscope fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: cscope fail"
+        loger "Install: cscope fail"
         exit -1
     fi
 
@@ -450,19 +362,19 @@ function inst_vim()
         --enable-python3interp=yes \
         --disable-gui --disable-netbeans 
     if [ $? -ne 0 ]; then
-        echo "===Configure: vim fail"
+        loger "Configure: vim fail"
         exit -1
     fi
 
     make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
-        echo "===Make: vim fail"
+        loger "Make: vim fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: vim fail"
+        loger "Install: vim fail"
         exit -1
     fi
 
@@ -485,19 +397,19 @@ function inst_tig()
     make configure
     ./configure --prefix=/usr
     if [ $? -ne 0 ]; then
-        echo "===Configure: tig fail"
+        loger "Configure: tig fail"
         exit -1
     fi
 
     make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
-        echo "===Make: tig fail"
+        loger "Make: tig fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: tig fail"
+        loger "Install: tig fail"
         exit -1
     fi
 
@@ -519,7 +431,7 @@ function inst_astyle()
 
     make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
-        echo "===Make: astyle fail"
+        loger "Make: astyle fail"
         exit -1
     fi
 
@@ -550,19 +462,19 @@ function inst_ack()
 
     ./configure
     if [ $? -ne 0 ]; then
-        echo "===Configure: ag fail"
+        loger "Configure: ag fail"
         exit -1
     fi
 
     make -j ${NEED_TD}
     if [ $? -ne 0 ]; then
-        echo "===Make: ag fail"
+        loger "Make: ag fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        echo "===Install: ag fail"
+        loger "Install: ag fail"
         exit -1
     fi
 
@@ -577,7 +489,7 @@ do
         for func in ${funcMap[${key}]};
         do
             ${func}
-            echo "===done: ${func}"
+            loger "done: ${func}"
         done
         break
     fi

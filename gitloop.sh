@@ -9,15 +9,17 @@ fi
 
 CUR_DIR=`pwd`
 cd ${RUN_DIR}
+RUN_DIR=`pwd`
 
 for dir in `ls -d */`;
 do
-    
     cd ${dir}
     if [ -d .git ]; then
-        echo "===${CMD_STR} @ ${dir}"
-        ${CMD_STR}
-        if [ $? -ne 0 ]; then
+        OUTPUT=`${CMD_STR}`
+        ERCODE=$?
+        
+        printf "=== %-30s @ %s\n" ${dir} "${OUTPUT}"
+        if [ ${ERCODE} -ne 0 ]; then
             echo "===${CMD_STR} fail"
             exit -1
         fi
