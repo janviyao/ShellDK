@@ -7,7 +7,7 @@ if [ ${LAST_CHAR} == '/' ]; then
 fi
 
 ECHO_PRE="=================="
-ECHO_SUF="=================="
+ECHO_SUF="${ECHO_PRE}"
 function loger()
 {
     echo "${ECHO_PRE} $1 ${ECHO_SUF}"
@@ -21,7 +21,7 @@ if [ $UID -ne 0 ]; then
     fi
 fi
 
-rpmDeps="readline-devel ncurses-devel ncurses-libs lua-devel python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv libiconv-devel pcre-devel"
+rpmDeps="readline-devel ncurses-devel ncurses-libs lua-devel python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv libiconv-devel"
 
 declare -A funcMap
 funcMap["env"]="deploy_env"
@@ -228,8 +228,10 @@ function inst_deps()
         if [ -z "${IS_INSTALL}" ]; then
             rpm -ivh ${rpmf}*.rpm --nodeps --force
             if [ $? -ne 0 ]; then
-                loger "Install: readline-devel fail"
+                loger "Install: ${rpmf} fail"
                 exit -1
+            else
+                loger "Install: ${rpmf} success"
             fi
         fi
     done
