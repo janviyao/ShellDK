@@ -7,7 +7,7 @@ if [ ${LAST_CHAR} == '/' ]; then
 fi
 
 ECHO_PRE="=================="
-ECHO_SUF="${ECHO_PRE}"
+ECHO_SUF=""
 function loger()
 {
     echo "${ECHO_PRE} $1 ${ECHO_SUF}"
@@ -21,7 +21,7 @@ if [ $UID -ne 0 ]; then
     fi
 fi
 
-rpmDeps="readline-devel ncurses-devel ncurses-libs lua-devel python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv libiconv-devel"
+rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel"
 
 declare -A funcMap
 funcMap["env"]="deploy_env"
@@ -69,13 +69,13 @@ function inst_usage()
 }
 
 NEED_OP=""
-NEED_TD=8
+MAKE_TD=8
 NEED_NET=0
 while [ -n "$1" ]; do
 	need_shift=0
     case "$1" in
 		-o) NEED_OP="$2"; need_shift=1; shift;;
-		-j) NEED_TD="$2"; need_shift=1; shift;;
+		-j) MAKE_TD="$2"; need_shift=1; shift;;
 		--op) NEED_OP="$2"; need_shift=1; shift;;
 		-n) NEED_NET="$2"; need_shift=1; shift;;
 		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
@@ -103,9 +103,9 @@ if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
     exit -1
 fi
 
-loger "Install Op: ${NEED_OP}"
-loger "Install Td: ${NEED_TD}"
-loger "Need Netwk: ${NEED_NET}"
+loger "Install Ops: ${NEED_OP}"
+loger "Make Thread: ${MAKE_TD}"
+loger "Need Netwrk: ${NEED_NET}"
 function check_net()   
 {   
     timeout=5 
@@ -224,17 +224,25 @@ function inst_deps()
     cd ${ROOT_DIR}/tools
     for rpmf in ${rpmDeps};
     do
-        IS_INSTALL=`rpm -qa | grep ${rpmf}`
-        if [ -z "${IS_INSTALL}" ]; then
-            rpm -ivh ${rpmf}*.rpm --nodeps --force
+        INSTALLED=`rpm -qa | grep ${rpmf}`
+        if [ -z "${INSTALLED}" ]; then
+            RPM_FILE=`find . -name "${rpmf}*.rpm"`
+            rpm -ivh ${RPM_FILE} --nodeps --force
             if [ $? -ne 0 ]; then
                 loger "Install: ${rpmf} fail"
                 exit -1
             else
                 loger "Install: ${rpmf} success"
             fi
+        else
+            loger "System Installed: ${INSTALLED}"
         fi
     done
+
+    cd ${ROOT_DIR}/tools
+    unzip deno-x86_64-unknown-linux-gnu.zip
+    mv deno /usr/bin
+
     #tar -xzf lua-5.3.3.tar.gz
     #cd lua-5.3.3
     #make linux && make install
@@ -251,7 +259,7 @@ function inst_deps()
     #    exit -1
     #fi
 
-    #make -j ${NEED_TD}
+    #make -j ${MAKE_TD}
     #if [ $? -ne 0 ]; then
     #    loger "Make: libiconv fail"
     #    exit -1
@@ -295,7 +303,7 @@ function inst_ctags()
         exit -1
     fi
 
-    make -j ${NEED_TD}
+    make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         loger "Make: ctags fail"
         exit -1
@@ -329,7 +337,7 @@ function inst_cscope()
         exit -1
     fi
 
-    make -j ${NEED_TD}
+    make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         loger "Make: cscope fail"
         exit -1
@@ -368,7 +376,7 @@ function inst_vim()
         exit -1
     fi
 
-    make -j ${NEED_TD}
+    make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         loger "Make: vim fail"
         exit -1
@@ -406,7 +414,7 @@ function inst_tig()
         exit -1
     fi
 
-    make -j ${NEED_TD}
+    make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         loger "Make: tig fail"
         exit -1
@@ -434,7 +442,7 @@ function inst_astyle()
         cd astyle*/build/gcc
     fi
 
-    make -j ${NEED_TD}
+    make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         loger "Make: astyle fail"
         exit -1
@@ -471,7 +479,7 @@ function inst_ack()
         exit -1
     fi
 
-    make -j ${NEED_TD}
+    make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         loger "Make: ag fail"
         exit -1
@@ -490,7 +498,7 @@ function inst_ack()
 for key in ${!funcMap[@]};
 do
     if [ x"${key}" = x"${NEED_OP}" ]; then
-        printf "===Op: %-6s ===Funcs: %s\n" ${key} "${funcMap[${key}]}"
+        printf "%s Op: %-6s \n%s Funcs: %s\n" ${ECHO_PRE} ${key} ${ECHO_PRE} "${funcMap[${key}]}"
         for func in ${funcMap[${key}]};
         do
             ${func}
