@@ -382,6 +382,9 @@ function inst_vim()
 
     cd ${ROOT_DIR}/tools
     rm -fr vim*/
+
+    rm -f /usr/local/bin/vim
+    ln -s /usr/bin/vim /usr/local/bin
 }
 
 function inst_tig()

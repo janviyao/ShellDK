@@ -864,10 +864,10 @@ function! LoadProject(opmode)
         silent! execute "!rm -f cscope.*out"
         silent! execute "!rm -f ncscope.*"
 
-        if has("linux") 
-            silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
-        else
+        if has("win16") || has("win32") || has("win32unix") || has("win64") || has("win95") 
             silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files"
+        else
+            silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
         endif
         silent! execute "!cscope -ckbq -i cscope.files"
 
