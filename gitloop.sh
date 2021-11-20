@@ -11,20 +11,30 @@ CUR_DIR=`pwd`
 cd ${RUN_DIR}
 RUN_DIR=`pwd`
 
-for dir in `ls -d */`;
+function loop_run()
+{
+    cmd_str="$1"
+    run_cnt=0
+
+    run_res=`${cmd_str}`
+    while $? -ne 0 -a ${run_cnt} -lt 3
+    do
+        echo "${run_res}"
+        let run_cnt++
+
+        run_res=`${cmd_str}`
+    done
+}
+
+for dir in `ls -d */`
 do
     cd ${dir}
     if [ -d .git ]; then
-        OUTPUT=`${CMD_STR}`
-        ERCODE=$?
-        
-        printf "=== %-30s @ %s\n" ${dir} "${OUTPUT}"
-        if [ ${ERCODE} -ne 0 ]; then
-            echo "===${CMD_STR} fail"
-            exit -1
-        fi
+        printf "=== %-30s @ " ${dir}
+        loop_run "${CMD_STR}"
     else
-        echo "===not git repo @ ${dir}"
+        echo "=== not git repo @ ${dir}"
     fi
+
     cd ${RUN_DIR}
 done
