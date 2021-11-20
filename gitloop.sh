@@ -15,15 +15,18 @@ function loop_run()
 {
     cmd_str="$1"
     run_cnt=0
+    tmp_file="/tmp/$0"
 
-    run_res=`${cmd_str}`
-    while $? -ne 0 -a ${run_cnt} -lt 3
+    ${cmd_str} &> ${tmp_file}
+    while [ $? -ne 0 -a ${run_cnt} -le 2 ]
     do
-        echo "${run_res}"
         let run_cnt++
-
-        run_res=`${cmd_str}`
+        echo ${run_cnt}
+        ${cmd_str} &> ${tmp_file}
     done
+
+    run_res=`cat ${tmp_file}`
+    echo "${run_res}"
 }
 
 for dir in `ls -d */`
@@ -31,7 +34,8 @@ do
     cd ${dir}
     if [ -d .git ]; then
         printf "=== %-30s @ " ${dir}
-        loop_run "${CMD_STR}"
+        loop_res=`loop_run "${CMD_STR}"`
+        printf "%s\n" "${loop_res}"
     else
         echo "=== not git repo @ ${dir}"
     fi
