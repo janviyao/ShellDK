@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 RUN_DIR=$1
 CMD_STR=$2
 
