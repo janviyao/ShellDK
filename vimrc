@@ -827,7 +827,7 @@ endfunction
 "工程控制
 function! LoadProject(opmode) 
     if a:opmode == "create"
-        let defaultStr = "c\\|cpp\\|cc\\|java\\|hpp\\|h\\|s\\|S\\|py"
+        let defaultStr = "c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|h\\|s\\|S\\|py"
 
         let findStr = GetInputStr("Input file type (separated with comma) to parse: ", "", "")
         if strlen(findStr) > 0

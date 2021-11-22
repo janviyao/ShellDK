@@ -1,9 +1,10 @@
 #!/bin/bash
 RUN_DIR=$1
 CMD_STR=$2
+OUT_PRE="=== "
 
 if [ ! -d ${RUN_DIR} ]; then
-    echo "===Dir: ${RUN_DIR} not exist"
+    echo "${OUT_PRE}Dir: ${RUN_DIR} not exist"
     exit -1
 fi
 
@@ -21,7 +22,6 @@ function loop_run()
     while [ $? -ne 0 -a ${run_cnt} -le 2 ]
     do
         let run_cnt++
-        echo ${run_cnt}
         ${cmd_str} &> ${tmp_file}
     done
 
@@ -33,11 +33,11 @@ for dir in `ls -d */`
 do
     cd ${dir}
     if [ -d .git ]; then
-        printf "=== %-30s @ " ${dir}
+        printf "%s%-30s @ " "${OUT_PRE}" ${dir}
         loop_res=`loop_run "${CMD_STR}"`
         printf "%s\n" "${loop_res}"
     else
-        echo "=== not git repo @ ${dir}"
+        echo "${OUT_PRE}not git repo @ ${dir}"
     fi
 
     cd ${RUN_DIR}
