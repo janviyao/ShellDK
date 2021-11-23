@@ -21,7 +21,7 @@ if [ $UID -ne 0 ]; then
     fi
 fi
 
-rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel"
+rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs"
 
 declare -A funcMap
 funcMap["env"]="deploy_env"
@@ -220,63 +220,85 @@ function clean_env()
 }
 
 function inst_deps()
-{
-    cd ${ROOT_DIR}/tools
-    for rpmf in ${rpmDeps};
-    do
-        INSTALLED=`rpm -qa | grep ${rpmf}`
-        if [ -z "${INSTALLED}" ]; then
-            RPM_FILE=`find . -name "${rpmf}*.rpm"`
-            rpm -ivh ${RPM_FILE} --nodeps --force
-            if [ $? -ne 0 ]; then
-                loger "Install: ${rpmf} fail"
-                exit -1
+{ 
+    if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+        cd ${ROOT_DIR}/tools
+        for rpmf in ${rpmDeps};
+        do
+            INSTALLED=`rpm -qa | grep ${rpmf}`
+            if [ -z "${INSTALLED}" ]; then
+                RPM_FILE=`find . -name "${rpmf}*.rpm"`
+                rpm -ivh ${RPM_FILE} --nodeps --force
+                if [ $? -ne 0 ]; then
+                    loger "Install: ${rpmf} fail"
+                    exit -1
+                else
+                    loger "Install: ${rpmf} success"
+                fi
             else
-                loger "Install: ${rpmf} success"
+                loger "System Installed: ${INSTALLED}"
             fi
-        else
-            loger "System Installed: ${INSTALLED}"
-        fi
-    done
+        done
 
-    cd ${ROOT_DIR}/tools
-    unzip deno-x86_64-unknown-linux-gnu.zip
-    mv deno /usr/bin
+        # Install deno
+        cd ${ROOT_DIR}/tools
+        unzip deno-x86_64-unknown-linux-gnu.zip
+        mv deno /usr/bin
 
-    #tar -xzf lua-5.3.3.tar.gz
-    #cd lua-5.3.3
-    #make linux && make install
+        # Install glibc
+        cd ${ROOT_DIR}/tools
+        tar -zxf  glibc-2.18.tar.gz
+        cd glibc-2.18
+        mkdir build
+        cd build/
 
-    #cd ${ROOT_DIR}/tools
-    #rm -fr lua-5.3.3
+        ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
+        make -j 8
+        make install
 
-    #tar -xzf libiconv-*.tar.gz
-    #cd libiconv-*
+        #tar -xzf lua-5.3.3.tar.gz
+        #cd lua-5.3.3
+        #make linux && make install
 
-    #./configure --prefix=/usr
-    #if [ $? -ne 0 ]; then
-    #    loger "Configure: libiconv fail"
-    #    exit -1
-    #fi
+        #cd ${ROOT_DIR}/tools
+        #rm -fr lua-5.3.3
 
-    #make -j ${MAKE_TD}
-    #if [ $? -ne 0 ]; then
-    #    loger "Make: libiconv fail"
-    #    exit -1
-    #fi
+        #tar -xzf libiconv-*.tar.gz
+        #cd libiconv-*
 
-    #make install
-    #if [ $? -ne 0 ]; then
-    #    loger "Install: libiconv fail"
-    #    exit -1
-    #fi
+        #./configure --prefix=/usr
+        #if [ $? -ne 0 ]; then
+        #    loger "Configure: libiconv fail"
+        #    exit -1
+        #fi
 
-    #cd ${ROOT_DIR}/tools
-    #rm -fr libiconv-*/
+        #make -j ${MAKE_TD}
+        #if [ $? -ne 0 ]; then
+        #    loger "Make: libiconv fail"
+        #    exit -1
+        #fi
 
-    sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
-    echo "/usr/local/lib" >> /etc/ld.so.conf
-    ldconfig
+        #make install
+        #if [ $? -ne 0 ]; then
+        #    loger "Install: libiconv fail"
+        #    exit -1
+        #fi
+
+        #cd ${ROOT_DIR}/tools
+        #rm -fr libiconv-*/
+
+        sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
+        echo "/usr/local/lib" >> /etc/ld.so.conf
+        ldconfig
+
+    elif [ "$(expr substr $(uname -s) 1 9)" == "CYGWIN_NT" ]; then
+        # Install deno
+        cd ${ROOT_DIR}/tools
+        unzip deno-x86_64-pc-windows-msvc.zip
+        mv deno.exe /usr/bin
+
+        chmod +x /usr/bin/deno.exe
+    fi 
 }
 
 function inst_ctags()
