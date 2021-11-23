@@ -10,7 +10,17 @@ ECHO_PRE="=================="
 ECHO_SUF=""
 function loger()
 {
-    echo "${ECHO_PRE} $1 ${ECHO_SUF}"
+    if [ $# -eq 2 ];then
+        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "${ECHO_SUF}"
+    elif [ $# -eq 3 ];then
+        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "$3" "${ECHO_SUF}"
+    elif [ $# -eq 4 ];then
+        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "$3" "$4" "${ECHO_SUF}"
+    elif [ $# -eq 5 ];then
+        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "$3" "$4" "$5" "${ECHO_SUF}"
+    else
+        echo "${ECHO_PRE} $* ${ECHO_SUF}"
+    fi
 }
 
 NEED_SUDO=
@@ -230,9 +240,22 @@ function inst_deps()
         cd ${ROOT_DIR}/tools
         for rpmf in ${rpmDeps};
         do
+            RPM_FILE=`find . -name "${rpmf}*.rpm"`
             INSTALLED=`rpm -qa | grep ${rpmf}`
+            loger "have Installed: %-50s   Will Installed: %s" "${INSTALLED}" "`basename ${RPM_FILE}`"
+
+            NEED_INSTALL=0
             if [ -z "${INSTALLED}" ]; then
-                RPM_FILE=`find . -name "${rpmf}*.rpm"`
+                NEED_INSTALL=1    
+            else
+                VERSION_CUR=`echo "${INSTALLED}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
+                VERSION_NEW=`echo "${RPM_FILE}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
+                if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
+                    NEED_INSTALL=1    
+                fi
+            fi
+
+            if test ${NEED_INSTALL} -eq 1; then
                 rpm -ivh ${RPM_FILE} --nodeps --force
                 if [ $? -ne 0 ]; then
                     loger "Install: ${rpmf} fail"
@@ -240,15 +263,13 @@ function inst_deps()
                 else
                     loger "Install: ${rpmf} success"
                 fi
-            else
-                loger "System Installed: ${INSTALLED}"
             fi
         done
 
         # Install deno
         cd ${ROOT_DIR}/tools
         unzip deno-x86_64-unknown-linux-gnu.zip
-        mv deno /usr/bin
+        mv -f deno /usr/bin
 
         VERSION_CUR=`getconf GNU_LIBC_VERSION`
         VERSION_NEW=2.18
@@ -304,7 +325,7 @@ function inst_deps()
         # Install deno
         cd ${ROOT_DIR}/tools
         unzip deno-x86_64-pc-windows-msvc.zip
-        mv deno.exe /usr/bin
+        mv -f deno.exe /usr/bin
 
         chmod +x /usr/bin/deno.exe
     fi 
