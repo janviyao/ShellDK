@@ -219,6 +219,11 @@ function clean_env()
     rm -f ~/.astylerc
 }
 
+function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+function version_le() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" == "$1"; }
+function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1"; }
+function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
+
 function inst_deps()
 { 
     if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
@@ -245,17 +250,21 @@ function inst_deps()
         unzip deno-x86_64-unknown-linux-gnu.zip
         mv deno /usr/bin
 
-        # Install glibc
-        cd ${ROOT_DIR}/tools
-        tar -zxf  glibc-2.18.tar.gz
-        cd glibc-2.18
-        mkdir build
-        cd build/
+        VERSION_CUR=`getconf GNU_LIBC_VERSION`
+        VERSION_NEW=2.18
+        if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
+            # Install glibc
+            cd ${ROOT_DIR}/tools
+            tar -zxf  glibc-2.18.tar.gz
+            cd glibc-2.18
+            mkdir build
+            cd build/
 
-        ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
-        make -j 8
-        make install
-
+            ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
+            make -j 8
+            make install
+        fi
+        
         #tar -xzf lua-5.3.3.tar.gz
         #cd lua-5.3.3
         #make linux && make install
