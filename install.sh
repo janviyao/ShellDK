@@ -241,14 +241,16 @@ function inst_deps()
         for rpmf in ${rpmDeps};
         do
             RPM_FILE=`find . -name "${rpmf}*.rpm"`
-            INSTALLED=`rpm -qa | grep ${rpmf}`
-            loger "have Installed: %-50s   Will Installed: %s" "${INSTALLED}" "`basename ${RPM_FILE}`"
+            RPM_FILE=`basename ${RPM_FILE}`
+
+            INSTALLED=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
+            loger "Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}"
 
             NEED_INSTALL=0
             if [ -z "${INSTALLED}" ]; then
                 NEED_INSTALL=1    
             else
-                VERSION_CUR=`echo "${INSTALLED}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
+                VERSION_CUR=`echo "${INSTALLED}" | tr " " "\n" | grep -P "\d+\.\d+\.?\d*" -o | sort -r | head -n 1`
                 VERSION_NEW=`echo "${RPM_FILE}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
                 if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
                     NEED_INSTALL=1    
