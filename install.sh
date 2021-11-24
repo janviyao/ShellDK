@@ -260,7 +260,7 @@ function inst_deps()
             if test ${NEED_INSTALL} -eq 1; then
                 rpm -ivh ${RPM_FILE} --nodeps --force
                 if [ $? -ne 0 ]; then
-                    loger "Install: ${rpmf} fail"
+                    loger "Install: ${rpmf} failure"
                     exit -1
                 else
                     loger "Install: ${rpmf} success"
