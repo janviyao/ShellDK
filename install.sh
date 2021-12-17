@@ -1,8 +1,7 @@
 #!/bin/bash
 ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_CHAR="${ROOT_DIR: -1}"
-LAST_CHAR=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_CHAR} == '/' ]; then
+LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
+if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
@@ -31,7 +30,7 @@ if [ $UID -ne 0 ]; then
     fi
 fi
 
-rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs"
+rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs zlib-devel"
 
 declare -A funcMap
 funcMap["env"]="deploy_env"
@@ -141,7 +140,7 @@ fi
 
 function deploy_env()
 {
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
 
     if [ ! -f ~/.vimrc ]; then
         loger "create slink: .vimrc"
@@ -192,7 +191,7 @@ function deploy_env()
     cp -fr ${ROOT_DIR}/syntax ~/.vim    
 
     if [ ! -d ~/.vim/bundle/vundle ]; then
-        cd ${ROOT_DIR}/tools
+        cd ${ROOT_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
             mv bundle ~/.vim/
@@ -237,7 +236,7 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 function inst_deps()
 { 
     if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-        cd ${ROOT_DIR}/tools
+        cd ${ROOT_DIR}/deps
         for rpmf in ${rpmDeps};
         do
             RPM_FILE=`find . -name "${rpmf}*.rpm"`
@@ -269,7 +268,7 @@ function inst_deps()
         done
 
         # Install deno
-        cd ${ROOT_DIR}/tools
+        cd ${ROOT_DIR}/deps
         unzip deno-x86_64-unknown-linux-gnu.zip
         mv -f deno /usr/bin
 
@@ -277,7 +276,7 @@ function inst_deps()
         VERSION_NEW=2.18
         if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
             # Install glibc
-            cd ${ROOT_DIR}/tools
+            cd ${ROOT_DIR}/deps
             tar -zxf  glibc-2.18.tar.gz
             cd glibc-2.18
             mkdir build
@@ -292,7 +291,7 @@ function inst_deps()
         #cd lua-5.3.3
         #make linux && make install
 
-        #cd ${ROOT_DIR}/tools
+        #cd ${ROOT_DIR}/deps
         #rm -fr lua-5.3.3
 
         #tar -xzf libiconv-*.tar.gz
@@ -316,7 +315,7 @@ function inst_deps()
         #    exit -1
         #fi
 
-        #cd ${ROOT_DIR}/tools
+        #cd ${ROOT_DIR}/deps
         #rm -fr libiconv-*/
 
         sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
@@ -325,7 +324,7 @@ function inst_deps()
 
     elif [ "$(expr substr $(uname -s) 1 9)" == "CYGWIN_NT" ]; then
         # Install deno
-        cd ${ROOT_DIR}/tools
+        cd ${ROOT_DIR}/deps
         unzip deno-x86_64-pc-windows-msvc.zip
         mv -f deno.exe /usr/bin
 
@@ -335,7 +334,7 @@ function inst_deps()
 
 function inst_ctags()
 {
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
 
     if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
@@ -369,13 +368,13 @@ function inst_ctags()
         exit -1
     fi
 
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     rm -fr ctags*/
 }
 
 function inst_cscope()
 {
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
 
     if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
@@ -403,13 +402,13 @@ function inst_cscope()
         exit -1
     fi
 
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     rm -fr cscope*/
 }
 
 function inst_vim()
 {
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
 
     if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/vim/vim.git vim
@@ -442,7 +441,7 @@ function inst_vim()
         exit -1
     fi
 
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     rm -fr vim*/
 
     rm -f /usr/local/bin/vim
@@ -451,7 +450,7 @@ function inst_vim()
 
 function inst_tig()
 {
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
 
     if [ ${IS_NET_OK} -eq 1 ]; then
         git clone https://github.com/jonas/tig.git tig
@@ -480,13 +479,13 @@ function inst_tig()
         exit -1
     fi
 
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     rm -fr tig*/
 }
 
 function inst_astyle()
 {
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
 
     if [ ${IS_NET_OK} -eq 1 ]; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
@@ -505,14 +504,14 @@ function inst_astyle()
     cp -f bin/astyle* /usr/bin/
     chmod 777 /usr/bin/astyle*
 
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     rm -fr astyle*/
 }
 
 function inst_ack()
 {
     # install ack
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     cp -f ack-* /usr/bin/ack-grep
     chmod 777 /usr/bin/ack-grep
     
@@ -545,7 +544,7 @@ function inst_ack()
         exit -1
     fi
 
-    cd ${ROOT_DIR}/tools
+    cd ${ROOT_DIR}/deps
     rm -fr the_silver_searcher-*/
 }
 
@@ -555,8 +554,9 @@ do
         printf "%s Op: %-6s \n%s Funcs: %s\n" ${ECHO_PRE} ${key} ${ECHO_PRE} "${funcMap[${key}]}"
         for func in ${funcMap[${key}]};
         do
+            loger "install: ${func} start"
             ${func}
-            loger "done: ${func}"
+            loger "install: ${func} done"
         done
         break
     fi
