@@ -272,7 +272,7 @@ function inst_deps()
         unzip deno-x86_64-unknown-linux-gnu.zip
         mv -f deno /usr/bin
 
-        VERSION_CUR=`getconf GNU_LIBC_VERSION`
+        VERSION_CUR=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
         VERSION_NEW=2.18
         if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
             # Install glibc
@@ -285,6 +285,9 @@ function inst_deps()
             ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
             make -j 8
             make install
+            
+            cd ${ROOT_DIR}/deps
+            rm -fr glibc-2.18
         fi
         
         #tar -xzf lua-5.3.3.tar.gz

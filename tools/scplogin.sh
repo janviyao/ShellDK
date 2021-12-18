@@ -36,7 +36,7 @@ if [ $? -ne 0 ];then
     yum install -y expect
 fi
 
-expect <<EOF
+expect << EOF
     set timeout 300
 
     #spawn -noecho scp -r ${SRC_DIR} ${DES_DIR}

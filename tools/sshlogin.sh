@@ -18,7 +18,7 @@ if [ $? -ne 0 ];then
     yum install -y expect
 fi
 
-expect <<EOF
+expect << EOF
     set timeout 300
 
     spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PWD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"

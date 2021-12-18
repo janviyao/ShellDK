@@ -18,31 +18,44 @@ CUR_DIR=`pwd`
 cd ${RUN_DIR}
 RUN_DIR=`pwd`
 
-log_file="/tmp/`basename $0`"
-function loop_run()
+log_file="/tmp/$$.log"
+:> ${log_file}
+
+TIMEOUT=180
+prefix=""
+trap "signal_handler1" 61
+function signal_handler1()
 {
-    local cmd_str="$1"
-    local run_cnt=0
-    
-    ${cmd_str} &> ${log_file}
-    while [ $? -ne 0 -a ${run_cnt} -le 2 ]
-    do
-        let run_cnt++
-        ${cmd_str} &> ${log_file}
-    done
+    echo "signal 61"
+    local timeout=$((TIMEOUT*10))
+    if [ ${PROGRESS3_FIN} -ne 0 ];then
+        echo "=== progress"
+        ( progress3 1 ${timeout} "$prefix" ) &
+    fi
 }
 
-for dir in `ls -d */`
+trap "signal_handler2" 62
+function signal_handler2()
+{
+    echo "signal 62"
+    PROGRESS3_FIN=0
+}
+
+for gitdir in `ls -d */`
 do
-    cd ${dir}
+    cd ${gitdir}
     if [ -d .git ]; then
-        printf "%s%-30s @ " "${OUT_PRE}" ${dir}
-        loop_run "${CMD_STR}"
+        prefix=$(printf "%s%-30s @ " "${OUT_PRE}" ${gitdir})
+
+        printf "%s" "${prefix}"
+        sh ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
         run_res=`cat ${log_file}`
         printf "%s\n" "${run_res}"
     else
-        echo_debug "not git repo @ ${dir}"
+        echo_debug "not git repo @ ${gitdir}"
     fi
 
     cd ${RUN_DIR}
 done
+
+env_clear

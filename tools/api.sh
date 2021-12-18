@@ -11,6 +11,31 @@ function bool_v
     fi
 }
 
+trap "ctrlc_handler" SIGINT SIGTERM EXIT
+function ctrlc_handler
+{
+    echo "ctrlc_handler $0"
+    local cur_pid=$$
+
+    local PD_LIST=`pstree ${cur_pid} -p | awk -F"[()]" '{print $2}'`
+    for PID in ${PD_LIST}
+    do
+        PID_EXIST=$(ps aux | awk '{print $2}'| grep -w $PID)
+        if [ -n "$PID_EXIST" ];then
+            kill -9 $PID
+        fi
+    done
+
+    # 后台最后一个进程
+    kill -9 $!
+}
+
+function env_clear
+{
+    trap - 61 62
+    trap - SIGINT SIGTERM EXIT
+}
+
 function progress
 {
     local current=$1
@@ -56,20 +81,24 @@ function progress2
     echo
 }
 
+declare -i PROGRESS3_FIN=1
 function progress3
 {
     local current=$1
     local total=$2
-    local finfile=$3
+    local prefix="$3"
 
-    local step=$(printf "%.3f" `echo "scale=4;100/($total-$current+1)"|bc`)
+    #local step=$(printf "%.3f" `echo "scale=4;100/($total-$current+1)"|bc`)
+    # here字符串
+    local step=$(printf "%.3f" `bc <<< "scale=4;100/($total-$current+1)"`)
+
     local shrink=$((100/50))
 
     local now=$current
     local last=$((total+1))
 
     local postfix=('|' '/' '-' '\')
-    while [ $now -le $last ]
+    while [[ $now -le $last ]] && [[ ${PROGRESS3_FIN} -ne 0 ]] 
     do
         local count=$(printf "%.0f" `echo "scale=1;(($now-$current)*$step)/$shrink"|bc`)
 
@@ -81,12 +110,14 @@ function progress3
 
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
-        printf "[%-50s %-2d%% %c]\r" "$str" "$value" "${postfix[$index]}"
+        printf "%s[%-50s %-2d%% %c]\r" "$prefix" "$str" "$value" "${postfix[$index]}"
 
         let now++
         sleep 0.1 
     done
-    printf "\n"
+
+    printf "%s%-100s" "$prefix" ""
+    printf "\r%s" "$prefix"
 }
 
 function trunc_name
