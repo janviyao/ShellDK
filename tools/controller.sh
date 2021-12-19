@@ -47,10 +47,14 @@ function ctrl_thread
             local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
 
             unset bgMap["${bgpid}"]
-            echo "EXIT" > ${bgpipe}
+            if [ -w ${bgpipe} ];then
+                echo "EXIT" > ${bgpipe}
+            fi
         elif [[ "${order}" == "SEND_TO_BG" ]];then
             for pipe in ${bgMap[@]};do
-                echo "${msg}" > ${pipe}
+                if [ -w ${pipe} ];then
+                    echo "${msg}" > ${pipe}
+                fi
             done
         fi
     done < ${CTRL_THIS_PIPE}
