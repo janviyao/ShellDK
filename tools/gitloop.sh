@@ -5,6 +5,7 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 . $ROOT_DIR/api.sh
+. $ROOT_DIR/controller.sh
 
 RUN_DIR=$1
 CMD_STR=$2
@@ -21,36 +22,30 @@ RUN_DIR=`pwd`
 log_file="/tmp/$$.log"
 :> ${log_file}
 
-TIMEOUT=180
-prefix=""
-trap "signal_handler1" 61
-function signal_handler1()
-{
-    echo "signal 61 ${PROGRESS3_FIN}"
-    local timeout=$((TIMEOUT*10))
-    if [ ${PROGRESS3_FIN} -ne 0 ];then
-        #echo "=== progress"
-        progress3 1 ${timeout} "$prefix" &
-    fi
-}
-
-trap "signal_handler2" 62
-function signal_handler2()
-{
-    echo "signal 62"
-    PROGRESS3_FIN=0
-}
-
 for gitdir in `ls -d */`
 do
     cd ${gitdir}
     if [ -d .git ]; then
         prefix=$(printf "%-30s @ " "${gitdir}")
 
-        printf "\r%s" "${prefix}"
+        $ROOT_DIR/progress.sh 1 1800 "${prefix}" "${LOGR_THIS_PIPE}" &
+
+        bgpid=$!
+        PRG_PIPE="/tmp/progress/pid.${bgpid}/msg"
+
+        send_ctrl_to_self "SAVE_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
+
         ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
+        send_ctrl_to_self "EXIT_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
+
+        #echo "wait ${bgpid}"
+        wait ${bgpid}
+
         run_res=`cat ${log_file}`
-        printf "%s\n" "${run_res}"
+
+        send_log_to_self "RETURN"
+        send_log_to_self "PRINT" "$(printf "%s%s" "${prefix}" "${run_res}")"
+        send_log_to_self "NEWLINE"
     else
         echo_debug "not git repo @ ${gitdir}"
     fi
@@ -58,4 +53,6 @@ do
     cd ${RUN_DIR}
 done
 
-env_clear
+controller_prepare
+wait
+controller_exit
