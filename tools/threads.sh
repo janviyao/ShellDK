@@ -1,7 +1,7 @@
 #!/bin/bash
 ROOT_DIR=$(cd `dirname $0`;pwd)
 LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_ONE} == '/' ]; then
+if [ "${LAST_ONE}" == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 . ${ROOT_DIR}/api.sh
@@ -40,16 +40,16 @@ do
 }
 done >&6
 
+echo === $PPID
+kill -s 61 $PPID
+
 thread_fin=1
 # 执行线程
 for tdidx in `seq 1 ${all_num}`
 do
 {
     read -u 6
-
-    echo === $PPID
-    kill -s 61 $PPID
-
+ 
     while read thread_fin
     do
         sed -i '1d' ${thread_ret}
@@ -74,7 +74,7 @@ do
 }
 done 
 
-#echo "send 62"
+echo "send 62"
 kill -s 62 $PPID
 
 # 等待当前脚本进程下的子进程结束 

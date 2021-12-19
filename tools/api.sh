@@ -110,7 +110,7 @@ function progress3
 
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
-        printf "%s[%-50s %-2d%% %c]\r" "$prefix" "$str" "$value" "${postfix[$index]}"
+        printf "\r%s[%-50s %-2d%% %c]" "$prefix" "$str" "$value" "${postfix[$index]}"
 
         let now++
         sleep 0.1 

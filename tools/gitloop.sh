@@ -26,11 +26,11 @@ prefix=""
 trap "signal_handler1" 61
 function signal_handler1()
 {
-    echo "signal 61"
+    echo "signal 61 ${PROGRESS3_FIN}"
     local timeout=$((TIMEOUT*10))
     if [ ${PROGRESS3_FIN} -ne 0 ];then
-        echo "=== progress"
-        ( progress3 1 ${timeout} "$prefix" ) &
+        #echo "=== progress"
+        progress3 1 ${timeout} "$prefix" &
     fi
 }
 
@@ -45,10 +45,10 @@ for gitdir in `ls -d */`
 do
     cd ${gitdir}
     if [ -d .git ]; then
-        prefix=$(printf "%s%-30s @ " "${OUT_PRE}" ${gitdir})
+        prefix=$(printf "%-30s @ " "${gitdir}")
 
-        printf "%s" "${prefix}"
-        sh ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
+        printf "\r%s" "${prefix}"
+        ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
         run_res=`cat ${log_file}`
         printf "%s\n" "${run_res}"
     else
