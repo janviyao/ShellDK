@@ -106,9 +106,9 @@ IS_NET_OK=$(bool_v "${NEED_NET}"; echo $?)
 if [ ${IS_NET_OK} -eq 1 ]; then
     IS_NET_OK=$(check_net; echo $?)
     if [ ${IS_NET_OK} -eq 1 ]; then
-        echo_info "Netwk ping: Ok"
+        echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Ok")"
     else
-        echo_info "Netwk ping: Fail"
+        echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Fail")"
     fi
 fi
 
@@ -217,7 +217,7 @@ function inst_deps()
             RPM_FILE=`basename ${RPM_FILE}`
 
             INSTALLED=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
-            echo_info "Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}"
+            echo_info "$(printf "Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}")"
 
             NEED_INSTALL=0
             if [ -z "${INSTALLED}" ]; then
