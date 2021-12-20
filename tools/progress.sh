@@ -134,9 +134,13 @@ function progress3
         sleep 0.1 
     done
 
+    # 清空输出
+    send_cmd "RETURN"
+    send_cmd "LOOP" "200${PRG_SPF2}SPACE"
+    
+    # 恢复prefix
     send_cmd "RETURN"
     send_msg "$(printf "%s" "${prefix}")"
-    send_cmd "LOOP" "100${PRG_SPF2}SPACE"
 }
 
 PRG_CURR="$1"
@@ -151,3 +155,4 @@ wait
 
 eval "exec ${PRG_FD}>&-"
 rm -fr ${PRG_THIS_DIR}
+#echo "exit prg"

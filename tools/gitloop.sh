@@ -4,7 +4,7 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/api.sh
+. $ROOT_DIR/include/common.api.sh
 . $ROOT_DIR/controller.sh
 
 RUN_DIR=$1
@@ -26,9 +26,10 @@ for gitdir in `ls -d */`
 do
     cd ${gitdir}
     if [ -d .git ]; then
+        #echo "enter ${gitdir}"
         prefix=$(printf "%-30s @ " "${gitdir}")
 
-        $ROOT_DIR/progress.sh 1 1800 "${prefix}" "${LOGR_THIS_PIPE}" &
+        $ROOT_DIR/progress.sh 1 1820 "${prefix}" "${LOGR_THIS_PIPE}" &
 
         bgpid=$!
         PRG_PIPE="/tmp/progress/pid.${bgpid}/msg"
@@ -36,9 +37,9 @@ do
         send_ctrl_to_self "SAVE_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
 
         ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
-        send_ctrl_to_self "EXIT_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
 
-        #echo "wait ${bgpid}"
+        send_ctrl_to_self "SEND_TO_BG" "FIN"
+        send_ctrl_to_self "EXIT_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
         wait ${bgpid}
 
         run_res=`cat ${log_file}`

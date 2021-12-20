@@ -4,8 +4,8 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ "${LAST_ONE}" == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. ${ROOT_DIR}/api.sh
-. $ROOT_DIR/controller.sh
+. ${ROOT_DIR}/include/common.api.sh
+. $ROOT_DIR/include/controller.api.sh
 
 pid_self=$$
 
@@ -49,10 +49,9 @@ done >&${thread_fd}
 
 thread_fin=1
 # 执行线程
-for tdidx in `seq 1 ${all_num}`
+for tdidx in `seq 1 $((all_num+1))`
 do
 {
-    #echo "thread ${tdidx}"
     read -u ${thread_fd}
  
     while read thread_fin
@@ -66,11 +65,12 @@ do
 
     if [[ -z "${thread_fin}" ]] || [[ ${thread_fin} -ne 0 ]];then
     {
-        #sleep 0.01
+        #echo "thread${tdidx}: ${thread_task}"
         eval ${thread_task}             
         echo $? >> ${THREAD_THIS_RET}
  
         echo "" >&${thread_fd}
+        exit 0
     } & 
     else
         break
@@ -78,13 +78,12 @@ do
 }
 done 
 
-send_ctrl_to_parent "SEND_TO_BG" "FIN"
+#echo "thread exit"
 
 # 等待当前脚本进程下的子进程结束 
-controller_prepare
 wait
-controller_exit
 
 # 关闭fd6管道
 eval "exec ${thread_fd}>&-"
 rm -fr ${THREAD_THIS_DIR}
+#echo "exit thread"

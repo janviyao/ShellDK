@@ -4,7 +4,7 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/api.sh
+. $ROOT_DIR/include/common.api.sh
 
 USR_NAME="$1"
 USR_PWD="$2"
