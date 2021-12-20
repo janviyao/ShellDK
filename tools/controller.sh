@@ -1,86 +1,89 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ "${LAST_ONE}" == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
-. $ROOT_DIR/include/controller.api.sh
+CTRL_BASE_DIR="/tmp/ctrl"
+CTRL_THIS_DIR="${CTRL_BASE_DIR}/pid.$$"
+CTRL_HIGH_DIR="${CTRL_BASE_DIR}/pid.$PPID"
+rm -fr ${CTRL_THIS_DIR}
+mkdir -p ${CTRL_THIS_DIR}
 
-rm -f ${CTRL_THIS_PIPE}
-mkfifo ${CTRL_THIS_PIPE}
-exec {CTRL_THIS_FD}<>${CTRL_THIS_PIPE} # 自动分配FD 
+CTRL_THIS_PIPE="${CTRL_THIS_DIR}/msg"
+LOGR_THIS_PIPE="${CTRL_THIS_DIR}/log"
 
-rm -f ${LOGR_THIS_PIPE}
-mkfifo ${LOGR_THIS_PIPE}
-exec {LOGR_THIS_FD}<>${LOGR_THIS_PIPE} # 自动分配FD 
+CTRL_HIGH_PIPE="${CTRL_HIGH_DIR}/msg"
+LOGR_HIGH_PIPE="${CTRL_HIGH_DIR}/log"
 
-function ctrl_thread
+CTRL_THIS_FD=${CTRL_THIS_FD:-6}
+LOGR_THIS_FD=${LOGR_THIS_FD:-7}
+
+CTRL_SPF1="^"
+CTRL_SPF2="|"
+
+function send_ctrl_to_self
 {
-    declare -A bgMap
-    while read line
-    do
-        #echo "ctr$$ recv: [${line}]" 
-        local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
-        local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+    local order="$1"
+    local msg="$2"
 
-        if [[ "${order}" == "CTRL" ]];then
-            if [[ "${msg}" == "EXIT" ]];then
-                exit 0
-            fi
-        elif [[ "${order}" == "SAVE_BG" ]];then
-            local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
-            local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
-
-            bgMap["${bgpid}"]="${bgpipe}" 
-        elif [[ "${order}" == "EXIT_BG" ]];then
-            local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
-            local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
-
-            unset bgMap["${bgpid}"]
-            if [ -w ${bgpipe} ];then
-                echo "EXIT" > ${bgpipe}
-            fi
-        elif [[ "${order}" == "SEND_TO_BG" ]];then
-            for pipe in ${bgMap[@]};do
-                if [ -w ${pipe} ];then
-                    echo "${msg}" > ${pipe}
-                fi
-            done
-        fi
-    done < ${CTRL_THIS_PIPE}
+    local sendctx="${order}${CTRL_SPF1}${msg}"
+    if [ -w ${CTRL_THIS_PIPE} ];then
+        echo "${sendctx}" > ${CTRL_THIS_PIPE}
+    else
+        echo "pipe removed: ${CTRL_THIS_PIPE}"
+    fi
 }
-ctrl_thread &
 
-function log_thread
+function send_ctrl_to_parent
 {
-    while read line
-    do
-        #echo "log$$ recv: [${line}]" 
-        local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
-        local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+    local order="$1"
+    local msg="$2"
 
-        if [[ "${order}" == "EXIT" ]];then
-            exit 0
-        elif [[ "${order}" == "RETURN" ]];then
-            printf "\r"
-        elif [[ "${order}" == "NEWLINE" ]];then
-            printf "\n"
-        elif [[ "${order}" == "PRINT" ]];then
-            printf "%s" "${msg}"
-        elif [[ "${order}" == "LOOP" ]];then
-            local count=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
-            local code="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)"
-            
-            for i in `seq 1 ${count}`
-            do
-                if [[ "${code}" == "SPACE" ]];then
-                    printf "%s" " "
-                fi
-            done
-        fi
-    done < ${LOGR_THIS_PIPE}
+    local sendctx="${order}${CTRL_SPF1}${msg}"
+    if [ -w ${CTRL_HIGH_PIPE} ];then
+        echo "${sendctx}" > ${CTRL_HIGH_PIPE}
+    else
+        echo "pipe removed: ${CTRL_HIGH_PIPE}"
+    fi
 }
-log_thread &
+
+function send_log_to_self
+{
+    local order="$1"
+    local msg="$2"
+
+    local sendctx="${order}${CTRL_SPF1}${msg}"
+    if [ -w ${LOGR_THIS_PIPE} ];then
+        echo "${sendctx}" > ${LOGR_THIS_PIPE}
+    else
+        echo "pipe removed: ${LOGR_THIS_PIPE}"
+    fi
+}
+
+function send_log_to_parent
+{
+    local order="$1"
+    local msg="$2"
+
+    local sendctx="${order}${CTRL_SPF1}${msg}"
+    if [ -w ${LOGR_HIGH_PIPE} ];then
+        echo "${sendctx}" > ${LOGR_HIGH_PIPE}
+    else
+        echo "pipe removed: ${LOGR_HIGH_PIPE}"
+    fi
+}
+
+function controller_prepare
+{
+    trap - SIGINT SIGTERM EXIT
+
+    send_ctrl_to_self "CTRL" "EXIT"
+    send_log_to_self "EXIT" "this is cmd"
+}
+
+function controller_exit
+{
+    eval "exec ${CTRL_THIS_FD}>&-"
+    eval "exec ${LOGR_THIS_FD}>&-"
+
+    rm -fr ${CTRL_THIS_DIR}
+}
 
 trap "signal_handler" SIGINT SIGTERM EXIT
 #trap "signal_handler" SIGINT SIGTERM
@@ -100,3 +103,73 @@ function signal_handler
         fi
     done
 }
+
+rm -f ${CTRL_THIS_PIPE}
+mkfifo ${CTRL_THIS_PIPE}
+exec {CTRL_THIS_FD}<>${CTRL_THIS_PIPE} # 自动分配FD 
+
+rm -f ${LOGR_THIS_PIPE}
+mkfifo ${LOGR_THIS_PIPE}
+exec {LOGR_THIS_FD}<>${LOGR_THIS_PIPE} # 自动分配FD 
+
+function ctrl_default_handler
+{
+    line="$1"
+
+    local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+
+    if [[ "${order}" == "CTRL" ]];then
+        if [[ "${msg}" == "EXIT" ]];then
+            exit 0
+        fi
+    fi
+}
+
+function controller_bg_thread
+{
+    while read line
+    do
+        #echo "[$$]ctrl recv: [${line}]" 
+        declare -F ctrl_user_handler &>/dev/null
+        if [ $? -eq 0 ];then
+            ctrl_user_handler "${line}"
+        fi
+
+        ctrl_default_handler "${line}"
+    done < ${CTRL_THIS_PIPE}
+}
+controller_bg_thread &
+
+function loger_default_handler
+{
+    line="$1"
+
+    local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+
+    if [[ "${order}" == "EXIT" ]];then
+        exit 0
+    elif [[ "${order}" == "RETURN" ]];then
+        printf "\r"
+    elif [[ "${order}" == "NEWLINE" ]];then
+        printf "\n"
+    elif [[ "${order}" == "PRINT" ]];then
+        printf "%s" "${msg}" 
+    fi
+}
+
+function loger_bg_thread
+{
+    while read line
+    do
+        #echo "[$$]loger recv: [${line}]" 
+        declare -F loger_user_handler &>/dev/null
+        if [ $? -eq 0 ];then
+            loger_user_handler "${line}"
+        fi
+
+        loger_default_handler "${line}"
+    done < ${LOGR_THIS_PIPE}
+}
+loger_bg_thread &

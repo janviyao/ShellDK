@@ -5,6 +5,63 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 . $ROOT_DIR/include/common.api.sh
+
+declare -A bgMap
+function ctrl_user_handler
+{
+    line="$1"
+
+    local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+
+    if [[ "${order}" == "SAVE_BG" ]];then
+        local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
+        local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
+
+        bgMap["${bgpid}"]="${bgpipe}"
+    elif [[ "${order}" == "EXIT_BG" ]];then
+        local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
+        local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
+
+        unset bgMap["${bgpid}"]
+        if [ -w ${bgpipe} ];then
+            echo "EXIT" > ${bgpipe}
+        else
+            echo "pipe removed: ${bgpipe}"
+        fi
+    elif [[ "${order}" == "SEND_TO_BG" ]];then
+        #echo "BG msg: ${msg}"
+        for key in ${!bgMap[@]};do
+            pipe="${bgMap[${key}]}"
+            #echo "key: ${key} value: ${pipe}"
+            if [ -w ${pipe} ];then
+                echo "${msg}" > ${pipe}
+            else
+                echo "pipe removed: ${pipe}"
+            fi
+        done
+    fi
+}
+
+function loger_user_handler
+{
+    line="$1"
+    
+    local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+
+    if [[ "${order}" == "LOOP" ]];then
+        local count=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
+        local code="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)"
+
+        for i in `seq 1 ${count}`
+        do
+            if [[ "${code}" == "SPACE" ]];then
+                printf "%s" " "
+            fi
+        done
+    fi
+}
 . $ROOT_DIR/controller.sh
 
 RUN_DIR=$1

@@ -19,7 +19,7 @@ function progresss_thread
 {
     while read line
     do
-        #echo "prg$$ recv: [${line}]"
+        #echo "[$$]prg recv: [${line}]"
         local order="$(echo "${line}" | cut -d "${PRG_SPF1}" -f 1)"
 
         if [[ "${order}" == "EXIT" ]];then

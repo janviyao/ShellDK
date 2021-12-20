@@ -5,7 +5,6 @@ if [ "${LAST_ONE}" == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 . ${ROOT_DIR}/include/common.api.sh
-. $ROOT_DIR/include/controller.api.sh
 
 pid_self=$$
 
@@ -79,7 +78,6 @@ do
 done 
 
 #echo "thread exit"
-
 # 等待当前脚本进程下的子进程结束 
 wait
 
