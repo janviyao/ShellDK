@@ -17,13 +17,6 @@ function trunc_name
     echo "${name_str}"
 }
 
-RED=$(tput setaf 1)    # 红
-GREEN=$(tput setaf 2)  # 绿
-YELLOW=$(tput setaf 3) # 黄
-BLUE=$(tput setaf 4)   # 蓝
-PINK=$(tput setaf 5)   # 粉红
-RES=$(tput sgr0)       # 清除颜色
-
 COLOR_HEADER='\033[40;35m' #黑底紫字
 COLOR_ERROR='\033[41;30m'  #红底黑字
 COLOR_DEBUG='\033[43;30m'  #黄底黑字

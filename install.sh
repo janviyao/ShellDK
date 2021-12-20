@@ -5,6 +5,7 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 . ${ROOT_DIR}/tools/include/common.api.sh
+. ${ROOT_DIR}/tools/paraparser.sh
 
 NEED_SUDO=
 if [ $UID -ne 0 ]; then
@@ -54,21 +55,18 @@ function inst_usage()
 NEED_OP=""
 MAKE_TD=8
 NEED_NET=0
-while [ -n "$1" ]; do
-	need_shift=0
-    case "$1" in
-		-o) NEED_OP="$2"; need_shift=1; shift;;
-		-j) MAKE_TD="$2"; need_shift=1; shift;;
-		--op) NEED_OP="$2"; need_shift=1; shift;;
-		-n) NEED_NET="$2"; need_shift=1; shift;;
-		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
-        #--net) NEED_NET="true"; shift;;
-        *) echo_erro "unkown para: $1"; echo ""; inst_usage; exit 1; break;;
-    esac
-	
-	if [ ${need_shift} -eq 1 ]; then
-		shift
-	fi
+for option in ${!parasMap[@]};do
+    if [[ "${option}" == "-o" ]];then
+        NEED_OP=${parasMap[$option]}
+    elif [[ "${option}" == "-j" ]];then
+        MAKE_TD=${parasMap[$option]}
+    elif [[ "${option}" == "--op" ]];then
+        NEED_OP=${parasMap[$option]}
+    elif [[ "${option}" == "-n" ]];then
+        NEED_NET=${parasMap[$option]}
+    elif [[ "${option}" == "--net" ]];then
+        NEED_NET="true"
+    fi
 done
 
 OP_MATCH=0
@@ -217,7 +215,7 @@ function inst_deps()
             RPM_FILE=`basename ${RPM_FILE}`
 
             INSTALLED=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
-            echo_info "$(printf "Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}")"
+            echo_info "$(printf " Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}")"
 
             NEED_INSTALL=0
             if [ -z "${INSTALLED}" ]; then
