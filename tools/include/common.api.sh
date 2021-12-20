@@ -17,18 +17,26 @@ function trunc_name
     echo "${name_str}"
 }
 
-COLOR_ERROR='\033[41;30m' #红底黑字
-COLOR_DEBUG='\033[43;30m' #黄底黑字
-COLOR_INFO='\033[42;37m'  #绿底白字
-COLOR_WARN='\033[42;31m'  #蓝底红字
-COLOR_CLOSE='\033[0m'     #关闭颜色
-FONT_BOLD='\033[1m'       #字体变粗
-FONT_BLINK='\033[5m'      #字体闪烁
+RED=$(tput setaf 1)    # 红
+GREEN=$(tput setaf 2)  # 绿
+YELLOW=$(tput setaf 3) # 黄
+BLUE=$(tput setaf 4)   # 蓝
+PINK=$(tput setaf 5)   # 粉红
+RES=$(tput sgr0)       # 清除颜色
+
+COLOR_HEADER='\033[40;35m' #黑底紫字
+COLOR_ERROR='\033[41;30m'  #红底黑字
+COLOR_DEBUG='\033[43;30m'  #黄底黑字
+COLOR_INFO='\033[42;37m'   #绿底白字
+COLOR_WARN='\033[42;31m'   #蓝底红字
+COLOR_CLOSE='\033[0m'      #关闭颜色
+FONT_BOLD='\033[1m'        #字体变粗
+FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_header
 {
     cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
-    echo "${COLOR_INFO}******@${FONT_BOLD}${cur_time}: ${COLOR_CLOSE}"
+    echo "${COLOR_HEADER}${FONT_BOLD}******@${cur_time}: ${COLOR_CLOSE}"
 }
 
 function echo_erro()

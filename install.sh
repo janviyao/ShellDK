@@ -4,23 +4,7 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-
-ECHO_PRE="=================="
-ECHO_SUF=""
-function loger()
-{
-    if [ $# -eq 2 ];then
-        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "${ECHO_SUF}"
-    elif [ $# -eq 3 ];then
-        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "$3" "${ECHO_SUF}"
-    elif [ $# -eq 4 ];then
-        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "$3" "$4" "${ECHO_SUF}"
-    elif [ $# -eq 5 ];then
-        printf "%s $1 %s\n" "${ECHO_PRE}" "$2" "$3" "$4" "$5" "${ECHO_SUF}"
-    else
-        echo "${ECHO_PRE} $* ${ECHO_SUF}"
-    fi
-}
+. ${ROOT_DIR}/tools/include/common.api.sh
 
 NEED_SUDO=
 if [ $UID -ne 0 ]; then
@@ -45,16 +29,6 @@ funcMap["astyle"]="inst_astyle"
 funcMap["deps"]="inst_deps"
 funcMap["install"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack"
 funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
-
-function bool_v()
-{
-    para=$1
-    if [ "${para,,}" == "yes" -o "${para,,}" == "true" -o "${para,,}" == "y" -o "${para,,}" == "1" ]; then
-        return 1
-    else
-        return 0
-    fi
-}
 
 function inst_usage()
 {
@@ -89,7 +63,7 @@ while [ -n "$1" ]; do
 		-n) NEED_NET="$2"; need_shift=1; shift;;
 		--net) NEED_NET="true"; if [ ! -z "$2" ]; then need_shift=1; fi; shift;;
         #--net) NEED_NET="true"; shift;;
-        *) loger "unkown para: $1"; echo ""; inst_usage; exit 1; break;;
+        *) echo_erro "unkown para: $1"; echo ""; inst_usage; exit 1; break;;
     esac
 	
 	if [ ${need_shift} -eq 1 ]; then
@@ -106,15 +80,15 @@ do
 done
 
 if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
-    loger "unkown op: ${NEED_OP}"
+    echo_erro "unkown op: ${NEED_OP}"
     echo ""
     inst_usage
     exit -1
 fi
 
-loger "Install Ops: ${NEED_OP}"
-loger "Make Thread: ${MAKE_TD}"
-loger "Need Netwrk: ${NEED_NET}"
+echo_info "$(printf "%13s: %-6s" "[Install Ops]" "${NEED_OP}")"
+echo_info "$(printf "%13s: %-6s" "[Make Thread]" "${MAKE_TD}")"
+echo_info "$(printf "%13s: %-6s" "[Need Netwrk]" "${NEED_NET}")"
 function check_net()   
 {   
     timeout=5 
@@ -132,9 +106,9 @@ IS_NET_OK=$(bool_v "${NEED_NET}"; echo $?)
 if [ ${IS_NET_OK} -eq 1 ]; then
     IS_NET_OK=$(check_net; echo $?)
     if [ ${IS_NET_OK} -eq 1 ]; then
-        loger "Netwk ping: Ok"
+        echo_info "Netwk ping: Ok"
     else
-        loger "Netwk ping: Fail"
+        echo_info "Netwk ping: Fail"
     fi
 fi
 
@@ -143,32 +117,32 @@ function deploy_env()
     cd ${ROOT_DIR}/deps
 
     if [ ! -f ~/.vimrc ]; then
-        loger "create slink: .vimrc"
+        echo_debug "create slink: .vimrc"
         ln -s ${ROOT_DIR}/vimrc ~/.vimrc
     fi
 
     if [ ! -f ~/.bashrc ]; then
-        loger "create slink: .bashrc"
+        echo_debug "create slink: .bashrc"
         ln -s ${ROOT_DIR}/bashrc ~/.bashrc
     fi
 
     if [ ! -f ~/.bash_profile ]; then
-        loger "create slink: .bash_profile"
+        echo_debug "create slink: .bash_profile"
         ln -s ${ROOT_DIR}/bash_profile ~/.bash_profile
     fi
 
     if [ ! -f ~/.minttyrc ]; then
-        loger "create slink: .minttyrc"
+        echo_debug "create slink: .minttyrc"
         ln -s ${ROOT_DIR}/minttyrc ~/.minttyrc
     fi
 
     if [ ! -f ~/.inputrc ]; then
-        loger "create slink: .inputrc"
+        echo_debug "create slink: .inputrc"
         ln -s ${ROOT_DIR}/inputrc ~/.inputrc
     fi
 
     if [ ! -f ~/.astylerc ]; then
-        loger "create slink: .astylerc"
+        echo_debug "create slink: .astylerc"
         ln -s ${ROOT_DIR}/astylerc ~/.astylerc
     fi
 
@@ -243,7 +217,7 @@ function inst_deps()
             RPM_FILE=`basename ${RPM_FILE}`
 
             INSTALLED=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
-            loger "Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}"
+            echo_info "Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}"
 
             NEED_INSTALL=0
             if [ -z "${INSTALLED}" ]; then
@@ -259,10 +233,10 @@ function inst_deps()
             if test ${NEED_INSTALL} -eq 1; then
                 rpm -ivh ${RPM_FILE} --nodeps --force
                 if [ $? -ne 0 ]; then
-                    loger "Install: ${rpmf} failure"
+                    echo_erro "Install: ${rpmf} failure"
                     exit -1
                 else
-                    loger "Install: ${rpmf} success"
+                    echo_info "Install: ${rpmf} success"
                 fi
             fi
         done
@@ -302,19 +276,19 @@ function inst_deps()
 
         #./configure --prefix=/usr
         #if [ $? -ne 0 ]; then
-        #    loger "Configure: libiconv fail"
+        #    echo_erro "Configure: libiconv fail"
         #    exit -1
         #fi
 
         #make -j ${MAKE_TD}
         #if [ $? -ne 0 ]; then
-        #    loger "Make: libiconv fail"
+        #    echo_erro "Make: libiconv fail"
         #    exit -1
         #fi
 
         #make install
         #if [ $? -ne 0 ]; then
-        #    loger "Install: libiconv fail"
+        #    echo_erro "Install: libiconv fail"
         #    exit -1
         #fi
 
@@ -349,25 +323,25 @@ function inst_ctags()
 
     ./autogen.sh
     if [ $? -ne 0 ]; then
-        loger "Autogen: ctags fail"
+        echo_erro "Autogen: ctags fail"
         exit -1
     fi
 
     ./configure --prefix=/usr
     if [ $? -ne 0 ]; then
-        loger "Configure: ctags fail"
+        echo_erro "Configure: ctags fail"
         exit -1
     fi
 
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
-        loger "Make: ctags fail"
+        echo_erro "Make: ctags fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        loger "Install: ctags fail"
+        echo_erro "Install: ctags fail"
         exit -1
     fi
 
@@ -389,19 +363,19 @@ function inst_cscope()
 
     ./configure
     if [ $? -ne 0 ]; then
-        loger "Configure: cscope fail"
+        echo_erro "Configure: cscope fail"
         exit -1
     fi
 
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
-        loger "Make: cscope fail"
+        echo_erro "Make: cscope fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        loger "Install: cscope fail"
+        echo_erro "Install: cscope fail"
         exit -1
     fi
 
@@ -428,19 +402,19 @@ function inst_vim()
         --enable-python3interp=yes \
         --disable-gui --disable-netbeans 
     if [ $? -ne 0 ]; then
-        loger "Configure: vim fail"
+        echo_erro "Configure: vim fail"
         exit -1
     fi
 
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
-        loger "Make: vim fail"
+        echo_erro "Make: vim fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        loger "Install: vim fail"
+        echo_erro "Install: vim fail"
         exit -1
     fi
 
@@ -466,19 +440,19 @@ function inst_tig()
     make configure
     ./configure --prefix=/usr
     if [ $? -ne 0 ]; then
-        loger "Configure: tig fail"
+        echo_erro "Configure: tig fail"
         exit -1
     fi
 
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
-        loger "Make: tig fail"
+        echo_erro "Make: tig fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        loger "Install: tig fail"
+        echo_erro "Install: tig fail"
         exit -1
     fi
 
@@ -500,7 +474,7 @@ function inst_astyle()
 
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
-        loger "Make: astyle fail"
+        echo_erro "Make: astyle fail"
         exit -1
     fi
 
@@ -531,19 +505,19 @@ function inst_ack()
 
     ./configure
     if [ $? -ne 0 ]; then
-        loger "Configure: ag fail"
+        echo_erro "Configure: ag fail"
         exit -1
     fi
 
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
-        loger "Make: ag fail"
+        echo_erro "Make: ag fail"
         exit -1
     fi
 
     make install
     if [ $? -ne 0 ]; then
-        loger "Install: ag fail"
+        echo_erro "Install: ag fail"
         exit -1
     fi
 
@@ -554,12 +528,13 @@ function inst_ack()
 for key in ${!funcMap[@]};
 do
     if [ x"${key}" = x"${NEED_OP}" ]; then
-        printf "%s Op: %-6s \n%s Funcs: %s\n" ${ECHO_PRE} ${key} ${ECHO_PRE} "${funcMap[${key}]}"
+        echo_info "$(printf "%13s: %-6s" "[Op]" "${key}")"
+        echo_info "$(printf "%13s: %-6s" "[Funcs]" "${funcMap[${key}]}")"
         for func in ${funcMap[${key}]};
         do
-            loger "install: ${func} start"
+            echo_info "$(printf "%13s: %-6s start" "[Install]" "${func}")"
             ${func}
-            loger "install: ${func} done"
+            echo_info "$(printf "%13s: %-6s done" "[Install]" "${func}")"
         done
         break
     fi
