@@ -11,6 +11,8 @@ USR_PWD="$2"
 HOST_IP="$3"
 CMD_EXE="$4"
 
+TIMEOUT=300
+
 echo_debug "Push { ${CMD_EXE} } to { ${HOST_IP} }"
 
 which expect &> /dev/null
@@ -19,7 +21,7 @@ if [ $? -ne 0 ];then
 fi
 
 expect << EOF
-    set timeout 300
+    set timeout ${TIMEOUT}
 
     spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PWD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PWD}' | sudo -S ${CMD_EXE}"
@@ -32,9 +34,11 @@ expect << EOF
         "password:" {
             send "${USR_PWD}\r\r"
         }
+        eof {
+            send_user "eof\r"
+        }
     }
 
-    expect eof
     exit
     #interact
 EOF

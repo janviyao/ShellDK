@@ -11,6 +11,8 @@ USR_PWD="$2"
 SRC_DIR="$3"
 DES_DIR="$4"
 
+TIMEOUT=300
+
 if [ -d "$SRC_DIR" ];then
     LAST_ONE=`echo "${SRC_DIR}" | grep -P ".$" -o`
     if [ ${LAST_ONE} == '/' ]; then
@@ -37,7 +39,7 @@ if [ $? -ne 0 ];then
 fi
 
 expect << EOF
-    set timeout 300
+    set timeout ${TIMEOUT}
 
     #spawn -noecho scp -r ${SRC_DIR} ${DES_DIR}
     spawn -noecho sshpass -p "${USR_PWD}" scp -r ${SRC_DIR} ${DES_DIR}
@@ -51,7 +53,10 @@ expect << EOF
             send "${USR_PWD}\r\r"
             exp_continue
         }
+        eof {
+            send_user "eof\r"
+        }
     }
-    #expect eof
+
     exit
 EOF
