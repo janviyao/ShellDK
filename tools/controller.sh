@@ -69,29 +69,29 @@ function send_log_to_parent
     fi
 }
 
-function controller_prepare
+function controller_threads_exit
 {
-    trap - SIGINT SIGTERM SIGKILL EXIT
-
     send_ctrl_to_self "CTRL" "EXIT"
     send_log_to_self "EXIT" "this is cmd"
 }
 
-function controller_exit
+function controller_clear
 {
     eval "exec ${CTRL_THIS_FD}>&-"
     eval "exec ${LOGR_THIS_FD}>&-"
-
     rm -fr ${CTRL_THIS_DIR}
+
+    trap - SIGINT SIGTERM SIGKILL EXIT
 }
 
 trap "signal_handler" SIGINT SIGTERM SIGKILL EXIT
 function signal_handler
 {
-    controller_prepare
-    controller_exit
+    controller_threads_exit
+    controller_clear
 
-    signal_process KILL $$
+    kill -s TERM $PPID
+    signal_process TERM $$ &> /dev/null
 }
 
 rm -f ${CTRL_THIS_PIPE}
@@ -102,6 +102,7 @@ rm -f ${LOGR_THIS_PIPE}
 mkfifo ${LOGR_THIS_PIPE}
 exec {LOGR_THIS_FD}<>${LOGR_THIS_PIPE} # 自动分配FD 
 
+declare -A childMap
 function ctrl_default_handler
 {
     line="$1"
@@ -111,8 +112,17 @@ function ctrl_default_handler
 
     if [[ "${order}" == "CTRL" ]];then
         if [[ "${msg}" == "EXIT" ]];then
+            for pid in ${!childMap[@]};do
+                signal_process TERM ${pid} &> /dev/null
+            done
             exit 0
         fi
+    elif [[ "${order}" == "CHILD_FORK" ]];then
+        local pid="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)"
+        local path="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)"
+        childMap["${pid}"]="${path}"
+    elif [[ "${order}" == "CHILD_EXIT" ]];then
+        unset childMap["${msg}"]
     fi
 }
 

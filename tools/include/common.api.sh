@@ -65,7 +65,7 @@ function signal_process
     local parent_pid=$2
     local child_pids="$(ps --ppid ${parent_pid} | grep -P "\d+" | awk '{ print $1 }')"
 
-    #echo "${parent_pid} childs: $(echo "${child_pids}" | tr '\n' ' ')"
+    #echo "${parent_pid} childs: $(echo "${child_pids}" | tr '\n' ' ') @ $0"
     for pid in ${child_pids}
     do
         if ps -p ${pid} > /dev/null; then
@@ -74,6 +74,6 @@ function signal_process
     done
 
     if ps -p ${parent_pid} > /dev/null; then
-        kill -s ${signal} ${parent_pid}
+        kill -s ${signal} ${parent_pid} &> /dev/null
     fi
 }

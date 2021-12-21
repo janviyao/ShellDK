@@ -111,6 +111,6 @@ do
     cd ${RUN_DIR}
 done
 
-controller_prepare
+controller_threads_exit
 wait
-controller_exit
+controller_clear
