@@ -1,57 +1,28 @@
 #!/bin/bash
-PRG_BASE_DIR="/tmp/progress"
-PRG_THIS_DIR="${PRG_BASE_DIR}/pid.$$"
-rm -fr ${PRG_THIS_DIR}
-mkdir -p ${PRG_THIS_DIR}
+ROOT_DIR=$(cd `dirname $0`;pwd)
+LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
+if [ "${LAST_ONE}" == '/' ]; then
+    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
+fi
+. ${ROOT_DIR}/include/common.api.sh
 
-PRG_PIPE="${PRG_THIS_DIR}/msg"
-PRG_FD=${PRG_FD:-6}
-
-rm -f ${PRG_PIPE}
-mkfifo ${PRG_PIPE}
-exec {PRG_FD}<>${PRG_PIPE} # 自动分配FD
-
-PRG_FIN="${PRG_THIS_DIR}/finish"
-
-PRG_SPF1="^"
-PRG_SPF2="|"
-function progresss_thread
+CTRL_BASE_DIR="/tmp/ctrl"
+CTRL_THIS_DIR="${CTRL_BASE_DIR}/pid.$$"
+PRG_FIN="${CTRL_THIS_DIR}/finish"
+function ctrl_user_handler
 {
-    while read line
-    do
-        #echo "[$$]prg recv: [${line}]"
-        local order="$(echo "${line}" | cut -d "${PRG_SPF1}" -f 1)"
+    line="$1"
+    #echo "prg recv: ${line} ${PRG_FIN}"
 
-        if [[ "${order}" == "EXIT" ]];then
-            exit 0
-        elif [[ "${order}" == "FIN" ]];then
-            touch ${PRG_FIN}
-        fi
-    done < ${PRG_PIPE}
-}
-progresss_thread &
+    local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
 
-function send_msg
-{
-    logstr="$*"
-    if [ -n "${LOG_PIPE}" ] && [ -w ${LOG_PIPE} ];then
-        echo "PRINT${PRG_SPF1}${logstr}" > ${LOG_PIPE}
-    else
-        printf "%s" "${logstr}"
+    if [[ "${order}" == "FIN" ]];then
+        touch ${PRG_FIN}
     fi
 }
-
-function send_cmd
-{
-    cmdstr="$1"
-    msgstr="$2"
-
-    if [ -n "${LOG_PIPE}" ] && [ -w ${LOG_PIPE} ];then
-        echo "${cmdstr}${PRG_SPF1}${msgstr}" > ${LOG_PIPE}
-    else
-        printf "%s" "${logstr}"
-    fi
-}
+. $ROOT_DIR/controller.sh
+send_log_to_self "EXIT"
 
 function progress
 {
@@ -127,32 +98,30 @@ function progress3
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
 
-        send_cmd "RETURN"
-        send_msg "$(printf "%s[%-50s %-2d%% %c]" "${prefix}" "$str" "$value" "${postfix[$index]}")"
+        send_log_to_parent "RETURN"
+        send_log_to_parent "PRINT" "$(printf "%s[%-50s %-2d%% %c]" "${prefix}" "$str" "$value" "${postfix[$index]}")"
 
         let now++
         sleep 0.1 
     done
 
     # 清空输出
-    send_cmd "RETURN"
-    send_cmd "LOOP" "200${PRG_SPF2}SPACE"
+    send_log_to_parent "RETURN"
+    send_log_to_parent "LOOP" "100${CTRL_SPF2}SPACE"
     
     # 恢复prefix
-    send_cmd "RETURN"
-    send_msg "$(printf "%s" "${prefix}")"
+    send_log_to_parent "RETURN"
+    send_log_to_parent "PRINT" "$(printf "%s" "${prefix}")"
 }
 
 PRG_CURR="$1"
 PRG_LAST="$2"
 LOG_PREF="$3"
-LOG_PIPE="$4"
 
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${LOG_PREF}"
 
-echo "EXIT" > ${PRG_PIPE}
+#echo "exit prg1"
+controller_threads_exit
+controller_clear
 wait
-
-eval "exec ${PRG_FD}>&-"
-rm -fr ${PRG_THIS_DIR}
 #echo "exit prg"

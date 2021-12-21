@@ -8,7 +8,6 @@ fi
 . $ROOT_DIR/controller.sh
 
 controller_threads_exit
-send_ctrl_to_parent "CHILD_FORK" "$$${CTRL_SPF2}$0"
 
 # 设置并发的进程数
 all_num="$1"
@@ -80,13 +79,10 @@ do
 done 
 
 #echo "thread exit"
-# 等待当前脚本进程下的子进程结束 
-controller_clear
 wait
 
-# 关闭fd6管道
+controller_clear
+# free thead res
 eval "exec ${thread_fd}>&-"
 rm -fr ${THREAD_THIS_DIR}
-
-send_ctrl_to_parent "CHILD_EXIT" "$$"
 #echo "exit thread"

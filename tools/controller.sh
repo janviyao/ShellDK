@@ -21,12 +21,14 @@ function send_ctrl_to_self
 {
     local order="$1"
     local msg="$2"
-
+ 
     local sendctx="${order}${CTRL_SPF1}${msg}"
     if [ -w ${CTRL_THIS_PIPE} ];then
         echo "${sendctx}" > ${CTRL_THIS_PIPE}
     else
-        echo "pipe removed: ${CTRL_THIS_PIPE}"
+        if [ -d ${CTRL_THIS_DIR} ];then
+            echo "Fail: ${sendctx} removed: ${CTRL_THIS_PIPE}"
+        fi
     fi
 }
 
@@ -39,7 +41,9 @@ function send_ctrl_to_parent
     if [ -w ${CTRL_HIGH_PIPE} ];then
         echo "${sendctx}" > ${CTRL_HIGH_PIPE}
     else
-        echo "pipe removed: ${CTRL_HIGH_PIPE}"
+        if [ -d ${CTRL_HIGH_DIR} ];then
+            echo "Fail: ${sendctx} removed: ${CTRL_HIGH_PIPE}"
+        fi
     fi
 }
 
@@ -52,7 +56,9 @@ function send_log_to_self
     if [ -w ${LOGR_THIS_PIPE} ];then
         echo "${sendctx}" > ${LOGR_THIS_PIPE}
     else
-        echo "pipe removed: ${LOGR_THIS_PIPE}"
+        if [ -d ${CTRL_THIS_DIR} ];then
+            echo "Fail: ${sendctx} removed: ${LOGR_THIS_PIPE}"
+        fi
     fi
 }
 
@@ -65,18 +71,22 @@ function send_log_to_parent
     if [ -w ${LOGR_HIGH_PIPE} ];then
         echo "${sendctx}" > ${LOGR_HIGH_PIPE}
     else
-        echo "pipe removed: ${LOGR_HIGH_PIPE}"
+        if [ -d ${CTRL_HIGH_DIR} ];then
+            echo "Fail: ${sendctx} removed: ${LOGR_HIGH_PIPE}"
+        fi
     fi
 }
 
 function controller_threads_exit
 {
     send_ctrl_to_self "CTRL" "EXIT"
-    send_log_to_self "EXIT" "this is cmd"
+    send_log_to_self "EXIT"
 }
 
 function controller_clear
 {
+    send_ctrl_to_parent "CHILD_EXIT" "$$"
+
     eval "exec ${CTRL_THIS_FD}>&-"
     eval "exec ${LOGR_THIS_FD}>&-"
     rm -fr ${CTRL_THIS_DIR}
@@ -119,8 +129,9 @@ function ctrl_default_handler
         fi
     elif [[ "${order}" == "CHILD_FORK" ]];then
         local pid="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)"
-        local path="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)"
-        childMap["${pid}"]="${path}"
+        local pipe="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)"
+
+        childMap["${pid}"]="${pipe}"
     elif [[ "${order}" == "CHILD_EXIT" ]];then
         unset childMap["${msg}"]
     fi
@@ -130,7 +141,7 @@ function controller_bg_thread
 {
     while read line
     do
-        #echo "[$$]ctrl recv: [${line}]" 
+        #echo "[$$]ctrl recv: [${line}] @ $0" 
         declare -F ctrl_user_handler &>/dev/null
         if [ $? -eq 0 ];then
             ctrl_user_handler "${line}"
@@ -166,7 +177,7 @@ function loger_bg_thread
 {
     while read line
     do
-        #echo "[$$]loger recv: [${line}]" 
+        #echo "[$$]loger recv: [${line}] @ $0" 
         declare -F loger_user_handler &>/dev/null
         if [ $? -eq 0 ];then
             loger_user_handler "${line}"
@@ -176,3 +187,5 @@ function loger_bg_thread
     done < ${LOGR_THIS_PIPE}
 }
 loger_bg_thread &
+
+send_ctrl_to_parent "CHILD_FORK" "$$${CTRL_SPF2}${CTRL_THIS_PIPE}"

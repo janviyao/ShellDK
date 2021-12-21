@@ -6,7 +6,7 @@ if [ ${LAST_ONE} == '/' ]; then
 fi
 . $ROOT_DIR/include/common.api.sh
 
-declare -A bgMap
+#declare -A bgMap
 function ctrl_user_handler
 {
     line="$1"
@@ -14,30 +14,35 @@ function ctrl_user_handler
     local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
     local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
 
-    if [[ "${order}" == "SAVE_BG" ]];then
-        local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
-        local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
-
-        bgMap["${bgpid}"]="${bgpipe}"
-    elif [[ "${order}" == "EXIT_BG" ]];then
-        local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
-        local bgpipe=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
-
-        unset bgMap["${bgpid}"]
-        if [ -w ${bgpipe} ];then
-            echo "EXIT" > ${bgpipe}
-        else
-            echo "pipe removed: ${bgpipe}"
-        fi
+    if [[ "${order}" == "EXIT_BG" ]];then
+        local bgpid=${msg}
+        for pid in ${!childMap[@]};do
+            if [ ${pid} -eq ${bgpid} ];then
+                pipe="${childMap[${pid}]}"
+                #echo "pid: ${pid} pipe: ${pipe}"
+                if [ -w ${pipe} ];then
+                    echo "EXIT" > ${pipe}
+                else
+                    echo "pipe removed: ${pipe}"
+                fi
+                break
+            fi
+        done
+        unset childMap["${bgpid}"]
     elif [[ "${order}" == "SEND_TO_BG" ]];then
-        #echo "BG msg: ${msg}"
-        for key in ${!bgMap[@]};do
-            pipe="${bgMap[${key}]}"
-            #echo "key: ${key} value: ${pipe}"
-            if [ -w ${pipe} ];then
-                echo "${msg}" > ${pipe}
-            else
-                echo "pipe removed: ${pipe}"
+        local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
+        local bgmsg=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
+        #echo "bgpid: ${bgpid} bgmsg: ${bgmsg}"
+
+        for pid in ${!childMap[@]};do
+            pipe="${childMap[${pid}]}"
+            #echo "pid: ${pid} pipe: ${pipe}"
+            if [ ${pid} -eq ${bgpid} ];then
+                if [ -w ${pipe} ];then
+                    echo "${bgmsg}" > ${pipe}
+                else
+                    echo "pipe removed: ${pipe}"
+                fi
             fi
         done
     fi
@@ -86,21 +91,16 @@ do
         #echo "enter ${gitdir}"
         prefix=$(printf "%-30s @ " "${gitdir}")
 
-        $ROOT_DIR/progress.sh 1 1820 "${prefix}" "${LOGR_THIS_PIPE}" &
-
+        $ROOT_DIR/progress.sh 1 1820 "${prefix}" &
         bgpid=$!
-        PRG_PIPE="/tmp/progress/pid.${bgpid}/msg"
-
-        send_ctrl_to_self "SAVE_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
 
         ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
 
-        send_ctrl_to_self "SEND_TO_BG" "FIN"
-        send_ctrl_to_self "EXIT_BG" "${bgpid}${CTRL_SPF2}${PRG_PIPE}"
+        send_ctrl_to_self "SEND_TO_BG" "${bgpid}${CTRL_SPF2}FIN"
+        send_ctrl_to_self "EXIT_BG" "${bgpid}"
         wait ${bgpid}
 
         run_res=`cat ${log_file}`
-
         send_log_to_self "RETURN"
         send_log_to_self "PRINT" "$(printf "%s%s" "${prefix}" "${run_res}")"
         send_log_to_self "NEWLINE"
