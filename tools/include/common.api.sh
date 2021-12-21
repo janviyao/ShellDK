@@ -58,3 +58,22 @@ function echo_debug()
         echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
     fi
 }
+
+function signal_process
+{
+    local signal=$1
+    local parent_pid=$2
+    local child_pids="$(ps --ppid ${parent_pid} | grep -P "\d+" | awk '{ print $1 }')"
+
+    #echo "${parent_pid} childs: $(echo "${child_pids}" | tr '\n' ' ')"
+    for pid in ${child_pids}
+    do
+        if ps -p ${pid} > /dev/null; then
+            signal_process ${signal} ${pid}
+        fi
+    done
+
+    if ps -p ${parent_pid} > /dev/null; then
+        kill -s ${signal} ${parent_pid}
+    fi
+}

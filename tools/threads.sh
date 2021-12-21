@@ -6,8 +6,6 @@ if [ "${LAST_ONE}" == '/' ]; then
 fi
 . ${ROOT_DIR}/include/common.api.sh
 
-pid_self=$$
-
 # 设置并发的进程数
 all_num="$1"
 concurrent_num="$2"

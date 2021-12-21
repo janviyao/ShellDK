@@ -71,7 +71,7 @@ function send_log_to_parent
 
 function controller_prepare
 {
-    trap - SIGINT SIGTERM EXIT
+    trap - SIGINT SIGTERM SIGKILL EXIT
 
     send_ctrl_to_self "CTRL" "EXIT"
     send_log_to_self "EXIT" "this is cmd"
@@ -85,23 +85,13 @@ function controller_exit
     rm -fr ${CTRL_THIS_DIR}
 }
 
-trap "signal_handler" SIGINT SIGTERM EXIT
-#trap "signal_handler" SIGINT SIGTERM
+trap "signal_handler" SIGINT SIGTERM SIGKILL EXIT
 function signal_handler
 {
+    controller_prepare
     controller_exit
 
-    echo "signal_handler $0"
-    local cur_pid=$$
-
-    local PD_LIST=`pstree ${cur_pid} -p | awk -F"[()]" '{print $2}'`
-    for PID in ${PD_LIST}
-    do
-        PID_EXIST=$(ps aux | awk '{print $2}'| grep -w $PID)
-        if [ -n "$PID_EXIST" ];then
-            kill -9 $PID
-        fi
-    done
+    signal_process KILL $$
 }
 
 rm -f ${CTRL_THIS_PIPE}
