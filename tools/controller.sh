@@ -99,8 +99,10 @@ function signal_handler
 {
     controller_threads_exit
     controller_clear
-
-    kill -s TERM $PPID
+    
+    if ps -p $PPID > /dev/null;then
+        kill -s TERM $PPID
+    fi
     signal_process TERM $$ &> /dev/null
 }
 
