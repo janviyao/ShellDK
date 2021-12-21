@@ -30,6 +30,8 @@ while [ -n "$1" ]; do
                 parasMap["${option}"]="${value}"
                 shift
             fi
+        else
+            parasMap["others"]="${parasMap['others']} ${option}"
         fi
     fi
 

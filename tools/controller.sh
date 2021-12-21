@@ -147,13 +147,16 @@ function loger_default_handler
 
     local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
     local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
-
+    
+    #echo "order: ${order} msg: ${msg}"
     if [[ "${order}" == "EXIT" ]];then
         exit 0
     elif [[ "${order}" == "RETURN" ]];then
         printf "\r"
     elif [[ "${order}" == "NEWLINE" ]];then
         printf "\n"
+    elif [[ "${order}" == "BACKSPACE" ]];then
+        printf "\b"
     elif [[ "${order}" == "PRINT" ]];then
         printf "%s" "${msg}" 
     fi
