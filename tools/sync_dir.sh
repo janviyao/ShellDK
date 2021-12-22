@@ -5,9 +5,7 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
-if (set -u; : ${TEST_DEBUG})&>/dev/null; then
-    echo > /dev/null
-else
+if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
     . $ROOT_DIR/include/common.api.sh
 fi
 

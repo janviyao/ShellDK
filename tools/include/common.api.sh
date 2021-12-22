@@ -1,5 +1,6 @@
 #!/bin/bash
-declare -r TEST_DEBUG=yes
+declare -r TEST_DEBUG=false
+declare -r LOG_HEADER=false
 
 function bool_v
 {
@@ -28,8 +29,10 @@ declare -r FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_header
 {
-    cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
-    echo "${COLOR_HEADER}${FONT_BOLD}******@${cur_time}: ${COLOR_CLOSE}"
+    if [ $(bool_v "${LOG_HEADER}"; echo $?) -eq 1 ];then
+        cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
+        echo "${COLOR_HEADER}${FONT_BOLD}******@${cur_time}: ${COLOR_CLOSE}"
+    fi
 }
 
 function echo_erro()
@@ -53,10 +56,15 @@ function echo_warn()
 function echo_debug()
 {
     para=$1
-    iftrue=$(bool_v "${TEST_DEBUG}"; echo $?)
-    if [ ${iftrue} -eq 1 ]; then
+    if [ $(bool_v "${TEST_DEBUG}"; echo $?) -eq 1 ]; then
         echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
     fi
+}
+
+function file_name
+{
+    local full_name="$0"
+    echo $(basename ${full_name})
 }
 
 function signal_process

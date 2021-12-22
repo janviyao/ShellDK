@@ -6,7 +6,7 @@ do
     shift
 done
 
-echo "===${CMD_STR}"
+echo "===Infinite time：${CMD_STR}"
 ${CMD_STR}
 while [ $? -ne 0 ]
 do

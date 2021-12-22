@@ -135,7 +135,13 @@ function ctrl_default_handler
 
         childMap["${pid}"]="${pipe}"
     elif [[ "${order}" == "CHILD_EXIT" ]];then
-        unset childMap["${msg}"]
+        local pid=${msg}
+        pipe="${childMap[${pid}]}"
+        if [ -z "${pipe}" ];then
+            echo_debug "pid: ${pid} have exited"
+        else
+            unset childMap["${pid}"]
+        fi
     fi
 }
 
@@ -143,7 +149,7 @@ function controller_bg_thread
 {
     while read line
     do
-        #echo "[$$]ctrl recv: [${line}] @ $0" 
+        echo_debug "[$$]ctrl recv: [${line}] @ $(file_name)" 
         declare -F ctrl_user_handler &>/dev/null
         if [ $? -eq 0 ];then
             ctrl_user_handler "${line}"
@@ -179,7 +185,7 @@ function loger_bg_thread
 {
     while read line
     do
-        #echo "[$$]loger recv: [${line}] @ $0" 
+        echo_debug "[$$]loger recv: [${line}] @ $(file_name)" 
         declare -F loger_user_handler &>/dev/null
         if [ $? -eq 0 ];then
             loger_user_handler "${line}"

@@ -5,9 +5,7 @@ if [ "${LAST_ONE}" == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
-if (set -u; : ${TEST_DEBUG})&>/dev/null; then
-    echo > /dev/null
-else
+if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
     . $ROOT_DIR/include/common.api.sh
 fi
 . $ROOT_DIR/controller.sh
@@ -52,8 +50,6 @@ do
 }
 done >&${thread_fd}
 
-#echo "thread total: ${all_num} concur: ${concurrent_num}"
-
 # 不能用declare -i声明，read值可能非整数导致失败
 thread_fin=1
 # 执行线程
@@ -64,7 +60,7 @@ do
  
     while read thread_fin
     do
-        #echo "thread ret: ${thread_fin}"
+        echo_debug "retcode: ${thread_fin}"
         sed -i '1d' ${THREAD_THIS_RET}
 
         if [[ -n "${thread_fin}" ]] && [[ ${thread_fin} -eq 0 ]];then
@@ -74,7 +70,7 @@ do
 
     if [[ -z "${thread_fin}" ]] || [[ ${thread_fin} -ne 0 ]];then
     {
-        #echo "thread${tdidx}: ${thread_task}"
+        echo_debug "thread-${tdidx}: ${thread_task}"
         eval ${thread_task}             
         echo $? >> ${THREAD_THIS_RET}
  
@@ -87,11 +83,9 @@ do
 }
 done 
 
-#echo "thread exit"
 wait
 controller_clear
 
 # free thead res
 eval "exec ${thread_fd}>&-"
 rm -fr ${THREAD_THIS_DIR}
-#echo "exit thread"

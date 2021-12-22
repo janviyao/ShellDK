@@ -5,9 +5,7 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
-if (set -u; : ${TEST_DEBUG})&>/dev/null; then
-    echo > /dev/null
-else
+if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
     . $ROOT_DIR/include/common.api.sh
 fi
 
@@ -18,34 +16,34 @@ function ctrl_user_handler
     local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
     local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
 
-    if [[ "${order}" == "EXIT_BG" ]];then
+    if [[ "${order}" == "BG_EXIT" ]];then
         local bgpid=${msg}
         for pid in ${!childMap[@]};do
             if [ ${pid} -eq ${bgpid} ];then
-                pipe="${childMap[${pid}]}"
-                #echo "pid: ${pid} pipe: ${pipe}"
+                local pipe="${childMap[${pid}]}"
+                echo_debug "pid: ${pid} pipe: ${pipe}"
                 if [ -w ${pipe} ];then
                     echo "EXIT" > ${pipe}
                 else
-                    echo "pipe removed: ${pipe}"
+                    echo_debug "pipe removed: ${pipe}"
                 fi
                 break
             fi
         done
         unset childMap["${bgpid}"]
-    elif [[ "${order}" == "SEND_TO_BG" ]];then
+    elif [[ "${order}" == "BG_RECV" ]];then
         local bgpid=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)
         local bgmsg=$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)
-        #echo "bgpid: ${bgpid} bgmsg: ${bgmsg}"
+        echo_debug "bgpid: ${bgpid} bgmsg: ${bgmsg}"
 
         for pid in ${!childMap[@]};do
-            pipe="${childMap[${pid}]}"
-            #echo "pid: ${pid} pipe: ${pipe}"
+            local pipe="${childMap[${pid}]}"
+            echo_debug "pid: ${pid} pipe: ${pipe}"
             if [ ${pid} -eq ${bgpid} ];then
                 if [ -w ${pipe} ];then
                     echo "${bgmsg}" > ${pipe}
                 else
-                    echo "pipe removed: ${pipe}"
+                    echo_debug "pipe removed: ${pipe}"
                 fi
             fi
         done
@@ -90,7 +88,7 @@ for gitdir in `ls -d */`
 do
     cd ${gitdir}
     if [ -d .git ]; then
-        #echo "enter ${gitdir}"
+        echo_debug "enter: ${gitdir}"
         prefix=$(printf "%-30s @ " "${gitdir}")
 
         $ROOT_DIR/progress.sh 1 1820 "${prefix}" &
@@ -98,8 +96,8 @@ do
 
         ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
 
-        send_ctrl_to_self "SEND_TO_BG" "${bgpid}${CTRL_SPF2}FIN"
-        send_ctrl_to_self "EXIT_BG" "${bgpid}"
+        send_ctrl_to_self "BG_RECV" "${bgpid}${CTRL_SPF2}FIN"
+        send_ctrl_to_self "BG_EXIT" "${bgpid}"
         wait ${bgpid}
 
         run_res=`cat ${log_file}`
