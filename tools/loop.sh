@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 CMD_STR=""
 while [ -n "$1" ]
 do

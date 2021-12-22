@@ -17,14 +17,10 @@ declare -r TIMEOUT=600
 
 echo_debug "Push { ${CMD_EXE} } to { ${HOST_IP} }"
 
-which expect &> /dev/null
-if [ $? -ne 0 ];then
-    yum install -y expect
-fi
-
 expect << EOF
     set timeout ${TIMEOUT}
-
+    
+    #echo '123' | sudo -S echo "send \015" | expect && sudo -S ls
     spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PWD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PWD}' | sudo -S ${CMD_EXE}"
 

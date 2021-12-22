@@ -35,11 +35,6 @@ if [ -n "${IS_OK}" ];then
 fi
 echo_debug "Cp { ${SRC_DIR} } to { ${DES_DIR} }"
 
-which expect &> /dev/null
-if [ $? -ne 0 ];then
-    yum install -y expect
-fi
-
 expect << EOF
     set timeout ${TIMEOUT}
 
@@ -59,6 +54,5 @@ expect << EOF
             send_user "eof\r"
         }
     }
-
     exit
 EOF

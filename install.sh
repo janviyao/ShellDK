@@ -4,17 +4,26 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
+
+if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
 . ${ROOT_DIR}/tools/include/common.api.sh
+fi
 . ${ROOT_DIR}/tools/paraparser.sh
 
 NEED_SUDO=
 if [ $UID -ne 0 ]; then
+    source ${ROOT_DIR}/tools/sudo.sh
     which sudo &> /dev/null
     if [ $? -eq 0 ]; then
-        NEED_SUDO=sudo
+        #NEED_SUDO="eval echo \"${USR_PASSWORD}\" | sudo -S echo 'send \015' | expect && sudo -S"
+        NEED_SUDO="eval echo -e \"${USR_PASSWORD}\r\" | sudo -u \"${USR_NAME}\" -S"
+        #NEED_SUDO="echo -e '123\\\\r' | sudo -u 'root' -S"
     fi
+else
+    echo "root"
 fi
 
+toolDeps="sshpass expect"
 rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs zlib-devel"
 
 declare -A funcMap
@@ -52,27 +61,20 @@ function inst_usage()
     done
 }
 
-NEED_OP=""
-MAKE_TD=8
-NEED_NET=0
-for option in ${!parasMap[@]};do
-    if [[ "${option}" == "-o" ]];then
-        NEED_OP=${parasMap[$option]}
-    elif [[ "${option}" == "-j" ]];then
-        MAKE_TD=${parasMap[$option]}
-    elif [[ "${option}" == "--op" ]];then
-        NEED_OP=${parasMap[$option]}
-    elif [[ "${option}" == "-n" ]];then
-        NEED_NET=${parasMap[$option]}
-    elif [[ "${option}" == "--net" ]];then
-        NEED_NET="true"
-    fi
-done
+NEED_OP="${parasMap['-o']}"
+NEED_OP="${NEED_OP:-${parasMap['--op']}}"
+NEED_OP="${NEED_OP:?'Please specify -o option'}"
+
+MAKE_TD=${parasMap['-j']:-8}
+
+NEED_NET="${parasMap['-n']}"
+NEED_NET="${NEED_NET:-${parasMap['--net']}}"
+NEED_NET="${NEED_NET:-0}"
 
 OP_MATCH=0
-for key in ${!funcMap[@]};
+for func in ${!funcMap[@]};
 do
-    if [ "x${key}" != "x${NEED_OP}" ]; then
+    if [ "x${func}" != "x${NEED_OP}" ]; then
         let OP_MATCH=OP_MATCH+1
     fi
 done
@@ -87,75 +89,61 @@ fi
 echo_info "$(printf "%13s: %-6s" "[Install Ops]" "${NEED_OP}")"
 echo_info "$(printf "%13s: %-6s" "[Make Thread]" "${MAKE_TD}")"
 echo_info "$(printf "%13s: %-6s" "[Need Netwrk]" "${NEED_NET}")"
-function check_net()   
-{   
-    timeout=5 
-    target=https://github.com
 
-    ret_code=`curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1`   
-    if [ "x$ret_code" = "x200" ]; then   
-        return 1
-    else   
-        return 0
-    fi 
-}
-
-IS_NET_OK=$(bool_v "${NEED_NET}"; echo $?)
-if [ ${IS_NET_OK} -eq 1 ]; then
-    IS_NET_OK=$(check_net; echo $?)
-    if [ ${IS_NET_OK} -eq 1 ]; then
+if [ $(bool_v "${NEED_NET}"; echo $?) -eq 1 ]; then
+    if [ $(check_net; echo $?) -eq 1 ]; then
         echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Ok")"
     else
         echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Fail")"
     fi
 fi
 
+CMD_PRE="my"
+CMD_DIR="/usr/local/bin"
+declare -A commandMap
+commandMap["${CMD_PRE}loop"]="${ROOT_DIR}/tools/loop.sh"
+commandMap["${CMD_PRE}progress"]="${ROOT_DIR}/tools/progress.sh"
+commandMap["${CMD_PRE}collect"]="${ROOT_DIR}/tools/collect.sh"
+commandMap["${CMD_PRE}stop"]="${ROOT_DIR}/tools/stop_p.sh"
+commandMap["${CMD_PRE}scplogin"]="${ROOT_DIR}/tools/scplogin.sh"
+commandMap["${CMD_PRE}scphost"]="${ROOT_DIR}/tools/scphosts.sh"
+commandMap["${CMD_PRE}sshlogin"]="${ROOT_DIR}/tools/sshlogin.sh"
+commandMap["${CMD_PRE}sshhost"]="${ROOT_DIR}/tools/sshhosts.sh"
+commandMap["${CMD_PRE}gitloop"]="${ROOT_DIR}/tools/gitloop.sh"
+commandMap["${CMD_PRE}gitdiff"]="${ROOT_DIR}/tools/gitdiff.sh"
+commandMap["${CMD_PRE}syndir"]="${ROOT_DIR}/tools/sync_dir.sh"
+commandMap["${CMD_PRE}threads"]="${ROOT_DIR}/tools/threads.sh"
+commandMap["${CMD_PRE}paraparser"]="${ROOT_DIR}/tools/paraparser.sh"
+
+commandMap[".vimrc"]="${ROOT_DIR}/vimrc"
+commandMap[".bashrc"]="${ROOT_DIR}/bashrc"
+commandMap[".bash_profile"]="${ROOT_DIR}/bash_profile"
+commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"
+commandMap[".inputrc"]="${ROOT_DIR}/inputrc"
+commandMap[".astylerc"]="${ROOT_DIR}/astylerc"
+
 function deploy_env()
-{
+{ 
+    for linkf in ${!commandMap[@]};
+    do
+        link_file=${commandMap["${linkf}"]}
+        echo_debug "create slink: ${linkf}"
+        if [[ ${linkf:0:1} == "." ]];then
+            ln -s ${link_file} ~/${linkf}
+        else
+            ${NEED_SUDO} ln -s ${link_file} ${CMD_DIR}/${linkf}
+        fi
+    done
+ 
+    for tool in ${toolDeps};
+    do
+        which ${tool} &> /dev/null
+        if [ $? -ne 0 ];then
+            install_cmd ${tool}
+        fi
+    done
+
     cd ${ROOT_DIR}/deps
-
-    if [ ! -f ~/.vimrc ]; then
-        echo_debug "create slink: .vimrc"
-        ln -s ${ROOT_DIR}/vimrc ~/.vimrc
-    fi
-
-    if [ ! -f ~/.bashrc ]; then
-        echo_debug "create slink: .bashrc"
-        ln -s ${ROOT_DIR}/bashrc ~/.bashrc
-    fi
-
-    if [ ! -f ~/.bash_profile ]; then
-        echo_debug "create slink: .bash_profile"
-        ln -s ${ROOT_DIR}/bash_profile ~/.bash_profile
-    fi
-
-    if [ ! -f ~/.minttyrc ]; then
-        echo_debug "create slink: .minttyrc"
-        ln -s ${ROOT_DIR}/minttyrc ~/.minttyrc
-    fi
-
-    if [ ! -f ~/.inputrc ]; then
-        echo_debug "create slink: .inputrc"
-        ln -s ${ROOT_DIR}/inputrc ~/.inputrc
-    fi
-
-    if [ ! -f ~/.astylerc ]; then
-        echo_debug "create slink: .astylerc"
-        ln -s ${ROOT_DIR}/astylerc ~/.astylerc
-    fi
-
-    # source environment config
-    if [ -f ~/.bashrc ]; then
-        source ~/.bashrc
-    fi
-
-    if [ -f ~/.bash_profile ]; then
-        source ~/.bash_profile
-    fi
-
-    if [ -f ~/.minttyrc ]; then
-        source ~/.minttyrc
-    fi
 
     # build vim-work environment
     mkdir -p ~/.vim
@@ -174,7 +162,7 @@ function deploy_env()
 function update_env()
 {
     if [ ${IS_NET_OK} -eq 1 ]; then
-        NEED_UPDATE=1
+        local NEED_UPDATE=1
         if [ ! -d ~/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
             vim +BundleInstall +q +q
@@ -189,15 +177,16 @@ function update_env()
 
 function clean_env()
 {
-    rm -fr ~/.vim
-    rm -fr ~/.vimSession
-    rm -f ~/.vimrc
-    rm -f ~/.viminfo
-    rm -f ~/.bashrc
-    rm -f ~/.bash_profile
-    rm -f ~/.minttyrc
-    rm -f ~/.inputrc
-    rm -f ~/.astylerc
+    for linkf in ${!commandMap[@]};
+    do
+        link_file=${commandMap["${linkf}"]}
+        echo_debug "remove slink: ${linkf}"
+        if [[ ${lnname:0:1} == "." ]];then
+            rm -f ~/${linkf}
+        else
+            ${NEED_SUDO} rm -f ${CMD_DIR}/${linkf}
+        fi
+    done
 }
 
 function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }

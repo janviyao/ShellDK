@@ -8,39 +8,22 @@ fi
 if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
     . $ROOT_DIR/include/common.api.sh
 fi
-
-declare -r USR_NM=`whoami`
-
-read -p "Please input username($USR_NM): " input_val
-declare -r USR_NM=${input_val:-$USR_NM}
-
-read -s -p "Please input password: " input_val
-declare -r PASSWD=${input_val}
-echo ""
-
-echo_debug "UserName: $USR_NM  Password: $PASSWD"
+. ${ROOT_DIR}/sudo.sh
 
 declare -r SRC_FD="$1"
 declare -r DES_FD="$2"
 
-which sshpass &> /dev/null
-IS_OK=$?
-
 for ipaddr in `cat /etc/hosts | grep -P "\d+\.\d+\.\d+\.\d+" -o`
 do
-    echo_debug "ipaddr: $ipaddr sshpass: $IS_OK"
-    IS_LOC=`ip addr | grep -F "$ipaddr"`
-    if [ -n "$IS_LOC" ];then
+    echo_debug "ipaddr: ${ipaddr}"
+    IS_LOC=`ip addr | grep -F "${ipaddr}"`
+    if [ -n "${IS_LOC}" ];then
         continue
     fi
 
-    if [ $IS_OK -eq 0 ];then
-        sh $ROOT_DIR/scplogin.sh "$USR_NM" "$PASSWD" "$SRC_FD" "$ipaddr:$DES_FD"
-    else
-        scp -r $SRC_FD $USR_NM@$ipaddr:$DES_FD
-    fi
+    sh ${ROOT_DIR}/scplogin.sh "${USR_NAME}" "${USR_PASSWORD}" "${SRC_FD}" "${ipaddr}:${DES_FD}"
 
     if [ $? -ne 0 ];then
-        echo_erro "scp fail from $SRC_FD to $DES_FD @ $ipaddr "
+        echo_erro "scp fail from ${SRC_FD} to ${DES_FD} @ ${ipaddr}"
     fi
 done

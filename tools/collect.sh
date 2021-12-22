@@ -1,3 +1,4 @@
+#!/bin/bash
 #set -x
 CUR_DIR=`pwd`
 cd ${CUR_DIR}/..

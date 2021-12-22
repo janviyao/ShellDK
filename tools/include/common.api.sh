@@ -85,3 +85,47 @@ function signal_process
         kill -s ${signal} ${parent_pid} &> /dev/null
     fi
 }
+
+function check_net()   
+{   
+    timeout=5 
+    target=https://github.com
+
+    ret_code=`curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1`   
+    if [ "x$ret_code" = "x200" ]; then   
+        return 1
+    else   
+        return 0
+    fi 
+}
+
+function install_cmd
+{
+    local tool="$1"
+    local success=0
+
+    if [ ${success} -ne 1 ];then
+        which yum &> /dev/null
+        if [ $? -eq 0 ];then
+            yum install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        which apt &> /dev/null
+        if [ $? -eq 0 ];then
+            apt install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        echo_erro "Install: ${tool} fail" 
+    fi
+}
+

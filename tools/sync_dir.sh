@@ -6,7 +6,7 @@ if [ ${LAST_ONE} == '/' ]; then
 fi
 
 if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . $ROOT_DIR/include/common.api.sh
+    . ${ROOT_DIR}/include/common.api.sh
 fi
 
 declare -r USR_NAME=$1
