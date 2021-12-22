@@ -1,21 +1,21 @@
 #!/bin/bash
-CTRL_BASE_DIR="/tmp/ctrl"
-CTRL_THIS_DIR="${CTRL_BASE_DIR}/pid.$$"
-CTRL_HIGH_DIR="${CTRL_BASE_DIR}/pid.$PPID"
+declare -r CTRL_BASE_DIR="/tmp/ctrl"
+declare -r CTRL_THIS_DIR="${CTRL_BASE_DIR}/pid.$$"
+declare -r CTRL_HIGH_DIR="${CTRL_BASE_DIR}/pid.$PPID"
 rm -fr ${CTRL_THIS_DIR}
 mkdir -p ${CTRL_THIS_DIR}
 
-CTRL_THIS_PIPE="${CTRL_THIS_DIR}/msg"
-LOGR_THIS_PIPE="${CTRL_THIS_DIR}/log"
+declare -r CTRL_THIS_PIPE="${CTRL_THIS_DIR}/msg"
+declare -r LOGR_THIS_PIPE="${CTRL_THIS_DIR}/log"
 
-CTRL_HIGH_PIPE="${CTRL_HIGH_DIR}/msg"
-LOGR_HIGH_PIPE="${CTRL_HIGH_DIR}/log"
+declare -r CTRL_HIGH_PIPE="${CTRL_HIGH_DIR}/msg"
+declare -r LOGR_HIGH_PIPE="${CTRL_HIGH_DIR}/log"
 
-CTRL_THIS_FD=${CTRL_THIS_FD:-6}
-LOGR_THIS_FD=${LOGR_THIS_FD:-7}
+declare -i CTRL_THIS_FD=${CTRL_THIS_FD:-6}
+declare -i LOGR_THIS_FD=${LOGR_THIS_FD:-7}
 
-CTRL_SPF1="^"
-CTRL_SPF2="|"
+declare -r CTRL_SPF1="^"
+declare -r CTRL_SPF2="|"
 
 function send_ctrl_to_self
 {

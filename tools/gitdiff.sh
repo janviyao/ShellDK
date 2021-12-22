@@ -4,9 +4,14 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/include/common.api.sh
 
-SRC_ROOT=$1
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
+
+declare -r SRC_ROOT=$1
 if [ ! -d ${SRC_ROOT} ]; then
     echo_erro "Not Dir: ${SRC_ROOT}"
     exit -1
@@ -18,8 +23,8 @@ if [ -z "${BAK_ROOT}" ];then
     BAK_ROOT=~/${SUFFIX}
 fi
 
-EXCLUDE_FILE=""
-EXCLUDE_DIR="\w+\.d \w+\.o \w+\.gcno"
+declare -r EXCLUDE_FILE=""
+declare -r EXCLUDE_DIR="\w+\.d \w+\.o \w+\.gcno"
 
 cd ${SRC_ROOT}
 

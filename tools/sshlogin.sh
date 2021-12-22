@@ -4,14 +4,18 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/include/common.api.sh
 
-USR_NAME="$1"
-USR_PWD="$2"
-HOST_IP="$3"
-CMD_EXE="$4"
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
 
-TIMEOUT=300
+declare -r USR_NAME="$1"
+declare -r USR_PWD="$2"
+declare -r HOST_IP="$3"
+declare -r CMD_EXE="$4"
+declare -r TIMEOUT=600
 
 echo_debug "Push { ${CMD_EXE} } to { ${HOST_IP} }"
 

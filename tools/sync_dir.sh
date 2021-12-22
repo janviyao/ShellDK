@@ -4,21 +4,26 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/include/common.api.sh
 
-USR_NAME=$1
-USR_PWD=$2
-DES_IPA=$3
-SRC_DIR=$4
-DES_DIR=$5
-EXCLUDE="$6"
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
+
+declare -r USR_NAME=$1
+declare -r USR_PWD=$2
+declare -r DES_IPA=$3
+declare -r SRC_DIR=$4
+declare -r DES_DIR=$5
+declare -r EXCLUDE="$6"
 
 CMD_WAP=""
 if [ ! -z "${USR_PWD}" ]; then
     CMD_WAP="sshpass -p ${USR_PWD}"
 fi
 
-SYNC_DES=${USR_NAME}@${DES_IPA}:${DES_DIR}
+declare -r SYNC_DES=${USR_NAME}@${DES_IPA}:${DES_DIR}
 echo_info "Sync from {${SRC_DIR}} to {${SYNC_DES}}"
 
 if [ -z "${EXCLUDE}" ]; then

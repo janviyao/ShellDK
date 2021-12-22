@@ -4,11 +4,16 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ "${LAST_ONE}" == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. ${ROOT_DIR}/include/common.api.sh
 
-CTRL_BASE_DIR="/tmp/ctrl"
-CTRL_THIS_DIR="${CTRL_BASE_DIR}/pid.$$"
-PRG_FIN="${CTRL_THIS_DIR}/finish"
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
+
+declare -r PRG_BASE_DIR="/tmp/ctrl"
+declare -r PRG_THIS_DIR="${PRG_BASE_DIR}/pid.$$"
+declare -r PRG_FIN="${PRG_THIS_DIR}/finish"
 function ctrl_user_handler
 {
     line="$1"
@@ -114,14 +119,14 @@ function progress3
     send_log_to_parent "PRINT" "$(printf "%s" "${prefix}")"
 }
 
-PRG_CURR="$1"
-PRG_LAST="$2"
-LOG_PREF="$3"
+declare -r PRG_CURR="$1"
+declare -r PRG_LAST="$2"
+declare -r LOG_PREF="$3"
 
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${LOG_PREF}"
 
 #echo "exit prg1"
 controller_threads_exit
-controller_clear
 wait
+controller_clear
 #echo "exit prg"

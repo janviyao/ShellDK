@@ -4,21 +4,26 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/include/common.api.sh
 
-USR_NM=`whoami`
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
+
+declare -r USR_NM=`whoami`
 
 read -p "Please input username($USR_NM): " input_val
-USR_NM=${input_val:-$USR_NM}
+declare -r USR_NM=${input_val:-$USR_NM}
 
 read -s -p "Please input password: " input_val
-PASSWD=${input_val}
+declare -r PASSWD=${input_val}
 echo ""
 
 echo_debug "UserName: $USR_NM  Password: $PASSWD"
 
-SRC_FD="$1"
-DES_FD="$2"
+declare -r SRC_FD="$1"
+declare -r DES_FD="$2"
 
 which sshpass &> /dev/null
 IS_OK=$?

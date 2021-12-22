@@ -4,37 +4,42 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ "${LAST_ONE}" == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. ${ROOT_DIR}/include/common.api.sh
+
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
 . $ROOT_DIR/controller.sh
 
 controller_threads_exit
 
 # 设置并发的进程数
-all_num="$1"
-concurrent_num="$2"
-include_api="$3"
+declare -r all_num="$1"
+declare -r concurrent_num="$2"
+declare -r include_api="$3"
 
 if [ -f "${ROOT_DIR}/${include_api}" ];then
     . ${ROOT_DIR}/${include_api}
 fi
 
 # 获取最后一个参数
-thread_task="$(eval echo \$$#)"
+declare -r thread_task="$(eval echo \$$#)"
 
 # mkfifo
-THREAD_BASE_DIR="/tmp/thread"
-THREAD_THIS_DIR="${THREAD_BASE_DIR}/pid.$$"
+declare -r THREAD_BASE_DIR="/tmp/thread"
+declare -r THREAD_THIS_DIR="${THREAD_BASE_DIR}/pid.$$"
 rm -fr ${THREAD_THIS_DIR}
 mkdir -p ${THREAD_THIS_DIR}
 
-THREAD_THIS_PIPE="${THREAD_THIS_DIR}/msg"
+declare -r THREAD_THIS_PIPE="${THREAD_THIS_DIR}/msg"
 mkfifo ${THREAD_THIS_PIPE}
 
 # 清空文件，若不存在则创建
-THREAD_THIS_RET="${THREAD_THIS_DIR}/retcode"
+declare -r THREAD_THIS_RET="${THREAD_THIS_DIR}/retcode"
 :> ${THREAD_THIS_RET}
 
-thread_fd=${thread_fd:-6}
+declare -i thread_fd=${thread_fd:-6}
 # 使文件描述符为写非阻塞式
 exec {thread_fd}<>${THREAD_THIS_PIPE}
 rm -f ${THREAD_THIS_PIPE}
@@ -47,6 +52,9 @@ do
 }
 done >&${thread_fd}
 
+#echo "thread total: ${all_num} concur: ${concurrent_num}"
+
+# 不能用declare -i声明，read值可能非整数导致失败
 thread_fin=1
 # 执行线程
 for tdidx in `seq 1 $((all_num+1))`
@@ -56,6 +64,7 @@ do
  
     while read thread_fin
     do
+        #echo "thread ret: ${thread_fin}"
         sed -i '1d' ${THREAD_THIS_RET}
 
         if [[ -n "${thread_fin}" ]] && [[ ${thread_fin} -eq 0 ]];then
@@ -80,8 +89,8 @@ done
 
 #echo "thread exit"
 wait
-
 controller_clear
+
 # free thead res
 eval "exec ${thread_fd}>&-"
 rm -fr ${THREAD_THIS_DIR}

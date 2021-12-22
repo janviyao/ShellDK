@@ -4,9 +4,13 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
-. $ROOT_DIR/include/common.api.sh
 
-#declare -A bgMap
+if (set -u; : ${TEST_DEBUG})&>/dev/null; then
+    echo > /dev/null
+else
+    . $ROOT_DIR/include/common.api.sh
+fi
+
 function ctrl_user_handler
 {
     line="$1"
@@ -69,19 +73,17 @@ function loger_user_handler
 }
 . $ROOT_DIR/controller.sh
 
-RUN_DIR=$1
-CMD_STR=$2
-
+RUN_DIR="$1"
 if [ ! -d ${RUN_DIR} ]; then
     echo_erro "Dir: ${RUN_DIR} not exist"
     exit -1
 fi
-
 CUR_DIR=`pwd`
 cd ${RUN_DIR}
 RUN_DIR=`pwd`
 
-log_file="/tmp/$$.log"
+declare -r CMD_STR="$2"
+declare -r log_file="/tmp/$$.log"
 :> ${log_file}
 
 for gitdir in `ls -d */`
