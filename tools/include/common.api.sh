@@ -19,7 +19,7 @@ fi
 
 function bool_v
 {
-    para=$1
+    local para=$1
     if [ "${para,,}" == "yes" -o "${para,,}" == "true" -o "${para,,}" == "y" -o "${para}" == "1" ]; then
         return 0
     else
@@ -29,7 +29,7 @@ function bool_v
 
 function access_ok
 {
-    para="$1"
+    local para="$1"
 
     if [ -d ${para} ];then
         return 0
@@ -50,7 +50,7 @@ function access_ok
 
 function trunc_name
 {
-    name_str=`echo "$1" | sed "s#${WORK_DIR}/##g"`
+    local name_str=`echo "$1" | sed "s#${WORK_DIR}/##g"`
     echo "${name_str}"
 }
 
@@ -74,25 +74,25 @@ function echo_header
 
 function echo_erro()
 {
-    para=$1
+    local para=$1
     echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
 }
 
 function echo_info()
 {
-    para=$1
+    local para=$1
     echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
 }
 
 function echo_warn()
 {
-    para=$1
+    local para=$1
     echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
 }
 
 function echo_debug()
 {
-    para=$1
+    local para=$1
 
     bool_v "${TEST_DEBUG}"
     if [ $? -eq 0 ]; then

@@ -7,18 +7,17 @@ do
 done
 
 if [ $((set -u ;: $USR_PASSWORD)&>/dev/null; echo $?) -ne 0 ]; then
-    declare -x USR_NAME=`whoami`
+    export USR_NAME=`whoami`
 
     read -p "Please input username(${USR_NAME}): " input_val
-    #declare -x USR_NAME=${input_val:-${USR_NAME}}
     export USR_NAME=${input_val:-${USR_NAME}}
 
     read -s -p "Please input password: " input_val
-    #declare -x USR_PASSWORD=${input_val}
     export USR_PASSWORD=${input_val}
     echo ""
 fi
 
+if [ -n "${CMD_STR}" ];then
 expect << EOF
     set time 30
     spawn -noecho sudo ${CMD_STR}
@@ -28,3 +27,4 @@ expect << EOF
         eof { send_user "eof\r" }
     }
 EOF
+fi

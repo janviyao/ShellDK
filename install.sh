@@ -5,7 +5,13 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+declare -F INCLUDE &>/dev/null
+if [ $? -eq 0 ];then
+    INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+else
+    . $MY_VIM_DIR/tools/include/common.api.sh
+fi
+
 . ${ROOT_DIR}/tools/paraparser.sh
 
 toolDeps="sshpass expect"
