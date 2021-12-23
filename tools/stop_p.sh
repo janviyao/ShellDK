@@ -1,21 +1,13 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_ONE} == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
-
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . $ROOT_DIR/include/common.api.sh
-fi
-. $ROOT_DIR/paraparser.sh
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+. $MY_VIM_DIR/tools/paraparser.sh
 
 paras_list="${parasMap['others']}"
 
 signame="$(echo ${paras_list} | cut -d ' ' -f 1)"
 pname_list="$(echo ${paras_list} | cut -d ' ' -f 2-)"
 
-echo_debug "@@@@@@: $(echo `basename $0`) @${ROOT_DIR}"
+echo_debug "@@@@@@: $(echo `basename $0`) @ $(echo `dirname $0`)"
 echo_debug "stop [${pname_list}] with [${signame}] @[${LOCAL_IP}]"
 
 exclude_pname="vim"

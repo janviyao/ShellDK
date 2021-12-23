@@ -1,13 +1,5 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_ONE} == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
-
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . ${ROOT_DIR}/include/common.api.sh
-fi
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 
 declare -r USR_NAME=$1
 declare -r USR_PWD=$2
@@ -27,17 +19,17 @@ echo_info "Sync from {${SRC_DIR}} to {${SYNC_DES}}"
 if [ -z "${EXCLUDE}" ]; then
     ${CMD_WAP} rsync -arzu --progress ${SRC_DIR}/* ${SYNC_DES}
     if [ $? -ne 0 ];then
-        sh $ROOT_DIR/scplogin.sh "${USR_NAME}" "${USR_PWD}" "${SRC_DIR}" "${SYNC_DES}"
+        $MY_VIM_DIR/tools/scplogin.sh "${USR_NAME}" "${USR_PWD}" "${SRC_DIR}" "${SYNC_DES}"
     fi
 else
-    rm -f ${ROOT_DIR}/exclude.conf
+    rm -f ~/.exclude.conf
     for file_or_dir in ${EXCLUDE}
     do
-        echo "${file_or_dir}" >> ${ROOT_DIR}/exclude.conf
+        echo "${file_or_dir}" >> ~/.exclude.conf
     done
 
-    ${CMD_WAP} rsync -arzu --exclude-from "${ROOT_DIR}/exclude.conf" --progress ${SRC_DIR}/* ${SYNC_DES}
+    ${CMD_WAP} rsync -arzu --exclude-from "~/.exclude.conf" --progress ${SRC_DIR}/* ${SYNC_DES}
     if [ $? -ne 0 ];then
-        sh $ROOT_DIR/scplogin.sh "${USR_NAME}" "${USR_PWD}" "${SRC_DIR}" "${SYNC_DES}"
+        $MY_VIM_DIR/tools/scplogin.sh "${USR_NAME}" "${USR_PWD}" "${SRC_DIR}" "${SYNC_DES}"
     fi
 fi

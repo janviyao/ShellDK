@@ -1,15 +1,51 @@
 #!/bin/bash
-declare -r TEST_DEBUG=false
-declare -r LOG_HEADER=false
+set -o allexport
+HOME_DIR=$(cd ~;pwd)
+
+TEST_DEBUG=false
+LOG_HEADER=true
+
+SUDO=""
+if [ $UID -ne 0 ]; then
+    which sudo &> /dev/null
+    if [ $? -eq 0 ]; then
+        #NEED_SUDO="eval echo \"${USR_PASSWORD}\" | sudo -S echo 'send \015' | expect && sudo -S"
+        #NEED_SUDO="eval echo -e \"${USR_PASSWORD}\r\" | sudo -u \"${USR_NAME}\" -S"
+        #NEED_SUDO="echo -e '123\\\\r' | sudo -u 'root' -S"
+        sudo_dir=$(cd `dirname $0`/..; pwd)
+        SUDO="${sudo_dir}/tools/sudo.sh"
+    fi
+fi
 
 function bool_v
 {
     para=$1
     if [ "${para,,}" == "yes" -o "${para,,}" == "true" -o "${para,,}" == "y" -o "${para}" == "1" ]; then
-        return 1
+        return 0
     else
+        return 1
+    fi
+}
+
+function access_ok
+{
+    para="$1"
+
+    if [ -d ${para} ];then
+        return 0
+    elif [ -f ${para} ];then
+        return 0
+    elif [ -b ${para} ];then
+        return 0
+    elif [ -c ${para} ];then
+        return 0
+    elif [ -h ${para} ];then
+        return 0
+    elif [ -r ${para} -o -w ${para} -o -x ${para} ];then
         return 0
     fi
+
+    return 1
 }
 
 function trunc_name
@@ -18,18 +54,19 @@ function trunc_name
     echo "${name_str}"
 }
 
-declare -r COLOR_HEADER='\033[40;35m' #黑底紫字
-declare -r COLOR_ERROR='\033[41;30m'  #红底黑字
-declare -r COLOR_DEBUG='\033[43;30m'  #黄底黑字
-declare -r COLOR_INFO='\033[42;37m'   #绿底白字
-declare -r COLOR_WARN='\033[42;31m'   #蓝底红字
-declare -r COLOR_CLOSE='\033[0m'      #关闭颜色
-declare -r FONT_BOLD='\033[1m'        #字体变粗
-declare -r FONT_BLINK='\033[5m'       #字体闪烁
+COLOR_HEADER='\033[40;35m' #黑底紫字
+COLOR_ERROR='\033[41;30m'  #红底黑字
+COLOR_DEBUG='\033[43;30m'  #黄底黑字
+COLOR_INFO='\033[42;37m'   #绿底白字
+COLOR_WARN='\033[42;31m'   #蓝底红字
+COLOR_CLOSE='\033[0m'      #关闭颜色
+FONT_BOLD='\033[1m'        #字体变粗
+FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_header
 {
-    if [ $(bool_v "${LOG_HEADER}"; echo $?) -eq 1 ];then
+    bool_v "${LOG_HEADER}"
+    if [ $? -eq 0 ];then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
         echo "${COLOR_HEADER}${FONT_BOLD}******@${cur_time}: ${COLOR_CLOSE}"
     fi
@@ -56,7 +93,9 @@ function echo_warn()
 function echo_debug()
 {
     para=$1
-    if [ $(bool_v "${TEST_DEBUG}"; echo $?) -eq 1 ]; then
+
+    bool_v "${TEST_DEBUG}"
+    if [ $? -eq 0 ]; then
         echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
     fi
 }
@@ -107,7 +146,7 @@ function install_cmd
     if [ ${success} -ne 1 ];then
         which yum &> /dev/null
         if [ $? -eq 0 ];then
-            yum install ${tool} -y
+            ${SUDO} yum install ${tool} -y
             if [ $? -eq 0 ];then
                 success=1
             fi
@@ -117,7 +156,7 @@ function install_cmd
     if [ ${success} -ne 1 ];then
         which apt &> /dev/null
         if [ $? -eq 0 ];then
-            apt install ${tool} -y
+            ${SUDO} apt install ${tool} -y
             if [ $? -eq 0 ];then
                 success=1
             fi
@@ -128,4 +167,3 @@ function install_cmd
         echo_erro "Install: ${tool} fail" 
     fi
 }
-

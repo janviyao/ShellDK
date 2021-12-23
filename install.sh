@@ -5,23 +5,8 @@ if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
 
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-. ${ROOT_DIR}/tools/include/common.api.sh
-fi
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 . ${ROOT_DIR}/tools/paraparser.sh
-
-NEED_SUDO=
-if [ $UID -ne 0 ]; then
-    source ${ROOT_DIR}/tools/sudo.sh
-    which sudo &> /dev/null
-    if [ $? -eq 0 ]; then
-        #NEED_SUDO="eval echo \"${USR_PASSWORD}\" | sudo -S echo 'send \015' | expect && sudo -S"
-        NEED_SUDO="eval echo -e \"${USR_PASSWORD}\r\" | sudo -u \"${USR_NAME}\" -S"
-        #NEED_SUDO="echo -e '123\\\\r' | sudo -u 'root' -S"
-    fi
-else
-    echo "root"
-fi
 
 toolDeps="sshpass expect"
 rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs zlib-devel"
@@ -90,7 +75,8 @@ echo_info "$(printf "%13s: %-6s" "[Install Ops]" "${NEED_OP}")"
 echo_info "$(printf "%13s: %-6s" "[Make Thread]" "${MAKE_TD}")"
 echo_info "$(printf "%13s: %-6s" "[Need Netwrk]" "${NEED_NET}")"
 
-if [ $(bool_v "${NEED_NET}"; echo $?) -eq 1 ]; then
+bool_v "${NEED_NET}"
+if [ $? -eq 0 ]; then
     if [ $(check_net; echo $?) -eq 1 ]; then
         echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Ok")"
     else
@@ -100,6 +86,7 @@ fi
 
 CMD_PRE="my"
 CMD_DIR="/usr/local/bin"
+
 declare -A commandMap
 commandMap["${CMD_PRE}loop"]="${ROOT_DIR}/tools/loop.sh"
 commandMap["${CMD_PRE}progress"]="${ROOT_DIR}/tools/progress.sh"
@@ -129,9 +116,11 @@ function deploy_env()
         link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            ln -s ${link_file} ~/${linkf}
+            access_ok "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
+            ln -s ${link_file} ${HOME_DIR}/${linkf}
         else
-            ${NEED_SUDO} ln -s ${link_file} ${CMD_DIR}/${linkf}
+            access_ok "${CMD_DIR}/${linkf}" && ${SUDO} rm -f ${CMD_DIR}/${linkf}
+            ${SUDO} ln -s ${link_file} ${CMD_DIR}/${linkf}
         fi
     done
  
@@ -146,25 +135,27 @@ function deploy_env()
     cd ${ROOT_DIR}/deps
 
     # build vim-work environment
-    mkdir -p ~/.vim
-    cp -fr ${ROOT_DIR}/colors ~/.vim
-    cp -fr ${ROOT_DIR}/syntax ~/.vim    
+    mkdir -p ${HOME_DIR}/.vim
+    cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
+    cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim    
 
-    if [ ! -d ~/.vim/bundle/vundle ]; then
+    if [ ! -d ${HOME_DIR}/.vim/bundle/vundle ]; then
         cd ${ROOT_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
-            mv bundle ~/.vim/
+            mv bundle ${HOME_DIR}/.vim/
         fi
     fi
+
+    sed -i "s#export[ ]*MY_VIM_DIR[ ]*=[ ]*.\+#export MY_VIM_DIR=\""${ROOT_DIR}\""#g" ${ROOT_DIR}/bashrc
 }
 
 function update_env()
 {
     if [ ${IS_NET_OK} -eq 1 ]; then
         local NEED_UPDATE=1
-        if [ ! -d ~/.vim/bundle/vundle ]; then
-            git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+        if [ ! -d ${HOME_DIR}/.vim/bundle/vundle ]; then
+            git clone https://github.com/gmarik/vundle.git ${HOME_DIR}/.vim/bundle/vundle
             vim +BundleInstall +q +q
             NEED_UPDATE=0
         fi
@@ -181,10 +172,10 @@ function clean_env()
     do
         link_file=${commandMap["${linkf}"]}
         echo_debug "remove slink: ${linkf}"
-        if [[ ${lnname:0:1} == "." ]];then
-            rm -f ~/${linkf}
+        if [[ ${linkf:0:1} == "." ]];then
+            access_ok "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
         else
-            ${NEED_SUDO} rm -f ${CMD_DIR}/${linkf}
+            access_ok "${CMD_DIR}/${linkf}" && ${SUDO} rm -f ${CMD_DIR}/${linkf}
         fi
     done
 }

@@ -1,14 +1,6 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ "${LAST_ONE}" == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
-
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . $ROOT_DIR/include/common.api.sh
-fi
-. $ROOT_DIR/controller.sh
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+. $MY_VIM_DIR/tools/controller.sh
 
 controller_threads_exit
 
@@ -17,8 +9,8 @@ declare -r all_num="$1"
 declare -r concurrent_num="$2"
 declare -r include_api="$3"
 
-if [ -f "${ROOT_DIR}/${include_api}" ];then
-    . ${ROOT_DIR}/${include_api}
+if [ -f "$MY_VIM_DIR/tools/include/${include_api}" ];then
+    . $MY_VIM_DIR/tools/include/${include_api}
 fi
 
 # 获取最后一个参数

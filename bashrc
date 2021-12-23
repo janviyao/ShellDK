@@ -100,6 +100,23 @@ alias llt='ls --color -lht'
 
 alias LS='ls --color'
 alias LL='ls --color -lh'
+
+#set -o allexport
+function INCLUDE
+{
+    local flag="$1"
+    local file="$2"
+    
+    #"set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
+    local check="\$(set -u ;: \$${flag})"
+    eval "$check" &> /dev/null
+    if [ $? -ne 0 ]; then
+        source "${file}"
+        #. ${file}
+    fi
+}
+export -f INCLUDE
+
 ################################################ End: Added by Janvi Yao ##################################################
 # Some example alias instructions
 # If these are enabled they will be used instead of any instructions
@@ -213,3 +230,5 @@ alias LL='ls --color -lh'
 # }
 # 
 # alias cd=cd_func
+
+export MY_VIM_DIR="/root/.git.vim"

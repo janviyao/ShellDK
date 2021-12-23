@@ -1,13 +1,5 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_ONE} == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
-
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . $ROOT_DIR/include/common.api.sh
-fi
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 
 function ctrl_user_handler
 {
@@ -69,7 +61,7 @@ function loger_user_handler
         done
     fi
 }
-. $ROOT_DIR/controller.sh
+. $MY_VIM_DIR/tools/controller.sh
 
 RUN_DIR="$1"
 if [ ! -d ${RUN_DIR} ]; then
@@ -91,10 +83,10 @@ do
         echo_debug "enter: ${gitdir}"
         prefix=$(printf "%-30s @ " "${gitdir}")
 
-        $ROOT_DIR/progress.sh 1 1820 "${prefix}" &
+        $MY_VIM_DIR/tools/progress.sh 1 1820 "${prefix}" &
         bgpid=$!
 
-        ${ROOT_DIR}/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
+        $MY_VIM_DIR/tools/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
 
         send_ctrl_to_self "BG_RECV" "${bgpid}${CTRL_SPF2}FIN"
         send_ctrl_to_self "BG_EXIT" "${bgpid}"

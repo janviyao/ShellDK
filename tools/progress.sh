@@ -1,13 +1,5 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ "${LAST_ONE}" == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
-
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . $ROOT_DIR/include/common.api.sh
-fi
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 
 declare -r PRG_BASE_DIR="/tmp/ctrl"
 declare -r PRG_THIS_DIR="${PRG_BASE_DIR}/pid.$$"
@@ -24,7 +16,7 @@ function ctrl_user_handler
         touch ${PRG_FIN}
     fi
 }
-. $ROOT_DIR/controller.sh
+. $MY_VIM_DIR/tools/controller.sh
 send_log_to_self "EXIT"
 
 function progress

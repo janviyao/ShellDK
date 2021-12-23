@@ -1,19 +1,11 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_ONE} == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 
-if [ $((set -u ;: $TEST_DEBUG)&>/dev/null; echo $?) -ne 0 ]; then
-    . $ROOT_DIR/include/common.api.sh
-fi
-
-declare -r USR_NAME="$1"
-declare -r USR_PWD="$2"
-declare -r HOST_IP="$3"
-declare -r CMD_EXE="$4"
-declare -r TIMEOUT=600
+TIMEOUT=600
+USR_NAME="$1"
+USR_PWD="$2"
+HOST_IP="$3"
+CMD_EXE="$4"
 
 echo_debug "Push { ${CMD_EXE} } to { ${HOST_IP} }"
 
