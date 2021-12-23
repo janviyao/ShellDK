@@ -3,9 +3,7 @@ SRC_FD="$1"
 DES_FD="$2"
 
 INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-if [ -z "${USR_PASSWORD}" ];then
-    source $MY_VIM_DIR/tools/sudo.sh
-fi
+. $MY_VIM_DIR/tools/password.sh
 
 while read line
 do

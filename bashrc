@@ -117,6 +117,44 @@ function INCLUDE
 }
 export -f INCLUDE
 
+declare -A _globalMap
+export _globalMap=(["aa"]="11" ["bb"]="22")
+function global_set
+{
+    local var_name="$1"
+    local var_value="$(eval "echo \"\$${var_name}\"")"
+
+    _globalMap[${var_name}]="${var_value}"
+}
+export -f global_set
+
+function global_get
+{
+    local var_name="$1"
+    local var_value="${_globalMap[${var_name}]}"
+    
+    eval "export ${var_name}=\"${var_value}\""
+}
+export -f global_get
+
+function global_clear
+{
+    local var
+    for var in ${!_globalMap[@]};do
+        unset _globalMap[$var]
+    done
+}
+export -f global_clear
+
+function global_print
+{
+    local var
+    for var in ${!_globalMap[@]};do
+        echo $(printf "%10s : %s" "${var}" "${_globalMap[$var]}")
+    done
+}
+export -f global_print
+
 ################################################ End: Added by Janvi Yao ##################################################
 # Some example alias instructions
 # If these are enabled they will be used instead of any instructions
@@ -231,4 +269,4 @@ export -f INCLUDE
 # 
 # alias cd=cd_func
 
-export MY_VIM_DIR="/root/.git.vim"
+export MY_VIM_DIR="/home/cat/.git.vim"

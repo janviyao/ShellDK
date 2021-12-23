@@ -6,25 +6,16 @@ do
     shift
 done
 
-if [ $((set -u ;: $USR_PASSWORD)&>/dev/null; echo $?) -ne 0 ]; then
-    export USR_NAME=`whoami`
+. $MY_VIM_DIR/tools/password.sh
 
-    read -p "Please input username(${USR_NAME}): " input_val
-    export USR_NAME=${input_val:-${USR_NAME}}
-
-    read -s -p "Please input password: " input_val
-    export USR_PASSWORD=${input_val}
-    echo ""
-fi
-
-if [ -n "${CMD_STR}" ];then
 expect << EOF
     set time 30
     spawn -noecho sudo ${CMD_STR}
     expect {
-        "*yes/no" { send "yes\r"; exp_continue }
-        "*password*:" { send "${USR_PASSWORD}\r" }
-        eof { send_user "eof\r" }
+        "*yes/no" { send_user "yes\r"; exp_continue }
+        "*password*:" { send_user "${USR_PASSWORD}\r" }
+        "*cat*:" { send_user "${USR_PASSWORD}\r" }
+        #eof { send_user "eof\r" }
+        eof
     }
 EOF
-fi

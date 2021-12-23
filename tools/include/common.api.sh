@@ -12,8 +12,7 @@ if [ $UID -ne 0 ]; then
         #NEED_SUDO="eval echo \"${USR_PASSWORD}\" | sudo -S echo 'send \015' | expect && sudo -S"
         #NEED_SUDO="eval echo -e \"${USR_PASSWORD}\r\" | sudo -u \"${USR_NAME}\" -S"
         #NEED_SUDO="echo -e '123\\\\r' | sudo -u 'root' -S"
-        sudo_dir=$(cd `dirname $0`/..; pwd)
-        SUDO="${sudo_dir}/tools/sudo.sh"
+        SUDO="$MY_VIM_DIR/tools/sudo.sh"
     fi
 fi
 
