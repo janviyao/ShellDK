@@ -1,6 +1,6 @@
 #!/bin/bash
 ROOT_DIR=$(match_trim_end "$(cd `dirname $0`;pwd)" "/")
-MY_VIM_DIR=${ROOT_DIR}
+export MY_VIM_DIR=${ROOT_DIR}
 
 declare -F INCLUDE &>/dev/null
 if [ $? -eq 0 ];then
