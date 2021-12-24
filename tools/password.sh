@@ -14,7 +14,6 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     read -s -p "Please input password: " input_val
     export USR_PASSWORD=${input_val}
     echo ""
-    echo "$USR_PASSWORD"
 
     global_set USR_NAME
     global_set USR_PASSWORD

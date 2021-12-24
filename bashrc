@@ -15,71 +15,130 @@ alias LS='ls --color'
 alias LL='ls --color -lh'
 
 #set -o allexport
+function end_char
+{
+    local string="$1"
+    local end_char=`echo "${string}" | grep -P ".$" -o`
+    echo "${end_char}" 
+}
+export -f end_char
+
+function first_char
+{
+    local string="$1"
+    local fst_char=`echo "${string}" | grep -P "^." -o`
+    echo "${fst_char}" 
+}
+export -f first_char
+
+function match_trim_end
+{
+    local string="$1"
+    local endchar="$2"
+
+    if [[ $(end_char "${string}") == ${endchar} ]]; then
+        local new=`echo "${string}" | sed 's/.$//g'` 
+        echo "${new}"
+    else
+        echo "${string}"
+    fi
+}
+export -f match_trim_end
+
+function match_trim_first
+{
+    local string="$1"
+    local fstchar="$2"
+
+    if [[ $(first_char "${string}") == ${fstchar} ]]; then
+        local new=`echo "${string}" | sed 's/^.//g'` 
+        echo "${new}"
+    else
+        echo "${string}"
+    fi
+}
+export -f match_trim_first
+
+function var_exist
+{
+    local var_name="$1"
+    if [ -z "${var_name}" ];then
+        return 1
+    fi
+
+    #"set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
+    local check="\$(set -u ;: \$${var_name})"
+    eval "$check" &> /dev/null
+    if [ $? -eq 0 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+export -f var_exist
+
 function INCLUDE
 {
     local flag="$1"
     local file="$2"
     
-    #"set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
-    local check="\$(set -u ;: \$${flag})"
-    eval "$check" &> /dev/null
-    if [ $? -ne 0 ]; then
-        #source "${file}"
-        . ${file}
-    fi
+    var_exist "${flag}" || source ${file} 
 }
 export -f INCLUDE
 
 # export these
-declare -rx _GLOBAL_CTRL_DIR="/tmp/ctrl/global.$$"
-declare -rx _GLOBAL_CTRL_PIPE="${_GLOBAL_CTRL_DIR}/msg.global"
-declare -rx _GLOBAL_CTRL_SPF1="^"
-declare -rx _GLOBAL_CTRL_SPF2="|"
+var_exist "_GLOBAL_CTRL_DIR"
+if [ $? -ne 0 ];then
+    declare -rx _GLOBAL_CTRL_DIR="/tmp/ctrl/global.$$"
+    declare -rx _GLOBAL_CTRL_PIPE="${_GLOBAL_CTRL_DIR}/msg.global"
+    declare -rx _GLOBAL_CTRL_SPF1="^"
+    declare -rx _GLOBAL_CTRL_SPF2="|"
 
-rm -fr ${_GLOBAL_CTRL_DIR}
-mkdir -p ${_GLOBAL_CTRL_DIR}
-declare -i _GLOBAL_CTRL_FD=6
-mkfifo ${_GLOBAL_CTRL_PIPE}
-exec {_GLOBAL_CTRL_FD}<>${_GLOBAL_CTRL_PIPE}
+    rm -fr ${_GLOBAL_CTRL_DIR}
+    mkdir -p ${_GLOBAL_CTRL_DIR}
+    declare -i _GLOBAL_CTRL_FD=6
+    mkfifo ${_GLOBAL_CTRL_PIPE}
+    exec {_GLOBAL_CTRL_FD}<>${_GLOBAL_CTRL_PIPE}
 
-trap "echo 'EXIT' > ${_GLOBAL_CTRL_PIPE}; exec ${_GLOBAL_CTRL_FD}>&-; rm -fr ${_GLOBAL_CTRL_DIR}; exit 0" EXIT
+    trap "echo 'EXIT' > ${_GLOBAL_CTRL_PIPE}; exec ${_GLOBAL_CTRL_FD}>&-; rm -fr ${_GLOBAL_CTRL_DIR}; exit 0" EXIT
 
-declare -A _globalMap
-function _global_ctrl_bg_thread
-{
-    while read line
-    do
-        #echo "[$$]global recv: [${line}]" 
-        local ctrl="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
-        local msg="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
+    function _global_ctrl_bg_thread
+    {
+        declare -A _globalMap
+        while read line
+        do
+            #echo "[$$]global recv: [${line}]" 
+            local ctrl="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
+            local msg="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
 
-        if [[ "${ctrl}" == "EXIT" ]];then
-            exit 0 
-        elif [[ "${ctrl}" == "SET_ENV" ]];then
-            local var_name="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)"
-            local var_value="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
+            if [[ "${ctrl}" == "EXIT" ]];then
+                exit 0 
+            elif [[ "${ctrl}" == "SET_ENV" ]];then
+                local var_name="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)"
+                local var_value="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
 
-            _globalMap[${var_name}]="${var_value}"
-        elif [[ "${ctrl}" == "GET_ENV" ]];then
-            local var_name="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)"
-            local var_pipe="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
+                _globalMap[${var_name}]="${var_value}"
+            elif [[ "${ctrl}" == "GET_ENV" ]];then
+                local var_name="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)"
+                local var_pipe="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
 
-            echo "${_globalMap[${var_name}]}" > ${var_pipe}
-        elif [[ "${ctrl}" == "UNSET_ENV" ]];then
-            local var_name=${msg}
-            unset _globalMap["${var_name}"]
-        elif [[ "${ctrl}" == "PRINT_ENV" ]];then
-            if [ ${#_globalMap[@]} -ne 0 ];then
-                echo "" > /dev/tty
-                for var_name in ${!_globalMap[@]};do
-                    echo "$(printf "[%15s]: %s" "${var_name}" "${_globalMap[${var_name}]}")" > /dev/tty
-                done
-                #echo "send \010" | expect 
+                echo "${_globalMap[${var_name}]}" > ${var_pipe}
+            elif [[ "${ctrl}" == "UNSET_ENV" ]];then
+                local var_name=${msg}
+                unset _globalMap["${var_name}"]
+            elif [[ "${ctrl}" == "PRINT_ENV" ]];then
+                if [ ${#_globalMap[@]} -ne 0 ];then
+                    echo "" > /dev/tty
+                    for var_name in ${!_globalMap[@]};do
+                        echo "$(printf "[%15s]: %s" "${var_name}" "${_globalMap[${var_name}]}")" > /dev/tty
+                    done
+                    #echo "send \010" | expect 
+                fi
             fi
-        fi
-    done < ${_GLOBAL_CTRL_PIPE}
-}
-_global_ctrl_bg_thread &
+        done < ${_GLOBAL_CTRL_PIPE}
+    }
+    _global_ctrl_bg_thread &
+fi
 
 function global_set
 {

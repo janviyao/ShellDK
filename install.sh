@@ -1,9 +1,5 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
-if [ ${LAST_ONE} == '/' ]; then
-    ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
-fi
+ROOT_DIR=$(match_trim_end "$(cd `dirname $0`;pwd)" "/")
 MY_VIM_DIR=${ROOT_DIR}
 
 declare -F INCLUDE &>/dev/null
@@ -100,9 +96,9 @@ commandMap["${CMD_PRE}progress"]="${ROOT_DIR}/tools/progress.sh"
 commandMap["${CMD_PRE}collect"]="${ROOT_DIR}/tools/collect.sh"
 commandMap["${CMD_PRE}stop"]="${ROOT_DIR}/tools/stop_p.sh"
 commandMap["${CMD_PRE}scplogin"]="${ROOT_DIR}/tools/scplogin.sh"
-commandMap["${CMD_PRE}scphost"]="${ROOT_DIR}/tools/scphosts.sh"
+commandMap["${CMD_PRE}scphosts"]="${ROOT_DIR}/tools/scphosts.sh"
 commandMap["${CMD_PRE}sshlogin"]="${ROOT_DIR}/tools/sshlogin.sh"
-commandMap["${CMD_PRE}sshhost"]="${ROOT_DIR}/tools/sshhosts.sh"
+commandMap["${CMD_PRE}sshhosts"]="${ROOT_DIR}/tools/sshhosts.sh"
 commandMap["${CMD_PRE}gitloop"]="${ROOT_DIR}/tools/gitloop.sh"
 commandMap["${CMD_PRE}gitdiff"]="${ROOT_DIR}/tools/gitdiff.sh"
 commandMap["${CMD_PRE}syndir"]="${ROOT_DIR}/tools/sync_dir.sh"
@@ -155,9 +151,9 @@ function deploy_env()
     access_ok "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
     access_ok "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
-    sed -i "/source.\+bashrc/d" ${HOME_DIR}/.bashrc
+    sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
     sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
-    sed -i "/source.\+bash_profile/d" ${HOME_DIR}/.bash_profile
+    sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 
     echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
     echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${HOME_DIR}/.bashrc
@@ -192,6 +188,10 @@ function clean_env()
             access_ok "${CMD_DIR}/${linkf}" && ${SUDO} rm -f ${CMD_DIR}/${linkf}
         fi
     done
+
+    sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
+    sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 }
 
 function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
