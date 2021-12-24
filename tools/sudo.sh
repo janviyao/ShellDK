@@ -18,6 +18,7 @@ expect << EOF
     spawn -noecho sudo -E ${CMD_STR}
     expect {
         "*password*:" { send "${USR_PASSWORD}\r"; send "\r" }
+        "\[sudo\]*：" { send "${USR_PASSWORD}\r"; send "\r" }
         eof
     }
     ${EXPECT_EOF}

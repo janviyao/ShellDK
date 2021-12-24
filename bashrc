@@ -152,7 +152,11 @@ if [ $? -ne 0 ];then
             fi
         done < ${_GLOBAL_CTRL_PIPE}
     }
-    _global_ctrl_bg_thread &
+
+    {
+        trap "" SIGINT SIGTERM SIGKILL
+        _global_ctrl_bg_thread
+    }&
 fi
 
 function global_set
