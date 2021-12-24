@@ -4,6 +4,7 @@ LAST_ONE=`echo "${ROOT_DIR}" | grep -P ".$" -o`
 if [ ${LAST_ONE} == '/' ]; then
     ROOT_DIR=`echo "${ROOT_DIR}" | sed 's/.$//g'`
 fi
+MY_VIM_DIR=${ROOT_DIR}
 
 declare -F INCLUDE &>/dev/null
 if [ $? -eq 0 ];then
@@ -93,6 +94,7 @@ CMD_PRE="my"
 CMD_DIR="/usr/local/bin"
 
 declare -A commandMap
+commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
 commandMap["${CMD_PRE}loop"]="${ROOT_DIR}/tools/loop.sh"
 commandMap["${CMD_PRE}progress"]="${ROOT_DIR}/tools/progress.sh"
 commandMap["${CMD_PRE}collect"]="${ROOT_DIR}/tools/collect.sh"
@@ -108,8 +110,6 @@ commandMap["${CMD_PRE}threads"]="${ROOT_DIR}/tools/threads.sh"
 commandMap["${CMD_PRE}paraparser"]="${ROOT_DIR}/tools/paraparser.sh"
 
 commandMap[".vimrc"]="${ROOT_DIR}/vimrc"
-commandMap[".bashrc"]="${ROOT_DIR}/bashrc"
-commandMap[".bash_profile"]="${ROOT_DIR}/bash_profile"
 commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"
 commandMap[".inputrc"]="${ROOT_DIR}/inputrc"
 commandMap[".astylerc"]="${ROOT_DIR}/astylerc"
@@ -151,8 +151,17 @@ function deploy_env()
             mv bundle ${HOME_DIR}/.vim/
         fi
     fi
+    
+    access_ok "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
+    access_ok "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
-    sed -i "s#export[ ]*MY_VIM_DIR[ ]*=[ ]*.\+#export MY_VIM_DIR=\""${ROOT_DIR}\""#g" ${ROOT_DIR}/bashrc
+    sed -i "/source.\+bashrc/d" ${HOME_DIR}/.bashrc
+    sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    sed -i "/source.\+bash_profile/d" ${HOME_DIR}/.bash_profile
+
+    echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
+    echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${HOME_DIR}/.bashrc
+    echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
 }
 
 function update_env()

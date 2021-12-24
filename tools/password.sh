@@ -1,8 +1,10 @@
 #!/bin/bash
+declare -A _globalMap
+
 global_get USR_NAME
 global_get USR_PASSWORD
 
-echo "Username: $USR_NAME Password: $USR_PASSWORD"
+#echo "Username: $USR_NAME Password: $USR_PASSWORD"
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     export USR_NAME=`whoami`
 

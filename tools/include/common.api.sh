@@ -1,6 +1,6 @@
 #!/bin/bash
 set -o allexport
-HOME_DIR=$(cd ~;pwd)
+HOME_DIR=${HOME}
 
 TEST_DEBUG=false
 LOG_HEADER=true

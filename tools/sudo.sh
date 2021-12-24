@@ -8,14 +8,17 @@ done
 
 . $MY_VIM_DIR/tools/password.sh
 
+EXPECT_EOF=""
+if [ $UID -ne 0 ]; then
+    EXPECT_EOF="expect eof"
+fi
+
 expect << EOF
     set time 30
-    spawn -noecho sudo ${CMD_STR}
+    spawn -noecho sudo -E ${CMD_STR}
     expect {
-        "*yes/no" { send_user "yes\r"; exp_continue }
-        "*password*:" { send_user "${USR_PASSWORD}\r" }
-        "*cat*:" { send_user "${USR_PASSWORD}\r" }
-        #eof { send_user "eof\r" }
+        "*password*:" { send "${USR_PASSWORD}\r"; send "\r" }
         eof
     }
+    ${EXPECT_EOF}
 EOF
