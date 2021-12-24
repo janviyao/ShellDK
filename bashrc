@@ -15,29 +15,41 @@ alias LS='ls --color'
 alias LL='ls --color -lh'
 
 #set -o allexport
-function end_char
+function end_chars
 {
     local string="$1"
-    local end_char=`echo "${string}" | grep -P ".$" -o`
-    echo "${end_char}" 
-}
-export -f end_char
+    local count="$2"
 
-function first_char
+    [ -z "${count}" ] && count=1
+
+    local chars="`echo "${string}" | rev | cut -c 1-${count} | rev`"
+    echo "${chars}"
+}
+export -f end_chars
+
+function start_chars
 {
     local string="$1"
-    local fst_char=`echo "${string}" | grep -P "^." -o`
-    echo "${fst_char}" 
+    local count="$2"
+
+    [ -z "${count}" ] && count=1
+
+    local chars="`echo "${string}" | cut -c 1-${count}`"
+    echo "${chars}"
 }
-export -f first_char
+export -f start_chars
 
 function match_trim_end
 {
     local string="$1"
-    local endchar="$2"
+    local subchar="$2"
+    
+    local total=${#string}
+    local sublen=${#subchar}
 
-    if [[ $(end_char "${string}") == ${endchar} ]]; then
-        local new=`echo "${string}" | sed 's/.$//g'` 
+    if [[ "$(end_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+        local diff=$((total-sublen))
+        local new="`echo "${string}" | cut -c 1-${diff}`" 
         echo "${new}"
     else
         echo "${string}"
@@ -45,19 +57,22 @@ function match_trim_end
 }
 export -f match_trim_end
 
-function match_trim_first
+function match_trim_start
 {
     local string="$1"
-    local fstchar="$2"
+    local subchar="$2"
+    
+    local sublen=${#subchar}
 
-    if [[ $(first_char "${string}") == ${fstchar} ]]; then
-        local new=`echo "${string}" | sed 's/^.//g'` 
+    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+        let sublen++
+        local new="`echo "${string}" | cut -c ${sublen}-`" 
         echo "${new}"
     else
         echo "${string}"
     fi
 }
-export -f match_trim_first
+export -f match_trim_start
 
 function var_exist
 {

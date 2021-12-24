@@ -80,7 +80,7 @@ function progress3
     local last=$((total+1))
     
     local postfix=('|' '/' '-' '\')
-    while [[ $now -le $last ]] && [[ ! -f ${PRG_FIN} ]] 
+    while [ $now -le $last ] && [ ! -f ${PRG_FIN} ] 
     do
         local count=$(printf "%.0f" `echo "scale=1;(($now-$current)*$step)/$shrink"|bc`)
 
