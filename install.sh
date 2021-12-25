@@ -117,7 +117,47 @@ commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"
 commandMap[".inputrc"]="${ROOT_DIR}/inputrc"
 commandMap[".astylerc"]="${ROOT_DIR}/astylerc"
 
-function deploy_env()
+function install_from_net
+{
+    local tool="$1"
+    local success=0
+
+    if [ ${success} -ne 1 ];then
+        which yum &> /dev/null
+        if [ $? -eq 0 ];then
+            ${SUDO} yum install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        which apt &> /dev/null
+        if [ $? -eq 0 ];then
+            ${SUDO} apt install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        which apt-cyg &> /dev/null
+        if [ $? -eq 0 ];then
+            apt-cyg install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        echo_erro "Install: ${tool} fail" 
+    fi
+}
+
+function deploy_env
 { 
     for linkf in ${!commandMap[@]};
     do
@@ -136,7 +176,13 @@ function deploy_env()
     do
         which ${tool} &> /dev/null
         if [ $? -ne 0 ];then
-            install_cmd ${tool}
+            bool_v "${NEED_NET}"
+            if [ $? -eq 0 ];then
+                install_from_net ${tool}
+            else
+                echo_erro "Please enable network"
+                exit 1
+            fi
         fi
     done
 
@@ -147,7 +193,8 @@ function deploy_env()
     cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
     cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim    
 
-    if [ ! -d ${HOME_DIR}/.vim/bundle/vundle ]; then
+    access_ok "${HOME_DIR}/.vim/bundle/vundle"
+    if [ $? -ne 0 ]; then
         cd ${ROOT_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
@@ -171,14 +218,15 @@ function update_env()
 {
     bool_v "${NEED_NET}"
     if [ $? -eq 0 ]; then
-        local NEED_UPDATE=1
-        if [ ! -d ${HOME_DIR}/.vim/bundle/vundle ]; then
+        local need_update=1
+        access_ok "${HOME_DIR}/.vim/bundle/vundle"
+        if [ $? -ne 0 ]; then
             git clone https://github.com/gmarik/vundle.git ${HOME_DIR}/.vim/bundle/vundle
             vim +BundleInstall +q +q
-            NEED_UPDATE=0
+            need_update=0
         fi
 
-        if [ ${NEED_UPDATE} -eq 1 ]; then
+        if [ ${need_update} -eq 1 ]; then
             vim +BundleUpdate +q +q
         fi
     fi
@@ -209,8 +257,8 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 
 function inst_deps()
 { 
-    if [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
-        cd ${ROOT_DIR}/deps
+    cd ${ROOT_DIR}/deps
+    if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
         for rpmf in ${rpmDeps};
         do
             local rpm_file=`find . -name "${rpmf}*.rpm"`
@@ -304,13 +352,11 @@ function inst_deps()
         ${SUDO} echo "${HOME_DIR}/.local/lib" '>>' /etc/ld.so.conf
         ${SUDO} ldconfig
 
-    elif [[ "$(expr substr $(uname -s) 1 9)" == "CYGWIN_NT" ]]; then
+    elif [[ "$(start_chars $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         # Install deno
-        cd ${ROOT_DIR}/deps
         unzip deno-x86_64-pc-windows-msvc.zip
         mv -f deno.exe ${BIN_DIR}
         chmod +x ${BIN_DIR}/deno.exe
-        rm -fr deno-x86_64*
 
         cp -f apt-cyg ${BIN_DIR}
         chmod +x ${BIN_DIR}/apt-cyg
@@ -433,6 +479,8 @@ function inst_vim()
     rm -fr vim*/
 
     ${SUDO} rm -f /usr/local/bin/vim
+
+    access_ok "${BIN_DIR}/vim" && rm -f ${BIN_DIR}/vim
     ${SUDO} ln -s /usr/bin/vim ${BIN_DIR}/vim
 }
 
@@ -546,9 +594,9 @@ do
         echo_info "$(printf "%13s: %-6s" "[Funcs]" "${funcMap[${key}]}")"
         for func in ${funcMap[${key}]};
         do
-            echo_info "$(printf "%13s: %-6s start" "[Install]" "${func}")"
+            echo_info "$(printf "%13s: %-13s start" "[Install]" "${func}")"
             ${func}
-            echo_info "$(printf "%13s: %-6s done" "[Install]" "${func}")"
+            echo_info "$(printf "%13s: %-13s done" "[Install]" "${func}")"
         done
         break
     fi

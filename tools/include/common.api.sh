@@ -12,9 +12,6 @@ SUDO=""
 if [ $UID -ne 0 ]; then
     which sudo &> /dev/null
     if [ $? -eq 0 ]; then
-        #NEED_SUDO="eval echo \"${USR_PASSWORD}\" | sudo -S echo 'send \015' | expect && sudo -S"
-        #NEED_SUDO="eval echo -e \"${USR_PASSWORD}\r\" | sudo -u \"${USR_NAME}\" -S"
-        #NEED_SUDO="echo -e '123\\\\r' | sudo -u 'root' -S"
         SUDO="$MY_VIM_DIR/tools/sudo.sh"
     fi
 fi
@@ -48,12 +45,6 @@ function access_ok
     fi
 
     return 1
-}
-
-function trunc_name
-{
-    local name_str=`echo "$1" | sed "s#${WORK_DIR}/##g"`
-    echo "${name_str}"
 }
 
 COLOR_HEADER='\033[40;35m' #黑底紫字
@@ -138,34 +129,4 @@ function check_net
     else   
         return 1
     fi 
-}
-
-function install_cmd
-{
-    local tool="$1"
-    local success=0
-
-    if [ ${success} -ne 1 ];then
-        which yum &> /dev/null
-        if [ $? -eq 0 ];then
-            ${SUDO} yum install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=1
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 1 ];then
-        which apt &> /dev/null
-        if [ $? -eq 0 ];then
-            ${SUDO} apt install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=1
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 1 ];then
-        echo_erro "Install: ${tool} fail" 
-    fi
 }
