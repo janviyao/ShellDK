@@ -106,6 +106,44 @@ function is_var
 }
 export -f is_var
 
+function install_from_net
+{
+    local tool="$1"
+    local success=0
+
+    if [ ${success} -ne 1 ];then
+        which yum &> /dev/null
+        if [ $? -eq 0 ];then
+            yum install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        which apt &> /dev/null
+        if [ $? -eq 0 ];then
+            apt install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 1 ];then
+        which apt-cyg &> /dev/null
+        if [ $? -eq 0 ];then
+            apt-cyg install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=1
+            fi
+        fi
+    fi
+
+    return ${success} 
+}
+
 function INCLUDE
 {
     local flag="$1"
@@ -178,6 +216,16 @@ if [ $? -ne 0 ];then
         _global_ctrl_bg_thread
     }&
 fi
+
+function global_set_pipe
+{
+    local var_name="$1"
+    local one_pipe="$2"
+    local var_value="$(eval "echo \"\$${var_name}\"")"
+
+    echo "SET_ENV${_GLOBAL_CTRL_SPF1}${var_name}${_GLOBAL_CTRL_SPF2}${var_value}" > ${one_pipe}
+}
+export -f global_set_pipe
 
 function global_set
 {

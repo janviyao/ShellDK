@@ -117,46 +117,6 @@ commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"
 commandMap[".inputrc"]="${ROOT_DIR}/inputrc"
 commandMap[".astylerc"]="${ROOT_DIR}/astylerc"
 
-function install_from_net
-{
-    local tool="$1"
-    local success=0
-
-    if [ ${success} -ne 1 ];then
-        which yum &> /dev/null
-        if [ $? -eq 0 ];then
-            ${SUDO} yum install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=1
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 1 ];then
-        which apt &> /dev/null
-        if [ $? -eq 0 ];then
-            ${SUDO} apt install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=1
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 1 ];then
-        which apt-cyg &> /dev/null
-        if [ $? -eq 0 ];then
-            apt-cyg install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=1
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 1 ];then
-        echo_erro "Install: ${tool} fail" 
-    fi
-}
-
 function deploy_env
 { 
     for linkf in ${!commandMap[@]};
@@ -171,21 +131,7 @@ function deploy_env
             ${SUDO} ln -s ${link_file} ${BIN_DIR}/${linkf}
         fi
     done
- 
-    for tool in ${toolDeps};
-    do
-        which ${tool} &> /dev/null
-        if [ $? -ne 0 ];then
-            bool_v "${NEED_NET}"
-            if [ $? -eq 0 ];then
-                install_from_net ${tool}
-            else
-                echo_erro "Please enable network"
-                exit 1
-            fi
-        fi
-    done
-
+  
     cd ${ROOT_DIR}/deps
 
     # build vim-work environment
@@ -257,6 +203,26 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 
 function inst_deps()
 { 
+    for tool in ${toolDeps};
+    do
+        which ${tool} &> /dev/null
+        if [ $? -ne 0 ];then
+            bool_v "${NEED_NET}"
+            if [ $? -eq 0 ];then
+                ${SUDO} install_from_net ${tool}
+            else
+                echo_erro "Please enable network"
+                exit 1
+            fi
+        fi
+    done
+
+    if [ $UID -ne 0 -a -z "${SUDO}" ]; then
+        # not root and sudo empty
+        echo_warn "Not root user and \$SUDO null, please rerun"
+        exit 0
+    fi
+
     cd ${ROOT_DIR}/deps
     if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
         for rpmf in ${rpmDeps};
