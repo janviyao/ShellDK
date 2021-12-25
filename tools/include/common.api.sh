@@ -1,5 +1,8 @@
 #!/bin/bash
+#set -e # when error, then exit
+#set -u # variable not exist, then exit
 set -o allexport
+
 HOME_DIR=${HOME}
 
 TEST_DEBUG=false
@@ -71,25 +74,25 @@ function echo_header
     fi
 }
 
-function echo_erro()
+function echo_erro
 {
     local para=$1
     echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
 }
 
-function echo_info()
+function echo_info
 {
     local para=$1
     echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
 }
 
-function echo_warn()
+function echo_warn
 {
     local para=$1
     echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
 }
 
-function echo_debug()
+function echo_debug
 {
     local para=$1
 
@@ -124,16 +127,16 @@ function signal_process
     fi
 }
 
-function check_net()   
+function check_net
 {   
     timeout=5 
     target=https://github.com
 
     ret_code=`curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1`   
     if [ "x$ret_code" = "x200" ]; then   
-        return 1
-    else   
         return 0
+    else   
+        return 1
     fi 
 }
 

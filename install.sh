@@ -1,4 +1,7 @@
 #!/bin/bash
+#set -e # when error, then exit
+#set -u # variable not exist, then exit
+
 ROOT_DIR=$(match_trim_end "$(cd `dirname $0`;pwd)" "/")
 export MY_VIM_DIR=${ROOT_DIR}
 
@@ -79,15 +82,19 @@ echo_info "$(printf "%13s: %-6s" "[Need Netwrk]" "${NEED_NET}")"
 
 bool_v "${NEED_NET}"
 if [ $? -eq 0 ]; then
-    if [ $(check_net; echo $?) -eq 1 ]; then
+    check_net
+    if [ $? -eq 0 ]; then
+        NEED_NET=1
         echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Ok")"
     else
+        NEED_NET=0
         echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Fail")"
     fi
 fi
 
 CMD_PRE="my"
-CMD_DIR="/usr/local/bin"
+BIN_DIR="${HOME_DIR}/.local/bin"
+mkdir -p ${BIN_DIR}
 
 declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
@@ -114,14 +121,14 @@ function deploy_env()
 { 
     for linkf in ${!commandMap[@]};
     do
-        link_file=${commandMap["${linkf}"]}
+        local link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
             access_ok "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
             ln -s ${link_file} ${HOME_DIR}/${linkf}
         else
-            access_ok "${CMD_DIR}/${linkf}" && ${SUDO} rm -f ${CMD_DIR}/${linkf}
-            ${SUDO} ln -s ${link_file} ${CMD_DIR}/${linkf}
+            access_ok "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
+            ${SUDO} ln -s ${link_file} ${BIN_DIR}/${linkf}
         fi
     done
  
@@ -162,7 +169,8 @@ function deploy_env()
 
 function update_env()
 {
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         local NEED_UPDATE=1
         if [ ! -d ${HOME_DIR}/.vim/bundle/vundle ]; then
             git clone https://github.com/gmarik/vundle.git ${HOME_DIR}/.vim/bundle/vundle
@@ -180,12 +188,12 @@ function clean_env()
 {
     for linkf in ${!commandMap[@]};
     do
-        link_file=${commandMap["${linkf}"]}
+        local link_file=${commandMap["${linkf}"]}
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
             access_ok "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
         else
-            access_ok "${CMD_DIR}/${linkf}" && ${SUDO} rm -f ${CMD_DIR}/${linkf}
+            access_ok "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
         fi
     done
 
@@ -201,29 +209,29 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 
 function inst_deps()
 { 
-    if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    if [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
         cd ${ROOT_DIR}/deps
         for rpmf in ${rpmDeps};
         do
-            RPM_FILE=`find . -name "${rpmf}*.rpm"`
-            RPM_FILE=`basename ${RPM_FILE}`
+            local rpm_file=`find . -name "${rpmf}*.rpm"`
+            local rpm_file=`basename ${rpm_file}`
 
-            INSTALLED=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
-            echo_info "$(printf " Will install: %-50s   Have installed: %s" "${RPM_FILE}" "${INSTALLED}")"
+            local installed=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
+            echo_info "$(printf " Will install: %-50s   Have installed: %s" "${rpm_file}" "${installed}")"
 
-            NEED_INSTALL=0
-            if [ -z "${INSTALLED}" ]; then
-                NEED_INSTALL=1    
+            local need_install=0
+            if [ -z "${installed}" ]; then
+                need_install=1    
             else
-                VERSION_CUR=`echo "${INSTALLED}" | tr " " "\n" | grep -P "\d+\.\d+\.?\d*" -o | sort -r | head -n 1`
-                VERSION_NEW=`echo "${RPM_FILE}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
-                if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
-                    NEED_INSTALL=1    
+                local version_cur=`echo "${installed}" | tr " " "\n" | grep -P "\d+\.\d+\.?\d*" -o | sort -r | head -n 1`
+                local version_new=`echo "${rpm_file}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
+                if version_lt ${version_cur} ${version_new}; then
+                    need_install=1    
                 fi
             fi
 
-            if test ${NEED_INSTALL} -eq 1; then
-                rpm -ivh ${RPM_FILE} --nodeps --force
+            if test ${need_install} -eq 1; then
+                ${SUDO} rpm -ivh ${rpm_file} --nodeps --force
                 if [ $? -ne 0 ]; then
                     echo_erro "Install: ${rpmf} failure"
                     exit -1
@@ -236,11 +244,11 @@ function inst_deps()
         # Install deno
         cd ${ROOT_DIR}/deps
         unzip deno-x86_64-unknown-linux-gnu.zip
-        mv -f deno /usr/bin
+        mv -f deno ${BIN_DIR}
 
-        VERSION_CUR=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
-        VERSION_NEW=2.18
-        if version_lt ${VERSION_CUR} ${VERSION_NEW}; then
+        local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
+        local version_new=2.18
+        if version_lt ${version_cur} ${version_new}; then
             # Install glibc
             cd ${ROOT_DIR}/deps
             tar -zxf  glibc-2.18.tar.gz
@@ -250,7 +258,7 @@ function inst_deps()
 
             ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
             make -j 8
-            make install
+            ${SUDO} make install
             
             cd ${ROOT_DIR}/deps
             rm -fr glibc-2.18
@@ -287,17 +295,25 @@ function inst_deps()
         #cd ${ROOT_DIR}/deps
         #rm -fr libiconv-*/
 
-        sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
-        echo "/usr/local/lib" >> /etc/ld.so.conf
-        ldconfig
+        ${SUDO} chmod 777 /etc/ld.so.conf
 
-    elif [ "$(expr substr $(uname -s) 1 9)" == "CYGWIN_NT" ]; then
+        ${SUDO} sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
+        ${SUDO} sed -i '/\/home\/.\+\/.local\/lib/d' /etc/ld.so.conf
+
+        ${SUDO} echo "/usr/local/lib" '>>' /etc/ld.so.conf
+        ${SUDO} echo "${HOME_DIR}/.local/lib" '>>' /etc/ld.so.conf
+        ${SUDO} ldconfig
+
+    elif [[ "$(expr substr $(uname -s) 1 9)" == "CYGWIN_NT" ]]; then
         # Install deno
         cd ${ROOT_DIR}/deps
         unzip deno-x86_64-pc-windows-msvc.zip
-        mv -f deno.exe /usr/bin
+        mv -f deno.exe ${BIN_DIR}
+        chmod +x ${BIN_DIR}/deno.exe
+        rm -fr deno-x86_64*
 
-        chmod +x /usr/bin/deno.exe
+        cp -f apt-cyg ${BIN_DIR}
+        chmod +x ${BIN_DIR}/apt-cyg
     fi 
 }
 
@@ -305,7 +321,8 @@ function inst_ctags()
 {
     cd ${ROOT_DIR}/deps
 
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
         tar -xzf ctags-*.tar.gz
@@ -331,7 +348,7 @@ function inst_ctags()
         exit -1
     fi
 
-    make install
+    ${SUDO} make install
     if [ $? -ne 0 ]; then
         echo_erro "Install: ctags fail"
         exit -1
@@ -345,7 +362,8 @@ function inst_cscope()
 {
     cd ${ROOT_DIR}/deps
 
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
         tar -xzf cscope-*.tar.gz
@@ -365,7 +383,7 @@ function inst_cscope()
         exit -1
     fi
 
-    make install
+    ${SUDO} make install
     if [ $? -ne 0 ]; then
         echo_erro "Install: cscope fail"
         exit -1
@@ -379,7 +397,8 @@ function inst_vim()
 {
     cd ${ROOT_DIR}/deps
 
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         git clone https://github.com/vim/vim.git vim
     else
         tar -xzf vim-*.tar.gz
@@ -389,10 +408,10 @@ function inst_vim()
 
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset \
         --enable-largefile \
-        --enable-luainterp=yes \
         --enable-pythoninterp=yes \
         --enable-python3interp=yes \
         --disable-gui --disable-netbeans 
+        #--enable-luainterp=yes \
     if [ $? -ne 0 ]; then
         echo_erro "Configure: vim fail"
         exit -1
@@ -404,7 +423,7 @@ function inst_vim()
         exit -1
     fi
 
-    make install
+    ${SUDO} make install
     if [ $? -ne 0 ]; then
         echo_erro "Install: vim fail"
         exit -1
@@ -413,15 +432,16 @@ function inst_vim()
     cd ${ROOT_DIR}/deps
     rm -fr vim*/
 
-    rm -f /usr/local/bin/vim
-    ln -s /usr/bin/vim /usr/local/bin
+    ${SUDO} rm -f /usr/local/bin/vim
+    ${SUDO} ln -s /usr/bin/vim ${BIN_DIR}/vim
 }
 
 function inst_tig()
 {
     cd ${ROOT_DIR}/deps
 
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
         tar -xzf tig-*.tar.gz
@@ -442,7 +462,7 @@ function inst_tig()
         exit -1
     fi
 
-    make install
+    ${SUDO} make install
     if [ $? -ne 0 ]; then
         echo_erro "Install: tig fail"
         exit -1
@@ -456,7 +476,8 @@ function inst_astyle()
 {
     cd ${ROOT_DIR}/deps
 
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
         cd astyle*/AStyle/build/gcc
     else
@@ -470,8 +491,8 @@ function inst_astyle()
         exit -1
     fi
 
-    cp -f bin/astyle* /usr/bin/
-    chmod 777 /usr/bin/astyle*
+    cp -f bin/astyle* ${BIN_DIR}
+    chmod 777 ${BIN_DIR}/astyle*
 
     cd ${ROOT_DIR}/deps
     rm -fr astyle*/
@@ -481,11 +502,12 @@ function inst_ack()
 {
     # install ack
     cd ${ROOT_DIR}/deps
-    cp -f ack-* /usr/bin/ack-grep
-    chmod 777 /usr/bin/ack-grep
+    cp -f ack-* ${BIN_DIR}/ack-grep
+    chmod 777 ${BIN_DIR}/ack-grep
     
     # install ag
-    if [ ${IS_NET_OK} -eq 1 ]; then
+    bool_v "${NEED_NET}"
+    if [ $? -eq 0 ]; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
         tar -xzf the_silver_searcher-*.tar.gz
@@ -507,7 +529,7 @@ function inst_ack()
         exit -1
     fi
 
-    make install
+    ${SUDO} make install
     if [ $? -ne 0 ]; then
         echo_erro "Install: ag fail"
         exit -1

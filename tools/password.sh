@@ -1,6 +1,4 @@
 #!/bin/bash
-declare -A _globalMap
-
 global_get USR_NAME
 global_get USR_PASSWORD
 

@@ -74,35 +74,49 @@ function match_trim_start
 }
 export -f match_trim_start
 
-function var_exist
+function is_num
 {
-    local var_name="$1"
-    if [ -z "${var_name}" ];then
+    # is argument an integer?
+    local re='^[0-9]+$'
+    if [[ -n $1 ]]; then
+        [[ $1 =~ $re ]] && return 0
+        return 1
+    else
+        return 2
+    fi
+}
+export -f is_num
+
+function is_var
+{
+    if is_num "$1"; then
         return 1
     fi
 
-    #"set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
-    local check="\$(set -u ;: \$${var_name})"
-    eval "$check" &> /dev/null
-    if [ $? -eq 0 ]; then
+    # "set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
+    # local check="\$(set -u ;: \$${var_name})"
+    # eval "$check" &> /dev/null
+
+    local arr="$(eval eval -- echo -n "\$$1")"
+    if [[ -n ${arr[@]} ]]; then
         return 0
-    else
-        return 1
     fi
+
+    return 1
 }
-export -f var_exist
+export -f is_var
 
 function INCLUDE
 {
     local flag="$1"
     local file="$2"
     
-    var_exist "${flag}" || source ${file} 
+    is_var "${flag}" || source ${file} 
 }
 export -f INCLUDE
 
 # export these
-var_exist "_GLOBAL_CTRL_DIR"
+is_var "_GLOBAL_CTRL_DIR"
 if [ $? -ne 0 ];then
     declare -rx _GLOBAL_CTRL_DIR="/tmp/ctrl/global.$$"
     declare -rx _GLOBAL_CTRL_PIPE="${_GLOBAL_CTRL_DIR}/msg.global"
@@ -140,7 +154,13 @@ if [ $? -ne 0 ];then
                 echo "${_globalMap[${var_name}]}" > ${var_pipe}
             elif [[ "${ctrl}" == "UNSET_ENV" ]];then
                 local var_name=${msg}
-                unset _globalMap["${var_name}"]
+                unset _globalMap[${var_name}]
+            elif [[ "${ctrl}" == "CLEAR_ENV" ]];then
+                if [ ${#_globalMap[@]} -ne 0 ];then
+                    for var_name in ${!_globalMap[@]};do
+                        unset _globalMap[${var_name}]
+                    done
+                fi
             elif [[ "${ctrl}" == "PRINT_ENV" ]];then
                 if [ ${#_globalMap[@]} -ne 0 ];then
                     echo "" > /dev/tty
@@ -188,6 +208,13 @@ function global_unset
 {
     local var_name="$1"
     echo "UNSET_ENV${_GLOBAL_CTRL_SPF1}${var_name}" > ${_GLOBAL_CTRL_PIPE}
+}
+export -f global_unset
+
+function global_clear
+{
+    local var_name="$1"
+    echo "CLEAR_ENV${_GLOBAL_CTRL_SPF1}ALL" > ${_GLOBAL_CTRL_PIPE}
 }
 export -f global_unset
 
