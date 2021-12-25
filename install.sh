@@ -13,7 +13,8 @@ else
 fi
 . ${ROOT_DIR}/tools/paraparser.sh
 
-toolDeps="sshpass expect"
+netDeps=""
+tarDeps="sshpass expect"
 rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs zlib-devel"
 
 declare -A funcMap
@@ -196,6 +197,45 @@ function clean_env()
     sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 }
 
+function install_from_net
+{
+    local tool="$1"
+    local sudo="$2"
+    local success=1
+
+    if [ ${success} -eq 1 ];then
+        which yum &> /dev/null
+        if [ $? -eq 0 ];then
+            ${sudo} yum install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=0
+            fi
+        fi
+    fi
+
+    if [ ${success} -eq 1 ];then
+        which apt &> /dev/null
+        if [ $? -eq 0 ];then
+            ${sudo} apt install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=0
+            fi
+        fi
+    fi
+
+    if [ ${success} -eq 1 ];then
+        which apt-cyg &> /dev/null
+        if [ $? -eq 0 ];then
+            ${sudo} apt-cyg install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=0
+            fi
+        fi
+    fi
+
+    return ${success}
+}
+
 function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
 function version_le() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" == "$1"; }
 function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1"; }
@@ -203,13 +243,22 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 
 function inst_deps()
 { 
-    for tool in ${toolDeps};
+    for tool in ${netDeps};
     do
         which ${tool} &> /dev/null
         if [ $? -ne 0 ];then
             bool_v "${NEED_NET}"
             if [ $? -eq 0 ];then
-                ${SUDO} install_from_net ${tool}
+                if [ -z "${SUDO}" ];then
+                    install_from_net ${tool} "sudo"
+                else
+                    install_from_net ${tool} "${SUDO}"
+                fi
+
+                if [ $? -ne 0 ];then
+                    echo_erro "Install: ${tool} failure"
+                    exit 1
+                fi
             else
                 echo_erro "Please enable network"
                 exit 1
