@@ -19,7 +19,7 @@ if [ $UID -ne 0 ]; then
 fi
 
 expect << EOF
-    #exp_internal 1 #enable debug
+    exp_internal 1 #enable debug
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
 

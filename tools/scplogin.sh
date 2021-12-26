@@ -48,10 +48,9 @@ expect << EOF
 
     expect {
         "(yes/no)?" { send "yes\r\r"; exp_continue }
-        "*password*:" { send "${USR_PASSWORD}\r\r" }
+        "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         eof
     }
     #exit
-    ${EXPECT_EOF}
 EOF
