@@ -11,12 +11,11 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
    exit 1
 fi
 
-if [ -d "$SRC_DIR" ];then
-    LAST_ONE=`echo "${SRC_DIR}" | grep -P ".$" -o`
-    if [ ${LAST_ONE} == '/' ]; then
-        SRC_DIR=$SRC_DIR.
-    else
-        SRC_DIR=$SRC_DIR/.
+if [ -d "${SRC_DIR}" ];then
+    if [[ $(end_chars "${SRC_DIR}" 1) == '/' ]]; then
+        #SRC_DIR=${SRC_DIR}.
+        #SRC_DIR=${SRC_DIR}*
+        SRC_DIR=${SRC_DIR}
     fi
 fi
 
