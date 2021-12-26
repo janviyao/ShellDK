@@ -35,6 +35,11 @@ function access_ok
 {
     local para="$1"
 
+    which ${para} &> /dev/null
+    if [ $? -eq 0 ];then
+        return 0
+    fi
+
     if [ -d ${para} ];then
         return 0
     elif [ -f ${para} ];then
@@ -48,7 +53,7 @@ function access_ok
     elif [ -r ${para} -o -w ${para} -o -x ${para} ];then
         return 0
     fi
-
+     
     return 1
 }
 

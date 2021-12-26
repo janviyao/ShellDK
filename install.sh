@@ -14,12 +14,19 @@ fi
 . ${ROOT_DIR}/tools/paraparser.sh
 
 declare -A funcMap
+declare -A netDeps
 declare -A tarDeps
 
-netDeps=""
+netDeps["g++"]="gcc-c++"
+
+tarDeps["m4"]="m4-*.tar.gz"
+tarDeps["autoconf"]="autoconf-*.tar.gz"
+tarDeps["automake"]="automake-*.tar.gz"
 tarDeps["sshpass"]="sshpass-*.tar.gz"
-tarDeps["expect"]="tcl*-src.tar.gz"
-rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs zlib-devel"
+tarDeps["tclsh8.6"]="tcl*-src.tar.gz"
+tarDeps["expect"]="expect*.tar.gz"
+
+rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake-"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
@@ -80,19 +87,19 @@ if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
     exit -1
 fi
 
-echo_info "$(printf "%13s: %-6s" "[Install Ops]" "${NEED_OP}")"
-echo_info "$(printf "%13s: %-6s" "[Make Thread]" "${MAKE_TD}")"
-echo_info "$(printf "%13s: %-6s" "[Need Netwrk]" "${NEED_NET}")"
+echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
+echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
+echo_info "$(printf "[%13s]: %-6s" "Need Netwrk" "${NEED_NET}")"
 
 bool_v "${NEED_NET}"
 if [ $? -eq 0 ]; then
     check_net
     if [ $? -eq 0 ]; then
         NEED_NET=1
-        echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Ok")"
+        echo_info "$(printf "[%13s]: %-6s" "Netwk ping" "Ok")"
     else
         NEED_NET=0
-        echo_info "$(printf "%13s: %-6s" "[Netwk ping]" "Fail")"
+        echo_info "$(printf "[%13s]: %-6s" "Netwk ping" "Fail")"
     fi
 fi
 
@@ -206,7 +213,7 @@ function install_from_net
     local success=1
 
     if [ ${success} -ne 0 ];then
-        which yum &> /dev/null
+        access_ok "yum"
         if [ $? -eq 0 ];then
             ${SUDO} yum install ${tool} -y
             if [ $? -eq 0 ];then
@@ -216,7 +223,7 @@ function install_from_net
     fi
 
     if [ ${success} -ne 0 ];then
-        which apt &> /dev/null
+        access_ok "apt"
         if [ $? -eq 0 ];then
             ${SUDO} apt install ${tool} -y
             if [ $? -eq 0 ];then
@@ -226,7 +233,7 @@ function install_from_net
     fi
 
     if [ ${success} -ne 0 ];then
-        which apt-cyg &> /dev/null
+        access_ok "apt-cyg"
         if [ $? -eq 0 ];then
             ${SUDO} apt-cyg install ${tool} -y
             if [ $? -eq 0 ];then
@@ -249,12 +256,16 @@ function install_from_tar
     local tar_file=`find . -name "${tar_name}"`
     local tar_file=`basename ${tar_file}`
 
-    echo_info "$(printf " Will install: %-50s" "${tar_file}")"
+    echo_info "$(printf "[%13s]: %-50s" "Will install" "${tar_file}")"
     
     tar -xzf ${tar_file} 
 
     local tar_dir=$(start_chars "${tar_file}" 5)
     cd ${tar_dir}*/
+
+    access_ok "Makefile" || access_ok "configure" 
+    [ $? -ne 0 ] && access_ok "unix/" && cd unix/
+    [ $? -ne 0 ] && access_ok "linux/" && cd linux/
 
     access_ok "autogen.sh"
     if [ $? -eq 0 ]; then
@@ -304,63 +315,68 @@ function version_le() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" 
 function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1"; }
 function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
 
-function inst_deps()
-{ 
-    for usr_cmd in ${!tarDeps[@]};
+function install_from_rpm
+{
+    local rpmf="$1"
+
+    local rpm_file_list=`find . -name "${rpmf}*.rpm"`
+    for rpm_file in ${rpm_file_list}    
     do
-        which ${usr_cmd} &> /dev/null
-        if [ $? -ne 0 ];then
-            local tar_file=${tarDeps["${usr_cmd}"]}
-            install_from_tar ${tar_file} 
+        local rpm_file=`basename ${rpm_file}`
+
+        local installed_list=`rpm -qa | grep -P "^${rpmf}" | tr "\n" " "`
+        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
+
+        local need_install=0
+        if [ -z "${installed_list}" ]; then
+            need_install=1    
+        else
+            local version_cur=`echo "${installed_list}" | tr " " "\n" | grep -P "\d+\.\d+\.?\d*" -o | sort -r | head -n 1`
+            local version_new=`echo "${rpm_file}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
+            if version_lt ${version_cur} ${version_new}; then
+                need_install=1    
+            fi
         fi
-    done
-    
-    for usr_cmd in ${netDeps};
-    do
-        which ${usr_cmd} &> /dev/null
-        if [ $? -ne 0 ];then
-            bool_v "${NEED_NET}"
-            if [ $? -eq 0 ];then
-                install_from_net ${usr_cmd} 
+
+        if test ${need_install} -eq 1; then
+            ${SUDO} rpm -ivh ${rpm_file} --nodeps --force
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
+                exit -1
             else
-                echo_erro "Please enable network"
-                exit 1
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
             fi
         fi
     done
-    
+}
+
+function inst_deps()
+{     
     cd ${ROOT_DIR}/deps
     if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
         for rpmf in ${rpmDeps};
         do
-            local rpm_file=`find . -name "${rpmf}*.rpm"`
-            local rpm_file=`basename ${rpm_file}`
+            install_from_rpm "${rpmf}" 
+        done
 
-            local installed=`rpm -qa | grep "${rpmf}" | tr "\n" " "`
-            echo_info "$(printf " Will install: %-50s   Have installed: %s" "${rpm_file}" "${installed}")"
-
-            local need_install=0
-            if [ -z "${installed}" ]; then
-                need_install=1    
-            else
-                local version_cur=`echo "${installed}" | tr " " "\n" | grep -P "\d+\.\d+\.?\d*" -o | sort -r | head -n 1`
-                local version_new=`echo "${rpm_file}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
-                if version_lt ${version_cur} ${version_new}; then
-                    need_install=1    
-                fi
-            fi
-
-            if test ${need_install} -eq 1; then
-                ${SUDO} rpm -ivh ${rpm_file} --nodeps --force
-                if [ $? -ne 0 ]; then
-                    echo_erro "Install: ${rpmf} failure"
-                    exit -1
-                else
-                    echo_info "Install: ${rpmf} success"
-                fi
+        for usr_cmd in ${!tarDeps[@]};
+        do
+            access_ok "${usr_cmd}"
+            if [ $? -ne 0 ];then
+                local tar_file=${tarDeps["${usr_cmd}"]}
+                install_from_tar ${tar_file} 
             fi
         done
 
+        for usr_cmd in ${!netDeps[@]};
+        do
+            access_ok "${usr_cmd}"
+            if [ $? -ne 0 ];then
+                local pat_file=${netDeps["${usr_cmd}"]}
+                install_from_net ${pat_file} 
+            fi
+        done
+        
         # Install deno
         cd ${ROOT_DIR}/deps
         unzip deno-x86_64-unknown-linux-gnu.zip
@@ -530,13 +546,13 @@ function inst_ack()
 for key in ${!funcMap[@]};
 do
     if [ x"${key}" = x"${NEED_OP}" ]; then
-        echo_info "$(printf "%13s: %-6s" "[Op]" "${key}")"
-        echo_info "$(printf "%13s: %-6s" "[Funcs]" "${funcMap[${key}]}")"
+        echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
+        echo_info "$(printf "[%13s]: %-6s" "Funcs" "${funcMap[${key}]}")"
         for func in ${funcMap[${key}]};
         do
-            echo_info "$(printf "%13s: %-13s start" "[Install]" "${func}")"
+            echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
             ${func}
-            echo_info "$(printf "%13s: %-13s done" "[Install]" "${func}")"
+            echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
         done
         break
     fi
