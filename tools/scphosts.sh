@@ -3,7 +3,6 @@ SRC_FD="$1"
 DES_FD="$2"
 
 INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-. $MY_VIM_DIR/tools/password.sh
 
 while read line
 do
@@ -15,7 +14,7 @@ do
         continue
     fi
 
-    $MY_VIM_DIR/tools/scplogin.sh "${USR_NAME}" "${USR_PASSWORD}" "${SRC_FD}" "${ipaddr}:${DES_FD}"
+    $MY_VIM_DIR/tools/scplogin.sh "${SRC_FD}" "${ipaddr}:${DES_FD}"
     if [ $? -ne 0 ];then
         echo_erro "scp fail from ${SRC_FD} to ${DES_FD} @ ${ipaddr}"
     fi
