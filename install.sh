@@ -13,11 +13,14 @@ else
 fi
 . ${ROOT_DIR}/tools/paraparser.sh
 
+declare -A funcMap
+declare -A tarDeps
+
 netDeps=""
-tarDeps="sshpass expect"
+tarDeps["sshpass"]="sshpass-*.tar.gz"
+tarDeps["expect"]="tcl*-src.tar.gz"
 rpmDeps="python-devel python-libs python3-devel python3-libs xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel ncurses-devel ncurses-libs zlib-devel"
 
-declare -A funcMap
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
 funcMap["clean"]="clean_env"
@@ -200,40 +203,100 @@ function clean_env()
 function install_from_net
 {
     local tool="$1"
-    local sudo="$2"
     local success=1
 
-    if [ ${success} -eq 1 ];then
+    if [ ${success} -ne 0 ];then
         which yum &> /dev/null
         if [ $? -eq 0 ];then
-            ${sudo} yum install ${tool} -y
+            ${SUDO} yum install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
             fi
         fi
     fi
 
-    if [ ${success} -eq 1 ];then
+    if [ ${success} -ne 0 ];then
         which apt &> /dev/null
         if [ $? -eq 0 ];then
-            ${sudo} apt install ${tool} -y
+            ${SUDO} apt install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
             fi
         fi
     fi
 
-    if [ ${success} -eq 1 ];then
+    if [ ${success} -ne 0 ];then
         which apt-cyg &> /dev/null
         if [ $? -eq 0 ];then
-            ${sudo} apt-cyg install ${tool} -y
+            ${SUDO} apt-cyg install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
             fi
         fi
     fi
 
-    return ${success}
+    if [ ${success} -ne 0 ];then
+        echo_erro " Install: ${tool} failure"
+        exit 1
+    fi
+}
+
+function install_from_tar
+{
+    local tar_name="$1"
+
+    cd ${ROOT_DIR}/deps
+    local tar_file=`find . -name "${tar_name}"`
+    local tar_file=`basename ${tar_file}`
+
+    echo_info "$(printf " Will install: %-50s" "${tar_file}")"
+    
+    tar -xzf ${tar_file} 
+
+    local tar_dir=$(start_chars "${tar_file}" 5)
+    cd ${tar_dir}*/
+
+    access_ok "autogen.sh"
+    if [ $? -eq 0 ]; then
+        ./autogen.sh
+        if [ $? -ne 0 ]; then
+            echo_erro " Autogen: ${tar_file} fail"
+            exit -1
+        fi
+    fi
+
+    access_ok "configure"
+    if [ $? -eq 0 ]; then
+        ./configure --prefix=/usr
+        if [ $? -ne 0 ]; then
+            echo_erro " Configure: ${tar_file} fail"
+            exit 1
+        fi
+    else
+        make configure
+        if [ $? -eq 0 ]; then
+            ./configure --prefix=/usr
+            if [ $? -ne 0 ]; then
+                echo_erro " Configure: ${tar_file} fail"
+                exit 1
+            fi
+        fi
+    fi
+
+    make -j ${MAKE_TD}
+    if [ $? -ne 0 ]; then
+        echo_erro " Make: ${tar_file} fail"
+        exit 1
+    fi
+
+    ${SUDO} make install
+    if [ $? -ne 0 ]; then
+        echo_erro " Install: ${tar_file} fail"
+        exit 1
+    fi
+
+    cd ${ROOT_DIR}/deps
+    rm -fr ${tar_dir}*/
 }
 
 function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
@@ -243,35 +306,29 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 
 function inst_deps()
 { 
-    for tool in ${netDeps};
+    for usr_cmd in ${!tarDeps[@]};
     do
-        which ${tool} &> /dev/null
+        which ${usr_cmd} &> /dev/null
+        if [ $? -ne 0 ];then
+            local tar_file=${tarDeps["${usr_cmd}"]}
+            install_from_tar ${tar_file} 
+        fi
+    done
+    
+    for usr_cmd in ${netDeps};
+    do
+        which ${usr_cmd} &> /dev/null
         if [ $? -ne 0 ];then
             bool_v "${NEED_NET}"
             if [ $? -eq 0 ];then
-                if [ -z "${SUDO}" ];then
-                    install_from_net ${tool} "sudo"
-                else
-                    install_from_net ${tool} "${SUDO}"
-                fi
-
-                if [ $? -ne 0 ];then
-                    echo_erro "Install: ${tool} failure"
-                    exit 1
-                fi
+                install_from_net ${usr_cmd} 
             else
                 echo_erro "Please enable network"
                 exit 1
             fi
         fi
     done
-
-    if [ $UID -ne 0 -a -z "${SUDO}" ]; then
-        # not root and sudo empty
-        echo_warn "Not root user and \$SUDO null, please rerun"
-        exit 0
-    fi
-
+    
     cd ${ROOT_DIR}/deps
     if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
         for rpmf in ${rpmDeps};
@@ -326,38 +383,7 @@ function inst_deps()
             cd ${ROOT_DIR}/deps
             rm -fr glibc-2.18
         fi
-        
-        #tar -xzf lua-5.3.3.tar.gz
-        #cd lua-5.3.3
-        #make linux && make install
-
-        #cd ${ROOT_DIR}/deps
-        #rm -fr lua-5.3.3
-
-        #tar -xzf libiconv-*.tar.gz
-        #cd libiconv-*
-
-        #./configure --prefix=/usr
-        #if [ $? -ne 0 ]; then
-        #    echo_erro "Configure: libiconv fail"
-        #    exit -1
-        #fi
-
-        #make -j ${MAKE_TD}
-        #if [ $? -ne 0 ]; then
-        #    echo_erro "Make: libiconv fail"
-        #    exit -1
-        #fi
-
-        #make install
-        #if [ $? -ne 0 ]; then
-        #    echo_erro "Install: libiconv fail"
-        #    exit -1
-        #fi
-
-        #cd ${ROOT_DIR}/deps
-        #rm -fr libiconv-*/
-
+         
         ${SUDO} chmod 777 /etc/ld.so.conf
 
         ${SUDO} sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
@@ -386,37 +412,8 @@ function inst_ctags()
     if [ $? -eq 0 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
-        tar -xzf ctags-*.tar.gz
+        install_from_tar "ctags-*.tar.gz"
     fi
-
-    cd ctags*/
-
-    ./autogen.sh
-    if [ $? -ne 0 ]; then
-        echo_erro "Autogen: ctags fail"
-        exit -1
-    fi
-
-    ./configure --prefix=/usr
-    if [ $? -ne 0 ]; then
-        echo_erro "Configure: ctags fail"
-        exit -1
-    fi
-
-    make -j ${MAKE_TD}
-    if [ $? -ne 0 ]; then
-        echo_erro "Make: ctags fail"
-        exit -1
-    fi
-
-    ${SUDO} make install
-    if [ $? -ne 0 ]; then
-        echo_erro "Install: ctags fail"
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/deps
-    rm -fr ctags*/
 }
 
 function inst_cscope()
@@ -427,31 +424,8 @@ function inst_cscope()
     if [ $? -eq 0 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
-        tar -xzf cscope-*.tar.gz
+        install_from_tar "cscope-*.tar.gz"
     fi
-
-    cd cscope*/
-
-    ./configure
-    if [ $? -ne 0 ]; then
-        echo_erro "Configure: cscope fail"
-        exit -1
-    fi
-
-    make -j ${MAKE_TD}
-    if [ $? -ne 0 ]; then
-        echo_erro "Make: cscope fail"
-        exit -1
-    fi
-
-    ${SUDO} make install
-    if [ $? -ne 0 ]; then
-        echo_erro "Install: cscope fail"
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/deps
-    rm -fr cscope*/
 }
 
 function inst_vim()
@@ -507,32 +481,8 @@ function inst_tig()
     if [ $? -eq 0 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
-        tar -xzf tig-*.tar.gz
+        install_from_tar "tig-*.tar.gz"
     fi
-
-    cd tig*/
-
-    make configure
-    ./configure --prefix=/usr
-    if [ $? -ne 0 ]; then
-        echo_erro "Configure: tig fail"
-        exit -1
-    fi
-
-    make -j ${MAKE_TD}
-    if [ $? -ne 0 ]; then
-        echo_erro "Make: tig fail"
-        exit -1
-    fi
-
-    ${SUDO} make install
-    if [ $? -ne 0 ]; then
-        echo_erro "Install: tig fail"
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/deps
-    rm -fr tig*/
 }
 
 function inst_astyle()
@@ -573,33 +523,8 @@ function inst_ack()
     if [ $? -eq 0 ]; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        tar -xzf the_silver_searcher-*.tar.gz
+        install_from_tar "the_silver_searcher-*.tar.gz"
     fi
-
-    cd the_silver_searcher-*/
-
-    sh autogen.sh
-
-    ./configure
-    if [ $? -ne 0 ]; then
-        echo_erro "Configure: ag fail"
-        exit -1
-    fi
-
-    make -j ${MAKE_TD}
-    if [ $? -ne 0 ]; then
-        echo_erro "Make: ag fail"
-        exit -1
-    fi
-
-    ${SUDO} make install
-    if [ $? -ne 0 ]; then
-        echo_erro "Install: ag fail"
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/deps
-    rm -fr the_silver_searcher-*/
 }
 
 for key in ${!funcMap[@]};

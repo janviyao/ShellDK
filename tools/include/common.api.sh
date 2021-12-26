@@ -15,6 +15,8 @@ if [ $UID -ne 0 ]; then
         which expect &> /dev/null
         if [ $? -eq 0 ]; then
             SUDO="$MY_VIM_DIR/tools/sudo.sh"
+        else
+            SUDO="sudo"
         fi
     fi
 fi
