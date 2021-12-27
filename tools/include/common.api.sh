@@ -5,7 +5,7 @@ set -o allexport
 
 HOME_DIR=${HOME}
 
-TEST_DEBUG=false
+TEST_DEBUG=true
 LOG_HEADER=true
 
 SUDO=""

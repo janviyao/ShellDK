@@ -39,6 +39,23 @@ function start_chars
 }
 export -f start_chars
 
+function match_trim_start
+{
+    local string="$1"
+    local subchar="$2"
+    
+    local sublen=${#subchar}
+
+    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+        let sublen++
+        local new="`echo "${string}" | cut -c ${sublen}-`" 
+        echo "${new}"
+    else
+        echo "${string}"
+    fi
+}
+export -f match_trim_start
+
 function match_trim_end
 {
     local string="$1"
@@ -57,22 +74,18 @@ function match_trim_end
 }
 export -f match_trim_end
 
-function match_trim_start
+function contain_string
 {
     local string="$1"
-    local subchar="$2"
+    local substr="$2"
     
-    local sublen=${#subchar}
-
-    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
-        let sublen++
-        local new="`echo "${string}" | cut -c ${sublen}-`" 
-        echo "${new}"
+    if [[ ${string} == *${substr}* ]];then
+        return 0
     else
-        echo "${string}"
+        return 1
     fi
 }
-export -f match_trim_start
+export -f contain_string
 
 function is_num
 {

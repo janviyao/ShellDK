@@ -4,7 +4,7 @@ HOST_IP="$1"
 CMD_EXE="$2"
 
 INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-. $MY_VIM_DIR/tools/password.sh
+source $MY_VIM_DIR/tools/password.sh
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
     echo_erro "Username or Password is empty"
@@ -19,11 +19,11 @@ if [ $UID -ne 0 ]; then
 fi
 
 expect << EOF
+    set timeout ${TIMEOUT}
+
     #exp_internal 1 #enable debug
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
-
-    set timeout ${TIMEOUT}
 
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${CMD_EXE}"
@@ -35,6 +35,5 @@ expect << EOF
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         eof
     }
-    #interact
     ${EXPECT_EOF}
 EOF

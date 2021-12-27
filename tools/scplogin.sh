@@ -36,11 +36,11 @@ if [ $UID -ne 0 ]; then
 fi
 
 expect << EOF
+    set timeout ${TIMEOUT}
+
     #exp_internal 1 #enable debug
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
-
-    set timeout ${TIMEOUT}
 
     #spawn -noecho scp -r ${SRC_DIR} ${DES_DIR}
     spawn -noecho sshpass -p "${USR_PASSWORD}" scp -r ${SRC_DIR} ${DES_DIR}

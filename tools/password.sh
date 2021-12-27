@@ -2,17 +2,27 @@
 global_get USR_NAME
 global_get USR_PASSWORD
 
-#echo "Username: $USR_NAME Password: $USR_PASSWORD"
+declare -F echo_debug &>/dev/null
+if [ $? -eq 0 ];then
+    echo_debug "Username:[ $USR_NAME ]  Password:[ $USR_PASSWORD ]"
+else
+    echo "Username:[ $USR_NAME ]  Password:[ $USR_PASSWORD ]"
+fi
+
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     export USR_NAME=`whoami`
 
-    read -p "Please input username(${USR_NAME}): " input_val
+    input_val=""
+    read -t 30 -p "Please input username(${USR_NAME}): " input_val
     export USR_NAME=${input_val:-${USR_NAME}}
 
+    input_val=""
     read -s -p "Please input password: " input_val
     export USR_PASSWORD=${input_val}
     echo ""
 
-    global_set USR_NAME
-    global_set USR_PASSWORD
+    if [ -n "${USR_NAME}" -a -n "${USR_PASSWORD}" ]; then
+        global_set USR_NAME
+        global_set USR_PASSWORD
+    fi
 fi

@@ -1,11 +1,13 @@
 #!/bin/bash
 declare -A parasMap
+
+parasMap["all"]="$*"
 while [ -n "$1" ]; do
     option=$1
     value=$2
 
-    have_eq=`echo "${option}" | grep "="`
-    if [ -n "${have_eq}" ];then
+    contain_string "${option}" "="
+    if [ $? -eq 0 ];then
         value="$(echo "${option}" | cut -d '=' -f 2)"
         option="$(echo "${option}" | cut -d '=' -f 1)"
     fi
