@@ -1,11 +1,9 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
-set -o allexport
-
 HOME_DIR=${HOME}
 
-TEST_DEBUG=true
+TEST_DEBUG=false
 LOG_HEADER=true
 
 SUDO=""
@@ -139,4 +137,84 @@ function check_net
     else   
         return 1
     fi 
+}
+
+function end_chars
+{
+    local string="$1"
+    local count="$2"
+
+    [ -z "${count}" ] && count=1
+
+    local chars="`echo "${string}" | rev | cut -c 1-${count} | rev`"
+    echo "${chars}"
+}
+
+function start_chars
+{
+    local string="$1"
+    local count="$2"
+
+    [ -z "${count}" ] && count=1
+
+    local chars="`echo "${string}" | cut -c 1-${count}`"
+    echo "${chars}"
+}
+
+function match_trim_start
+{
+    local string="$1"
+    local subchar="$2"
+    
+    local sublen=${#subchar}
+
+    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+        let sublen++
+        local new="`echo "${string}" | cut -c ${sublen}-`" 
+        echo "${new}"
+    else
+        echo "${string}"
+    fi
+}
+
+function match_trim_end
+{
+    local string="$1"
+    local subchar="$2"
+    
+    local total=${#string}
+    local sublen=${#subchar}
+
+    if [[ "$(end_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+        local diff=$((total-sublen))
+        local new="`echo "${string}" | cut -c 1-${diff}`" 
+        echo "${new}"
+    else
+        echo "${string}"
+    fi
+}
+
+function contain_string
+{
+    local string="$1"
+    local substr="$2"
+    
+    if [[ ${string} == *${substr}* ]];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function ssh_address
+{
+    local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+    local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+    for addr in ${ssh_con}
+    do
+        if [[ "${ssh_cli}" == "${addr}" ]];then
+            continue
+        fi
+        echo "${addr}"
+    done
 }

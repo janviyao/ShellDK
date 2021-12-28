@@ -14,78 +14,7 @@ alias llt='ls --color -lht'
 alias LS='ls --color'
 alias LL='ls --color -lh'
 
-#set -o allexport
-function end_chars
-{
-    local string="$1"
-    local count="$2"
-
-    [ -z "${count}" ] && count=1
-
-    local chars="`echo "${string}" | rev | cut -c 1-${count} | rev`"
-    echo "${chars}"
-}
-export -f end_chars
-
-function start_chars
-{
-    local string="$1"
-    local count="$2"
-
-    [ -z "${count}" ] && count=1
-
-    local chars="`echo "${string}" | cut -c 1-${count}`"
-    echo "${chars}"
-}
-export -f start_chars
-
-function match_trim_start
-{
-    local string="$1"
-    local subchar="$2"
-    
-    local sublen=${#subchar}
-
-    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
-        let sublen++
-        local new="`echo "${string}" | cut -c ${sublen}-`" 
-        echo "${new}"
-    else
-        echo "${string}"
-    fi
-}
-export -f match_trim_start
-
-function match_trim_end
-{
-    local string="$1"
-    local subchar="$2"
-    
-    local total=${#string}
-    local sublen=${#subchar}
-
-    if [[ "$(end_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
-        local diff=$((total-sublen))
-        local new="`echo "${string}" | cut -c 1-${diff}`" 
-        echo "${new}"
-    else
-        echo "${string}"
-    fi
-}
-export -f match_trim_end
-
-function contain_string
-{
-    local string="$1"
-    local substr="$2"
-    
-    if [[ ${string} == *${substr}* ]];then
-        return 0
-    else
-        return 1
-    fi
-}
-export -f contain_string
+set -o allexport
 
 function is_num
 {
@@ -98,7 +27,6 @@ function is_num
         return 2
     fi
 }
-export -f is_num
 
 function is_var
 {
@@ -117,7 +45,6 @@ function is_var
 
     return 1
 }
-export -f is_var
 
 function INCLUDE
 {
@@ -126,123 +53,6 @@ function INCLUDE
     
     is_var "${flag}" || source ${file} 
 }
-export -f INCLUDE
 
-# export these
-is_var "_GLOBAL_CTRL_DIR"
-if [ $? -ne 0 ];then
-    declare -rx _GLOBAL_CTRL_DIR="/tmp/ctrl/global.$$"
-    declare -rx _GLOBAL_CTRL_PIPE="${_GLOBAL_CTRL_DIR}/msg.global"
-    declare -rx _GLOBAL_CTRL_SPF1="^"
-    declare -rx _GLOBAL_CTRL_SPF2="|"
-
-    rm -fr ${_GLOBAL_CTRL_DIR}
-    mkdir -p ${_GLOBAL_CTRL_DIR}
-    declare -i _GLOBAL_CTRL_FD=6
-    mkfifo ${_GLOBAL_CTRL_PIPE}
-    exec {_GLOBAL_CTRL_FD}<>${_GLOBAL_CTRL_PIPE}
-
-    trap "echo 'EXIT' > ${_GLOBAL_CTRL_PIPE}; exec ${_GLOBAL_CTRL_FD}>&-; rm -fr ${_GLOBAL_CTRL_DIR}; exit 0" EXIT
-
-    function _global_ctrl_bg_thread
-    {
-        declare -A _globalMap
-        while read line
-        do
-            #echo "[$$]global recv: [${line}]" 
-            local ctrl="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
-            local msg="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
-
-            if [[ "${ctrl}" == "EXIT" ]];then
-                exit 0 
-            elif [[ "${ctrl}" == "SET_ENV" ]];then
-                local var_name="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)"
-                local var_value="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
-
-                _globalMap[${var_name}]="${var_value}"
-            elif [[ "${ctrl}" == "GET_ENV" ]];then
-                local var_name="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)"
-                local var_pipe="$(echo "${msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
-
-                echo "${_globalMap[${var_name}]}" > ${var_pipe}
-            elif [[ "${ctrl}" == "UNSET_ENV" ]];then
-                local var_name=${msg}
-                unset _globalMap[${var_name}]
-            elif [[ "${ctrl}" == "CLEAR_ENV" ]];then
-                if [ ${#_globalMap[@]} -ne 0 ];then
-                    for var_name in ${!_globalMap[@]};do
-                        unset _globalMap[${var_name}]
-                    done
-                fi
-            elif [[ "${ctrl}" == "PRINT_ENV" ]];then
-                if [ ${#_globalMap[@]} -ne 0 ];then
-                    echo "" > /dev/tty
-                    for var_name in ${!_globalMap[@]};do
-                        echo "$(printf "[%15s]: %s" "${var_name}" "${_globalMap[${var_name}]}")" > /dev/tty
-                    done
-                    #echo "send \010" | expect 
-                fi
-            fi
-        done < ${_GLOBAL_CTRL_PIPE}
-    }
-
-    {
-        trap "" SIGINT SIGTERM SIGKILL
-        _global_ctrl_bg_thread
-    }&
-fi
-
-function global_set_pipe
-{
-    local var_name="$1"
-    local one_pipe="$2"
-    local var_value="$(eval "echo \"\$${var_name}\"")"
-
-    echo "SET_ENV${_GLOBAL_CTRL_SPF1}${var_name}${_GLOBAL_CTRL_SPF2}${var_value}" > ${one_pipe}
-}
-export -f global_set_pipe
-
-function global_set
-{
-    local var_name="$1"
-    local var_value="$(eval "echo \"\$${var_name}\"")"
-
-    echo "SET_ENV${_GLOBAL_CTRL_SPF1}${var_name}${_GLOBAL_CTRL_SPF2}${var_value}" > ${_GLOBAL_CTRL_PIPE}
-}
-export -f global_set
-
-function global_get
-{
-    local var_name="$1"
-    local var_value=""
-
-    local TMP_PIPE=${_GLOBAL_CTRL_DIR}/msg.$$
-    mkfifo ${TMP_PIPE}
-    
-    echo "GET_ENV${_GLOBAL_CTRL_SPF1}${var_name}${_GLOBAL_CTRL_SPF2}${TMP_PIPE}" > ${_GLOBAL_CTRL_PIPE}
-    read var_value < ${TMP_PIPE}
-    rm -f ${TMP_PIPE}
-
-    eval "export ${var_name}=\"${var_value}\""
-}
-export -f global_get
-
-function global_unset
-{
-    local var_name="$1"
-    echo "UNSET_ENV${_GLOBAL_CTRL_SPF1}${var_name}" > ${_GLOBAL_CTRL_PIPE}
-}
-export -f global_unset
-
-function global_clear
-{
-    local var_name="$1"
-    echo "CLEAR_ENV${_GLOBAL_CTRL_SPF1}ALL" > ${_GLOBAL_CTRL_PIPE}
-}
-export -f global_unset
-
-function global_print
-{
-    echo "PRINT_ENV${_GLOBAL_CTRL_SPF1}ALL" > ${_GLOBAL_CTRL_PIPE}
-}
-export -f global_print
+INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+INCLUDE "_GLOBAL_CTRL_DIR" $MY_VIM_DIR/tools/include/bash_task.sh

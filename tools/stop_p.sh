@@ -23,7 +23,7 @@ do
     done
     signum=`printf "%02d" ${signum}`
 
-    PID_LIST=`ps -ef | grep -F "${pname}" | grep -v "$0" | grep -v "grep " | awk '{print $2}'`
+    PID_LIST=`ps -ef | grep -w -F "${pname}" | grep -v "$0" | grep -v "grep " | awk '{print $2}'`
     if [ ! -z "${PID_LIST}" ];then
         for pid in ${PID_LIST}
         do

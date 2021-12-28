@@ -1,9 +1,9 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
-
-ROOT_DIR=$(match_trim_end "$(cd `dirname $0`;pwd)" "/")
+ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
+source $MY_VIM_DIR/bashrc
 
 declare -F INCLUDE &>/dev/null
 if [ $? -eq 0 ];then
@@ -162,12 +162,12 @@ function deploy_env
     access_ok "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
     access_ok "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
-    sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
     sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
     sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 
-    echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
     echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${HOME_DIR}/.bashrc
+    echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
     echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
 }
 

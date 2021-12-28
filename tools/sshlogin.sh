@@ -18,6 +18,13 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
+RET_VAR="sudo_ret$$"
+MSG_CTX="echo \\\"${_MSG_OWNER}${_GLOBAL_CTRL_SPF1}RETURN_CODE${_GLOBAL_CTRL_SPF2}${RET_VAR}=\$?\\\" | nc ${_SERVER_ADDR} ${_SERVER_PORT}"
+
+#CMD_EXE="${CMD_EXE};${MSG_CTX}"
+#echo "RECV_MSG" > ${_GLOBAL_CTRL_PIPE}
+#sleep 1
+
 expect << EOF
     set timeout ${TIMEOUT}
 
@@ -30,10 +37,14 @@ expect << EOF
     spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
 
     expect {
-        "(yes/no)?" { send "yes\r"; exp_continue }
+        "*yes/no*?" { send "yes\r"; exp_continue }
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         eof
     }
     ${EXPECT_EOF}
 EOF
+
+#global_get ${RET_VAR}
+#eval "echo ${RET_VAR}=\$${RET_VAR}"
+#eval "exit \$${RET_VAR}"
