@@ -19,10 +19,9 @@ if [ $UID -ne 0 ]; then
 fi
 
 RET_VAR="sudo_ret$$"
-MSG_CTX="echo \\\"${_MSG_OWNER}${_GLOBAL_CTRL_SPF1}RETURN_CODE${_GLOBAL_CTRL_SPF2}${RET_VAR}=\$?\\\" | nc ${_SERVER_ADDR} ${_SERVER_PORT}"
+SRV_MSG="echo \\\"${_SERVER_IDNO}${_GLOBAL_CTRL_SPF1}RETURN_CODE${_GLOBAL_CTRL_SPF2}${RET_VAR}=\$?\\\" | nc ${_SERVER_ADDR} ${_SERVER_PORT}"
 
-CMD_EXE="${CMD_EXE};${MSG_CTX}"
-
+CMD_EXE="${CMD_EXE};${SRV_MSG}"
 global_wait_ack "RECV_MSG"
 
 expect << EOF

@@ -2,6 +2,7 @@
 CMD_STR="$*"
 
 INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+source $MY_VIM_DIR/tools/password.sh
 
 while read line
 do

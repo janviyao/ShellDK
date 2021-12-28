@@ -150,12 +150,11 @@ function deploy_env
     cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
     cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim    
 
-    access_ok "${HOME_DIR}/.vim/bundle/vundle"
-    if [ $? -ne 0 ]; then
+    if ! access_ok "${HOME_DIR}/.vim/bundle/vundle"; then
         cd ${ROOT_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
-            mv bundle ${HOME_DIR}/.vim/
+            mv -f bundle ${HOME_DIR}/.vim/
         fi
     fi
     
@@ -176,8 +175,7 @@ function update_env()
     bool_v "${NEED_NET}"
     if [ $? -eq 0 ]; then
         local need_update=1
-        access_ok "${HOME_DIR}/.vim/bundle/vundle"
-        if [ $? -ne 0 ]; then
+        if access_ok "${HOME_DIR}/.vim/bundle/vundle"; then
             git clone https://github.com/gmarik/vundle.git ${HOME_DIR}/.vim/bundle/vundle
             vim +BundleInstall +q +q
             need_update=0
@@ -213,8 +211,7 @@ function install_from_net
     local success=1
 
     if [ ${success} -ne 0 ];then
-        access_ok "yum"
-        if [ $? -eq 0 ];then
+        if access_ok "yum";then
             ${SUDO} yum install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
@@ -223,8 +220,7 @@ function install_from_net
     fi
 
     if [ ${success} -ne 0 ];then
-        access_ok "apt"
-        if [ $? -eq 0 ];then
+        if access_ok "apt";then
             ${SUDO} apt install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
@@ -233,8 +229,7 @@ function install_from_net
     fi
 
     if [ ${success} -ne 0 ];then
-        access_ok "apt-cyg"
-        if [ $? -eq 0 ];then
+        if access_ok "apt-cyg";then
             ${SUDO} apt-cyg install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
@@ -267,8 +262,7 @@ function install_from_tar
     [ $? -ne 0 ] && access_ok "unix/" && cd unix/
     [ $? -ne 0 ] && access_ok "linux/" && cd linux/
 
-    access_ok "autogen.sh"
-    if [ $? -eq 0 ]; then
+    if access_ok "autogen.sh"; then
         ./autogen.sh
         if [ $? -ne 0 ]; then
             echo_erro " Autogen: ${tar_file} fail"
@@ -276,8 +270,7 @@ function install_from_tar
         fi
     fi
 
-    access_ok "configure"
-    if [ $? -eq 0 ]; then
+    if access_ok "configure"; then
         ./configure --prefix=/usr
         if [ $? -ne 0 ]; then
             echo_erro " Configure: ${tar_file} fail"
@@ -361,8 +354,7 @@ function inst_deps()
 
         for usr_cmd in ${!tarDeps[@]};
         do
-            access_ok "${usr_cmd}"
-            if [ $? -ne 0 ];then
+            if access_ok "${usr_cmd}";then
                 local tar_file=${tarDeps["${usr_cmd}"]}
                 install_from_tar ${tar_file} 
             fi
@@ -370,8 +362,7 @@ function inst_deps()
 
         for usr_cmd in ${!netDeps[@]};
         do
-            access_ok "${usr_cmd}"
-            if [ $? -ne 0 ];then
+            if access_ok "${usr_cmd}";then
                 local pat_file=${netDeps["${usr_cmd}"]}
                 install_from_net ${pat_file} 
             fi

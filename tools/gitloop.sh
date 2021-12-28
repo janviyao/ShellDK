@@ -83,10 +83,11 @@ do
         echo_debug "enter: ${gitdir}"
         prefix=$(printf "%-30s @ " "${gitdir}")
 
-        $MY_VIM_DIR/tools/progress.sh 1 1820 "${prefix}" &
+        prg_time=$((OP_TIMEOUT*10*OP_TRY_CNT + 2*10))
+        $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} "${prefix}" &
         bgpid=$!
 
-        $MY_VIM_DIR/tools/threads.sh 3 1 "timeout 60s ${CMD_STR} &> ${log_file}"
+        $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${log_file}"
 
         send_ctrl_to_self "BG_RECV" "${bgpid}${CTRL_SPF2}FIN"
         send_ctrl_to_self "BG_EXIT" "${bgpid}"

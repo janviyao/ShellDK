@@ -6,6 +6,9 @@ HOME_DIR=${HOME}
 TEST_DEBUG=false
 LOG_HEADER=true
 
+OP_TRY_CNT=3
+OP_TIMEOUT=60
+
 SUDO=""
 if [ $UID -ne 0 ]; then
     which sudo &> /dev/null
