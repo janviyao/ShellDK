@@ -26,7 +26,7 @@ tarDeps["sshpass"]="sshpass-*.tar.gz"
 tarDeps["tclsh8.6"]="tcl*-src.tar.gz"
 tarDeps["expect"]="expect*.tar.gz"
 
-rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake-"
+rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake- nmap-ncat-"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
