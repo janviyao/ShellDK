@@ -19,12 +19,13 @@ declare -A tarDeps
 
 netDeps["g++"]="gcc-c++"
 
-tarDeps["m4"]="m4-*.tar.gz"
-tarDeps["autoconf"]="autoconf-*.tar.gz"
-tarDeps["automake"]="automake-*.tar.gz"
-tarDeps["sshpass"]="sshpass-*.tar.gz"
-tarDeps["tclsh8.6"]="tcl*-src.tar.gz"
-tarDeps["expect"]="expect*.tar.gz"
+CMD_IFS="|"
+tarDeps["m4"]="m4-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr m4-*/"
+tarDeps["autoconf"]="autoconf-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr autoconf*/"
+tarDeps["automake"]="automake-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr automake*/"
+tarDeps["sshpass"]="sshpass-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr sshpass*/"
+tarDeps["tclsh8.6"]="tcl*-src.tar.gz${CMD_IFS}"
+tarDeps["expect"]="expect*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
 rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake- nmap-ncat-"
 
@@ -245,7 +246,8 @@ function install_from_net
 
 function install_from_tar
 {
-    local tar_name="$1"
+    local actions="$1"
+    local tar_name="$(echo "${actions}" | cut -d "${CMD_IFS}" -f 1)"
 
     cd ${ROOT_DIR}/deps
     local tar_file=`find . -name "${tar_name}"`
@@ -263,7 +265,7 @@ function install_from_tar
     [ $? -ne 0 ] && access_ok "linux/" && cd linux/
 
     if access_ok "autogen.sh"; then
-        ./autogen.sh
+        ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Autogen: ${tar_file} fail"
             exit -1
@@ -271,15 +273,15 @@ function install_from_tar
     fi
 
     if access_ok "configure"; then
-        ./configure --prefix=/usr
+        ./configure --prefix=/usr/local &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Configure: ${tar_file} fail"
             exit 1
         fi
     else
-        make configure
+        make configure &>> build.log
         if [ $? -eq 0 ]; then
-            ./configure --prefix=/usr
+            ./configure --prefix=/usr/local &>> build.log
             if [ $? -ne 0 ]; then
                 echo_erro " Configure: ${tar_file} fail"
                 exit 1
@@ -287,20 +289,27 @@ function install_from_tar
         fi
     fi
 
-    make -j ${MAKE_TD}
+    make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${tar_file} fail"
         exit 1
     fi
 
-    ${SUDO} make install
+    ${SUDO} "make install &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${tar_file} fail"
         exit 1
     fi
+    
+    local next_act=2
+    local one_act="$(echo "${actions}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    while [ -n "${one_act}" ]
+    do
+        eval "${one_act}"
 
-    cd ${ROOT_DIR}/deps
-    rm -fr ${tar_dir}*/
+        let next_act++
+        one_act="$(echo "${actions}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    done
 }
 
 function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
@@ -354,15 +363,15 @@ function inst_deps()
 
         for usr_cmd in ${!tarDeps[@]};
         do
-            if access_ok "${usr_cmd}";then
-                local tar_file=${tarDeps["${usr_cmd}"]}
-                install_from_tar ${tar_file} 
+            if ! access_ok "${usr_cmd}";then
+                local tar_file="${tarDeps[${usr_cmd}]}"
+                install_from_tar "${tar_file}" 
             fi
         done
 
         for usr_cmd in ${!netDeps[@]};
         do
-            if access_ok "${usr_cmd}";then
+            if ! access_ok "${usr_cmd}";then
                 local pat_file=${netDeps["${usr_cmd}"]}
                 install_from_net ${pat_file} 
             fi

@@ -17,7 +17,7 @@ RET_VAR="sudo_ret$$"
 GET_RET="${RET_VAR}=\$?; global_set_pipe ${RET_VAR} ${_GLOBAL_CTRL_PIPE}"
 
 CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
-CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR;source $MY_VIM_DIR/bashrc; ${CMD_STR}; ${GET_RET}"
+CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; ${CMD_STR}; ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF
