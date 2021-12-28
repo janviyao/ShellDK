@@ -10,8 +10,6 @@ _GLOBAL_CTRL_FD=6
 mkfifo ${_GLOBAL_CTRL_PIPE}
 exec {_GLOBAL_CTRL_FD}<>${_GLOBAL_CTRL_PIPE}
 
-trap "echo 'EXIT' > ${_GLOBAL_CTRL_PIPE}; exec ${_GLOBAL_CTRL_FD}>&-; rm -fr ${_GLOBAL_CTRL_DIR}; exit 0" EXIT
-
 _MSG_OWNER=$$
 _SERVER_ADDR="$(ssh_address)"
 _SERVER_PORT=7888
@@ -84,9 +82,9 @@ function _global_ctrl_bg_thread
     done < ${_GLOBAL_CTRL_PIPE}
 }
 
+trap "echo 'EXIT' > ${_GLOBAL_CTRL_PIPE}; exec ${_GLOBAL_CTRL_FD}>&-; rm -fr ${_GLOBAL_CTRL_DIR}; exit 0" EXIT
 {
     trap "" SIGINT SIGTERM SIGKILL
-    trap "echo "EXIT" > ${_GLOBAL_CTRL_PIPE};exit 0" EXIT
     _global_ctrl_bg_thread
 }&
 
