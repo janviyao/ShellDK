@@ -31,7 +31,7 @@ tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_
 tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
 tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
-rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake- nmap-ncat- the_silver_searcher-"
+rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- autoconf- automake- nmap-ncat- the_silver_searcher-"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
@@ -272,6 +272,7 @@ function install_from_tar
     [ $? -ne 0 ] && access_ok "linux/" && cd linux/
 
     if access_ok "autogen.sh"; then
+        echo_info "$(printf "[%13s]: %-50s" "Action" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Autogen: ${filename} fail"
@@ -280,14 +281,17 @@ function install_from_tar
     fi
 
     if access_ok "configure"; then
+        echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
         ./configure --prefix=/usr/local &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Configure: ${filename} fail"
             exit 1
         fi
     else
+        echo_info "$(printf "[%13s]: %-50s" "Action" "make configure")"
         make configure &>> build.log
         if [ $? -eq 0 ]; then
+            echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
             ./configure --prefix=/usr/local &>> build.log
             if [ $? -ne 0 ]; then
                 echo_erro " Configure: ${filename} fail"
@@ -296,12 +300,14 @@ function install_from_tar
         fi
     fi
 
+    echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${filename} fail"
         exit 1
     fi
 
+    echo_info "$(printf "[%13s]: %-50s" "Action" "make install")"
     ${SUDO} make install &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${filename} fail"
@@ -398,16 +404,34 @@ function inst_deps()
         local version_new=2.18
         if version_lt ${version_cur} ${version_new}; then
             # Install glibc
+            echo_info "$(printf "[%13s]: %-50s" "Will install" "glibc-2.18")"
             cd ${ROOT_DIR}/deps
             tar -zxf  glibc-2.18.tar.gz
             cd glibc-2.18
             mkdir build
             cd build/
 
-            ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
-            make -j 8
-            ${SUDO} make install
-            
+            echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
+            ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin &>> build.log
+            if [ $? -ne 0 ]; then
+                echo_erro "Configure: glibc-2.18 fail"
+                exit -1
+            fi
+
+            echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
+            make -j ${MAKE_TD} &>> build.log
+            if [ $? -ne 0 ]; then
+                echo_erro "Make: glibc-2.18 fail"
+                exit -1
+            fi
+
+            echo_info "$(printf "[%13s]: %-50s" "Action" "make install")"
+            ${SUDO} make install &>> build.log
+            if [ $? -ne 0 ]; then
+                echo_erro "Install: glibc-2.18 fail"
+                exit -1
+            fi
+
             cd ${ROOT_DIR}/deps
             rm -fr glibc-2.18
         fi
@@ -469,6 +493,7 @@ function inst_vim()
 
     cd vim*/
 
+    echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset \
         --enable-largefile \
         --enable-pythoninterp=yes \
@@ -480,12 +505,14 @@ function inst_vim()
         exit -1
     fi
 
+    echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro "Make: vim fail"
         exit -1
     fi
 
+    echo_info "$(printf "[%13s]: %-50s" "Action" "make install")"
     ${SUDO} make install &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro "Install: vim fail"
@@ -526,6 +553,7 @@ function inst_astyle()
         cd astyle*/build/gcc
     fi
 
+    echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         echo_erro "Make: astyle fail"
