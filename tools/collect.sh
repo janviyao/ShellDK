@@ -1,6 +1,6 @@
 #!/bin/bash
 #set -x
-CUR_DIR=`pwd`
+CUR_DIR=$(cd `dirname $0`;pwd)
 cd ${CUR_DIR}/..
 CUR_DIR=`pwd`
 

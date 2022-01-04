@@ -41,7 +41,7 @@ expect << EOF
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         eof
     }
-    ${EXPECT_EOF}
+    expect eof
 EOF
 
 global_get ${RET_VAR}

@@ -43,13 +43,14 @@ expect << EOF
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
 
     #spawn -noecho scp -r ${SRC_DIR} ${DES_DIR}
-    spawn -noecho sshpass -p "${USR_PASSWORD}" scp -r ${SRC_DIR} ${DES_DIR}
+    #spawn -noecho sshpass -p "${USR_PASSWORD}" scp -r ${SRC_DIR} ${DES_DIR}
+    spawn -noecho scp -r ${SRC_DIR} ${DES_DIR}
 
     expect {
-        "(yes/no)?" { send "yes\r\r"; exp_continue }
+        "*(yes/no)?" { send "yes\r"; exp_continue }
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         eof
     }
-    #exit
+    expect eof
 EOF

@@ -20,6 +20,11 @@ if [ $UID -ne 0 ]; then
             SUDO="sudo"
         fi
     fi
+else
+    which sudo &> /dev/null
+    if [ $? -eq 0 ]; then
+        SUDO="sudo"
+    fi
 fi
 
 function bool_v

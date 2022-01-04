@@ -6,6 +6,11 @@ do
     shift
 done
 
+if [ $UID -eq 0 ]; then
+    eval "${CMD_STR}"
+    exit $?
+fi
+
 . $MY_VIM_DIR/tools/password.sh
 
 EXPECT_EOF=""

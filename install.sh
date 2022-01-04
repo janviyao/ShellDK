@@ -3,6 +3,7 @@
 #set -u # variable not exist, then exit
 ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
+source $MY_VIM_DIR/bash_profile
 source $MY_VIM_DIR/bashrc
 
 declare -F INCLUDE &>/dev/null
@@ -15,19 +16,22 @@ fi
 
 declare -A funcMap
 declare -A netDeps
-declare -A tarDeps
+declare -A tarTodo
 
+netDeps["make"]="make"
 netDeps["g++"]="gcc-c++"
 
 CMD_IFS="|"
-tarDeps["m4"]="m4-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr m4-*/"
-tarDeps["autoconf"]="autoconf-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr autoconf*/"
-tarDeps["automake"]="automake-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr automake*/"
-tarDeps["sshpass"]="sshpass-*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr sshpass*/"
-tarDeps["tclsh8.6"]="tcl*-src.tar.gz${CMD_IFS}"
-tarDeps["expect"]="expect*.tar.gz${CMD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
+BUILD_IFS="!"
+declare -a tarDeps=("m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
+tarTodo["m4"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf m4-*.tar.gz${CMD_IFS}cd m4-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr m4-*/"
+tarTodo["autoconf"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf autoconf-*.tar.gz${CMD_IFS}cd autoconf*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr autoconf*/"
+tarTodo["automake"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf automake-*.tar.gz${CMD_IFS}cd automake*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr automake*/"
+tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_IFS}cd sshpass*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr sshpass*/"
+tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
+tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
-rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake- nmap-ncat-"
+rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- perl-Thread-Queue- autoconf- automake- nmap-ncat- the_silver_searcher-"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
@@ -148,8 +152,9 @@ function deploy_env
 
     # build vim-work environment
     mkdir -p ${HOME_DIR}/.vim
-    cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
-    cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim    
+
+    /usr/bin/cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
+    /usr/bin/cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim    
 
     if ! access_ok "${HOME_DIR}/.vim/bundle/vundle"; then
         cd ${ROOT_DIR}/deps
@@ -246,19 +251,21 @@ function install_from_net
 
 function install_from_tar
 {
-    local actions="$1"
-    local tar_name="$(echo "${actions}" | cut -d "${CMD_IFS}" -f 1)"
-
-    cd ${ROOT_DIR}/deps
-    local tar_file=`find . -name "${tar_name}"`
-    local tar_file=`basename ${tar_file}`
-
-    echo_info "$(printf "[%13s]: %-50s" "Will install" "${tar_file}")"
+    local before_orders="$(echo "$*" | cut -d "${BUILD_IFS}" -f 1)"
+    local after_orders="$(echo "$*" | cut -d "${BUILD_IFS}" -f 2)"
     
-    tar -xzf ${tar_file} 
+    local next_act=1
+    local one_act="$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    while [ -n "${one_act}" ]
+    do
+        echo_info "$(printf "[%13s]: %-50s" "Action" "${one_act}")"
+        eval "${one_act}"
 
-    local tar_dir=$(start_chars "${tar_file}" 5)
-    cd ${tar_dir}*/
+        let next_act++
+        one_act="$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    done
+
+    local filename="$(basename `pwd`)"
 
     access_ok "Makefile" || access_ok "configure" 
     [ $? -ne 0 ] && access_ok "unix/" && cd unix/
@@ -267,7 +274,7 @@ function install_from_tar
     if access_ok "autogen.sh"; then
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${tar_file} fail"
+            echo_erro " Autogen: ${filename} fail"
             exit -1
         fi
     fi
@@ -275,7 +282,7 @@ function install_from_tar
     if access_ok "configure"; then
         ./configure --prefix=/usr/local &>> build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Configure: ${tar_file} fail"
+            echo_erro " Configure: ${filename} fail"
             exit 1
         fi
     else
@@ -283,7 +290,7 @@ function install_from_tar
         if [ $? -eq 0 ]; then
             ./configure --prefix=/usr/local &>> build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${tar_file} fail"
+                echo_erro " Configure: ${filename} fail"
                 exit 1
             fi
         fi
@@ -291,24 +298,25 @@ function install_from_tar
 
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
-        echo_erro " Make: ${tar_file} fail"
+        echo_erro " Make: ${filename} fail"
         exit 1
     fi
 
-    ${SUDO} "make install &>> build.log"
+    ${SUDO} make install &>> build.log
     if [ $? -ne 0 ]; then
-        echo_erro " Install: ${tar_file} fail"
+        echo_erro " Install: ${filename} fail"
         exit 1
     fi
     
-    local next_act=2
-    local one_act="$(echo "${actions}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    local next_act=1
+    local one_act="$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
     while [ -n "${one_act}" ]
     do
+        echo_info "$(printf "[%13s]: %-50s" "Action" "${one_act}")"
         eval "${one_act}"
 
         let next_act++
-        one_act="$(echo "${actions}" | cut -d "${CMD_IFS}" -f ${next_act})"
+        one_act="$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
     done
 }
 
@@ -361,11 +369,13 @@ function inst_deps()
             install_from_rpm "${rpmf}" 
         done
 
-        for usr_cmd in ${!tarDeps[@]};
+        for usr_cmd in ${tarDeps[@]};
         do
             if ! access_ok "${usr_cmd}";then
-                local tar_file="${tarDeps[${usr_cmd}]}"
-                install_from_tar "${tar_file}" 
+                local todoes="${tarTodo[${usr_cmd}]}"
+
+                echo_info "$(printf "[%13s]: %-50s" "Will install" "${usr_cmd}")"
+                install_from_tar "${todoes}" 
             fi
         done
 
@@ -378,9 +388,11 @@ function inst_deps()
         done
         
         # Install deno
-        cd ${ROOT_DIR}/deps
-        unzip deno-x86_64-unknown-linux-gnu.zip
-        mv -f deno ${BIN_DIR}
+        if ! access_ok "deno";then
+            cd ${ROOT_DIR}/deps
+            unzip deno-x86_64-unknown-linux-gnu.zip
+            mv -f deno ${BIN_DIR}
+        fi
 
         local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
         local version_new=2.18
@@ -414,8 +426,8 @@ function inst_deps()
         unzip deno-x86_64-pc-windows-msvc.zip
         mv -f deno.exe ${BIN_DIR}
         chmod +x ${BIN_DIR}/deno.exe
-
-        cp -f apt-cyg ${BIN_DIR}
+        
+        /usr/bin/cp -f apt-cyg ${BIN_DIR}
         chmod +x ${BIN_DIR}/apt-cyg
     fi 
 }
@@ -428,7 +440,7 @@ function inst_ctags()
     if [ $? -eq 0 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
-        install_from_tar "ctags-*.tar.gz"
+        install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf ctags-*.tar.gz${CMD_IFS}cd ctags-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr ctags-*/"
     fi
 }
 
@@ -440,7 +452,7 @@ function inst_cscope()
     if [ $? -eq 0 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
-        install_from_tar "cscope-*.tar.gz"
+        install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf cscope-*.tar.gz${CMD_IFS}cd cscope-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr cscope-*/"
     fi
 }
 
@@ -461,20 +473,20 @@ function inst_vim()
         --enable-largefile \
         --enable-pythoninterp=yes \
         --enable-python3interp=yes \
-        --disable-gui --disable-netbeans 
+        --disable-gui --disable-netbeans &>> build.log
         #--enable-luainterp=yes \
     if [ $? -ne 0 ]; then
         echo_erro "Configure: vim fail"
         exit -1
     fi
 
-    make -j ${MAKE_TD}
+    make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro "Make: vim fail"
         exit -1
     fi
 
-    ${SUDO} make install
+    ${SUDO} make install &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro "Install: vim fail"
         exit -1
@@ -497,7 +509,7 @@ function inst_tig()
     if [ $? -eq 0 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
-        install_from_tar "tig-*.tar.gz"
+        access_ok "tig" || install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tig-*.tar.gz${CMD_IFS}cd tig-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tig-*/"
     fi
 }
 
@@ -520,7 +532,7 @@ function inst_astyle()
         exit -1
     fi
 
-    cp -f bin/astyle* ${BIN_DIR}
+    /usr/bin/cp -f bin/astyle* ${BIN_DIR}
     chmod 777 ${BIN_DIR}/astyle*
 
     cd ${ROOT_DIR}/deps
@@ -531,7 +543,8 @@ function inst_ack()
 {
     # install ack
     cd ${ROOT_DIR}/deps
-    cp -f ack-* ${BIN_DIR}/ack-grep
+
+    /usr/bin/cp -f ack-* ${BIN_DIR}/ack-grep
     chmod 777 ${BIN_DIR}/ack-grep
     
     # install ag
@@ -539,7 +552,7 @@ function inst_ack()
     if [ $? -eq 0 ]; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        install_from_tar "the_silver_searcher-*.tar.gz"
+        access_ok "ag" || install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
     fi
 }
 
