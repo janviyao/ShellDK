@@ -31,7 +31,8 @@ tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_
 tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
 tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
-rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs zlib-1 zlib-devel m4- autoconf- automake- nmap-ncat- the_silver_searcher-"
+rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs"
+rpmDeps="${rpmDeps} zlib-1 zlib-devel m4- autoconf- automake- nmap-ncat- the_silver_searcher- perl-Data-Dumper- perl-Thread-Queue- glibc-common-"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
