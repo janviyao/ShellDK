@@ -8,4 +8,4 @@ fi
 # User specific environment and startup programs
 export GOPATH=$HOME/.local
 export GOROOT=$GOPATH/go
-export PATH=$PATH:$HOME/.local/bin:$HOME/bin:$GOROOT/bin
+export PATH=$PATH:$HOME/.local/bin:$GOROOT/bin
