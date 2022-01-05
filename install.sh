@@ -310,25 +310,39 @@ function install_from_make
 
     if access_ok "configure"; then
         echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-        mkdir -p build && cd build
-        ../configure --prefix=/usr &>> build.log
+        ./configure --prefix=/usr &>> build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Configure: ${filename} fail"
-            exit 1
-        fi
-        access_ok "Makefile" || mv -f ./* ../ && cd ..
-    else
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
-        make configure &>> build.log
-        if [ $? -eq 0 ]; then
-            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
             mkdir -p build && cd build
             ../configure --prefix=/usr &>> build.log
             if [ $? -ne 0 ]; then
                 echo_erro " Configure: ${filename} fail"
                 exit 1
             fi
-            access_ok "Makefile" || mv -f ./* ../ && cd ..
+
+            if ! access_ok "Makefile"; then
+                ls --color=never -A | xargs -i cp -fr {} ../
+                cd ..
+            fi
+        fi
+    else
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
+        make configure &>> build.log
+        if [ $? -eq 0 ]; then
+            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+            ./configure --prefix=/usr &>> build.log
+            if [ $? -ne 0 ]; then
+                mkdir -p build && cd build
+                ../configure --prefix=/usr &>> build.log
+                if [ $? -ne 0 ]; then
+                    echo_erro " Configure: ${filename} fail"
+                    exit 1
+                fi
+
+                if ! access_ok "Makefile"; then
+                    ls --color=never -A | xargs -i cp -fr {} ../
+                    cd ..
+                fi
+            fi
         fi
     fi
 
