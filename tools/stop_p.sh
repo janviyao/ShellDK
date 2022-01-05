@@ -4,7 +4,9 @@ INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 
 paras_list="${parasMap['others']}"
 
+typeset -u signame
 signame="$(echo ${paras_list} | cut -d ' ' -f 1)"
+signame=$(match_trim_start "${signame}" "SIG")
 pname_list="$(echo ${paras_list} | cut -d ' ' -f 2-)"
 
 echo_debug "@@@@@@: $(echo `basename $0`) @ $(echo `dirname $0`)"
@@ -17,10 +19,11 @@ do
     for sig in `kill -l`
     do
         let signum++
-        if [ x"${sig}" == x"${signame}" ];then
+        if [ x"${sig}" == xSIG"${signame}" ];then
             break    
         fi
     done
+    signum=$((signum/2))
     signum=`printf "%02d" ${signum}`
 
     PID_LIST=`ps -ef | grep -w -F "${pname}" | grep -v "$0" | grep -v "grep " | awk '{print $2}'`
@@ -37,7 +40,7 @@ do
                 is_exc=`echo "${exclude_pname}" | grep -w "${pname}"` 
                 if [ -z "${is_exc}" ];then
                     echo_info "${signum}）${signame} ${pname} PID=${pid}"
-                    kill -s ${signame} ${pid}
+                    ${SUDO} kill -s ${signame} ${pid}
                 fi
             fi
         done

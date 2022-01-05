@@ -126,8 +126,14 @@ function _global_ctrl_bg_thread
                 if [ -n "${ack_pipe}" ];then
                     echo "ACK" > ${ack_pipe}
                 fi
+                
+                for pid in `pgrep nc`
+                do
+                    if is_number "${pid}";then
+                        kill -s INT ${pid}
+                    fi
+                done
 
-                pgrep nc | xargs kill -s INT
                 timeout ${OP_TIMEOUT} nc -l ${_SERVER_PORT} | while read nc_msg
                 do
                     #echo "ncat_msg: ${nc_msg}"

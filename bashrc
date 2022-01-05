@@ -14,6 +14,8 @@ alias llt='ls --color -lht'
 alias LS='ls --color'
 alias LL='ls --color -lh'
 
+unalias cp &> /dev/null
+
 # all variables and functions exported
 # only function exported: export -f function
 # only variable exported: export var=val

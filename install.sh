@@ -181,8 +181,8 @@ function deploy_env
     # build vim-work environment
     mkdir -p ${HOME_DIR}/.vim
 
-    /usr/bin/cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
-    /usr/bin/cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim    
+    cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
+    cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim
 
     if ! access_ok "${HOME_DIR}/.vim/bundle/vundle"; then
         cd ${ROOT_DIR}/deps
@@ -477,7 +477,7 @@ function inst_deps()
         mv -f deno.exe ${BIN_DIR}
         chmod +x ${BIN_DIR}/deno.exe
         
-        /usr/bin/cp -f apt-cyg ${BIN_DIR}
+        cp -f apt-cyg ${BIN_DIR}
         chmod +x ${BIN_DIR}/apt-cyg
     fi 
 }
@@ -586,7 +586,7 @@ function inst_astyle()
         exit -1
     fi
 
-    /usr/bin/cp -f bin/astyle* ${BIN_DIR}
+    cp -f bin/astyle* ${BIN_DIR}
     chmod 777 ${BIN_DIR}/astyle*
 
     cd ${ROOT_DIR}/deps
@@ -598,7 +598,7 @@ function inst_ack()
     # install ack
     cd ${ROOT_DIR}/deps
 
-    /usr/bin/cp -f ack-* ${BIN_DIR}/ack-grep
+    cp -f ack-* ${BIN_DIR}/ack-grep
     chmod 777 ${BIN_DIR}/ack-grep
     
     # install ag
