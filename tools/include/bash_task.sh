@@ -127,6 +127,7 @@ function _global_ctrl_bg_thread
                     echo "ACK" > ${ack_pipe}
                 fi
 
+                pgrep nc | xargs kill -s INT
                 timeout ${OP_TIMEOUT} nc -l ${_SERVER_PORT} | while read nc_msg
                 do
                     #echo "ncat_msg: ${nc_msg}"
