@@ -26,7 +26,7 @@ CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; ${CMD_STR}; $
 
 # expect -d # debug expect
 expect << EOF
-    #exp_internal 1 #enable debug
+    exp_internal 1 #enable debug
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
 
@@ -35,10 +35,12 @@ expect << EOF
     expect {
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
-        eof
-    }
-     
-    ${EXPECT_EOF}
+         #solve: expect: spawn id exp4 not open
+         "\r\n" { }
+         "\r" { }
+         "\n" { }
+     }
+    expect eof
 EOF
 
 global_get ${RET_VAR}

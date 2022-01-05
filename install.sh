@@ -277,7 +277,7 @@ function install_from_net
     fi
 }
 
-function install_from_tar
+function install_from_make
 {
     local before_orders="$(echo "$*" | cut -d "${BUILD_IFS}" -f 1)"
     local after_orders="$(echo "$*" | cut -d "${BUILD_IFS}" -f 2)"
@@ -286,7 +286,7 @@ function install_from_tar
     local one_act="$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
     while [ -n "${one_act}" ]
     do
-        echo_info "$(printf "[%13s]: %-50s" "Action" "${one_act}")"
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "${one_act}")"
         eval "${one_act}"
 
         let next_act++
@@ -300,7 +300,7 @@ function install_from_tar
     [ $? -ne 0 ] && access_ok "linux/" && cd linux/
 
     if access_ok "autogen.sh"; then
-        echo_info "$(printf "[%13s]: %-50s" "Action" "autogen")"
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Autogen: ${filename} fail"
@@ -309,33 +309,37 @@ function install_from_tar
     fi
 
     if access_ok "configure"; then
-        echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
-        ./configure --prefix=/usr/local &>> build.log
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        mkdir build && cd build
+        ../configure --prefix=/usr &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Configure: ${filename} fail"
             exit 1
         fi
+        access_ok "Makefile" || cd ..
     else
-        echo_info "$(printf "[%13s]: %-50s" "Action" "make configure")"
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
         make configure &>> build.log
         if [ $? -eq 0 ]; then
-            echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
-            ./configure --prefix=/usr/local &>> build.log
+            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+            mkdir build && cd build
+            ../configure --prefix=/usr &>> build.log
             if [ $? -ne 0 ]; then
                 echo_erro " Configure: ${filename} fail"
                 exit 1
             fi
+            access_ok "Makefile" || cd ..
         fi
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${filename} fail"
         exit 1
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Action" "make install")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
     ${SUDO} make install &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${filename} fail"
@@ -346,7 +350,7 @@ function install_from_tar
     local one_act="$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
     while [ -n "${one_act}" ]
     do
-        echo_info "$(printf "[%13s]: %-50s" "Action" "${one_act}")"
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "${one_act}")"
         eval "${one_act}"
 
         let next_act++
@@ -362,6 +366,7 @@ function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)"
 function install_from_rpm
 {
     local rpmf="$1"
+    local force="${2:-false}"
 
     local rpm_file_list=`find . -name "${rpmf}*.rpm"`
     for rpm_file in ${rpm_file_list}    
@@ -382,7 +387,7 @@ function install_from_rpm
             fi
         fi
 
-        if test ${need_install} -eq 1; then
+        if bool_v "${force}" || test ${need_install} -eq 1; then
             ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
@@ -412,7 +417,7 @@ function inst_deps()
                 local todoes="${tarTodo[${usr_cmd}]}"
 
                 echo_info "$(printf "[%13s]: %-50s" "Will install" "${usr_cmd}")"
-                install_from_tar "${todoes}" 
+                install_from_make "${todoes}" 
             fi
         done
 
@@ -435,36 +440,12 @@ function inst_deps()
         local version_new=2.18
         if version_lt ${version_cur} ${version_new}; then
             # Install glibc
-            echo_info "$(printf "[%13s]: %-50s" "Will install" "glibc-2.18")"
-            cd ${ROOT_DIR}/deps
-            tar -zxf  glibc-2.18.tar.gz
-            cd glibc-2.18
-            mkdir build
-            cd build/
+            install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
+            install_from_rpm "glibc-common-" true
 
-            echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
-            ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin &>> build.log
-            if [ $? -ne 0 ]; then
-                echo_erro "Configure: glibc-2.18 fail"
-                exit -1
-            fi
-
-            echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
-            make -j ${MAKE_TD} &>> build.log
-            if [ $? -ne 0 ]; then
-                echo_erro "Make: glibc-2.18 fail"
-                exit -1
-            fi
-
-            echo_info "$(printf "[%13s]: %-50s" "Action" "make install")"
-            ${SUDO} make install &>> build.log
-            if [ $? -ne 0 ]; then
-                echo_erro "Install: glibc-2.18 fail"
-                exit -1
-            fi
-
-            cd ${ROOT_DIR}/deps
-            rm -fr glibc-2.18
+            echo "LANG=en_US.UTF-8" >> /etc/environment
+            echo "LC_ALL=" >> /etc/environment
+            localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null
         fi
          
         ${SUDO} chmod 777 /etc/ld.so.conf
@@ -495,7 +476,7 @@ function inst_ctags()
     if [ $? -eq 0 ]; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
-        install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf ctags-*.tar.gz${CMD_IFS}cd ctags-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr ctags-*/"
+        install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf ctags-*.tar.gz${CMD_IFS}cd ctags-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr ctags-*/"
     fi
 }
 
@@ -507,7 +488,7 @@ function inst_cscope()
     if [ $? -eq 0 ]; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
-        install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf cscope-*.tar.gz${CMD_IFS}cd cscope-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr cscope-*/"
+        install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf cscope-*.tar.gz${CMD_IFS}cd cscope-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr cscope-*/"
     fi
 }
 
@@ -524,7 +505,7 @@ function inst_vim()
 
     cd vim*/
 
-    echo_info "$(printf "[%13s]: %-50s" "Action" "configure")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset \
         --enable-largefile \
         --enable-pythoninterp=yes \
@@ -536,14 +517,14 @@ function inst_vim()
         exit -1
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro "Make: vim fail"
         exit -1
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Action" "make install")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
     ${SUDO} make install &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro "Install: vim fail"
@@ -567,7 +548,7 @@ function inst_tig()
     if [ $? -eq 0 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
-        access_ok "tig" || install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tig-*.tar.gz${CMD_IFS}cd tig-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tig-*/"
+        access_ok "tig" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tig-*.tar.gz${CMD_IFS}cd tig-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tig-*/"
     fi
 }
 
@@ -584,7 +565,7 @@ function inst_astyle()
         cd astyle*/build/gcc
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Action" "make")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     make -j ${MAKE_TD}
     if [ $? -ne 0 ]; then
         echo_erro "Make: astyle fail"
@@ -611,7 +592,7 @@ function inst_ack()
     if [ $? -eq 0 ]; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        access_ok "ag" || install_from_tar "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
+        access_ok "ag" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
     fi
 }
 
