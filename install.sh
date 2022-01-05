@@ -17,6 +17,7 @@ fi
 declare -A funcMap
 declare -A netDeps
 declare -A tarTodo
+declare -A rpmTodo
 
 netDeps["make"]="make"
 netDeps["g++"]="gcc-c++"
@@ -31,8 +32,34 @@ tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_
 tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
 tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
-rpmDeps="python-devel python-libs python3-devel python3-libs- xz-libs xz-devel libiconv-1 libiconv-devel pcre-8 pcre-devel pcre-cpp pcre-utf16 pcre-utf32 ncurses-devel ncurses-libs"
-rpmDeps="${rpmDeps} zlib-1 zlib-devel m4- autoconf- automake- nmap-ncat- the_silver_searcher- perl-Data-Dumper- perl-Thread-Queue- glibc-common-"
+rpmTodo["/usr/bin/python-config"]="python-devel"
+rpmTodo["/usr/lib64/libpython2.7.so.1.0"]="python-libs"
+rpmTodo["/usr/bin/python3-config"]="python3-devel"
+rpmTodo["/usr/lib64/libpython3.so"]="python3-libs-"
+rpmTodo["/usr/lib64/liblzma.so.5"]="xz-libs"
+rpmTodo["/usr/lib64/liblzma.so"]="xz-devel"
+rpmTodo["/usr/libiconv/lib64/libiconv.so.2"]="libiconv-1"
+rpmTodo["/usr/libiconv/lib64/libiconv.so"]="libiconv-devel"
+rpmTodo["/usr/lib64/libpcre.so.1"]="pcre-8"
+rpmTodo["/usr/lib64/libpcre.so"]="pcre-devel"
+rpmTodo["/usr/lib64/libpcrecpp.so.0"]="pcre-cpp"
+rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16"
+rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32"
+rpmTodo["/usr/lib64/libncurses.so"]="ncurses-devel"
+rpmTodo["/usr/lib64/libncurses.so.6"]="ncurses-libs"
+rpmTodo["/usr/lib64/libz.so.1"]="zlib-1"
+rpmTodo["/usr/lib64/libz.so"]="zlib-devel"
+rpmTodo["m4"]="m4-"
+rpmTodo["autoconf"]="autoconf-"
+rpmTodo["automake"]="automake-"
+rpmTodo["nc"]="nmap-ncat-"
+rpmTodo["ag"]="the_silver_searcher-"
+rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-"
+rpmTodo["/usr/share/doc/perl-Thread-Queue"]="perl-Thread-Queue-"
+rpmTodo["locale"]="glibc-common-"
+#rpmTodo["/usr/lib/golang/api"]="golang-1"
+#rpmTodo["/usr/lib/golang/src"]="golang-src-"
+#rpmTodo["/usr/lib/golang/bin"]="golang-bin-"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
@@ -356,7 +383,7 @@ function install_from_rpm
         fi
 
         if test ${need_install} -eq 1; then
-            ${SUDO} rpm -ivh ${rpm_file} --nodeps --force
+            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
                 exit -1
@@ -371,11 +398,14 @@ function inst_deps()
 {     
     cd ${ROOT_DIR}/deps
     if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
-        for rpmf in ${rpmDeps};
+        for usr_cmd in ${!rpmTodo[@]};
         do
-            install_from_rpm "${rpmf}" 
+            if ! access_ok "${usr_cmd}";then
+                local todoes="${rpmTodo["${usr_cmd}"]}"
+                install_from_rpm "${todoes}" 
+            fi
         done
-
+        
         for usr_cmd in ${tarDeps[@]};
         do
             if ! access_ok "${usr_cmd}";then
