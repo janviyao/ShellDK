@@ -33,14 +33,20 @@ expect << EOF
     set time 30
     spawn -noecho sudo bash -c "${CMD_STR}"
     expect {
-        timeout { exit 1 }
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         #solve: expect: spawn id exp4 not open
-        "\r\n" { exp_continue }
+        "\r\n" { }
         "\r" { }
-        "\n" { } 
+        "\n" { }
         eof { exit 0 }
+        timeout { exit 1 }
+    }
+
+    set pid [exp_pid]
+    #puts "PID: $pid"
+    if { "$pid" == "" } {
+        expect eof
     }
 EOF
 
