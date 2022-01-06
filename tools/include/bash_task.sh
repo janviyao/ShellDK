@@ -130,11 +130,11 @@ function _global_ctrl_bg_thread
                 for pid in `pgrep nc`
                 do
                     if is_number "${pid}";then
-                        kill -s INT ${pid}
+                        ${SUDO} kill -s INT ${pid}
                     fi
                 done
 
-                timeout ${OP_TIMEOUT} nc -l ${_SERVER_PORT} | while read nc_msg
+                timeout ${OP_TIMEOUT} nc -l -4 ${_SERVER_PORT} | while read nc_msg
                 do
                     #echo "ncat_msg: ${nc_msg}"
                     local srv_id="$(echo "${nc_msg}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
