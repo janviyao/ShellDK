@@ -11,13 +11,13 @@ while [ -n "$1" ]; do
         value="$(echo "${option}" | cut -d '=' -f 2)"
         option="$(echo "${option}" | cut -d '=' -f 1)"
     fi
-    #echo "para: ${option} ${value}"
+    echo_debug "para: ${option} ${value}"
 
     prefix=${option:0:2} 
     if [[ "${prefix}" == "--" ]];then
         prefix=${value:0:1} 
         if [[ "${prefix}" == "-" ]];then
-            parasMap["${option}"]=""
+            parasMap["${option}"]="true"
         else
             parasMap["${option}"]="${value}"
             shift
@@ -27,7 +27,7 @@ while [ -n "$1" ]; do
         if [[ "${prefix}" == "-" ]];then
             prefix=${value:0:1} 
             if [[ "${prefix}" == "-" ]];then
-                parasMap["${option}"]=""
+                parasMap["${option}"]="true"
             else
                 parasMap["${option}"]="${value}"
                 shift

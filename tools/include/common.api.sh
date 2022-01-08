@@ -147,15 +147,19 @@ function check_net
     fi 
 }
 
-function end_chars
+function match_regex
 {
     local string="$1"
-    local count="$2"
+    local regstr="$2"
 
-    [ -z "${count}" ] && count=1
+    [ -z "${regstr}" ] && return 1 
 
-    local chars="`echo "${string}" | rev | cut -c 1-${count} | rev`"
-    echo "${chars}"
+    echo "${string}" | grep -P "${regstr}" &> /dev/null
+    if [ $? -eq 0 ];then
+        return 0
+    else
+        return 1
+    fi
 }
 
 function start_chars
@@ -166,6 +170,17 @@ function start_chars
     [ -z "${count}" ] && count=1
 
     local chars="`echo "${string}" | cut -c 1-${count}`"
+    echo "${chars}"
+}
+
+function end_chars
+{
+    local string="$1"
+    local count="$2"
+
+    [ -z "${count}" ] && count=1
+
+    local chars="`echo "${string}" | rev | cut -c 1-${count} | rev`"
     echo "${chars}"
 }
 
@@ -206,12 +221,42 @@ function contain_string
 {
     local string="$1"
     local substr="$2"
-    
+
+    if [[ ${substr} == *\\* ]];then
+        substr="${substr//\\/\\\\}"
+    fi
+
+    if [[ ${substr} == *\** ]];then
+        substr="${substr//*/\*}"
+    fi
+
     if [[ ${string} == *${substr}* ]];then
         return 0
     else
         return 1
     fi
+}
+
+function regex_replace
+{
+    local string="$1"
+    local regstr="$2"
+    local newstr="$3"
+    
+    #donot use (), because it fork child shell
+    [ -z "${regstr}" ] && { echo "${string}"; return; }
+ 
+    local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
+    [ -z "${oldstr}" ] && { echo "${string}"; return; }
+
+    oldstr="${oldstr//./\.}"
+    oldstr="${oldstr//\//\\/}"
+
+    newstr="${newstr//\\/\\\\}"
+    newstr="${newstr//\//\\/}"
+
+    string="$(echo "${string}" | sed "s/${oldstr}/${newstr}/g")"
+    echo "${string}"
 }
 
 function ssh_address

@@ -1,6 +1,8 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:my_vim_dir = expand('$MY_VIM_DIR')
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -37,10 +39,10 @@ endfunction
 function! GetVimDir(work, dir)
     let makdir = expand('$HOME/.vimSession/')
     if strlen(a:dir) == 0
-        let makdir = makdir . substitute(getcwd(), '[:\/]', '-', 'g')
+        let makdir = makdir . substitute(getcwd(), '[:\/]', '@', 'g')
     else
         if a:work == 1
-            let makdir = makdir . a:dir . "/" . substitute(getcwd(), '[:\/]', '-', 'g')
+            let makdir = makdir . a:dir . "/" . substitute(getcwd(), '[:\/]', '@', 'g')
         else
             let makdir = makdir . a:dir 
         endif
@@ -238,6 +240,9 @@ autocmd CursorMoved * if exists("g:show_func")
                       \| set cmdheight=1 
                       \| echo '' 
                       \| endif
+
+autocmd FileType c,cpp let g:prj_type=c
+autocmd FileType go let g:prj_type=go
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 设置快捷键
@@ -764,116 +769,10 @@ endfunction
 "自定义变量
 let g:isDeleteSave = 0
 
-function! RemoveGitignore(findFile)
-    for gitline in readfile(".gitignore", '')
-        if strlen(gitline) == 0
-            continue
-        endif
-
-        "call PrintMsg("debug", "O===".gitline)
-        let firstidx = stridx(gitline, "!")
-        if firstidx == 0
-            continue
-        endif
-
-        let firstidx = stridx(gitline, "#")
-        if firstidx == 0
-            continue
-        endif
-
-        let firstidx = stridx(gitline, "/")
-        if firstidx == 0
-            let gitline = "^".gitline
-        endif
-
-        let lastidx = strridx(gitline, ".")
-        if lastidx >= 0
-            let gitline = substitute(gitline, "\\.", "\\\\.", 'g')
-            let gitline = gitline."$"
-            if lastidx == 0
-                let gitline = "^".gitline
-            endif
-        endif
-
-        let firstidx = stridx(gitline, "*")
-        if firstidx >= 0
-            let gitline = substitute(gitline, "*", ".*", 'g')
-        endif
-
-        let firstidx = stridx(gitline, "?")
-        if firstidx >= 0
-            let line = substitute(gitline, "?", ".", 'g')
-        endif
-        
-        if isdirectory(gitline)
-            let gitline = substitute(gitline, "\\/", "\\\\/", 'g')
-            let gitline = "^".gitline
-            let lastidx = strridx(gitline, "/") + 1
-            if lastidx != strlen(gitline)
-                let gitline = gitline."\\/"
-            endif
-        else
-            let firstidx = stridx(gitline, "/")
-            if firstidx >= 0
-                let gitline = substitute(gitline, "\\/", "\\\\/", 'g')
-            endif
-        endif
-
-        "call PrintMsg("debug", "M===".gitline)
-        silent! execute "!sed -i '/".gitline."/d' ".a:findFile
-    endfor
-endfunction
-
 "工程控制
 function! LoadProject(opmode) 
     if a:opmode == "create"
-        let defaultStr = "c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|h\\|s\\|S\\|py\\|go"
-
-        let findStr = GetInputStr("Input file type (separated with comma) to parse: ", "", "")
-        if strlen(findStr) > 0
-            let findStr = substitute(findStr, ',', '\\|', 'g')                
-        else
-            let findStr = defaultStr
-        endif
- 
-        silent! execute "!find . -type f -regex '.+\\.\\(".findStr."\\)' > cscope.files"
-
-        let includeStr = GetInputStr("Input search directory: ", "", "dir")
-        while strlen(includeStr) > 0
-            silent! execute "!find ".includeStr." -type f -regex '.+\\.\\(".findStr."\\)' >> cscope.files"
-            let includeStr = GetInputStr("Input search directory: ", "", "dir")
-        endwhile
-
-        silent! execute "!sort -u cscope.files > cscope.files.tmp"
-        silent! execute "!mv cscope.files.tmp cscope.files"
-
-        "删除cscope.files中无用文件
-        let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
-        while strlen(excludeStr) > 0
-            let excludeStr = substitute(excludeStr, $HOME."/", "", 'g')                
-            let excludeStr = substitute(excludeStr, "/", "\\\\/", 'g')                
-
-            silent! execute "!sed -i '/".excludeStr."/d' cscope.files"
-            let excludeStr = GetInputStr("Input wipe directory: ", "", "dir")
-        endwhile
-        
-        silent! execute '!sed -i "s/\.\///g" cscope.files'
-        call RemoveGitignore("cscope.files")
-
-        silent! execute "!rm -f tags"
-        silent! execute "!rm -f cscope.*out"
-        silent! execute "!rm -f ncscope.*"
-
-        if has("win16") || has("win32") || has("win32unix") || has("win64") || has("win95") 
-            silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files"
-        else
-            silent! execute "!ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files"
-        endif
-        silent! execute "!cscope -ckbq -i cscope.files"
-
-        silent! execute "!rm -f rm.line"
-        silent! execute "!rm -f ncscope.*"
-        silent! execute "!rm -f cscope.files"
+        silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -d \"".getcwd()."\" -m create"
         silent! execute "qa"
     elseif a:opmode == "delete" 
         let g:isDeleteSave = 1
@@ -935,6 +834,7 @@ function! LeaveHandler()
             silent! execute "!rm -fr ".GetVimDir(1,"sessions") 
             silent! execute "!rm -fr ".GetVimDir(1,"ctrlpcache") 
             silent! execute "!rm -fr ".GetVimDir(1,"bookmark") 
+
             silent! execute "!rm -f cscope.* ncscope.* tags"
         endif 
     endif
