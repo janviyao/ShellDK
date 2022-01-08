@@ -68,9 +68,10 @@ function progress3
 {
     local current="$1"
     local total="$2"
-    local prefix="$3"
+    local rows="$3"
+    local cols="$4"
 
-    #local step=$(printf "%.3f" `echo "scale=4;100/($total-$current+1)"|bc`)
+    # local step=$(printf "%.3f" `echo "scale=4;100/($total-$current+1)"|bc`)
     # here字符串
     local step=$(printf "%.3f" `bc <<< "scale=4;100/($total-$current+1)"`)
 
@@ -79,6 +80,10 @@ function progress3
     local now=$current
     local last=$((total+1))
     
+    send_log_to_parent "CURSOR_MOVE" "${rows}${CTRL_SPF2}${cols}"
+    send_log_to_parent "ERASE_LINE"
+    send_log_to_parent "CURSOR_HIDE"
+
     local postfix=('|' '/' '-' '\')
     while [ $now -le $last ] && [ ! -f ${PRG_FIN} ] 
     do
@@ -93,27 +98,23 @@ function progress3
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
 
-        send_log_to_parent "RETURN"
-        send_log_to_parent "PRINT" "$(printf "%s[%-50s %-2d%% %c]" "${prefix}" "$str" "$value" "${postfix[$index]}")"
+        send_log_to_parent "CURSOR_SAVE"
+        send_log_to_parent "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
+        send_log_to_parent "CURSOR_RESTORE"
 
         let now++
         sleep 0.1 
     done
-
-    # 清空输出
-    send_log_to_parent "RETURN"
-    send_log_to_parent "LOOP" "100${CTRL_SPF2}SPACE"
-    
-    # 恢复prefix
-    send_log_to_parent "RETURN"
-    send_log_to_parent "PRINT" "$(printf "%s" "${prefix}")"
+    send_log_to_parent "ERASE_LINE"
+    send_log_to_parent "CURSOR_SHOW"
 }
 
 declare -r PRG_CURR="$1"
 declare -r PRG_LAST="$2"
-declare -r LOG_PREF="$3"
+declare -r POS_ROWS="$3"
+declare -r POS_COLS="$4"
 
-progress3 "${PRG_CURR}" "${PRG_LAST}" "${LOG_PREF}"
+progress3 "${PRG_CURR}" "${PRG_LAST}" "${POS_ROWS}" "${POS_COLS}"
 
 #echo "exit prg1"
 controller_threads_exit

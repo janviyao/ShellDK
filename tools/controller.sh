@@ -167,9 +167,26 @@ function loger_default_handler
     local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
     local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
     
-    #echo "order: ${order} msg: ${msg}"
     if [[ "${order}" == "EXIT" ]];then
         exit 0
+    elif [[ "${order}" == "CURSOR_MOVE" ]];then
+        local x_val="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 1)"
+        local y_val="$(echo "${msg}" | cut -d "${CTRL_SPF2}" -f 2)"
+        tput cup ${x_val} ${y_val}
+    elif [[ "${order}" == "CURSOR_HIDE" ]];then
+        tput civis
+    elif [[ "${order}" == "CURSOR_SHOW" ]];then
+        tput cnorm
+    elif [[ "${order}" == "CURSOR_SAVE" ]];then
+        tput sc
+    elif [[ "${order}" == "CURSOR_RESTORE" ]];then
+        tput rc
+    elif [[ "${order}" == "ERASE_LINE" ]];then
+        tput el
+    elif [[ "${order}" == "ERASE_BEHIND" ]];then
+        tput ed
+    elif [[ "${order}" == "ERASE_ALL" ]];then
+        tput clear
     elif [[ "${order}" == "RETURN" ]];then
         printf "\r"
     elif [[ "${order}" == "NEWLINE" ]];then

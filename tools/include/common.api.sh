@@ -271,3 +271,23 @@ function ssh_address
         echo "${addr}"
     done
 }
+
+function cursor_pos
+{
+    # ask the terminal for the position
+    echo -ne "\033[6n" > /dev/tty
+
+    # discard the first part of the response
+    read -s -d\[ garbage < /dev/tty
+
+    # store the position in bash variable 'pos'
+    read -s -d R pos < /dev/tty
+
+    # save the position
+    echo_debug "position: $pos"
+    local x_pos="$(echo "${pos}" | cut -d ';' -f 1)"
+    local y_pos="$(echo "${pos}" | cut -d ';' -f 2)"
+
+    global_set x_pos
+    global_set y_pos
+}

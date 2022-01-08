@@ -80,11 +80,19 @@ for gitdir in `ls -d */`
 do
     cd ${gitdir}
     if [ -d .git ]; then
-        echo_debug "enter: ${gitdir}"
-        prefix=$(printf "%-30s @ " "${gitdir}")
+        echo_debug "enter into: ${gitdir}"
+        prefix="$(printf "%-30s @ " "${gitdir}")"
+        send_log_to_self "PRINT" "${prefix}"
+        sleep 0.05
+
+        cursor_pos
+        global_get x_pos
+        global_get y_pos
+        let x_pos--
+        echo_debug "progress position: [${x_pos}:${y_pos}]"
 
         prg_time=$((OP_TIMEOUT*10*OP_TRY_CNT + 2*10))
-        $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} "${prefix}" &
+        $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos}&
         bgpid=$!
 
         $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${log_file}"
@@ -94,8 +102,9 @@ do
         wait ${bgpid}
 
         run_res=`cat ${log_file}`
-        send_log_to_self "RETURN"
-        send_log_to_self "PRINT" "$(printf "%s%s" "${prefix}" "${run_res}")"
+        send_log_to_self "CURSOR_MOVE" "${x_pos}${CTRL_SPF2}${y_pos}"
+        send_log_to_self "ERASE_LINE" 
+        send_log_to_self "PRINT" "$(printf "%s" "${run_res}")"
         send_log_to_self "NEWLINE"
     else
         echo_debug "not git repo @ ${gitdir}"
