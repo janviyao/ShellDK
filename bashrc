@@ -60,4 +60,4 @@ function INCLUDE
 }
 
 INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-INCLUDE "_GLOBAL_CTRL_DIR" $MY_VIM_DIR/tools/include/bash_task.sh
+INCLUDE "GBL_CTRL_DIR" $MY_VIM_DIR/tools/include/bash_task.sh

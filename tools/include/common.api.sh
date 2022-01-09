@@ -77,7 +77,7 @@ function echo_header
     bool_v "${LOG_HEADER}"
     if [ $? -eq 0 ];then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
-        echo "${COLOR_HEADER}${FONT_BOLD}******${_SERVER_ADDR}@${cur_time}: ${COLOR_CLOSE}"
+        echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
     fi
 }
 
@@ -305,6 +305,6 @@ function cursor_pos
     local x_pos="$(echo "${pos}" | cut -d ';' -f 1)"
     local y_pos="$(echo "${pos}" | cut -d ';' -f 2)"
 
-    global_set x_pos
-    global_set y_pos
+    global_set_var x_pos
+    global_set_var y_pos
 }

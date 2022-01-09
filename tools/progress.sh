@@ -9,8 +9,8 @@ function ctrl_user_handler
     line="$1"
     #echo "prg recv: ${line} ${PRG_FIN}"
 
-    local order="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
-    local msg="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
+    local order="$(echo "${line}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
 
     if [[ "${order}" == "FIN" ]];then
         touch ${PRG_FIN}
@@ -80,7 +80,7 @@ function progress3
     local now=$current
     local last=$((total+1))
     
-    send_log_to_parent "CURSOR_MOVE" "${rows}${_GLOBAL_CTRL_SPF2}${cols}"
+    send_log_to_parent "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
     send_log_to_parent "ERASE_LINE"
     #send_log_to_parent "CURSOR_HIDE"
 
@@ -106,7 +106,7 @@ function progress3
         sleep 0.1 
     done
 
-    send_log_to_parent "CURSOR_MOVE" "${rows}${_GLOBAL_CTRL_SPF2}${cols}"
+    send_log_to_parent "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
     send_log_to_parent "ERASE_LINE"
     #send_log_to_parent "CURSOR_SHOW"
 }

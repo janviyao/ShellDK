@@ -5,12 +5,12 @@ function ctrl_user_handler
 {
     line="$1"
 
-    local ack_ctrl="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 1)"
-    local ack_pipe="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 2)"
+    local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
+    local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
+    local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
-    local request="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 3)"
-    local req_ctrl="$(echo "${request}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
-    local req_msg="$(echo "${request}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
+    local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
+    local req_msg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
 
     if [[ "${req_ctrl}" == "BG_EXIT" ]];then
         local bgpid=${req_msg}
@@ -28,8 +28,8 @@ function ctrl_user_handler
         done
         unset childMap["${bgpid}"]
     elif [[ "${req_ctrl}" == "BG_RECV" ]];then
-        local bgpid=$(echo "${req_msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)
-        local bgmsg=$(echo "${req_msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)
+        local bgpid=$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+        local bgmsg=$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
         echo_debug "bgpid: ${bgpid} bgmsg: ${bgmsg}"
 
         for pid in ${!childMap[@]};do
@@ -50,16 +50,16 @@ function loger_user_handler
 {
     line="$1"
     
-    local ack_ctrl="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 1)"
-    local ack_pipe="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 2)"
+    local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
+    local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
+    local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
-    local request="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 3)"
-    local req_ctrl="$(echo "${request}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
-    local req_msg="$(echo "${request}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
+    local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
+    local req_msg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
 
     if [[ "${req_ctrl}" == "LOOP" ]];then
-        local count=$(echo "${req_msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 1)
-        local code="$(echo "${req_msg}" | cut -d "${_GLOBAL_CTRL_SPF2}" -f 2)"
+        local count=$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+        local code="$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
 
         for i in `seq 1 ${count}`
         do
@@ -93,8 +93,8 @@ do
         send_log_to_self_sync "PRINT" "${prefix}"
 
         cursor_pos
-        global_get x_pos
-        global_get y_pos
+        global_get_var x_pos
+        global_get_var y_pos
         let x_pos--
         echo_debug "progress position: [${x_pos}:${y_pos}]"
 
@@ -104,12 +104,12 @@ do
 
         $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${log_file}"
 
-        send_ctrl_to_self "BG_RECV" "${bgpid}${_GLOBAL_CTRL_SPF2}FIN"
+        send_ctrl_to_self "BG_RECV" "${bgpid}${GBL_CTRL_SPF2}FIN"
         send_ctrl_to_self "BG_EXIT" "${bgpid}"
         wait ${bgpid}
 
         run_res=`cat ${log_file}`
-        send_log_to_self "CURSOR_MOVE" "${x_pos}${_GLOBAL_CTRL_SPF2}${y_pos}"
+        send_log_to_self "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
         send_log_to_self "ERASE_LINE" 
         send_log_to_self "PRINT" "$(printf "%s" "${run_res}")"
         send_log_to_self "NEWLINE"

@@ -19,7 +19,7 @@ if [ $UID -ne 0 ]; then
 fi
 
 RET_VAR="sudo_ret$$"
-GET_RET="${RET_VAR}=\$?; global_set_pipe ${RET_VAR} ${_GLOBAL_CTRL_PIPE}"
+GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_CTRL_PIPE}"
 
 CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; ${CMD_STR}; ${GET_RET}"
@@ -50,7 +50,7 @@ expect << EOF
     }
 EOF
 
-global_get ${RET_VAR}
-global_unset ${RET_VAR}
+global_get_var ${RET_VAR}
+global_unset_var ${RET_VAR}
 
 eval "exit \$${RET_VAR}"

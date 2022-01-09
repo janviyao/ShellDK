@@ -1,6 +1,6 @@
 #!/bin/bash
-global_get USR_NAME
-global_get USR_PASSWORD
+global_get_var USR_NAME
+global_get_var USR_PASSWORD
 
 declare -F echo_debug &>/dev/null
 if [ $? -eq 0 ];then
@@ -22,7 +22,7 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     echo ""
 
     if [ -n "${USR_NAME}" -a -n "${USR_PASSWORD}" ]; then
-        global_set USR_NAME
-        global_set USR_PASSWORD
+        global_set_var USR_NAME
+        global_set_var USR_PASSWORD
     fi
 fi
