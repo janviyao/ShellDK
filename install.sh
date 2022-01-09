@@ -155,6 +155,7 @@ commandMap["${CMD_PRE}gitdiff"]="${ROOT_DIR}/tools/gitdiff.sh"
 commandMap["${CMD_PRE}syndir"]="${ROOT_DIR}/tools/sync_dir.sh"
 commandMap["${CMD_PRE}threads"]="${ROOT_DIR}/tools/threads.sh"
 commandMap["${CMD_PRE}paraparser"]="${ROOT_DIR}/tools/paraparser.sh"
+commandMap["${CMD_PRE}replace"]="${ROOT_DIR}/tools/replace.sh"
 
 commandMap[".vimrc"]="${ROOT_DIR}/vimrc"
 commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"

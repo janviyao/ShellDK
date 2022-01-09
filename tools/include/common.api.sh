@@ -191,6 +191,14 @@ function match_trim_start
     
     local sublen=${#subchar}
 
+    if [[ ${subchar} == *\\* ]];then
+        subchar="${subchar//\\/\\\\}"
+    fi
+
+    if [[ ${subchar} == *\** ]];then
+        subchar="${subchar//*/\*}"
+    fi
+
     if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
         let sublen++
         local new="`echo "${string}" | cut -c ${sublen}-`" 
@@ -207,6 +215,14 @@ function match_trim_end
     
     local total=${#string}
     local sublen=${#subchar}
+
+    if [[ ${subchar} == *\\* ]];then
+        subchar="${subchar//\\/\\\\}"
+    fi
+
+    if [[ ${subchar} == *\** ]];then
+        subchar="${subchar//*/\*}"
+    fi
 
     if [[ "$(end_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
         local diff=$((total-sublen))
@@ -263,6 +279,7 @@ function ssh_address
 {
     local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
     local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+
     for addr in ${ssh_con}
     do
         if [[ "${ssh_cli}" == "${addr}" ]];then
