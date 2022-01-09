@@ -68,12 +68,12 @@ do
  
         echo "" >&${thread_fd}
         exit 0
-    } & 
+    } &
     else
         break
     fi
 }
-done 
+done
 
 wait
 controller_clear

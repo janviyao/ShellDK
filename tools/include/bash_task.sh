@@ -83,7 +83,7 @@ function _global_ctrl_bg_thread
     declare -A _globalMap
     while read line
     do
-        #echo "[$$]global recv: [${line}]" 
+        echo_debug "[$$]global: [${line}]" 
         local ack_ctrl="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 1)"
         local ack_pipe="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 2)"
         local request="$(echo "${line}" | cut -d "${_GLOBAL_ACK_SPF}" -f 3)"

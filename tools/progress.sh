@@ -9,8 +9,8 @@ function ctrl_user_handler
     line="$1"
     #echo "prg recv: ${line} ${PRG_FIN}"
 
-    local order="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 1)"
-    local msg="$(echo "${line}" | cut -d "${CTRL_SPF1}" -f 2)"
+    local order="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 1)"
+    local msg="$(echo "${line}" | cut -d "${_GLOBAL_CTRL_SPF1}" -f 2)"
 
     if [[ "${order}" == "FIN" ]];then
         touch ${PRG_FIN}
@@ -80,9 +80,9 @@ function progress3
     local now=$current
     local last=$((total+1))
     
-    send_log_to_parent "CURSOR_MOVE" "${rows}${CTRL_SPF2}${cols}"
+    send_log_to_parent "CURSOR_MOVE" "${rows}${_GLOBAL_CTRL_SPF2}${cols}"
     send_log_to_parent "ERASE_LINE"
-    send_log_to_parent "CURSOR_HIDE"
+    #send_log_to_parent "CURSOR_HIDE"
 
     local postfix=('|' '/' '-' '\')
     while [ $now -le $last ] && [ ! -f ${PRG_FIN} ] 
@@ -92,7 +92,7 @@ function progress3
         local str=''
         for i in `seq 1 $count`
         do 
-            str+='#'
+            str+='+'
         done
 
         let index=now%4
@@ -105,8 +105,10 @@ function progress3
         let now++
         sleep 0.1 
     done
+
+    send_log_to_parent "CURSOR_MOVE" "${rows}${_GLOBAL_CTRL_SPF2}${cols}"
     send_log_to_parent "ERASE_LINE"
-    send_log_to_parent "CURSOR_SHOW"
+    #send_log_to_parent "CURSOR_SHOW"
 }
 
 declare -r PRG_CURR="$1"
