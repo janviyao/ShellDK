@@ -1,8 +1,6 @@
 #!/bin/bash
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-. $MY_VIM_DIR/tools/controller.sh
-
-controller_threads_exit
+usr_ctrl_launch
+usr_ctrl_exit
 
 # 设置并发的进程数
 declare -r all_num="$1"
@@ -75,9 +73,12 @@ do
 }
 done
 
+echo_debug "thread finish"
 wait
-controller_clear
+usr_ctrl_clear
 
 # free thead res
 eval "exec ${thread_fd}>&-"
 rm -fr ${THREAD_THIS_DIR}
+
+echo_debug "thread exit"

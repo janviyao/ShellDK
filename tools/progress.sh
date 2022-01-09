@@ -1,13 +1,11 @@
 #!/bin/bash
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+usr_logr_launch
 
-declare -r PRG_BASE_DIR="/tmp/ctrl"
-declare -r PRG_THIS_DIR="${PRG_BASE_DIR}/pid.$$"
-declare -r PRG_FIN="${PRG_THIS_DIR}/finish"
+declare -r PRG_FIN="${USR_CTRL_THIS_DIR}/finish"
 function ctrl_user_handler
 {
     line="$1"
-    #echo "prg recv: ${line} ${PRG_FIN}"
+    echo_debug "[$$]prgs: ${line} ${PRG_FIN}"
 
     local order="$(echo "${line}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
     local msg="$(echo "${line}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
@@ -16,8 +14,6 @@ function ctrl_user_handler
         touch ${PRG_FIN}
     fi
 }
-. $MY_VIM_DIR/tools/controller.sh
-send_log_to_self "EXIT"
 
 function progress
 {
@@ -118,8 +114,8 @@ declare -r POS_COLS="$4"
 
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${POS_ROWS}" "${POS_COLS}"
 
-#echo "exit prg1"
-controller_threads_exit
+echo_debug "progress finish"
+usr_logr_exit
 wait
-controller_clear
-#echo "exit prg"
+usr_logr_clear
+echo_debug "progress exit"

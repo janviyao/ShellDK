@@ -1,30 +1,18 @@
 #!/bin/bash
-declare -r USR_CTRL_BASE_DIR="/tmp/ctrl"
-declare -r USR_CTRL_THIS_DIR="${USR_CTRL_BASE_DIR}/pid.$$"
-declare -r USR_CTRL_HIGH_DIR="${USR_CTRL_BASE_DIR}/pid.$PPID"
-rm -fr ${USR_CTRL_THIS_DIR}
-mkdir -p ${USR_CTRL_THIS_DIR}
-
-declare -r USR_CTRL_THIS_PIPE="${USR_CTRL_THIS_DIR}/msg"
-declare -r USR_LOGR_THIS_PIPE="${USR_CTRL_THIS_DIR}/log"
-
-declare -r USR_CTRL_HIGH_PIPE="${USR_CTRL_HIGH_DIR}/msg"
-declare -r USR_LOGR_HIGH_PIPE="${USR_CTRL_HIGH_DIR}/log"
-
-declare -i USR_CTRL_THIS_FD=${USR_CTRL_THIS_FD:-6}
-declare -i USR_LOGR_THIS_FD=${USR_LOGR_THIS_FD:-7}
+_USR_BASE_DIR="/tmp/usr"
 
 function send_ctrl_to_self
 {
     local req_ctrl="$1"
     local req_mssg="$2"
- 
+    echo_debug "[$$]ctrl to self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+
     local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
         echo "${sendctx}" > ${USR_CTRL_THIS_PIPE}
     else
         if [ -d ${USR_CTRL_THIS_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_CTRL_THIS_PIPE}"
+            echo_erro "removed: ${USR_CTRL_THIS_PIPE}"
         fi
     fi
 }
@@ -33,13 +21,14 @@ function send_ctrl_to_parent
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]ctrl to parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
     else
         if [ -d ${USR_CTRL_HIGH_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_CTRL_HIGH_PIPE}"
+            echo_erro "removed: ${USR_CTRL_HIGH_PIPE}"
         fi
     fi
 }
@@ -48,6 +37,7 @@ function send_ctrl_to_self_sync
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
         local ack_pipe="$(make_ack)"
@@ -58,7 +48,7 @@ function send_ctrl_to_self_sync
         wait_ack "${ack_pipe}"
     else
         if [ -d ${USR_CTRL_THIS_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_CTRL_THIS_PIPE}"
+            echo_erro "removed: ${USR_CTRL_THIS_PIPE}"
         fi
     fi
 }
@@ -67,6 +57,7 @@ function send_ctrl_to_parent_sync
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         local ack_pipe="$(make_ack)"
@@ -77,7 +68,7 @@ function send_ctrl_to_parent_sync
         wait_ack "${ack_pipe}"
     else
         if [ -d ${USR_CTRL_HIGH_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_CTRL_HIGH_PIPE}"
+            echo_erro "removed: ${USR_CTRL_HIGH_PIPE}"
         fi
     fi
 }
@@ -86,13 +77,14 @@ function send_log_to_self
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]log to self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
     if [ -w ${USR_LOGR_THIS_PIPE} ];then
         echo "${sendctx}" > ${USR_LOGR_THIS_PIPE}
     else
-        if [ -d ${USR_CTRL_THIS_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_LOGR_THIS_PIPE}"
+        if [ -d ${USR_LOGR_THIS_DIR} ];then
+            echo_erro "removed: ${USR_LOGR_THIS_PIPE}"
         fi
     fi
 }
@@ -101,13 +93,14 @@ function send_log_to_parent
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]log to parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
     if [ -w ${USR_LOGR_HIGH_PIPE} ];then
         echo "${sendctx}" > ${USR_LOGR_HIGH_PIPE}
     else
-        if [ -d ${USR_CTRL_HIGH_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_LOGR_HIGH_PIPE}"
+        if [ -d ${USR_LOGR_HIGH_DIR} ];then
+            echo_erro "removed: ${USR_LOGR_HIGH_PIPE}"
         fi
     fi
 }
@@ -116,6 +109,7 @@ function send_log_to_self_sync
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]log ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_THIS_PIPE} ];then
         local ack_pipe="$(make_ack)"
@@ -125,8 +119,8 @@ function send_log_to_self_sync
 
         wait_ack "${ack_pipe}"
     else
-        if [ -d ${USR_CTRL_THIS_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_LOGR_THIS_PIPE}"
+        if [ -d ${USR_LOGR_THIS_DIR} ];then
+            echo_erro "removed: ${USR_LOGR_THIS_PIPE}"
         fi
     fi
 }
@@ -135,6 +129,7 @@ function send_log_to_parent_sync
 {
     local req_ctrl="$1"
     local req_mssg="$2"
+    echo_debug "[$$]log ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_HIGH_PIPE} ];then
         local ack_pipe="$(make_ack)"
@@ -144,57 +139,20 @@ function send_log_to_parent_sync
 
         wait_ack "${ack_pipe}"
     else
-        if [ -d ${USR_CTRL_HIGH_DIR} ];then
-            echo "Fail: ${sendctx} removed: ${USR_LOGR_HIGH_PIPE}"
+        if [ -d ${USR_LOGR_HIGH_DIR} ];then
+            echo_erro "removed: ${USR_LOGR_HIGH_PIPE}"
         fi
     fi
 }
 
-function controller_threads_exit
-{
-    send_ctrl_to_self "CTRL" "EXIT"
-    send_log_to_self "EXIT"
-}
-
-function controller_clear
-{
-    send_ctrl_to_parent "CHILD_EXIT" "$$"
-
-    eval "exec ${USR_CTRL_THIS_FD}>&-"
-    eval "exec ${USR_LOGR_THIS_FD}>&-"
-    rm -fr ${USR_CTRL_THIS_DIR}
-
-    trap - SIGINT SIGTERM SIGKILL EXIT
-}
-
-trap "signal_handler" SIGINT SIGTERM SIGKILL EXIT
-function signal_handler
-{
-    controller_threads_exit
-    controller_clear
-    
-    if ps -p $PPID > /dev/null;then
-        kill -s TERM $PPID
-    fi
-    signal_process TERM $$ &> /dev/null
-}
-
-rm -f ${USR_CTRL_THIS_PIPE}
-mkfifo ${USR_CTRL_THIS_PIPE}
-exec {USR_CTRL_THIS_FD}<>${USR_CTRL_THIS_PIPE} # 自动分配FD 
-
-rm -f ${USR_LOGR_THIS_PIPE}
-mkfifo ${USR_LOGR_THIS_PIPE}
-exec {USR_LOGR_THIS_FD}<>${USR_LOGR_THIS_PIPE} # 自动分配FD 
-
-declare -A childMap
 function ctrl_default_handler
 {
     line="$1"
+    echo_debug "[$$]ctrl dflt: [${line}]" 
 
     local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
     local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
-    local request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+    local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
     local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
     local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
@@ -226,11 +184,12 @@ function ctrl_default_handler
     fi
 }
 
-function controller_bg_thread
+function usr_ctrl_thread
 {
+    declare -Ax childMap
+
     while read line
     do
-        echo_debug "[$$]ctrl: [${line}]" 
         declare -F ctrl_user_handler &>/dev/null
         if [ $? -eq 0 ];then
             ctrl_user_handler "${line}"
@@ -239,11 +198,11 @@ function controller_bg_thread
         ctrl_default_handler "${line}"
     done < ${USR_CTRL_THIS_PIPE}
 }
-controller_bg_thread &
 
 function loger_default_handler
 {
     line="$1"
+    echo_debug "[$$]logr dflt: [${line}]" 
 
     local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
     local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
@@ -287,11 +246,10 @@ function loger_default_handler
     fi
 }
 
-function loger_bg_thread
+function usr_logr_thread
 {
     while read line
     do
-        echo_debug "[$$]loger: [${line}]" 
         declare -F loger_user_handler &>/dev/null
         if [ $? -eq 0 ];then
             loger_user_handler "${line}"
@@ -300,6 +258,95 @@ function loger_bg_thread
         loger_default_handler "${line}"
     done < ${USR_LOGR_THIS_PIPE}
 }
-loger_bg_thread &
 
-send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
+function usr_ctrl_signal
+{
+    usr_ctrl_exit
+    usr_ctrl_clear
+    
+    signal_process TERM $$ &> /dev/null
+
+    trap - SIGINT SIGTERM SIGKILL EXIT
+}
+
+function usr_ctrl_launch
+{
+    export USR_CTRL_THIS_DIR="${_USR_BASE_DIR}/ctrl/pid.$$"
+    export USR_CTRL_HIGH_DIR="${_USR_BASE_DIR}/ctrl/pid.$PPID"
+
+    rm -fr ${USR_CTRL_THIS_DIR}
+    mkdir -p ${USR_CTRL_THIS_DIR}
+
+    export USR_CTRL_THIS_PIPE="${USR_CTRL_THIS_DIR}/msg"
+    export USR_CTRL_HIGH_PIPE="${USR_CTRL_HIGH_DIR}/msg"
+    export USR_CTRL_THIS_FD=${USR_CTRL_THIS_FD:-6}
+
+    rm -f ${USR_CTRL_THIS_PIPE}
+    mkfifo ${USR_CTRL_THIS_PIPE}
+
+    exec {USR_CTRL_THIS_FD}<>${USR_CTRL_THIS_PIPE} # 自动分配FD 
+    export USR_CTRL_THIS_FD=${USR_CTRL_THIS_FD}
+
+    trap "usr_ctrl_signal" SIGINT SIGTERM SIGKILL EXIT
+    usr_ctrl_thread &
+
+    send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
+}
+
+function usr_ctrl_exit
+{
+    send_ctrl_to_self "CTRL" "EXIT"
+}
+
+function usr_ctrl_clear
+{
+    send_ctrl_to_parent "CHILD_EXIT" "$$"
+
+    eval "exec ${USR_CTRL_THIS_FD}>&-"
+    rm -fr ${USR_CTRL_THIS_DIR}
+}
+
+function usr_logr_signal
+{
+    usr_logr_exit
+    usr_logr_clear
+    
+    signal_process TERM $$ &> /dev/null
+
+    trap - SIGINT SIGTERM SIGKILL EXIT
+}
+
+function usr_logr_launch
+{
+    export USR_LOGR_THIS_DIR="${_USR_BASE_DIR}/logr/pid.$$"
+    export USR_LOGR_HIGH_DIR="${_USR_BASE_DIR}/logr/pid.$PPID"
+
+    rm -fr ${USR_LOGR_THIS_DIR}
+    mkdir -p ${USR_LOGR_THIS_DIR}
+
+    export USR_LOGR_THIS_PIPE="${USR_LOGR_THIS_DIR}/log"
+    export USR_LOGR_HIGH_PIPE="${USR_LOGR_HIGH_DIR}/log"
+    export USR_LOGR_THIS_FD=${USR_LOGR_THIS_FD:-7}
+
+    rm -f ${USR_LOGR_THIS_PIPE}
+    mkfifo ${USR_LOGR_THIS_PIPE}
+
+    exec {USR_LOGR_THIS_FD}<>${USR_LOGR_THIS_PIPE} # 自动分配FD 
+    export USR_LOGR_THIS_FD=${USR_LOGR_THIS_FD}
+
+    trap "usr_logr_signal" SIGINT SIGTERM SIGKILL EXIT
+    usr_logr_thread &
+
+    send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
+}
+
+function usr_logr_exit
+{
+    send_log_to_self "EXIT"
+}
+
+function usr_logr_clear
+{
+    eval "exec ${USR_LOGR_THIS_FD}>&-"
+    rm -fr ${USR_LOGR_THIS_DIR}
+}

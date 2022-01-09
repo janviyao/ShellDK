@@ -77,7 +77,8 @@ function echo_header
     bool_v "${LOG_HEADER}"
     if [ $? -eq 0 ];then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
-        echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
+        #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
+        echo "${COLOR_HEADER}${FONT_BOLD}$(file_name)@${cur_time}: ${COLOR_CLOSE}"
     fi
 }
 
@@ -112,7 +113,8 @@ function echo_debug
 function file_name
 {
     local full_name="$0"
-    echo $(basename ${full_name})
+    local file_name="$(basename ${full_name})"
+    printf "[%-13s]\n" "${file_name}"
 }
 
 function signal_process
@@ -121,7 +123,7 @@ function signal_process
     local parent_pid=$2
     local child_pids="$(ps --ppid ${parent_pid} | grep -P "\d+" | awk '{ print $1 }')"
 
-    #echo "${parent_pid} childs: $(echo "${child_pids}" | tr '\n' ' ') @ $0"
+    echo_debug "${parent_pid} childs: $(echo "${child_pids}" | tr '\n' ' ') @ $0"
     for pid in ${child_pids}
     do
         if ps -p ${pid} > /dev/null; then
@@ -301,7 +303,7 @@ function cursor_pos
     read -s -d R pos < /dev/tty
 
     # save the position
-    echo_debug "position: $pos"
+    echo_debug "current position: $pos"
     local x_pos="$(echo "${pos}" | cut -d ';' -f 1)"
     local y_pos="$(echo "${pos}" | cut -d ';' -f 2)"
 

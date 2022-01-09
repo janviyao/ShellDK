@@ -1,19 +1,18 @@
 #!/bin/bash
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-
 function ctrl_user_handler
 {
     line="$1"
+    echo_debug "[$$]ctrl user: [${line}]"
 
     local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
     local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
     local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
     local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-    local req_msg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+    local  req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
 
     if [[ "${req_ctrl}" == "BG_EXIT" ]];then
-        local bgpid=${req_msg}
+        local bgpid=${req_mssg}
         for pid in ${!childMap[@]};do
             if [ ${pid} -eq ${bgpid} ];then
                 local pipe="${childMap[${pid}]}"
@@ -28,8 +27,8 @@ function ctrl_user_handler
         done
         unset childMap["${bgpid}"]
     elif [[ "${req_ctrl}" == "BG_RECV" ]];then
-        local bgpid=$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
-        local bgmsg=$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
+        local bgpid=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+        local bgmsg=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
         echo_debug "bgpid: ${bgpid} bgmsg: ${bgmsg}"
 
         for pid in ${!childMap[@]};do
@@ -49,17 +48,18 @@ function ctrl_user_handler
 function loger_user_handler
 {
     line="$1"
-    
+    echo_debug "[$$]logr user: [${line}]"
+
     local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
     local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
     local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
     local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-    local req_msg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+    local  req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
 
     if [[ "${req_ctrl}" == "LOOP" ]];then
-        local count=$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
-        local code="$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+        local count=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+        local code="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
 
         for i in `seq 1 ${count}`
         do
@@ -69,13 +69,17 @@ function loger_user_handler
         done
     fi
 }
-. $MY_VIM_DIR/tools/controller.sh
+
+usr_ctrl_launch
+usr_logr_launch
+#trap "signal_process KILL $$ &> /dev/null" SIGINT SIGTERM SIGKILL EXIT
 
 RUN_DIR="$1"
 if [ ! -d ${RUN_DIR} ]; then
     echo_erro "Dir: ${RUN_DIR} not exist"
     exit -1
 fi
+
 CUR_DIR=`pwd`
 cd ${RUN_DIR}
 RUN_DIR=`pwd`
@@ -96,7 +100,6 @@ do
         global_get_var x_pos
         global_get_var y_pos
         let x_pos--
-        echo_debug "progress position: [${x_pos}:${y_pos}]"
 
         prg_time=$((OP_TIMEOUT*10*OP_TRY_CNT + 2*10))
         $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos}&
@@ -120,6 +123,10 @@ do
     cd ${RUN_DIR}
 done
 
-controller_threads_exit
+usr_ctrl_exit
+usr_logr_exit
+
 wait
-controller_clear
+
+usr_ctrl_clear
+usr_logr_clear

@@ -1,17 +1,20 @@
 #!/bin/bash
-GBL_CTRL_DIR="/tmp/ctrl/global.$$"
-GBL_CTRL_PIPE="${GBL_CTRL_DIR}/msg.global"
+_GBL_BASE_DIR="/tmp/gbl"
+
+GBL_CTRL_THIS_DIR="${_GBL_BASE_DIR}/ctrl/pid.$$"
+GBL_CTRL_THIS_PIPE="${GBL_CTRL_THIS_DIR}/msg"
 
 GBL_ACK_SPF="#"
 GBL_CTRL_SPF1="^"
 GBL_CTRL_SPF2="|"
 GBL_CTRL_SPF3="!"
 
-rm -fr ${GBL_CTRL_DIR}
-mkdir -p ${GBL_CTRL_DIR}
-GBL_CTRL_FD=6
-mkfifo ${GBL_CTRL_PIPE}
-exec {GBL_CTRL_FD}<>${GBL_CTRL_PIPE}
+rm -fr ${GBL_CTRL_THIS_DIR}
+mkdir -p ${GBL_CTRL_THIS_DIR}
+
+GBL_CTRL_THIS_FD=${GBL_CTRL_THIS_FD:-6}
+mkfifo ${GBL_CTRL_THIS_PIPE}
+exec {GBL_CTRL_THIS_FD}<>${GBL_CTRL_THIS_PIPE}
 
 GBL_SRV_IDNO=$$
 GBL_SRV_ADDR="$(ssh_address)"
@@ -22,7 +25,7 @@ function global_set_var
     local var_name="$1"
     local one_pipe="$2"
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_CTRL_PIPE}"
+        one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
 
     local var_value="$(eval "echo \"\$${var_name}\"")"
@@ -34,12 +37,12 @@ function global_get_var
     local var_name="$1"
     local one_pipe="$2"
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_CTRL_PIPE}"
+        one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
 
     local var_value=""
 
-    local TMP_PIPE=${GBL_CTRL_DIR}/msg.$$
+    local TMP_PIPE="${GBL_CTRL_THIS_DIR}/msg.$$"
     mkfifo ${TMP_PIPE}
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}GET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${TMP_PIPE}" > ${one_pipe}
@@ -54,7 +57,7 @@ function global_unset_var
     local var_name="$1"
     local one_pipe="$2"
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_CTRL_PIPE}"
+        one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}UNSET_ENV${GBL_CTRL_SPF1}${var_name}" > ${one_pipe}
@@ -62,17 +65,17 @@ function global_unset_var
 
 function global_clear_var
 {
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}CLEAR_ENV${GBL_CTRL_SPF1}ALL" > ${GBL_CTRL_PIPE}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}CLEAR_ENV${GBL_CTRL_SPF1}ALL" > ${GBL_CTRL_THIS_PIPE}
 }
 
 function global_print_var
 {
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}PRINT_ENV${GBL_CTRL_SPF1}ALL" > ${GBL_CTRL_PIPE}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}PRINT_ENV${GBL_CTRL_SPF1}ALL" > ${GBL_CTRL_THIS_PIPE}
 }
 
 function make_ack
 {
-    local ack_pipe="${GBL_CTRL_DIR}/ack.$$"
+    local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.$$"
 
     mkfifo ${ack_pipe}
     echo "${ack_pipe}"
@@ -91,7 +94,7 @@ function global_wait_ack
     local msgctx="$1"
     
     local ack_pipe="$(make_ack)"
-    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_PIPE}
+    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
     wait_ack "${ack_pipe}"
 }
 
@@ -106,22 +109,22 @@ function _global_ctrl_bg_thread
         local request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
         local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-        local req_msg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+        local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
             exit 0 
         elif [[ "${req_ctrl}" == "SET_ENV" ]];then
-            local var_name="$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-            local var_value="$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+            local var_name="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
+            local var_value="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
 
             _globalMap[${var_name}]="${var_value}"
         elif [[ "${req_ctrl}" == "GET_ENV" ]];then
-            local var_name="$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-            local var_pipe="$(echo "${req_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+            local var_name="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
+            local var_pipe="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
 
             echo "${_globalMap[${var_name}]}" > ${var_pipe}
         elif [[ "${req_ctrl}" == "UNSET_ENV" ]];then
-            local var_name=${req_msg}
+            local var_name=${req_mssg}
             unset _globalMap[${var_name}]
         elif [[ "${req_ctrl}" == "CLEAR_ENV" ]];then
             if [ ${#_globalMap[@]} -ne 0 ];then
@@ -175,10 +178,10 @@ function _global_ctrl_bg_thread
             } &
             fi
         fi
-    done < ${GBL_CTRL_PIPE}
+    done < ${GBL_CTRL_THIS_PIPE}
 }
 
-trap "echo 'EXIT' > ${GBL_CTRL_PIPE}; exec ${GBL_CTRL_FD}>&-; rm -fr ${GBL_CTRL_DIR}; exit 0" EXIT
+trap "echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}; exec ${GBL_CTRL_THIS_FD}>&-; rm -fr ${_GBL_BASE_DIR}; exit 0" EXIT
 {
     trap "" SIGINT SIGTERM SIGKILL
     _global_ctrl_bg_thread

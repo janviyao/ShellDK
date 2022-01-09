@@ -15,6 +15,7 @@ alias LS='ls --color'
 alias LL='ls --color -lh'
 
 unalias cp &> /dev/null
+unalias rm &> /dev/null
 
 # all variables and functions exported
 # only function exported: export -f function
@@ -60,4 +61,5 @@ function INCLUDE
 }
 
 INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-INCLUDE "GBL_CTRL_DIR" $MY_VIM_DIR/tools/include/bash_task.sh
+INCLUDE "_GBL_BASE_DIR" $MY_VIM_DIR/tools/include/bash_task.sh
+INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
