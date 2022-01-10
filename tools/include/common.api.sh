@@ -4,6 +4,7 @@
 HOME_DIR=${HOME}
 
 TEST_DEBUG=false
+LOG_ENABLE=".+"
 LOG_HEADER=true
 
 OP_TRY_CNT=3
@@ -63,77 +64,100 @@ function access_ok
     return 1
 }
 
-COLOR_HEADER='\033[40;35m' #黑底紫字
-COLOR_ERROR='\033[41;30m'  #红底黑字
-COLOR_DEBUG='\033[43;30m'  #黄底黑字
-COLOR_INFO='\033[42;37m'   #绿底白字
-COLOR_WARN='\033[42;31m'   #蓝底红字
-COLOR_CLOSE='\033[0m'      #关闭颜色
-FONT_BOLD='\033[1m'        #字体变粗
-FONT_BLINK='\033[5m'       #字体闪烁
-
-function echo_header
-{
-    bool_v "${LOG_HEADER}"
-    if [ $? -eq 0 ];then
-        cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
-        #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
-        echo "${COLOR_HEADER}${FONT_BOLD}$(file_name)@${cur_time}: ${COLOR_CLOSE}"
-    fi
-}
-
-function echo_erro
-{
-    local para=$1
-    echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
-}
-
-function echo_info
-{
-    local para=$1
-    echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
-}
-
-function echo_warn
-{
-    local para=$1
-    echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
-}
-
-function echo_debug
-{
-    local para=$1
-
-    bool_v "${TEST_DEBUG}"
-    if [ $? -eq 0 ]; then
-        echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
-    fi
-}
-
 function file_name
 {
     local full_name="$0"
-    local file_name="$(basename ${full_name})"
-    printf "[%-13s]\n" "${file_name}"
+    if [[ ${full_name} == "-bash" ]];then
+        echo "${full_name}"
+    else
+        local file_name="$(basename ${full_name})"
+        echo "${file_name}"
+    fi
+}
+
+function process_exist
+{
+    local pid="$1"
+
+    local ppath="/proc/${pid}/stat"
+    if access_ok "${ppath}";then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function process_name
+{
+    local pid="$1"
+
+    # ps -p 2133 -oargs=
+    # ps -p 2133 -ocomm=
+    local ppath="/proc/${pid}/status"
+    if access_ok "${ppath}";then
+        local pname="$(cat ${ppath} | grep -w 'Name:' | awk '{ print $NF }')"
+        echo "${pname}"
+    else
+        echo "!anon!"
+    fi
+}
+
+function child_process
+{
+    local ppid=$1
+    local chld_path="/proc/${ppid}/task/${ppid}/children"
+
+    # ps -p $$ -o ppid=
+    local child_pids=""
+    if access_ok "${chld_path}"; then
+        child_pids="$(cat ${chld_path})"
+    fi
+
+    echo "${child_pids}"
 }
 
 function signal_process
 {
     local signal=$1
-    local parent_pid=$2
-    local child_pids="$(ps --ppid ${parent_pid} | grep -P "\d+" | awk '{ print $1 }')"
+    local toppid=$2
 
-    echo_debug "${parent_pid} childs: $(echo "${child_pids}" | tr '\n' ' ') @ $0"
-    for pid in ${child_pids}
-    do
-        if ps -p ${pid} > /dev/null; then
-            signal_process ${signal} ${pid}
+    local child_pids=($(child_process ${toppid}))
+    #echo_debug "$(process_name ${toppid})[${toppid}] childs: $(echo "${child_pids[@]}")"
+
+    if ps -p ${toppid} > /dev/null; then
+        if [ ${toppid} -ne $ROOT_PID ];then
+            echo_debug "${signal}: $(process_name ${toppid})[${toppid}]"
+            kill -s ${signal} ${toppid} &> /dev/null
         fi
-    done
-
-    if ps -p ${parent_pid} > /dev/null; then
-        kill -s ${signal} ${parent_pid} &> /dev/null
     fi
+
+    local index=0
+    local total=${#child_pids[@]}
+    while [ ${index} -lt ${total} ]
+    do
+        local next_pid=${child_pids[${index}]}
+        if [ -z "${next_pid}" ];then
+            let index++
+            total=${#child_pids[@]}
+        fi
+
+        local lower_pids=($(child_process ${next_pid}))
+        #echo_debug "$(process_name ${next_pid})[${next_pid}] childs: $(echo "${lower_pids[@]}")"
+
+        if [ ${#lower_pids[@]} -gt 0 ];then
+            child_pids=(${child_pids[@]} ${lower_pids[@]})
+        fi
+
+        if ps -p ${next_pid} > /dev/null; then
+            if [ ${next_pid} -ne $ROOT_PID ];then
+                echo_debug "${signal}: $(process_name ${next_pid})[${next_pid}]"
+                kill -s ${signal} ${next_pid} &> /dev/null
+            fi
+        fi
+
+        let index++
+        total=${#child_pids[@]}
+    done
 }
 
 function check_net
@@ -303,10 +327,61 @@ function cursor_pos
     read -s -d R pos < /dev/tty
 
     # save the position
-    echo_debug "current position: $pos"
+    #echo "current position: $pos"
     local x_pos="$(echo "${pos}" | cut -d ';' -f 1)"
     local y_pos="$(echo "${pos}" | cut -d ';' -f 2)"
 
     global_set_var x_pos
     global_set_var y_pos
+}
+
+COLOR_HEADER='\033[40;35m' #黑底紫字
+COLOR_ERROR='\033[41;30m'  #红底黑字
+COLOR_DEBUG='\033[43;30m'  #黄底黑字
+COLOR_INFO='\033[42;37m'   #绿底白字
+COLOR_WARN='\033[42;31m'   #蓝底红字
+COLOR_CLOSE='\033[0m'      #关闭颜色
+FONT_BOLD='\033[1m'        #字体变粗
+FONT_BLINK='\033[5m'       #字体闪烁
+
+function echo_header
+{
+    bool_v "${LOG_HEADER}"
+    if [ $? -eq 0 ];then
+        cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
+        #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
+        local proc_info="$(printf "[%-12s[%5d]]" "$(file_name)" "$$")"
+        echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
+    fi
+}
+
+function echo_erro
+{
+    local para=$1
+    echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+}
+
+function echo_info
+{
+    local para=$1
+    echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+}
+
+function echo_warn
+{
+    local para=$1
+    echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+}
+
+function echo_debug
+{
+    local para=$1
+
+    if bool_v "${TEST_DEBUG}"; then
+        local fname="$(file_name)"
+        contain_string "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
+        if [ $? -eq 0 ]; then
+            echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+        fi
+    fi
 }

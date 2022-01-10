@@ -1,19 +1,26 @@
 #!/bin/bash
-usr_logr_launch
+usr_ctrl_init_self
+usr_logr_init_parent
 
 declare -r PRG_FIN="${USR_CTRL_THIS_DIR}/finish"
 function ctrl_user_handler
 {
     line="$1"
-    echo_debug "[$$]prgs: ${line} ${PRG_FIN}"
+    echo_debug "progress: ${line}"
 
-    local order="$(echo "${line}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-    local msg="$(echo "${line}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+    local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
+    local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
+    local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
-    if [[ "${order}" == "FIN" ]];then
+    local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
+    local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+
+    if [[ "${req_ctrl}" == "FIN" ]];then
+        echo_debug "touch: ${PRG_FIN}"
         touch ${PRG_FIN}
     fi
 }
+usr_ctrl_launch
 
 function progress
 {
@@ -115,7 +122,7 @@ declare -r POS_COLS="$4"
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${POS_ROWS}" "${POS_COLS}"
 
 echo_debug "progress finish"
-usr_logr_exit
+usr_ctrl_exit
 wait
-usr_logr_clear
+usr_ctrl_clear
 echo_debug "progress exit"

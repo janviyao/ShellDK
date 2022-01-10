@@ -1,8 +1,4 @@
 #!/bin/bash
-usr_ctrl_launch
-usr_ctrl_exit
-
-# 设置并发的进程数
 declare -r all_num="$1"
 declare -r concurrent_num="$2"
 declare -r include_api="$3"
@@ -11,7 +7,7 @@ if [ -f "$MY_VIM_DIR/tools/include/${include_api}" ];then
     . $MY_VIM_DIR/tools/include/${include_api}
 fi
 
-# 获取最后一个参数
+# get the last para
 declare -r thread_task="$(eval echo \$$#)"
 
 # mkfifo
@@ -23,62 +19,105 @@ mkdir -p ${THREAD_THIS_DIR}
 declare -r THREAD_THIS_PIPE="${THREAD_THIS_DIR}/msg"
 mkfifo ${THREAD_THIS_PIPE}
 
-# 清空文件，若不存在则创建
+# clear file, and if not exist, create it
 declare -r THREAD_THIS_RET="${THREAD_THIS_DIR}/retcode"
 :> ${THREAD_THIS_RET}
 
-declare -i thread_fd=${thread_fd:-6}
-# 使文件描述符为写非阻塞式
-exec {thread_fd}<>${THREAD_THIS_PIPE}
+declare -i THREAD_FD=${THREAD_FD:-6}
+# get non-block's write fd
+exec {THREAD_FD}<>${THREAD_THIS_PIPE}
 rm -f ${THREAD_THIS_PIPE}
 
-# 为文件描述符创建占位信息
+usr_ctrl_init_parent
+usr_ctrl_init_self
+send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
+
+declare -a thread_ids=()
+function thread_signal
+{
+    echo "exception" >> ${THREAD_THIS_RET}
+    echo "" >&${THREAD_FD}
+
+    for tid in ${thread_ids[@]}
+    do
+        if process_exist "${tid}";then
+            echo_debug "kill thread-bg: ${tid}"
+            signal_process KILL ${tid}    
+        fi
+    done
+
+    send_ctrl_to_parent "CTRL" "EXCEPTION"
+    send_ctrl_to_parent "CTRL" "EXIT"
+
+    send_log_to_parent "CTRL" "EXCEPTION"
+    send_log_to_parent "CTRL" "EXIT"
+}
+trap "thread_signal" SIGINT SIGTERM SIGKILL
+
+# create file placeholders
 for ((i=1; i<=${concurrent_num}; i++))
 do
 {
     echo ""
 }
-done >&${thread_fd}
+done >&${THREAD_FD}
 
-# 不能用declare -i声明，read值可能非整数导致失败
-thread_fin=1
-# 执行线程
-for tdidx in `seq 1 $((all_num+1))`
+thread_state=1
+
+# thread work
+for index in `seq 1 $((all_num+1))`
 do
 {
-    read -u ${thread_fd}
+    read -u ${THREAD_FD}
  
-    while read thread_fin
+    while read thread_state
     do
-        echo_debug "retcode: ${thread_fin}"
+        echo_debug "retcode: ${thread_state}"
+        if [[ ${thread_state} == "exception" ]];then
+            break
+        fi
+
         sed -i '1d' ${THREAD_THIS_RET}
 
-        if [[ -n "${thread_fin}" ]] && [[ ${thread_fin} -eq 0 ]];then
+        if [[ -n "${thread_state}" ]] && [[ ${thread_state} -eq 0 ]];then
             break
         fi
     done < ${THREAD_THIS_RET}
 
-    if [[ -z "${thread_fin}" ]] || [[ ${thread_fin} -ne 0 ]];then
-    {
-        echo_debug "thread-${tdidx}: ${thread_task}"
-        eval ${thread_task}             
-        echo $? >> ${THREAD_THIS_RET}
- 
-        echo "" >&${thread_fd}
-        exit 0
-    } &
+    if [[ ${thread_state} == "exception" ]];then
+        break
+    fi
+
+    if [[ -z "${thread_state}" ]] || [[ ${thread_state} -ne 0 ]];then
+        {
+            echo_debug "thread-${index}: ${thread_task}"
+            eval ${thread_task}             
+            echo $? >> ${THREAD_THIS_RET}
+     
+            echo "" >&${THREAD_FD}
+            exit 0
+        } &
+
+        bgpid=$!
+        thread_ids[${index}]=${bgpid}
     else
         break
     fi
 }
 done
 
-echo_debug "thread finish"
+echo_debug "threads finish"
 wait
-usr_ctrl_clear
+send_ctrl_to_parent "CHILD_EXIT" "$$"
+echo_debug "threads exit"
 
 # free thead res
-eval "exec ${thread_fd}>&-"
+eval "exec ${THREAD_FD}>&-"
 rm -fr ${THREAD_THIS_DIR}
 
-echo_debug "thread exit"
+if [[ ${thread_state} == "exception" ]];then
+    exit 1
+else
+    is_number "${thread_state}" && exit ${thread_state}
+    exit 0
+fi

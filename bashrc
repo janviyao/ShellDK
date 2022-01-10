@@ -23,6 +23,8 @@ unalias rm &> /dev/null
 # NOTE: if variables use declare define, allexport will have no effect to them
 set -o allexport
 
+ROOT_PID=$$
+
 function is_number
 {
     # is argument an integer?
