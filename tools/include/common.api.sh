@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 HOME_DIR=${HOME}
 
-TEST_DEBUG=false
+TEST_DEBUG=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
 

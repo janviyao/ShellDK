@@ -40,12 +40,13 @@ function send_ctrl_to_self_sync
     #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
-        local ack_pipe="$(make_ack)"
+        local ack_str="$(make_ack)"
+        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_CTRL_THIS_PIPE}
 
-        wait_ack "${ack_pipe}"
+        wait_ack "${ack_str}"
     else
         if [ -d ${USR_CTRL_THIS_DIR} ];then
             echo_erro "removed: ${USR_CTRL_THIS_PIPE}"
@@ -60,12 +61,13 @@ function send_ctrl_to_parent_sync
     #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
-        local ack_pipe="$(make_ack)"
+        local ack_str="$(make_ack)"
+        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
 
-        wait_ack "${ack_pipe}"
+        wait_ack "${ack_str}"
     else
         if [ -d ${USR_CTRL_HIGH_DIR} ];then
             echo_erro "removed: ${USR_CTRL_HIGH_PIPE}"
@@ -112,12 +114,13 @@ function send_log_to_self_sync
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_THIS_PIPE} ];then
-        local ack_pipe="$(make_ack)"
+        local ack_str="$(make_ack)"
+        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_LOGR_THIS_PIPE}
 
-        wait_ack "${ack_pipe}"
+        wait_ack "${ack_str}"
     else
         if [ -d ${USR_LOGR_THIS_DIR} ];then
             echo_erro "removed: ${USR_LOGR_THIS_PIPE}"
@@ -132,12 +135,13 @@ function send_log_to_parent_sync
     #echo_debug "log ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_HIGH_PIPE} ];then
-        local ack_pipe="$(make_ack)"
+        local ack_str="$(make_ack)"
+        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_LOGR_HIGH_PIPE}
 
-        wait_ack "${ack_pipe}"
+        wait_ack "${ack_str}"
     else
         if [ -d ${USR_LOGR_HIGH_DIR} ];then
             echo_erro "removed: ${USR_LOGR_HIGH_PIPE}"
@@ -163,14 +167,13 @@ function ctrl_default_handler
                 echo_debug "ack to [${ack_pipe}]"
                 echo "ACK" > ${ack_pipe}
             fi
-
-            signal_process KILL $$
             exit 0
         elif [[ "${sub_ctrl}" == "EXCEPTION" ]];then
             for pid in ${!childMap[@]};do
                 echo_debug "child: $(process_name "${pid}")[${pid}] killed" 
                 signal_process KILL ${pid}
             done
+            signal_process KILL $$
         fi
     elif [[ "${req_ctrl}" == "CHILD_FORK" ]];then
         local pid="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"

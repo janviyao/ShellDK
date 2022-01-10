@@ -60,6 +60,10 @@ declare -r CMD_STR="$2"
 declare -r log_file="/tmp/$$.log"
 :> ${log_file}
 
+cursor_pos
+global_get_var x_pos
+let x_pos--
+
 for gitdir in `ls -d */`
 do
     cd ${gitdir}
@@ -68,14 +72,11 @@ do
         prefix="$(printf "%-30s @ " "${gitdir}")"
         send_log_to_self_sync "PRINT" "${prefix}"
 
-        cursor_pos
-        global_get_var x_pos
-        global_get_var y_pos
-        let x_pos--
-
         prg_time=$((OP_TIMEOUT*10*OP_TRY_CNT + 2*10))
-        $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos}&
+        $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${#prefix}&
         bgpid=$!
+
+        let x_pos++
 
         $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${log_file}"
         if [ $? -ne 0 ];then
@@ -85,7 +86,7 @@ do
             send_ctrl_to_self "BG_EXIT" "${bgpid}"
             wait ${bgpid}
 
-            send_log_to_self "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
+            send_log_to_self "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${#prefix}"
             send_log_to_self "ERASE_LINE" 
             send_log_to_self "NEWLINE"
             break
@@ -96,7 +97,7 @@ do
         wait ${bgpid}
 
         run_res=`cat ${log_file}`
-        send_log_to_self "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
+        send_log_to_self "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${#prefix}"
         send_log_to_self "ERASE_LINE" 
         send_log_to_self "PRINT" "$(printf "%s" "${run_res}")"
         send_log_to_self "NEWLINE"

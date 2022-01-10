@@ -43,11 +43,16 @@ function global_get_var
     local var_value=""
 
     local get_pipe="${GBL_CTRL_THIS_DIR}/get.$$"
-    rm -f ${get_pipe}
     mkfifo ${get_pipe}
+    access_ok "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
+
+    local get_fd=0
+    exec {get_fd}<>${get_pipe}
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}GET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${get_pipe}" > ${one_pipe}
     read -t 10 var_value < ${get_pipe}
+
+    eval "exec ${get_fd}>&-"
     rm -f ${get_pipe}
 
     eval "export ${var_name}=\"${var_value}\""
@@ -79,14 +84,24 @@ function make_ack
     local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.$$"
 
     mkfifo ${ack_pipe}
-    echo "${ack_pipe}"
+    access_ok "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+
+    local ack_fd=0
+    exec {ack_fd}<>${ack_pipe}
+
+    echo "${ack_pipe}${GBL_ACK_SPF}${ack_fd}"
 }
 
 function wait_ack
 {
-    local ack_pipe="$1"
+    local ack_str="$1"
+
+    local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+    local ack_fd="$(cut -d "${GBL_ACK_SPF}" -f 2 <<< "${ack_str}")"
 
     read ack_response < ${ack_pipe}
+
+    eval "exec ${ack_fd}>&-"
     rm -f ${ack_pipe}
 }
 
@@ -94,9 +109,12 @@ function global_wait_ack
 {
     local msgctx="$1"
     
-    local ack_pipe="$(make_ack)"
+    local ack_str="$(make_ack)"
+    local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
-    wait_ack "${ack_pipe}"
+
+    wait_ack "${ack_str}"
 }
 
 function _global_ctrl_bg_thread
@@ -107,7 +125,7 @@ function _global_ctrl_bg_thread
         echo_debug "[$$]global: [${line}]" 
         local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
         local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
-        local request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+        local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
 
         local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
         local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
