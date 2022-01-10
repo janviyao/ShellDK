@@ -5,7 +5,7 @@ function send_ctrl_to_self
 {
     local req_ctrl="$1"
     local req_mssg="$2"
-    echo_debug "ctrl to self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    #echo_debug "ctrl to self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
@@ -21,7 +21,7 @@ function send_ctrl_to_parent
 {
     local req_ctrl="$1"
     local req_mssg="$2"
-    echo_debug "ctrl to parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    #echo_debug "ctrl to parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
@@ -37,7 +37,7 @@ function send_ctrl_to_self_sync
 {
     local req_ctrl="$1"
     local req_mssg="$2"
-    echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
         local ack_pipe="$(make_ack)"
@@ -57,7 +57,7 @@ function send_ctrl_to_parent_sync
 {
     local req_ctrl="$1"
     local req_mssg="$2"
-    echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         local ack_pipe="$(make_ack)"
@@ -160,9 +160,11 @@ function ctrl_default_handler
         local sub_ctrl="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
         if [[ "${sub_ctrl}" == "EXIT" ]];then
             if [ -n "${ack_pipe}" ];then
-                echo_debug "ack to ${ack_pipe}"
+                echo_debug "ack to [${ack_pipe}]"
                 echo "ACK" > ${ack_pipe}
             fi
+
+            signal_process KILL $$
             exit 0
         elif [[ "${sub_ctrl}" == "EXCEPTION" ]];then
             for pid in ${!childMap[@]};do
@@ -188,7 +190,7 @@ function ctrl_default_handler
     fi
 
     if [ -n "${ack_pipe}" ];then
-        echo_debug "ack to ${ack_pipe}"
+        echo_debug "ack to [${ack_pipe}]"
         echo "ACK" > ${ack_pipe}
     fi
 }
@@ -225,12 +227,12 @@ function loger_default_handler
         local sub_ctrl="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
         if [[ "${sub_ctrl}" == "EXIT" ]];then
             if [ -n "${ack_pipe}" ];then
-                echo_debug "ack to ${ack_pipe}"
+                echo_debug "ack to [${ack_pipe}]"
                 echo "ACK" > ${ack_pipe}
             fi
             exit 0
         elif [[ "${sub_ctrl}" == "EXCEPTION" ]];then
-            echo_debug "NULLLLLLLLLLLLLLLLLLL" 
+            echo_debug "NOP" 
         fi
     elif [[ "${req_ctrl}" == "CURSOR_MOVE" ]];then
         local x_val="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
@@ -261,7 +263,7 @@ function loger_default_handler
     fi
 
     if [ -n "${ack_pipe}" ];then
-        echo_debug "ack to ${ack_pipe}"
+        echo_debug "ack to [${ack_pipe}]"
         echo "ACK" > ${ack_pipe}
     fi
 }
@@ -287,9 +289,17 @@ function usr_ctrl_signal
 
     send_ctrl_to_parent "CTRL" "EXCEPTION"
     send_ctrl_to_parent "CTRL" "EXIT"
+
+    send_ctrl_to_self "CTRL" "EXCEPTION"
+    #send_ctrl_to_self "CTRL" "EXIT"
+
     if access_ok "${USR_CTRL_THIS_DIR}";then
         usr_ctrl_exit
         usr_ctrl_clear
+    fi
+
+    if access_ok "${USR_LOGR_THIS_DIR}";then
+        usr_logr_signal
     fi
 }
 
@@ -321,7 +331,8 @@ function usr_ctrl_launch
     exec {USR_CTRL_THIS_FD}<>${USR_CTRL_THIS_PIPE} # 自动分配FD 
     export USR_CTRL_THIS_FD=${USR_CTRL_THIS_FD}
 
-    trap "usr_ctrl_signal" SIGINT SIGTERM SIGKILL EXIT
+    #trap "usr_ctrl_signal" SIGINT SIGTERM SIGKILL EXIT
+    trap "usr_ctrl_signal" SIGINT SIGTERM SIGKILL
     usr_ctrl_thread &
 
     send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
@@ -346,9 +357,17 @@ function usr_logr_signal
 
     send_log_to_parent "CTRL" "EXCEPTION"
     send_log_to_parent "CTRL" "EXIT"
+
+    send_log_to_self "CTRL" "EXCEPTION"
+    #send_log_to_self "CTRL" "EXIT"
+
     if access_ok "${USR_LOGR_THIS_DIR}";then
         usr_logr_exit
         usr_logr_clear
+    fi
+
+    if access_ok "${USR_CTRL_THIS_DIR}";then
+        usr_ctrl_signal
     fi
 }
 
@@ -380,7 +399,8 @@ function usr_logr_launch
     exec {USR_LOGR_THIS_FD}<>${USR_LOGR_THIS_PIPE} # 自动分配FD 
     export USR_LOGR_THIS_FD=${USR_LOGR_THIS_FD}
 
-    trap "usr_logr_signal" SIGINT SIGTERM SIGKILL EXIT
+    #trap "usr_logr_signal" SIGINT SIGTERM SIGKILL EXIT
+    trap "usr_logr_signal" SIGINT SIGTERM SIGKILL
     usr_logr_thread &
 
     send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"

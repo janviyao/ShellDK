@@ -15,11 +15,11 @@ function ctrl_user_handler
         for pid in ${!childMap[@]};do
             if [ ${pid} -eq ${bgpid} ];then
                 local pipe="${childMap[${pid}]}"
-                echo_info "bg exit: pid[${pid}] pipe[${pipe}]"
+                echo_debug "bg exit: pid[${pid}] pipe[${pipe}]"
                 if [ -w ${pipe} ];then
                     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}EXIT${GBL_CTRL_SPF1}${pipe}" > ${pipe}
                 else
-                    echo_info "pipe removed: ${pipe}"
+                    echo_debug "pipe removed: ${pipe}"
                 fi
                 break
             fi
@@ -31,12 +31,12 @@ function ctrl_user_handler
 
         for pid in ${!childMap[@]};do
             local pipe="${childMap[${pid}]}"
-            echo_info "bg recv: pid[${pid}] bgpid[${bgpid}] pipe[${pipe}]"
+            echo_debug "bg recv: pid[${pid}] bgpid[${bgpid}] pipe[${pipe}]"
             if [ ${pid} -eq ${bgpid} ];then
                 if [ -w ${pipe} ];then
                     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${bgmsg}${GBL_CTRL_SPF1}${pipe}" > ${pipe}
                 else
-                    echo_info "pipe removed: ${pipe}"
+                    echo_debug "pipe removed: ${pipe}"
                 fi
             fi
         done

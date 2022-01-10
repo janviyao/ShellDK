@@ -121,8 +121,8 @@ declare -r POS_COLS="$4"
 
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${POS_ROWS}" "${POS_COLS}"
 
-echo_debug "progress finish"
+echo_debug "**********progress finish"
 usr_ctrl_exit
 wait
 usr_ctrl_clear
-echo_debug "progress exit"
+echo_debug "**********progress exit"

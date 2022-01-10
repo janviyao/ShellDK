@@ -106,14 +106,14 @@ do
 }
 done
 
-echo_debug "threads finish"
+echo_debug "**********threads finish"
 wait
 send_ctrl_to_parent "CHILD_EXIT" "$$"
-echo_debug "threads exit"
 
 # free thead res
 eval "exec ${THREAD_FD}>&-"
 rm -fr ${THREAD_THIS_DIR}
+echo_debug "**********threads exit"
 
 if [[ ${thread_state} == "exception" ]];then
     exit 1

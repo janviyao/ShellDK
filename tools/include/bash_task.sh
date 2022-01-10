@@ -42,12 +42,13 @@ function global_get_var
 
     local var_value=""
 
-    local TMP_PIPE="${GBL_CTRL_THIS_DIR}/msg.$$"
-    mkfifo ${TMP_PIPE}
+    local get_pipe="${GBL_CTRL_THIS_DIR}/get.$$"
+    rm -f ${get_pipe}
+    mkfifo ${get_pipe}
 
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}GET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${TMP_PIPE}" > ${one_pipe}
-    read var_value < ${TMP_PIPE}
-    rm -f ${TMP_PIPE}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}GET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${get_pipe}" > ${one_pipe}
+    read -t 10 var_value < ${get_pipe}
+    rm -f ${get_pipe}
 
     eval "export ${var_name}=\"${var_value}\""
 }
