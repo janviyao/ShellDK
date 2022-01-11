@@ -3,17 +3,16 @@ _GBL_BASE_DIR="/tmp/gbl"
 
 GBL_CTRL_THIS_DIR="${_GBL_BASE_DIR}/ctrl/pid.$$"
 GBL_CTRL_THIS_PIPE="${GBL_CTRL_THIS_DIR}/msg"
+mkdir -p ${GBL_CTRL_THIS_DIR}
 
 GBL_ACK_SPF="#"
 GBL_CTRL_SPF1="^"
 GBL_CTRL_SPF2="|"
 GBL_CTRL_SPF3="!"
 
-rm -fr ${GBL_CTRL_THIS_DIR}
-mkdir -p ${GBL_CTRL_THIS_DIR}
-
 GBL_CTRL_THIS_FD=${GBL_CTRL_THIS_FD:-6}
 mkfifo ${GBL_CTRL_THIS_PIPE}
+access_ok "${GBL_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_THIS_PIPE} fail"
 exec {GBL_CTRL_THIS_FD}<>${GBL_CTRL_THIS_PIPE}
 
 GBL_SRV_IDNO=$$

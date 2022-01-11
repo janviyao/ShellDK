@@ -75,12 +75,33 @@ function file_name
     fi
 }
 
+function kill_process
+{
+    # $1 = process pid
+    if [ -z "$1" ]; then
+        exit 1
+    fi
+
+    if kill -0 $1; then
+        kill $1
+        wait $1
+    fi
+}
+
 function process_exist
 {
     local pid="$1"
 
-    local ppath="/proc/${pid}/stat"
-    if access_ok "${ppath}";then
+    #local ppath="/proc/${pid}/stat"
+    #if access_ok "${ppath}";then
+    #    return 0
+    #else
+    #    return 1
+    #fi
+
+    # if the process is no longer running, then exit the script
+    # since it means the application crashed
+    if kill -s 0 ${pid} &> /dev/null; then
         return 0
     else
         return 1
@@ -333,6 +354,53 @@ function cursor_pos
 
     global_set_var x_pos
     global_set_var y_pos
+}
+
+function print_backtrace
+{
+    # if errexit is not enabled, don't print a backtrace
+    #[[ "$-" =~ e ]] || return 0
+
+    local shell_options="$-"
+    set +x
+    echo "========== Backtrace start: =========="
+    echo ""
+    for i in $(seq 1 $((${#FUNCNAME[@]} - 1)))
+    do
+        local func="${FUNCNAME[$i]}"
+        local line_nr="${BASH_LINENO[$((i - 1))]}"
+        local src="${BASH_SOURCE[$i]}"
+        [ -z "$src" ] && continue
+        echo "in $src:$line_nr -> $func()"
+        echo "     ..."
+        nl -w 4 -ba -nln $src | grep -B 5 -A 5 "^$line_nr[^0-9]" | sed "s/^/   /g" | sed "s/^   $line_nr /=> $line_nr /g"
+        echo "     ..."
+    done
+    echo ""
+    echo "========== Backtrace end =========="
+
+    [[ "$shell_options" =~ x ]] && set -x
+    return 0
+}
+
+function enable_backtrace
+{
+    # Same as -E.
+    # -E If set, any trap on ERR is inherited by shell functions,
+    # command substitutions, and commands executed in a sub‐shell environment.  
+    # The ERR trap is normally not inherited in such cases.
+    #set -o xtrace
+    #set -x 
+    #set -o errexit
+    #set -e 
+    set -o errtrace
+    trap "trap - ERR; print_backtrace >&2" ERR
+}
+
+function disable_backtrace
+{
+    #set +e
+    set +o errtrace
 }
 
 COLOR_HEADER='\033[40;35m' #黑底紫字

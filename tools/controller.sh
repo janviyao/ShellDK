@@ -324,6 +324,7 @@ function usr_ctrl_init_self
 
     rm -f ${USR_CTRL_THIS_PIPE}
     mkfifo ${USR_CTRL_THIS_PIPE}
+    access_ok "${USR_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${USR_CTRL_THIS_PIPE} fail"
 }
 
 function usr_ctrl_launch
@@ -392,6 +393,7 @@ function usr_logr_init_self
 
     rm -f ${USR_LOGR_THIS_PIPE}
     mkfifo ${USR_LOGR_THIS_PIPE}
+    access_ok "${USR_LOGR_THIS_PIPE}" || echo_erro "mkfifo: ${USR_LOGR_THIS_PIPE} fail"
 }
 
 function usr_logr_launch

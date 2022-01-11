@@ -48,6 +48,7 @@ function var_exist
     # eval "$check" &> /dev/null
     local arr="$(eval eval -- echo -n "\$$1")"
     if [[ -n ${arr[@]} ]]; then
+        # variable exist and its value is not empty
         return 0
     fi
 
