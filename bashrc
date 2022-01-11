@@ -62,6 +62,5 @@ function INCLUDE
     var_exist "${flag}" || source ${file} 
 }
 
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
+INCLUDE "DEBUG_ON" $MY_VIM_DIR/tools/include/common.api.sh
 INCLUDE "_GBL_BASE_DIR" $MY_VIM_DIR/tools/include/bash_task.sh
-INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh

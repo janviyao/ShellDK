@@ -1,6 +1,4 @@
 #!/bin/bash
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-
 declare -r SRC_ROOT=$1
 if [ ! -d ${SRC_ROOT} ]; then
     echo_erro "Not Dir: ${SRC_ROOT}"

@@ -1,4 +1,6 @@
 #!/bin/bash
+INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
+
 usr_ctrl_init_self
 usr_logr_init_parent
 

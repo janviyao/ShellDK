@@ -241,8 +241,8 @@ autocmd CursorMoved * if exists("g:show_func")
                       \| echo '' 
                       \| endif
 
-autocmd FileType c,cpp let g:prj_type=c
-autocmd FileType go let g:prj_type=go
+"autocmd FileType c,cpp let g:prj_type=c
+"autocmd FileType go let g:prj_type=go
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 设置快捷键

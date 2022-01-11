@@ -1,6 +1,4 @@
 #!/bin/bash
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-
 declare -r USR_NAME=$1
 declare -r USR_PWD=$2
 declare -r DES_IPA=$3

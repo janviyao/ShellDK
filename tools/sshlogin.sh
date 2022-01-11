@@ -3,7 +3,6 @@ TIMEOUT=600
 HOST_IP="$1"
 CMD_EXE="$2"
 
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/password.sh
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then

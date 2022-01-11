@@ -8,7 +8,7 @@ source $MY_VIM_DIR/bashrc
 
 declare -F INCLUDE &>/dev/null
 if [ $? -eq 0 ];then
-    INCLUDE "TEST_DEBUG" ${ROOT_DIR}/tools/include/common.api.sh
+    INCLUDE "DEBUG_ON" ${ROOT_DIR}/tools/include/common.api.sh
 else
     . ${ROOT_DIR}/tools/include/common.api.sh
 fi

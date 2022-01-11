@@ -2,8 +2,6 @@
 SRC_FD="$1"
 DES_FD="$2"
 
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
-
 declare -i count=0
 declare -a ip_array
 while read line

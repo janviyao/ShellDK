@@ -1,4 +1,6 @@
 #!/bin/bash
+INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
+
 declare -r all_num="$1"
 declare -r concurrent_num="$2"
 declare -r include_api="$3"

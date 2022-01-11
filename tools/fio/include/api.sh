@@ -1,5 +1,5 @@
 #!/bin/bash
-TEST_DEBUG=yes
+DEBUG_ON=yes
 
 function bool_v
 {
@@ -138,7 +138,7 @@ function echo_warn()
 function echo_debug()
 {
     para=$1
-    iftrue=$(bool_v "${TEST_DEBUG}"; echo $?)
+    iftrue=$(bool_v "${DEBUG_ON}"; echo $?)
     if [ ${iftrue} -eq 1 ]; then
         echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
     fi

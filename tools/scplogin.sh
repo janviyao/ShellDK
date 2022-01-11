@@ -3,7 +3,6 @@ TIMEOUT=600
 SRC_DIR="$1"
 DES_DIR="$2"
 
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 . $MY_VIM_DIR/tools/password.sh
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then

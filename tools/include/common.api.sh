@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 HOME_DIR=${HOME}
 
-TEST_DEBUG=0
+DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
 
@@ -377,7 +377,7 @@ function echo_debug
 {
     local para=$1
 
-    if bool_v "${TEST_DEBUG}"; then
+    if bool_v "${DEBUG_ON}"; then
         local fname="$(file_name)"
         contain_string "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then

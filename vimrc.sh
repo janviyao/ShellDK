@@ -1,5 +1,4 @@
 #!/bin/bash
-INCLUDE "TEST_DEBUG" $MY_VIM_DIR/tools/include/common.api.sh
 . $MY_VIM_DIR/tools/paraparser.sh
 #set -x
 
