@@ -52,6 +52,8 @@ function create_project
     if access_ok ".gitignore"; then
         while read line
         do
+            [ -z "${line}" ] && continue
+
             if match_regex "${line}" "^#";then
                 continue
             fi
