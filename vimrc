@@ -256,9 +256,18 @@ nnoremap <silent> <C-a> ggvG$                              "全选
 
 nnoremap <silent> <Leader>sw :w<CR>                        "保存当前窗口修改
 nnoremap <silent> <Leader>sa :wa<CR>                       "保存所有窗口修改
+
 nnoremap <silent> <Leader>wv <C-w>v                        "垂直分割当前窗口
 nnoremap <silent> <Leader>wh <C-w>s                        "水平分割当前窗口
-nnoremap <silent> <Leader>wt :tabe %<CR>                   "当前窗口移到新标签页
+nnoremap <silent> <C-up> :resize +5<CR>                    "水平分隔窗口调大
+nnoremap <silent> <C-down> :resize -5<CR>                  "水平分隔窗口调小
+nnoremap <silent> <C-right> :vertical resize+5<CR>         "垂直分隔窗口调大
+nnoremap <silent> <C-left> :vertical resize-5<CR>          "垂直分隔窗口调大
+
+nnoremap <silent> <Leader>wt :tabe<CR>                     "当前窗口拷贝到新标签页
+nnoremap <silent> <Leader>tp :tabp<CR>                     "当前窗口移到左侧标签页
+nnoremap <silent> <Leader>tn :tabn<CR>                     "当前窗口移到右侧标签页
+
 nnoremap <silent> <Leader>wr <C-w>r                        "旋转当前窗口位置
 nnoremap <silent> <Leader>wc <C-w>c                        "关闭当前窗口
 nnoremap <silent> <Leader>wd :bd<CR>                       "删除当前缓存窗口
