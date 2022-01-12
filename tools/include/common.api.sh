@@ -99,14 +99,15 @@ function kill_process
 {
     local arr=($*)
     
-    [ ${#arr[*]} -eq 0 ] && return
+    [ ${#arr[*]} -eq 0 ] && return 1
 
     for pn in ${arr[*]}
     do
         if is_number "${pn}"; then
             if process_exist "${pn}"; then
                 kill -9 ${pn} &> /dev/null
-                wait ${pn} &> /dev/null
+                return $?
+                #wait ${pn} &> /dev/null
             fi
         else
             local pids=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pn}$/) print \$1 }"))    
@@ -114,11 +115,14 @@ function kill_process
             do
                 if process_exist "${pid}"; then
                     kill -9 ${pid} &> /dev/null
-                    wait ${pid} &> /dev/null
+                    return $?
+                    #wait ${pid} &> /dev/null
                 fi
             done
         fi
     done
+
+    return 1
 }
 
 function process_name
