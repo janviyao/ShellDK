@@ -1,45 +1,94 @@
 #!/bin/bash
 declare -A parasMap
+declare -a all_paras=()
+declare -i all_cnt=0
+declare -a other_paras=()
+declare -i other_cnt=0
 
-parasMap["all"]="$*"
-while [ -n "$1" ]; do
+while [ $# -gt 0 ]
+do
     option=$1
-    value=$2
+    if [ -z "${option}" ];then
+        all_paras[${all_cnt}]="$1"
+        other_paras[${other_cnt}]="$1"
 
-    contain_string "${option}" "="
-    if [ $? -eq 0 ];then
+        let all_cnt++
+        let other_cnt++
+        shift
+        continue
+    fi
+    value=$2
+    
+    b_single=false
+    if contain_string "${option}" "=";then
         value="$(echo "${option}" | cut -d '=' -f 2)"
         option="$(echo "${option}" | cut -d '=' -f 1)"
+        b_single=true
     fi
+
+    if bool_v "${b_single}";then
+        if [[ "${value:0:1}" == "-" ]];then
+            echo_erro "para: ${option}=${value} invalid"
+            exit 0
+        fi
+    fi
+
     echo_debug "para: ${option} ${value}"
 
-    prefix=${option:0:2} 
-    if [[ "${prefix}" == "--" ]];then
-        prefix=${value:0:1} 
-        if [[ "${prefix}" == "-" ]];then
+    if [[ "${option:0:2}" == "--" ]];then
+        if [[ "${value:0:1}" == "-" ]];then
             parasMap["${option}"]="true"
         else
             parasMap["${option}"]="${value}"
-            shift
+            if ! bool_v "${b_single}";then
+                all_paras[${all_cnt}]="$1"
+                let all_cnt++
+                shift
+            fi
         fi
     else
-        prefix=${option:0:1} 
-        if [[ "${prefix}" == "-" ]];then
-            prefix=${value:0:1} 
-            if [[ "${prefix}" == "-" ]];then
+        if [[ "${option:0:1}" == "-" ]];then
+            if [[ "${value:0:1}" == "-" ]];then
                 parasMap["${option}"]="true"
             else
                 parasMap["${option}"]="${value}"
-                shift
+                if ! bool_v "${b_single}";then
+                    all_paras[${all_cnt}]="$1"
+                    let all_cnt++
+                    shift
+                fi
             fi
         else
-            parasMap["others"]="${parasMap['others']} ${option}"
+            other_paras[${other_cnt}]="$1"
+            let other_cnt++
         fi
     fi
 
+    all_paras[${all_cnt}]="$1"
+    let all_cnt++
     shift
 done
 
-#for key in ${!parasMap[@]};do
-#    echo "$(printf "Key: %-8s  Value: %s" "${key}" "${parasMap[$key]}")"
-#done
+#if bool_v "${DEBUG_ON}";then
+#    for key in ${!parasMap[*]}
+#    do
+#        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${parasMap[$key]}")"
+#    done
+#
+#    echo
+#    printf "%-13s: " "all_paras"
+#    printf "%2d=( " "${#all_paras[*]}"
+#    for ((idx=0; idx < ${#all_paras[*]}; idx++)) 
+#    do
+#        printf "\"%s\" " "${all_paras[${idx}]}" 
+#    done
+#    echo ")"
+#
+#    printf "%-13s: " "other_paras"
+#    printf "%2d=( " "${#other_paras[*]}"
+#    for ((idx=0; idx < ${#other_paras[*]}; idx++)) 
+#    do
+#        printf "\"%s\" " "${other_paras[${idx}]}" 
+#    done
+#    echo ")"
+#fi

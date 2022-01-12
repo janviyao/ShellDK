@@ -1,64 +1,90 @@
 #!/bin/bash
-declare -r SRC_ROOT=$1
+. $MY_VIM_DIR/tools/paraparser.sh
+
+SRC_ROOT="${other_paras[0]}"
 if [ ! -d ${SRC_ROOT} ]; then
     echo_erro "Not Dir: ${SRC_ROOT}"
-    exit -1
+    exit 1
 fi
 
-BAK_ROOT=$2
+BAK_ROOT="${other_paras[1]}"
 if [ -z "${BAK_ROOT}" ];then
-    SUFFIX=`date '+%Y%m%d-%H%M%S'`
-    BAK_ROOT=~/${SUFFIX}
+    suffix=`date '+%Y%m%d-%H%M%S'`
+    BAK_ROOT=~/${suffix}
+
+    if [ ${#paras_list[*]} -ge 2 ];then
+        # remove the first two item
+        unset other_paras[0]
+        unset other_paras[1]
+    else
+        # remove the first item
+        unset other_paras[0]
+    fi
+else
+    if [ ! -d ${BAK_ROOT} ]; then
+        echo_erro "Not Dir: ${BAK_ROOT}"
+        exit 1
+    fi
+    
+    # remove the first two item
+    unset other_paras[0]
+    unset other_paras[1]
 fi
 
-declare -r EXCLUDE_FILE=""
-declare -r EXCLUDE_DIR="\w+\.d \w+\.o \w+\.gcno"
+EXCLUDE_FILS=(${other_paras[*]} "\w+\.d" "\w+\.o" "\w+\.gcno")
+EXCLUDE_DIRS=(${other_paras[*]} "build")
 
-cd ${SRC_ROOT}
+function git_backup
+{
+    local git_item="$1"
 
-FLIST=`git status -s | awk '{ print $2 }'`
-for fname in $FLIST
-do
-    fdir=$(readlink -f $(dirname ${fname}))
-    if [ -f ${fname} ];then
-        IS_EXCLUDE=0
-        for xfile in ${EXCLUDE_FILE}
+    local is_exclude=1
+    if [ -f ${git_item} ];then
+        for regex in ${EXCLUDE_FILS[*]}
         do
-            IS_VALID=`echo "${fname}" | grep -P "${xfile}" -o`
-            if [ ! -z "${IS_VALID}" ];then 
-                echo_warn "Exclude File: ${fname}"
-                IS_EXCLUDE=1
+            [ -z "${regex}" ] && continue
+            if match_regex "${git_item}" "${regex}";then 
+                echo_warn "Exclude File: ${git_item}"
+                is_exclude=0
                 break
             fi
         done
 
-        if [ ${IS_EXCLUDE} -ne 1 ];then 
-            desdir=${BAK_ROOT}${fdir}
+        if [ ${is_exclude} -ne 0 ];then 
+            local fdir=$(readlink -f $(dirname ${git_item}))
+            local desdir=${BAK_ROOT}${fdir}
             mkdir -p ${desdir} 
 
-            cp -f ${fname} ${desdir}
-            echo_info "Copy File: ${fname}"
+            cp -f ${git_item} ${desdir}
+            echo_info "Copy File: ${git_item}"
         fi
     else
-        IS_EXCLUDE=0
-        for xdir in ${EXCLUDE_DIR}
+        for regex in ${EXCLUDE_DIRS[*]}
         do
-            IS_VALID=`echo "${fname}" | grep -P "${xdir}" -o`
-            if [ ! -z "${IS_VALID}" ];then 
-                echo_warn "Exclude Dir: ${fname}"
-                IS_EXCLUDE=1
+            [ -z "${regex}" ] && continue
+            if match_regex "${git_item}" "${regex}";then 
+                echo_warn "Exclude Dir: ${git_item}"
+                is_exclude=0
                 break
             fi
         done
 
-        if [ ${IS_EXCLUDE} -ne 1 ];then 
-            desdir=${BAK_ROOT}${fdir}
+        if [ ${is_exclude} -ne 0 ];then 
+            local fdir=$(readlink -f $(dirname ${git_item}))
+            local desdir=${BAK_ROOT}${fdir}
             mkdir -p ${desdir} 
 
-            cp -fr ${fname} ${desdir}
-            echo_info "Copy  Dir: ${fname}"
+            cp -fr ${git_item} ${desdir}
+            echo_info "Copy  Dir: ${git_item}"
         fi
     fi
+}
+
+cd ${SRC_ROOT}
+FLIST=($(git status -s | awk '{ print $2 }'))
+for git_item in ${FLIST[*]}
+do
+    git_backup "${git_item}"
 done
 
 chmod 777 -R ${BAK_ROOT}

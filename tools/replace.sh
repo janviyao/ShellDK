@@ -1,6 +1,5 @@
 #!/bin/bash
 . $MY_VIM_DIR/tools/paraparser.sh
-paras_list="${parasMap['others']}"
 
 function replace_file
 {
@@ -40,9 +39,11 @@ function do_replace
     echo_debug "finish: $(match_trim_start "${des_dir}" "${rep_dir}/")"
 }
 
-OLD_STR="$(echo ${paras_list} | cut -d ' ' -f 1)"
-NEW_STR="$(echo ${paras_list} | cut -d ' ' -f 2)"
-replace_list=($(echo ${paras_list} | cut -d ' ' -f 3-))
+OLD_STR="${other_paras[0]}"
+NEW_STR="${other_paras[1]}"
+unset other_paras[0]
+unset other_paras[1]
+replace_list=(${other_paras[*]})
 
 CUR_DIR="$(pwd)"
 for rep_dir in ${replace_list[@]}
