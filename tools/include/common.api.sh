@@ -75,19 +75,6 @@ function file_name
     fi
 }
 
-function kill_process
-{
-    # $1 = process pid
-    if [ -z "$1" ]; then
-        exit 1
-    fi
-
-    if kill -0 $1; then
-        kill $1
-        wait $1
-    fi
-}
-
 function process_exist
 {
     local pid="$1"
@@ -108,16 +95,42 @@ function process_exist
     fi
 }
 
+function kill_process
+{
+    local arr=($*)
+    
+    [ ${#arr[*]} -eq 0 ] && return
+
+    for pn in ${arr[*]}
+    do
+        if is_number "${pn}"; then
+            if process_exist "${pn}"; then
+                kill -9 ${pn} &> /dev/null
+                wait ${pn} &> /dev/null
+            fi
+        else
+            local pids=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pn}$/) print \$1 }"))    
+            for pid in ${pids[*]}
+            do
+                if process_exist "${pid}"; then
+                    kill -9 ${pid} &> /dev/null
+                    wait ${pid} &> /dev/null
+                fi
+            done
+        fi
+    done
+}
+
 function process_name
 {
     local pid="$1"
+    is_number "${pid}" || { echo "${pid}"; return; }
 
-    # ps -p 2133 -oargs=
-    # ps -p 2133 -ocomm=
-    local ppath="/proc/${pid}/status"
-    if access_ok "${ppath}";then
-        local pname="$(cat ${ppath} | grep -w 'Name:' | awk '{ print $NF }')"
-        echo "${pname}"
+    # ps -p 2133 -o args=
+    # ps -p 2133 -o comm=
+    # cat /proc/${pid}/status
+    if process_exist "${pid}";then
+        echo "$(ps -p ${pid} -o comm=)"
     else
         echo "!anon!"
     fi

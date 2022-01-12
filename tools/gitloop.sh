@@ -1,4 +1,7 @@
 #!/bin/bash
+#set -e
+#set -o errtrace
+#trap "trap - ERR; print_backtrace >&2" ERR
 INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
 
 function ctrl_user_handler
@@ -65,7 +68,7 @@ declare -r log_file="/tmp/$$.log"
 cursor_pos
 global_get_var x_pos
 let x_pos--
-let y_pos=0
+y_pos=0
 
 for gitdir in `ls -d */`
 do
