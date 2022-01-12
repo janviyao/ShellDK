@@ -107,7 +107,6 @@ function kill_process
             if process_exist "${pn}"; then
                 kill -9 ${pn} &> /dev/null
                 return $?
-                #wait ${pn} &> /dev/null
             fi
         else
             local pids=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pn}$/) print \$1 }"))    
@@ -115,14 +114,13 @@ function kill_process
             do
                 if process_exist "${pid}"; then
                     kill -9 ${pid} &> /dev/null
-                    return $?
-                    #wait ${pid} &> /dev/null
+                    [ $? -eq 0 ] || return 1
                 fi
             done
         fi
     done
 
-    return 1
+    return 0
 }
 
 function process_name
