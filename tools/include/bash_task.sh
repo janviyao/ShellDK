@@ -199,7 +199,7 @@ function _global_ctrl_bg_thread
     done < ${GBL_CTRL_THIS_PIPE}
 }
 
-trap "echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}; exec ${GBL_CTRL_THIS_FD}>&-; rm -fr ${_GBL_BASE_DIR}; exit 0" EXIT
+trap "echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}; exec ${GBL_CTRL_THIS_FD}>&-; rm -fr ${GBL_CTRL_THIS_DIR}; exit 0" EXIT
 {
     trap "" SIGINT SIGTERM SIGKILL
     _global_ctrl_bg_thread
