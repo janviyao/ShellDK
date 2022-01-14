@@ -422,13 +422,16 @@ endfunction
 
 "获取函数头开始行
 function! JumpFuncStart()
-    let line_end='\s*\r?\n?\s*'
+    " E872: (NFA regexp) Too many '('
+    " use non-capturing groups with the \%(pattern\) syntax
+    " when \v, %(pattern) syntax
+    let line_end='%(\s*\r?\n?\s*)'
     let not_in_bracket='[^\;\+\-\!\/\(\)\{\}]'
 
-    let func_return='(^(\s*[a-zA-Z0-9_]+\s*){0,2}'.not_in_bracket.'$'.line_end.')?'
-    let func_name='\s*(([a-zA-Z0-9_]+\s*(::[a-zA-Z0-9_]+)?)|(operator.+\s*))'
-    let func_args='\((('.not_in_bracket.'*,?)*'.line_end.')*\)'
-    let func_restrict='(\s*const\s*)?'.line_end
+    let func_return='%(^%(\s*[a-zA-Z0-9_]+\s*){0,2}'.not_in_bracket.'$'.line_end.')?'
+    let func_name='\s*%(%([a-zA-Z0-9_]+\s*(::[a-zA-Z0-9_]+)?)|%(operator.+\s*))'
+    let func_args='\(%(%('.not_in_bracket.'*%(__attribute__.+)?,?)*'.line_end.')*\)'
+    let func_restrict='%(\s*const\s*)?'.line_end
 
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
