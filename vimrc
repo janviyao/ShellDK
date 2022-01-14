@@ -264,7 +264,7 @@ nnoremap <silent> <C-down> :resize -5<CR>                  "水平分隔窗口�
 nnoremap <silent> <C-right> :vertical resize+5<CR>         "垂直分隔窗口调大
 nnoremap <silent> <C-left> :vertical resize-5<CR>          "垂直分隔窗口调大
 
-nnoremap <silent> <Leader>wt :tabe<CR>                     "当前窗口拷贝到新标签页
+nnoremap <silent> <Leader>wt :tabe %<CR>                   "当前窗口拷贝到新标签页
 nnoremap <silent> <Leader>tp :tabp<CR>                     "当前窗口移到左侧标签页
 nnoremap <silent> <Leader>tn :tabn<CR>                     "当前窗口移到右侧标签页
 
