@@ -2,18 +2,19 @@
 . $MY_VIM_DIR/tools/paraparser.sh
 #set -x
 
-ROOT_DIR="${parasMap['-d']}"
-ROOT_DIR="${ROOT_DIR:-${parasMap['--root-dir']}}"
-ROOT_DIR="${ROOT_DIR:-.}"
-ROOT_DIR="$(match_trim_end "${ROOT_DIR}" "/")"
-[ -n "${ROOT_DIR}" ] && echo_debug "root-dir: ${ROOT_DIR}"
-
 OP_MODE="${parasMap['-m']}"
 OP_MODE="${OP_MODE:-${parasMap['--mode']}}"
 [ -n "${OP_MODE}" ] && echo_debug "mode: ${OP_MODE}"
 
 function create_project
 {
+    local root_dir="${parasMap['-d']}"
+    root_dir="${root_dir:-${parasMap['--root-dir']}}"
+    root_dir="${root_dir:-.}"
+    root_dir="$(match_trim_end "${root_dir}" "/")"
+    [ -n "${root_dir}" ] && echo_debug "root-dir: ${root_dir}"
+
+    cd ${root_dir}
     local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|h\\|s\\|S\\|py\\|go"
     local find_str="${default_type}"
 
@@ -103,11 +104,7 @@ function create_project
 
 case ${OP_MODE} in
     create)
-        cd ${ROOT_DIR}
         create_project
-        ;;
-    delete)
-        echo_debug "delete"
         ;;
     *)
         echo_erro "opmode: ${OP_MODE} invalid"

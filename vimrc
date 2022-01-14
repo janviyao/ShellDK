@@ -422,16 +422,16 @@ endfunction
 
 "获取函数头开始行
 function! JumpFuncStart()
-    let line_end="\\s*\\r\\?\\n\\?\\s*"
-    let not_in_bracket="[^;+\\-=!/(){}]"
+    let line_end='\s*\r?\n?\s*'
+    let not_in_bracket='[^;+\-!/(){}]'
 
-    let func_name="^\\(\\s*[\\~\\*:]*\\s*\\w\\+\\s*\\)\\+\\(::\\~\\?\\w\\+\\)\\?".line_end
-    let func_args="(\\(".not_in_bracket."*".line_end.",\\?".line_end."\\)*)".line_end
-    let func_its_cpp="\\(:\\(".line_end."\\w\\+(\\(".line_end."[^{}]*".line_end."\\)\\+),\\?".line_end."\\)\\+\\)\\?".line_end
-    let func_limit="\\(\\s*const\\s*\\)\\?".line_end."{"
+    let func_return='(^([a-zA-Z0-9_]+\s*){0,2})?'
+    let func_name=line_end.'(([a-zA-Z0-9_]+\s*(::[a-zA-Z0-9_]+)?)|(operator.+\s*))'
+    let func_args='\((('.not_in_bracket.'*,?)*'.line_end.')*\)'
+    let func_restrict='(\s*const\s*)?'.line_end
 
-    let func_reg=func_name.func_args.func_its_cpp.func_limit
-    let exclude_reg="\\(}\\?\\s*\\(else\\)\\?\\s*if\\|for\\|while\\|switch\\|catch\\)\\s*(.*)".line_end."{\\?"
+    let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
+    let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
     let find_line=search(func_reg, 'bW')
     let find_str=getline(find_line)
@@ -640,7 +640,7 @@ function! GlobalReplace()
     if stridx(rangeStr, ',') > 0
         let rangeStr = rangeStr . "," 
         let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
-        if matchstr(lineNum, '\d\+') != ''
+        if matchstr(lineNum, '\v\d+') != ''
             let startLine = str2nr(lineNum)
         else
             return 
@@ -648,7 +648,7 @@ function! GlobalReplace()
 
         let rangeStr = strpart(rangeStr, stridx(rangeStr, ',') + 1)
         let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
-        if matchstr(lineNum, '\d\+') != ''
+        if matchstr(lineNum, '\v\d+') != ''
             let endLine = str2nr(lineNum)
         else
             if lineNum == '$'
@@ -680,23 +680,23 @@ function! GlobalReplace()
             call cursor(startLine, 1)
             if confirmStr == "y" || confirmStr == "Y" 
                 if wholeWordStr == "y" || wholeWordStr == "Y"
-                    while matchstr(getline(startLine), "\\<".oldStr."\\>") != '' 
+                    if matchstr(getline(startLine), "\\<".oldStr."\\>") != '' 
                         execute "s".separatorStr."\\<".oldStr."\\>".separatorStr.newStr.separatorStr."gec"
-                    endwhile
+                    endif
                 elseif wholeWordStr == "n" || wholeWordStr == "N"
-                    while matchstr(getline(startLine), "\\v([\s\S]{-})".oldStr."([\s\S]{-})") != '' 
+                    if matchstr(getline(startLine), "\\v([\s\S]{-})".oldStr."([\s\S]{-})") != '' 
                         execute "s".separatorStr."\\v([\s\S]{-})".oldStr."([\s\S]{-})".separatorStr."\\1".newStr."\\2".separatorStr."gec"
-                    endwhile
+                    endif
                 endif
             elseif confirmStr == "n" || confirmStr == "N"
                 if wholeWordStr == "y" || wholeWordStr == "Y"
-                    while matchstr(getline(startLine), "\\<".oldStr."\\>") != '' 
+                    if matchstr(getline(startLine), "\\<".oldStr."\\>") != '' 
                         silent! execute "s".separatorStr."\\<".oldStr."\\>".separatorStr.newStr.separatorStr."ge"
-                    endwhile
+                    endif
                 elseif wholeWordStr == "n" || wholeWordStr == "N"
-                    while matchstr(getline(startLine), "\\v([\s\S]{-})".oldStr."([\s\S]{-})") != '' 
+                    if matchstr(getline(startLine), "\\v([\s\S]{-})".oldStr."([\s\S]{-})") != '' 
                         silent! execute "s".separatorStr."\\v([\s\S]{-})".oldStr."([\s\S]{-})".separatorStr."\\1".newStr."\\2".separatorStr."ge"
-                    endwhile
+                    endif
                 endif
             endif     
 
