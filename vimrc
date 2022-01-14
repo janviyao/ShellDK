@@ -435,9 +435,18 @@ function! JumpFuncStart()
 
     let find_line=search(func_reg, 'bW')
     let find_str=getline(find_line)
+    while find_str == ""
+        let find_line=search(func_reg, 'bW')
+        let find_str=getline(find_line)
+    endwhile
+
     while matchstr(find_str, exclude_reg) != ""
         let find_line=search(func_reg, 'bW')
         let find_str=getline(find_line)
+        while find_str == ""
+            let find_line=search(func_reg, 'bW')
+            let find_str=getline(find_line)
+        endwhile
     endwhile
 
     let func_start = line(".")
