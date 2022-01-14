@@ -423,10 +423,10 @@ endfunction
 "获取函数头开始行
 function! JumpFuncStart()
     let line_end='\s*\r?\n?\s*'
-    let not_in_bracket='[^;+\-!/(){}]'
+    let not_in_bracket='[^\;\+\-\!\/\(\)\{\}]'
 
-    let func_return='(^([a-zA-Z0-9_]+\s*){0,2})?'
-    let func_name=line_end.'(([a-zA-Z0-9_]+\s*(::[a-zA-Z0-9_]+)?)|(operator.+\s*))'
+    let func_return='(^(\s*[a-zA-Z0-9_]+\s*){0,2}'.not_in_bracket.'$'.line_end.')?'
+    let func_name='\s*(([a-zA-Z0-9_]+\s*(::[a-zA-Z0-9_]+)?)|(operator.+\s*))'
     let func_args='\((('.not_in_bracket.'*,?)*'.line_end.')*\)'
     let func_restrict='(\s*const\s*)?'.line_end
 
@@ -434,23 +434,48 @@ function! JumpFuncStart()
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
     let find_line=search(func_reg, 'bW')
+    if find_line == 0
+        call PrintMsg("error", "search fail: ".func_reg)
+        return 0
+    endif
+
     let find_str=getline(find_line)
     while find_str == ""
         let find_line=search(func_reg, 'bW')
+        if find_line <= 1
+            break
+        endif
+
         let find_str=getline(find_line)
     endwhile
 
     while matchstr(find_str, exclude_reg) != ""
         let find_line=search(func_reg, 'bW')
+        if find_line <= 1
+            break
+        endif
+
         let find_str=getline(find_line)
         while find_str == ""
             let find_line=search(func_reg, 'bW')
+            if find_line <= 1
+                break
+            endif
+
             let find_str=getline(find_line)
         endwhile
     endwhile
 
-    let func_start = line(".")
-    return func_start
+    let rowNum = line(".")
+    let colNum = col(".")
+
+    let find_line=search('\v'.func_return, 'bW')
+    if getline(find_line) != ""
+        return find_line
+    endif
+
+    call cursor(rowNum, colNum)
+    return rowNum
 endfunction
 
 "状态栏显示当前行所在函数名
