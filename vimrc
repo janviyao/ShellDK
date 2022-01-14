@@ -15,6 +15,10 @@ function! PrintMsg(type, msg)
         redir >> vim.debug
         echo a:msg
         redir end
+    elseif a:type == "msg"
+        echohl ModeMsg
+        echo a:msg
+        echohl None
     else
         echom a:msg
     endif
