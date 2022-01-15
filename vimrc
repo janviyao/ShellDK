@@ -8,12 +8,16 @@ let g:my_vim_dir = expand('$MY_VIM_DIR')
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 function! PrintMsg(type, msg)
     if a:type == "error"
-        echohl ErrorMsg | echo a:msg
-    elseif a:type == "warn" 
-        echohl WarningMsg | echo a:msg
-    elseif a:type == "debug" 
-        redir >> vim.debug
+        echohl ErrorMsg
         echo a:msg
+        echohl None
+    elseif a:type == "warn" 
+        echohl WarningMsg
+        echo a:msg
+        echohl None
+    elseif a:type == "file" 
+        redir! >> vim.debug
+        silent! execute "echo a:msg"
         redir end
     elseif a:type == "msg"
         echohl ModeMsg
@@ -30,11 +34,131 @@ function! GetResultIndex(cmd, substr)
     return idx
 endfunction
 
-function! CloseQfix(force)
-    if exists("g:qfix_win")
-        if &buftype != 'quickfix' || a:force == 1
+function! GetCurrentQuickCount()
+    let qfcount=0
+    let qflist = getqflist()
+    for item in qflist
+        let bufnr = item.bufnr 
+        if bufnr == bufnr('%')
+            let qfcount += 1
+        endif
+    endfor
+    return qfcount
+endfunction
+
+function! QuickLoad(index)
+    if filereadable(GetVimDir(1,"quickfix").'/list'.a:index)
+        call setqflist([], "r")
+
+        let qflist=readfile(GetVimDir(1,"quickfix").'/list'.a:index, "")
+        for item in qflist
+            let dicTmp=eval(item)
+            let retCode=setqflist([dicTmp], 'a')
+            if retCode != 0
+                call PrintMsg("error", "item invalid: ".item)
+            endif
+        endfor
+
+        let s:qfix_size=getqflist({'size' : 1}).size
+        return 0
+    endif
+
+    return 1
+endfunction
+
+function! QuickCtrl(mode)
+    if a:mode == "open"
+        let qflist = getqflist()
+        if !empty(qflist)
+            silent! execute 'copen 15'
+            let s:qfix_win = bufnr("$")
+            let s:qfix_pos=getqflist({'idx' : 0}).idx
+        endif
+    elseif a:mode == "close"
+        if exists("s:qfix_win")
             silent! execute 'cclose'
-            unlet! g:qfix_win
+            unlet! s:qfix_win
+        endif
+        let s:qfix_pos=getqflist({'idx' : 0}).idx
+    elseif a:mode == "toggle"
+        if exists("s:qfix_win")
+            call QuickCtrl("close")        
+        else
+            call QuickCtrl("open")        
+        endif
+    elseif a:mode == "clear"
+        silent! execute 'call setqflist([], "r")'
+        if exists("s:qfix_win")
+            unlet! s:qfix_win
+        endif
+    elseif a:mode == "recover"
+        silent! execute 'cc!'
+        let s:qfix_pos=getqflist({'idx' : 0}).idx
+    elseif a:mode == "next"
+        let s:qfix_pos=getqflist({'idx' : 0}).idx
+        if s:qfix_pos >= s:qfix_size
+            let s:qfix_index += 1
+            let retCode=QuickLoad(s:qfix_index)
+            if retCode == 0
+                silent! execute 'cc! 1'
+                let s:qfix_pos=getqflist({'idx' : 0}).idx
+            else
+                let s:qfix_index -= 1
+            endif
+        else
+            silent! execute 'cn!'
+            let s:qfix_pos=getqflist({'idx' : 0}).idx
+        endif
+    elseif a:mode == "prev"
+        let s:qfix_pos=getqflist({'idx' : 0}).idx
+        if s:qfix_pos <= 1
+            let s:qfix_index -= 1
+            let retCode=QuickLoad(s:qfix_index)
+            if retCode == 0
+                silent! execute 'cc! '.s:qfix_size
+                let s:qfix_pos=getqflist({'idx' : 0}).idx
+            else
+                let s:qfix_index += 1
+            endif
+        else
+            silent! execute 'cp!'
+            let s:qfix_pos=getqflist({'idx' : 0}).idx
+        endif
+    elseif a:mode == "save"
+        let qflist = getqflist()
+        if !empty(qflist)
+            call writefile([s:qfix_index], GetVimDir(1,"quickfix").'/index', 'b')
+            call writefile([s:qfix_pos], GetVimDir(1,"quickfix").'/position', 'b')
+
+            call writefile([], GetVimDir(1,"quickfix").'/list'.s:qfix_index, 'r')
+            for item in qflist
+                let item["filename"]=bufname(item["bufnr"]) 
+                let item["bufnr"]=0
+
+                unlet item["end_lnum"]
+                unlet item["end_col"]
+                call writefile([string(item)], GetVimDir(1,"quickfix").'/list'.s:qfix_index, 'a')
+            endfor
+
+            let s:qfix_index += 1
+        endif
+    elseif a:mode == "load"
+        if filereadable(GetVimDir(1,"quickfix").'/index')
+            let s:qfix_index = get(readfile(GetVimDir(1,"quickfix").'/index', 'b', 1), 0, '') 
+        else
+            let s:qfix_index = 0
+        endif
+
+        if filereadable(GetVimDir(1,"quickfix").'/index')
+            let s:qfix_pos = get(readfile(GetVimDir(1,"quickfix").'/position', 'b', 1), 0, '') 
+        else
+            let s:qfix_pos = 1
+        endif
+
+        let retCode=QuickLoad(s:qfix_index)
+        if retCode == 0
+            call setqflist([], 'a', {'idx' : s:qfix_pos})
+            let s:qfix_pos=getqflist({'idx' : 0}).idx
         endif
     endif
 endfunction
@@ -231,11 +355,11 @@ autocmd VimLeave * call LeaveHandler()
 "跟踪quickfix窗口状态
 augroup QFixToggle
     autocmd!
-    autocmd BufReadPost quickfix let g:qfix_win = bufnr('$')
-    autocmd BufWinEnter quickfix let g:qfix_win = bufnr("$")
+    autocmd BufReadPost quickfix let s:qfix_win = bufnr("$")
+    autocmd BufWinEnter quickfix let s:qfix_win = bufnr("$")
 
-    "关闭quickfix窗口
-    autocmd CursorMoved * call CloseQfix(0)
+    "不在quickfix窗内移动，则关闭quickfix窗口
+    autocmd CursorMoved * if &buftype != 'quickfix' | call QuickCtrl("close") | endif
 augroup END
 
 "恢复命令栏默认高度
@@ -300,8 +424,9 @@ nnoremap <silent> <C-j> 6j
 nnoremap <silent> <C-k> 6k
 
 "切换下一条quickfix记录
-nnoremap <silent> <Leader>qf :silent! cn!<CR>
-nnoremap <silent> <Leader>qb :silent! cp!<CR>
+nnoremap <silent> <Leader>qc :call QuickCtrl("recover")<CR>
+nnoremap <silent> <Leader>qf :call QuickCtrl("next")<CR>
+nnoremap <silent> <Leader>qb :call QuickCtrl("prev")<CR>
 
 "替换当前光标下单词为复制寄存器内容
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
@@ -358,7 +483,8 @@ nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 "CS命令
 function! CSFind(ccmd)
     call ToggleWindow("allclose")
-    silent! execute 'call setqflist([], "r")'
+    call QuickCtrl("save")
+    call QuickCtrl("clear")
 
     let csarg=expand('<cword>')
     if a:ccmd == "fs"
@@ -380,18 +506,8 @@ function! CSFind(ccmd)
         let csarg=expand('<cfile>')
         silent! execute "cs find i ".csarg 
     endif
-
-    let itemCount=0
-    for item in getqflist()
-        let itemCount = itemCount + 1
-        if itemCount > 1
-            if exists("g:qfix_win")
-                unlet! g:qfix_win
-            endif
-            call ToggleWindow("qo")
-            break
-        endif
-    endfor
+ 
+    call QuickCtrl("open")
 endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -498,8 +614,8 @@ function! ShowFuncName()
     let headHeight = 0
     let saveStart=headStart
     while headStart <= headEnd  
-        let headHeight = headHeight + 1
-        let headStart = headStart + 1
+        let headHeight += 1
+        let headStart += 1
     endwhile
     silent! execute 'set cmdheight='.headHeight
     let g:show_func=headHeight
@@ -508,7 +624,7 @@ function! ShowFuncName()
     echohl ModeMsg
     while headStart <= headEnd  
         echo getline(headStart)
-        let headStart = headStart + 1
+        let headStart += 1
     endwhile
     echohl None
 
@@ -638,14 +754,14 @@ function! ReplaceWord()
     silent! execute "normal $"
     let tailCol = col(".") 
     if colNum <= tailCol
-        let colNum = colNum - 1
+        let colNum -= 1
         if colNum <= 0
             silent! execute "normal ^"
         else
             call cursor(rowNum, colNum)
         endif
     else
-        let index = index - 1
+        let index -= 1
         if index <= 0
             silent! execute "normal ^"
         else
@@ -759,6 +875,8 @@ function! RestoreLoad()
 
         "创建文件修改回退目录
         let dirStr=GetVimDir(0,"undodir")
+
+        call QuickCtrl("load")
     endif
 endfunction
 
@@ -775,13 +893,13 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        call CloseQfix(1) 
+        call QuickCtrl("close") 
         call CloseBufExp()
         
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        call CloseQfix(1) 
+        call QuickCtrl("close") 
         call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
@@ -793,7 +911,7 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call CloseQfix(1) 
+        call QuickCtrl("close") 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
@@ -801,17 +919,11 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         call CloseBufExp()
         
-        if exists("g:qfix_win")
-            silent! execute 'cclose'
-            unlet! g:qfix_win
-        else
-            silent! execute 'copen 15'
-            let g:qfix_win = bufnr("$")
-        endif
+        call QuickCtrl("toggle")
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call CloseQfix(1) 
+        call QuickCtrl("close") 
         call CloseBufExp()
     endif
 endfunction
@@ -863,6 +975,8 @@ endfunction
 "VIM退出事件
 function! LeaveHandler()
     if filereadable("tags") && filereadable("cscope.out")
+        call QuickCtrl("save")
+
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'SrcExplClose'
@@ -884,6 +998,7 @@ function! LeaveHandler()
             silent! execute "!rm -fr ".GetVimDir(1,"sessions") 
             silent! execute "!rm -fr ".GetVimDir(1,"ctrlpcache") 
             silent! execute "!rm -fr ".GetVimDir(1,"bookmark") 
+            silent! execute "!rm -fr ".GetVimDir(1,"quickfix") 
 
             silent! execute "!rm -f cscope.* ncscope.* tags"
         endif 
