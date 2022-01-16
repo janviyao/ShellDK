@@ -638,13 +638,15 @@ function! JumpFuncStart()
     " E872: (NFA regexp) Too many '('
     " use non-capturing groups with the \%(pattern\) syntax
     " when \v, %(pattern) syntax
+    let code_word='[a-zA-Z0-9_]+'
     let line_end='%(\s*\r?\n?\s*)'
     let not_in_bracket='[^\;\+\-\!\/\(\)\{\}]'
     let exclude_char='[^\:\;\+\-\!\/\(\)\{\}]'
+    let gcc_attrs='__attribute__.+'
 
-    let func_return='%(^%(\s*[a-zA-Z0-9_]+\s*){0,2}'.exclude_char.'$'.line_end.')?'
-    let func_name='\s*%(%([a-zA-Z0-9_]+\s*(::[a-zA-Z0-9_]+)?)|%(operator.+\s*))'
-    let func_args='\(%(%('.not_in_bracket.'*%(__attribute__.+)?,?)*'.line_end.')*\)'
+    let func_return='%(^%(\s*'.code_word.'\s*){0,2}'.exclude_char.'$'.line_end.')?'
+    let func_name='\s*%(%('.code_word.'\s*(::'.code_word.')?)|%(operator.+\s*))'
+    let func_args='\(%(%('.not_in_bracket.'*%('.gcc_attrs.')?,?)*'.line_end.')*\)'
     let func_restrict='%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
