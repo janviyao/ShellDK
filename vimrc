@@ -47,10 +47,19 @@ function! GetCurrentQuickCount()
 endfunction
 
 function! QuickLoad(index)
-    if filereadable(GetVimDir(1,"quickfix").'/list'.a:index)
+    let listFile=GetVimDir(1,"quickfix").'/list'.a:index
+    let posnFile=GetVimDir(1,"quickfix").'/position'.a:index
+
+    if filereadable(listFile)
+        if filereadable(posnFile)
+            let s:qfix_pos = get(readfile(posnFile, 'b', 1), 0, '') 
+        else
+            let s:qfix_pos = 1
+        endif
+
         call setqflist([], "r")
 
-        let qflist=readfile(GetVimDir(1,"quickfix").'/list'.a:index, "")
+        let qflist=readfile(listFile, "")
         for item in qflist
             let dicTmp=eval(item)
             let retCode=setqflist([dicTmp], 'a')
@@ -64,6 +73,75 @@ function! QuickLoad(index)
     endif
 
     return 1
+endfunction
+
+function! QuickSave(index, pos)
+    let qflist = getqflist()
+    if !empty(qflist)
+        let indexFile=GetVimDir(1,"quickfix").'/index'
+        let posFile=GetVimDir(1,"quickfix").'/position'.a:index
+
+        call writefile([a:index], indexFile, 'b')
+        call writefile([a:pos], posFile, 'b')
+
+        let listFile=GetVimDir(1,"quickfix").'/list'.a:index
+        call writefile([], listFile, 'r')
+        for item in qflist
+            let item["filename"]=bufname(item["bufnr"]) 
+            let item["bufnr"]=0
+
+            unlet item["end_lnum"]
+            unlet item["end_col"]
+            call writefile([string(item)], listFile, 'a')
+        endfor
+
+        return 0
+    endif
+
+    return 1
+endfunction
+
+function! QuickFindHome()
+    let newList = getqflist()
+
+    let findCount=0
+    let homeIndex=0
+    let listFile=GetVimDir(1,"quickfix").'/list'.homeIndex
+    while filereadable(listFile)
+        let qflist=readfile(listFile, "")
+        for item in qflist
+            let dicTmp=eval(item)
+
+            let fname1=trim(dicTmp.filename) 
+            let fname1=trim(fname1, './/', 1) 
+            let fname1=trim(fname1, './', 1) 
+            let ptext1=trim(dicTmp.text) 
+
+            for dicNew in newList
+                let fname2=trim(bufname(dicNew["bufnr"])) 
+                let fname2=trim(fname2, './/', 1) 
+                let fname2=trim(fname2, './', 1) 
+                let ptext2=trim(dicNew.text) 
+                
+                if fname1 == fname2 && ptext1 == ptext2
+                    let findCount +=1
+                    break
+                endif
+            endfor
+            
+            let finCount = len(newList)/3 + 1
+            if findCount >= finCount
+                "call PrintMsg("file", "total: ".len(newList)." fin: ".finCount." home: ".homeIndex)
+                return homeIndex
+            endif
+        endfor
+
+        let findCount = 0
+        let homeIndex += 1
+        let listFile=GetVimDir(1,"quickfix").'/list'.homeIndex
+    endwhile
+
+    return -1
 endfunction
 
 function! QuickCtrl(mode)
@@ -125,40 +203,38 @@ function! QuickCtrl(mode)
             let s:qfix_pos=getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "save"
-        let qflist = getqflist()
-        if !empty(qflist)
-            call writefile([s:qfix_index], GetVimDir(1,"quickfix").'/index', 'b')
-            call writefile([s:qfix_pos], GetVimDir(1,"quickfix").'/position', 'b')
-
-            call writefile([], GetVimDir(1,"quickfix").'/list'.s:qfix_index, 'r')
-            for item in qflist
-                let item["filename"]=bufname(item["bufnr"]) 
-                let item["bufnr"]=0
-
-                unlet item["end_lnum"]
-                unlet item["end_col"]
-                call writefile([string(item)], GetVimDir(1,"quickfix").'/list'.s:qfix_index, 'a')
-            endfor
-
+        let retCode=QuickSave(s:qfix_index, s:qfix_pos)
+        if retCode == 0
             let s:qfix_index += 1
         endif
     elseif a:mode == "load"
-        if filereadable(GetVimDir(1,"quickfix").'/index')
-            let s:qfix_index = get(readfile(GetVimDir(1,"quickfix").'/index', 'b', 1), 0, '') 
+        let indexFile=GetVimDir(1,"quickfix").'/index'
+        if filereadable(indexFile)
+            let s:qfix_index = get(readfile(indexFile, 'b', 1), 0, '') 
         else
             let s:qfix_index = 0
         endif
-
-        if filereadable(GetVimDir(1,"quickfix").'/index')
-            let s:qfix_pos = get(readfile(GetVimDir(1,"quickfix").'/position', 'b', 1), 0, '') 
-        else
-            let s:qfix_pos = 1
-        endif
-
+        
         let retCode=QuickLoad(s:qfix_index)
         if retCode == 0
             call setqflist([], 'a', {'idx' : s:qfix_pos})
             let s:qfix_pos=getqflist({'idx' : 0}).idx
+        endif
+    elseif a:mode == "home"
+        let homeIndex=QuickFindHome()
+        if homeIndex >= 0
+            let homePos=1
+            let posnFile=GetVimDir(1,"quickfix").'/position'.homeIndex
+            if filereadable(posnFile)
+                let homePos = get(readfile(posnFile, 'b', 1), 0, '') 
+            endif
+
+            let retCode=QuickSave(homeIndex, homePos)
+            if retCode == 0
+                let s:qfix_index = homeIndex
+                let s:qfix_pos = homePos 
+                call setqflist([], 'a', {'idx' : homePos})
+            endif
         endif
     endif
 endfunction
@@ -507,6 +583,7 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
  
+    call QuickCtrl("home")
     call QuickCtrl("open")
 endfunction
 
