@@ -34,18 +34,6 @@ function! GetResultIndex(cmd, substr)
     return idx
 endfunction
 
-function! GetCurrentQuickCount()
-    let qfcount=0
-    let qflist = getqflist()
-    for item in qflist
-        let bufnr = item.bufnr 
-        if bufnr == bufnr('%')
-            let qfcount += 1
-        endif
-    endfor
-    return qfcount
-endfunction
-
 function! QuickLoad(index)
     let listFile=GetVimDir(1,"quickfix").'/list'.a:index
     let posnFile=GetVimDir(1,"quickfix").'/position'.a:index
@@ -68,7 +56,10 @@ function! QuickLoad(index)
             endif
         endfor
 
+        call setqflist([], 'a', {'idx' : s:qfix_pos})
         let s:qfix_size=getqflist({'size' : 1}).size
+
+        "call PrintMsg("file", "index: ".a:index." size: ".s:qfix_size)
         return 0
     endif
 
@@ -95,6 +86,7 @@ function! QuickSave(index, pos)
             call writefile([string(item)], listFile, 'a')
         endfor
 
+        "call PrintMsg("file", "index: ".a:index." pos: ".a:pos)
         return 0
     endif
 
@@ -103,6 +95,7 @@ endfunction
 
 function! QuickFindHome()
     let newList = getqflist()
+    let succCnt = len(newList)/3 + 1
 
     let findCount=0
     let homeIndex=0
@@ -129,9 +122,8 @@ function! QuickFindHome()
                 endif
             endfor
             
-            let finCount = len(newList)/3 + 1
-            if findCount >= finCount
-                "call PrintMsg("file", "total: ".len(newList)." fin: ".finCount." home: ".homeIndex)
+            if findCount >= succCnt
+                "call PrintMsg("file", "total: ".len(newList)." succCnt: ".succCnt." home: ".homeIndex)
                 return homeIndex
             endif
         endfor
@@ -145,19 +137,20 @@ function! QuickFindHome()
 endfunction
 
 function! QuickCtrl(mode)
+    "call PrintMsg("file", "mode: ".a:mode)
     if a:mode == "open"
         let qflist = getqflist()
         if !empty(qflist)
             silent! execute 'copen 15'
             let s:qfix_win = bufnr("$")
-            let s:qfix_pos=getqflist({'idx' : 0}).idx
+            let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "close"
         if exists("s:qfix_win")
             silent! execute 'cclose'
             unlet! s:qfix_win
         endif
-        let s:qfix_pos=getqflist({'idx' : 0}).idx
+        let s:qfix_pos = getqflist({'idx' : 0}).idx
     elseif a:mode == "toggle"
         if exists("s:qfix_win")
             call QuickCtrl("close")        
@@ -171,36 +164,60 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "recover"
         silent! execute 'cc!'
-        let s:qfix_pos=getqflist({'idx' : 0}).idx
+        let s:qfix_pos = getqflist({'idx' : 0}).idx
+    elseif a:mode == "recover-next"
+        call QuickSave(s:qfix_index, s:qfix_pos)
+
+        let s:qfix_index += 1
+        let retCode=QuickLoad(s:qfix_index)
+        if retCode == 0
+            silent! execute 'cc!'
+        else
+            let s:qfix_index -= 1
+        endif
+    elseif a:mode == "recover-prev"
+        call QuickSave(s:qfix_index, s:qfix_pos)
+
+        let s:qfix_index -= 1
+        let retCode=QuickLoad(s:qfix_index)
+        if retCode == 0
+            silent! execute 'cc!'
+        else
+            let s:qfix_index += 1
+        endif
     elseif a:mode == "next"
-        let s:qfix_pos=getqflist({'idx' : 0}).idx
+        let s:qfix_pos = getqflist({'idx' : 0}).idx
         if s:qfix_pos >= s:qfix_size
+            call QuickSave(s:qfix_index, s:qfix_pos)
+
             let s:qfix_index += 1
             let retCode=QuickLoad(s:qfix_index)
             if retCode == 0
                 silent! execute 'cc! 1'
-                let s:qfix_pos=getqflist({'idx' : 0}).idx
+                let s:qfix_pos = getqflist({'idx' : 0}).idx
             else
                 let s:qfix_index -= 1
             endif
         else
             silent! execute 'cn!'
-            let s:qfix_pos=getqflist({'idx' : 0}).idx
+            let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "prev"
-        let s:qfix_pos=getqflist({'idx' : 0}).idx
+        let s:qfix_pos = getqflist({'idx' : 0}).idx
         if s:qfix_pos <= 1
+            call QuickSave(s:qfix_index, s:qfix_pos)
+
             let s:qfix_index -= 1
             let retCode=QuickLoad(s:qfix_index)
             if retCode == 0
                 silent! execute 'cc! '.s:qfix_size
-                let s:qfix_pos=getqflist({'idx' : 0}).idx
+                let s:qfix_pos = getqflist({'idx' : 0}).idx
             else
                 let s:qfix_index += 1
             endif
         else
             silent! execute 'cp!'
-            let s:qfix_pos=getqflist({'idx' : 0}).idx
+            let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "save"
         let retCode=QuickSave(s:qfix_index, s:qfix_pos)
@@ -215,11 +232,7 @@ function! QuickCtrl(mode)
             let s:qfix_index = 0
         endif
         
-        let retCode=QuickLoad(s:qfix_index)
-        if retCode == 0
-            call setqflist([], 'a', {'idx' : s:qfix_pos})
-            let s:qfix_pos=getqflist({'idx' : 0}).idx
-        endif
+        call QuickLoad(s:qfix_index)
     elseif a:mode == "home"
         let homeIndex=QuickFindHome()
         if homeIndex >= 0
@@ -433,6 +446,7 @@ augroup QFixToggle
     autocmd!
     autocmd BufReadPost quickfix let s:qfix_win = bufnr("$")
     autocmd BufWinEnter quickfix let s:qfix_win = bufnr("$")
+    autocmd BufWinLeave quickfix let s:qfix_pos = getqflist({'idx' : 0}).idx
 
     "不在quickfix窗内移动，则关闭quickfix窗口
     autocmd CursorMoved * if &buftype != 'quickfix' | call QuickCtrl("close") | endif
@@ -500,9 +514,11 @@ nnoremap <silent> <C-j> 6j
 nnoremap <silent> <C-k> 6k
 
 "切换下一条quickfix记录
-nnoremap <silent> <Leader>qc :call QuickCtrl("recover")<CR>
-nnoremap <silent> <Leader>qf :call QuickCtrl("next")<CR>
-nnoremap <silent> <Leader>qb :call QuickCtrl("prev")<CR>
+nnoremap <silent> <Leader>qf  :call QuickCtrl("next")<CR>
+nnoremap <silent> <Leader>qb  :call QuickCtrl("prev")<CR>
+nnoremap <silent> <Leader>qrc :call QuickCtrl("recover")<CR>
+nnoremap <silent> <Leader>qrf :call QuickCtrl("recover-next")<CR>
+nnoremap <silent> <Leader>qrb :call QuickCtrl("recover-prev")<CR>
 
 "替换当前光标下单词为复制寄存器内容
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
