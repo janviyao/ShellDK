@@ -204,13 +204,13 @@ function _global_ctrl_bg_thread
 }
 
 function _bash_exit
-{
+{ 
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit
     fi
 
     echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}
-    exec ${GBL_CTRL_THIS_FD}>&-
+    eval "exec ${GBL_CTRL_THIS_FD}>&-"
 
     rm -fr ${GBL_CTRL_THIS_DIR}
     rm -f ${LOG_FILE}
