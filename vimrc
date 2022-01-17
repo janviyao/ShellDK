@@ -660,7 +660,7 @@ function! JumpFuncStart()
 
     let find_line=search(func_reg, 'bW')
     if find_line == 0
-        call PrintMsg("error", "search fail: ".func_reg)
+        "call PrintMsg("error", "search fail: ".func_reg)
         return 0
     endif
 
