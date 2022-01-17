@@ -144,13 +144,13 @@ function! QuickCtrl(mode)
             silent! execute 'copen 15'
             let s:qfix_win = bufnr("$")
             let s:qfix_pos = getqflist({'idx' : 0}).idx
+            let s:qfix_size = getqflist({'size' : 1}).size
         endif
     elseif a:mode == "close"
         if exists("s:qfix_win")
             silent! execute 'cclose'
             unlet! s:qfix_win
         endif
-        let s:qfix_pos = getqflist({'idx' : 0}).idx
     elseif a:mode == "toggle"
         if exists("s:qfix_win")
             call QuickCtrl("close")        
@@ -159,12 +159,14 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "clear"
         silent! execute 'call setqflist([], "r")'
+        let s:qfix_pos = getqflist({'idx' : 0}).idx
+        let s:qfix_size = getqflist({'size' : 1}).size
+
         if exists("s:qfix_win")
             unlet! s:qfix_win
         endif
     elseif a:mode == "recover"
         silent! execute 'cc!'
-        let s:qfix_pos = getqflist({'idx' : 0}).idx
     elseif a:mode == "recover-next"
         call QuickSave(s:qfix_index, s:qfix_pos)
 
@@ -186,7 +188,6 @@ function! QuickCtrl(mode)
             let s:qfix_index += 1
         endif
     elseif a:mode == "next"
-        let s:qfix_pos = getqflist({'idx' : 0}).idx
         if s:qfix_pos >= s:qfix_size
             call QuickSave(s:qfix_index, s:qfix_pos)
 
@@ -203,7 +204,6 @@ function! QuickCtrl(mode)
             let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "prev"
-        let s:qfix_pos = getqflist({'idx' : 0}).idx
         if s:qfix_pos <= 1
             call QuickSave(s:qfix_index, s:qfix_pos)
 
