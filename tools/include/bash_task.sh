@@ -16,7 +16,7 @@ access_ok "${GBL_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_THIS_PIPE} fa
 exec {GBL_CTRL_THIS_FD}<>${GBL_CTRL_THIS_PIPE}
 
 GBL_SRV_IDNO=$$
-GBL_SRV_ADDR="$(ssh_address)"
+GBL_SRV_ADDR="$(ssh_address|cat)"
 GBL_SRV_PORT=7888
 
 function global_set_var
@@ -203,7 +203,22 @@ function _global_ctrl_bg_thread
     done < ${GBL_CTRL_THIS_PIPE}
 }
 
-trap "echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}; exec ${GBL_CTRL_THIS_FD}>&-; rm -fr ${GBL_CTRL_THIS_DIR}; rm -f ${LOG_FILE}; exit 0" EXIT
+function _bash_exit
+{
+    if [ -f ${HOME}/.bash_exit ];then
+        source ${HOME}/.bash_exit
+    fi
+
+    echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}
+    exec ${GBL_CTRL_THIS_FD}>&-
+
+    rm -fr ${GBL_CTRL_THIS_DIR}
+    rm -f ${LOG_FILE}
+
+    exit 0
+}
+
+trap "_bash_exit" EXIT
 {
     trap "" SIGINT SIGTERM SIGKILL
     _global_ctrl_bg_thread

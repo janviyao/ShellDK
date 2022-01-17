@@ -9,11 +9,11 @@ function replace_file
 
     local old_str=$(grep -P "${old_reg}" -o ${repfile} | head -n 1)
     if [ -n "${old_str}" ];then
-        local old_str="$(regex_replace "${old_str}" "/" "\/")"
-        local sed_str="$(regex_replace "${new_str}" "/" "\/")"
+        local old_str="$(regex_replace "${old_str}" "/" "\/"|cat)"
+        local sed_str="$(regex_replace "${new_str}" "/" "\/"|cat)"
         sed -i "s/${old_str}/${sed_str}/g" ${repfile}
 
-        echo_info "replace: $(match_trim_start "${repfile}" "${rep_dir}/")"
+        echo_info "replace: $(match_trim_start "${repfile}" "${rep_dir}/"|cat)"
     fi
 }
 
@@ -23,7 +23,7 @@ function do_replace
     local new_str="$2"
     local des_dir="$3"
 
-    echo_debug "do_replace: [${old_reg} @ ${new_str} @ $(match_trim_start "${des_dir}" "${rep_dir}/")]"
+    echo_debug "do_replace: [${old_reg} @ ${new_str} @ $(match_trim_start "${des_dir}" "${rep_dir}/"|cat)]"
 
     cd ${des_dir}
     for thing in `ls` 
@@ -36,7 +36,7 @@ function do_replace
         replace_file "${old_reg}" "${new_str}" "${des_dir}/${thing}"
     done
 
-    echo_debug "finish: $(match_trim_start "${des_dir}" "${rep_dir}/")"
+    echo_debug "finish: $(match_trim_start "${des_dir}" "${rep_dir}/"|cat)"
 }
 
 OLD_STR="${other_paras[0]}"
@@ -55,7 +55,7 @@ do
     
     if [ -d "${rep_dir}" ];then
         rep_dir="$(cd ${rep_dir};pwd)"
-        rep_dir="$(match_trim_end "${rep_dir}" "/")"
+        rep_dir="$(match_trim_end "${rep_dir}" "/"|cat)"
     fi
 
     if [ -d "${rep_dir}" ];then
