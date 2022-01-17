@@ -6,6 +6,7 @@ HOME_DIR=${HOME}
 DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
+LOG_FILE="/tmp/bash.log.$$"
 
 OP_TRY_CNT=3
 OP_TIMEOUT=60
@@ -427,6 +428,13 @@ COLOR_CLOSE='\033[0m'      #关闭颜色
 FONT_BOLD='\033[1m'        #字体变粗
 FONT_BLINK='\033[5m'       #字体闪烁
 
+function echo_file
+{
+    local log_type="$1"
+    shift
+    printf "[%-12s:%5d:%5s] %s\n" "$(file_name)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
+}
+
 function echo_header
 {
     bool_v "${LOG_HEADER}"
@@ -442,18 +450,21 @@ function echo_erro
 {
     local para=$1
     echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+    echo_file "erro" "$*"
 }
 
 function echo_info
 {
     local para=$1
     echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+    echo_file "info" "$*"
 }
 
 function echo_warn
 {
     local para=$1
     echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+    echo_file "warn" "$*"
 }
 
 function echo_debug
@@ -467,4 +478,5 @@ function echo_debug
             echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
         fi
     fi
+    echo_file "debug" "$*"
 }

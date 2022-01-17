@@ -43,6 +43,10 @@ function send_ctrl_to_self_sync
         local ack_str="$(make_ack)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
+        if [ -n "${ack_pipe}" ];then
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+        fi
+
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_CTRL_THIS_PIPE}
 
@@ -63,6 +67,10 @@ function send_ctrl_to_parent_sync
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         local ack_str="$(make_ack)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+
+        if [ -n "${ack_pipe}" ];then
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+        fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
@@ -117,6 +125,10 @@ function send_log_to_self_sync
         local ack_str="$(make_ack)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
+        if [ -n "${ack_pipe}" ];then
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+        fi
+
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_LOGR_THIS_PIPE}
 
@@ -138,6 +150,10 @@ function send_log_to_parent_sync
         local ack_str="$(make_ack)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
+        if [ -n "${ack_pipe}" ];then
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+        fi
+
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_LOGR_HIGH_PIPE}
 
@@ -156,6 +172,10 @@ function ctrl_default_handler
     local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
     local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
     local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+
+    if [ -n "${ack_pipe}" ];then
+        access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${line}"
+    fi
 
     local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
     local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
@@ -222,6 +242,10 @@ function loger_default_handler
     local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
     local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
     local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+
+    if [ -n "${ack_pipe}" ];then
+        access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${line}"
+    fi
 
     local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
     local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"

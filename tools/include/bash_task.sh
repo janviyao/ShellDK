@@ -26,6 +26,7 @@ function global_set_var
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
+    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     local var_value="$(eval "echo \"\$${var_name}\"")"
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}SET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${var_value}" > ${one_pipe}
@@ -38,6 +39,7 @@ function global_get_var
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
+    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     local var_value=""
 
@@ -64,6 +66,7 @@ function global_unset_var
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
+    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}UNSET_ENV${GBL_CTRL_SPF1}${var_name}" > ${one_pipe}
 }
@@ -121,7 +124,7 @@ function _global_ctrl_bg_thread
     declare -A _globalMap
     while read line
     do
-        echo_debug "[$$]global: [${line}]" 
+        echo_debug "global: [${line}]" 
         local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
         local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
         local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
@@ -199,7 +202,7 @@ function _global_ctrl_bg_thread
     done < ${GBL_CTRL_THIS_PIPE}
 }
 
-trap "echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}; exec ${GBL_CTRL_THIS_FD}>&-; rm -fr ${GBL_CTRL_THIS_DIR}; exit 0" EXIT
+trap "echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}; exec ${GBL_CTRL_THIS_FD}>&-; rm -fr ${GBL_CTRL_THIS_DIR}; rm -f ${LOG_FILE}; exit 0" EXIT
 {
     trap "" SIGINT SIGTERM SIGKILL
     _global_ctrl_bg_thread
