@@ -397,7 +397,7 @@ set showmatch                                              "高亮显示匹配�
 set nohlsearch                                             "不高亮被搜索的单词
 set incsearch                                              "搜索时输入逐字符高亮 
 set smartcase                                              "有一个或以上大写字母时仍大小写敏感
-set gdefault                                               "替换时所有的行内匹配都被替换，而不是只有第一个
+"set gdefault                                              "替换时所有的行内匹配都被替换，而不是只有第一个, 但s命令g标记失效，s///gg时重新生效
 "set ignorecase                                            "搜索时候忽略大小写
 
 "搜索时要忽略的文件和目录
@@ -661,7 +661,7 @@ function! JumpFuncStart()
     let find_line=search(func_reg, 'bW')
     if find_line == 0
         "call PrintMsg("error", "search fail: ".func_reg)
-        return 0
+        return 1
     endif
 
     let find_str=getline(find_line)
@@ -943,7 +943,7 @@ function! GlobalReplace()
                         execute "s".separatorStr."\\<".oldStr."\\>".separatorStr.newStr.separatorStr."gec"
                     endif
                 elseif wholeWordStr == "n" || wholeWordStr == "N"
-                    if matchstr(getline(startLine), "\\v([\s\S]{-})".oldStr."([\s\S]{-})") != '' 
+                    if matchstr(getline(startLine), "\\v([\s\S]{-})".oldStr."([\s\S]{-})") != ''
                         execute "s".separatorStr."\\v([\s\S]{-})".oldStr."([\s\S]{-})".separatorStr."\\1".newStr."\\2".separatorStr."gec"
                     endif
                 endif
