@@ -92,7 +92,7 @@ function make_ack
     local ack_fd=0
     exec {ack_fd}<>${ack_pipe}
 
-    echo "${ack_pipe}${GBL_ACK_SPF}${ack_fd}" > /tmp/make_ack.$$
+    echo "${ack_pipe}${GBL_ACK_SPF}${ack_fd}"
 }
 
 function wait_ack
@@ -112,7 +112,7 @@ function global_wait_ack
 {
     local msgctx="$1"
     
-    local ack_str="$(make_ack; cat /tmp/make_ack.$$)"
+    local ack_str="$(make_ack | cat)"
     local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}

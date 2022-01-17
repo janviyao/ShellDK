@@ -40,7 +40,7 @@ function send_ctrl_to_self_sync
     #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
-        local ack_str="$(make_ack; cat /tmp/make_ack.$$)"
+        local ack_str="$(make_ack | cat)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         if [ -n "${ack_pipe}" ];then
@@ -65,7 +65,7 @@ function send_ctrl_to_parent_sync
     #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
-        local ack_str="$(make_ack; cat /tmp/make_ack.$$)"
+        local ack_str="$(make_ack | cat)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         if [ -n "${ack_pipe}" ];then
@@ -122,7 +122,7 @@ function send_log_to_self_sync
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_THIS_PIPE} ];then
-        local ack_str="$(make_ack; cat /tmp/make_ack.$$)"
+        local ack_str="$(make_ack | cat)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         if [ -n "${ack_pipe}" ];then
@@ -147,7 +147,7 @@ function send_log_to_parent_sync
     #echo_debug "log ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_HIGH_PIPE} ];then
-        local ack_str="$(make_ack; cat /tmp/make_ack.$$)"
+        local ack_str="$(make_ack | cat)"
         local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
         if [ -n "${ack_pipe}" ];then
