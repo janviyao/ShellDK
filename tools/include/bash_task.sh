@@ -83,7 +83,6 @@ function global_print_var
 
 function make_ack
 {
-    local return_vname="$1"
     local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.$$"
 
     access_ok "${ack_pipe}" && rm -f ${ack_pipe}
@@ -93,7 +92,7 @@ function make_ack
     local ack_fd=0
     exec {ack_fd}<>${ack_pipe}
     
-    eval "export ${return_vname}=\"${ack_pipe}${GBL_ACK_SPF}${ack_fd}\""
+    echo "${ack_pipe}${GBL_ACK_SPF}${ack_fd}"
 }
 
 function wait_ack
@@ -113,10 +112,7 @@ function global_wait_ack
 {
     local msgctx="$1"
     
-    local return_vname="make_ack_return$$"
-    make_ack ${return_vname}
-    eval "local ack_str=\"\$${return_vname}\""
-
+    local ack_str="$(make_ack)"
     local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
 
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
@@ -217,7 +213,7 @@ function _bash_exit
     eval "exec ${GBL_CTRL_THIS_FD}>&-"
 
     rm -fr ${GBL_CTRL_THIS_DIR}
-    rm -f ${LOG_FILE}
+    access_ok "${LOG_FILE}" && rm -f ${LOG_FILE}
 
     exit 0
 }
