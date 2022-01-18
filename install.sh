@@ -451,6 +451,13 @@ function inst_deps()
             mv -f deno ${BIN_DIR}
         fi
 
+        # Install ppid
+        if ! access_ok "ppid";then
+            cd ${ROOT_DIR}/deps
+            gcc ppid.c -o ppid
+            mv -f ppid ${BIN_DIR}
+        fi
+
         local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
         local version_new=2.18
         if version_lt ${version_cur} ${version_new}; then

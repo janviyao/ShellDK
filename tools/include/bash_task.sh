@@ -83,24 +83,27 @@ function global_print_var
 
 function make_ack
 {
-    local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.$$"
-
+    local self_pid=$1
+    local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
+    
     access_ok "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
     access_ok "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+    echo_debug "make ack: ${ack_pipe}"
 
     local ack_fd=0
     exec {ack_fd}<>${ack_pipe}
     
-    echo "${ack_pipe}${GBL_ACK_SPF}${ack_fd}"
+    return ${ack_fd}
 }
 
 function wait_ack
 {
-    local ack_str="$1"
+    local self_pid=$1
+    local ack_fd=$2
 
-    local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
-    local ack_fd="$(cut -d "${GBL_ACK_SPF}" -f 2 <<< "${ack_str}")"
+    local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
+    echo_debug "wait ack: ${ack_pipe}"
 
     read ack_response < ${ack_pipe}
 
@@ -112,12 +115,14 @@ function global_wait_ack
 {
     local msgctx="$1"
     
-    local ack_str="$(make_ack)"
-    local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+    # the first pid is shell where ppid run
+    local self_pid=$(ppid | sed -n '1p')
+    local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+    local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
 
-    wait_ack "${ack_str}"
+    wait_ack "${self_pid}" "${ack_fd}"
 }
 
 function _global_ctrl_bg_thread

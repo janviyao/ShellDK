@@ -40,17 +40,18 @@ function send_ctrl_to_self_sync
     #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
-        local ack_str="$(make_ack)"
-        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+        local self_pid=$(ppid | sed -n '1p')
+        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_CTRL_THIS_PIPE}
 
-        wait_ack "${ack_str}"
+        wait_ack "${self_pid}" "${ack_fd}"
     else
         if [ -d ${USR_CTRL_THIS_DIR} ];then
             echo_erro "removed: ${USR_CTRL_THIS_PIPE}"
@@ -65,17 +66,18 @@ function send_ctrl_to_parent_sync
     #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
-        local ack_str="$(make_ack)"
-        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+        local self_pid=$(ppid | sed -n '1p')
+        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
 
-        wait_ack "${ack_str}"
+        wait_ack "${self_pid}" "${ack_fd}"
     else
         if [ -d ${USR_CTRL_HIGH_DIR} ];then
             echo_erro "removed: ${USR_CTRL_HIGH_PIPE}"
@@ -122,17 +124,18 @@ function send_log_to_self_sync
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_THIS_PIPE} ];then
-        local ack_str="$(make_ack)"
-        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+        local self_pid=$(ppid | sed -n '1p')
+        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_LOGR_THIS_PIPE}
 
-        wait_ack "${ack_str}"
+        wait_ack "${self_pid}" "${ack_fd}"
     else
         if [ -d ${USR_LOGR_THIS_DIR} ];then
             echo_erro "removed: ${USR_LOGR_THIS_PIPE}"
@@ -147,17 +150,18 @@ function send_log_to_parent_sync
     #echo_debug "log ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_LOGR_HIGH_PIPE} ];then
-        local ack_str="$(make_ack)"
-        local ack_pipe="$(cut -d "${GBL_ACK_SPF}" -f 1 <<< "${ack_str}")"
+        local self_pid=$(ppid | sed -n '1p')
+        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_str}"
+            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
         echo "${sendctx}" > ${USR_LOGR_HIGH_PIPE}
 
-        wait_ack "${ack_str}"
+        wait_ack "${self_pid}" "${ack_fd}"
     else
         if [ -d ${USR_LOGR_HIGH_DIR} ];then
             echo_erro "removed: ${USR_LOGR_HIGH_PIPE}"

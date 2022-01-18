@@ -140,7 +140,8 @@ function process_name
     # ps -p 2133 -o comm=
     # cat /proc/${pid}/status
     if process_exist "${pid}";then
-        echo "$(ps -p ${pid} -o comm=)"
+        #echo "$(ps -p ${pid} -o comm=)"
+        echo "$(ps -p ${pid} -o cmd=)"
     else
         echo "!anon!"
     fi

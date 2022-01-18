@@ -104,7 +104,7 @@ function progress3
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
 
         send_log_to_parent "CURSOR_SAVE"
-        send_log_to_parent "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
+        send_log_to_parent_sync "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
         send_log_to_parent "CURSOR_RESTORE"
 
         let now++
