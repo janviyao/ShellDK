@@ -11,7 +11,7 @@ function create_project
     local root_dir="${parasMap['-d']}"
     root_dir="${root_dir:-${parasMap['--root-dir']}}"
     root_dir="${root_dir:-.}"
-    root_dir="$(match_trim_end "${root_dir}" "/"|cat)"
+    root_dir="$(match_trim_end "${root_dir}" "/")"
     [ -n "${root_dir}" ] && echo_debug "root-dir: ${root_dir}"
 
     cd ${root_dir}
@@ -20,7 +20,7 @@ function create_project
 
     read -p "Input file type (separated with comma) to parse: " input_val
     if [ -n "${input_val}" ];then
-        find_str="$(regex_replace "${input_val}" "," "\\|"|cat)"
+        find_str="$(regex_replace "${input_val}" "," "\\|")"
     fi
     find . -type f -regex ".+\\.\\(${find_str}\\)" > cscope.files 
 
@@ -40,8 +40,8 @@ function create_project
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
-            input_val="$(regex_replace "${input_val}" "$HOME/" ""|cat)"
-            input_val="$(regex_replace "${input_val}" "/" "\/"|cat)"
+            input_val="$(regex_replace "${input_val}" "$HOME/" "")"
+            input_val="$(regex_replace "${input_val}" "/" "\/")"
             sed -i "/${input_val}/d" cscope.files 
         fi
 
@@ -75,18 +75,18 @@ function create_project
                 if match_regex "${line}" "^\.";then
                     line="^${line}"
                 fi
-                line="$(regex_replace "${line}" "\." "\."|cat)"
+                line="$(regex_replace "${line}" "\." "\.")"
             fi
 
             if match_regex "${line}" "\*";then
-                line="$(regex_replace "${line}" "\*" ".*"|cat)"
+                line="$(regex_replace "${line}" "\*" ".*")"
             fi
 
             if match_regex "${line}" "\?";then
-                line="$(regex_replace "${line}" "\?" "."|cat)"
+                line="$(regex_replace "${line}" "\?" ".")"
             fi
  
-            line="$(regex_replace "${line}" "/" "\/"|cat)"
+            line="$(regex_replace "${line}" "/" "\/")"
             sed -i "/${line}/d" cscope.files
         done < .gitignore
     fi

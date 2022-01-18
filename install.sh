@@ -417,7 +417,7 @@ function install_from_rpm
 function inst_deps()
 {     
     cd ${ROOT_DIR}/deps
-    if [[ "$(start_chars $(uname -s) 5|cat)" == "Linux" ]]; then
+    if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
         for usr_cmd in ${!rpmTodo[@]};
         do
             if ! access_ok "${usr_cmd}";then
@@ -472,7 +472,7 @@ function inst_deps()
         ${SUDO} echo "${HOME_DIR}/.local/lib" '>>' /etc/ld.so.conf
         ${SUDO} ldconfig
 
-    elif [[ "$(start_chars $(uname -s) 9|cat)" == "CYGWIN_NT" ]]; then
+    elif [[ "$(start_chars $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         # Install deno
         unzip deno-x86_64-pc-windows-msvc.zip
         mv -f deno.exe ${BIN_DIR}

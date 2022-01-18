@@ -52,7 +52,7 @@ function access_ok
     fi
     
     if match_regex "${fname}" "^~";then
-        fname="$(regex_replace "${fname}" "^~" "${HOME}"|cat)"
+        fname="$(regex_replace "${fname}" "^~" "${HOME}")"
     fi
 
     if [ -d ${fname} ];then
@@ -165,12 +165,12 @@ function signal_process
     local signal=$1
     local toppid=$2
 
-    local child_pids=($(child_process ${toppid}|cat))
-    #echo_debug "$(process_name ${toppid}|cat)[${toppid}] childs: $(echo "${child_pids[@]}")"
+    local child_pids=($(child_process ${toppid}))
+    #echo_debug "$(process_name ${toppid})[${toppid}] childs: $(echo "${child_pids[@]}")"
 
     if ps -p ${toppid} > /dev/null; then
         if [ ${toppid} -ne $ROOT_PID ];then
-            echo_debug "${signal}: $(process_name ${toppid}|cat)[${toppid}]"
+            echo_debug "${signal}: $(process_name ${toppid})[${toppid}]"
             kill -s ${signal} ${toppid} &> /dev/null
         fi
     fi
@@ -185,8 +185,8 @@ function signal_process
             total=${#child_pids[@]}
         fi
 
-        local lower_pids=($(child_process ${next_pid}|cat))
-        #echo_debug "$(process_name ${next_pid}|cat)[${next_pid}] childs: $(echo "${lower_pids[@]}")"
+        local lower_pids=($(child_process ${next_pid}))
+        #echo_debug "$(process_name ${next_pid})[${next_pid}] childs: $(echo "${lower_pids[@]}")"
 
         if [ ${#lower_pids[@]} -gt 0 ];then
             child_pids=(${child_pids[@]} ${lower_pids[@]})
@@ -194,7 +194,7 @@ function signal_process
 
         if ps -p ${next_pid} > /dev/null; then
             if [ ${next_pid} -ne $ROOT_PID ];then
-                echo_debug "${signal}: $(process_name ${next_pid}|cat)[${next_pid}]"
+                echo_debug "${signal}: $(process_name ${next_pid})[${next_pid}]"
                 kill -s ${signal} ${next_pid} &> /dev/null
             fi
         fi
@@ -269,7 +269,7 @@ function match_trim_start
         subchar="${subchar//*/\*}"
     fi
 
-    if [[ "$(start_chars "${string}" ${sublen}|cat)"x == "${subchar}"x ]]; then
+    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
         let sublen++
         local new="`echo "${string}" | cut -c ${sublen}-`" 
         echo "${new}"
@@ -294,7 +294,7 @@ function match_trim_end
         subchar="${subchar//*/\*}"
     fi
 
-    if [[ "$(end_chars "${string}" ${sublen}|cat)"x == "${subchar}"x ]]; then
+    if [[ "$(end_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
         local diff=$((total-sublen))
         local new="`echo "${string}" | cut -c 1-${diff}`" 
         echo "${new}"
@@ -437,10 +437,10 @@ FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_file
 {
-    if access_ok "${LOG_FILE}";then
+    if var_exist "LOG_FILE";then
         local log_type="$1"
         shift
-        printf "[%-12s:%5d:%5s] %s\n" "$(file_name|cat)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
+        printf "[%-12s:%5d:%5s] %s\n" "$(file_name)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
     fi
 }
 
@@ -450,7 +450,7 @@ function echo_header
     if [ $? -eq 0 ];then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
         #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
-        local proc_info="$(printf "[%-12s[%5d]]" "$(file_name|cat)" "$$")"
+        local proc_info="$(printf "[%-12s[%5d]]" "$(file_name)" "$$")"
         echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
     fi
 }
@@ -458,21 +458,21 @@ function echo_header
 function echo_erro
 {
     local para=$1
-    echo -e "$(echo_header|cat)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+    echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
     echo_file "erro" "$*"
 }
 
 function echo_info
 {
     local para=$1
-    echo -e "$(echo_header|cat)${COLOR_INFO}${para}${COLOR_CLOSE}"
+    echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     echo_file "info" "$*"
 }
 
 function echo_warn
 {
     local para=$1
-    echo -e "$(echo_header|cat)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+    echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     echo_file "warn" "$*"
 }
 
@@ -481,10 +481,10 @@ function echo_debug
     local para=$1
 
     if bool_v "${DEBUG_ON}"; then
-        local fname="$(file_name|cat)"
+        local fname="$(file_name)"
         contain_string "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then
-            echo -e "$(echo_header|cat)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+            echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
         fi
     fi
     echo_file "debug" "$*"

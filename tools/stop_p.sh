@@ -3,7 +3,7 @@
 
 typeset -u signame
 signame="${other_paras[0]}"
-signame=$(match_trim_start "${signame}" "SIG"|cat)
+signame=$(match_trim_start "${signame}" "SIG")
 
 unset other_paras[0]
 pname_list="${other_paras[*]}"
