@@ -34,6 +34,7 @@ function! GetResultIndex(cmd, substr)
     return idx
 endfunction
 
+let s:qfix_max_index = 20
 function! QuickFormat(info)
     " get information about a range of quickfix entries
     let items = getqflist({'id' : a:info.id, 'items' : 1}).items
@@ -74,7 +75,7 @@ function! QuickLoad(index)
 
         let s:qfix_size = getqflist({'size' : 1}).size
 
-        "call PrintMsg("file", "index: ".a:index." size: ".s:qfix_size)
+        "call PrintMsg("file", "load index: ".s:qfix_index." pos: ".s:qfix_pos." size: ".s:qfix_size)
         return 0
     endif
 
@@ -101,7 +102,8 @@ function! QuickSave(index, pos)
             unlet item["end_col"]
             call writefile([string(item)], listFile, 'a')
         endfor
-        "call PrintMsg("file", "index: ".a:index." pos: ".a:pos)
+
+        "call PrintMsg("file", "save index: ".a:index." pos: ".a:pos)
         return 0
     endif
 
@@ -133,36 +135,38 @@ function! QuickFindHome()
 
     let findCount=0
     let homeIndex=0
-    let listFile=GetVimDir(1,"quickfix").'/list'.homeIndex
-    while filereadable(listFile)
-        let qflist=readfile(listFile, "")
-        for item in qflist
-            let dicTmp=eval(item)
+    let listFile = GetVimDir(1,"quickfix").'/list'.homeIndex
+    while homeIndex < s:qfix_max_index
+        if filereadable(listFile)
+            let qflist = readfile(listFile, "")
+            for item in qflist
+                let dicTmp=eval(item)
 
-            let fname1=trim(dicTmp.filename) 
-            let fname1=fnamemodify(fname1, ':p:.') 
-            let ptext1=trim(dicTmp.text) 
+                let fname1=trim(dicTmp.filename) 
+                let fname1=fnamemodify(fname1, ':p:.') 
+                let ptext1=trim(dicTmp.text) 
 
-            for dicNew in newList
-                let fname2=trim(bufname(dicNew["bufnr"])) 
-                let fname2=fnamemodify(fname2, ':p:.') 
-                let ptext2=trim(dicNew.text) 
-                
-                if fname1 == fname2 && ptext1 == ptext2
-                    let findCount +=1
-                    break
+                for dicNew in newList
+                    let fname2=trim(bufname(dicNew["bufnr"])) 
+                    let fname2=fnamemodify(fname2, ':p:.') 
+                    let ptext2=trim(dicNew.text) 
+
+                    if fname1 == fname2 && ptext1 == ptext2
+                        let findCount +=1
+                        break
+                    endif
+                endfor
+
+                if findCount >= succCnt
+                    "call PrintMsg("file", "home total: ".len(newList)." succCnt: ".succCnt." index: ".homeIndex)
+                    return homeIndex
                 endif
             endfor
-            
-            if findCount >= succCnt
-                "call PrintMsg("file", "total: ".len(newList)." succCnt: ".succCnt." home: ".homeIndex)
-                return homeIndex
-            endif
-        endfor
+        endif
 
         let findCount = 0
         let homeIndex += 1
-        let listFile=GetVimDir(1,"quickfix").'/list'.homeIndex
+        let listFile = GetVimDir(1,"quickfix").'/list'.homeIndex
     endwhile
 
     return -1
@@ -189,9 +193,6 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "clear"
         call setqflist([], "r")
-        let s:qfix_pos = getqflist({'idx' : 0}).idx
-        let s:qfix_size = getqflist({'size' : 1}).size
-
         if exists("s:qfix_win")
             unlet! s:qfix_win
         endif
@@ -201,7 +202,7 @@ function! QuickCtrl(mode)
         call QuickSave(s:qfix_index, s:qfix_pos)
 
         let index_save = s:qfix_index
-        while index_save <= 20
+        while index_save < s:qfix_max_index 
             let index_save += 1
             let retCode = QuickLoad(index_save)
             if retCode == 0
@@ -249,13 +250,15 @@ function! QuickCtrl(mode)
             let s:qfix_index += 1
         endif
     elseif a:mode == "load"
-        let indexFile = GetVimDir(1,"quickfix").'/index'
-        if filereadable(indexFile)
-            let s:qfix_index = get(readfile(indexFile, 'b', 1), 0, '') 
-        else
-            let s:qfix_index = 0
-        endif
-        
+        if !exists("s:qfix_index")
+            let indexFile = GetVimDir(1,"quickfix").'/index'
+            if filereadable(indexFile)
+                let s:qfix_index = get(readfile(indexFile, 'b', 1), 0, '') 
+            else
+                let s:qfix_index = 0
+            endif
+        endif 
+
         call QuickLoad(s:qfix_index)
     elseif a:mode == "delete"
         let retCode = QuickDelete(s:qfix_index)
@@ -479,10 +482,11 @@ augroup QFixToggle
     autocmd!
     autocmd BufReadPost quickfix let s:qfix_win = bufnr("$")
     autocmd BufWinEnter quickfix let s:qfix_win = bufnr("$")
-    autocmd BufWinLeave quickfix let s:qfix_pos = getqflist({'idx' : 0}).idx
+
+    autocmd BufWinLeave * if exists("s:qfix_win") | let s:qfix_pos = getqflist({'idx' : 0}).idx | endif 
 
     "不在quickfix窗内移动，则关闭quickfix窗口
-    autocmd CursorMoved * if &buftype != 'quickfix' | call QuickCtrl("close") | endif
+    autocmd CursorMoved * if exists("s:qfix_win") && &buftype != 'quickfix' | call QuickCtrl("close") | endif
 augroup END
 
 "恢复命令栏默认高度
