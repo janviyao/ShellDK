@@ -495,10 +495,13 @@ nnoremap <silent> <C-down> :resize -5<CR>                  "水平分隔窗口�
 nnoremap <silent> <C-right> :vertical resize+5<CR>         "垂直分隔窗口调大
 nnoremap <silent> <C-left> :vertical resize-5<CR>          "垂直分隔窗口调大
 
-nnoremap <silent> <Leader>wt :tabe %<CR>                   "当前窗口拷贝到新标签页
-nnoremap <silent> <Leader>tp :tabp<CR>                     "当前窗口移到左侧标签页
-nnoremap <silent> <Leader>tn :tabn<CR>                     "当前窗口移到右侧标签页
+nnoremap <silent> <Leader>te  :tabe %<CR>                  "当前窗口拷贝到新标签页
+nnoremap <silent> <Leader>tc  :tabc<CR>                    "关闭当前标签窗口
+nnoremap <silent> <Leader>tco :tabo<CR>                    "关闭其它所有标签窗口
+nnoremap <silent> <Leader>tp  :tabp<CR>                    "当前窗口移到左侧标签页,同gT
+nnoremap <silent> <Leader>tn  :tabn<CR>                    "当前窗口移到右侧标签页,同gt
 
+nnoremap <silent> <Leader>bb <C-^>                         "切换最近两个文件,同:next #,:edit #
 nnoremap <silent> <Leader>wr <C-w>r                        "旋转当前窗口位置
 nnoremap <silent> <Leader>wc <C-w>c                        "关闭当前窗口
 nnoremap <silent> <Leader>wd :bd<CR>                       "删除当前缓存窗口
@@ -1358,12 +1361,12 @@ let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "vim-scripts/a.vim"
 
-nnoremap <silent> <Leader>a :A<CR>
-nnoremap <silent> <Leader>an :AN<CR>
-nnoremap <silent> <Leader>at :AT<CR>
-nnoremap <silent> <Leader>af :IH<CR>
-nnoremap <silent> <Leader>afn :IHN<CR>
-nnoremap <silent> <Leader>aft :IHT<CR>
+nnoremap <silent> <Leader>aa  :A<CR>                        "switches to the header file corresponding to the current file being edited
+nnoremap <silent> <Leader>an  :AN<CR>                       "cycles through matches
+nnoremap <silent> <Leader>at  :AT<CR>                       "new tab and switches
+nnoremap <silent> <Leader>af  :IH<CR>                       "switches to file under cursor
+nnoremap <silent> <Leader>afn :IHN<CR>                      "cycles through matches
+nnoremap <silent> <Leader>aft :IHT<CR>                      "new tab and switches
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动补全 插件
