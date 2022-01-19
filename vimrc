@@ -284,8 +284,6 @@ function! QuickCtrl(mode)
 
             let s:qfix_index = homeIndex
             let s:qfix_pos = homePos 
-
-            call QuickCtrl("save")        
             call QuickCtrl("load")        
         endif
     endif
