@@ -111,6 +111,9 @@ endfunction
 function! QuickFindHome()
     let newList = getqflist()
     let succCnt = len(newList)/3 + 1
+    if succCnt > 10
+        let succCnt = 10
+    endif
 
     let findCount=0
     let homeIndex=0
