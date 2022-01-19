@@ -108,6 +108,22 @@ function! QuickSave(index, pos)
     return 1
 endfunction
 
+function! QuickDelete(index)
+    let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+    let posnFile = GetVimDir(1,"quickfix").'/position'.a:index
+ 
+    if filereadable(listFile)
+        silent! execute 'rm -f '.listFile
+    endif
+
+    if filereadable(posnFile)
+        silent! execute 'rm -f '.posnFile
+    endif
+
+    call writefile([], listFile, 'r')
+    return 0
+endfunction
+
 function! QuickFindHome()
     let newList = getqflist()
     let succCnt = len(newList)/3 + 1
@@ -184,51 +200,45 @@ function! QuickCtrl(mode)
     elseif a:mode == "recover-next"
         call QuickSave(s:qfix_index, s:qfix_pos)
 
-        let s:qfix_index += 1
-        let retCode = QuickLoad(s:qfix_index)
-        if retCode == 0
-            silent! execute 'cc!'
-        else
-            let s:qfix_index -= 1
-        endif
+        let index_save = s:qfix_index
+        while index_save <= 20
+            let index_save += 1
+            let retCode = QuickLoad(index_save)
+            if retCode == 0
+                silent! execute 'cc!'
+                let s:qfix_index = index_save
+                return 0
+            endif
+        endwhile
+
+        return 1
     elseif a:mode == "recover-prev"
         call QuickSave(s:qfix_index, s:qfix_pos)
 
-        let s:qfix_index -= 1
-        let retCode = QuickLoad(s:qfix_index)
-        if retCode == 0
-            silent! execute 'cc!'
-        else
-            let s:qfix_index += 1
-        endif
+        let index_save = s:qfix_index
+        while index_save >= 0
+            let index_save -= 1
+            let retCode = QuickLoad(index_save)
+            if retCode == 0
+                silent! execute 'cc!'
+                let s:qfix_index = index_save
+                return 0
+            endif
+        endwhile
+
+        return 1
     elseif a:mode == "next"
         if s:qfix_pos >= s:qfix_size
-            call QuickSave(s:qfix_index, s:qfix_pos)
-
-            let s:qfix_index += 1
-            let retCode = QuickLoad(s:qfix_index)
-            if retCode == 0
-                silent! execute 'cc! 1'
-                let s:qfix_pos = getqflist({'idx' : 0}).idx
-            else
-                let s:qfix_index -= 1
-            endif
+            QuickCtrl("recover-next") 
+            silent! execute 'cc! 1'
         else
             silent! execute 'cn!'
             let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "prev"
         if s:qfix_pos <= 1
-            call QuickSave(s:qfix_index, s:qfix_pos)
-
-            let s:qfix_index -= 1
-            let retCode = QuickLoad(s:qfix_index)
-            if retCode == 0
-                silent! execute 'cc! '.s:qfix_size
-                let s:qfix_pos = getqflist({'idx' : 0}).idx
-            else
-                let s:qfix_index += 1
-            endif
+            QuickCtrl("recover-prev") 
+            silent! execute 'cc! '.s:qfix_size
         else
             silent! execute 'cp!'
             let s:qfix_pos = getqflist({'idx' : 0}).idx
@@ -247,6 +257,14 @@ function! QuickCtrl(mode)
         endif
         
         call QuickLoad(s:qfix_index)
+    elseif a:mode == "delete"
+        let retCode = QuickDelete(s:qfix_index)
+        if retCode == 0
+            let retCode = QuickCtrl("recover-prev") 
+            if retCode != 0
+                call QuickCtrl("recover-next") 
+            endif
+        endif
     elseif a:mode == "home"
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
@@ -263,6 +281,8 @@ function! QuickCtrl(mode)
         call QuickCtrl("save")        
         call QuickCtrl("load")        
     endif
+
+    return 0
 endfunction
 
 "获取VIM工作目录
@@ -501,7 +521,7 @@ nnoremap <silent> <Leader>tco :tabo<CR>                    "关闭其它所有�
 nnoremap <silent> <Leader>tp  :tabp<CR>                    "当前窗口移到左侧标签页,同gT
 nnoremap <silent> <Leader>tn  :tabn<CR>                    "当前窗口移到右侧标签页,同gt
 
-nnoremap <silent> <Leader>bb <C-^>                         "切换最近两个文件,同:next #,:edit #
+nnoremap <silent> <Leader>aa <C-^>                         "切换最近两个文件,同:next #,:edit #
 nnoremap <silent> <Leader>wr <C-w>r                        "旋转当前窗口位置
 nnoremap <silent> <Leader>wc <C-w>c                        "关闭当前窗口
 nnoremap <silent> <Leader>wd :bd<CR>                       "删除当前缓存窗口
@@ -532,6 +552,7 @@ nnoremap <silent> <C-k> 6k
 "切换下一条quickfix记录
 nnoremap <silent> <Leader>qf  :call QuickCtrl("next")<CR>
 nnoremap <silent> <Leader>qb  :call QuickCtrl("prev")<CR>
+nnoremap <silent> <Leader>qd  :call QuickCtrl("delete")<CR>
 nnoremap <silent> <Leader>qrc :call QuickCtrl("recover")<CR>
 nnoremap <silent> <Leader>qrf :call QuickCtrl("recover-next")<CR>
 nnoremap <silent> <Leader>qrb :call QuickCtrl("recover-prev")<CR>
@@ -1361,7 +1382,7 @@ let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "vim-scripts/a.vim"
 
-nnoremap <silent> <Leader>aa  :A<CR>                        "switches to the header file corresponding to the current file being edited
+nnoremap <silent> <Leader>ab  :A<CR>                        "switches to the header file corresponding to the current file being edited
 nnoremap <silent> <Leader>an  :AN<CR>                       "cycles through matches
 nnoremap <silent> <Leader>at  :AT<CR>                       "new tab and switches
 nnoremap <silent> <Leader>af  :IH<CR>                       "switches to file under cursor
