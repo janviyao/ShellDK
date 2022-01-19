@@ -115,14 +115,13 @@ function! QuickDelete(index)
     let posnFile = GetVimDir(1,"quickfix").'/position'.a:index
  
     if filereadable(listFile)
-        silent! execute 'rm -f '.listFile
+        call delete(listFile)
     endif
 
     if filereadable(posnFile)
-        silent! execute 'rm -f '.posnFile
+        call delete(posnFile)
     endif
 
-    call writefile([], listFile, 'r')
     return 0
 endfunction
 
@@ -193,9 +192,6 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "clear"
         call setqflist([], "r")
-        if exists("s:qfix_win")
-            unlet! s:qfix_win
-        endif
     elseif a:mode == "recover"
         silent! execute 'cc!'
     elseif a:mode == "recover-next"
@@ -230,7 +226,7 @@ function! QuickCtrl(mode)
         return 1
     elseif a:mode == "next"
         if s:qfix_pos >= s:qfix_size
-            QuickCtrl("recover-next") 
+            call QuickCtrl("recover-next") 
             silent! execute 'cc! 1'
         else
             silent! execute 'cn!'
@@ -238,13 +234,21 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "prev"
         if s:qfix_pos <= 1
-            QuickCtrl("recover-prev") 
+            call QuickCtrl("recover-prev") 
             silent! execute 'cc! '.s:qfix_size
         else
             silent! execute 'cp!'
             let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "save"
+        if !exists("s:qfix_index")
+            let s:qfix_index = 0
+        endif
+
+        if !exists("s:qfix_pos")
+            let s:qfix_pos = 1
+        endif
+
         let retCode = QuickSave(s:qfix_index, s:qfix_pos)
         if retCode == 0
             let s:qfix_index += 1
@@ -263,6 +267,7 @@ function! QuickCtrl(mode)
     elseif a:mode == "delete"
         let retCode = QuickDelete(s:qfix_index)
         if retCode == 0
+            call QuickCtrl("clear") 
             let retCode = QuickCtrl("recover-prev") 
             if retCode != 0
                 call QuickCtrl("recover-next") 
@@ -279,10 +284,10 @@ function! QuickCtrl(mode)
 
             let s:qfix_index = homeIndex
             let s:qfix_pos = homePos 
-        endif
 
-        call QuickCtrl("save")        
-        call QuickCtrl("load")        
+            call QuickCtrl("save")        
+            call QuickCtrl("load")        
+        endif
     endif
 
     return 0
@@ -480,10 +485,10 @@ autocmd VimLeave * call LeaveHandler()
 "跟踪quickfix窗口状态
 augroup QFixToggle
     autocmd!
-    autocmd BufReadPost quickfix let s:qfix_win = bufnr("$")
-    autocmd BufWinEnter quickfix let s:qfix_win = bufnr("$")
+    autocmd BufReadPost quickfix let s:qfix_win = bufnr("$") | let s:qfix_enter = 1
+    autocmd BufWinEnter quickfix let s:qfix_win = bufnr("$") | let s:qfix_enter = 1
 
-    autocmd BufWinLeave * if exists("s:qfix_win") | let s:qfix_pos = getqflist({'idx' : 0}).idx | endif 
+    autocmd BufWinLeave * if exists("s:qfix_enter") | let s:qfix_pos = getqflist({'idx' : 0}).idx | unlet! s:qfix_enter | endif 
 
     "不在quickfix窗内移动，则关闭quickfix窗口
     autocmd CursorMoved * if exists("s:qfix_win") && &buftype != 'quickfix' | call QuickCtrl("close") | endif
@@ -616,6 +621,7 @@ nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 "CS命令
 function! CSFind(ccmd)
     call ToggleWindow("allclose")
+    call QuickCtrl("save")        
     call QuickCtrl("clear")
 
     let csarg=expand('<cword>')
