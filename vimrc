@@ -656,10 +656,18 @@ function! JumpFuncStart()
     let exclude_char='[^\:\;\+\-\!\/\(\)\{\}]'
     let gcc_attrs='__attribute__.+'
 
-    let func_return='%(^%(\s*'.code_word.'\s*){0,2}'.exclude_char.'$'.line_end.')?'
+    let func_return='\s*%(^%(\s*'.code_word.'\s*){0,2}'.exclude_char.'$'.line_end.')?\s*'
     let func_name='\s*%(%('.code_word.'\s*(::'.code_word.')?)|%(operator.+\s*))'
-    let func_args='\(%(%('.not_in_bracket.'*%('.gcc_attrs.')?,?)*'.line_end.')*\)'
-    let func_restrict='%(\s*const\s*)?'.line_end
+
+    let fptr_return='\s*%('.code_word.'\s*)+\s*'
+    let fptr_name='\s*\(\s*\*\s*'.code_word.'\s*\)\s*'
+    let fptr_args='\s*\(%('.not_in_bracket.'+,?)*\)\s*'
+    let func_fptr=fptr_return.fptr_name.fptr_args
+
+    let one_arg='\s*%(%(%('.not_in_bracket.'+%('.gcc_attrs.')?)|%('.func_fptr.')),?)\s*'
+    let func_args='\s*\(%('.one_arg.line_end.')*\)\s*'
+
+    let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
     "call PrintMsg("file", "func_return: ".func_return)
