@@ -48,8 +48,9 @@ function! QuickFormat(info)
 endfunc
 
 function! QuickLoad(index)
-    let listFile=GetVimDir(1,"quickfix").'/list'.a:index
-    let posnFile=GetVimDir(1,"quickfix").'/position'.a:index
+    let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+    let posnFile = GetVimDir(1,"quickfix").'/position'.a:index
+    let titleFile = GetVimDir(1,"quickfix").'/keyword'.a:index
 
     if filereadable(listFile)
         let s:qfix_index = a:index
@@ -60,8 +61,14 @@ function! QuickLoad(index)
             let s:qfix_pos = 1
         endif
 
+        if filereadable(titleFile)
+            let s:qfix_title = get(readfile(titleFile, 'b', 1), 0, '') 
+        else
+            let s:qfix_title = "!none!"
+        endif
+
         call setqflist([], "r")
-        let qflist=readfile(listFile, "")
+        let qflist = readfile(listFile, "")
         for item in qflist
             let dicTmp = eval(item)
             let retCode = setqflist([dicTmp], 'a')
@@ -72,25 +79,28 @@ function! QuickLoad(index)
 
         call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'})
         call setqflist([], 'a', {'idx' : s:qfix_pos})
+        call setqflist([], 'a', {'title' : s:qfix_title})
 
         let s:qfix_size = getqflist({'size' : 1}).size
-        "call PrintMsg("file", "load index: ".s:qfix_index." pos: ".s:qfix_pos." size: ".s:qfix_size)
+        "call PrintMsg("file", "load index: ".s:qfix_index." pos: ".s:qfix_pos." size: ".s:qfix_size." title: ".s:qfix_title)
         return 0
     endif
 
     return -1
 endfunction
 
-function! QuickSave(index, pos)
+function! QuickSave()
     let qflist = getqflist()
     if !empty(qflist)
-        let indexFile=GetVimDir(1,"quickfix").'/index'
-        let posFile=GetVimDir(1,"quickfix").'/position'.a:index
+        let indexFile = GetVimDir(1,"quickfix").'/index'
+        let posFile = GetVimDir(1,"quickfix").'/position'.s:qfix_index
+        let titleFile = GetVimDir(1,"quickfix").'/keyword'.s:qfix_index
 
-        call writefile([a:index], indexFile, 'b')
-        call writefile([a:pos], posFile, 'b')
+        call writefile([s:qfix_index], indexFile, 'b')
+        call writefile([s:qfix_pos], posFile, 'b')
+        call writefile([s:qfix_title], titleFile, 'b')
 
-        let listFile=GetVimDir(1,"quickfix").'/list'.a:index
+        let listFile=GetVimDir(1,"quickfix").'/list'.s:qfix_index
         call writefile([], listFile, 'r')
         for item in qflist
             let fname=fnamemodify(bufname(item.bufnr), ':p:.') 
@@ -102,7 +112,7 @@ function! QuickSave(index, pos)
             call writefile([string(item)], listFile, 'a')
         endfor
 
-        "call PrintMsg("file", "save index: ".a:index." pos: ".a:pos)
+        "call PrintMsg("file", "save index: ".s:qfix_index." pos: ".s:qfix_pos." size: ".s:qfix_size." title: ".s:qfix_title)
         return 0
     endif
 
@@ -111,101 +121,38 @@ endfunction
 
 function! QuickDelete(index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
-    let posnFile = GetVimDir(1,"quickfix").'/position'.a:index
- 
     if filereadable(listFile)
         call delete(listFile)
     endif
 
+    let posnFile = GetVimDir(1,"quickfix").'/position'.a:index
     if filereadable(posnFile)
         call delete(posnFile)
+    endif
+
+    let titleFile = GetVimDir(1,"quickfix").'/keyword'.s:qfix_index
+    if filereadable(titleFile)
+        call delete(titleFile)
     endif
 
     return 0
 endfunction
 
 function! QuickFindHome()
-    let newList = getqflist()
-    let fmaxMatch = 3
-    let matchSuccess = len(newList)/3 + 1
-    if matchSuccess > 10
-        let matchSuccess = 10
-    endif
-    
-    let findCount = 0
     let homeIndex = 0
-    let staticResult = {} 
-    let preciseResult = {} 
 
-    let listFile = GetVimDir(1,"quickfix").'/list'.homeIndex
+    let newTitle = getqflist({'title' : 1}).title
     while homeIndex < s:qfix_max_index
-        if filereadable(listFile)
-            call filter(staticResult, 0)
-            call filter(preciseResult, 0)
-
-            let qflist = readfile(listFile, "")
-            for item in qflist
-                let dicTmp=eval(item)
-
-                let fname1=trim(dicTmp.filename) 
-                let fname1=fnamemodify(fname1, ':p:.') 
-                let ptext1=trim(dicTmp.text) 
-                let lnum1=dicTmp.lnum
-
-                if has_key(staticResult, fname1)
-                    if staticResult[fname1] > fmaxMatch
-                        continue
-                    endif
-                endif
-
-                for dicNew in newList
-                    let fname2=trim(bufname(dicNew["bufnr"])) 
-                    let fname2=fnamemodify(fname2, ':p:.') 
-                    let ptext2=trim(dicNew.text) 
-                    let lnum2=dicNew.lnum
-
-                    if fname1 == fname2 && ptext1 == ptext2
-                        if has_key(staticResult, fname1)
-                            let staticResult[fname1] += 1
-                        else
-                            let staticResult[fname1] = 1
-                        endif
-
-                        if lnum1 == lnum2
-                            if has_key(preciseResult, fname1)
-                                let preciseResult[fname1] += 1
-                            else
-                                let preciseResult[fname1] = 1
-                            endif
-                        endif
-
-                        let findCount +=1
-                        break
-                    endif
-                endfor
-
-                if findCount >= matchSuccess
-                    "call PrintMsg("file", "home total: ".len(newList)." match: ".findCount." index: ".homeIndex)
-                    return homeIndex
-                endif
-            endfor
-        
-            if len(qflist) >= matchSuccess && findCount > 0
-                let preTotal = 0
-                for val in values(preciseResult)
-                    let preTotal += val 
-                endfor
-
-                if preTotal == findCount
-                    "call PrintMsg("file", "home total: ".len(newList)." match: ".findCount." index: ".homeIndex)
-                    return homeIndex
-                endif
-            endif
+        let titleFile = GetVimDir(1,"quickfix").'/keyword'.homeIndex
+        if filereadable(titleFile)
+            let saveTitle = get(readfile(titleFile, 'b', 1), 0, '') 
+            if saveTitle == newTitle 
+                "call PrintMsg("file", "home title: ".saveTitle." index: ".homeIndex)
+                return homeIndex
+            endif    
         endif
 
-        let findCount = 0
         let homeIndex += 1
-        let listFile = GetVimDir(1,"quickfix").'/list'.homeIndex
     endwhile
 
     return -1
@@ -235,7 +182,7 @@ function! QuickCtrl(mode)
     elseif a:mode == "recover"
         silent! execute 'cc!'
     elseif a:mode == "recover-next"
-        call QuickSave(s:qfix_index, s:qfix_pos)
+        call QuickSave()
 
         let index_save = s:qfix_index
         while index_save < s:qfix_max_index 
@@ -250,7 +197,7 @@ function! QuickCtrl(mode)
 
         return -1
     elseif a:mode == "recover-prev"
-        call QuickSave(s:qfix_index, s:qfix_pos)
+        call QuickSave()
 
         let index_save = s:qfix_index
         while index_save >= 0
@@ -290,7 +237,11 @@ function! QuickCtrl(mode)
             let s:qfix_pos = 1
         endif
 
-        let retCode = QuickSave(s:qfix_index, s:qfix_pos)
+        if !exists("s:qfix_pos")
+            let s:qfix_title = getqflist({'title' : 1}).title
+        endif
+
+        let retCode = QuickSave()
         if retCode == 0
             let s:qfix_index += 1
         endif
@@ -318,16 +269,17 @@ function! QuickCtrl(mode)
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
             let homePos=1
-            let posnFile=GetVimDir(1,"quickfix").'/position'.homeIndex
-            if filereadable(posnFile)
-                let homePos = get(readfile(posnFile, 'b', 1), 0, '') 
+            let posFile=GetVimDir(1,"quickfix").'/position'.homeIndex
+            if filereadable(posFile)
+                let homePos = get(readfile(posFile, 'b', 1), 0, '') 
             endif
-
+            
             let s:qfix_index = homeIndex
             let s:qfix_pos = homePos 
+            let s:qfix_title = getqflist({'title' : 1}).title
 
-            call QuickCtrl("save")        
-            call QuickCtrl("load")        
+            call QuickSave()
+            call QuickLoad(s:qfix_index)
         endif
     endif
 
