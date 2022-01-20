@@ -35,6 +35,40 @@ function! GetResultIndex(cmd, substr)
 endfunction
 
 let s:qfix_max_index = 20
+function! QuickCompare(item1, item2)
+    let itemList1 = split(a:item1, "|")
+    let itemList2 = split(a:item2, "|")
+    if trim(itemList1[0]) == trim(itemList2[0])
+        if str2nr(trim(itemList1[1])) == str2nr(trim(itemList2[1]))
+            return 0
+        elseif str2nr(trim(itemList1[1])) < str2nr(trim(itemList2[1]))
+            return -1
+        else
+            return 1
+        endif
+    else
+        let nameList1 = split(trim(itemList1[0]), "/")
+        let nameList2 = split(trim(itemList2[0]), "/")
+        
+        let minVal = min([len(nameList1), len(nameList2)])
+        let startIndx = 0
+        while startIndx < minVal
+            if trim(nameList1[startIndx]) == trim(nameList2[startIndx])
+                let startIndx += 1
+            elseif trim(nameList1[startIndx]) < trim(nameList2[startIndx])
+                return -1
+            else
+                return 1
+            endif
+        endwhile
+
+        if startIndx == minVal
+            return 0
+        endif
+    endif
+    return 0
+endfunction
+
 function! QuickFormat(info)
     " get information about a range of quickfix entries
     let items = getqflist({'id' : a:info.id, 'items' : 1}).items
@@ -44,6 +78,8 @@ function! QuickFormat(info)
         let lnctn=fnamemodify(bufname(items[idx].bufnr), ':p:.')."| ".items[idx].lnum." | ".items[idx].text
         call add(newList, lnctn)
     endfor
+    
+    call sort(newList, "QuickCompare")
     return newList
 endfunc
 
