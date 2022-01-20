@@ -240,6 +240,7 @@ function! QuickCtrl(mode)
             let s:qfix_pos = getqflist({'idx' : 0}).idx
         endif
     elseif a:mode == "save"
+        "when quickfix load empty and then first save, var not exist
         if !exists("s:qfix_index")
             let s:qfix_index = 0
         endif
@@ -642,6 +643,7 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
  
+    call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'})
     call QuickCtrl("home")
     call QuickCtrl("open")
 endfunction
