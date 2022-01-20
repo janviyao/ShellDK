@@ -126,16 +126,23 @@ endfunction
 
 function! QuickFindHome()
     let newList = getqflist()
-    let succCnt = len(newList)/3 + 1
-    if succCnt > 10
-        let succCnt = 10
+    let fmaxMatch = 3
+    let matchSuccess = len(newList)/3 + 1
+    if matchSuccess > 10
+        let matchSuccess = 10
     endif
+    
+    let findCount = 0
+    let homeIndex = 0
+    let staticResult = {} 
+    let preciseResult = {} 
 
-    let findCount=0
-    let homeIndex=0
     let listFile = GetVimDir(1,"quickfix").'/list'.homeIndex
     while homeIndex < s:qfix_max_index
         if filereadable(listFile)
+            call filter(staticResult, 0)
+            call filter(preciseResult, 0)
+
             let qflist = readfile(listFile, "")
             for item in qflist
                 let dicTmp=eval(item)
@@ -143,23 +150,57 @@ function! QuickFindHome()
                 let fname1=trim(dicTmp.filename) 
                 let fname1=fnamemodify(fname1, ':p:.') 
                 let ptext1=trim(dicTmp.text) 
+                let lnum1=dicTmp.lnum
+
+                if has_key(staticResult, fname1)
+                    if staticResult[fname1] > fmaxMatch
+                        continue
+                    endif
+                endif
 
                 for dicNew in newList
                     let fname2=trim(bufname(dicNew["bufnr"])) 
                     let fname2=fnamemodify(fname2, ':p:.') 
                     let ptext2=trim(dicNew.text) 
+                    let lnum2=dicNew.lnum
 
                     if fname1 == fname2 && ptext1 == ptext2
+                        if has_key(staticResult, fname1)
+                            let staticResult[fname1] += 1
+                        else
+                            let staticResult[fname1] = 1
+                        endif
+
+                        if lnum1 == lnum2
+                            if has_key(preciseResult, fname1)
+                                let preciseResult[fname1] += 1
+                            else
+                                let preciseResult[fname1] = 1
+                            endif
+                        endif
+
                         let findCount +=1
                         break
                     endif
                 endfor
 
-                if findCount >= succCnt
-                    "call PrintMsg("file", "home total: ".len(newList)." succCnt: ".succCnt." index: ".homeIndex)
+                if findCount >= matchSuccess
+                    "call PrintMsg("file", "home total: ".len(newList)." match: ".findCount." index: ".homeIndex)
                     return homeIndex
                 endif
             endfor
+        
+            if len(qflist) >= matchSuccess && findCount > 0
+                let preTotal = 0
+                for val in values(preciseResult)
+                    let preTotal += val 
+                endfor
+
+                if preTotal == findCount
+                    "call PrintMsg("file", "home total: ".len(newList)." match: ".findCount." index: ".homeIndex)
+                    return homeIndex
+                endif
+            endif
         endif
 
         let findCount = 0
@@ -284,6 +325,8 @@ function! QuickCtrl(mode)
 
             let s:qfix_index = homeIndex
             let s:qfix_pos = homePos 
+
+            call QuickCtrl("save")        
             call QuickCtrl("load")        
         endif
     endif
