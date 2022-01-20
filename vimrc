@@ -36,19 +36,22 @@ endfunction
 
 let s:qfix_max_index = 20
 function! QuickCompare(item1, item2)
-    let itemList1 = split(a:item1, "|")
-    let itemList2 = split(a:item2, "|")
-    if trim(itemList1[0]) == trim(itemList2[0])
-        if str2nr(trim(itemList1[1])) == str2nr(trim(itemList2[1]))
+    let fname1 = fnamemodify(bufname(a:item1.bufnr), ':p:.')
+    let fname2 = fnamemodify(bufname(a:item2.bufnr), ':p:.')
+
+    if fname1 == fname2 
+        let lnum1 = str2nr(a:item1.lnum) 
+        let lnum2 = str2nr(a:item2.lnum) 
+        if lnum1 == lnum2 
             return 0
-        elseif str2nr(trim(itemList1[1])) < str2nr(trim(itemList2[1]))
+        elseif lnum1 < lnum2
             return -1
         else
             return 1
         endif
     else
-        let nameList1 = split(trim(itemList1[0]), "/")
-        let nameList2 = split(trim(itemList2[0]), "/")
+        let nameList1 = split(fname1, "/")
+        let nameList2 = split(fname2, "/")
         
         let minVal = min([len(nameList1), len(nameList2)])
         let startIndx = 0
@@ -79,7 +82,6 @@ function! QuickFormat(info)
         call add(newList, lnctn)
     endfor
     
-    call sort(newList, "QuickCompare")
     return newList
 endfunc
 
@@ -130,6 +132,8 @@ endfunction
 function! QuickSave(index)
     let qflist = getqflist()
     if !empty(qflist)
+        call sort(qflist, "QuickCompare")
+
         let s:qfix_index = a:index
 
         let indexFile = GetVimDir(1,"quickfix").'/index'
@@ -303,7 +307,9 @@ function! QuickCtrl(mode)
             if site >= 0
                 let s:qfix_index = site
             endif
+
             call QuickSave(s:qfix_index)
+            call QuickLoad(s:qfix_index)
         endif
     elseif a:mode == "load"
         if !exists("s:qfix_index")
