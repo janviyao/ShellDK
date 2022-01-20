@@ -74,12 +74,11 @@ function! QuickLoad(index)
         call setqflist([], 'a', {'idx' : s:qfix_pos})
 
         let s:qfix_size = getqflist({'size' : 1}).size
-
         "call PrintMsg("file", "load index: ".s:qfix_index." pos: ".s:qfix_pos." size: ".s:qfix_size)
         return 0
     endif
 
-    return 1
+    return -1
 endfunction
 
 function! QuickSave(index, pos)
@@ -107,7 +106,7 @@ function! QuickSave(index, pos)
         return 0
     endif
 
-    return 1
+    return -1
 endfunction
 
 function! QuickDelete(index)
@@ -208,7 +207,7 @@ function! QuickCtrl(mode)
             endif
         endwhile
 
-        return 1
+        return -1
     elseif a:mode == "recover-prev"
         call QuickSave(s:qfix_index, s:qfix_pos)
 
@@ -223,7 +222,7 @@ function! QuickCtrl(mode)
             endif
         endwhile
 
-        return 1
+        return -1
     elseif a:mode == "next"
         if s:qfix_pos >= s:qfix_size
             call QuickCtrl("recover-next") 
@@ -528,7 +527,7 @@ nnoremap <silent> <Leader>tco :tabo<CR>                    "关闭其它所有�
 nnoremap <silent> <Leader>tp  :tabp<CR>                    "当前窗口移到左侧标签页,同gT
 nnoremap <silent> <Leader>tn  :tabn<CR>                    "当前窗口移到右侧标签页,同gt
 
-nnoremap <silent> <Leader>aa <C-^>                         "切换最近两个文件,同:next #,:edit #
+nnoremap <silent> <Leader>ab <C-^>                         "切换最近两个文件,同:next #,:edit #
 nnoremap <silent> <Leader>wr <C-w>r                        "旋转当前窗口位置
 nnoremap <silent> <Leader>wc <C-w>c                        "关闭当前窗口
 nnoremap <silent> <Leader>wd :bd<CR>                       "删除当前缓存窗口
@@ -1390,7 +1389,7 @@ let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "vim-scripts/a.vim"
 
-nnoremap <silent> <Leader>ab  :A<CR>                        "switches to the header file corresponding to the current file being edited
+nnoremap <silent> <Leader>aa  :A<CR>                        "switches to the header file corresponding to the current file being edited
 nnoremap <silent> <Leader>an  :AN<CR>                       "cycles through matches
 nnoremap <silent> <Leader>at  :AT<CR>                       "new tab and switches
 nnoremap <silent> <Leader>af  :IH<CR>                       "switches to file under cursor
