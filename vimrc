@@ -237,7 +237,7 @@ function! QuickCtrl(mode)
             let s:qfix_pos = 1
         endif
 
-        if !exists("s:qfix_pos")
+        if !exists("s:qfix_title")
             let s:qfix_title = getqflist({'title' : 1}).title
         endif
 
@@ -638,7 +638,9 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
  
+    let s:qfix_size = getqflist({'size' : 1}).size
     call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'})
+
     call QuickCtrl("home")
     call QuickCtrl("open")
 endfunction
