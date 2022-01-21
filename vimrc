@@ -94,11 +94,11 @@ function! QuickLoad(index)
         if filereadable(keyFile)
             let keywords = eval(get(readfile(keyFile, 'b', 1), 0, ''))
         else
-            let keywords = { "pos": 1, "title": "!non!" } 
+            let keywords = { "pick": 1, "title": "!anon!" } 
         endif
         "call PrintMsg("file", "load key: ".string(keywords))
 
-        let s:qfix_pos = keywords.pos
+        let s:qfix_pick = keywords.pick
         let s:qfix_title = keywords.title
 
         call setqflist([], "r")
@@ -112,7 +112,7 @@ function! QuickLoad(index)
         endfor
 
         call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'})
-        call setqflist([], 'a', {'idx' : s:qfix_pos})
+        call setqflist([], 'a', {'idx' : s:qfix_pick})
         call setqflist([], 'a', {'title' : s:qfix_title})
 
         let s:qfix_size = getqflist({'size' : 1}).size
@@ -141,7 +141,7 @@ function! QuickSave(index)
         
         let keywords = {}
         let keywords['index'] = s:qfix_index
-        let keywords['pos'] = s:qfix_pos
+        let keywords['pick'] = s:qfix_pick
         let keywords['size'] = s:qfix_size
         let keywords['title'] = s:qfix_title
 
@@ -231,15 +231,15 @@ function! QuickCtrl(mode)
         if !empty(qflist)
             let height = winheight(0)/2
             silent! execute 'copen '.height
-            let s:qfix_win = bufnr("$")
+            let s:qfix_opened = bufnr("$")
         endif
     elseif a:mode == "close"
-        if exists("s:qfix_win")
+        if exists("s:qfix_opened")
             silent! execute 'cclose'
-            unlet! s:qfix_win
+            unlet! s:qfix_opened
         endif
     elseif a:mode == "toggle"
-        if exists("s:qfix_win")
+        if exists("s:qfix_opened")
             call QuickCtrl("close")        
         else
             call QuickCtrl("open")        
@@ -275,27 +275,19 @@ function! QuickCtrl(mode)
 
         return -1
     elseif a:mode == "next"
-        if s:qfix_pos >= s:qfix_size
-            call QuickCtrl("recover-next") 
-        else
-            silent! execute 'cn!'
-            let s:qfix_pos = getqflist({'idx' : 0}).idx
-        endif
+        silent! execute 'cn!'
+        let s:qfix_pick = getqflist({'idx' : 0}).idx
     elseif a:mode == "prev"
-        if s:qfix_pos <= 1
-            call QuickCtrl("recover-prev") 
-        else
-            silent! execute 'cp!'
-            let s:qfix_pos = getqflist({'idx' : 0}).idx
-        endif
+        silent! execute 'cp!'
+        let s:qfix_pick = getqflist({'idx' : 0}).idx
     elseif a:mode == "save"
         "when quickfix load empty and then first save, var not exist
         if !exists("s:qfix_index")
             let s:qfix_index = 0
         endif
 
-        if !exists("s:qfix_pos")
-            let s:qfix_pos = 1
+        if !exists("s:qfix_pick")
+            let s:qfix_pick = 1
         endif
         
         let saveHome = QuickCtrl("home")
@@ -305,7 +297,7 @@ function! QuickCtrl(mode)
                 let s:qfix_index = newHome
             endif
 
-            let s:qfix_pos = getqflist({'idx' : 0}).idx
+            let s:qfix_pick = getqflist({'idx' : 0}).idx
             let s:qfix_title = getqflist({'title' : 1}).title
             let s:qfix_size = getqflist({'size' : 1}).size
 
@@ -336,13 +328,12 @@ function! QuickCtrl(mode)
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
             let s:qfix_index = homeIndex
-            let s:qfix_pos = getqflist({'idx' : 0}).idx
+            let s:qfix_pick = getqflist({'idx' : 0}).idx
             let s:qfix_title = getqflist({'title' : 1}).title
             let s:qfix_size = getqflist({'size' : 1}).size
 
             call QuickSave(s:qfix_index)
             call QuickLoad(s:qfix_index)
-
             return 0
         endif
         return -1
@@ -542,13 +533,13 @@ autocmd VimLeave * call LeaveHandler()
 
 function! DoBufEnter()
     if &buftype == "quickfix"
-        let s:qfix_win = bufnr("$")
+        let s:qfix_opened = bufnr("$")
     endif
 endfunction
 
 function! DoBufLeave()
     if &buftype == "quickfix"
-        let s:qfix_pos = getqflist({'idx' : 0}).idx
+        let s:qfix_pick = getqflist({'idx' : 0}).idx
     endif
 endfunction
 
@@ -561,7 +552,7 @@ augroup QFixToggle
     autocmd BufLeave * call DoBufLeave() 
 
     "不在quickfix窗内移动，则关闭quickfix窗口
-    autocmd CursorMoved * if exists("s:qfix_win") && &buftype != 'quickfix' | call QuickCtrl("close") | endif
+    autocmd CursorMoved * if exists("s:qfix_opened") && &buftype != 'quickfix' | call QuickCtrl("close") | endif
 augroup END
 
 "恢复命令栏默认高度
@@ -715,7 +706,7 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
  
-    let s:qfix_pos = getqflist({'idx' : 0}).idx
+    let s:qfix_pick = getqflist({'idx' : 0}).idx
     let s:qfix_title = getqflist({'title' : 1}).title
     let s:qfix_size = getqflist({'size' : 1}).size
 
