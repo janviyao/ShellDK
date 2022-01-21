@@ -34,7 +34,7 @@ function! GetResultIndex(cmd, substr)
     return idx
 endfunction
 
-let s:qfix_max_index = 20
+let s:qfix_max_index = 50
 function! QuickCompare(item1, item2)
     let fname1 = fnamemodify(bufname(a:item1.bufnr), ':p:.')
     let fname2 = fnamemodify(bufname(a:item2.bufnr), ':p:.')
@@ -135,11 +135,9 @@ function! QuickSave(index)
     if !empty(qflist)
         call sort(qflist, "QuickCompare")
 
-        let s:qfix_index = a:index
-
         let indexFile = GetVimDir(1,"quickfix").'/index'
-        let listFile = GetVimDir(1,"quickfix").'/list'.s:qfix_index
-        let keyFile = GetVimDir(1,"quickfix").'/keyword'.s:qfix_index
+        let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+        let keyFile = GetVimDir(1,"quickfix").'/keyword'.a:index
         
         let keywords = {}
         let keywords['index'] = s:qfix_index
@@ -152,7 +150,7 @@ function! QuickSave(index)
         let keywords['fcol'] = col(".")
         "call PrintMsg("file", "save key: ".string(keywords))
 
-        call writefile([s:qfix_index], indexFile, 'b')
+        call writefile([a:index], indexFile, 'b')
         call writefile([string(keywords)], keyFile, 'b')
 
         call writefile([], listFile, 'r')
@@ -279,7 +277,6 @@ function! QuickCtrl(mode)
     elseif a:mode == "next"
         if s:qfix_pos >= s:qfix_size
             call QuickCtrl("recover-next") 
-            silent! execute 'cc! 1'
         else
             silent! execute 'cn!'
             let s:qfix_pos = getqflist({'idx' : 0}).idx
@@ -287,7 +284,6 @@ function! QuickCtrl(mode)
     elseif a:mode == "prev"
         if s:qfix_pos <= 1
             call QuickCtrl("recover-prev") 
-            silent! execute 'cc! '.s:qfix_size
         else
             silent! execute 'cp!'
             let s:qfix_pos = getqflist({'idx' : 0}).idx
@@ -308,6 +304,10 @@ function! QuickCtrl(mode)
             if newHome >= 0
                 let s:qfix_index = newHome
             endif
+
+            let s:qfix_pos = getqflist({'idx' : 0}).idx
+            let s:qfix_title = getqflist({'title' : 1}).title
+            let s:qfix_size = getqflist({'size' : 1}).size
 
             call QuickSave(s:qfix_index)
             call QuickLoad(s:qfix_index)
@@ -335,16 +335,8 @@ function! QuickCtrl(mode)
     elseif a:mode == "home"
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
-            if !exists("s:qfix_pos") || s:qfix_pos == 1 
-                let homePos=1
-                let keyFile = GetVimDir(1,"quickfix").'/keyword'.homeIndex
-                if filereadable(keyFile)
-                    let keywords = eval(get(readfile(keyFile, 'b', 1), 0, ''))
-                    let s:qfix_pos = keywords.pos
-                endif
-            endif
-
             let s:qfix_index = homeIndex
+            let s:qfix_pos = getqflist({'idx' : 0}).idx
             let s:qfix_title = getqflist({'title' : 1}).title
             let s:qfix_size = getqflist({'size' : 1}).size
 
