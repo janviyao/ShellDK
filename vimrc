@@ -227,7 +227,8 @@ function! QuickCtrl(mode)
     if a:mode == "open"
         let qflist = getqflist()
         if !empty(qflist)
-            silent! execute 'copen 15'
+            let height = winheight(0)/2
+            silent! execute 'copen '.height
             let s:qfix_win = bufnr("$")
         endif
     elseif a:mode == "close"
