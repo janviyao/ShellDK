@@ -90,7 +90,7 @@ function! QuickNeatShow()
     let qflist = getqflist()
     call sort(qflist, "QuickCompare")
 
-    call setqflist([], "r")
+    call setqflist([], "r", {'items' : []})
     for item in qflist
         let retCode = setqflist([item], 'a')
         if retCode != 0
