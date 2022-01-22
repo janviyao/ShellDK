@@ -95,6 +95,7 @@ function! QuickNeatShow()
         let retCode = setqflist([item], 'a')
         if retCode != 0
             call PrintMsg("error", "item invalid: ".item)
+            call QuickDumpInfo()
         endif
     endfor
 endfunction
@@ -116,6 +117,7 @@ function! QuickLoad(index)
         let s:qfix_index = infoDic.index
         if s:qfix_index != a:index
             call PrintMsg("error", "load index not consistent: ".s:qfix_index." != ".a:index)
+            call QuickDumpInfo()
         endif
         let s:qfix_index_next = infoDic.index_next
 
@@ -126,6 +128,7 @@ function! QuickLoad(index)
             let retCode = setqflist([dicTmp], 'a')
             if retCode != 0
                 call PrintMsg("error", "item invalid: ".item)
+                call QuickDumpInfo()
             endif
         endfor
 
@@ -177,6 +180,8 @@ function! QuickSave(index)
     if !empty(qflist)
         if s:qfix_index != a:index
             call PrintMsg("error", "save index not consistent: ".s:qfix_index." != ".a:index)
+            call QuickDumpInfo()
+            call QuickLoad(a:index)
         endif
 
         let indexFile = GetVimDir(1,"quickfix").'/index'
@@ -184,14 +189,12 @@ function! QuickSave(index)
 
         let infoDic = {}
         let infoDic['time'] = localtime() 
-
         let infoDic['index_prev'] = s:qfix_index_prev
         let infoDic['index'] = s:qfix_index
         let infoDic['index_next'] = s:qfix_index_next
         let infoDic['pick'] = s:qfix_pick
         let infoDic['size'] = s:qfix_size
         let infoDic['title'] = s:qfix_title
-
         let infoDic['fname'] = expand("%:p:.") 
         let infoDic['fline'] = line(".")
         let infoDic['fcol'] = col(".")
@@ -240,10 +243,10 @@ endfunction
 function! QuickDumpInfo()
     call PrintMsg("file", "")
     let currIndex = printf("prev: %-2d index: %-2d next: %-2d", s:qfix_index_prev, s:qfix_index, s:qfix_index_next)
-    let currTitle = printf("title: %-30s pick: %-3d", s:qfix_title, s:qfix_pick)
     let currCursor = printf("cursor: %d/%d", line("."), col("."))
-    let currPos = printf("%-20s file: %s", currCursor, fnamemodify(bufname("%"), ':p:.'))
-    call PrintMsg("file", "now ".currIndex." ".currTitle. " ".currPos)
+    let currPick = printf("pick: %-3d %-18s", s:qfix_pick, currCursor)
+    let currFile = printf("title: %-30s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
+    call PrintMsg("file", "now ".currIndex." ".currPick. " ".currFile)
 
     let homeIndex = 0
     while homeIndex < s:qfix_index_max
@@ -251,10 +254,10 @@ function! QuickDumpInfo()
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             let indexInfo = printf("prev: %-2d index: %-2d next: %-2d", infoDic.index_prev, infoDic.index, infoDic.index_next)
-            let titleInfo = printf("title: %-30s pick: %-3d", infoDic.title, infoDic.pick)
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
-            let posInfo = printf("%-20s file: %s", cursorInfo, infoDic.fname)
-            call PrintMsg("file", "map ".indexInfo." ".titleInfo." ".posInfo)
+            let pickInfo = printf("pick: %-3d %-18s", infoDic.pick, cursorInfo)
+            let fileInfo = printf("title: %-30s file: %s", infoDic.title, infoDic.fname)
+            call PrintMsg("file", "map ".indexInfo." ".pickInfo." ".fileInfo)
         endif
         let homeIndex += 1
     endwhile
@@ -342,6 +345,7 @@ function! QuickCtrl(mode)
             call QuickCtrl("open")        
         endif
     elseif a:mode == "clear"
+        call QuickCtrl("save")
         call setqflist([], "r")
     elseif a:mode == "recover"
         silent! execute 'cc!'
@@ -791,7 +795,6 @@ function! CSFind(ccmd)
     "call QuickDumpInfo()
 
     call ToggleWindow("allclose")
-    call QuickCtrl("save")
     call QuickCtrl("clear")
 
     if a:ccmd == "fs"
