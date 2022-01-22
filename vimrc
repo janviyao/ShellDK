@@ -388,15 +388,7 @@ function! QuickCtrl(mode)
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
             call QuickSave(homeIndex)
-        else
-            let s:qfix_index_prev = s:qfix_index
-            let s:qfix_index = QuickFindSite(s:qfix_index, [s:qfix_index, s:qfix_index_prev]) 
-            let s:qfix_index_next = QuickFindSite(s:qfix_index, [s:qfix_index, s:qfix_index_prev])
-            
-            let s:qfix_pick = getqflist({'idx' : 0}).idx
-            let s:qfix_title = getqflist({'title' : 1}).title
-            let s:qfix_size = getqflist({'size' : 1}).size
-
+        else 
             call QuickSave(s:qfix_index)
         endif
     elseif a:mode == "load"
@@ -444,6 +436,14 @@ function! QuickCtrl(mode)
             return homeIndex
         else
             call QuickNeatShow()
+
+            let s:qfix_index_prev = s:qfix_index
+            let s:qfix_index = QuickFindSite(s:qfix_index, [s:qfix_index, s:qfix_index_prev]) 
+            let s:qfix_index_next = QuickFindSite(s:qfix_index, [s:qfix_index, s:qfix_index_prev])
+
+            let s:qfix_pick = getqflist({'idx' : 0}).idx
+            let s:qfix_title = getqflist({'title' : 1}).title
+            let s:qfix_size = getqflist({'size' : 1}).size
             return -1
         endif
     endif
@@ -817,7 +817,7 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
 
-    call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'})
+    call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'}) 
     call QuickCtrl("home")
     call QuickCtrl("open")
 endfunction
