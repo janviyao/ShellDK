@@ -86,6 +86,19 @@ function! QuickFormat(info)
     return newList
 endfunc
 
+function! QuickNeatShow()
+    let qflist = getqflist()
+    call sort(qflist, "QuickCompare")
+
+    call setqflist([], "r")
+    for item in qflist
+        let retCode = setqflist([item], 'a')
+        if retCode != 0
+            call PrintMsg("error", "item invalid: ".item)
+        endif
+    endfor
+endfunction
+
 function! QuickLoad(index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
     if filereadable(listFile) 
@@ -139,7 +152,7 @@ function! QuickLoad(index)
     return -1
 endfunction
 
-function! QuickUpdateList(index, qflist)
+function! QuickPersistList(index, qflist)
     if !empty(a:qflist)
         call sort(a:qflist, "QuickCompare")
 
@@ -187,7 +200,7 @@ function! QuickSave(index)
         call writefile([a:index], indexFile, 'b')
         call writefile([string(infoDic)], infoFile, 'b')
 
-        call QuickUpdateList(a:index, qflist)
+        call QuickPersistList(a:index, qflist)
         return 0
     endif
     return -1
@@ -422,11 +435,13 @@ function! QuickCtrl(mode)
     elseif a:mode == "home"
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
-            call QuickUpdateList(homeIndex, getqflist())
+            call QuickPersistList(homeIndex, getqflist())
             call QuickLoad(homeIndex)
             return homeIndex
+        else
+            call QuickNeatShow()
+            return -1
         endif
-        return -1
     endif
 
     return 0
