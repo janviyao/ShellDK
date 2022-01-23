@@ -101,6 +101,7 @@ function! QuickNeatShow()
 endfunction
 
 function! QuickLoad(index)
+    "call PrintMsg("file", "load index: ".a:index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
     if filereadable(listFile) 
         let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
@@ -215,6 +216,7 @@ function! QuickSave(index)
 endfunction
 
 function! QuickDelete(index)
+    "call PrintMsg("file", "delete index: ".a:index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
     if filereadable(listFile)
         call delete(listFile)
@@ -235,17 +237,32 @@ function! QuickDelete(index)
                 continue
             endif
 
+            let errHappen = 1
             let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
             if filereadable(infoFile)
                 let isWrite = 1
                 let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
                 if infoDic.index_next == index
                     let infoDic.index_next = index_next
+                    if infoDic.index == infoDic.index_next
+                        let errHappen = 0
+                        call PrintMsg("error", "quickfix index in confusion, please check vim.debug log")
+                        call PrintMsg("file", "index(".infoDic.index.") = index_next(".infoDic.index_next.")")
+                        call QuickDumpInfo()
+                        let infoDic.index_next = s:qfix_index_max 
+                    endif
                     let isWrite = 0
                 endif    
 
                 if infoDic.index_prev == index
                     let infoDic.index_prev = index_prev
+                    if infoDic.index == infoDic.index_prev
+                        let errHappen = 0
+                        call PrintMsg("error", "quickfix index in confusion, please check vim.debug log")
+                        call PrintMsg("file", "index(".infoDic.index.") = index_prev(".infoDic.index_prev.")")
+                        call QuickDumpInfo()
+                        let infoDic.index_prev = s:qfix_index_max 
+                    endif
                     let isWrite = 0
                 endif
 
@@ -255,58 +272,43 @@ function! QuickDelete(index)
             endif
 
             let homeIndex += 1
+            if errHappen == 0
+                call QuickDumpInfo()
+            endif
         endwhile
 
         let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
         call delete(infoFile)
         "call PrintMsg("file", "delete info: ".a:index)
     endif
-
+ 
     return 0
 endfunction
 
-function! QuickFindHome()
-    let homeIndex = 0
-    let newTitle = getqflist({'title' : 1}).title
-    while homeIndex < s:qfix_index_max
-        let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+function! QuickSeekIndex(mode, index)
+    let retIndex = -1
+    let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info*")
+    for infoFile in infoList
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-            if infoDic.title == newTitle 
-                "call PrintMsg("file", "home key: ".string(infoDic))
-                return homeIndex
-            endif    
+            if a:mode == "next"
+                if a:index == infoDic.index_next 
+                    let retIndex = infoDic.index
+                    break
+                endif
+            elseif a:mode == "prev"
+                if a:index == infoDic.index_prev
+                    let retIndex = infoDic.index
+                    break
+                endif
+            endif
         endif
-        let homeIndex += 1
-    endwhile
-    return -1
+    endfor
+    "call PrintMsg("file", "index: ".a:index." ".a:mode.": ".retIndex)
+    return retIndex
 endfunction
 
-function! QuickDumpInfo()
-    call PrintMsg("file", "")
-    let currIndex = printf("prev: %-2d index: %-2d next: %-2d", s:qfix_index_prev, s:qfix_index, s:qfix_index_next)
-    let currCursor = printf("cursor: %d/%d", line("."), col("."))
-    let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
-    let currFile = printf("title: %-30s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
-    call PrintMsg("file", "now ".currIndex." ".currPick. " ".currFile)
-
-    let homeIndex = 0
-    while homeIndex < s:qfix_index_max
-        let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
-        if filereadable(infoFile)
-            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-            let indexInfo = printf("prev: %-2d index: %-2d next: %-2d", infoDic.index_prev, infoDic.index, infoDic.index_next)
-            let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
-            let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
-            let fileInfo = printf("title: %-30s file: %s", infoDic.title, infoDic.fname)
-            call PrintMsg("file", "map ".indexInfo." ".pickInfo." ".fileInfo)
-        endif
-        let homeIndex += 1
-    endwhile
-    call PrintMsg("file", "")
-endfunction
-
-function! QuickFindSite(start, exclude)
+function! QuickNewIndex(start, exclude)
     let siteIndex = s:qfix_index_max
     let infoFile = GetVimDir(1,"quickfix").'/info'.a:start
     if filereadable(infoFile)
@@ -367,6 +369,47 @@ function! QuickFindSite(start, exclude)
     return siteIndex
 endfunction
 
+function! QuickFindHome()
+    let homeIndex = 0
+    let newTitle = getqflist({'title' : 1}).title
+    while homeIndex < s:qfix_index_max
+        let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+        if filereadable(infoFile)
+            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            if infoDic.title == newTitle 
+                "call PrintMsg("file", "home key: ".string(infoDic))
+                return homeIndex
+            endif    
+        endif
+        let homeIndex += 1
+    endwhile
+    return -1
+endfunction
+
+function! QuickDumpInfo()
+    call PrintMsg("file", "")
+    let currIndex = printf("prev: %-2d index: %-2d next: %-2d", s:qfix_index_prev, s:qfix_index, s:qfix_index_next)
+    let currCursor = printf("cursor: %d/%d", line("."), col("."))
+    let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
+    let currFile = printf("title: %-30s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
+    call PrintMsg("file", "now ".currIndex." ".currPick. " ".currFile)
+
+    let homeIndex = 0
+    while homeIndex < s:qfix_index_max
+        let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+        if filereadable(infoFile)
+            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            let indexInfo = printf("prev: %-2d index: %-2d next: %-2d", infoDic.index_prev, infoDic.index, infoDic.index_next)
+            let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
+            let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
+            let fileInfo = printf("title: %-30s file: %s", infoDic.title, infoDic.fname)
+            call PrintMsg("file", "map ".indexInfo." ".pickInfo." ".fileInfo)
+        endif
+        let homeIndex += 1
+    endwhile
+    call PrintMsg("file", "")
+endfunction
+
 function! QuickCtrl(mode)
     "call PrintMsg("file", "mode: ".a:mode)
     if a:mode == "open"
@@ -395,26 +438,20 @@ function! QuickCtrl(mode)
     elseif a:mode == "recover-next"
         "call QuickDumpInfo()
         call QuickCtrl("save")
-        let index_save = s:qfix_index_next
-        while index_save < s:qfix_index_max 
-            let retCode = QuickLoad(index_save)
-            if retCode == 0
-                return 0
-            endif
-            let index_save += 1
-        endwhile
+        let nextIndex = QuickSeekIndex("prev", s:qfix_index)
+        if nextIndex >= 0
+            call QuickLoad(nextIndex)
+            return 0
+        endif
         return -1
     elseif a:mode == "recover-prev"
         "call QuickDumpInfo()
         call QuickCtrl("save")
-        let index_save = s:qfix_index_prev
-        while index_save >= 0
-            let retCode = QuickLoad(index_save)
-            if retCode == 0
-                return 0
-            endif
-            let index_save -= 1
-        endwhile
+        let prevIndex = QuickSeekIndex("next", s:qfix_index)
+        if prevIndex >= 0
+            call QuickLoad(prevIndex)
+            return 0
+        endif
         return -1
     elseif a:mode == "next"
         silent! execute 'cn!'
@@ -464,8 +501,18 @@ function! QuickCtrl(mode)
             if retCode != 0
                 let retCode = QuickCtrl("recover-next") 
                 if retCode != 0
-                    let indexFile = GetVimDir(1,"quickfix").'/index'
-                    call delete(indexFile)
+                    let loadIndex = QuickSeekIndex("next", s:qfix_index_prev)
+                    if loadIndex >= 0
+                        call QuickLoad(loadIndex)
+                    else
+                        let loadIndex = QuickSeekIndex("prev", s:qfix_index_next)
+                        if loadIndex >= 0
+                            call QuickLoad(loadIndex)
+                        else
+                            call PrintMsg("error", "index: ".s:qfix_index." is bad")
+                            return -1
+                        endif
+                    endif
                 endif
             endif
         endif
@@ -481,8 +528,8 @@ function! QuickCtrl(mode)
             call QuickNeatShow()
 
             let s:qfix_index_prev = s:qfix_index
-            let s:qfix_index = QuickFindSite(s:qfix_index, [s:qfix_index, s:qfix_index_prev]) 
-            let s:qfix_index_next = QuickFindSite(s:qfix_index, [s:qfix_index, s:qfix_index_prev])
+            let s:qfix_index = QuickNewIndex(s:qfix_index, [s:qfix_index, s:qfix_index_prev]) 
+            let s:qfix_index_next = QuickNewIndex(s:qfix_index, [s:qfix_index, s:qfix_index_prev])
 
             let s:qfix_pick = getqflist({'idx' : 0}).idx
             let s:qfix_title = getqflist({'title' : 1}).title
