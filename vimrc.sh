@@ -94,8 +94,13 @@ function create_project
     rm -f tags
     rm -f cscope.*out
     rm -f ncscope.*
-
-    ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
+    
+    local extra_opt=$(ctags --help | grep '\-\-extra\=') 
+    if [ -n "${extra_opt}" ]; then
+        ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files
+    else
+        ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
+    fi
     cscope -ckbq -i cscope.files
     
     rm -f ncscope.*
