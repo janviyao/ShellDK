@@ -166,8 +166,13 @@ function! QuickPersistList(index, qflist)
             let item["filename"]=fname
             let item["bufnr"]=0
 
-            unlet item["end_lnum"]
-            unlet item["end_col"]
+            if has_key(item, "end_lnum")
+                unlet item["end_lnum"]
+            endif
+            if has_key(item, "end_col")
+                unlet item["end_col"]
+            endif
+
             call writefile([string(item)], listFile, 'a')
         endfor
         return 0
@@ -213,6 +218,7 @@ function! QuickDelete(index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
     if filereadable(listFile)
         call delete(listFile)
+        "call PrintMsg("file", "delete list: ".a:index)
     endif
     
     let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
@@ -253,6 +259,7 @@ function! QuickDelete(index)
 
         let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
         call delete(infoFile)
+        "call PrintMsg("file", "delete info: ".a:index)
     endif
 
     return 0
@@ -440,9 +447,9 @@ function! QuickCtrl(mode)
 
         "when quickfix load empty and then first save, var not exist
         if !exists("s:qfix_pick")
-            let s:qfix_index_prev = s:qfix_index_max - 1
-            let s:qfix_index = 0
-            let s:qfix_index_next = 1
+            let s:qfix_index_prev = s:qfix_index_max - 2
+            let s:qfix_index = s:qfix_index_max - 1
+            let s:qfix_index_next = 0
 
             let s:qfix_pick = 1
             let s:qfix_title = "!anon!" 
@@ -450,11 +457,9 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "delete"
         "call QuickDumpInfo()
-        call QuickCtrl("save")
-
         let retCode = QuickDelete(s:qfix_index)
         if retCode == 0
-            call QuickCtrl("clear") 
+            call setqflist([], "r")
             let retCode = QuickCtrl("recover-prev") 
             if retCode != 0
                 let retCode = QuickCtrl("recover-next") 
@@ -464,7 +469,9 @@ function! QuickCtrl(mode)
                 endif
             endif
         endif
+        "call QuickDumpInfo()
     elseif a:mode == "home"
+        "call QuickDumpInfo()
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
             call QuickPersistList(homeIndex, getqflist())
