@@ -215,8 +215,43 @@ function! QuickDelete(index)
         call delete(listFile)
     endif
     
-    let infoFile = GetVimDir(1,"quickfix").'/info'.s:qfix_index
+    let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
     if filereadable(infoFile)
+        let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+        let index_prev = infoDic.index_prev
+        let index = infoDic.index
+        let index_next = infoDic.index_next
+
+        let homeIndex = 0
+        while homeIndex < s:qfix_index_max
+            if homeIndex == a:index
+                let homeIndex += 1
+                continue
+            endif
+
+            let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+            if filereadable(infoFile)
+                let isWrite = 1
+                let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+                if infoDic.index_next == index
+                    let infoDic.index_next = index_next
+                    let isWrite = 0
+                endif    
+
+                if infoDic.index_prev == index
+                    let infoDic.index_prev = index_prev
+                    let isWrite = 0
+                endif
+
+                if isWrite == 0
+                    call writefile([string(infoDic)], infoFile, 'b')
+                endif
+            endif
+
+            let homeIndex += 1
+        endwhile
+
+        let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
         call delete(infoFile)
     endif
 
@@ -320,6 +355,7 @@ function! QuickFindSite(start, exclude)
         endif
     endif
 
+    call QuickDelete(siteIndex)
     "call PrintMsg("file", "site start: ".a:start." find: ".siteIndex)
     return siteIndex
 endfunction
