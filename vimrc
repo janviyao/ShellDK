@@ -285,7 +285,7 @@ function! QuickDelete(index)
     return 0
 endfunction
 
-function! QuickSeekIndex(mode, index)
+function! QuickInfoSeek(mode, index)
     let retIndex = -1
     let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info*")
     for infoFile in infoList
@@ -391,7 +391,7 @@ function! QuickDumpInfo()
     let currIndex = printf("prev: %-2d index: %-2d next: %-2d", s:qfix_index_prev, s:qfix_index, s:qfix_index_next)
     let currCursor = printf("cursor: %d/%d", line("."), col("."))
     let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
-    let currFile = printf("title: %-30s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
+    let currFile = printf("title: %-40s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
     call PrintMsg("file", "now ".currIndex." ".currPick. " ".currFile)
 
     let homeIndex = 0
@@ -402,7 +402,7 @@ function! QuickDumpInfo()
             let indexInfo = printf("prev: %-2d index: %-2d next: %-2d", infoDic.index_prev, infoDic.index, infoDic.index_next)
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
             let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
-            let fileInfo = printf("title: %-30s file: %s", infoDic.title, infoDic.fname)
+            let fileInfo = printf("title: %-40s file: %s", infoDic.title, infoDic.fname)
             call PrintMsg("file", "map ".indexInfo." ".pickInfo." ".fileInfo)
         endif
         let homeIndex += 1
@@ -438,7 +438,7 @@ function! QuickCtrl(mode)
     elseif a:mode == "recover-next"
         "call QuickDumpInfo()
         call QuickCtrl("save")
-        let nextIndex = QuickSeekIndex("prev", s:qfix_index)
+        let nextIndex = QuickInfoSeek("prev", s:qfix_index)
         if nextIndex >= 0
             call QuickLoad(nextIndex)
             return 0
@@ -447,7 +447,7 @@ function! QuickCtrl(mode)
     elseif a:mode == "recover-prev"
         "call QuickDumpInfo()
         call QuickCtrl("save")
-        let prevIndex = QuickSeekIndex("next", s:qfix_index)
+        let prevIndex = QuickInfoSeek("next", s:qfix_index)
         if prevIndex >= 0
             call QuickLoad(prevIndex)
             return 0
@@ -501,11 +501,11 @@ function! QuickCtrl(mode)
             if retCode != 0
                 let retCode = QuickCtrl("recover-next") 
                 if retCode != 0
-                    let loadIndex = QuickSeekIndex("next", s:qfix_index_prev)
+                    let loadIndex = QuickInfoSeek("next", s:qfix_index_prev)
                     if loadIndex >= 0
                         call QuickLoad(loadIndex)
                     else
-                        let loadIndex = QuickSeekIndex("prev", s:qfix_index_next)
+                        let loadIndex = QuickInfoSeek("prev", s:qfix_index_next)
                         if loadIndex >= 0
                             call QuickLoad(loadIndex)
                         else
