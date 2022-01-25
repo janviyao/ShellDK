@@ -10,6 +10,7 @@ if [ $UID -eq 0 ]; then
     eval "${CMD_STR}"
     exit $?
 fi
+echo_debug "sudo: ${CMD_STR}"
 
 . $MY_VIM_DIR/tools/password.sh
 

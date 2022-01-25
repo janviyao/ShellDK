@@ -465,11 +465,11 @@ function inst_deps()
             install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
             install_from_rpm "glibc-common-" true
 
-            echo "LANG=en_US.UTF-8" >> /etc/environment
-            echo "LC_ALL=" >> /etc/environment
-            localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null
+            ${SUDO} echo "LANG=en_US.UTF-8" \>\> /etc/environment
+            ${SUDO} echo "LC_ALL=" \>\> /etc/environment
+            ${SUDO} localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 \&\> /dev/null
         fi
-         
+
         ${SUDO} chmod 777 /etc/ld.so.conf
 
         ${SUDO} sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
@@ -492,6 +492,14 @@ function inst_deps()
 
 function inst_ctags()
 {
+    if access_ok "ctags";then
+        local version_cur=$(ctags --version | head -n 1 | grep -P "\d+\.\d+" -o)
+        local version_new=5.8
+        if version_ge ${version_cur} ${version_new}; then
+            return 0
+        fi     
+    fi
+
     cd ${ROOT_DIR}/deps
 
     bool_v "${NEED_NET}"
@@ -504,6 +512,14 @@ function inst_ctags()
 
 function inst_cscope()
 {
+    if access_ok "cscope";then
+        local version_cur=$(cscope --version | grep -P "\d+\.\d+" -o)
+        local version_new=15.9
+        if version_ge ${version_cur} ${version_new}; then
+            return 0
+        fi     
+    fi
+
     cd ${ROOT_DIR}/deps
 
     bool_v "${NEED_NET}"
@@ -516,6 +532,14 @@ function inst_cscope()
 
 function inst_vim()
 {
+    if access_ok "vim";then
+        local version_cur=$(vim --version | head -n 1 | grep -P "\d+\.\d+" -o)
+        local version_new=8.2
+        if version_ge ${version_cur} ${version_new}; then
+            return 0
+        fi     
+    fi
+
     cd ${ROOT_DIR}/deps
 
     bool_v "${NEED_NET}"
@@ -576,6 +600,14 @@ function inst_tig()
 
 function inst_astyle()
 {
+    if access_ok "astyle";then
+        local version_cur=$(astyle --version | grep -P "\d+\.\d+" -o)
+        local version_new=3.1
+        if version_ge ${version_cur} ${version_new}; then
+            return 0
+        fi     
+    fi
+
     cd ${ROOT_DIR}/deps
 
     bool_v "${NEED_NET}"
