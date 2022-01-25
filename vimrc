@@ -159,6 +159,8 @@ function! QuickLoad(index)
         "save the newest index
         let indexFile = GetVimDir(1,"quickfix").'/index'
         call writefile([s:qfix_index], indexFile, 'b')
+
+        call QuickDumpInfo()
         return 0
     endif
 
