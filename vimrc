@@ -2,6 +2,8 @@
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:my_vim_dir = expand('$MY_VIM_DIR')
+let g:print_log_enable = 0
+let g:qfix_dump_enable = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
@@ -12,7 +14,14 @@ function! PrintMsg(type, msg)
         echohl ErrorMsg
         echoerr a:msg
         echohl None
-    elseif a:type == "warn" 
+        return
+    endif 
+
+    if !exists("g:print_log_enable") || g:print_log_enable == 0
+        return
+    endif
+
+    if a:type == "warn" 
         echohl WarningMsg
         echomsg a:msg
         echohl None
@@ -35,7 +44,7 @@ function! GetResultIndex(cmd, substr)
     return idx
 endfunction
 
-let s:qfix_index_max = 50
+let s:qfix_index_max = 10
 function! QuickCompare(item1, item2)
     let fname1 = fnamemodify(bufname(a:item1.bufnr), ':p:.')
     let fname2 = fnamemodify(bufname(a:item2.bufnr), ':p:.')
@@ -101,7 +110,7 @@ function! QuickNeatShow()
 endfunction
 
 function! QuickLoad(index)
-    "call PrintMsg("file", "load index: ".a:index)
+    call PrintMsg("file", "load index: ".a:index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
     if filereadable(listFile) 
         let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
@@ -110,7 +119,7 @@ function! QuickLoad(index)
         else
             let infoDic = { "pick": 1, "title": "!anon!" } 
         endif
-        "call PrintMsg("file", "load key: ".string(infoDic))
+        call PrintMsg("file", "load key: ".string(infoDic))
 
         let s:qfix_pick = infoDic.pick
         let s:qfix_title = infoDic.title
@@ -120,7 +129,7 @@ function! QuickLoad(index)
             call PrintMsg("error", "load index not consistent: ".s:qfix_index." != ".a:index)
             call QuickDumpInfo()
         endif
-        let s:qfix_index_next = infoDic.index_next
+        let s:qfix_index_next = copy(infoDic.index_next)
 
         call setqflist([], "r")
         let qflist = readfile(listFile, "")
@@ -156,29 +165,75 @@ function! QuickLoad(index)
     return -1
 endfunction
 
-function! QuickPersistList(index, qflist)
-    if !empty(a:qflist)
-        call sort(a:qflist, "QuickCompare")
+function! QuickPersistInfo(index, key="", value="")
+    let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
 
-        let listFile = GetVimDir(1,"quickfix").'/list'.a:index
-        call writefile([], listFile, 'r')
-        for item in a:qflist
-            let fname=fnamemodify(bufname(item.bufnr), ':p:.') 
-            let item["filename"]=fname
-            let item["bufnr"]=0
-
-            if has_key(item, "end_lnum")
-                unlet item["end_lnum"]
+    let infoDic = {}
+    if strlen(a:key) == 0
+        let infoDic['time'] = localtime() 
+        let infoDic['index_prev'] = s:qfix_index_prev
+        let infoDic['index'] = s:qfix_index
+        let infoDic['index_next'] = s:qfix_index_next
+        let infoDic['pick'] = s:qfix_pick
+        let infoDic['size'] = s:qfix_size
+        let infoDic['title'] = s:qfix_title
+        let infoDic['fname'] = expand("%:p:.") 
+        let infoDic['fline'] = line(".")
+        let infoDic['fcol'] = col(".")
+    else
+        if filereadable(infoFile)
+            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            if strlen(a:value) <= 0
+                if a:key == "time"
+                    let infoDic['time'] = localtime() 
+                elseif a:key == "index_prev"
+                    let infoDic['index_prev'] = s:qfix_index_prev
+                elseif a:key == "index"
+                    let infoDic['index'] = s:qfix_index
+                elseif a:key == "index_next"
+                    let infoDic['index_next'] = s:qfix_index_next
+                elseif a:key == "pick"
+                    let infoDic['pick'] = s:qfix_pick
+                elseif a:key == "size"
+                    let infoDic['size'] = s:qfix_size
+                elseif a:key == "title"
+                    let infoDic['title'] = s:qfix_title
+                elseif a:key == "fname"
+                    let infoDic['fname'] = expand("%:p:.") 
+                elseif a:key == "fline"
+                    let infoDic['fline'] = line(".")
+                elseif a:key == "fcol"
+                    let infoDic['fcol'] = col(".")
+                endif
+            else
+                let infoDic[a:key] = eval(a:value) 
             endif
-            if has_key(item, "end_col")
-                unlet item["end_col"]
-            endif
-
-            call writefile([string(item)], listFile, 'a')
-        endfor
-        return 0
+        endif
     endif
-    return -1
+
+    call PrintMsg("file", "save info: ".string(infoDic))
+    call writefile([string(infoDic)], infoFile, 'b')
+endfunction
+
+function! QuickPersistList(index, qflist)
+    call sort(a:qflist, "QuickCompare")
+
+    let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+    call writefile([], listFile, 'r')
+    for item in a:qflist
+        let fname=fnamemodify(bufname(item.bufnr), ':p:.') 
+        let item["filename"]=fname
+        let item["bufnr"]=0
+
+        if has_key(item, "end_lnum")
+            unlet item["end_lnum"]
+        endif
+        if has_key(item, "end_col")
+            unlet item["end_col"]
+        endif
+
+        call writefile([string(item)], listFile, 'a')
+    endfor
 endfunction
 
 function! QuickSave(index)
@@ -191,25 +246,14 @@ function! QuickSave(index)
         endif
 
         let indexFile = GetVimDir(1,"quickfix").'/index'
-        let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
-
-        let infoDic = {}
-        let infoDic['time'] = localtime() 
-        let infoDic['index_prev'] = s:qfix_index_prev
-        let infoDic['index'] = s:qfix_index
-        let infoDic['index_next'] = s:qfix_index_next
-        let infoDic['pick'] = s:qfix_pick
-        let infoDic['size'] = s:qfix_size
-        let infoDic['title'] = s:qfix_title
-        let infoDic['fname'] = expand("%:p:.") 
-        let infoDic['fline'] = line(".")
-        let infoDic['fcol'] = col(".")
-        "call PrintMsg("file", "save key: ".string(infoDic))
-
         call writefile([a:index], indexFile, 'b')
-        call writefile([string(infoDic)], infoFile, 'b')
 
+        call QuickPersistInfo(a:index)
         call QuickPersistList(a:index, qflist)
+
+        if index(s:qfix_index_list, a:index) < 0 
+            call add(s:qfix_index_list, a:index)
+        endif
         return 0
     endif
     return -1
@@ -220,15 +264,20 @@ function! QuickDelete(index)
     let listFile = GetVimDir(1,"quickfix").'/list'.a:index
     if filereadable(listFile)
         call delete(listFile)
-        "call PrintMsg("file", "delete list: ".a:index)
+        call PrintMsg("file", "delete list: ".a:index)
     endif
     
     let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
     if filereadable(infoFile)
         let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
         let index_prev = infoDic.index_prev
-        let index = infoDic.index
         let index_next = infoDic.index_next
+
+        if infoDic.index != a:index 
+            call PrintMsg("error", "quickfix index in confusion, please check vim.debug log")
+            call PrintMsg("file", "index(".a:index.") != info index(".infoDic.index.")")
+            call QuickDumpInfo()
+        endif
 
         let homeIndex = 0
         while homeIndex < s:qfix_index_max
@@ -242,23 +291,28 @@ function! QuickDelete(index)
             if filereadable(infoFile)
                 let isWrite = 1
                 let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-                if infoDic.index_next == index
-                    let infoDic.index_next = index_next
-                    if infoDic.index == infoDic.index_next
+
+                let indexVal = index(infoDic.index_next, a:index)    
+                if indexVal >= 0 
+                    call remove(infoDic.index_next, indexVal)
+                    let infoDic.index_next += index_next
+
+                    let indexVal = index(infoDic.index_next, infoDic.index)    
+                    if indexVal >= 0 
                         let errHappen = 0
-                        call PrintMsg("error", "quickfix index in confusion, please check vim.debug log")
-                        call PrintMsg("file", "index(".infoDic.index.") = index_next(".infoDic.index_next.")")
+                        call PrintMsg("error", "info index and index_next in confusion, please check vim.debug log")
+                        call PrintMsg("file", "index(".infoDic.index.") in index_next(".string(infoDic.index_next).")")
                         call QuickDumpInfo()
-                        let infoDic.index_next = s:qfix_index_max 
+                        let infoDic.index_next = [s:qfix_index_max] 
                     endif
                     let isWrite = 0
                 endif    
 
-                if infoDic.index_prev == index
+                if infoDic.index_prev == a:index 
                     let infoDic.index_prev = index_prev
                     if infoDic.index == infoDic.index_prev
                         let errHappen = 0
-                        call PrintMsg("error", "quickfix index in confusion, please check vim.debug log")
+                        call PrintMsg("error", "info index and index_prev in confusion, please check vim.debug log")
                         call PrintMsg("file", "index(".infoDic.index.") = index_prev(".infoDic.index_prev.")")
                         call QuickDumpInfo()
                         let infoDic.index_prev = s:qfix_index_max 
@@ -279,9 +333,14 @@ function! QuickDelete(index)
 
         let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
         call delete(infoFile)
-        "call PrintMsg("file", "delete info: ".a:index)
+        call PrintMsg("file", "delete info: ".a:index)
     endif
- 
+    
+    let indexVal = index(s:qfix_index_list, a:index)
+    if indexVal >= 0 
+        call remove(s:qfix_index_list, indexVal)
+    endif
+
     return 0
 endfunction
 
@@ -292,31 +351,88 @@ function! QuickInfoSeek(mode, index)
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             if a:mode == "next"
-                if a:index == infoDic.index_next 
+                let indexVal = index(infoDic.index_next, a:index)    
+                if indexVal >= 0 
                     let retIndex = infoDic.index
                     break
                 endif
             elseif a:mode == "prev"
-                if a:index == infoDic.index_prev
+                if infoDic.index_prev == a:index 
                     let retIndex = infoDic.index
                     break
                 endif
             endif
         endif
     endfor
-    "call PrintMsg("file", "index: ".a:index." ".a:mode.": ".retIndex)
+    call PrintMsg("file", "info seek ".a:mode."=".a:index." return: ".retIndex)
+    return retIndex
+endfunction
+
+function! QuickFindOldest(indexList)
+    call PrintMsg("file", "find oldest from ".string(a:indexList))
+    let timeMin = localtime()
+    let retIndex = -1
+    let timeIndex = 0 
+    for timeIndex in a:indexList
+        let infoFile = GetVimDir(1,"quickfix").'/info'.timeIndex
+        if filereadable(infoFile)
+            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            if timeMin > infoDic.time 
+                let timeMin = infoDic.time
+                let retIndex = timeIndex
+            endif
+        endif
+    endfor
+
+    call PrintMsg("file", "find oldest: ".retIndex)
+    return retIndex
+endfunction
+
+function! QuickFindNewest(indexList)
+    call PrintMsg("file", "find newest from ".string(a:indexList))
+    let timeMax = 0 
+    let retIndex = -1
+    let timeIndex = 0 
+    for timeIndex in a:indexList
+        let infoFile = GetVimDir(1,"quickfix").'/info'.timeIndex
+        if filereadable(infoFile)
+            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            if timeMax < infoDic.time 
+                let timeMax = infoDic.time
+                let retIndex = timeIndex
+            endif
+        endif
+    endfor
+
+    call PrintMsg("file", "find newest: ".retIndex)
     return retIndex
 endfunction
 
 function! QuickNewIndex(start, exclude)
+    call PrintMsg("file", "new start: ".a:start." exclude: ".string(a:exclude))
     let siteIndex = s:qfix_index_max
     let infoFile = GetVimDir(1,"quickfix").'/info'.a:start
     if filereadable(infoFile)
         let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-        let siteIndex = infoDic.index_next
-        let infoFile = GetVimDir(1,"quickfix").'/info'.siteIndex
-        if filereadable(infoFile)
+        let indexList = copy(infoDic.index_next)
+        while len(indexList) > 0
+            let siteIndex = indexList[0] 
+            let infoFile = GetVimDir(1,"quickfix").'/info'.siteIndex
+            if filereadable(infoFile)
+                call remove(indexList, 0)
+            else
+                break
+            endif
+        endwhile 
+
+        if index(a:exclude, siteIndex) >= 0 
             let siteIndex = s:qfix_index_max
+        else
+            if len(indexList) == 0
+                let siteIndex = s:qfix_index_max
+            else
+                call PrintMsg("file", "new find: ".siteIndex." because info next")
+            endif
         endif
     endif
 
@@ -334,27 +450,21 @@ function! QuickNewIndex(start, exclude)
             endif
             let siteIndex += 1
         endwhile
+
+        if siteIndex != s:qfix_index_max 
+            call PrintMsg("file", "new find: ".siteIndex." because info file")
+        endif
     endif
 
     if siteIndex == s:qfix_index_max
-        let timeMin = localtime()
-        let timeIndex = 0 
-        while timeIndex < s:qfix_index_max
-            if index(a:exclude, timeIndex) >= 0 
-                let timeIndex += 1
-                continue
-            endif
+        let siteIndex = QuickFindOldest(s:qfix_index_list)
+        if siteIndex < 0
+            let siteIndex = s:qfix_index_max
+        endif
 
-            let infoFile = GetVimDir(1,"quickfix").'/info'.timeIndex
-            if filereadable(infoFile)
-                let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-                if timeMin > infoDic.time 
-                    let timeMin = infoDic.time
-                    let siteIndex = timeIndex
-                endif
-            endif
-            let timeIndex += 1
-        endwhile
+        if siteIndex != s:qfix_index_max 
+            call PrintMsg("file", "new find: ".siteIndex." because time oldest")
+        endif
     endif
     
     if siteIndex == s:qfix_index_max 
@@ -365,7 +475,6 @@ function! QuickNewIndex(start, exclude)
     endif
 
     call QuickDelete(siteIndex)
-    "call PrintMsg("file", "site start: ".a:start." find: ".siteIndex)
     return siteIndex
 endfunction
 
@@ -377,7 +486,7 @@ function! QuickFindHome()
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             if infoDic.title == newTitle 
-                "call PrintMsg("file", "home key: ".string(infoDic))
+                call PrintMsg("file", "find home: ".string(infoDic))
                 return homeIndex
             endif    
         endif
@@ -387,8 +496,12 @@ function! QuickFindHome()
 endfunction
 
 function! QuickDumpInfo()
+    if !exists("g:qfix_dump_enable") || g:qfix_dump_enable == 0
+        return
+    endif
+
     call PrintMsg("file", "")
-    let currIndex = printf("prev: %-2d index: %-2d next: %-2d", s:qfix_index_prev, s:qfix_index, s:qfix_index_next)
+    let currIndex = printf("prev: %-2d index: %-2d next: %-10s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
     let currCursor = printf("cursor: %d/%d", line("."), col("."))
     let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
     let currFile = printf("title: %-40s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
@@ -399,7 +512,7 @@ function! QuickDumpInfo()
         let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-            let indexInfo = printf("prev: %-2d index: %-2d next: %-2d", infoDic.index_prev, infoDic.index, infoDic.index_next)
+            let indexInfo = printf("prev: %-2d index: %-2d next: %-10s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
             let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
             let fileInfo = printf("title: %-40s file: %s", infoDic.title, infoDic.fname)
@@ -411,7 +524,7 @@ function! QuickDumpInfo()
 endfunction
 
 function! QuickCtrl(mode)
-    "call PrintMsg("file", "mode: ".a:mode)
+    call PrintMsg("file", "mode: ".a:mode)
     if a:mode == "open"
         let qflist = getqflist()
         if !empty(qflist)
@@ -436,7 +549,7 @@ function! QuickCtrl(mode)
     elseif a:mode == "recover"
         silent! execute 'cc!'
     elseif a:mode == "recover-next"
-        "call QuickDumpInfo()
+        call QuickDumpInfo()
         call QuickCtrl("save")
         let nextIndex = QuickInfoSeek("prev", s:qfix_index)
         if nextIndex >= 0
@@ -445,7 +558,7 @@ function! QuickCtrl(mode)
         endif
         return -1
     elseif a:mode == "recover-prev"
-        "call QuickDumpInfo()
+        call QuickDumpInfo()
         call QuickCtrl("save")
         let prevIndex = QuickInfoSeek("next", s:qfix_index)
         if prevIndex >= 0
@@ -463,7 +576,7 @@ function! QuickCtrl(mode)
         if empty(getqflist())
             return 0
         endif
-        "call QuickDumpInfo()
+        call QuickDumpInfo()
 
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
@@ -473,12 +586,25 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "load"
         if !exists("s:qfix_index")
+            "first load
             let indexFile = GetVimDir(1,"quickfix").'/index'
             if filereadable(indexFile)
                 let s:qfix_index = get(readfile(indexFile, 'b', 1), 0, '') 
             else
                 let s:qfix_index = 0
             endif
+
+            let s:qfix_index_list = []
+            let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info*")
+            for infoFile in infoList
+                if filereadable(infoFile)
+                    let indexVal = str2nr(matchstr(infoFile, '\v\d+$'))
+                    if index(s:qfix_index_list, indexVal) < 0 
+                        call add(s:qfix_index_list, indexVal)
+                    endif
+                endif
+            endfor
+            call PrintMsg("file", "load index list: ".string(s:qfix_index_list))
         endif
         call QuickLoad(s:qfix_index)
 
@@ -486,39 +612,75 @@ function! QuickCtrl(mode)
         if !exists("s:qfix_pick")
             let s:qfix_index_prev = s:qfix_index_max - 2
             let s:qfix_index = s:qfix_index_max - 1
-            let s:qfix_index_next = 0
+            let s:qfix_index_next = [0]
 
             let s:qfix_pick = 1
             let s:qfix_title = "!anon!" 
             let s:qfix_size = 0 
         endif
+        call QuickDumpInfo()
     elseif a:mode == "delete"
-        "call QuickDumpInfo()
+        call QuickDumpInfo()
         let retCode = QuickDelete(s:qfix_index)
         if retCode == 0
+            call QuickDumpInfo()
             call setqflist([], "r")
-            let retCode = QuickCtrl("recover-prev") 
-            if retCode != 0
-                let retCode = QuickCtrl("recover-next") 
-                if retCode != 0
+
+            let indexList = copy(s:qfix_index_next)
+            while len(indexList) > 0
+                let nextIndex = QuickFindNewest(indexList)
+                if nextIndex < 0
+                    call filter(indexList, 0)
+                    break
+                endif
+
+                let loadIndex = QuickInfoSeek("next", nextIndex)
+                if loadIndex < 0
+                    let index = index(indexList, nextIndex)    
+                    call remove(indexList, index)
+                else
+                    call QuickLoad(loadIndex)
+                    break
+                endif
+            endwhile
+
+            if len(indexList) == 0
+                let retCode = QuickInfoSeek("prev", s:qfix_index_prev)
+                if retCode < 0
                     let loadIndex = QuickInfoSeek("next", s:qfix_index_prev)
                     if loadIndex >= 0
                         call QuickLoad(loadIndex)
                     else
-                        let loadIndex = QuickInfoSeek("prev", s:qfix_index_next)
-                        if loadIndex >= 0
-                            call QuickLoad(loadIndex)
-                        else
+                        let indexList = copy(s:qfix_index_next)
+                        while len(indexList) > 0
+                            let oldest = QuickFindNewest(indexList)
+                            if oldest < 0
+                                call filter(indexList, 0)
+                                break
+                            endif
+
+                            let loadIndex = QuickInfoSeek("prev", oldest)
+                            if loadIndex >= 0
+                                call QuickLoad(loadIndex)
+                                break
+                            else
+                                let index = index(indexList, oldest)    
+                                call remove(indexList, index)
+                            endif
+                        endwhile
+
+                        if len(indexList) <= 0
                             call PrintMsg("error", "index: ".s:qfix_index." is bad")
                             return -1
+                        else
+                            return 0
                         endif
                     endif
                 endif
             endif
         endif
-        "call QuickDumpInfo()
     elseif a:mode == "home"
-        "call QuickDumpInfo()
+        call QuickDumpInfo()
         let homeIndex = QuickFindHome()
         if homeIndex >= 0
             call QuickPersistList(homeIndex, getqflist())
@@ -527,13 +689,24 @@ function! QuickCtrl(mode)
         else
             call QuickNeatShow()
 
-            let s:qfix_index_prev = s:qfix_index
-            let s:qfix_index = QuickNewIndex(s:qfix_index, [s:qfix_index, s:qfix_index_prev]) 
-            let s:qfix_index_next = QuickNewIndex(s:qfix_index, [s:qfix_index, s:qfix_index_prev])
+            let new_index_prev = s:qfix_index
+            let new_index = QuickNewIndex(s:qfix_index, [new_index_prev]) 
+            let new_index_next = [ QuickNewIndex(s:qfix_index, [new_index, new_index_prev]) ]
+
+            if index(s:qfix_index_next, new_index) < 0
+                call add(s:qfix_index_next, new_index)
+                call QuickPersistInfo(s:qfix_index, "index_next", string(s:qfix_index_next))
+            endif
+
+            let s:qfix_index_prev = new_index_prev
+            let s:qfix_index = new_index
+            let s:qfix_index_next = new_index_next
 
             let s:qfix_pick = getqflist({'idx' : 0}).idx
             let s:qfix_title = getqflist({'title' : 1}).title
             let s:qfix_size = getqflist({'size' : 1}).size
+
+            call QuickDumpInfo()
             return -1
         endif
     endif
@@ -881,9 +1054,7 @@ nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 "CS命令
 function! CSFind(ccmd)
     let csarg = expand('<cword>')
-    "call PrintMsg("file", "CSFind: ".csarg)
-    "call QuickDumpInfo()
-
+    call PrintMsg("file", "CSFind: ".csarg)
     call ToggleWindow("allclose")
     call QuickCtrl("clear")
 
