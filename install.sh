@@ -42,9 +42,9 @@ rpmTodo["/usr/libiconv/lib64/libiconv.so.2"]="libiconv-1"
 rpmTodo["/usr/libiconv/lib64/libiconv.so"]="libiconv-devel"
 rpmTodo["/usr/lib64/libpcre.so.1"]="pcre-8"
 rpmTodo["/usr/lib64/libpcre.so"]="pcre-devel"
-rpmTodo["/usr/lib64/libpcrecpp.so.0"]="pcre-cpp"
-rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16"
-rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32"
+#rpmTodo["/usr/lib64/libpcrecpp.so.0"]="pcre-cpp"
+#rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16"
+#rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32"
 rpmTodo["/usr/lib64/libncurses.so"]="ncurses-devel"
 rpmTodo["/usr/lib64/libncurses.so.6"]="ncurses-libs"
 rpmTodo["/usr/lib64/libz.so.1"]="zlib-1"
@@ -378,6 +378,41 @@ function version_le() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" 
 function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1"; }
 function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
 
+function update_check
+{
+    local local_cmd="$1"
+    local fname_reg="$2"
+
+    if access_ok "${local_cmd}";then
+        ${local_cmd} --version &> /tmp/${local_cmd}.ver
+        if [ $? -ne 0 ];then
+            return 1
+        fi
+
+        local version_cur=$(grep -P "\d+\.\d+" -o /tmp/${local_cmd}.ver | tail -n 1)
+        local local_dir=$(pwd)
+        cd ${ROOT_DIR}/deps
+
+        local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
+        for full_nm in ${file_list}    
+        do
+            local file_name=$(basename ${full_nm})
+            echo_debug "local version: ${version_cur}  install version: ${file_name}"
+
+            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
+            if version_lt ${version_cur} ${version_new}; then
+                cd ${local_dir}
+                return 0
+            fi
+        done
+
+        cd ${local_dir}
+        return 1
+    else
+        return 0
+    fi
+}
+
 function install_from_rpm
 {
     local rpmf="$1"
@@ -492,12 +527,8 @@ function inst_deps()
 
 function inst_ctags()
 {
-    if access_ok "ctags";then
-        local version_cur=$(ctags --version | head -n 1 | grep -P "\d+\.\d+" -o)
-        local version_new=5.8
-        if version_ge ${version_cur} ${version_new}; then
-            return 0
-        fi     
+    if ! update_check "ctags" "ctags-.*\.tar\.gz";then
+        return 0     
     fi
 
     cd ${ROOT_DIR}/deps
@@ -512,12 +543,8 @@ function inst_ctags()
 
 function inst_cscope()
 {
-    if access_ok "cscope";then
-        local version_cur=$(cscope --version | grep -P "\d+\.\d+" -o)
-        local version_new=15.9
-        if version_ge ${version_cur} ${version_new}; then
-            return 0
-        fi     
+    if ! update_check "cscope" "cscope-.*\.tar\.gz";then
+        return 0     
     fi
 
     cd ${ROOT_DIR}/deps
@@ -532,12 +559,8 @@ function inst_cscope()
 
 function inst_vim()
 {
-    if access_ok "vim";then
-        local version_cur=$(vim --version | head -n 1 | grep -P "\d+\.\d+" -o)
-        local version_new=8.2
-        if version_ge ${version_cur} ${version_new}; then
-            return 0
-        fi     
+    if ! update_check "vim" "vim-.*\.tar\.gz";then
+        return 0     
     fi
 
     cd ${ROOT_DIR}/deps
@@ -600,12 +623,8 @@ function inst_tig()
 
 function inst_astyle()
 {
-    if access_ok "astyle";then
-        local version_cur=$(astyle --version | grep -P "\d+\.\d+" -o)
-        local version_new=3.1
-        if version_ge ${version_cur} ${version_new}; then
-            return 0
-        fi     
+    if ! update_check "astyle" "astyle.*\.tar\.gz";then
+        return 0     
     fi
 
     cd ${ROOT_DIR}/deps
