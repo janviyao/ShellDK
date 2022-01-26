@@ -1136,19 +1136,19 @@ function! JumpFuncStart()
     let com_arg=code_word.'\s+%(\*?\s*'.code_word.')%(\s+'.gcc_attrs.')?,?'
 
     let one_arg='\s*%(%('.com_arg.')|%('.func_fptr.'))\s*'
-    let func_args='\s*\(%('.one_arg.line_end.')*\)\s*'
+    let func_args='\s*\(%(%(\s*void\s*)|%(%('.one_arg.line_end.')*))\)\s*'
 
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
-    call PrintMsg("file", "func_return: ".func_return)
-    call PrintMsg("file", "func_name: ".func_name)
-    call PrintMsg("file", "func_fptr: ".func_fptr)
-    call PrintMsg("file", "com_arg: ".com_arg)
-    call PrintMsg("file", "one_arg: ".one_arg)
-    call PrintMsg("file", "func_args: ".func_args)
-    call PrintMsg("file", "func_restrict: ".func_restrict)
-    call PrintMsg("file", "func_reg: ".func_reg)
+    "call PrintMsg("file", "func_return: ".func_return)
+    "call PrintMsg("file", "func_name: ".func_name)
+    "call PrintMsg("file", "func_fptr: ".func_fptr)
+    "call PrintMsg("file", "com_arg: ".com_arg)
+    "call PrintMsg("file", "one_arg: ".one_arg)
+    "call PrintMsg("file", "func_args: ".func_args)
+    "call PrintMsg("file", "func_restrict: ".func_restrict)
+    "call PrintMsg("file", "func_reg: ".func_reg)
 
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
