@@ -46,7 +46,7 @@ rpmTodo["/usr/lib64/libpcre.so"]="pcre-devel"
 #rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16"
 #rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32"
 rpmTodo["/usr/lib64/libncurses.so"]="ncurses-devel"
-rpmTodo["/usr/lib64/libncurses.so.6"]="ncurses-libs"
+rpmTodo["/usr/lib64/libncurses.so.5"]="ncurses-libs"
 rpmTodo["/usr/lib64/libz.so.1"]="zlib-1"
 rpmTodo["/usr/lib64/libz.so"]="zlib-devel"
 rpmTodo["m4"]="m4-"
@@ -55,7 +55,7 @@ rpmTodo["automake"]="automake-"
 rpmTodo["nc"]="nmap-ncat-"
 rpmTodo["ag"]="the_silver_searcher-"
 rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-"
-rpmTodo["/usr/share/doc/perl-Thread-Queue"]="perl-Thread-Queue-"
+rpmTodo["/usr/share/doc/perl-Thread-Queue-3.02"]="perl-Thread-Queue-"
 rpmTodo["locale"]="glibc-common-"
 #rpmTodo["/usr/lib/golang/api"]="golang-1"
 #rpmTodo["/usr/lib/golang/src"]="golang-src-"
@@ -70,22 +70,24 @@ funcMap["cscope"]="inst_cscope"
 funcMap["tig"]="inst_tig"
 funcMap["ack"]="inst_ack"
 funcMap["astyle"]="inst_astyle"
+funcMap["glibc2.18"]="inst_glibc"
 funcMap["deps"]="inst_deps"
 funcMap["install"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack"
 funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
 
-function inst_usage()
+function inst_usage
 {
     echo "=================== Usage ==================="
-    echo "install.sh -n true     @all installation packages from net"
-    echo "install.sh -o clean    @clean vim environment"
-    echo "install.sh -o env      @deploy vim's usage environment"
-    echo "install.sh -o vim      @install vim package"
-    echo "install.sh -o tig      @install tig package"
-    echo "install.sh -o astyle   @install astyle package"
-    echo "install.sh -o ack      @install ack package"
-    echo "install.sh -o all      @install all vim's package"
-    echo "install.sh -j num      @install with thread-num"
+    echo "install.sh -n true       @all installation packages from net"
+    echo "install.sh -o clean      @clean vim environment"
+    echo "install.sh -o env        @deploy vim's usage environment"
+    echo "install.sh -o vim        @install vim package"
+    echo "install.sh -o tig        @install tig package"
+    echo "install.sh -o astyle     @install astyle package"
+    echo "install.sh -o ack        @install ack package"
+    echo "install.sh -o glibc2.18  @install glibc2.18 package"
+    echo "install.sh -o all        @install all vim's package"
+    echo "install.sh -j num        @install with thread-num"
 
     echo ""
     echo "=================== Opers ==================="
@@ -205,7 +207,7 @@ function deploy_env
     echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
 }
 
-function update_env()
+function update_env
 {
     bool_v "${NEED_NET}"
     if [ $? -eq 0 ]; then
@@ -222,7 +224,7 @@ function update_env()
     fi
 }
 
-function clean_env()
+function clean_env
 {
     for linkf in ${!commandMap[@]};
     do
@@ -373,10 +375,33 @@ function install_from_make
     done
 }
 
-function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
-function version_le() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" == "$1"; }
-function version_lt() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" != "$1"; }
-function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
+function version_compare
+{
+    local ver1="$1"
+    local ver2="$2"
+
+    local list1=($(echo "${ver1}" | tr "." " "))
+    local list2=($(echo "${ver2}" | tr "." " "))
+    local count1=${#list1[@]}
+    local count2=${#list2[@]}
+
+    local min=${count1}
+    if [ ${count1} -gt ${count2} ];then
+        min=${count2}
+    elif [ ${count1} -lt ${count2} ];then
+        min=${count1}
+    fi
+
+    for ((idx=0; idx< ${min}; idx++))
+    do
+        if [ ${list1[${idx}]} -gt ${list2[${idx}]} ];then
+            return 1
+        elif [ ${list1[${idx}]} -lt ${list2[${idx}]} ];then
+            return 255
+        fi
+    done
+    return 0
+}
 
 function update_check
 {
@@ -389,7 +414,7 @@ function update_check
             return 1
         fi
 
-        local version_cur=$(grep -P "\d+\.\d+" -o /tmp/${local_cmd}.ver | tail -n 1)
+        local version_cur=$(grep -P "\d+\.\d+" -o /tmp/${local_cmd}.ver | head -n 1)
         local local_dir=$(pwd)
         cd ${ROOT_DIR}/deps
 
@@ -400,7 +425,8 @@ function update_check
             echo_debug "local version: ${version_cur}  install version: ${file_name}"
 
             local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
-            if version_lt ${version_cur} ${version_new}; then
+            version_compare ${version_cur} ${version_new}
+            if [ $? -eq 255 ]; then
                 cd ${local_dir}
                 return 0
             fi
@@ -416,7 +442,6 @@ function update_check
 function install_from_rpm
 {
     local rpmf="$1"
-    local force="${2:-false}"
 
     local rpm_file_list=`find . -name "${rpmf}*.rpm"`
     for rpm_file in ${rpm_file_list}    
@@ -426,30 +451,17 @@ function install_from_rpm
         local installed_list=`rpm -qa | grep -P "^${rpmf}" | tr "\n" " "`
         echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
 
-        local need_install=0
-        if [ -z "${installed_list}" ]; then
-            need_install=1    
+        ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
+        if [ $? -ne 0 ]; then
+            echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
+            exit -1
         else
-            local version_cur=`echo "${installed_list}" | tr " " "\n" | grep -P "\d+\.\d+\.?\d*" -o | sort -r | head -n 1`
-            local version_new=`echo "${rpm_file}" | grep -P "\d+\.\d+\.?\d*" -o | head -n 1`
-            if version_lt ${version_cur} ${version_new}; then
-                need_install=1    
-            fi
-        fi
-
-        if bool_v "${force}" || test ${need_install} -eq 1; then
-            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
-            if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
-                exit -1
-            else
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
-            fi
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
         fi
     done
 }
 
-function inst_deps()
+function inst_deps
 {     
     cd ${ROOT_DIR}/deps
     if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
@@ -492,19 +504,7 @@ function inst_deps()
             gcc ppid.c -o ppid
             mv -f ppid ${BIN_DIR}
         fi
-
-        local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
-        local version_new=2.18
-        if version_lt ${version_cur} ${version_new}; then
-            # Install glibc
-            install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
-            install_from_rpm "glibc-common-" true
-
-            ${SUDO} echo "LANG=en_US.UTF-8" \>\> /etc/environment
-            ${SUDO} echo "LC_ALL=" \>\> /etc/environment
-            ${SUDO} localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 \&\> /dev/null
-        fi
-
+ 
         ${SUDO} chmod 777 /etc/ld.so.conf
 
         ${SUDO} sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
@@ -525,7 +525,7 @@ function inst_deps()
     fi 
 }
 
-function inst_ctags()
+function inst_ctags
 {
     if ! update_check "ctags" "ctags-.*\.tar\.gz";then
         return 0     
@@ -541,7 +541,7 @@ function inst_ctags()
     fi
 }
 
-function inst_cscope()
+function inst_cscope
 {
     if ! update_check "cscope" "cscope-.*\.tar\.gz";then
         return 0     
@@ -557,7 +557,7 @@ function inst_cscope()
     fi
 }
 
-function inst_vim()
+function inst_vim
 {
     if ! update_check "vim" "vim-.*\.tar\.gz";then
         return 0     
@@ -609,7 +609,7 @@ function inst_vim()
     ${SUDO} ln -s /usr/bin/vim ${BIN_DIR}/vim
 }
 
-function inst_tig()
+function inst_tig
 {
     cd ${ROOT_DIR}/deps
 
@@ -621,7 +621,7 @@ function inst_tig()
     fi
 }
 
-function inst_astyle()
+function inst_astyle
 {
     if ! update_check "astyle" "astyle.*\.tar\.gz";then
         return 0     
@@ -652,7 +652,7 @@ function inst_astyle()
     rm -fr astyle*/
 }
 
-function inst_ack()
+function inst_ack
 {
     # install ack
     cd ${ROOT_DIR}/deps
@@ -666,6 +666,26 @@ function inst_ack()
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
         access_ok "ag" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
+    fi
+}
+
+function inst_glibc
+{
+    # install ack
+    cd ${ROOT_DIR}/deps
+
+    local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
+    local version_new=2.18
+
+    version_compare ${version_cur} ${version_new}
+    if [ $? -eq 255 ]; then
+        # Install glibc
+        install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
+        install_from_rpm "glibc-common-"
+
+        ${SUDO} echo "LANG=en_US.UTF-8" \>\> /etc/environment
+        ${SUDO} echo "LC_ALL=" \>\> /etc/environment
+        ${SUDO} localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 \&\> /dev/null
     fi
 }
 
