@@ -1832,12 +1832,18 @@ let g:tagbar_iconchars = ['▸', '▾']                         "折叠ICON
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "vim-scripts/a.vim"
 
-nnoremap <silent> <Leader>aa  :A<CR>                        "switches to the header file corresponding to the current file being edited
-nnoremap <silent> <Leader>an  :AN<CR>                       "cycles through matches
-nnoremap <silent> <Leader>at  :AT<CR>                       "new tab and switches
-nnoremap <silent> <Leader>af  :IH<CR>                       "switches to file under cursor
-nnoremap <silent> <Leader>afn :IHN<CR>                      "cycles through matches
-nnoremap <silent> <Leader>aft :IHT<CR>                      "new tab and switches
+"switches to the header file corresponding to the current file being edited
+nnoremap <silent> <Leader>aa  :A<CR>
+"cycles through matches
+nnoremap <silent> <Leader>an  :AN<CR> 
+"new tab and switches
+nnoremap <silent> <Leader>at  :AT<CR>
+"switches to file under cursor
+nnoremap <silent> <Leader>af  :IH<CR>
+"cycles through matches
+nnoremap <silent> <Leader>afn :IHN<CR>
+"new tab and switches
+nnoremap <silent> <Leader>aft :IHT<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动补全 插件
