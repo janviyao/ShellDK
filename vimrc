@@ -1122,8 +1122,8 @@ function! JumpFuncStart()
     " when \v, %(pattern) syntax
     let code_word='[a-zA-Z0-9_]+'
     let line_end='%(\s*\r?\n?\s*)'
-    let not_in_bracket='[^\;\+\-\!\/\(\)\{\}]'
-    let exclude_char='[^\:\;\+\-\!\/\(\)\{\}]'
+    let not_in_bracket='[^\s\r\n\+\-\!\/\(\)\{\},;]'
+    let exclude_char='[^\s\r\n\+\-\!\/\(\)\{\}\:,;]'
     let gcc_attrs='__attribute__.+'
 
     let func_return='\s*%(^%(\s*'.code_word.'\s*){0,2}'.exclude_char.'$'.line_end.')?\s*'
@@ -1132,19 +1132,23 @@ function! JumpFuncStart()
     let fptr_return='\s*%('.code_word.'\s*)+\s*'
     let fptr_name='\s*\(\s*\*\s*'.code_word.'\s*\)\s*'
     let fptr_args='\s*\(%('.not_in_bracket.'+,?)*\)\s*'
-    let func_fptr=fptr_return.fptr_name.fptr_args
+    let func_fptr=fptr_return.fptr_name.fptr_args.",?"
+    let com_arg=code_word.'\s+%(\*?\s*'.code_word.')%(\s+'.gcc_attrs.')?,?'
 
-    let one_arg='\s*%(%(%('.not_in_bracket.'+%('.gcc_attrs.')?)|%('.func_fptr.')),?)\s*'
+    let one_arg='\s*%(%('.com_arg.')|%('.func_fptr.'))\s*'
     let func_args='\s*\(%('.one_arg.line_end.')*\)\s*'
 
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
-    "call PrintMsg("file", "func_return: ".func_return)
-    "call PrintMsg("file", "func_name: ".func_name)
-    "call PrintMsg("file", "func_args: ".func_args)
-    "call PrintMsg("file", "func_restrict: ".func_restrict)
-    "call PrintMsg("file", "func_reg: ".func_reg)
+    call PrintMsg("file", "func_return: ".func_return)
+    call PrintMsg("file", "func_name: ".func_name)
+    call PrintMsg("file", "func_fptr: ".func_fptr)
+    call PrintMsg("file", "com_arg: ".com_arg)
+    call PrintMsg("file", "one_arg: ".one_arg)
+    call PrintMsg("file", "func_args: ".func_args)
+    call PrintMsg("file", "func_restrict: ".func_restrict)
+    call PrintMsg("file", "func_reg: ".func_reg)
 
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
