@@ -32,34 +32,34 @@ tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_
 tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
 tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
-rpmTodo["/usr/bin/python-config"]="python-devel"
-rpmTodo["/usr/lib64/libpython2.7.so.1.0"]="python-libs"
-rpmTodo["/usr/bin/python3-config"]="python3-devel"
-rpmTodo["/usr/lib64/libpython3.so"]="python3-libs-"
-rpmTodo["/usr/lib64/liblzma.so.5"]="xz-libs"
-rpmTodo["/usr/lib64/liblzma.so"]="xz-devel"
-rpmTodo["/usr/libiconv/lib64/libiconv.so.2"]="libiconv-1"
-rpmTodo["/usr/libiconv/lib64/libiconv.so"]="libiconv-devel"
-rpmTodo["/usr/lib64/libpcre.so.1"]="pcre-8"
-rpmTodo["/usr/lib64/libpcre.so"]="pcre-devel"
-#rpmTodo["/usr/lib64/libpcrecpp.so.0"]="pcre-cpp"
-#rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16"
-#rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32"
-rpmTodo["/usr/lib64/libncurses.so"]="ncurses-devel"
-rpmTodo["/usr/lib64/libncurses.so.5"]="ncurses-libs"
-rpmTodo["/usr/lib64/libz.so.1"]="zlib-1"
-rpmTodo["/usr/lib64/libz.so"]="zlib-devel"
-rpmTodo["m4"]="m4-"
-rpmTodo["autoconf"]="autoconf-"
-rpmTodo["automake"]="automake-"
-rpmTodo["nc"]="nmap-ncat-"
-rpmTodo["ag"]="the_silver_searcher-"
-rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-"
-rpmTodo["/usr/share/doc/perl-Thread-Queue-3.02"]="perl-Thread-Queue-"
-rpmTodo["locale"]="glibc-common-"
-#rpmTodo["/usr/lib/golang/api"]="golang-1"
-#rpmTodo["/usr/lib/golang/src"]="golang-src-"
-#rpmTodo["/usr/lib/golang/bin"]="golang-bin-"
+rpmTodo["/usr/bin/python-config"]="python-devel.+\.rpm"
+rpmTodo["/usr/lib64/libpython2.7.so.1.0"]="python-libs.+\.rpm"
+rpmTodo["/usr/bin/python3-config"]="python3-devel.+\.rpm"
+rpmTodo["/usr/lib64/libpython3.so"]="python3-libs-.+\.rpm"
+rpmTodo["/usr/lib64/liblzma.so.5"]="xz-libs.+\.rpm"
+rpmTodo["/usr/lib64/liblzma.so"]="xz-devel.+\.rpm"
+rpmTodo["/usr/libiconv/lib64/libiconv.so.2"]="libiconv-1.+\.rpm"
+rpmTodo["/usr/libiconv/lib64/libiconv.so"]="libiconv-devel.+\.rpm"
+rpmTodo["/usr/lib64/libpcre.so.1"]="pcre-8.+\.rpm"
+rpmTodo["/usr/lib64/libpcre.so"]="pcre-devel.+\.rpm"
+#rpmTodo["/usr/lib64/libpcrecpp.so.0"]="pcre-cpp.+\.rpm"
+#rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16.+\.rpm"
+#rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32.+\.rpm"
+rpmTodo["/usr/lib64/libncurses.so"]="ncurses-devel.+\.rpm"
+rpmTodo["/usr/lib64/libncurses.so.5"]="ncurses-libs.+\.rpm"
+rpmTodo["/usr/lib64/libz.so.1"]="zlib-1.+\.rpm"
+rpmTodo["/usr/lib64/libz.so"]="zlib-devel.+\.rpm"
+rpmTodo["m4"]="m4-.+\.rpm"
+rpmTodo["autoconf"]="autoconf-.+\.rpm"
+rpmTodo["automake"]="automake-.+\.rpm"
+rpmTodo["nc"]="nmap-ncat-.+\.rpm"
+rpmTodo["ag"]="the_silver_searcher-.+\.rpm"
+rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-.+\.rpm"
+rpmTodo["/usr/share/doc/perl-Thread-Queue-3.02"]="perl-Thread-Queue-.+\.rpm"
+rpmTodo["locale"]="glibc-common-.+\.rpm"
+#rpmTodo["/usr/lib/golang/api"]="golang-1.+\.rpm"
+#rpmTodo["/usr/lib/golang/src"]="golang-src-.+\.rpm"
+#rpmTodo["/usr/lib/golang/bin"]="golang-bin-.+\.rpm"
 
 funcMap["env"]="deploy_env"
 funcMap["update"]="update_env"
@@ -375,33 +375,9 @@ function install_from_make
     done
 }
 
-function version_compare
-{
-    local ver1="$1"
-    local ver2="$2"
-
-    local list1=($(echo "${ver1}" | tr "." " "))
-    local list2=($(echo "${ver2}" | tr "." " "))
-    local count1=${#list1[@]}
-    local count2=${#list2[@]}
-
-    local min=${count1}
-    if [ ${count1} -gt ${count2} ];then
-        min=${count2}
-    elif [ ${count1} -lt ${count2} ];then
-        min=${count1}
-    fi
-
-    for ((idx=0; idx< ${min}; idx++))
-    do
-        if [ ${list1[${idx}]} -gt ${list2[${idx}]} ];then
-            return 1
-        elif [ ${list1[${idx}]} -lt ${list2[${idx}]} ];then
-            return 255
-        fi
-    done
-    return 0
-}
+function version_gt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 1 ]; }
+function version_lt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 255 ]; }
+function version_eq() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 0 ]; }
 
 function update_check
 {
@@ -425,8 +401,7 @@ function update_check
             echo_debug "local version: ${version_cur}  install version: ${file_name}"
 
             local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
-            version_compare ${version_cur} ${version_new}
-            if [ $? -eq 255 ]; then
+            if version_lt ${version_cur} ${version_new}; then
                 cd ${local_dir}
                 return 0
             fi
@@ -441,22 +416,26 @@ function update_check
 
 function install_from_rpm
 {
-    local rpmf="$1"
+    local fname_reg="$1"
 
-    local rpm_file_list=`find . -name "${rpmf}*.rpm"`
-    for rpm_file in ${rpm_file_list}    
+    local rpm_pkg_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
+    for rpm_file in ${rpm_pkg_list}    
     do
         local rpm_file=`basename ${rpm_file}`
+        local rpm_file=$(match_trim_end "${rpm_file}" ".rpm")
 
-        local installed_list=`rpm -qa | grep -P "^${rpmf}" | tr "\n" " "`
+        local tmp_reg=$(match_trim_end "${fname_reg}" "\.rpm")
+        local installed_list=`rpm -qa | grep -P "^${tmp_reg}" | tr "\n" " "`
+
         echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
-
-        ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
-        if [ $? -ne 0 ]; then
-            echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
-            exit -1
-        else
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
+        if ! contain_string "${installed_list}" "${rpm_file}";then
+            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
+                exit -1
+            else
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
+            fi
         fi
     done
 }
@@ -677,11 +656,10 @@ function inst_glibc
     local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
     local version_new=2.18
 
-    version_compare ${version_cur} ${version_new}
-    if [ $? -eq 255 ]; then
+    if version_lt ${version_cur} ${version_new}; then
         # Install glibc
         install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
-        install_from_rpm "glibc-common-"
+        install_from_rpm "glibc-common-.+\.rpm"
 
         ${SUDO} echo "LANG=en_US.UTF-8" \>\> /etc/environment
         ${SUDO} echo "LC_ALL=" \>\> /etc/environment

@@ -75,7 +75,7 @@ function access_ok
 function file_name
 {
     local full_name="$0"
-    if [[ ${full_name} == "-bash" ]];then
+    if [[ ${full_name} == -bash ]];then
         echo "${full_name}"
     else
         local file_name="$(basename ${full_name})"
@@ -267,10 +267,10 @@ function match_trim_start
     fi
 
     if [[ ${subchar} == *\** ]];then
-        subchar="${subchar//*/\*}"
+        subchar="${subchar//\*/\\*}"
     fi
 
-    if [[ "$(start_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+    if [[ $(start_chars "${string}" ${sublen}) == ${subchar} ]]; then
         let sublen++
         local new="`echo "${string}" | cut -c ${sublen}-`" 
         echo "${new}"
@@ -292,10 +292,10 @@ function match_trim_end
     fi
 
     if [[ ${subchar} == *\** ]];then
-        subchar="${subchar//*/\*}"
+        subchar="${subchar//\*/\\*}"
     fi
 
-    if [[ "$(end_chars "${string}" ${sublen})"x == "${subchar}"x ]]; then
+    if [[ $(end_chars "${string}" ${sublen}) == ${subchar} ]]; then
         local diff=$((total-sublen))
         local new="`echo "${string}" | cut -c 1-${diff}`" 
         echo "${new}"
@@ -314,7 +314,7 @@ function contain_string
     fi
 
     if [[ ${substr} == *\** ]];then
-        substr="${substr//*/\*}"
+        substr="${substr//\*/\\*}"
     fi
 
     if [[ ${string} == *${substr}* ]];then
@@ -353,7 +353,7 @@ function ssh_address
 
     for addr in ${ssh_con}
     do
-        if [[ "${ssh_cli}" == "${addr}" ]];then
+        if [[ ${ssh_cli} == ${addr} ]];then
             continue
         fi
         echo "${addr}"
@@ -378,6 +378,33 @@ function cursor_pos
 
     global_set_var x_pos
     global_set_var y_pos
+}
+
+function array_cmp
+{
+    local array1=($1)
+    local array2=($2)
+
+    local count1=${#array1[@]}
+    local count2=${#array2[@]}
+
+    local min_cnt=${count1}
+    if [ ${min_cnt} -gt ${count2} ];then
+        min_cnt=${count2}
+    fi
+    
+    for ((idx=0; idx< ${min_cnt}; idx++))
+    do
+        local item1=${array1[${idx}]}
+        local item2=${array2[${idx}]}
+        
+        if [[ ${item1} > ${item2} ]];then
+            return 1
+        elif [[ ${item1} < ${item2} ]];then
+            return 255
+        fi
+    done
+    return 0
 }
 
 function print_backtrace
