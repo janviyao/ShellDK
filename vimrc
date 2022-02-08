@@ -1122,7 +1122,7 @@ function! JumpFuncStart()
     " when \v, %(pattern) syntax
     let code_word='[a-zA-Z0-9_]+'
     let line_end='%(\s*\r?\n?\s*)'
-    let not_in_bracket='[^\s\r\n\+\-\!\/\(\)\{\},;]'
+    let not_in_bracket='[^\r\n\+\-\!\/\(\)\{\},;]'
     let exclude_char='[^\s\r\n\+\-\!\/\(\)\{\}\:,;]'
     let gcc_attrs='__attribute__.+'
 
