@@ -1121,7 +1121,7 @@ function! JumpFuncStart()
     " use non-capturing groups with the \%(pattern\) syntax
     " when \v, %(pattern) syntax
     let code_word='[a-zA-Z0-9_]+'
-    let line_end='%(\s*\r?\n?\s*)'
+    let line_end='%(\r?\n?)?'
     let not_in_bracket='[^\r\n\+\-\!\/\(\)\{\},;]'
     let exclude_char='[^\s\r\n\+\-\!\/\(\)\{\}\:,;]'
     let gcc_attrs='__attribute__.+'
@@ -1133,7 +1133,7 @@ function! JumpFuncStart()
     let fptr_name='\s*\(\s*\*\s*'.code_word.'\s*\)\s*'
     let fptr_args='\s*\(%('.not_in_bracket.'+,?)*\)\s*'
     let func_fptr=fptr_return.fptr_name.fptr_args.",?"
-    let com_arg=code_word.'\s+%(\*?\s*'.code_word.')%(\s+'.gcc_attrs.')?,?'
+    let com_arg='%('.code_word.'\s+)+%(\*?\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
 
     let one_arg='\s*%(%('.com_arg.')|%('.func_fptr.'))\s*'
     let func_args='\s*\(%(%(\s*void\s*)|%(%('.one_arg.line_end.')*))\)\s*'
