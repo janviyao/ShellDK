@@ -2,8 +2,13 @@
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:my_vim_dir = expand('$MY_VIM_DIR')
+
+let g:log_file = "vim.debug"
 let g:print_log_enable = 0
-let g:qfix_dump_enable = 0
+let g:quickfix_dump_enable = 0
+
+let g:quickfix_module = "init"
+let g:quickfix_index_max = 50
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
@@ -30,7 +35,7 @@ function! PrintMsg(type, msg)
         echomsg a:msg
         echohl None
     elseif a:type == "file" 
-        redir! >> vim.debug
+        redir! >> vim.debug 
         silent! echo a:msg
         redir end
     else
@@ -44,8 +49,7 @@ function! GetResultIndex(cmd, substr)
     return idx
 endfunction
 
-let s:qfix_index_max = 10
-function! QuickCompare(item1, item2)
+function! CSFindQuickCompare(item1, item2)
     let fname1 = fnamemodify(bufname(a:item1.bufnr), ':p:.')
     let fname2 = fnamemodify(bufname(a:item2.bufnr), ':p:.')
 
@@ -82,7 +86,23 @@ function! QuickCompare(item1, item2)
     return 0
 endfunction
 
-function! QuickFormat(info)
+function! QuickNeatShow(module)
+    if a:module == "csfind"
+        let qflist = getqflist()
+        call sort(qflist, "CSFindQuickCompare")
+
+        call setqflist([], "r", {'items' : []})
+        for item in qflist
+            let retCode = setqflist([item], 'a')
+            if retCode != 0
+                call PrintMsg("error", a:module." item invalid: ".item)
+                call QuickDumpInfo(a:module)
+            endif
+        endfor
+    endif
+endfunction
+
+function! CSFindQuickfixFormat(info)
     "get information about a range of quickfix entries
     let items = getqflist({'id' : a:info.id, 'items' : 1}).items
     let newList = []
@@ -95,39 +115,25 @@ function! QuickFormat(info)
     return newList
 endfunc
 
-function! QuickNeatShow()
-    let qflist = getqflist()
-    call sort(qflist, "QuickCompare")
-
-    call setqflist([], "r", {'items' : []})
-    for item in qflist
-        let retCode = setqflist([item], 'a')
-        if retCode != 0
-            call PrintMsg("error", "item invalid: ".item)
-            call QuickDumpInfo()
-        endif
-    endfor
-endfunction
-
-function! QuickLoad(index)
-    call PrintMsg("file", "load index: ".a:index)
-    let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+function! QuickLoad(module, index)
+    call PrintMsg("file", a:module." load index: ".a:index)
+    let listFile = GetVimDir(1,"quickfix").'/list.'.a:module.".".a:index
     if filereadable(listFile) 
-        let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:index
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
         else
             let infoDic = { "pick": 1, "title": "!anon!" } 
         endif
-        call PrintMsg("file", "load key: ".string(infoDic))
+        call PrintMsg("file", a:module." load key: ".string(infoDic))
 
         let s:qfix_pick = infoDic.pick
         let s:qfix_title = infoDic.title
         let s:qfix_index_prev = infoDic.index_prev
         let s:qfix_index = infoDic.index
         if s:qfix_index != a:index
-            call PrintMsg("error", "load index not consistent: ".s:qfix_index." != ".a:index)
-            call QuickDumpInfo()
+            call PrintMsg("error", a:module." load index not consistent: ".s:qfix_index." != ".a:index)
+            call QuickDumpInfo(a:module)
         endif
         let s:qfix_index_next = copy(infoDic.index_next)
 
@@ -137,12 +143,16 @@ function! QuickLoad(index)
             let dicTmp = eval(item)
             let retCode = setqflist([dicTmp], 'a')
             if retCode != 0
-                call PrintMsg("error", "item invalid: ".item)
-                call QuickDumpInfo()
+                call PrintMsg("error", a:module." item invalid: ".item)
+                call QuickDumpInfo(a:module)
             endif
         endfor
 
-        call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'})
+        if a:module == "csfind"
+            call setqflist([], 'a', {'quickfixtextfunc' : 'CSFindQuickfixFormat'})
+        elseif a:module == "grep"
+            call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'})
+        endif
         call setqflist([], 'a', {'idx' : s:qfix_pick})
         call setqflist([], 'a', {'title' : s:qfix_title})
 
@@ -157,18 +167,18 @@ function! QuickLoad(index)
         call cursor(infoDic.fline, infoDic.fcol)
 
         "save the newest index
-        let indexFile = GetVimDir(1,"quickfix").'/index'
+        let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
         call writefile([s:qfix_index], indexFile, 'b')
 
-        call QuickDumpInfo()
+        call QuickDumpInfo(a:module)
         return 0
     endif
 
     return -1
 endfunction
 
-function! QuickPersistInfo(index, key="", value="")
-    let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
+function! QuickPersistInfo(module, index, key="", value="")
+    let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:index
 
     let infoDic = {}
     if strlen(a:key) == 0
@@ -213,14 +223,16 @@ function! QuickPersistInfo(index, key="", value="")
         endif
     endif
 
-    call PrintMsg("file", "save info: ".string(infoDic))
+    call PrintMsg("file", a:module." save info: ".string(infoDic))
     call writefile([string(infoDic)], infoFile, 'b')
 endfunction
 
-function! QuickPersistList(index, qflist)
-    call sort(a:qflist, "QuickCompare")
+function! QuickPersistList(module, index, qflist)
+    if a:module == "csfind"
+        call sort(a:qflist, "CSFindQuickCompare")
+    endif
 
-    let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+    let listFile = GetVimDir(1,"quickfix").'/list.'.a:module.".".a:index
     call writefile([], listFile, 'r')
     for item in a:qflist
         let fname=fnamemodify(bufname(item.bufnr), ':p:.') 
@@ -238,20 +250,20 @@ function! QuickPersistList(index, qflist)
     endfor
 endfunction
 
-function! QuickSave(index)
+function! QuickSave(module, index)
     let qflist = getqflist()
     if !empty(qflist)
         if s:qfix_index != a:index
-            call PrintMsg("error", "save index not consistent: ".s:qfix_index." != ".a:index)
-            call QuickDumpInfo()
-            call QuickLoad(a:index)
+            call PrintMsg("error", a:module." save index not consistent: ".s:qfix_index." != ".a:index)
+            call QuickDumpInfo(a:module)
+            call QuickLoad(a:module, a:index)
         endif
 
-        let indexFile = GetVimDir(1,"quickfix").'/index'
+        let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
         call writefile([a:index], indexFile, 'b')
 
-        call QuickPersistInfo(a:index)
-        call QuickPersistList(a:index, qflist)
+        call QuickPersistInfo(a:module, a:index)
+        call QuickPersistList(a:module, a:index, qflist)
 
         if index(s:qfix_index_list, a:index) < 0 
             call add(s:qfix_index_list, a:index)
@@ -261,35 +273,35 @@ function! QuickSave(index)
     return -1
 endfunction
 
-function! QuickDelete(index)
-    "call PrintMsg("file", "delete index: ".a:index)
-    let listFile = GetVimDir(1,"quickfix").'/list'.a:index
+function! QuickDelete(module, index)
+    call PrintMsg("file", a:module." delete index: ".a:index)
+    let listFile = GetVimDir(1,"quickfix").'/list.'.a:module.".".a:index
     if filereadable(listFile)
         call delete(listFile)
-        call PrintMsg("file", "delete list: ".a:index)
+        call PrintMsg("file", a:module." delete success: list".a:index)
     endif
-    
-    let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
+
+    let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:index
     if filereadable(infoFile)
         let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
         let index_prev = infoDic.index_prev
         let index_next = infoDic.index_next
 
         if infoDic.index != a:index 
-            call PrintMsg("error", "quickfix index in confusion, please check vim.debug log")
-            call PrintMsg("file", "index(".a:index.") != info index(".infoDic.index.")")
-            call QuickDumpInfo()
+            call PrintMsg("error", a:module." quickfix index in confusion, please check ".g:log_file." log")
+            call PrintMsg("file", a:module." index(".a:index.") != info index(".infoDic.index.")")
+            call QuickDumpInfo(a:module)
         endif
 
         let homeIndex = 0
-        while homeIndex < s:qfix_index_max
+        while homeIndex < g:quickfix_index_max
             if homeIndex == a:index
                 let homeIndex += 1
                 continue
             endif
 
             let errHappen = 1
-            let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+            let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
             if filereadable(infoFile)
                 let isWrite = 1
                 let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
@@ -302,10 +314,10 @@ function! QuickDelete(index)
                     let indexVal = index(infoDic.index_next, infoDic.index)    
                     if indexVal >= 0 
                         let errHappen = 0
-                        call PrintMsg("error", "info index and index_next in confusion, please check vim.debug log")
-                        call PrintMsg("file", "index(".infoDic.index.") in index_next(".string(infoDic.index_next).")")
-                        call QuickDumpInfo()
-                        let infoDic.index_next = [s:qfix_index_max] 
+                        call PrintMsg("error", a:module." info index and index_next in confusion, please check ".g:log_file." log")
+                        call PrintMsg("file", a:module." index(".infoDic.index.") in index_next(".string(infoDic.index_next).")")
+                        call QuickDumpInfo(a:module)
+                        let infoDic.index_next = [g:quickfix_index_max] 
                     endif
                     let isWrite = 0
                 endif    
@@ -314,10 +326,10 @@ function! QuickDelete(index)
                     let infoDic.index_prev = index_prev
                     if infoDic.index == infoDic.index_prev
                         let errHappen = 0
-                        call PrintMsg("error", "info index and index_prev in confusion, please check vim.debug log")
-                        call PrintMsg("file", "index(".infoDic.index.") = index_prev(".infoDic.index_prev.")")
-                        call QuickDumpInfo()
-                        let infoDic.index_prev = s:qfix_index_max 
+                        call PrintMsg("error", a:module." info index and index_prev in confusion, please check ".g:log_file." log")
+                        call PrintMsg("file", a:module." index(".infoDic.index.") = index_prev(".infoDic.index_prev.")")
+                        call QuickDumpInfo(a:module)
+                        let infoDic.index_prev = g:quickfix_index_max 
                     endif
                     let isWrite = 0
                 endif
@@ -329,54 +341,81 @@ function! QuickDelete(index)
 
             let homeIndex += 1
             if errHappen == 0
-                call QuickDumpInfo()
+                call QuickDumpInfo(a:module)
             endif
         endwhile
 
-        let infoFile = GetVimDir(1,"quickfix").'/info'.a:index
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:index
         call delete(infoFile)
-        call PrintMsg("file", "delete info: ".a:index)
+        call PrintMsg("file", a:module." delete success: info".a:index)
     endif
-    
+
     let indexVal = index(s:qfix_index_list, a:index)
     if indexVal >= 0 
         call remove(s:qfix_index_list, indexVal)
     endif
-
+ 
     return 0
 endfunction
 
-function! QuickInfoSeek(mode, index)
+function! QuickGetIndex(module, mode, index)
+    let retIndex = []
+    let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:index
+    if filereadable(infoFile)
+        let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+
+        if a:mode == "index"
+            call add(retIndex, infoDic.index)
+        elseif a:mode == "index_next"
+            call extend(retIndex, infoDic.index_next)
+        elseif a:mode == "index_prev"
+            call add(retIndex, infoDic.index_prev)
+        endif
+    endif
+
+    call PrintMsg("file", a:module." get from info.".a:index." mode: ".a:mode." return: ".string(retIndex))
+    return retIndex
+endfunction
+
+function! QuickInfoSeek(module, mode, index)
     let retIndex = -1
-    let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info*")
+    let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info.".a:module.".*")
     for infoFile in infoList
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-            if a:mode == "next"
+            call PrintMsg("file", a:module." seek: ".string(infoDic))
+
+            if a:mode == "index"
+                if infoDic.index == a:index 
+                    let retIndex = infoDic.index
+                    break
+                endif
+            elseif a:mode == "index_next"
                 let indexVal = index(infoDic.index_next, a:index)    
                 if indexVal >= 0 
                     let retIndex = infoDic.index
                     break
                 endif
-            elseif a:mode == "prev"
+            elseif a:mode == "index_prev"
                 if infoDic.index_prev == a:index 
                     let retIndex = infoDic.index
                     break
-                endif
+                endif 
             endif
         endif
     endfor
-    call PrintMsg("file", "info seek ".a:mode."=".a:index." return: ".retIndex)
+
+    call PrintMsg("file", a:module." seek from info.".a:index." mode: ".a:mode." return: ".retIndex)
     return retIndex
 endfunction
 
-function! QuickFindOldest(indexList)
-    call PrintMsg("file", "find oldest from ".string(a:indexList))
+function! QuickFindOldest(module, indexList)
+    call PrintMsg("file", a:module." find oldest from ".string(a:indexList))
     let timeMin = localtime()
     let retIndex = -1
     let timeIndex = 0 
     for timeIndex in a:indexList
-        let infoFile = GetVimDir(1,"quickfix").'/info'.timeIndex
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".timeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             if timeMin > infoDic.time 
@@ -386,17 +425,18 @@ function! QuickFindOldest(indexList)
         endif
     endfor
 
-    call PrintMsg("file", "find oldest: ".retIndex)
+    call PrintMsg("file", a:module." find oldest: ".retIndex)
     return retIndex
 endfunction
 
-function! QuickFindNewest(indexList)
-    call PrintMsg("file", "find newest from ".string(a:indexList))
+function! QuickFindNewest(module, indexList)
+    call PrintMsg("file", a:module." find newest from ".string(a:indexList))
+
     let timeMax = 0 
     let retIndex = -1
     let timeIndex = 0 
     for timeIndex in a:indexList
-        let infoFile = GetVimDir(1,"quickfix").'/info'.timeIndex
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".timeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             if timeMax < infoDic.time 
@@ -406,20 +446,20 @@ function! QuickFindNewest(indexList)
         endif
     endfor
 
-    call PrintMsg("file", "find newest: ".retIndex)
+    call PrintMsg("file", a:module." find newest: ".retIndex)
     return retIndex
 endfunction
 
-function! QuickNewIndex(start, exclude)
-    call PrintMsg("file", "new start: ".a:start." exclude: ".string(a:exclude))
-    let siteIndex = s:qfix_index_max
-    let infoFile = GetVimDir(1,"quickfix").'/info'.a:start
+function! QuickNewIndex(module, start, exclude)
+    call PrintMsg("file", a:module." new start: ".a:start." exclude: ".string(a:exclude))
+    let siteIndex = g:quickfix_index_max
+    let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:start
     if filereadable(infoFile)
         let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
         let indexList = copy(infoDic.index_next)
         while len(indexList) > 0
             let siteIndex = indexList[0] 
-            let infoFile = GetVimDir(1,"quickfix").'/info'.siteIndex
+            let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".siteIndex
             if filereadable(infoFile)
                 call remove(indexList, 0)
             else
@@ -428,67 +468,67 @@ function! QuickNewIndex(start, exclude)
         endwhile 
 
         if index(a:exclude, siteIndex) >= 0 
-            let siteIndex = s:qfix_index_max
+            let siteIndex = g:quickfix_index_max
         else
             if len(indexList) == 0
-                let siteIndex = s:qfix_index_max
+                let siteIndex = g:quickfix_index_max
             else
-                call PrintMsg("file", "new find: ".siteIndex." because info next")
+                call PrintMsg("file", a:module." new find: ".siteIndex." because info next")
             endif
         endif
     endif
 
-    if siteIndex == s:qfix_index_max
+    if siteIndex == g:quickfix_index_max
         let siteIndex = 0
-        while siteIndex < s:qfix_index_max
+        while siteIndex < g:quickfix_index_max
             if index(a:exclude, siteIndex) >= 0 
                 let siteIndex += 1
                 continue
             endif
 
-            let infoFile = GetVimDir(1,"quickfix").'/info'.siteIndex
+            let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".siteIndex
             if !filereadable(infoFile)
                 break
             endif
             let siteIndex += 1
         endwhile
 
-        if siteIndex != s:qfix_index_max 
-            call PrintMsg("file", "new find: ".siteIndex." because info file")
+        if siteIndex != g:quickfix_index_max 
+            call PrintMsg("file", a:module." new find: ".siteIndex." because info file")
         endif
     endif
 
-    if siteIndex == s:qfix_index_max
-        let siteIndex = QuickFindOldest(s:qfix_index_list)
+    if siteIndex == g:quickfix_index_max
+        let siteIndex = QuickFindOldest(a:module, s:qfix_index_list)
         if siteIndex < 0
-            let siteIndex = s:qfix_index_max
+            let siteIndex = g:quickfix_index_max
         endif
 
-        if siteIndex != s:qfix_index_max 
-            call PrintMsg("file", "new find: ".siteIndex." because time oldest")
+        if siteIndex != g:quickfix_index_max 
+            call PrintMsg("file", a:module." new find: ".siteIndex." because time oldest")
         endif
     endif
-    
-    if siteIndex == s:qfix_index_max 
+
+    if siteIndex == g:quickfix_index_max 
         let siteIndex = a:start + 1
-        if siteIndex == s:qfix_index_max
+        if siteIndex == g:quickfix_index_max
             let siteIndex = 0 
         endif
     endif
 
-    call QuickDelete(siteIndex)
+    call QuickDelete(a:module, siteIndex)
     return siteIndex
 endfunction
 
-function! QuickFindHome()
+function! QuickFindHome(module)
     let homeIndex = 0
     let newTitle = getqflist({'title' : 1}).title
-    while homeIndex < s:qfix_index_max
-        let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+    while homeIndex < g:quickfix_index_max
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             if infoDic.title == newTitle 
-                call PrintMsg("file", "find home: ".string(infoDic))
+                call PrintMsg("file", a:module." find home: ".string(infoDic))
                 return homeIndex
             endif    
         endif
@@ -497,8 +537,8 @@ function! QuickFindHome()
     return -1
 endfunction
 
-function! QuickDumpInfo()
-    if !exists("g:qfix_dump_enable") || g:qfix_dump_enable == 0
+function! QuickDumpInfo(module)
+    if !exists("g:quickfix_dump_enable") || g:quickfix_dump_enable == 0
         return
     endif
 
@@ -510,8 +550,8 @@ function! QuickDumpInfo()
     call PrintMsg("file", "now ".currIndex." ".currPick. " ".currFile)
 
     let homeIndex = 0
-    while homeIndex < s:qfix_index_max
-        let infoFile = GetVimDir(1,"quickfix").'/info'.homeIndex
+    while homeIndex < g:quickfix_index_max
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             let indexInfo = printf("prev: %-2d index: %-2d next: %-10s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
@@ -525,8 +565,8 @@ function! QuickDumpInfo()
     call PrintMsg("file", "")
 endfunction
 
-function! QuickCtrl(mode)
-    call PrintMsg("file", "mode: ".a:mode)
+function! QuickCtrl(module, mode)
+    call PrintMsg("file", a:module." mode: ".a:mode)
     if a:mode == "open"
         let qflist = getqflist()
         if !empty(qflist)
@@ -541,30 +581,30 @@ function! QuickCtrl(mode)
         endif
     elseif a:mode == "toggle"
         if exists("s:qfix_opened")
-            call QuickCtrl("close")        
+            call QuickCtrl(a:module, "close")        
         else
-            call QuickCtrl("open")        
+            call QuickCtrl(a:module, "open")        
         endif
     elseif a:mode == "clear"
-        call QuickCtrl("save")
+        call QuickCtrl(a:module, "save")
         call setqflist([], "r")
     elseif a:mode == "recover"
         silent! execute 'cc!'
     elseif a:mode == "recover-next"
-        call QuickDumpInfo()
-        call QuickCtrl("save")
-        let nextIndex = QuickInfoSeek("prev", s:qfix_index)
+        call QuickDumpInfo(a:module)
+        call QuickCtrl(a:module, "save")
+        let nextIndex = QuickInfoSeek(a:module, "index_prev", s:qfix_index)
         if nextIndex >= 0
-            call QuickLoad(nextIndex)
+            call QuickLoad(a:module, nextIndex)
             return 0
         endif
         return -1
     elseif a:mode == "recover-prev"
-        call QuickDumpInfo()
-        call QuickCtrl("save")
-        let prevIndex = QuickInfoSeek("next", s:qfix_index)
+        call QuickDumpInfo(a:module)
+        call QuickCtrl(a:module, "save")
+        let prevIndex = QuickInfoSeek(a:module, "index_next", s:qfix_index)
         if prevIndex >= 0
-            call QuickLoad(prevIndex)
+            call QuickLoad(a:module, prevIndex)
             return 0
         endif
         return -1
@@ -578,18 +618,18 @@ function! QuickCtrl(mode)
         if empty(getqflist())
             return 0
         endif
-        call QuickDumpInfo()
+        call QuickDumpInfo(a:module)
 
-        let homeIndex = QuickFindHome()
+        let homeIndex = QuickFindHome(a:module)
         if homeIndex >= 0
-            call QuickSave(homeIndex)
+            call QuickSave(a:module, homeIndex)
         else 
-            call QuickSave(s:qfix_index)
+            call QuickSave(a:module, s:qfix_index)
         endif
     elseif a:mode == "load"
         if !exists("s:qfix_index")
             "first load
-            let indexFile = GetVimDir(1,"quickfix").'/index'
+            let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
             if filereadable(indexFile)
                 let s:qfix_index = get(readfile(indexFile, 'b', 1), 0, '') 
             else
@@ -597,7 +637,7 @@ function! QuickCtrl(mode)
             endif
 
             let s:qfix_index_list = []
-            let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info*")
+            let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info.".a:module.".*")
             for infoFile in infoList
                 if filereadable(infoFile)
                     let indexVal = str2nr(matchstr(infoFile, '\v\d+$'))
@@ -606,98 +646,142 @@ function! QuickCtrl(mode)
                     endif
                 endif
             endfor
-            call PrintMsg("file", "load index list: ".string(s:qfix_index_list))
+            call PrintMsg("file", a:module." load index list: ".string(s:qfix_index_list))
         endif
-        call QuickLoad(s:qfix_index)
+        call QuickLoad(a:module, s:qfix_index)
 
         "when quickfix load empty and then first save, var not exist
         if !exists("s:qfix_pick")
-            let s:qfix_index_prev = s:qfix_index_max - 2
-            let s:qfix_index = s:qfix_index_max - 1
+            let s:qfix_index_prev = g:quickfix_index_max - 2
+            let s:qfix_index = g:quickfix_index_max - 1
             let s:qfix_index_next = [0]
 
             let s:qfix_pick = 1
             let s:qfix_title = "!anon!" 
             let s:qfix_size = 0 
         endif
-        call QuickDumpInfo()
+        call QuickDumpInfo(a:module)
     elseif a:mode == "delete"
-        call QuickDumpInfo()
-        let retCode = QuickDelete(s:qfix_index)
+        call QuickDumpInfo(a:module)
+        let retCode = QuickDelete(a:module, s:qfix_index)
         if retCode == 0
-            call QuickDumpInfo()
+            call QuickDumpInfo(a:module)
             call setqflist([], "r")
 
-            let indexList = copy(s:qfix_index_next)
-            while len(indexList) > 0
-                let nextIndex = QuickFindNewest(indexList)
-                if nextIndex < 0
-                    call filter(indexList, 0)
-                    break
-                endif
+            let loadIndex = QuickInfoSeek(a:module, "index", s:qfix_index_prev)
+            if loadIndex >= 0
+                call QuickLoad(a:module, loadIndex)
+                return 0
+            else
+                let indexList = copy(s:qfix_index_next)
+                while len(indexList) > 0
+                    let nextIndex = QuickFindNewest(a:module, indexList)
+                    if nextIndex < 0
+                        call filter(indexList, 0)
+                        break
+                    endif
 
-                let loadIndex = QuickInfoSeek("next", nextIndex)
-                if loadIndex < 0
-                    let index = index(indexList, nextIndex)    
-                    call remove(indexList, index)
-                else
-                    call QuickLoad(loadIndex)
-                    break
-                endif
-            endwhile
-
-            if len(indexList) == 0
-                let retCode = QuickInfoSeek("prev", s:qfix_index_prev)
-                if retCode < 0
-                    let loadIndex = QuickInfoSeek("next", s:qfix_index_prev)
-                    if loadIndex >= 0
-                        call QuickLoad(loadIndex)
+                    let loadIndex = QuickInfoSeek(a:module, "index", nextIndex)
+                    if loadIndex < 0
+                        let index = index(indexList, nextIndex)    
+                        call remove(indexList, index)
                     else
-                        let indexList = copy(s:qfix_index_next)
-                        while len(indexList) > 0
-                            let oldest = QuickFindNewest(indexList)
-                            if oldest < 0
-                                call filter(indexList, 0)
-                                break
-                            endif
+                        call QuickLoad(a:module, loadIndex)
+                        return 0
+                    endif
+                endwhile
 
-                            let loadIndex = QuickInfoSeek("prev", oldest)
-                            if loadIndex >= 0
-                                call QuickLoad(loadIndex)
-                                break
-                            else
-                                let index = index(indexList, oldest)    
-                                call remove(indexList, index)
-                            endif
-                        endwhile
-
-                        if len(indexList) <= 0
-                            call PrintMsg("error", "index: ".s:qfix_index." is bad")
-                            return -1
-                        else
+                if len(indexList) == 0
+                    let arrIndex = QuickGetIndex(a:module, "index_prev", s:qfix_index_prev)
+                    while len(arrIndex) > 0
+                        let loadIndex = QuickGetIndex(a:module, "index", arrIndex[0])
+                        if len(loadIndex) > 0
+                            call QuickLoad(a:module, loadIndex[0])
                             return 0
                         endif
-                    endif
+
+                        let arrIndex = QuickGetIndex(a:module, "index_prev", arrIndex[0])
+                    endwhile
+
+                    let tmpList = []
+                    let indexList = copy(s:qfix_index_next)
+                    call PrintMsg("file", "start next: ".string(indexList))
+
+                    while len(indexList) > 0
+                        let nextIndex = QuickFindNewest(a:module, indexList)
+                        if nextIndex < 0
+                            call filter(indexList, 0)
+                            break
+                        endif
+
+                        let index = index(indexList, nextIndex)    
+                        call remove(indexList, index)
+
+                        let arrIndex = QuickGetIndex(a:module, "index_next", nextIndex)
+                        while len(arrIndex) > 0
+                            let newest = QuickFindNewest(a:module, arrIndex)
+                            if newest < 0
+                                call filter(arrIndex, 0)
+                                break
+                            endif
+
+                            let loadIndex = QuickGetIndex(a:module, "index", newest)
+                            if len(loadIndex) <= 0
+                                let index = index(arrIndex, newest)    
+                                call remove(arrIndex, index)
+                                call extend(tmpList, QuickGetIndex(a:module, "index_next", newest))
+                            else
+                                call QuickLoad(a:module, loadIndex[0])
+                                return 0
+                            endif
+                        endwhile
+                        
+                        if len(indexList) == 0
+                            call extend(indexList, tmpList)
+                            call PrintMsg("file", "extend next: ".string(indexList))
+                            call filter(tmpList, 0)
+                        endif
+                    endwhile
                 endif
             endif
+
+            let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info.".a:module.".*")
+            let tmpList = copy(infoList)
+            for infoFile in infoList
+                if !filereadable(infoFile)
+                    let index = index(tmpList, infoFile)    
+                    call remove(tmpList, index)
+                endif
+            endfor
+
+            if len(tmpList) == 0 
+                let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
+                if filereadable(indexFile)
+                    call delete(indexFile)
+                endif
+                return 0
+            endif
+
+            call PrintMsg("error", "index: ".s:qfix_index." is bad")
+            return -1
         endif
     elseif a:mode == "home"
-        call QuickDumpInfo()
-        let homeIndex = QuickFindHome()
+        call QuickDumpInfo(a:module)
+        let homeIndex = QuickFindHome(a:module)
         if homeIndex >= 0
-            call QuickPersistList(homeIndex, getqflist())
-            call QuickLoad(homeIndex)
+            call QuickPersistList(a:module, homeIndex, getqflist())
+            call QuickLoad(a:module, homeIndex)
             return homeIndex
         else
-            call QuickNeatShow()
+            call QuickNeatShow(a:module)
 
             let new_index_prev = s:qfix_index
-            let new_index = QuickNewIndex(s:qfix_index, [new_index_prev]) 
-            let new_index_next = [ QuickNewIndex(s:qfix_index, [new_index, new_index_prev]) ]
+            let new_index = QuickNewIndex(a:module, s:qfix_index, [new_index_prev]) 
+            let new_index_next = [ QuickNewIndex(a:module, s:qfix_index, [new_index, new_index_prev]) ]
 
             if index(s:qfix_index_next, new_index) < 0
                 call add(s:qfix_index_next, new_index)
-                call QuickPersistInfo(s:qfix_index, "index_next", string(s:qfix_index_next))
+                call QuickPersistInfo(a:module, s:qfix_index, "index_next", string(s:qfix_index_next))
             endif
 
             let s:qfix_index_prev = new_index_prev
@@ -708,7 +792,7 @@ function! QuickCtrl(mode)
             let s:qfix_title = getqflist({'title' : 1}).title
             let s:qfix_size = getqflist({'size' : 1}).size
 
-            call QuickDumpInfo()
+            call QuickDumpInfo(a:module)
             return -1
         endif
     endif
@@ -926,7 +1010,7 @@ augroup QFixToggle
     autocmd BufLeave * call DoBufLeave() 
 
     "不在quickfix窗内移动，则关闭quickfix窗口
-    autocmd CursorMoved * if exists("s:qfix_opened") && &buftype != 'quickfix' | call QuickCtrl("close") | endif
+    autocmd CursorMoved * if exists("s:qfix_opened") && &buftype != 'quickfix' | call QuickCtrl(g:quickfix_module, "close") | endif
 augroup END
 
 "恢复命令栏默认高度
@@ -994,12 +1078,12 @@ nnoremap <silent> <C-j> 6j
 nnoremap <silent> <C-k> 6k
 
 "切换下一条quickfix记录
-nnoremap <silent> <Leader>qf  :call QuickCtrl("next")<CR>
-nnoremap <silent> <Leader>qb  :call QuickCtrl("prev")<CR>
-nnoremap <silent> <Leader>qd  :call QuickCtrl("delete")<CR>
-nnoremap <silent> <Leader>qrc :call QuickCtrl("recover")<CR>
-nnoremap <silent> <Leader>qrf :call QuickCtrl("recover-next")<CR>
-nnoremap <silent> <Leader>qrb :call QuickCtrl("recover-prev")<CR>
+nnoremap <silent> <Leader>qf  :call QuickCtrl(g:quickfix_module, "next")<CR>
+nnoremap <silent> <Leader>qb  :call QuickCtrl(g:quickfix_module, "prev")<CR>
+nnoremap <silent> <Leader>qd  :call QuickCtrl(g:quickfix_module, "delete")<CR>
+nnoremap <silent> <Leader>qrc :call QuickCtrl(g:quickfix_module, "recover")<CR>
+nnoremap <silent> <Leader>qrf :call QuickCtrl(g:quickfix_module, "recover-next")<CR>
+nnoremap <silent> <Leader>qrb :call QuickCtrl(g:quickfix_module, "recover-prev")<CR>
 
 "替换当前光标下单词为复制寄存器内容
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
@@ -1058,7 +1142,8 @@ function! CSFind(ccmd)
     let csarg = expand('<cword>')
     call PrintMsg("file", "CSFind: ".csarg)
     call ToggleWindow("allclose")
-    call QuickCtrl("clear")
+    call QuickCtrl(g:quickfix_module, "clear")
+    let g:quickfix_module = "csfind"
 
     if a:ccmd == "fs"
         execute "cs find s ".csarg 
@@ -1080,9 +1165,9 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
 
-    call setqflist([], 'a', {'quickfixtextfunc' : 'QuickFormat'}) 
-    call QuickCtrl("home")
-    call QuickCtrl("open")
+    call setqflist([], 'a', {'quickfixtextfunc' : 'CSFindQuickfixFormat'}) 
+    call QuickCtrl(g:quickfix_module, "home")
+    call QuickCtrl(g:quickfix_module, "open")
 endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -1472,7 +1557,14 @@ function! RestoreLoad()
         "创建文件修改回退目录
         let dirStr=GetVimDir(0,"undodir")
 
-        call QuickCtrl("load")
+        let moduleFile = GetVimDir(1,"quickfix").'/module'
+        if filereadable(moduleFile)
+            let g:quickfix_module = get(readfile(moduleFile, 'b', 1), 0, '')
+        else
+            let g:quickfix_module = "csfind"
+        endif
+
+        call QuickCtrl(g:quickfix_module, "load")
     endif
 endfunction
 
@@ -1489,13 +1581,13 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        call QuickCtrl("close") 
+        call QuickCtrl("all", "close") 
         call CloseBufExp()
         
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        call QuickCtrl("close") 
+        call QuickCtrl("all", "close") 
         call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
@@ -1507,7 +1599,7 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call QuickCtrl("close") 
+        call QuickCtrl("all", "close") 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
@@ -1515,11 +1607,13 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         call CloseBufExp()
         
-        call QuickCtrl("toggle")
+        call QuickCtrl("all", "toggle")
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call QuickCtrl("close") 
+        silent! execute 'SrcExplClose'
+        silent! execute 'CtrlSFClose'
+        call QuickCtrl("all", "close") 
         call CloseBufExp()
     endif
 endfunction
@@ -1571,18 +1665,24 @@ endfunction
 "VIM退出事件
 function! LeaveHandler()
     if filereadable("tags") && filereadable("cscope.out")
-        call QuickCtrl("save")
-
-        silent! execute 'TagbarClose'
-        silent! execute 'NERDTreeClose'
-        silent! execute 'SrcExplClose'
-        silent! execute 'CtrlSFClose'
-        silent! execute 'cclose'
-
-        let benr = bufnr("[BufExplorer]")
-        if bufname(benr) == "[BufExplorer]"
-            silent! execute 'bw! '.benr
+        if !empty(g:quickfix_module)
+            let moduleFile = GetVimDir(1,"quickfix").'/module'
+            call writefile([g:quickfix_module], moduleFile, 'b')
         endif
+
+        call ToggleWindow("allclose")
+        call QuickCtrl(g:quickfix_module, "save")
+
+        "silent! execute 'TagbarClose'
+        "silent! execute 'NERDTreeClose'
+        "silent! execute 'SrcExplClose'
+        "silent! execute 'CtrlSFClose'
+        "silent! execute 'cclose'
+
+        "let benr = bufnr("[BufExplorer]")
+        "if bufname(benr) == "[BufExplorer]"
+        "    silent! execute 'bw! '.benr
+        "endif
 
         if g:isDeleteSave == 0
             silent! execute "mks! ".GetVimDir(1,"sessions")."/session.vim"
@@ -1597,6 +1697,7 @@ function! LeaveHandler()
             silent! execute "!rm -fr ".GetVimDir(1,"quickfix") 
 
             silent! execute "!rm -f cscope.* ncscope.* tags"
+            silent! execute "!rm -f ".g:log_file
         endif 
     endif
 endfunction
@@ -1720,10 +1821,10 @@ let g:vbookmark_bookmarkSaveFile = GetVimDir(1,"bookmark")."/save.vbm"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "yegappan/grep"
 
-let Grep_Default_Filelist = '*.*'                          "查找文件类型
-let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'  "不匹配指定目录
-let Grep_Skip_Files = '*.bak *~ .git* tags cscope.*'       "不匹配指定文件
-let Grep_OpenQuickfixWindow = 0                            "默认不自动打开quickfix, 完成格式化打开
+let Grep_Default_Filelist = '*.*'                                    "查找文件类型
+let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'            "不匹配指定目录
+let Grep_Skip_Files = '*.bak *~ .git* tags cscope.* vim.debug'       "不匹配指定文件
+let Grep_OpenQuickfixWindow = 0                                      "默认不自动打开quickfix, 完成格式化打开
 
 function! GrepQuickfixFormat(info)
     "get information about a range of quickfix entries
@@ -1747,13 +1848,14 @@ function! GrepFind()
     let csarg = expand('<cword>')
     call PrintMsg("file", "GrepFind: ".csarg)
     call ToggleWindow("allclose")
-    call QuickCtrl("clear")
+    call QuickCtrl(g:quickfix_module, "clear")
+    let g:quickfix_module = "grep"
 
     execute "Rgrep"
     
     call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'}) 
-    call QuickCtrl("home")
-    call QuickCtrl("open")
+    call QuickCtrl(g:quickfix_module, "home")
+    call QuickCtrl(g:quickfix_module, "open")
 endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
