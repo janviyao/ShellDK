@@ -88,7 +88,7 @@ function! QuickFormat(info)
     let newList = []
     for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
         "use the simplified file name
-        let lnctn=fnamemodify(bufname(items[idx].bufnr), ':p:.')."| ".items[idx].lnum." | ".items[idx].text
+        let lnctn = fnamemodify(bufname(items[idx].bufnr), ':p:.')."| ".items[idx].lnum." | ".items[idx].text
         call add(newList, lnctn)
     endfor
     
@@ -1005,7 +1005,7 @@ nnoremap <silent> <Leader>qrb :call QuickCtrl("recover-prev")<CR>
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
 
 "搜索光标下单词
-nnoremap <silent> <Leader>rg :Rgrep<CR>
+nnoremap <silent> <Leader>rg :call GrepFind()<CR>
 
 "替换字符串
 nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
@@ -1721,8 +1721,40 @@ let g:vbookmark_bookmarkSaveFile = GetVimDir(1,"bookmark")."/save.vbm"
 Bundle "yegappan/grep"
 
 let Grep_Default_Filelist = '*.*'                          "查找文件类型
-let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn'        "不匹配指定目录
+let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'  "不匹配指定目录
 let Grep_Skip_Files = '*.bak *~ .git* tags cscope.*'       "不匹配指定文件
+let Grep_OpenQuickfixWindow = 0                            "默认不自动打开quickfix, 完成格式化打开
+
+function! GrepQuickfixFormat(info)
+    "get information about a range of quickfix entries
+    let items = getqflist({'id' : a:info.id, 'items' : 1}).items
+    let newList = []
+    for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
+        "call PrintMsg("file", string(items[idx]))
+        if items[idx].lnum == 0
+            call add(newList, "|| ".items[idx].text)
+        else
+            "use the simplified file name
+            let lnctn = fnamemodify(bufname(items[idx].bufnr), ':p:.')."| ".items[idx].lnum." | ".items[idx].text
+            call add(newList, lnctn)
+        endif
+    endfor
+    
+    return newList
+endfunc
+
+function! GrepFind()
+    let csarg = expand('<cword>')
+    call PrintMsg("file", "GrepFind: ".csarg)
+    call ToggleWindow("allclose")
+    call QuickCtrl("clear")
+
+    execute "Rgrep"
+    
+    call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'}) 
+    call QuickCtrl("home")
+    call QuickCtrl("open")
+endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 快速搜索 插件
