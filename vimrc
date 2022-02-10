@@ -15,9 +15,9 @@ let g:quickfix_index_max = 50
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 function! PrintMsg(type, msg)
     if a:type == "error"
-        call PrintMsg("file", a:msg)
+        call PrintMsg("file", a:type.": ".a:msg)
         echohl ErrorMsg
-        echoerr a:msg
+        echoerr a:type.": ".a:msg
         echohl None
         return
     endif 
@@ -28,18 +28,18 @@ function! PrintMsg(type, msg)
 
     if a:type == "warn" 
         echohl WarningMsg
-        echomsg a:msg
+        echomsg a:type.": ".a:msg
         echohl None
     elseif a:type == "info"
         echohl ModeMsg
-        echomsg a:msg
+        echomsg a:type.": ".a:msg
         echohl None
     elseif a:type == "file" 
         redir! >> vim.debug 
         silent! echo a:msg
         redir end
     else
-        echomsg a:msg
+        echomsg "!!!!: ".a:msg
     endif
 endfunction
 
@@ -554,6 +554,12 @@ function! QuickDumpInfo(module)
         let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            if empty(infoDic)
+                call PrintMsg("error", "info empty: ".infoFile)
+                let homeIndex += 1
+                continue
+            endif
+
             let indexInfo = printf("prev: %-2d index: %-2d next: %-10s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
             let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
