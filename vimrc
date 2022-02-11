@@ -565,8 +565,43 @@ function! QuickDumpInfo(module)
         return
     endif
 
+    let maxLen = 0
+    let homeIndex = 0
+    while homeIndex < g:quickfix_index_max
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
+        if filereadable(infoFile)
+            let indexVal = index(s:qfix_index_list, homeIndex)
+            if indexVal < 0 
+                call PrintMsg("error", "index list: ".string(s:qfix_index_list)." not contain: ".homeIndex)
+            endif
+
+            let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
+            if empty(infoDic)
+                call PrintMsg("error", "info empty: ".infoFile)
+                let homeIndex += 1
+                continue
+            endif
+
+            if len(string(infoDic.index_next)) > maxLen
+                maxLen = len(string(infoDic.index_next));
+            endif
+        endif
+        let homeIndex += 1
+    endwhile
+
     call PrintMsg("file", "")
-    let currIndex = printf("prev: %-2d index: %-2d next: %-10s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
+
+    if maxLen < 10
+        let currIndex = printf("prev: %-2d index: %-2d next: %-10s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
+    elseif maxLen < 15
+        let currIndex = printf("prev: %-2d index: %-2d next: %-15s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
+    elseif maxLen < 20
+        let currIndex = printf("prev: %-2d index: %-2d next: %-20s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
+    elseif maxLen < 25
+        let currIndex = printf("prev: %-2d index: %-2d next: %-25s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
+    else
+        let currIndex = printf("prev: %-2d index: %-2d next: %-30s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
+    endif
     let currCursor = printf("cursor: %d/%d", line("."), col("."))
     let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
     let currFile = printf("title: %-40s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
@@ -577,13 +612,18 @@ function! QuickDumpInfo(module)
         let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
-            if empty(infoDic)
-                call PrintMsg("error", "info empty: ".infoFile)
-                let homeIndex += 1
-                continue
+            
+            if maxLen < 10
+                let indexInfo = printf("prev: %-2d index: %-2d next: %-10s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
+            elseif maxLen < 15
+                let indexInfo = printf("prev: %-2d index: %-2d next: %-15s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
+            elseif maxLen < 20
+                let indexInfo = printf("prev: %-2d index: %-2d next: %-20s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
+            elseif maxLen < 25
+                let indexInfo = printf("prev: %-2d index: %-2d next: %-25s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
+            else
+                let indexInfo = printf("prev: %-2d index: %-2d next: %-30s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
             endif
-
-            let indexInfo = printf("prev: %-2d index: %-2d next: %-10s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
             let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
             let fileInfo = printf("title: %-40s file: %s", infoDic.title, infoDic.fname)
