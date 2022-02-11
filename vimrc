@@ -121,27 +121,32 @@ function! QuickLoad(module, index)
         "first load
         let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
         if filereadable(indexFile)
-            let loadIndex = get(readfile(indexFile, 'b', 1), 0, '') 
+            let loadIndex = str2nr(get(readfile(indexFile, 'b', 1), 0, ''))
         else
             let loadIndex = 0
         endif
 
-        let s:qfix_index_list = []
+        let s:qfix_index_all = []
         let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info.".a:module.".*")
         for infoFile in infoList
             if filereadable(infoFile)
                 let indexVal = str2nr(matchstr(infoFile, '\v\d+$'))
-                if index(s:qfix_index_list, indexVal) < 0 
-                    call add(s:qfix_index_list, indexVal)
+                if index(s:qfix_index_all, indexVal) < 0 
+                    call add(s:qfix_index_all, indexVal)
                 endif
             endif
         endfor
-        call PrintMsg("file", a:module." load index list: ".string(s:qfix_index_list))
+        call PrintMsg("file", a:module." load index list: ".string(s:qfix_index_all))
     endif
 
     call PrintMsg("file", a:module." load index: ".loadIndex)
     let listFile = GetVimDir(1,"quickfix").'/list.'.a:module.".".loadIndex
     if filereadable(listFile) 
+        let indexVal = index(s:qfix_index_all, loadIndex)
+        if indexVal < 0 
+            call PrintMsg("error", "index all: ".string(s:qfix_index_all)." not contain: ".loadIndex)
+        endif
+
         let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".loadIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
@@ -288,8 +293,9 @@ function! QuickSave(module, index)
         call QuickPersistInfo(a:module, a:index)
         call QuickPersistList(a:module, a:index, qflist)
 
-        if index(s:qfix_index_list, a:index) < 0 
-            call add(s:qfix_index_list, a:index)
+        if index(s:qfix_index_all, str2nr(a:index)) < 0 
+            call add(s:qfix_index_all, str2nr(a:index))
+            call PrintMsg("file", "index all: ".string(s:qfix_index_all))
         endif
         return 0
     endif
@@ -373,9 +379,9 @@ function! QuickDelete(module, index)
         call PrintMsg("file", a:module." delete success: info".a:index)
     endif
 
-    let indexVal = index(s:qfix_index_list, a:index)
+    let indexVal = index(s:qfix_index_all, str2nr(a:index))
     if indexVal >= 0 
-        call remove(s:qfix_index_list, indexVal)
+        call remove(s:qfix_index_all, indexVal)
     endif
  
     return 0
@@ -522,7 +528,7 @@ function! QuickNewIndex(module, start, exclude)
     endif
 
     if siteIndex == g:quickfix_index_max
-        let siteIndex = QuickFindOldest(a:module, s:qfix_index_list)
+        let siteIndex = QuickFindOldest(a:module, s:qfix_index_all)
         if siteIndex < 0
             let siteIndex = g:quickfix_index_max
         endif
@@ -565,16 +571,11 @@ function! QuickDumpInfo(module)
         return
     endif
 
-    let maxLen = 0
+    let maxNextLen = 0
     let homeIndex = 0
     while homeIndex < g:quickfix_index_max
         let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
-        if filereadable(infoFile)
-            let indexVal = index(s:qfix_index_list, homeIndex)
-            if indexVal < 0 
-                call PrintMsg("error", "index list: ".string(s:qfix_index_list)." not contain: ".homeIndex)
-            endif
-
+        if filereadable(infoFile) 
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             if empty(infoDic)
                 call PrintMsg("error", "info empty: ".infoFile)
@@ -582,26 +583,17 @@ function! QuickDumpInfo(module)
                 continue
             endif
 
-            if len(string(infoDic.index_next)) > maxLen
-                maxLen = len(string(infoDic.index_next));
+            if len(string(infoDic.index_next)) > maxNextLen
+                let maxNextLen = len(string(infoDic.index_next))
             endif
         endif
         let homeIndex += 1
     endwhile
+    let maxNextLen += 2
+    let nextFormat = "next: %-".maxNextLen."s"
 
     call PrintMsg("file", "")
-
-    if maxLen < 10
-        let currIndex = printf("prev: %-2d index: %-2d next: %-10s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
-    elseif maxLen < 15
-        let currIndex = printf("prev: %-2d index: %-2d next: %-15s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
-    elseif maxLen < 20
-        let currIndex = printf("prev: %-2d index: %-2d next: %-20s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
-    elseif maxLen < 25
-        let currIndex = printf("prev: %-2d index: %-2d next: %-25s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
-    else
-        let currIndex = printf("prev: %-2d index: %-2d next: %-30s", s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
-    endif
+    let currIndex = printf("prev: %-2d index: %-2d ".nextFormat, s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
     let currCursor = printf("cursor: %d/%d", line("."), col("."))
     let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
     let currFile = printf("title: %-40s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
@@ -613,17 +605,7 @@ function! QuickDumpInfo(module)
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
             
-            if maxLen < 10
-                let indexInfo = printf("prev: %-2d index: %-2d next: %-10s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
-            elseif maxLen < 15
-                let indexInfo = printf("prev: %-2d index: %-2d next: %-15s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
-            elseif maxLen < 20
-                let indexInfo = printf("prev: %-2d index: %-2d next: %-20s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
-            elseif maxLen < 25
-                let indexInfo = printf("prev: %-2d index: %-2d next: %-25s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
-            else
-                let indexInfo = printf("prev: %-2d index: %-2d next: %-30s", infoDic.index_prev, infoDic.index, string(infoDic.index_next))
-            endif
+            let indexInfo = printf("prev: %-2d index: %-2d ".nextFormat, infoDic.index_prev, infoDic.index, string(infoDic.index_next))
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
             let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
             let fileInfo = printf("title: %-40s file: %s", infoDic.title, infoDic.fname)
@@ -1912,7 +1894,11 @@ function! GrepFind()
         call QuickCtrl(g:quickfix_module, "load")
     endif
     execute "Rgrep"
-    
+
+    if empty(getqflist())
+        return
+    endif
+
     call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'}) 
     call QuickCtrl(g:quickfix_module, "home")
     call QuickCtrl(g:quickfix_module, "open")
