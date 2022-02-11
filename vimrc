@@ -116,10 +116,33 @@ function! CSFindQuickfixFormat(info)
 endfunc
 
 function! QuickLoad(module, index)
-    call PrintMsg("file", a:module." load index: ".a:index)
-    let listFile = GetVimDir(1,"quickfix").'/list.'.a:module.".".a:index
+    let loadIndex = a:index
+    if loadIndex < 0 
+        "first load
+        let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
+        if filereadable(indexFile)
+            let loadIndex = get(readfile(indexFile, 'b', 1), 0, '') 
+        else
+            let loadIndex = 0
+        endif
+
+        let s:qfix_index_list = []
+        let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info.".a:module.".*")
+        for infoFile in infoList
+            if filereadable(infoFile)
+                let indexVal = str2nr(matchstr(infoFile, '\v\d+$'))
+                if index(s:qfix_index_list, indexVal) < 0 
+                    call add(s:qfix_index_list, indexVal)
+                endif
+            endif
+        endfor
+        call PrintMsg("file", a:module." load index list: ".string(s:qfix_index_list))
+    endif
+
+    call PrintMsg("file", a:module." load index: ".loadIndex)
+    let listFile = GetVimDir(1,"quickfix").'/list.'.a:module.".".loadIndex
     if filereadable(listFile) 
-        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".a:index
+        let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".loadIndex
         if filereadable(infoFile)
             let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
         else
@@ -131,8 +154,8 @@ function! QuickLoad(module, index)
         let s:qfix_title = infoDic.title
         let s:qfix_index_prev = infoDic.index_prev
         let s:qfix_index = infoDic.index
-        if s:qfix_index != a:index
-            call PrintMsg("error", a:module." load index not consistent: ".s:qfix_index." != ".a:index)
+        if s:qfix_index != loadIndex
+            call PrintMsg("error", a:module." load index not consistent: ".s:qfix_index." != ".loadIndex)
             call QuickDumpInfo(a:module)
         endif
         let s:qfix_index_next = copy(infoDic.index_next)
@@ -592,7 +615,6 @@ function! QuickCtrl(module, mode)
             call QuickCtrl(a:module, "open")        
         endif
     elseif a:mode == "clear"
-        call QuickCtrl(a:module, "save")
         call setqflist([], "r")
     elseif a:mode == "recover"
         silent! execute 'cc!'
@@ -635,24 +657,7 @@ function! QuickCtrl(module, mode)
     elseif a:mode == "load"
         if !exists("s:qfix_index")
             "first load
-            let indexFile = GetVimDir(1,"quickfix").'/index.'.a:module
-            if filereadable(indexFile)
-                let s:qfix_index = get(readfile(indexFile, 'b', 1), 0, '') 
-            else
-                let s:qfix_index = 0
-            endif
-
-            let s:qfix_index_list = []
-            let infoList = systemlist("ls ".GetVimDir(1,"quickfix")."/info.".a:module.".*")
-            for infoFile in infoList
-                if filereadable(infoFile)
-                    let indexVal = str2nr(matchstr(infoFile, '\v\d+$'))
-                    if index(s:qfix_index_list, indexVal) < 0 
-                        call add(s:qfix_index_list, indexVal)
-                    endif
-                endif
-            endfor
-            call PrintMsg("file", a:module." load index list: ".string(s:qfix_index_list))
+            let s:qfix_index = -1 
         endif
         call QuickLoad(a:module, s:qfix_index)
 
@@ -1148,8 +1153,13 @@ function! CSFind(ccmd)
     let csarg = expand('<cword>')
     call PrintMsg("file", "CSFind: ".csarg)
     call ToggleWindow("allclose")
+    call QuickCtrl(g:quickfix_module, "save")
     call QuickCtrl(g:quickfix_module, "clear")
-    let g:quickfix_module = "csfind"
+    if g:quickfix_module != "csfind"
+        let g:quickfix_module = "csfind"
+        unlet s:qfix_index
+        call QuickCtrl(g:quickfix_module, "load")
+    endif
 
     if a:ccmd == "fs"
         execute "cs find s ".csarg 
@@ -1854,9 +1864,13 @@ function! GrepFind()
     let csarg = expand('<cword>')
     call PrintMsg("file", "GrepFind: ".csarg)
     call ToggleWindow("allclose")
+    call QuickCtrl(g:quickfix_module, "save")
     call QuickCtrl(g:quickfix_module, "clear")
-    let g:quickfix_module = "grep"
-
+    if g:quickfix_module != "grep"
+        let g:quickfix_module = "grep"
+        unlet s:qfix_index
+        call QuickCtrl(g:quickfix_module, "load")
+    endif
     execute "Rgrep"
     
     call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'}) 
