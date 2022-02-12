@@ -317,8 +317,7 @@ function! QuickDelete(module, index)
         let index_next = infoDic.index_next
 
         if infoDic.index != a:index 
-            call PrintMsg("error", a:module." quickfix index in confusion, please check ".g:log_file." log")
-            call PrintMsg("file", a:module." index(".a:index.") != info index(".infoDic.index.")")
+            call PrintMsg("error", a:module." index(".a:index.") != info index(".infoDic.index.") info: ".string(infoDic))
             call QuickDumpInfo(a:module)
         endif
 
@@ -329,10 +328,10 @@ function! QuickDelete(module, index)
                 continue
             endif
 
-            let errHappen = 1
+            let errHappen = 0
             let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
             if filereadable(infoFile)
-                let isWrite = 1
+                let isWrite = 0
                 let infoDic = eval(get(readfile(infoFile, 'b', 1), 0, ''))
 
                 let indexVal = index(infoDic.index_next, a:index)    
@@ -342,34 +341,32 @@ function! QuickDelete(module, index)
 
                     let indexVal = index(infoDic.index_next, infoDic.index)    
                     if indexVal >= 0 
-                        let errHappen = 0
-                        call PrintMsg("error", a:module." info index and index_next in confusion, please check ".g:log_file." log")
-                        call PrintMsg("file", a:module." index(".infoDic.index.") in index_next(".string(infoDic.index_next).")")
+                        let errHappen = 1
+                        call PrintMsg("error", a:module." index(".infoDic.index.") in index_next(".string(infoDic.index_next).") info: ".string(infoDic))
                         call QuickDumpInfo(a:module)
                         let infoDic.index_next = [g:quickfix_index_max] 
                     endif
-                    let isWrite = 0
+                    let isWrite = 1
                 endif    
 
                 if infoDic.index_prev == a:index 
                     let infoDic.index_prev = index_prev
                     if infoDic.index == infoDic.index_prev
-                        let errHappen = 0
-                        call PrintMsg("error", a:module." info index and index_prev in confusion, please check ".g:log_file." log")
-                        call PrintMsg("file", a:module." index(".infoDic.index.") = index_prev(".infoDic.index_prev.")")
+                        let errHappen = 1
+                        call PrintMsg("error", a:module." index(".infoDic.index.") = index_prev(".infoDic.index_prev.") info: ".string(infoDic))
                         call QuickDumpInfo(a:module)
                         let infoDic.index_prev = g:quickfix_index_max 
                     endif
-                    let isWrite = 0
+                    let isWrite = 1
                 endif
 
-                if isWrite == 0
+                if isWrite == 1
                     call writefile([string(infoDic)], infoFile, 'b')
                 endif
             endif
 
             let homeIndex += 1
-            if errHappen == 0
+            if errHappen == 1
                 call QuickDumpInfo(a:module)
             endif
         endwhile
