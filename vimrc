@@ -572,6 +572,7 @@ function! QuickDumpInfo(module)
     endif
 
     let maxNextLen = 0
+    let maxTitleLen = 0
     let homeIndex = 0
     while homeIndex < g:quickfix_index_max
         let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".homeIndex
@@ -586,17 +587,23 @@ function! QuickDumpInfo(module)
             if len(string(infoDic.index_next)) > maxNextLen
                 let maxNextLen = len(string(infoDic.index_next))
             endif
+
+            if len(string(infoDic.title)) > maxTitleLen
+                let maxTitleLen = len(string(infoDic.title))
+            endif
         endif
         let homeIndex += 1
     endwhile
     let maxNextLen += 2
+
     let nextFormat = "next: %-".maxNextLen."s"
+    let titleFormat = "title: %-".maxTitleLen."s"
 
     call PrintMsg("file", "")
     let currIndex = printf("prev: %-2d index: %-2d ".nextFormat, s:qfix_index_prev, s:qfix_index, string(s:qfix_index_next))
     let currCursor = printf("cursor: %d/%d", line("."), col("."))
     let currPick = printf("pick: %-4d %-18s", s:qfix_pick, currCursor)
-    let currFile = printf("title: %-40s file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
+    let currFile = printf(titleFormat." file: %s", s:qfix_title, fnamemodify(bufname("%"), ':p:.'))
     call PrintMsg("file", "now ".currIndex." ".currPick. " ".currFile)
 
     let homeIndex = 0
@@ -608,7 +615,7 @@ function! QuickDumpInfo(module)
             let indexInfo = printf("prev: %-2d index: %-2d ".nextFormat, infoDic.index_prev, infoDic.index, string(infoDic.index_next))
             let cursorInfo = printf("cursor: %d/%d", infoDic.fline, infoDic.fcol)
             let pickInfo = printf("pick: %-4d %-18s", infoDic.pick, cursorInfo)
-            let fileInfo = printf("title: %-40s file: %s", infoDic.title, infoDic.fname)
+            let fileInfo = printf(titleFormat." file: %s", infoDic.title, infoDic.fname)
             call PrintMsg("file", "map ".indexInfo." ".pickInfo." ".fileInfo)
         endif
         let homeIndex += 1
