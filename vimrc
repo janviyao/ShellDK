@@ -1207,6 +1207,10 @@ function! CSFind(ccmd)
         silent! execute "cs find i ".csarg 
     endif
 
+    if empty(getqflist())
+        return
+    endif
+
     call setqflist([], 'a', {'quickfixtextfunc' : 'CSFindQuickfixFormat'}) 
     call QuickCtrl(g:quickfix_module, "home")
     call QuickCtrl(g:quickfix_module, "open")
@@ -1897,6 +1901,7 @@ function! GrepFind()
         unlet s:qfix_index
         call QuickCtrl(g:quickfix_module, "load")
     endif
+
     execute "Rgrep"
 
     if empty(getqflist())
