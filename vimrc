@@ -144,7 +144,7 @@ function! QuickLoad(module, index)
     if filereadable(listFile) 
         let indexVal = index(s:qfix_index_all, loadIndex)
         if indexVal < 0 
-            call PrintMsg("error", "index all: ".string(s:qfix_index_all)." not contain: ".loadIndex)
+            call PrintMsg("error", "index(".len(s:qfix_index_all).") all: ".string(s:qfix_index_all)." not contain: ".loadIndex)
         endif
 
         let infoFile = GetVimDir(1,"quickfix").'/info.'.a:module.".".loadIndex
@@ -295,7 +295,7 @@ function! QuickSave(module, index)
 
         if index(s:qfix_index_all, str2nr(a:index)) < 0 
             call add(s:qfix_index_all, str2nr(a:index))
-            call PrintMsg("file", "index all: ".string(s:qfix_index_all))
+            call PrintMsg("file", "index(".len(s:qfix_index_all).") all: ".string(s:qfix_index_all))
         endif
         return 0
     endif
@@ -1718,18 +1718,7 @@ function! LeaveHandler()
 
         call ToggleWindow("allclose")
         call QuickCtrl(g:quickfix_module, "save")
-
-        "silent! execute 'TagbarClose'
-        "silent! execute 'NERDTreeClose'
-        "silent! execute 'SrcExplClose'
-        "silent! execute 'CtrlSFClose'
-        "silent! execute 'cclose'
-
-        "let benr = bufnr("[BufExplorer]")
-        "if bufname(benr) == "[BufExplorer]"
-        "    silent! execute 'bw! '.benr
-        "endif
-
+        
         if g:isDeleteSave == 0
             silent! execute "mks! ".GetVimDir(1,"sessions")."/session.vim"
             silent! execute "wviminfo! ".GetVimDir(1,"sessions")."/session.viminfo"
