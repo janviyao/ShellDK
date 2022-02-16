@@ -592,6 +592,9 @@ function! QuickDumpInfo(module)
         let homeIndex += 1
     endwhile
     let maxNextLen += 2
+    if maxTitleLen > 2
+        let maxTitleLen -= 2
+    endif
 
     let nextFormat = "next: %-".maxNextLen."s"
     let titleFormat = "title: %-".maxTitleLen."s"
@@ -1185,6 +1188,7 @@ function! CSFind(ccmd)
         let g:quickfix_module = "csfind"
         unlet s:qfix_index
         call QuickCtrl(g:quickfix_module, "load")
+        call QuickCtrl(g:quickfix_module, "clear")
     endif
 
     if a:ccmd == "fs"
@@ -1889,6 +1893,7 @@ function! GrepFind()
         let g:quickfix_module = "grep"
         unlet s:qfix_index
         call QuickCtrl(g:quickfix_module, "load")
+        call QuickCtrl(g:quickfix_module, "clear")
     endif
 
     execute "Rgrep"
