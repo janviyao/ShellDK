@@ -1117,6 +1117,11 @@ nnoremap <silent> <C-l> 6l
 nnoremap <silent> <C-j> 6j
 nnoremap <silent> <C-k> 6k
 
+vnoremap <silent> <C-h> 6h
+vnoremap <silent> <C-l> 6l
+vnoremap <silent> <C-j> 6j
+vnoremap <silent> <C-k> 6k
+
 "切换下一条quickfix记录
 nnoremap <silent> <Leader>qf  :call QuickCtrl(g:quickfix_module, "next")<CR>
 nnoremap <silent> <Leader>qb  :call QuickCtrl(g:quickfix_module, "prev")<CR>
@@ -1136,6 +1141,9 @@ nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
 
 "显示当前行所在函数名,等同于df命令
 nnoremap <silent> <Leader>sfn :call ShowFuncName()<CR>
+
+"选择所有函数行
+nnoremap <silent> <Leader>sfl :call SelectFuncLines()<CR>
 
 "跳转到函数指定位置
 nnoremap <silent> <Leader>jfs  :call JumpFunctionPos("jfs")<CR> 
@@ -1262,13 +1270,13 @@ function! JumpFuncStart()
     let gcc_attrs='__attribute__.+'
 
     let func_return='\s*%(^%(\s*'.code_word.'\s*){0,2}'.exclude_char.'$'.line_end.')?\s*'
-    let func_name='\s*%(%('.code_word.'\s*(::'.code_word.')?)|%(operator.+\s*))'
+    let func_name='\s*%(%('.code_word.'%(\s*::'.code_word.')*)|%(operator.+\s*))'
 
     let fptr_return='\s*%('.code_word.'\s*)+\s*'
     let fptr_name='\s*\(\s*\*\s*'.code_word.'\s*\)\s*'
     let fptr_args='\s*\(%('.not_in_bracket.'+,?)*\)\s*'
     let func_fptr=fptr_return.fptr_name.fptr_args.",?"
-    let com_arg='%('.code_word.'\s+)+%(\*?\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
+    let com_arg='%('.code_word.'\s+)+%([\*\&]?\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
 
     let one_arg='\s*%(%('.com_arg.')|%('.func_fptr.'))\s*'
     let func_args='\s*\(%(%(\s*void\s*)|%(%('.one_arg.line_end.')*))\)\s*'
@@ -1330,6 +1338,37 @@ function! JumpFuncStart()
 
     call cursor(rowNum, colNum)
     return rowNum
+endfunction
+
+function! SelectFuncLines()
+    let rangeStr = GetFuncRange()
+    if strlen(rangeStr) == 0
+        return 
+    endif
+
+    if stridx(rangeStr, ',') > 0
+        let rangeStr = rangeStr . "," 
+        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
+        if matchstr(lineNum, '\d\+') != ''
+            let startLine = str2nr(lineNum)
+        else
+            return 
+        endif
+
+        let rangeStr = strpart(rangeStr, stridx(rangeStr, ',') + 1)
+        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
+        if matchstr(lineNum, '\d\+') != ''
+            let endLine = str2nr(lineNum)
+        else
+            return 
+        endif
+
+        silent! execute 'normal '.startLine.'G'
+        silent! execute 'normal V'
+        silent! execute 'normal '.endLine.'G'
+    else
+        return
+    endif
 endfunction
 
 "状态栏显示当前行所在函数名
