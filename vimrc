@@ -4,7 +4,7 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 0
+let g:print_log_enable = 1
 let g:quickfix_dump_enable = 0
 
 let g:quickfix_module = "init"
@@ -1131,7 +1131,7 @@ nnoremap <silent> <Leader>qrf :call QuickCtrl(g:quickfix_module, "recover-next")
 nnoremap <silent> <Leader>qrb :call QuickCtrl(g:quickfix_module, "recover-prev")<CR>
 
 "替换当前光标下单词为复制寄存器内容
-nnoremap <silent> <Leader>p  :call ReplaceWord()<CR> 
+nnoremap <silent> <Leader>p  :call ReplaceWord()<CR>
 
 "搜索光标下单词
 nnoremap <silent> <Leader>rg :call GrepFind()<CR>
@@ -1142,12 +1142,16 @@ nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
 "显示当前行所在函数名,等同于df命令
 nnoremap <silent> <Leader>sfn :call ShowFuncName()<CR>
 
-"选择所有函数行
-nnoremap <silent> <Leader>sfl :call SelectFuncLines()<CR>
-
 "跳转到函数指定位置
-nnoremap <silent> <Leader>jfs  :call JumpFunctionPos("jfs")<CR> 
-nnoremap <silent> <Leader>jfe  :call JumpFunctionPos("jfe")<CR> 
+nnoremap <silent> <Leader>jfs  :call JumpFunctionPos("jfs")<CR>
+nnoremap <silent> <Leader>jfe  :call JumpFunctionPos("jfe")<CR>
+
+"跳转到当前层括号
+nnoremap <silent> <Leader>j{  :call JumpBracket("{", "bW")<CR>
+nnoremap <silent> <Leader>j}  :call JumpBracket("}", "W")<CR>
+
+"跳转到当前层括号
+nnoremap <silent> <Leader>=  :call FormatSelect()<CR>
 
 "格式化当前文件
 nnoremap <silent> <Leader>cf :call CodeFormat()<CR>
@@ -1340,35 +1344,76 @@ function! JumpFuncStart()
     return rowNum
 endfunction
 
-function! SelectFuncLines()
-    let rangeStr = GetFuncRange()
-    if strlen(rangeStr) == 0
-        return 
+function! JumpBracket(aim, flags)
+    let rowNum = line(".")
+    let forword = 1
+    if stridx(a:flags, "b") >= 0
+        let forword = 0
     endif
 
-    if stridx(rangeStr, ',') > 0
-        let rangeStr = rangeStr . "," 
-        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
-        if matchstr(lineNum, '\d\+') != ''
-            let startLine = str2nr(lineNum)
-        else
-            return 
+    while 1
+        if forword == 0
+            let startLine = search(a:aim, a:flags)
+            if startLine > 0
+                let saveRow = line(".")
+                let saveCol = col(".")
+                "call PrintMsg("info", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
+
+                silent! execute 'normal ^'
+                call search(a:aim, 'c')
+                silent! execute 'normal %'
+                let endLine = line(".") 
+                call cursor(saveRow, saveCol)
+            else
+                let saveRow = line(".")
+                let saveCol = col(".")
+                call PrintMsg("error", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
+                break
+            endif
+        elseif forword == 1
+            let endLine = search(a:aim, a:flags)
+            if endLine > 0
+                let saveRow = line(".")
+                let saveCol = col(".")
+                "call PrintMsg("info", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
+
+                silent! execute 'normal ^'
+                call search(a:aim, 'c')
+                silent! execute 'normal %'
+                let startLine = line(".")
+                call cursor(saveRow, saveCol)
+            else
+                let saveRow = line(".")
+                let saveCol = col(".")
+                call PrintMsg("error", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
+                break
+            endif
         endif
 
-        let rangeStr = strpart(rangeStr, stridx(rangeStr, ',') + 1)
-        let lineNum = strpart(rangeStr, 0, stridx(rangeStr, ','))
-        if matchstr(lineNum, '\d\+') != ''
-            let endLine = str2nr(lineNum)
-        else
-            return 
+        "call PrintMsg("info", a:aim." ".a:flags." Start: ".startLine." End: ".endLine." Pos: ".rowNum)
+        if rowNum >= startLine && rowNum <= endLine
+            if forword == 0
+                return startLine
+            elseif forword == 1
+                return endLine
+            endif
         endif
+    endwhile
 
-        silent! execute 'normal '.startLine.'G'
-        silent! execute 'normal V'
-        silent! execute 'normal '.endLine.'G'
-    else
-        return
-    endif
+    return 0
+endfunction
+
+function! GetInputStr(prompt, default, type)
+    let rowNum = line(".")
+    let colNum = col(".")
+
+    while true
+
+    endwhile
+    call search("{", 'bW')
+
+    call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
+    return cmd
 endfunction
 
 "状态栏显示当前行所在函数名
@@ -1457,6 +1502,32 @@ function! FormatLanguage()
     "格式化文件
     let as_config = expand('$HOME/').".astylerc"
     silent! execute rangeStr."!astyle --options=".as_config
+endfunction
+
+function! FormatSelect()
+    let rowNum = line(".")
+    let colNum = col(".")
+
+    let startLine = JumpBracket("{", "bW")
+    if startLine <= 0
+        call cursor(rowNum, colNum)
+        return
+    endif
+
+    call cursor(rowNum, colNum)
+    let endLine = JumpBracket("}", "W")
+    if endLine <= 0
+        call cursor(rowNum, colNum)
+        return
+    endif
+    call cursor(rowNum, colNum)
+
+    "call PrintMsg("info", "Start: ".startLine." End: ".endLine." Pos: ".rowNum)
+    silent! execute 'normal '.startLine.'G'
+    silent! execute 'normal V'
+    silent! execute 'normal '.endLine.'G'
+    silent! execute 'normal ='
+    call cursor(rowNum, colNum)
 endfunction
 
 "格式化并刷新
