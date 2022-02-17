@@ -1403,19 +1403,6 @@ function! JumpBracket(aim, flags)
     return 0
 endfunction
 
-function! GetInputStr(prompt, default, type)
-    let rowNum = line(".")
-    let colNum = col(".")
-
-    while true
-
-    endwhile
-    call search("{", 'bW')
-
-    call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
-    return cmd
-endfunction
-
 "状态栏显示当前行所在函数名
 function! ShowFuncName()
     let rowNum = line(".")
