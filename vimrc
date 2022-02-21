@@ -1352,40 +1352,34 @@ function! JumpBracket(aim, flags)
     endif
 
     while 1
+        let cursor = getcurpos()
+        "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
         if forword == 0
             let startLine = search(a:aim, a:flags)
-            if startLine > 0
-                let saveRow = line(".")
-                let saveCol = col(".")
-                "call PrintMsg("info", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
+            let cursor = getcurpos()
+            "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
 
+            if startLine > 0
                 silent! execute 'normal ^'
                 call search(a:aim, 'c')
                 silent! execute 'normal %'
                 let endLine = line(".") 
-                call cursor(saveRow, saveCol)
+                call setpos('.', cursor)
             else
-                let saveRow = line(".")
-                let saveCol = col(".")
-                call PrintMsg("error", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
                 break
             endif
         elseif forword == 1
             let endLine = search(a:aim, a:flags)
-            if endLine > 0
-                let saveRow = line(".")
-                let saveCol = col(".")
-                "call PrintMsg("info", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
-
+            let cursor = getcurpos()
+            "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
+            
+            if endLine > 0 
                 silent! execute 'normal ^'
                 call search(a:aim, 'c')
                 silent! execute 'normal %'
                 let startLine = line(".")
-                call cursor(saveRow, saveCol)
+                call setpos('.', cursor)
             else
-                let saveRow = line(".")
-                let saveCol = col(".")
-                call PrintMsg("error", a:aim." ".a:flags." Row: ".saveRow." Col: ".saveCol)
                 break
             endif
         endif
@@ -1957,10 +1951,10 @@ let g:vbookmark_bookmarkSaveFile = GetVimDir(1,"bookmark")."/save.vbm"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "yegappan/grep"
 
-let Grep_Default_Filelist = '*.*'                                    "查找文件类型
-let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'            "不匹配指定目录
-let Grep_Skip_Files = '*.bak *~ .git* tags cscope.* vim.debug'       "不匹配指定文件
-let Grep_OpenQuickfixWindow = 0                                      "默认不自动打开quickfix, 完成格式化打开
+let Grep_Default_Filelist = '*.*'                                         "查找文件类型
+let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
+let Grep_Skip_Files = '*.o *.b *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
+let Grep_OpenQuickfixWindow = 0                                           "默认不自动打开quickfix, 完成格式化打开
 
 function! GrepQuickfixFormat(info)
     "get information about a range of quickfix entries
@@ -1982,6 +1976,8 @@ endfunc
 
 function! GrepFind()
     let csarg = expand('<cword>')
+    let cursor = getcurpos()
+
     call PrintMsg("file", "GrepFind: ".csarg)
     call ToggleWindow("allclose")
     call QuickCtrl(g:quickfix_module, "save")
@@ -1993,6 +1989,7 @@ function! GrepFind()
         call QuickCtrl(g:quickfix_module, "clear")
     endif
 
+    call setpos('.', cursor)
     execute "Rgrep"
 
     if empty(getqflist())
