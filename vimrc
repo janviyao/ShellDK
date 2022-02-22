@@ -1953,7 +1953,7 @@ Bundle "yegappan/grep"
 
 let Grep_Default_Filelist = '*.*'                                         "查找文件类型
 let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
-let Grep_Skip_Files = '*.o *.b *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
+let Grep_Skip_Files = '*.o *.d *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
 let Grep_OpenQuickfixWindow = 0                                           "默认不自动打开quickfix, 完成格式化打开
 
 function! GrepQuickfixFormat(info)
