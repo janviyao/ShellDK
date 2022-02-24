@@ -102,10 +102,9 @@ do
         send_ctrl_to_self "BG_EXIT" "${bgpid}"
         wait ${bgpid}
 
-        run_res=`cat ${log_file}`
         send_log_to_self_sync "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
         send_log_to_self_sync "ERASE_LINE" 
-        send_log_to_self_sync "PRINT" "$(printf "%s" "${run_res}")"
+        send_log_to_self_sync "PRINT_FROM_FILE" "${log_file}"
         send_log_to_self_sync "NEWLINE"
 
         let x_pos++

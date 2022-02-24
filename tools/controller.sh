@@ -291,6 +291,9 @@ function loger_default_handler
         printf "\b"
     elif [[ "${req_ctrl}" == "PRINT" ]];then
         printf "%s" "${req_mssg}" 
+    elif [[ "${req_ctrl}" == "PRINT_FROM_FILE" ]];then
+        local file_log=$(cat ${req_mssg}) 
+        printf "%s" "${file_log}" 
     fi
 
     if [ -n "${ack_pipe}" ];then
