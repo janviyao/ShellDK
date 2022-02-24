@@ -177,12 +177,23 @@ function! QuickLoad(module, index)
         endfor
 
         if a:module == "csfind"
-            call setqflist([], 'a', {'quickfixtextfunc' : 'CSFindQuickfixFormat'})
+            call setqflist([], 'a', {'quickfixtextfunc': 'CSFindQuickfixFormat'})
         elseif a:module == "grep"
-            call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'})
+            call setqflist([], 'a', {'quickfixtextfunc': 'GrepQuickfixFormat'})
         endif
-        call setqflist([], 'a', {'idx' : s:qfix_pick})
-        call setqflist([], 'a', {'title' : s:qfix_title})
+
+        let retCode = setqflist([], 'a', {'idx': s:qfix_pick})
+        if retCode != 0
+            call PrintMsg("error", a:module." idx invalid: ".s:qfix_pick)
+        endif
+
+        let retCode = setqflist([], 'a', {'title': s:qfix_title})
+        if retCode != 0
+            call PrintMsg("error", a:module." title invalid: ".s:qfix_title)
+        endif
+
+        call PrintMsg("file", a:module." set idx: ".s:qfix_pick." get: ".string(getqflist({'idx' : 0})))
+        call PrintMsg("file", a:module." set title: ".string(getqflist({'title' : 0})))
 
         let s:qfix_size = getqflist({'size' : 1}).size
         let s:qfix_title = getqflist({'title' : 1}).title
@@ -626,8 +637,8 @@ endfunction
 function! QuickCtrl(module, mode)
     call PrintMsg("file", a:module." mode: ".a:mode)
     if a:mode == "open"
-        let qflist = getqflist()
-        if !empty(qflist)
+        call PrintMsg("file", a:module." pick state: ".string(getqflist({'idx': 0})))
+        if !empty(getqflist())
             let height = winheight(0)/2
             silent! execute 'copen '.height
             let s:qfix_opened = bufnr("$")
@@ -1023,7 +1034,7 @@ autocmd BufWritePost .vimrc source ~/.vimrc
 autocmd BufWritePost .bashrc source ~/.bashrc
 
 "让vim记忆上次编辑文件的位置
-autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | silent! execute "normal g'\"" | endif
+autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | silent! execute "normal! g'\"" | endif
 
 "自动保存和加载VimSeesion和VimInfo
 autocmd VimEnter * call EnterHandler()
@@ -1198,7 +1209,9 @@ function! CSFind(ccmd)
     call QuickCtrl(g:quickfix_module, "clear")
     if g:quickfix_module != "csfind"
         let g:quickfix_module = "csfind"
-        unlet s:qfix_index
+        if exists("s:qfix_index")
+            unlet s:qfix_index
+        endif
         call QuickCtrl(g:quickfix_module, "load")
         call QuickCtrl(g:quickfix_module, "clear")
     endif
@@ -1227,7 +1240,7 @@ function! CSFind(ccmd)
         return
     endif
 
-    call setqflist([], 'a', {'quickfixtextfunc' : 'CSFindQuickfixFormat'}) 
+    call setqflist([], 'a', {'quickfixtextfunc': 'CSFindQuickfixFormat'}) 
     call QuickCtrl(g:quickfix_module, "home")
     call QuickCtrl(g:quickfix_module, "open")
 endfunction
@@ -1259,7 +1272,7 @@ function! SearchLetters(type)
 
     "搜索模式寄存器赋值
     call setreg("/", fargs)
-    silent! execute 'normal n'
+    silent! execute 'normal! n'
 endfunction
 
 "获取函数头开始行
@@ -1360,9 +1373,9 @@ function! JumpBracket(aim, flags)
             "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
 
             if startLine > 0
-                silent! execute 'normal ^'
+                silent! execute 'normal! ^'
                 call search(a:aim, 'c')
-                silent! execute 'normal %'
+                silent! execute 'normal! %'
                 let endLine = line(".") 
                 call setpos('.', cursor)
             else
@@ -1374,9 +1387,9 @@ function! JumpBracket(aim, flags)
             "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
             
             if endLine > 0 
-                silent! execute 'normal ^'
+                silent! execute 'normal! ^'
                 call search(a:aim, 'c')
-                silent! execute 'normal %'
+                silent! execute 'normal! %'
                 let startLine = line(".")
                 call setpos('.', cursor)
             else
@@ -1403,7 +1416,7 @@ function! ShowFuncName()
     let colNum = col(".")
 
     let headStart = JumpFuncStart()
-    silent! execute 'normal ^'
+    silent! execute 'normal! ^'
     call search("{", 'c')
 
     let headEnd = line(".")
@@ -1433,9 +1446,9 @@ function! GetFuncRange()
     let colNum = col(".")
 
     let funcStart = JumpFuncStart()
-    silent! execute 'normal ^'
+    silent! execute 'normal! ^'
     call search("{", 'c')
-    silent! execute 'normal %'
+    silent! execute 'normal! %'
     let funcEnd = line(".")
 
     call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
@@ -1468,7 +1481,7 @@ function! FormatLanguage()
             if lineNum == '$'
                 let rowCurNum = line(".")
                 let colCurNum = col(".")
-                silent! execute "normal G"
+                silent! execute "normal! G"
                 let endLine = line(".")
             else
                 return
@@ -1504,17 +1517,17 @@ function! FormatSelect()
     call cursor(rowNum, colNum)
 
     "call PrintMsg("info", "Start: ".startLine." End: ".endLine." Pos: ".rowNum)
-    silent! execute 'normal '.startLine.'G'
-    silent! execute 'normal V'
-    silent! execute 'normal '.endLine.'G'
-    silent! execute 'normal ='
+    silent! execute 'normal! '.startLine.'G'
+    silent! execute 'normal! V'
+    silent! execute 'normal! '.endLine.'G'
+    silent! execute 'normal! ='
     call cursor(rowNum, colNum)
 endfunction
 
 "格式化并刷新
 function! CodeFormat()
     "保存标签位置，格式化后恢复
-    normal! ma
+    silent! normal! mX
 
     "去除行结尾字符
     silent! execute '%s/\r//g' 
@@ -1531,20 +1544,20 @@ function! CodeFormat()
     silent! execute 'e' 
 
     "恢复文件行位置
-    silent! normal! g`a
-    delmarks a
+    silent! normal! g`X
+    silent! delmarks X
 endfunction
 
 "跳转到函数指定位置
 function! JumpFunctionPos(pos)
     if a:pos == 'jfs'
         call JumpFuncStart()
-        silent! execute 'normal ^'
+        silent! execute 'normal! ^'
     elseif a:pos == 'jfe'
         call JumpFuncStart()
-        silent! execute 'normal ^'
+        silent! execute 'normal! ^'
         call search("{", 'c')
-        silent! execute 'normal %'
+        silent! execute 'normal! %'
     endif
 endfunction
 
@@ -1564,28 +1577,28 @@ function! ReplaceWord()
 
     if index >= 1
         call cursor(rowNum, index)
-        silent! execute "normal ".strlen(oldStr)."x"
+        silent! execute "normal! ".strlen(oldStr)."x"
         let curCol = col(".")
         if curCol < index
-            silent! execute "normal \"0p"
+            silent! execute "normal! \"0p"
         else
-            silent! execute "normal \"0P"
+            silent! execute "normal! \"0P"
         endif
     endif
     
-    silent! execute "normal $"
+    silent! execute "normal! $"
     let tailCol = col(".") 
     if colNum <= tailCol
         let colNum -= 1
         if colNum <= 0
-            silent! execute "normal ^"
+            silent! execute "normal! ^"
         else
             call cursor(rowNum, colNum)
         endif
     else
         let index -= 1
         if index <= 0
-            silent! execute "normal ^"
+            silent! execute "normal! ^"
         else
             call cursor(rowNum, index)
         endif
@@ -1633,7 +1646,7 @@ function! GlobalReplace()
             if lineNum == '$'
                 let rowCurNum = line(".")
                 let colCurNum = col(".")
-                silent! execute "normal G"
+                silent! execute "normal! G"
                 let endLine = line(".")
                 call search("\\%" . rowCurNum . "l" . "\\%" . colCurNum . "c")
             else
@@ -1976,7 +1989,7 @@ endfunc
 
 function! GrepFind()
     let csarg = expand('<cword>')
-    let cursor = getcurpos()
+    silent! normal! mX
 
     call PrintMsg("file", "GrepFind: ".csarg)
     call ToggleWindow("allclose")
@@ -1984,19 +1997,22 @@ function! GrepFind()
     call QuickCtrl(g:quickfix_module, "clear")
     if g:quickfix_module != "grep"
         let g:quickfix_module = "grep"
-        unlet s:qfix_index
+        if exists("s:qfix_index")
+            unlet s:qfix_index
+        endif
         call QuickCtrl(g:quickfix_module, "load")
         call QuickCtrl(g:quickfix_module, "clear")
     endif
 
-    call setpos('.', cursor)
+    silent! normal! g`X
+    silent! delmarks X
     execute "Rgrep"
 
     if empty(getqflist())
         return
     endif
 
-    call setqflist([], 'a', {'quickfixtextfunc' : 'GrepQuickfixFormat'}) 
+    call setqflist([], 'a', {'quickfixtextfunc': 'GrepQuickfixFormat'}) 
     call QuickCtrl(g:quickfix_module, "home")
     call QuickCtrl(g:quickfix_module, "open")
 endfunction
