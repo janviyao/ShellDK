@@ -50,9 +50,6 @@ function thread_signal
 
     send_ctrl_to_parent "CTRL" "EXCEPTION"
     send_ctrl_to_parent "CTRL" "EXIT"
-
-    send_log_to_parent "CTRL" "EXCEPTION"
-    send_log_to_parent "CTRL" "EXIT"
 }
 trap "thread_signal" SIGINT SIGTERM SIGKILL
 

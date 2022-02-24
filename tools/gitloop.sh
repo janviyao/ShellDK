@@ -47,9 +47,7 @@ function ctrl_user_handler
         done
     fi
 }
-
 usr_ctrl_launch
-usr_logr_launch
 
 RUN_DIR="$1"
 if [ ! -d ${RUN_DIR} ]; then
@@ -72,13 +70,17 @@ y_pos=0
 
 for gitdir in `ls -d */`
 do
+    if ctrl_exited; then
+        break
+    fi
+
     cd ${gitdir}
     if [ -d .git ]; then
         echo_debug "enter into: ${gitdir}"
         prefix="$(printf "%-30s @ " "${gitdir}")"
         y_pos=${#prefix}
 
-        send_log_to_self_sync "PRINT" "${prefix}"
+        global_send_log "PRINT" "${prefix}"
 
         prg_time=$((OP_TIMEOUT*10*OP_TRY_CNT + 2*10))
         $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos}&
@@ -92,9 +94,9 @@ do
             send_ctrl_to_self "BG_EXIT" "${bgpid}"
             wait ${bgpid}
 
-            send_log_to_self "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
-            send_log_to_self "ERASE_LINE" 
-            send_log_to_self "NEWLINE"
+            global_send_log "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
+            global_send_log "ERASE_LINE" 
+            global_send_log "NEWLINE"
             break
         fi
 
@@ -102,10 +104,10 @@ do
         send_ctrl_to_self "BG_EXIT" "${bgpid}"
         wait ${bgpid}
 
-        send_log_to_self_sync "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
-        send_log_to_self_sync "ERASE_LINE" 
-        send_log_to_self_sync "PRINT_FROM_FILE" "${log_file}"
-        send_log_to_self_sync "NEWLINE"
+        global_send_log "CURSOR_MOVE" "${x_pos}${GBL_CTRL_SPF2}${y_pos}"
+        global_send_log "ERASE_LINE" 
+        global_send_log_sync "PRINT_FROM_FILE" "${log_file}"
+        global_send_log "NEWLINE"
 
         let x_pos++
     else
@@ -116,7 +118,5 @@ do
 done
 
 usr_ctrl_exit
-usr_logr_exit
 wait
 usr_ctrl_clear
-usr_logr_clear

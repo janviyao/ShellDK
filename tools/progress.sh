@@ -1,8 +1,6 @@
 #!/bin/bash
 INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
-
 usr_ctrl_init_self
-usr_logr_init_parent
 
 declare -r PRG_FIN="${USR_CTRL_THIS_DIR}/finish"
 function ctrl_user_handler
@@ -85,9 +83,9 @@ function progress3
     local now=$current
     local last=$((total+1))
     
-    send_log_to_parent "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
-    send_log_to_parent "ERASE_LINE"
-    #send_log_to_parent "CURSOR_HIDE"
+    global_send_log "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
+    global_send_log "ERASE_LINE"
+    #global_send_log "CURSOR_HIDE"
 
     local postfix=('|' '/' '-' '\')
     while [ $now -le $last ] && [ ! -f ${PRG_FIN} ] 
@@ -103,17 +101,17 @@ function progress3
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
 
-        send_log_to_parent "CURSOR_SAVE"
-        send_log_to_parent_sync "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
-        send_log_to_parent "CURSOR_RESTORE"
+        global_send_log "CURSOR_SAVE"
+        global_send_log "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
+        global_send_log "CURSOR_RESTORE"
 
         let now++
         sleep 0.1 
     done
 
-    send_log_to_parent "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
-    send_log_to_parent "ERASE_LINE"
-    #send_log_to_parent "CURSOR_SHOW"
+    global_send_log "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
+    global_send_log "ERASE_LINE"
+    #global_send_log "CURSOR_SHOW"
 }
 
 declare -r PRG_CURR="$1"
