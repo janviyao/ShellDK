@@ -72,6 +72,13 @@ function access_ok
     return 1
 }
 
+function current_dir
+{
+    local curdir=$(cd `dirname $0`;pwd)
+    curdir=$(match_trim_end "${curdir}" "/")
+    echo "${curdir}"
+}
+
 function file_name
 {
     local full_name="$0"
