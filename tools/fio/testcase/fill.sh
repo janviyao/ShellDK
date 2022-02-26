@@ -1,20 +1,12 @@
 #!/bin/bash
-source /tmp/fio.env
-cd ${ROOT_DIR}
-
-. include/api.sh
-. include/dev.sh
-. include/global.sh
-
-CPU_MASK=0-63
-CPU_POLICY=split
-IO_ENGINE=libaio
-TEST_TIME=180
-RAMP_TIME=10
-THREAD_ON=1
-VERIFY_ON=0
+FIO_CPU_MASK=0-63
+FIO_CPU_POLICY=split
+FIO_IO_ENGINE=libaio
+FIO_TEST_TIME=10
+FIO_RAMP_TIME=10
+FIO_THREAD_ON=1
+FIO_VERIFY_ON=0
 DEBUG_ON=0
 
-declare -A testMap
-testMap["dev-${DEV_NUM}-1"]="fio.s.w 1m 1 1"
-
+declare -A FIO_TEST_MAP
+FIO_TEST_MAP["testcase-1"]="fio.s.w 1m 1 1 vdb"

@@ -1,22 +1,4 @@
 #!/bin/bash
-DEBUG_ON=yes
-
-function bool_v
-{
-    para=$1
-    if [ "${para,,}" == "yes" -o "${para,,}" == "true" -o "${para,,}" == "y" -o "${para}" == "1" ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-function trunc_name
-{
-    name_str=`echo "$1" | sed "s#${WORK_DIR}/##g"`
-    echo "${name_str}"
-}
-
 function get_scsi_dev
 {
     target_ip=$1

@@ -9,10 +9,10 @@ KEEP_ENV=no
 SESSION_PER_LUN=32
 
 DEV_TYPE="malloc"
-DEV_SIZE=64
-DEV_BLK=4096
-DEV_QD=256
-MDEV_QD=`expr ${DEV_QD} \* ${SESSION_PER_LUN}`
+DEVICE_SIZE=64
+BLOCK_SIZE=4096
+DEVICE_QD=256
+MDEV_QD=`expr ${DEVICE_QD} \* ${SESSION_PER_LUN}`
 
 ISCSI_HEADER_DIGEST="None"
 ISCSI_DATA_DIGEST="None"
@@ -72,7 +72,7 @@ done
 declare -A ignetMap
 MAX_TARGET_NUM=5
 LUN_ID_LIST=""
-BDEV_ID_LIST=""
+DEVICE_LIST=""
 
 all_lun_num=0
 for ipaddr in ${INI_IPS}
@@ -109,9 +109,9 @@ do
                 LUN_ID_LIST="${LUN_ID_LIST} ${lun_id}"
             fi
             
-            is_exist=`echo "${BDEV_ID_LIST} " | grep -P "${bdev_id}\s+" -o`
+            is_exist=`echo "${DEVICE_LIST} " | grep -P "${bdev_id}\s+" -o`
             if [ -z "${is_exist}" ];then
-                BDEV_ID_LIST="${BDEV_ID_LIST} ${bdev_id}"
+                DEVICE_LIST="${DEVICE_LIST} ${bdev_id}"
             fi
             
             let all_lun_num++
@@ -120,11 +120,11 @@ do
 done
 
 LUN_NUM=`echo "${LUN_ID_LIST}" | awk '{ print NF }'`
-BDEV_NUM=`echo "${BDEV_ID_LIST}" | awk '{ print NF }'`
+BDEV_NUM=`echo "${DEVICE_LIST}" | awk '{ print NF }'`
 DEV_NUM=`expr ${all_lun_num} \* ${SESSION_PER_LUN}`
 
 #echo_debug "INI_IPS: {${INI_IPS} }"
 #echo_debug "TGT_IPS: {${TGT_IPS} }"
 #echo_debug "PG_ID_LIST: {${PG_ID_LIST} } IG_ID_LIST: {${IG_ID_LIST} }"
-#echo_debug "LUN_ID_LIST: {${LUN_ID_LIST} } BDEV_ID_LIST: {${BDEV_ID_LIST} }"
+#echo_debug "LUN_ID_LIST: {${LUN_ID_LIST} } DEVICE_LIST: {${DEVICE_LIST} }"
 #echo_debug "ALL_LUN: { ${all_lun_num} } LUN_NUM: { ${LUN_NUM} } DEV_NUM: { ${DEV_NUM} } BDEV_NUM: { ${BDEV_NUM} }"

@@ -20,7 +20,7 @@ fi
 RET_VAR="sudo_ret$$"
 SRV_MSG="echo \\\"${GBL_SRV_IDNO}${GBL_CTRL_SPF1}RETURN_CODE${GBL_CTRL_SPF2}${RET_VAR}=\$?\\\" | nc ${GBL_SRV_ADDR} ${GBL_SRV_PORT}"
 
-CMD_EXE="${CMD_EXE};${SRV_MSG}"
+CMD_EXE="(${CMD_EXE});${SRV_MSG}"
 global_wait_ack "RECV_MSG"
 
 expect << EOF
