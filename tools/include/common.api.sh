@@ -74,8 +74,8 @@ function access_ok
 
 function current_dir
 {
-    local curdir=$(cd `dirname $0`;pwd)
-    curdir=$(match_trim_end "${curdir}" "/")
+    local curdir=$(readlink -f $(dirname $0))
+    #curdir=$(match_trim_end "${curdir}" "/")
     echo "${curdir}"
 }
 
