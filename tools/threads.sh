@@ -42,7 +42,7 @@ function thread_signal
 
     for tid in ${thread_ids[@]}
     do
-        if process_exist "${tid}";then
+        if process_exist_bypid "${tid}";then
             echo_debug "kill thread-bg: ${tid}"
             signal_process KILL ${tid}    
         fi

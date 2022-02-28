@@ -33,7 +33,7 @@ do
                 continue
             fi
 
-            if process_exist "${pid}";then
+            if process_exist_bypid "${pid}";then
                 pname=$(process_name "${pid}")
                 is_exc=`echo "${exclude_pname}" | grep -w "${pname}"` 
                 if [ -z "${is_exc}" ];then
