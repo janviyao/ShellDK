@@ -32,6 +32,8 @@ function global_set_var
 {
     local var_name="$1"
     local one_pipe="$2"
+    echo_debug "global set: [$*]" 
+
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
@@ -45,6 +47,8 @@ function global_get_var
 {
     local var_name="$1"
     local one_pipe="$2"
+    echo_debug "global get: [$*]" 
+
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi

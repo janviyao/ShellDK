@@ -9,4 +9,4 @@ FIO_VERIFY_ON=0
 DEBUG_ON=0
 
 declare -A FIO_TEST_MAP
-FIO_TEST_MAP["testcase-1"]="fio.s.w 1m 1 1 vdb"
+FIO_TEST_MAP["testcase-1"]="fio.s.w 1m 1 1 172.24.15.162,172.24.15.163 vdb,vdc"

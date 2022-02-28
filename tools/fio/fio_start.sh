@@ -18,7 +18,8 @@ function run_fio_func
     local case_index="$1"
     local output_dir="$2"
     local conf_brief_name="$3"
-    local devs_value="$4"
+    local host_array=($4)
+    local devs_array=($5)
     
     local conf_full_name=${conf_brief_name}.local
     local fio_output_file=${conf_brief_name}.log
@@ -46,7 +47,7 @@ function run_fio_func
     fi
 
     local other_paras=""
-    for ipaddr in ${FIO_SIP_ARRAY[*]}
+    for ipaddr in ${host_array[*]}
     do
         conf_full_name=${conf_brief_name}.${ipaddr}
         other_paras="${other_paras} --client=${ipaddr} --remote-config=${output_dir}/${conf_full_name}"
@@ -81,14 +82,14 @@ function run_fio_func
     local test_lat=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $4 }' )
     local test_spend=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $5 }' )
     
-    echo_info "result-(${case_index}): { ${start_time} | ${devs_value} | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
+    echo_info "result-(${case_index}): { ${start_time} | [${devs_array[*]}] | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
 
     if [ -z "${test_lat}" ]; then
         echo_erro "empty: ${output_dir}/${conf_full_name}"
     else
         local ifgt=$( echo "${test_lat} > 0" | bc )
         if [ ${ifgt} -eq 1 ]; then
-            local devs_str=$(echo "${devs_value}" | tr ',' '-')
+            local devs_str=$(echo "${devs_array[*]}" | tr ' ' '-')
             echo "${devs_str},${numjobs},${iosize},${iodepth},${rwtype},${read_pct},${test_iops},${test_bw},${test_lat},${start_time},${test_spend}" >> ${FIO_TEST_RESULT}
         else
             echo_erro "failed: ${output_dir}/${conf_full_name}"
@@ -119,12 +120,16 @@ function start_test_func
         if [ -z "${test_case}" ]; then
             continue
         fi
+        echo_debug "testcase: { ${test_case} }"
 
         local testcase_tpl=$(echo "${test_case}" | awk '{print $1}')
         local bs_value=$(echo "${test_case}" | awk '{print $2}')
         local job_value=$(echo "${test_case}" | awk '{print $3}')
         local depth_value=$(echo "${test_case}" | awk '{print $4}')
-        local devs_value=$(echo "${test_case}" | awk '{print $5}')
+        local ipaddr_value=$(echo "${test_case}" | awk '{print $5}')
+        local devs_value=$(echo "${test_case}" | awk '{print $6}')
+
+        local ipaddr_array=($(echo "${ipaddr_value}" | tr ',' ' '))
 
         local output_dir=${FIO_OUTPUT_DIR}/${testcase_tpl}
         mkdir -p ${output_dir}
@@ -189,7 +194,7 @@ function start_test_func
         sed -i "s/runtime[ ]*=[ ]*[0-9]\+s\?/runtime=${FIO_TEST_TIME}s/g" ${output_dir}/${conf_full_name}
         sed -i "s/ramp_time[ ]*=[ ]*[0-9]\+s\?/ramp_time=${FIO_RAMP_TIME}s/g" ${output_dir}/${conf_full_name}
 
-        for ipaddr in ${FIO_SIP_ARRAY[*]}
+        for ipaddr in ${ipaddr_array[*]}
         do
             conf_full_name=${conf_brief_name}.${ipaddr}
             cp -f ${output_dir}/${conf_brief_name}.local ${output_dir}/${conf_full_name}
@@ -198,7 +203,7 @@ function start_test_func
             $MY_VIM_DIR/tools/scplogin.sh "${output_dir}/${conf_full_name}" "${ipaddr}:${output_dir}"
         done
 
-        run_fio_func "${idx}" "${output_dir}" "${conf_brief_name}" "${devs_value}" 
+        run_fio_func "${idx}" "${output_dir}" "${conf_brief_name}" "${ipaddr_array[*]}" "${devs_array[*]}" 
 
         let left_case_num--
         spend_time=$(((left_case_num * test_time) / 60))

@@ -2,6 +2,7 @@
 TIMEOUT=600
 HOST_IP="$1"
 CMD_EXE="$2"
+echo_debug "parameter: { $* }"
 
 source $MY_VIM_DIR/tools/password.sh
 

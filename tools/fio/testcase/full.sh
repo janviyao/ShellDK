@@ -24,12 +24,12 @@ FIO_DEPTH_MAP["4k"]="1 8 32 128"
 FIO_DEPTH_MAP["64k"]="1 8 32 128"
 FIO_DEPTH_MAP["1m"]="1 8 32"
 
-declare -A FIO_DEVICE_MAP
-FIO_DEVICE_MAP["4k"]="vdb vdb,vdc"
-FIO_DEVICE_MAP["64k"]="vdb vdb,vdc"
-FIO_DEVICE_MAP["1m"]="vdb vdb,vdc"
+declare -A FIO_HOST_MAP
+FIO_HOST_MAP["4k"]="172.24.15.162,172.24.15.163 vdb,vdc"
+FIO_HOST_MAP["64k"]="172.24.15.162,172.24.15.163 vdb,vdc"
+FIO_HOST_MAP["1m"]="172.24.15.162,172.24.15.163 vdb,vdc"
 
-if [ ${#FIO_CONF_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_JOB_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_DEPTH_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_DEVICE_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} ]; then
+if [ ${#FIO_CONF_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_JOB_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_DEPTH_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_HOST_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} ]; then
     echo_erro "FIO_BS_ARRAY != FIO_CONF_MAP != FIO_JOB_MAP != FIO_DEPTH_MAP"
     exit
 fi
@@ -44,14 +44,12 @@ do
         do
             for depth_value in ${FIO_DEPTH_MAP[${bs_value}]}
             do
-                for devs_value in ${FIO_DEVICE_MAP[${bs_value}]}
-                do
-                    test_key="testcase-${case_num}"
-                    test_val="${template} ${bs_value} ${job_value} ${depth_value} ${devs_value}"
+                test_key="testcase-${case_num}"
+                test_val="${template} ${bs_value} ${job_value} ${depth_value} ${FIO_HOST_MAP[${bs_value}]}"
 
-                    FIO_TEST_MAP["${test_key}"]="${test_val}"
-                    let case_num++
-                done
+                FIO_TEST_MAP["${test_key}"]="${test_val}"
+                let case_num++
+                #echo_info "testcase: { ${test_val} }"
             done
         done
     done
