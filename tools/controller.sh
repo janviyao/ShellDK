@@ -121,16 +121,16 @@ function usr_ctrl_thread
                 exit 0
             elif [[ "${sub_ctrl}" == "EXCEPTION" ]];then
                 for pid in ${!childMap[@]};do
-                    echo_debug "child: $(process_name "${pid}")[${pid}] killed" 
-                    signal_process KILL ${pid}
+                    echo_debug "child: $(process_pid2name "${pid}")[${pid}] killed" 
+                    process_signal KILL ${pid}
                 done
-                signal_process KILL $$
+                process_signal KILL $$
             fi
         elif [[ "${req_ctrl}" == "CHILD_FORK" ]];then
             local pid="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
             local pipe="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
 
-            echo_debug "child: $(process_name "${pid}")[${pid}] fork" 
+            echo_debug "child: $(process_pid2name "${pid}")[${pid}] fork" 
             childMap["${pid}"]="${pipe}"
         elif [[ "${req_ctrl}" == "CHILD_EXIT" ]];then
             local pid=${req_mssg}
