@@ -97,7 +97,7 @@ function path2fname
     local full_path="$1"
 
     if contain_string "${full_path}" "/";then
-        local file_name="$(readlink -f $(basename ${full_path}))"
+        local file_name="$(basename $(readlink -f ${full_path}))"
         echo "${file_name}"
     else
         echo "${full_path}"
@@ -109,7 +109,7 @@ function fname2path
     local full_name="$1"
 
     if contain_string "${full_name}" "/";then
-        local dir_name="$(readlink -f $(dirname ${full_name}))"
+        local dir_name="$(dirname $(readlink -f ${full_name}))"
         echo "${dir_name}"
     else
         echo "${full_name}"
