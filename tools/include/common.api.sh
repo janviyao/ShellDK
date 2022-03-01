@@ -92,7 +92,7 @@ function access_ok
 function current_filedir
 {
     local curdir=$(fname2path $0)
-    #curdir=$(match_trim_end "${curdir}" "/")
+    #curdir=$(trim_end_str "${curdir}" "/")
     echo "${curdir}"
 }
 
@@ -471,7 +471,7 @@ function end_chars
     echo "${chars}"
 }
 
-function match_trim_start
+function match_start_str
 {
     local string="$1"
     local subchar="$2"
@@ -487,15 +487,29 @@ function match_trim_start
     fi
 
     if [[ $(start_chars "${string}" ${sublen}) == ${subchar} ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function trim_start_str
+{
+    local string="$1"
+    local subchar="$2"
+    
+    if match_start_str "${string}" "${subchar}"; then
+        local sublen=${#subchar}
         let sublen++
-        local new="`echo "${string}" | cut -c ${sublen}-`" 
-        echo "${new}"
+
+        local new_str="`echo "${string}" | cut -c ${sublen}-`" 
+        echo "${new_str}"
     else
         echo "${string}"
     fi
 }
 
-function match_trim_end
+function match_end_str
 {
     local string="$1"
     local subchar="$2"
@@ -512,9 +526,23 @@ function match_trim_end
     fi
 
     if [[ $(end_chars "${string}" ${sublen}) == ${subchar} ]]; then
-        local diff=$((total-sublen))
-        local new="`echo "${string}" | cut -c 1-${diff}`" 
-        echo "${new}"
+        return 0
+    else
+        return 1
+    fi
+}
+
+function trim_end_str
+{
+    local string="$1"
+    local subchar="$2"
+     
+    if match_start_str "${string}" "${subchar}"; then
+        local total=${#string}
+        local sublen=${#subchar}
+
+        local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
+        echo "${new_str}"
     else
         echo "${string}"
     fi

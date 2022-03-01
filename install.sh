@@ -422,9 +422,9 @@ function install_from_rpm
     for rpm_file in ${rpm_pkg_list}    
     do
         local rpm_file=$(path2fname ${rpm_file})
-        local rpm_file=$(match_trim_end "${rpm_file}" ".rpm")
+        local rpm_file=$(trim_end_str "${rpm_file}" ".rpm")
 
-        local tmp_reg=$(match_trim_end "${fname_reg}" "\.rpm")
+        local tmp_reg=$(trim_end_str "${fname_reg}" "\.rpm")
         local installed_list=`rpm -qa | grep -P "^${tmp_reg}" | tr "\n" " "`
 
         echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
