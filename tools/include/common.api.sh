@@ -46,11 +46,24 @@ function access_ok
     if [ -z "${fname}" ];then
         return 1
     fi
- 
+
+    if match_regex "${fname}" "\*$";then
+        for file in ${fname}
+        do
+            if access_ok "${file}"; then
+                return 0
+            fi
+        done
+    fi
+
+    if ls --color=never ${fname} &> /dev/null;then
+        return 0
+    fi
+
     if which ${fname} &> /dev/null;then
         return 0
     fi
-    
+ 
     if match_regex "${fname}" "^~";then
         fname="$(regex_replace "${fname}" "^~" "${HOME}")"
     fi
@@ -68,11 +81,7 @@ function access_ok
     elif [ -r ${fname} -o -w ${fname} -o -x ${fname} ];then
         return 0
     fi
-
-    if ls --color=never ${fname} &> /dev/null;then
-        return 0
-    fi
-
+ 
     return 1
 }
 
