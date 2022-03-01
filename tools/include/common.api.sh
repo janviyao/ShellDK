@@ -50,6 +50,10 @@ function access_ok
     if match_regex "${fname}" "\*$";then
         for file in ${fname}
         do
+            if match_regex "${file}" "\*$";then
+                return 1
+            fi
+
             if access_ok "${file}"; then
                 return 0
             fi
