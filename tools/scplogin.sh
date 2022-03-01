@@ -12,7 +12,7 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
 fi
 
 if [ -d "${SRC_DIR}" ];then
-    if [[ $(end_chars "${SRC_DIR}" 1) == '/' ]]; then
+    if [[ $(string_end "${SRC_DIR}" 1) == '/' ]]; then
         #SRC_DIR=${SRC_DIR}.
         #SRC_DIR=${SRC_DIR}*
         SRC_DIR=${SRC_DIR}

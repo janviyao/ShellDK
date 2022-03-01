@@ -422,13 +422,13 @@ function install_from_rpm
     for rpm_file in ${rpm_pkg_list}    
     do
         local rpm_file=$(path2fname ${rpm_file})
-        local rpm_file=$(trim_end_str "${rpm_file}" ".rpm")
+        local rpm_file=$(trim_str_end "${rpm_file}" ".rpm")
 
-        local tmp_reg=$(trim_end_str "${fname_reg}" "\.rpm")
+        local tmp_reg=$(trim_str_end "${fname_reg}" "\.rpm")
         local installed_list=`rpm -qa | grep -P "^${tmp_reg}" | tr "\n" " "`
 
         echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
-        if ! contain_string "${installed_list}" "${rpm_file}";then
+        if ! contain_str "${installed_list}" "${rpm_file}";then
             ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
@@ -443,7 +443,7 @@ function install_from_rpm
 function inst_deps
 {     
     cd ${ROOT_DIR}/deps
-    if [[ "$(start_chars $(uname -s) 5)" == "Linux" ]]; then
+    if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         for usr_cmd in ${!rpmTodo[@]};
         do
             if ! access_ok "${usr_cmd}";then
@@ -493,7 +493,7 @@ function inst_deps
         ${SUDO} echo "${HOME_DIR}/.local/lib" '>>' /etc/ld.so.conf
         ${SUDO} ldconfig
 
-    elif [[ "$(start_chars $(uname -s) 9)" == "CYGWIN_NT" ]]; then
+    elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         # Install deno
         unzip deno-x86_64-pc-windows-msvc.zip
         mv -f deno.exe ${BIN_DIR}

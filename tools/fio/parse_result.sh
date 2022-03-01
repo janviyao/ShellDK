@@ -269,7 +269,7 @@ function collect_result
         local write_flag=`cat ${test_output} | grep -P "write\s*:\s*.*\s*${g_iops_key}\s*=" | wc -l`
         g_valid_reslut_ln=`cat ${test_output} | grep -P "group-disk" | grep -P "jobs\s*=" | wc -l`
         
-        echo_debug "dispose[r=${read_flag}/w=${write_flag}/nd=${g_valid_reslut_ln}]: { $(trim_start_str "${test_output}" "${FIO_WORK_DIR}/") }"
+        echo_debug "dispose[r=${read_flag}/w=${write_flag}/nd=${g_valid_reslut_ln}]: { $(trim_str_start "${test_output}" "${FIO_WORK_DIR}/") }"
 
         [ ${read_flag} -ge 1 ] && get_result ${test_output} "read"
         [ ${write_flag} -ge 1 ] && get_result ${test_output} "write"

@@ -92,7 +92,7 @@ function access_ok
 function current_filedir
 {
     local curdir=$(fname2path $0)
-    #curdir=$(trim_end_str "${curdir}" "/")
+    #curdir=$(trim_str_end "${curdir}" "/")
     echo "${curdir}"
 }
 
@@ -100,7 +100,7 @@ function path2fname
 {
     local full_path="$1"
 
-    if contain_string "${full_path}" "/";then
+    if contain_str "${full_path}" "/";then
         local file_name="$(basename $(readlink -f ${full_path}))"
         echo "${file_name}"
     else
@@ -112,7 +112,7 @@ function fname2path
 {
     local full_name="$1"
 
-    if contain_string "${full_name}" "/";then
+    if contain_str "${full_name}" "/";then
         local dir_name="$(dirname $(readlink -f ${full_name}))"
         echo "${dir_name}"
     else
@@ -449,106 +449,124 @@ function match_regex
     fi
 }
 
-function start_chars
+function string_start
 {
     local string="$1"
-    local count="$2"
+    local length="$2"
 
-    [ -z "${count}" ] && count=1
+    is_number "${length}" || { echo "${string}"; return; }
 
-    local chars="`echo "${string}" | cut -c 1-${count}`"
-    echo "${chars}"
+    #local chars="`echo "${string}" | cut -c 1-${length}`"
+    #echo "${chars}"
+    echo "${string:0:${length}}"
 }
 
-function end_chars
+function string_sub
 {
     local string="$1"
-    local count="$2"
+    local start="$2"
+    local length="$3"
 
-    [ -z "${count}" ] && count=1
+    is_number "${start}" || { echo "${string}"; return; }
+    is_number "${length}" || { echo "${string:${start}}"; return; }
 
-    local chars="`echo "${string}" | rev | cut -c 1-${count} | rev`"
-    echo "${chars}"
+    #local chars="`echo "${string}" | cut -c 1-${length}`"
+    #echo "${chars}"
+    echo "${string:${start}:${length}}"
 }
 
-function match_start_str
+function string_end
 {
     local string="$1"
-    local subchar="$2"
+    local length="$2"
+
+    is_number "${length}" || { echo "${string}"; return; }
+
+    #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
+    #echo "${chars}"
+    echo "${string:0-${length}:${length}}"
+}
+
+function match_str_start
+{
+    local string="$1"
+    local substr="$2"
     
     local sublen=${#subchar}
 
-    if [[ ${subchar} == *\\* ]];then
-        subchar="${subchar//\\/\\\\}"
+    if [[ ${substr} == *\\* ]];then
+        substr="${substr//\\/\\\\}"
     fi
 
-    if [[ ${subchar} == *\** ]];then
-        subchar="${subchar//\*/\\*}"
+    if [[ ${substr} == *\** ]];then
+        substr="${substr//\*/\\*}"
     fi
 
-    if [[ $(start_chars "${string}" ${sublen}) == ${subchar} ]]; then
+    if [[ $(string_start "${string}" ${sublen}) == ${substr} ]]; then
         return 0
     else
         return 1
     fi
 }
 
-function trim_start_str
+function match_str_end
 {
     local string="$1"
-    local subchar="$2"
-    
-    if match_start_str "${string}" "${subchar}"; then
-        local sublen=${#subchar}
-        let sublen++
-
-        local new_str="`echo "${string}" | cut -c ${sublen}-`" 
-        echo "${new_str}"
-    else
-        echo "${string}"
-    fi
-}
-
-function match_end_str
-{
-    local string="$1"
-    local subchar="$2"
+    local substr="$2"
     
     local total=${#string}
     local sublen=${#subchar}
 
-    if [[ ${subchar} == *\\* ]];then
-        subchar="${subchar//\\/\\\\}"
+    if [[ ${substr} == *\\* ]];then
+        substr="${substr//\\/\\\\}"
     fi
 
-    if [[ ${subchar} == *\** ]];then
-        subchar="${subchar//\*/\\*}"
+    if [[ ${substr} == *\** ]];then
+        substr="${substr//\*/\\*}"
     fi
 
-    if [[ $(end_chars "${string}" ${sublen}) == ${subchar} ]]; then
+    if [[ $(string_end "${string}" ${sublen}) == ${substr} ]]; then
         return 0
     else
         return 1
     fi
 }
 
-function trim_end_str
+function trim_str_start
 {
     local string="$1"
-    local subchar="$2"
-     
-    if match_start_str "${string}" "${subchar}"; then
-        local total=${#string}
-        local sublen=${#subchar}
+    local substr="$2"
+    
+    if match_str_start "${string}" "${substr}"; then
+        #local sublen=${#subchar}
+        #let sublen++
 
-        local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
-        echo "${new_str}"
+        #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
+        #echo "${new_str}"
+        echo "${string##${substr}}"
     else
         echo "${string}"
     fi
 }
 
-function contain_string
+function trim_str_end
+{
+    local string="$1"
+    local substr="$2"
+     
+    if match_str_end "${string}" "${substr}"; then
+        #local total=${#string}
+        #local sublen=${#subchar}
+
+        #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
+        #echo "${new_str}"
+        echo "${string%%${substr}}"
+    else
+        echo "${string}"
+    fi
+}
+
+function contain_str
 {
     local string="$1"
     local substr="$2"
@@ -754,7 +772,7 @@ function echo_debug
 
     if bool_v "${DEBUG_ON}"; then
         local fname="$(path2fname $0)"
-        contain_string "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
+        contain_str "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then
             echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
         fi
