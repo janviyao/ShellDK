@@ -334,10 +334,6 @@ function _global_logr_bg_thread
 
 function _bash_exit
 { 
-    if [ -f ${HOME}/.bash_exit ];then
-        source ${HOME}/.bash_exit
-    fi
-
     echo 'EXIT' > ${GBL_CTRL_THIS_PIPE}
     eval "exec ${GBL_CTRL_THIS_FD}>&-"
 
@@ -348,11 +344,19 @@ function _bash_exit
     rm -fr ${GBL_LOGR_THIS_DIR}
 
     access_ok "${LOG_FILE}" && rm -f ${LOG_FILE}
+}
 
+function _exit_signal
+{ 
+    if [ -f ${HOME}/.bash_exit ];then
+        source ${HOME}/.bash_exit
+    fi
+
+    _bash_exit
     exit 0
 }
 
-trap "_bash_exit" EXIT
+trap "_exit_signal" EXIT
 
 {
     trap "" SIGINT SIGTERM SIGKILL

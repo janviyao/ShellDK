@@ -63,7 +63,7 @@ function run_fio_func
     fi
     
     local have_error=$(cat ${output_dir}/${fio_output_file} | grep "error=")
-    if [ -s "${have_error}" ]; then
+    if [ -n "${have_error}" ]; then
         cat ${output_dir}/${fio_output_file}
         echo_erro "failed: ${FIO_BIN} ${output_dir}/${conf_full_name} ${other_paras}" 
         exit -1
