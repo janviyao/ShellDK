@@ -51,7 +51,7 @@ function git_backup
         done
 
         if [ ${is_exclude} -ne 0 ];then 
-            local fdir=$(readlink -f $(dirname ${git_item}))
+            local fdir=$(fname2path ${git_item})
             local desdir=${BAK_ROOT}${fdir}
             mkdir -p ${desdir} 
 
@@ -70,7 +70,7 @@ function git_backup
         done
 
         if [ ${is_exclude} -ne 0 ];then 
-            local fdir=$(readlink -f $(dirname ${git_item}))
+            local fdir=$(fname2path ${git_item})
             local desdir=${BAK_ROOT}${fdir}
             mkdir -p ${desdir} 
 

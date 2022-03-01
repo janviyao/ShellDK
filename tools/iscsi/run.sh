@@ -3,7 +3,7 @@ FIO_ROOT=$MY_VIM_DIR/tools/fio
 source ${FIO_ROOT}/include/device.conf.sh
 source ${FIO_ROOT}/include/fio.conf.sh
 
-echo_debug "@@@@@@: $(echo `basename $0`) @${FIO_ROOT}"
+echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT}"
 #sed -i "s/node\.session\.nr_sessions[ ]*=[ ]*[0-9]*/node\.session\.nr_sessions = ${SESSION_PER_LUN}/g" tools/iscsid.conf
 
 for fio_ip in ${FIO_SIP_ARRAY[*]}

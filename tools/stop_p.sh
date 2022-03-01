@@ -8,7 +8,7 @@ signame=$(match_trim_start "${signame}" "SIG")
 unset other_paras[0]
 pname_list="${other_paras[*]}"
 
-echo_debug "@@@@@@: $(echo `basename $0`) @ $(echo `dirname $0`)"
+echo_debug "@@@@@@: $(path2fname $0) @ $(fname2path $0)"
 echo_debug "stop [${pname_list}] with [${signame}] @[${LOCAL_IP}]"
 
 exclude_pname="vim"

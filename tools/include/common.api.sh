@@ -68,25 +68,42 @@ function access_ok
     elif [ -r ${fname} -o -w ${fname} -o -x ${fname} ];then
         return 0
     fi
-     
+
+    if ls --color=never ${fname} &> /dev/null;then
+        return 0
+    fi
+
     return 1
 }
 
-function current_dir
+function current_filedir
 {
-    local curdir=$(readlink -f $(dirname $0))
+    local curdir=$(fname2path $0)
     #curdir=$(match_trim_end "${curdir}" "/")
     echo "${curdir}"
 }
 
-function file_name
+function path2fname
 {
-    local full_name="$0"
-    if [[ ${full_name} == -bash ]];then
-        echo "${full_name}"
-    else
-        local file_name="$(basename ${full_name})"
+    local full_path="$1"
+
+    if contain_string "${full_path}" "/";then
+        local file_name="$(readlink -f $(basename ${full_path}))"
         echo "${file_name}"
+    else
+        echo "${full_path}"
+    fi
+}
+
+function fname2path
+{
+    local full_name="$1"
+
+    if contain_string "${full_name}" "/";then
+        local dir_name="$(readlink -f $(dirname ${full_name}))"
+        echo "${dir_name}"
+    else
+        echo "${full_name}"
     fi
 }
 
@@ -654,7 +671,7 @@ function echo_file
     if var_exist "LOG_FILE";then
         local log_type="$1"
         shift
-        printf "[%-12s:%5d:%5s] %s\n" "$(file_name)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
+        printf "[%-12s:%5d:%5s] %s\n" "$(path2fname $0)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
     fi
 }
 
@@ -664,7 +681,7 @@ function echo_header
     if [ $? -eq 0 ];then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
         #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
-        local proc_info="$(printf "[%-12s[%5d]]" "$(file_name)" "$$")"
+        local proc_info="$(printf "[%-12s[%5d]]" "$(path2fname $0)" "$$")"
         echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
     fi
 }
@@ -695,7 +712,7 @@ function echo_debug
     local para=$1
 
     if bool_v "${DEBUG_ON}"; then
-        local fname="$(file_name)"
+        local fname="$(path2fname $0)"
         contain_string "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then
             echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"

@@ -296,7 +296,7 @@ function install_from_make
         one_act="$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
     done
 
-    local filename="$(basename `pwd`)"
+    local filename="$(path2fname `pwd`)"
 
     access_ok "Makefile" || access_ok "configure" 
     [ $? -ne 0 ] && access_ok "unix/" && cd unix/
@@ -397,7 +397,7 @@ function update_check
         local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
         for full_nm in ${file_list}    
         do
-            local file_name=$(basename ${full_nm})
+            local file_name=$(path2fname ${full_nm})
             echo_debug "local version: ${version_cur}  install version: ${file_name}"
 
             local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
@@ -421,7 +421,7 @@ function install_from_rpm
     local rpm_pkg_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
     for rpm_file in ${rpm_pkg_list}    
     do
-        local rpm_file=`basename ${rpm_file}`
+        local rpm_file=$(path2fname ${rpm_file})
         local rpm_file=$(match_trim_end "${rpm_file}" ".rpm")
 
         local tmp_reg=$(match_trim_end "${fname_reg}" "\.rpm")

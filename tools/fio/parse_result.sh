@@ -1,7 +1,7 @@
 #!/bin/bash
 FIO_ROOT=$MY_VIM_DIR/tools/fio
 
-echo_debug "@@@@@@: $(echo `basename $0`) @${FIO_WORK_DIR} @${LOCAL_IP}"
+echo_debug "@@@@@@: $(path2fname $0) @${FIO_WORK_DIR} @${LOCAL_IP}"
 
 g_result_list="$1"
 g_read_pct="$2"
