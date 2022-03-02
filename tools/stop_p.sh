@@ -25,7 +25,7 @@ do
     signum=$((signum/2))
     signum=`printf "%02d" ${signum}`
 
-    PID_LIST=($(ps -eo pid,cmd | grep -w -F "${pname}" | grep -v "$0" | grep -v "grep " | awk '{print $1}'))
+    PID_LIST=($(process_name2pid "${pname}"))
     if [ -n "${PID_LIST[*]}" ];then
         for pid in ${PID_LIST[*]}
         do
