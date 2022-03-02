@@ -483,7 +483,7 @@ function match_str_start
     local string="$1"
     local substr="$2"
     
-    local sublen=${#subchar}
+    local sublen=${#substr}
 
     if [[ ${substr} == *\\* ]];then
         substr="${substr//\\/\\\\}"
@@ -506,7 +506,7 @@ function match_str_end
     local substr="$2"
     
     local total=${#string}
-    local sublen=${#subchar}
+    local sublen=${#substr}
 
     if [[ ${substr} == *\\* ]];then
         substr="${substr//\\/\\\\}"
@@ -529,12 +529,13 @@ function trim_str_start
     local substr="$2"
     
     if match_str_start "${string}" "${substr}"; then
-        #local sublen=${#subchar}
+        #local sublen=${#substr}
         #let sublen++
 
         #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
         #echo "${new_str}"
-        echo "${string##${substr}}"
+        substr="$(replace_regex "${substr}" "\*" "\*")"
+        echo "${string#${substr}}"
     else
         echo "${string}"
     fi
@@ -547,11 +548,14 @@ function trim_str_end
      
     if match_str_end "${string}" "${substr}"; then
         #local total=${#string}
-        #local sublen=${#subchar}
+        #local sublen=${#substr}
 
         #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
         #echo "${new_str}"
-        echo "${string%%${substr}}"
+        string="$(replace_regex "${string}" "\*" "\*")"
+        substr="$(replace_regex "${substr}" "\*" "\*")"
+        substr="$(replace_regex "${substr}" "\*" "\*")"
+        echo "${string%${substr}}"
     else
         echo "${string}"
     fi
