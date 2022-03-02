@@ -24,7 +24,7 @@ GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_CTRL_THIS_PIPE}"
 
 CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 # trap - EXIT : prevent from removing global directory
-CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap - EXIT; ${CMD_STR}; ${GET_RET}; _bash_exit"
+CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; ${CMD_STR}; ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF
