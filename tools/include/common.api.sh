@@ -616,14 +616,24 @@ function ssh_address
 
 function file_count
 {
-    local fname="$1"
-    echo $(fstat ${fname} | awk '{ print $1 }')
+    local fname="$*"
+    local self_pid=$(ppid | sed -n '1p')
+    local tmp_file=/tmp/size.${self_pid}
+
+    ${SUDO} fstat "${fname}" \&\> ${tmp_file}
+    echo $(tail -n 1 ${tmp_file} | awk '{ print $1 }')
+    ${SUDO} rm -f ${tmp_file}
 }
 
 function file_size
 {
-    local fname="$1"
-    echo $(fstat ${fname} | awk '{ print $2 }')
+    local fname="$*"
+    local self_pid=$(ppid | sed -n '1p')
+    local tmp_file=/tmp/size.${self_pid}
+
+    ${SUDO} fstat "${fname}" \&\> ${tmp_file}
+    echo $(tail -n 1 ${tmp_file} | awk '{ print $2 }')
+    ${SUDO} rm -f ${tmp_file}
 }
 
 function cursor_pos
