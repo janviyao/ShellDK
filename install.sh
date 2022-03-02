@@ -479,11 +479,17 @@ function inst_deps
 
         # Install ppid
         if ! access_ok "ppid";then
-            cd ${ROOT_DIR}/deps
+            cd ${ROOT_DIR}/tools/app
             gcc ppid.c -o ppid
             mv -f ppid ${BIN_DIR}
         fi
- 
+
+        if ! access_ok "fstat";then
+            cd ${ROOT_DIR}/tools/app
+            gcc fstat.c -o fstat
+            mv -f fstat ${BIN_DIR}
+        fi
+
         ${SUDO} chmod 777 /etc/ld.so.conf
 
         ${SUDO} sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf

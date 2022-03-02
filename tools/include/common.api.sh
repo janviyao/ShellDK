@@ -614,6 +614,17 @@ function ssh_address
     done
 }
 
+function file_size
+{
+    local fname="$1"
+
+    if test -d ${fname}; then
+        echo $(fstat ${fname} | awk '{ print $2 }')
+    else
+        echo $(fstat ${fname})
+    fi    
+}
+
 function cursor_pos
 {
     # ask the terminal for the position

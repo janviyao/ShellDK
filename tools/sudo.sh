@@ -1,10 +1,13 @@
 #!/bin/bash
-CMD_STR=""
-while [ -n "$1" ]
-do
-    CMD_STR="${CMD_STR} $1"
-    shift
-done
+CMD_STR="$*"
+#while [ -n "$1" ]
+#do
+#    CMD_STR="${CMD_STR} $1"
+#    shift
+#done
+#CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
+CMD_STR="$(replace_regex "${CMD_STR}" '\\' '\\')"
+echo_debug "sudo: ${CMD_STR}"
 
 if [ $UID -eq 0 ]; then
     eval "${CMD_STR}"
@@ -17,8 +20,6 @@ else
     fi
 fi
 
-echo_debug "sudo: ${CMD_STR}"
-
 . $MY_VIM_DIR/tools/password.sh
 
 EXPECT_EOF=""
@@ -28,9 +29,6 @@ fi
 
 RET_VAR="sudo_ret$$"
 GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_CTRL_THIS_PIPE}"
-
-#CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
-CMD_STR="$(replace_regex "${CMD_STR}" '\\' '\\\\\\\\')"
 
 # trap - EXIT : prevent from removing global directory
 CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_STR}); ${GET_RET}"
