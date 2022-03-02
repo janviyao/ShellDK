@@ -52,34 +52,38 @@ void get_dir_size(char *dirname, uint32_t *file_cnt, uint64_t *dir_size)
 
 int main(int argc, char *argv[])
 {
+    int idx;
     int fd = -1;
     uint32_t total_count = 0;
     uint64_t total_size = 0;
     struct stat filestat;
 
-    if(argc != 2) {
-        printf("argv != 2\n");
+    if(argc < 2) {
+        printf("argv < 2\n");
         return -1;
     }
     
-    if(stat(argv[1], &filestat) != 0) {
-        perror(argv[1]);
-        return -1;
-    }
-    
-    if(S_ISDIR(filestat.st_mode)) {
-        get_dir_size(argv[1], &total_count, &total_size);
-        printf("%lu %lu\n", total_count, total_size);
-    } else {
-        fd = open(argv[1], O_RDONLY);
-        if (fd == -1) {
-            printf("open file wrong \n");
+    for(idx = 1; idx < argc; idx ++) {
+        if(stat(argv[idx], &filestat) != 0) {
+            perror(argv[idx]);
             return -1;
         }
 
-        off_t off = lseek(fd, 0, SEEK_END);
-        printf("%lld\n", off);
+        if(S_ISDIR(filestat.st_mode)) {
+            get_dir_size(argv[idx], &total_count, &total_size);
+        } else {
+            fd = open(argv[idx], O_RDONLY);
+            if (fd == -1) {
+                printf("open %s failed\n", argv[idx]);
+                return -1;
+            }
+
+            total_count += 1;
+            total_size += lseek(fd, 0, SEEK_END);
+            close(fd);
+        }
     }
- 
+     
+    printf("%lu %lu\n", total_count, total_size);
     return 0;
 }

@@ -614,15 +614,16 @@ function ssh_address
     done
 }
 
+function file_count
+{
+    local fname="$1"
+    echo $(fstat ${fname} | awk '{ print $1 }')
+}
+
 function file_size
 {
     local fname="$1"
-
-    if test -d ${fname}; then
-        echo $(fstat ${fname} | awk '{ print $2 }')
-    else
-        echo $(fstat ${fname})
-    fi    
+    echo $(fstat ${fname} | awk '{ print $2 }')
 }
 
 function cursor_pos
