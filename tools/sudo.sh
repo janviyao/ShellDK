@@ -22,9 +22,11 @@ fi
 RET_VAR="sudo_ret$$"
 GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_CTRL_THIS_PIPE}"
 
-CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
+#CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
+CMD_STR="$(replace_regex "${CMD_STR}" '\\' '\\\\\\\\')"
+
 # trap - EXIT : prevent from removing global directory
-CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; ${CMD_STR}; ${GET_RET}"
+CMD_STR="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_STR}); ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF

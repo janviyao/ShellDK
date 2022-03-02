@@ -69,7 +69,7 @@ function access_ok
     fi
  
     if match_regex "${fname}" "^~";then
-        fname="$(regex_replace "${fname}" "^~" "${HOME}")"
+        fname="$(replace_regex "${fname}" "^~" "${HOME}")"
     fi
 
     if [ -d ${fname} ];then
@@ -586,7 +586,7 @@ function contain_str
     fi
 }
 
-function regex_replace
+function replace_regex
 {
     local string="$1"
     local regstr="$2"
@@ -599,6 +599,7 @@ function regex_replace
     [ -z "${oldstr}" ] && { echo "${string}"; return; }
 
     oldstr="${oldstr//./\.}"
+    oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
 
     newstr="${newstr//\\/\\\\}"

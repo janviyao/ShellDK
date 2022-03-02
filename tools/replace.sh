@@ -9,8 +9,8 @@ function replace_file
 
     local old_str=$(grep -P "${old_reg}" -o ${repfile} | head -n 1)
     if [ -n "${old_str}" ];then
-        local old_str="$(regex_replace "${old_str}" "/" "\/")"
-        local sed_str="$(regex_replace "${new_str}" "/" "\/")"
+        local old_str="$(replace_regex "${old_str}" "/" "\/")"
+        local sed_str="$(replace_regex "${new_str}" "/" "\/")"
         sed -i "s/${old_str}/${sed_str}/g" ${repfile}
 
         echo_info "replace: $(trim_str_start "${repfile}" "${rep_dir}/")"
