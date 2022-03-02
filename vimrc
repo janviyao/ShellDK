@@ -1700,6 +1700,7 @@ function! GlobalReplace()
 
     "恢复文件行列位置
     call search("\\%" . rowNum . "l" . "\\%" . colNum . "c")
+    silent! normal! M
 endfunction
 
 "恢复加载
@@ -1814,6 +1815,8 @@ function! EnterHandler()
 
         call RestoreLoad()
     endif
+
+    silent! normal! M
 endfunction
 
 "VIM退出事件

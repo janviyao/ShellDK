@@ -9,7 +9,14 @@ done
 if [ $UID -eq 0 ]; then
     eval "${CMD_STR}"
     exit $?
+else
+    if ! which sudo &> /dev/null || ! which expect &> /dev/null; then
+        echo_erro "sudo or expect not supported"
+        eval "${CMD_STR}"
+        exit $?
+    fi
 fi
+
 echo_debug "sudo: ${CMD_STR}"
 
 . $MY_VIM_DIR/tools/password.sh

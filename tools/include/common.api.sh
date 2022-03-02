@@ -11,23 +11,7 @@ LOG_FILE="/tmp/bash.log.$$"
 OP_TRY_CNT=3
 OP_TIMEOUT=60
 
-SUDO=""
-if [ $UID -ne 0 ]; then
-    which sudo &> /dev/null
-    if [ $? -eq 0 ]; then
-        which expect &> /dev/null
-        if [ $? -eq 0 ]; then
-            SUDO="$MY_VIM_DIR/tools/sudo.sh"
-        else
-            SUDO="sudo"
-        fi
-    fi
-else
-    which sudo &> /dev/null
-    if [ $? -eq 0 ]; then
-        SUDO="sudo"
-    fi
-fi
+SUDO="$MY_VIM_DIR/tools/sudo.sh"
 
 function bool_v
 {
@@ -135,7 +119,8 @@ function process_exist
 
         # if the process is no longer running, then exit the script
         # since it means the application crashed
-        if kill -s 0 ${pid} &> /dev/null; then
+        ${SUDO} kill -s 0 ${pid} \&\> /dev/null
+        if [ $? -eq 0 ]; then
             return 0
         else
             return 1
@@ -158,29 +143,23 @@ function process_exist
     fi
 }
 
-function kill_process
+function process_kill
 {
     local arr=($*)
-    
+    local pid=""
+
     [ ${#arr[*]} -eq 0 ] && return 1
 
-    for pn in ${arr[*]}
+    for pid in ${arr[*]}
     do
-        if is_number "${pn}"; then
-            if process_exist "${pn}"; then
-                kill -9 ${pn} &> /dev/null
-                return $?
+        local -a pid_array=($(process_name2pid "${pid}"))
+        for pid in ${pid_array[*]}
+        do
+            if process_exist "${pid}"; then
+                ${SUDO} kill -9 ${pid} \&\> /dev/null
+                [ $? -eq 0 ] || return 1
             fi
-        else
-            local pids=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pn}$/) print \$1 }"))    
-            for pid in ${pids[*]}
-            do
-                if process_exist "${pid}"; then
-                    kill -9 ${pid} &> /dev/null
-                    [ $? -eq 0 ] || return 1
-                fi
-            done
-        fi
+        done
     done
 
     return 0
@@ -200,21 +179,42 @@ function process_pid2name
 function process_name2pid
 {
     local pname="$1"
+
     is_number "${pname}" && { echo "${pname}"; return; }
-    echo "$(ps -C ${pname} -o pid=)"
+
+    local -a pid_array=($(ps -C ${pname} -o pid=))
+    if [ ${#pid_array[*]} -gt 0 ];then
+        echo "${pid_array[*]}"
+        return
+    fi
+
+    pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pname}$/) print \$1 }"))    
+    if [ ${#pid_array[*]} -gt 0 ];then
+        echo "${pid_array[*]}"
+        return
+    fi
+
+    pid_array=($(ps -eo pid,cmd | grep -P "\b${pname}\b" | awk '{ print $1 }'))    
+    if [ ${#pid_array[*]} -gt 0 ];then
+        echo "${pid_array[*]}"
+        return
+    fi
 }
 
 function process_subprocess
 {
     local ppid=$1
-    ppid=$(process_name2pid "${ppid}")
-    local subpro_path="/proc/${ppid}/task/${ppid}/children"
+    local -a pid_array=($(process_name2pid "${ppid}"))
 
-    # ps -p $$ -o ppid=
     local -a child_pids=($(echo ""))
-    if access_ok "${subpro_path}"; then
-        child_pids=($(cat ${subpro_path}))
-    fi
+    for ppid in ${pid_array[*]}
+    do
+        # ps -p $$ -o ppid=
+        local subpro_path="/proc/${ppid}/task/${ppid}/children"
+        if access_ok "${subpro_path}"; then
+            child_pids=(${child_pids[*]} $(cat ${subpro_path}))
+        fi
+    done
 
     echo "${child_pids[*]}"
 }
@@ -222,19 +222,18 @@ function process_subprocess
 function process_subthread
 {
     local ppid=$1
-    ppid=$(process_name2pid "${ppid}")
-    local thread_path="/proc/${ppid}/task"
+    local -a pid_array=($(process_name2pid "${ppid}"))
 
     local -a child_tids=($(echo ""))
-    if access_ok "${thread_path}"; then
-        child_tids=($(ls --color=never ${thread_path}))
-    fi
-    
-    if [ ${#child_tids[*]} -le 1 ];then
-        echo ""
-    else
-        echo "${child_tids[*]}"
-    fi
+    for ppid in ${pid_array[*]}
+    do
+        local thread_path="/proc/${ppid}/task"
+        if access_ok "${thread_path}"; then
+            child_tids=(${child_tids[*]} $(ls --color=never ${thread_path}))
+        fi
+    done
+     
+    echo "${child_tids[*]}"
 }
 
 function thread_info
@@ -242,11 +241,10 @@ function thread_info
     local ppid=$1
     local shead=${2:-true}
 
-    ppid=$(process_name2pid "${ppid}")
-
-    local -a show_header=("PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
+    local -a show_header=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
     local -A index_map={}
     index_map["PID"]="%-5s %-5d 0"
+    index_map["COMMAND"]="%-20s %-20s 1"
     index_map["STATE"]="%-5s %-5s 2"
     index_map["PPID"]="%-4s %-4d 3"
     index_map["FLAGS"]="%-10s %-10d 8"
@@ -264,7 +262,7 @@ function thread_info
     index_map["WCHAN"]="%-5s %-5d 34"
     index_map["POLICY"]="%-6s %-6d 40"
     index_map["CPU"]="%-3s %-3d 38"
-    index_map["CPU-U"]="%-5s %-5f x"
+    index_map["CPU-U"]="%-5s %4.1f x"
 
     if bool_v "${shead}"; then
         for header in ${show_header[*]}
@@ -276,95 +274,88 @@ function thread_info
     fi
 
     #top -b -n 1 -H -p ${pid}  | sed -n "7,$ p"
-    local -a tid_array=($(process_subthread ${ppid}))
-    for tid in ${tid_array[*]}
+    local -a pid_array=($(process_name2pid "${ppid}"))
+    for ppid in ${pid_array[*]}
     do
-        local -a pinfo=($(cat /proc/${ppid}/stat))
-
-        local -a tinfo=($(cat /proc/${ppid}/task/${tid}/stat))
-        for header in ${show_header[*]}
+        local -a tid_array=($(process_subthread ${ppid}))
+        for tid in ${tid_array[*]}
         do
-            local -a values=(${index_map[${header}]})
-            printf "${values[1]} " "${tinfo[${values[2]}]}"
+            local -a pinfo=($(cat /proc/${ppid}/stat))
+
+            local -a tinfo=($(cat /proc/${ppid}/task/${tid}/stat))
+            for header in ${show_header[*]}
+            do
+                local -a values=(${index_map[${header}]})
+                printf "${values[1]} " "${tinfo[${values[2]}]}"
+            done
+
+            local -a values=(${index_map["CPU"]})
+            local cpu_nm=${tinfo[${values[2]}]}
+
+            values=(${index_map["UTIME"]})
+            local tutime=${tinfo[${values[2]}]}
+            local putime=${pinfo[${values[2]}]}
+
+            values=(${index_map["CUTIME"]})
+            local pcutime=${pinfo[${values[2]}]}
+
+            values=(${index_map["STIME"]})
+            local tstime=${tinfo[${values[2]}]}
+            local pstime=${pinfo[${values[2]}]}
+
+            values=(${index_map["CSTIME"]})
+            local pcstime=${pinfo[${values[2]}]}
+
+            local ttime=$((tutime+tstime))
+            local ptime=$((putime+pstime+pcutime+pcstime))
+            
+            #echo_debug "proces utime: ${putime} stime: ${pstime} cpu${cpu_nm}: ${ptime}"
+            #echo_debug "thread utime: ${tutime} stime: ${tstime} cpu${cpu_nm}: ${ttime}"
+            if [ ${ptime} -gt 0 ];then
+                values=(${index_map["CPU-U"]})
+                printf "${values[1]}%% \n" "$((100*ttime/ptime))"
+            else
+                printf "\n"
+            fi
         done
 
-        local -a values=(${index_map["CPU"]})
-        local cpu_nm=${tinfo[${values[2]}]}
-
-        values=(${index_map["UTIME"]})
-        local tutime=${tinfo[${values[2]}]}
-        local putime=${pinfo[${values[2]}]}
-
-        values=(${index_map["CUTIME"]})
-        local pcutime=${pinfo[${values[2]}]}
-
-        values=(${index_map["STIME"]})
-        local tstime=${tinfo[${values[2]}]}
-        local pstime=${pinfo[${values[2]}]}
-
-        values=(${index_map["CSTIME"]})
-        local pcstime=${pinfo[${values[2]}]}
-
-        local ttime=$((tutime+tstime))
-        local ptime=$((putime+pstime+pcutime+pcstime))
-        #echo_debug "proces utime: ${putime} stime: ${pstime} cpu${cpu_nm}: ${ptime}"
-        #echo_debug "thread utime: ${tutime} stime: ${tstime} cpu${cpu_nm}: ${ttime}"
-        values=(${index_map["CPU-U"]})
-        printf "%4.1f%% \n" "$((100*ttime/ptime))"
-    done
-
-    local -a sub_array=($(process_subprocess "${ppid}"))    
-    for subpid in ${sub_array[*]}
-    do
-        thread_info "${subpid}" "false"
+        local -a sub_array=($(process_subprocess "${ppid}"))    
+        for subpid in ${sub_array[*]}
+        do
+            thread_info "${subpid}" "false"
+        done
     done
 }
 
 function process_info
 {
-    local pinfo="$1"
+    local pid="$1"
     local shead=${2:-true}
 
     local ps_header="comm,ppid,pid,lwp=TID,nlwp=TD-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,%cpu,maj_flt,min_flt,flags=FLAG,sz,vsz,%mem,wchan,stackp,etime,cmd"
 
     local show_head=${shead}
     local -a pids_array=($(echo ""))
-    if is_number "${pinfo}"; then
+
+    local -a pid_array=($(process_name2pid "${pid}"))    
+    for pid in ${pid_array[*]}
+    do
         if bool_v "${show_head}"; then
             show_head=false
-            ps -p ${pinfo} -o ${ps_header}
+            ps -p ${pid} -o ${ps_header}
         else
-            ps -p ${pinfo} -o ${ps_header} --no-headers
+            ps -p ${pid} -o ${ps_header} --no-headers
         fi
 
-        pids_array=(${pids_array[*]} ${pinfo})
-        local -a sub_array=($(process_subprocess "${pinfo}"))    
+        pids_array=(${pids_array[*]} ${pid})
+        local -a sub_array=($(process_subprocess "${pid}"))    
         for subpid in ${sub_array[*]}
         do
-            pids_array=(${pids_array[*]} ${subpid})
+            pids_array=(${pids_array[*]} ${subpid}) 
             process_info "${subpid}" "false"
         done
-    else
-        local -a pid_array=($(process_name2pid "${pinfo}"))    
-        for pid in ${pid_array[*]}
-        do
-            if bool_v "${show_head}"; then
-                show_head=false
-                ps -p ${pid} -o ${ps_header}
-            else
-                ps -p ${pid} -o ${ps_header} --no-headers
-            fi
-
-            pids_array=(${pids_array[*]} ${pid})
-            local -a sub_array=($(process_subprocess "${pid}"))    
-            for subpid in ${sub_array[*]}
-            do
-                pids_array=(${pids_array[*]} ${subpid}) 
-                process_info "${subpid}" "false"
-            done
-        done
-    fi
-
+    done
+ 
     if bool_v "${shead}"; then
         for pid in ${pids_array[*]}
         do
@@ -388,7 +379,7 @@ function process_signal
     if ps -p ${toppid} > /dev/null; then
         if [ ${toppid} -ne $ROOT_PID ];then
             echo_debug "${signal}: $(process_pid2name ${toppid})[${toppid}]"
-            kill -s ${signal} ${toppid} &> /dev/null
+            ${SUDO} kill -s ${signal} ${toppid} \&\> /dev/null
         fi
     fi
 
@@ -412,7 +403,7 @@ function process_signal
         if ps -p ${next_pid} > /dev/null; then
             if [ ${next_pid} -ne $ROOT_PID ];then
                 echo_debug "${signal}: $(process_pid2name ${next_pid})[${next_pid}]"
-                kill -s ${signal} ${next_pid} &> /dev/null
+                ${SUDO} kill -s ${signal} ${next_pid} \&\> /dev/null
             fi
         fi
 

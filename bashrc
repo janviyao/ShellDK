@@ -14,6 +14,10 @@ alias llt='ls --color -lht'
 alias LS='ls --color'
 alias LL='ls --color -lh'
 
+alias lsblk='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,WWN,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,SCHED,RQ-SIZE,RA,RO,RM,MODEL,SERIAL,VENDOR,PKNAME,TRAN'
+alias lspci='lspci -vvv -nn'
+alias lsscsi='lsscsi -d -s -g -p -P -i -w'
+
 unalias cp &> /dev/null
 unalias rm &> /dev/null
 

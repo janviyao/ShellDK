@@ -64,7 +64,7 @@ function global_get_var
     exec {get_fd}<>${get_pipe}
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}GET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${get_pipe}" > ${one_pipe}
-    read -t 10 var_value < ${get_pipe}
+    read var_value < ${get_pipe}
 
     eval "exec ${get_fd}>&-"
     rm -f ${get_pipe}
@@ -165,7 +165,8 @@ function _global_ctrl_bg_thread
         elif [[ "${req_ctrl}" == "GET_ENV" ]];then
             local var_name="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
             local var_pipe="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
-
+            
+            echo_debug "write [${_globalMap[${var_name}]}] into [${var_pipe}]"
             echo "${_globalMap[${var_name}]}" > ${var_pipe}
         elif [[ "${req_ctrl}" == "UNSET_ENV" ]];then
             local var_name=${req_mssg}
