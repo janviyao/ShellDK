@@ -621,8 +621,9 @@ function file_count
     local tmp_file=/tmp/size.${self_pid}
 
     ${SUDO} fstat "${fname}" \&\> ${tmp_file}
-    echo $(tail -n 1 ${tmp_file} | awk '{ print $1 }')
-    ${SUDO} rm -f ${tmp_file}
+    local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
+    ${SUDO} rm -f ${tmp_file} &> /dev/null
+    echo "${fcount}"
 }
 
 function file_size
@@ -632,8 +633,9 @@ function file_size
     local tmp_file=/tmp/size.${self_pid}
 
     ${SUDO} fstat "${fname}" \&\> ${tmp_file}
-    echo $(tail -n 1 ${tmp_file} | awk '{ print $2 }')
-    ${SUDO} rm -f ${tmp_file}
+    local fsize=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
+    ${SUDO} rm -f ${tmp_file} &> /dev/null
+    echo "${fsize}"
 }
 
 function cursor_pos
