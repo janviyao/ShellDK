@@ -593,14 +593,16 @@ function replace_regex
     local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
     [ -z "${oldstr}" ] && { echo "${string}"; return; }
 
-    oldstr="${oldstr//./\.}"
+    #oldstr="${oldstr//./\.}"
     oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
+    oldstr="${oldstr//\*/\*}"
 
     newstr="${newstr//\\/\\\\}"
-    newstr="${newstr//\//\\/}"
+    #newstr="${newstr//\//\\/}"
 
-    string="$(echo "${string}" | sed "s/${oldstr}/${newstr}/g")"
+    #string="$(echo "${string}" | sed "s/${oldstr}/${newstr}/g")"
+    string="${string//${oldstr}/${newstr}}"
     echo "${string}"
 }
 
