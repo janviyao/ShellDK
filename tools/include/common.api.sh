@@ -486,7 +486,6 @@ function match_str_end
     local string="$1"
     local substr="$2"
     
-    local total=${#string}
     local sublen=${#substr}
 
     if [[ ${substr} == *\\* ]];then
@@ -538,8 +537,8 @@ function trim_str_end
         string=$(replace_regex "${string}" '\*' '\*')
 
         substr=$(replace_regex "${substr}" '\*' '\*')
-        substr=$(replace_regex "${substr}" '\*' '\*')
         substr=$(replace_regex "${substr}" '\\' '\\')
+
         echo "${string%${substr}}"
     else
         echo "${string}"
