@@ -25,7 +25,7 @@ GBL_CTRL_SPF2="|"
 GBL_CTRL_SPF3="!"
 
 GBL_SRV_IDNO=$$
-GBL_SRV_ADDR="$(ssh_address)"
+GBL_SRV_ADDR=$(ssh_address)
 GBL_SRV_PORT=7888
 
 function global_set_var
@@ -39,7 +39,7 @@ function global_set_var
     fi
     access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
-    local var_value="$(eval "echo \"\$${var_name}\"")"
+    local var_value=$(eval "echo \"\$${var_name}\"")
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}SET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${var_value}" > ${one_pipe}
 }
 
@@ -130,7 +130,7 @@ function global_wait_ack
     
     # the first pid is shell where ppid run
     local self_pid=$(ppid | sed -n '1p')
-    local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+    local ack_fd=$(make_ack "${self_pid}"; echo $?)
     local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
@@ -144,27 +144,27 @@ function _global_ctrl_bg_thread
     while read line
     do
         echo_debug "global ctrl: [${line}]" 
-        local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
-        local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
-        local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+        local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
+        local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
+        local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
             access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
-        local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-        local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+        local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
+        local req_mssg=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
             exit 0 
         elif [[ "${req_ctrl}" == "SET_ENV" ]];then
-            local var_name="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-            local var_value="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+            local var_name=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+            local var_value=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
 
             _globalMap[${var_name}]="${var_value}"
         elif [[ "${req_ctrl}" == "GET_ENV" ]];then
-            local var_name="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-            local var_pipe="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+            local var_name=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+            local var_pipe=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
             
             echo_debug "write [${_globalMap[${var_name}]}] into [${var_pipe}]"
             echo "${_globalMap[${var_name}]}" > ${var_pipe}
@@ -202,17 +202,17 @@ function _global_ctrl_bg_thread
                 timeout ${OP_TIMEOUT} nc -l -4 ${GBL_SRV_PORT} | while read nc_msg
                 do
                     #echo "ncat_msg: ${nc_msg}"
-                    local srv_id="$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-                    local srv_msg="$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+                    local srv_id=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
+                    local srv_msg=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
 
                     if [ ${srv_id} -eq ${GBL_SRV_IDNO} ];then
                         if [ -n "${srv_msg}" ];then
-                            local srv_ctrl="$(echo "${srv_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-                            local srv_act="$(echo "${srv_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+                            local srv_ctrl=$(echo "${srv_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+                            local srv_act=$(echo "${srv_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
 
                             if [[ "${srv_ctrl}" == "RETURN_CODE" ]];then
-                                local var_name="$(echo "${srv_act}" | cut -d "=" -f 1)"
-                                local var_value="$(echo "${srv_act}" | cut -d "=" -f 2)"
+                                local var_name=$(echo "${srv_act}" | cut -d "=" -f 1)
+                                local var_value=$(echo "${srv_act}" | cut -d "=" -f 2)
 
                                 eval "${var_name}=${var_value}"
                                 global_set_var ${var_name}
@@ -250,8 +250,8 @@ function global_send_log_sync
 
     if [ -w ${GBL_LOGR_THIS_PIPE} ];then
         local self_pid=$(ppid | sed -n '1p')
-        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
-        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
+        local ack_fd=$(make_ack "${self_pid}"; echo $?)
+        local ack_pipe=${GBL_CTRL_THIS_DIR}/ack.${self_pid}
 
         if [ -n "${ack_pipe}" ];then
             access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
@@ -273,19 +273,19 @@ function _global_logr_bg_thread
     while read line
     do
         echo_debug "global logr: [${line}]" 
-        local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
-        local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
-        local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+        local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
+        local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
+        local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
             access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
-        local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-        local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+        local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
+        local req_mssg=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
 
         if [[ "${req_ctrl}" == "CTRL" ]];then
-            local sub_ctrl="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
+            local sub_ctrl=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
             if [[ "${sub_ctrl}" == "EXIT" ]];then
                 if [ -n "${ack_pipe}" ];then
                     echo_debug "ack to [${ack_pipe}]"
@@ -296,8 +296,8 @@ function _global_logr_bg_thread
                 echo_debug "NOP" 
             fi
         elif [[ "${req_ctrl}" == "CURSOR_MOVE" ]];then
-            local x_val="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-            local y_val="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+            local x_val=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+            local y_val=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
             tput cup ${x_val} ${y_val}
         elif [[ "${req_ctrl}" == "CURSOR_HIDE" ]];then
             tput civis

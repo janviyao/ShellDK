@@ -53,7 +53,7 @@ function access_ok
     fi
  
     if match_regex "${fname}" "^~";then
-        fname="$(replace_regex "${fname}" "^~" "${HOME}")"
+        fname=$(replace_regex "${fname}" "^~" "${HOME}")
     fi
 
     if [ -d ${fname} ];then
@@ -85,7 +85,7 @@ function path2fname
     local full_path="$1"
 
     if contain_str "${full_path}" "/";then
-        local file_name="$(basename $(readlink -f ${full_path}))"
+        local file_name=$(basename $(readlink -f ${full_path}))
         echo "${file_name}"
     else
         echo "${full_path}"
@@ -97,7 +97,7 @@ function fname2path
     local full_name="$1"
 
     if contain_str "${full_name}" "/";then
-        local dir_name="$(dirname $(readlink -f ${full_name}))"
+        local dir_name=$(dirname $(readlink -f ${full_name}))
         echo "${dir_name}"
     else
         echo "${full_name}"
@@ -534,7 +534,7 @@ function trim_str_start
 
         #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
         #echo "${new_str}"
-        substr="$(replace_regex "${substr}" "\*" "\*")"
+        substr=$(replace_regex "${substr}" "\*" "\*")
         echo "${string#${substr}}"
     else
         echo "${string}"
@@ -552,9 +552,9 @@ function trim_str_end
 
         #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
         #echo "${new_str}"
-        string="$(replace_regex "${string}" "\*" "\*")"
-        substr="$(replace_regex "${substr}" "\*" "\*")"
-        substr="$(replace_regex "${substr}" "\*" "\*")"
+        string=$(replace_regex "${string}" "\*" "\*")
+        substr=$(replace_regex "${substr}" "\*" "\*")
+        substr=$(replace_regex "${substr}" "\*" "\*")
         echo "${string%${substr}}"
     else
         echo "${string}"
@@ -691,8 +691,8 @@ function cursor_pos
 
     # save the position
     #echo "current position: $pos"
-    local x_pos="$(echo "${pos}" | cut -d ';' -f 1)"
-    local y_pos="$(echo "${pos}" | cut -d ';' -f 2)"
+    local x_pos=$(echo "${pos}" | cut -d ';' -f 1)
+    local y_pos=$(echo "${pos}" | cut -d ';' -f 2)
 
     global_set_var x_pos
     global_set_var y_pos
@@ -796,7 +796,7 @@ function echo_header
     if [ $? -eq 0 ];then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
         #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
-        local proc_info="$(printf "[%-12s[%5d]]" "$(path2fname $0)" "$$")"
+        local proc_info=$(printf "[%-12s[%5d]]" "$(path2fname $0)" "$$")
         echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
     fi
 }
@@ -827,7 +827,7 @@ function echo_debug
     local para=$1
 
     if bool_v "${DEBUG_ON}"; then
-        local fname="$(path2fname $0)"
+        local fname=$(path2fname $0)
         contain_str "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then
             echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"

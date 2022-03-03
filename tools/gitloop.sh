@@ -8,12 +8,12 @@ function ctrl_user_handler
 {
     line="$1"
 
-    local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
-    local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
-    local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+    local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
+    local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
+    local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
-    local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-    local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+    local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
+    local req_mssg=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
 
     if [[ "${req_ctrl}" == "BG_EXIT" ]];then
         local bgpid=${req_mssg}
@@ -77,7 +77,7 @@ do
     cd ${gitdir}
     if [ -d .git ]; then
         echo_debug "enter into: ${gitdir}"
-        prefix="$(printf "%-30s @ " "${gitdir}")"
+        prefix=$(printf "%-30s @ " "${gitdir}")
         y_pos=${#prefix}
 
         global_send_log "PRINT" "${prefix}"

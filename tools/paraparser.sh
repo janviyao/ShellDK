@@ -21,8 +21,8 @@ do
     
     b_single=false
     if contain_str "${option}" "=";then
-        value="$(echo "${option}" | cut -d '=' -f 2)"
-        option="$(echo "${option}" | cut -d '=' -f 1)"
+        value=$(echo "${option}" | cut -d '=' -f 2)
+        option=$(echo "${option}" | cut -d '=' -f 1)
         b_single=true
     fi
 

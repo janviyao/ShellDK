@@ -282,21 +282,21 @@ function install_from_net
 
 function install_from_make
 {
-    local before_orders="$(echo "$*" | cut -d "${BUILD_IFS}" -f 1)"
-    local after_orders="$(echo "$*" | cut -d "${BUILD_IFS}" -f 2)"
+    local before_orders=$(echo "$*" | cut -d "${BUILD_IFS}" -f 1)
+    local after_orders=$(echo "$*" | cut -d "${BUILD_IFS}" -f 2)
     
     local next_act=1
-    local one_act="$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    local one_act=$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
     while [ -n "${one_act}" ]
     do
         echo_info "$(printf "[%13s]: %-50s" "Doing" "${one_act}")"
         eval "${one_act}"
 
         let next_act++
-        one_act="$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
+        one_act=$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
     done
 
-    local filename="$(path2fname `pwd`)"
+    local filename=$(path2fname `pwd`)
 
     access_ok "Makefile" || access_ok "configure" 
     [ $? -ne 0 ] && access_ok "unix/" && cd unix/
@@ -364,14 +364,14 @@ function install_from_make
     fi
     
     local next_act=1
-    local one_act="$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
+    local one_act=$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
     while [ -n "${one_act}" ]
     do
         echo_info "$(printf "[%13s]: %-50s" "Doing" "${one_act}")"
         eval "${one_act}"
 
         let next_act++
-        one_act="$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})"
+        one_act=$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
     done
 }
 

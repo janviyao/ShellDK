@@ -9,8 +9,8 @@ function replace_file
 
     local old_str=$(grep -P "${old_reg}" -o ${repfile} | head -n 1)
     if [ -n "${old_str}" ];then
-        local old_str="$(replace_regex "${old_str}" "/" "\/")"
-        local sed_str="$(replace_regex "${new_str}" "/" "\/")"
+        local old_str=$(replace_regex "${old_str}" "/" "\/")
+        local sed_str=$(replace_regex "${new_str}" "/" "\/")
         sed -i "s/${old_str}/${sed_str}/g" ${repfile}
 
         echo_info "replace: $(trim_str_start "${repfile}" "${rep_dir}/")"
@@ -45,7 +45,7 @@ unset other_paras[0]
 unset other_paras[1]
 replace_list=(${other_paras[*]})
 
-CUR_DIR="$(pwd)"
+CUR_DIR=$(pwd)
 for rep_dir in ${replace_list[@]}
 do
     if ! access_ok "${rep_dir}";then
@@ -54,8 +54,8 @@ do
     fi
     
     if [ -d "${rep_dir}" ];then
-        rep_dir="$(cd ${rep_dir};pwd)"
-        rep_dir="$(trim_str_end "${rep_dir}" "/")"
+        rep_dir=$(cd ${rep_dir};pwd)
+        rep_dir=$(trim_str_end "${rep_dir}" "/")
     fi
 
     if [ -d "${rep_dir}" ];then

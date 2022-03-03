@@ -74,8 +74,7 @@ do
     $MY_VIM_DIR/tools/scplogin.sh "${scp_src}/mdevs.${fio_ip}" "${scp_dir}"
 done
 
-is_fill=$(bool_v "${FILL_DAT}";echo $?)
-if [ ${is_fill} -eq 1 ];then
+if bool_v "${FILL_DAT}";then
     ${FIO_ROOT}/fio_start.sh "${FIO_ROOT}/testcase/fill.sh"
 fi
 

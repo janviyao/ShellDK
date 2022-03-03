@@ -10,7 +10,7 @@ if [ -f "$MY_VIM_DIR/tools/include/${include_api}" ];then
 fi
 
 # get the last para
-declare -r thread_task="$(eval echo \$$#)"
+declare -r thread_task=$(eval echo \$$#)
 
 # mkfifo
 declare -r THREAD_BASE_DIR="/tmp/thread"

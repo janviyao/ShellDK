@@ -42,7 +42,7 @@ function send_ctrl_to_self_sync
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
         local self_pid=$(ppid | sed -n '1p')
-        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+        local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
@@ -68,7 +68,7 @@ function send_ctrl_to_parent_sync
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         local self_pid=$(ppid | sed -n '1p')
-        local ack_fd="$(make_ack "${self_pid}"; echo $?)"
+        local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
@@ -99,19 +99,19 @@ function usr_ctrl_thread
             ctrl_user_handler "${line}"
         fi
 
-        local ack_ctrl="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)"
-        local ack_pipe="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)"
-        local  request="$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)"
+        local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
+        local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
+        local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
             access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${line}"
         fi
 
-        local req_ctrl="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)"
-        local req_mssg="$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)"
+        local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
+        local req_mssg=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
 
         if [[ "${req_ctrl}" == "CTRL" ]];then
-            local sub_ctrl="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
+            local sub_ctrl=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
             if [[ "${sub_ctrl}" == "EXIT" ]];then
                 USR_CTRL_EXIT=1
                 if [ -n "${ack_pipe}" ];then
@@ -127,8 +127,8 @@ function usr_ctrl_thread
                 process_signal KILL $$
             fi
         elif [[ "${req_ctrl}" == "CHILD_FORK" ]];then
-            local pid="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)"
-            local pipe="$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)"
+            local pid=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+            local pipe=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
 
             echo_debug "child: $(process_pid2name "${pid}")[${pid}] fork" 
             childMap["${pid}"]="${pipe}"
