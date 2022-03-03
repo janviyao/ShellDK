@@ -53,7 +53,7 @@ function access_ok
     fi
  
     if match_regex "${fname}" "^~";then
-        fname=$(replace_regex "${fname}" "^~" "${HOME}")
+        fname=$(replace_regex "${fname}" '^~' "${HOME}")
     fi
 
     if [ -d ${fname} ];then
@@ -534,7 +534,9 @@ function trim_str_start
 
         #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
         #echo "${new_str}"
-        substr=$(replace_regex "${substr}" "\*" "\*")
+        substr=$(replace_regex "${substr}" '\*' '\*')
+        substr=$(replace_regex "${substr}" '\\' '\\')
+
         echo "${string#${substr}}"
     else
         echo "${string}"
@@ -552,9 +554,11 @@ function trim_str_end
 
         #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
         #echo "${new_str}"
-        string=$(replace_regex "${string}" "\*" "\*")
-        substr=$(replace_regex "${substr}" "\*" "\*")
-        substr=$(replace_regex "${substr}" "\*" "\*")
+        string=$(replace_regex "${string}" '\*' '\*')
+
+        substr=$(replace_regex "${substr}" '\*' '\*')
+        substr=$(replace_regex "${substr}" '\*' '\*')
+        substr=$(replace_regex "${substr}" '\\' '\\')
         echo "${string%${substr}}"
     else
         echo "${string}"
@@ -597,12 +601,13 @@ function replace_regex
     oldstr="${oldstr//\//\\/}"
     oldstr="${oldstr//\*/\*}"
 
-    if match_regex "${regstr}" '^\^';then
+    if [[ $(string_start "${regstr}" 1) == '^' ]]; then
         oldstr="${oldstr//./\.}"
         newstr="${newstr//\\/\\\\}"
         newstr="${newstr//\//\\/}"
         echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
-    elif match_regex "${regstr}" '\$$';then
+
+    elif [[ $(string_end "${regstr}" 1) == '$' ]]; then
         oldstr="${oldstr//./\.}"
         newstr="${newstr//\\/\\\\}"
         newstr="${newstr//\//\\/}"

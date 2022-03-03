@@ -20,7 +20,7 @@ function create_project
 
     read -p "Input file type (separated with comma) to parse: " input_val
     if [ -n "${input_val}" ];then
-        find_str=$(replace_regex "${input_val}" "," "\\|")
+        find_str=$(replace_regex "${input_val}" ',' '\\|')
     fi
     find . -type f -regex ".+\\.\\(${find_str}\\)" > cscope.files 
 
@@ -41,7 +41,7 @@ function create_project
     do
         if [ -d "${input_val}" ];then
             input_val=$(replace_regex "${input_val}" "$HOME/" "")
-            input_val=$(replace_regex "${input_val}" "/" "\/")
+            input_val=$(replace_regex "${input_val}" '/' '\/')
             sed -i "/${input_val}/d" cscope.files 
         fi
 
@@ -75,18 +75,18 @@ function create_project
                 if match_regex "${line}" "^\.";then
                     line="^${line}"
                 fi
-                line=$(replace_regex "${line}" "\." "\.")
+                line=$(replace_regex "${line}" '\.' '\.')
             fi
 
             if match_regex "${line}" "\*";then
-                line=$(replace_regex "${line}" "\*" ".*")
+                line=$(replace_regex "${line}" '\*' '.*')
             fi
 
             if match_regex "${line}" "\?";then
-                line=$(replace_regex "${line}" "\?" ".")
+                line=$(replace_regex "${line}" '\?' '.')
             fi
  
-            line=$(replace_regex "${line}" "/" "\/")
+            line=$(replace_regex "${line}" '/' '\/')
             sed -i "/${line}/d" cscope.files
         done < .gitignore
     fi

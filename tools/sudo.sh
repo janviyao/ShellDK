@@ -13,9 +13,15 @@ if [ $UID -eq 0 ]; then
     eval "${CMD_STR}"
     exit $?
 else
-    if ! which sudo &> /dev/null || ! which expect &> /dev/null; then
-        echo_erro "sudo or expect not supported"
+    if ! which sudo &> /dev/null; then
+        echo_erro "sudo not supported"
         eval "${CMD_STR}"
+        exit $?
+    fi
+
+    if ! which expect &> /dev/null; then
+        echo_erro "expect not supported"
+        eval "sudo ${CMD_STR}"
         exit $?
     fi
 fi
@@ -39,7 +45,7 @@ expect << EOF
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
 
-    set time 30
+    #set time 30
     spawn -noecho sudo bash -c "${CMD_STR}"
     expect {
         "*password*:" { send "${USR_PASSWORD}\r" }
