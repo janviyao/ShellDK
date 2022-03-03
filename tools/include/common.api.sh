@@ -597,14 +597,14 @@ function replace_regex
     oldstr="${oldstr//\//\\/}"
     oldstr="${oldstr//\*/\*}"
 
-    newstr="${newstr//\\/\\\\}"
-
     if match_regex "${regstr}" '^\^';then
         oldstr="${oldstr//./\.}"
+        newstr="${newstr//\\/\\\\}"
         newstr="${newstr//\//\\/}"
         echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
     elif match_regex "${regstr}" '\$$';then
         oldstr="${oldstr//./\.}"
+        newstr="${newstr//\\/\\\\}"
         newstr="${newstr//\//\\/}"
         echo "$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")"
     else
