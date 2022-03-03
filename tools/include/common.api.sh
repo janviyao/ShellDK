@@ -452,7 +452,7 @@ function string_start
     echo "${string:0:${length}}"
 }
 
-function string_sub
+function string_substr
 {
     local string="$1"
     local start="$2"
@@ -593,17 +593,23 @@ function replace_regex
     local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
     [ -z "${oldstr}" ] && { echo "${string}"; return; }
 
-    #oldstr="${oldstr//./\.}"
     oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
     oldstr="${oldstr//\*/\*}"
 
     newstr="${newstr//\\/\\\\}"
-    #newstr="${newstr//\//\\/}"
 
-    #string="$(echo "${string}" | sed "s/${oldstr}/${newstr}/g")"
-    string="${string//${oldstr}/${newstr}}"
-    echo "${string}"
+    if match_regex "${regstr}" '^\^';then
+        oldstr="${oldstr//./\.}"
+        newstr="${newstr//\//\\/}"
+        echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
+    elif match_regex "${regstr}" '\$$';then
+        oldstr="${oldstr//./\.}"
+        newstr="${newstr//\//\\/}"
+        echo "$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")"
+    else
+        echo "${string//${oldstr}/${newstr}}"
+    fi
 }
 
 function ssh_address
@@ -622,26 +628,54 @@ function ssh_address
 
 function file_count
 {
-    local fname="$*"
-    local self_pid=$(ppid | sed -n '1p')
-    local tmp_file=/tmp/size.${self_pid}
+    local f_array=($*)
+    local readable=true
 
-    ${SUDO} fstat "${fname}" \&\> ${tmp_file}
-    local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
-    ${SUDO} rm -f ${tmp_file} &> /dev/null
-    echo "${fcount}"
+    for file in ${f_array[*]}
+    do
+        if ! test -r ${file};then
+            readable=false
+            break
+        fi
+    done
+
+    if bool_v "${readable}";then
+        echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
+    else
+        local self_pid=$(ppid | sed -n '1p')
+        local tmp_file=/tmp/size.${self_pid}
+
+        ${SUDO} fstat "${f_array[*]}" \&\> ${tmp_file}
+        local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
+        ${SUDO} rm -f ${tmp_file} &> /dev/null
+        echo "${fcount}"
+    fi
 }
 
 function file_size
 {
-    local fname="$*"
-    local self_pid=$(ppid | sed -n '1p')
-    local tmp_file=/tmp/size.${self_pid}
+    local f_array=($*)
+    local readable=true
 
-    ${SUDO} fstat "${fname}" \&\> ${tmp_file}
-    local fsize=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
-    ${SUDO} rm -f ${tmp_file} &> /dev/null
-    echo "${fsize}"
+    for file in ${f_array[*]}
+    do
+        if ! test -r ${file};then
+            readable=false
+            break
+        fi
+    done
+
+    if bool_v "${readable}";then
+        echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
+    else
+        local self_pid=$(ppid | sed -n '1p')
+        local tmp_file=/tmp/size.${self_pid}
+
+        ${SUDO} fstat "${f_array[*]}" \&\> ${tmp_file}
+        local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
+        ${SUDO} rm -f ${tmp_file} &> /dev/null
+        echo "${fcount}"
+    fi
 }
 
 function cursor_pos
