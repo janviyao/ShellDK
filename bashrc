@@ -32,7 +32,7 @@ ROOT_PID=$$
 function is_number
 {
     # is argument an integer?
-    local re='^[0-9]+$'
+    local re='^-?[0-9]+$'
     if [[ -n $1 ]]; then
         [[ $1 =~ $re ]] && return 0
         return 1
