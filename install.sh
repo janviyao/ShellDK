@@ -360,7 +360,7 @@ function install_from_make
     fi
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    ${SUDO} make install &>> build.log
+    ${SUDO} "make install &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${filename} fail"
         exit 1
@@ -498,8 +498,8 @@ function inst_deps
         ${SUDO} "sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf"
         ${SUDO} "sed -i '/\/home\/.\+\/.local\/lib/d' /etc/ld.so.conf"
 
-        ${SUDO} echo "/usr/local/lib" '>>' /etc/ld.so.conf
-        ${SUDO} echo "${HOME_DIR}/.local/lib" '>>' /etc/ld.so.conf
+        ${SUDO} "echo '/usr/local/lib' >> /etc/ld.so.conf"
+        ${SUDO} "echo '${HOME_DIR}/.local/lib' >> /etc/ld.so.conf"
         ${SUDO} ldconfig
 
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
@@ -582,7 +582,7 @@ function inst_vim
     fi
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    ${SUDO} make install &>> build.log
+    ${SUDO} "make install &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro "Install: vim fail"
         exit -1
@@ -670,9 +670,9 @@ function inst_glibc
         install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
         install_from_rpm "glibc-common-.+\.rpm"
 
-        ${SUDO} echo "LANG=en_US.UTF-8" \>\> /etc/environment
-        ${SUDO} echo "LC_ALL=" \>\> /etc/environment
-        ${SUDO} localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 \&\> /dev/null
+        ${SUDO} "echo 'LANG=en_US.UTF-8' >> /etc/environment"
+        ${SUDO} "echo 'LC_ALL=' >> /etc/environment"
+        ${SUDO} "localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null"
     fi
 }
 

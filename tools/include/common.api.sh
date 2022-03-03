@@ -119,7 +119,7 @@ function process_exist
 
         # if the process is no longer running, then exit the script
         # since it means the application crashed
-        ${SUDO} kill -s 0 ${pid} \&\> /dev/null
+        ${SUDO} "kill -s 0 ${pid} &> /dev/null"
         if [ $? -eq 0 ]; then
             return 0
         else
@@ -155,8 +155,12 @@ function process_kill
         local -a pid_array=($(process_name2pid "${pid}"))
         for pid in ${pid_array[*]}
         do
+            if (( ${pid} == $$ ));then
+                continue
+            fi
+
             if process_exist "${pid}"; then
-                ${SUDO} kill -9 ${pid} \&\> /dev/null
+                ${SUDO} "kill -9 ${pid} &> /dev/null"
                 [ $? -eq 0 ] || return 1
             fi
         done
@@ -332,7 +336,7 @@ function process_info
     local pid="$1"
     local shead=${2:-true}
 
-    local ps_header="comm,ppid,pid,lwp=TID,nlwp=TD-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,%cpu,maj_flt,min_flt,flags=FLAG,sz,vsz,%mem,wchan,stackp,etime,cmd"
+    local ps_header="comm,ppid,pid,lwp=TID,nlwp=TD-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,%cpu,maj_flt,min_flt,flags=FLAG,sz,vsz,%mem,wchan:15,stackp,etime,cmd"
 
     local show_head=${shead}
     local -a pids_array=($(echo ""))
@@ -379,7 +383,7 @@ function process_signal
     if ps -p ${toppid} > /dev/null; then
         if [ ${toppid} -ne $ROOT_PID ];then
             echo_debug "${signal}: $(process_pid2name ${toppid})[${toppid}]"
-            ${SUDO} kill -s ${signal} ${toppid} \&\> /dev/null
+            ${SUDO} "kill -s ${signal} ${toppid} &> /dev/null"
         fi
     fi
 
@@ -403,7 +407,7 @@ function process_signal
         if ps -p ${next_pid} > /dev/null; then
             if [ ${next_pid} -ne $ROOT_PID ];then
                 echo_debug "${signal}: $(process_pid2name ${next_pid})[${next_pid}]"
-                ${SUDO} kill -s ${signal} ${next_pid} \&\> /dev/null
+                ${SUDO} "kill -s ${signal} ${next_pid} &> /dev/null"
             fi
         fi
 
@@ -650,9 +654,9 @@ function file_count
         local self_pid=$(ppid | sed -n '1p')
         local tmp_file=/tmp/size.${self_pid}
 
-        ${SUDO} fstat "${f_array[*]}" \&\> ${tmp_file}
+        ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
-        ${SUDO} rm -f ${tmp_file} &> /dev/null
+        ${SUDO} "rm -f ${tmp_file} &> /dev/null"
         echo "${fcount}"
     fi
 }
@@ -676,9 +680,9 @@ function file_size
         local self_pid=$(ppid | sed -n '1p')
         local tmp_file=/tmp/size.${self_pid}
 
-        ${SUDO} fstat "${f_array[*]}" \&\> ${tmp_file}
+        ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
-        ${SUDO} rm -f ${tmp_file} &> /dev/null
+        ${SUDO} "rm -f ${tmp_file} &> /dev/null"
         echo "${fcount}"
     fi
 }

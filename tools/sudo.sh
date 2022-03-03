@@ -6,7 +6,7 @@ CMD_STR="$*"
 #    shift
 #done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
-CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
+#CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
 echo_debug "sudo: ${CMD_STR}"
 
 if [ $UID -eq 0 ]; then
