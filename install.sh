@@ -195,6 +195,9 @@ function deploy_env
         fi
     fi
     
+    access_ok "${HOME_DIR}/.bashrc" || access_ok "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${HOME_DIR}/.bashrc
+    access_ok "${HOME_DIR}/.bash_profile" || access_ok "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
+
     access_ok "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
     access_ok "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
@@ -237,9 +240,9 @@ function clean_env
         fi
     done
 
-    sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
-    sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
-    sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
+    access_ok "${HOME_DIR}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
+    access_ok "${HOME_DIR}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    access_ok "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 }
 
 function install_from_net
@@ -492,8 +495,8 @@ function inst_deps
 
         ${SUDO} chmod 777 /etc/ld.so.conf
 
-        ${SUDO} sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf
-        ${SUDO} sed -i '/\/home\/.\+\/.local\/lib/d' /etc/ld.so.conf
+        ${SUDO} "sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf"
+        ${SUDO} "sed -i '/\/home\/.\+\/.local\/lib/d' /etc/ld.so.conf"
 
         ${SUDO} echo "/usr/local/lib" '>>' /etc/ld.so.conf
         ${SUDO} echo "${HOME_DIR}/.local/lib" '>>' /etc/ld.so.conf
