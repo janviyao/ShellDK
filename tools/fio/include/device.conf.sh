@@ -1,6 +1,0 @@
-#!/bin/bash
-DEVICE_SIZE=64
-BLOCK_SIZE=4096
-DEVICE_QD=256
-
-declare -a DEVICE_ARRAY=(sdb sdc)

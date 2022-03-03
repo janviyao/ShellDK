@@ -1,6 +1,5 @@
 #!/bin/bash
 FIO_ROOT=$MY_VIM_DIR/tools/fio
-source ${FIO_ROOT}/include/device.conf.sh
 source ${FIO_ROOT}/include/fio.conf.sh
 
 echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT}"

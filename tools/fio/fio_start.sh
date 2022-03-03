@@ -1,15 +1,14 @@
 #!/bin/bash
-FIO_ROOT=$MY_VIM_DIR/tools/fio
-source ${FIO_ROOT}/include/device.conf.sh
-source ${FIO_ROOT}/include/fio.conf.sh
-
-echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT}"
-
 if ! access_ok "$1"; then
     echo_erro "testcase not exist: $1"
     exit
 fi
 source $1
+
+FIO_ROOT=$MY_VIM_DIR/tools/fio
+source ${FIO_ROOT}/include/fio.conf.sh
+
+echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT}"
 
 g_sed_insert_pre="/;[ ]*[>]\+[ ]*/i\    "
 
