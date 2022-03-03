@@ -108,39 +108,16 @@ function process_exist
 {
     local pinfo="$1"
 
-    if is_number "${pinfo}"; then
-        local pid="${pinfo}"
-        #local ppath="/proc/${pid}/stat"
-        #if access_ok "${ppath}";then
-        #    return 0
-        #else
-        #    return 1
-        #fi
-
-        # if the process is no longer running, then exit the script
-        # since it means the application crashed
+    local -a pid_array=($(process_name2pid "${pinfo}"))
+    for pid in ${pid_array[*]}
+    do
         ${SUDO} "kill -s 0 ${pid} &> /dev/null"
         if [ $? -eq 0 ]; then
             return 0
         else
             return 1
         fi
-    else
-        local pname="${pinfo}"
-        local pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pname}$/) print \$1 }"))    
-        if [ -n "${pid_array[*]}" ];then
-            for pid in ${pid_array[*]}
-            do
-                if ! process_exist "${pid}";then
-                    return 1 
-                fi
-            done
-        else
-            return 1
-        fi
-
-        return 0
-    fi
+    done
 }
 
 function process_kill
