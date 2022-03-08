@@ -1,20 +1,4 @@
 #!/bin/bash
-set -o allexport
-
-FIO_BIN=$MY_VIM_DIR/tools/app/fio
-FIO_CONF_DIR=$MY_VIM_DIR/tools/fio/conf
-
-FIO_WORK_DIR=${HOME}
-FIO_OUTPUT_DIR=${FIO_WORK_DIR}/$(date '+%Y%m%d-%H%M%S')
-FIO_TEST_RESULT=${FIO_OUTPUT_DIR}/result.csv
-
-mkdir -p ${FIO_WORK_DIR}
-mkdir -p ${FIO_OUTPUT_DIR}
-
-DEVICE_SIZE=64
-BLOCK_SIZE=4096
-DEVICE_QD=256
-
 declare -a FIO_SIP_ARRAY=("")
 declare -a DEVICES_ARRAY=("")
 
@@ -37,7 +21,7 @@ function update_fio_sip
         local ipaddr_array=($(echo "${ipaddr_value}" | tr ',' ' '))
         for ipaddr in ${ipaddr_array[*]}
         do
-            if ! contain_str "${FIO_SIP_ARRAY[*]}" "${ipaddr}";then
+            if ! array_has "${FIO_SIP_ARRAY[*]}" "${ipaddr}";then
                 FIO_SIP_ARRAY=(${FIO_SIP_ARRAY[*]} ${ipaddr})
             fi
         done
@@ -46,7 +30,7 @@ function update_fio_sip
         local devs_array=($(echo "${devs_value}" | tr ',' ' '))
         for subdev in ${devs_array[*]}
         do
-            if ! contain_str "${DEVICES_ARRAY[*]}" "${subdev}";then
+            if ! array_has "${DEVICES_ARRAY[*]}" "${subdev}";then
                 DEVICES_ARRAY=(${DEVICES_ARRAY[*]} ${subdev})
             fi
         done

@@ -24,5 +24,8 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if [ -n "${USR_NAME}" -a -n "${USR_PASSWORD}" ]; then
         global_set_var USR_NAME
         global_set_var USR_PASSWORD
+    else
+        echo_erro "invalid username or password"
+        exit 1
     fi
 fi

@@ -1,13 +1,13 @@
 #!/bin/bash
 #set -x
-CUR_DIR=$(fname2path $0)
-cd ${CUR_DIR}/..
-CUR_DIR=`pwd`
+EXPORT_FILE=$1
+if [ -z "${EXPORT_FILE}" ];then
+    EXPORT_FILE="vim.tar"
+fi
 
-cd ~
-HOME_DIR=`pwd`/
-
-CAMP_DIR=${CUR_DIR#${HOME_DIR}}
+CUR_DIR=$(current_filedir)/..
+CUR_DIR=$(cd ${CUR_DIR};pwd)
+CAMP_DIR=$(trim_str_start "${CUR_DIR}" "${HOME_DIR}/")
 
 # Collect dirs and files 
 C_WHAT="${CAMP_DIR}"
@@ -22,5 +22,5 @@ C_WHAT="${C_WHAT} .vim"
 # Start to tar 
 echo "Home Dir: \"${HOME_DIR}\"  Collect: \"${C_WHAT}\""
 cd ${HOME_DIR}
-rm -f vim.tar
-tar -cf vim.tar ${C_WHAT}
+rm -f ${EXPORT_FILE}
+tar -cf ${EXPORT_FILE} ${C_WHAT}

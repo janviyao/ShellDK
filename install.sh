@@ -202,10 +202,12 @@ function deploy_env
     access_ok "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
     sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
     sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
     sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 
     echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${HOME_DIR}/.bashrc
+    echo "export TEST_SUIT_ENV=\"${HOME_DIR}/.testrc\"" >> ${HOME_DIR}/.bashrc
     echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
     echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
 }
@@ -242,6 +244,7 @@ function clean_env
 
     access_ok "${HOME_DIR}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
     access_ok "${HOME_DIR}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    access_ok "${HOME_DIR}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
     access_ok "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 }
 

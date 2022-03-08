@@ -41,7 +41,7 @@ function send_ctrl_to_self_sync
     #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
-        local self_pid=$(ppid | sed -n '1p')
+        local self_pid=$(ppid | sed -n '2p')
         local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
@@ -67,7 +67,7 @@ function send_ctrl_to_parent_sync
     #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
-        local self_pid=$(ppid | sed -n '1p')
+        local self_pid=$(ppid | sed -n '2p')
         local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 

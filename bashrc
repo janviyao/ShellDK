@@ -18,8 +18,8 @@ alias lsblk='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,WWN,ALIGNMENT,MIN
 alias lspci='lspci -vvv -nn'
 alias lsscsi='lsscsi -d -s -g -p -P -i -w'
 
-unalias cp &> /dev/null
-unalias rm &> /dev/null
+unalias cp &> /dev/null || true
+unalias rm &> /dev/null || true
 
 # all variables and functions exported
 # only function exported: export -f function
@@ -64,7 +64,10 @@ function INCLUDE
     local flag="$1"
     local file="$2"
     
-    var_exist "${flag}" || source ${file} 
+    #var_exist "${flag}" || source ${file} 
+    if ! var_exist "${flag}" && test -f ${file};then
+        source ${file} 
+    fi
 }
 
 INCLUDE "DEBUG_ON" $MY_VIM_DIR/tools/include/common.api.sh

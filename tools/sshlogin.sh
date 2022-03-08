@@ -5,13 +5,15 @@ CMD_EXE="$2"
 echo_debug "parameter: { $* }"
 
 source $MY_VIM_DIR/tools/password.sh
-
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
     echo_erro "Username or Password is empty"
     exit 1
 fi
 
 echo_debug "Push { ${CMD_EXE} } to { ${HOST_IP} }"
+if [ -z "${CMD_EXE}" ];then
+    exit 0
+fi
 
 EXPECT_EOF=""
 if [ $UID -ne 0 ]; then
@@ -19,10 +21,10 @@ if [ $UID -ne 0 ]; then
 fi
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="echo \\\"${GBL_SRV_IDNO}${GBL_CTRL_SPF1}RETURN_CODE${GBL_CTRL_SPF2}${RET_VAR}=\$?\\\" | nc ${GBL_SRV_ADDR} ${GBL_SRV_PORT}"
+SRV_MSG="remote_set_var '${GBL_SRV_ADDR}' '${RET_VAR}' \$?"
+CMD_EXE="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_EXE});${SRV_MSG}"
 
-CMD_EXE="(${CMD_EXE});${SRV_MSG}"
-global_wait_ack "RECV_MSG"
+global_ncat_ctrl "NCAT_START"
 
 expect << EOF
     set timeout ${TIMEOUT}
@@ -46,5 +48,17 @@ expect << EOF
     expect eof
 EOF
 
+count=0
+while ! global_var_exist "${RET_VAR}"
+do
+    sleep 0.001
+    let count++
+    if [ ${count} -gt 1000 ];then
+        break
+    fi
+done
+
 global_get_var ${RET_VAR}
+global_ncat_ctrl "NCAT_QUIT"
+
 eval "exit \$${RET_VAR}"

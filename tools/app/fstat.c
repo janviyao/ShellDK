@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define MAX_TMPBUF 1024
+
 void get_dir_size(char *dirname, uint32_t *file_cnt, uint64_t *dir_size)
 {
     DIR *dir_ptr;

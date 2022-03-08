@@ -13,6 +13,40 @@ OP_TIMEOUT=60
 
 SUDO="$MY_VIM_DIR/tools/sudo.sh"
 
+shopt -s expand_aliases
+source $MY_VIM_DIR/tools/include/trace.api.sh
+
+function NOT
+{
+    local es=0
+
+    "$@" || es=$?
+
+    # Logic looks like so:
+    #  - return false if command exit successfully
+    #  - return false if command exit after receiving a core signal (FIXME: or any signal?)
+    #  - return true if command exit with an error
+
+    # This naively assumes that the process doesn't exit with > 128 on its own.
+    if ((es > 128)); then
+        es=$((es & ~128))
+        case "$es" in
+            3) ;&       # SIGQUIT
+            4) ;&       # SIGILL
+            6) ;&       # SIGABRT
+            8) ;&       # SIGFPE
+            9) ;&       # SIGKILL
+            11) es=0 ;; # SIGSEGV
+            *) es=1 ;;
+        esac
+    elif [[ -n $EXIT_STATUS ]] && ((es != EXIT_STATUS)); then
+        es=0
+    fi
+
+    # invert error code of any command and also trigger ERR on 0 (unlike bash ! prefix)
+    ((!es == 0))
+}
+
 function bool_v
 {
     local para=$1
@@ -69,7 +103,7 @@ function access_ok
     elif [ -r ${fname} -o -w ${fname} -o -x ${fname} ];then
         return 0
     fi
- 
+
     return 1
 }
 
@@ -82,10 +116,14 @@ function current_filedir
 
 function path2fname
 {
-    local full_path="$1"
+    local full_path=$1
+    if contain_str "${full_path}" "-";then 
+        full_path=$(replace_regex "${full_path}" "\-" "\-")
+    fi
+    full_path=$(readlink -f ${full_path})
 
     if contain_str "${full_path}" "/";then
-        local file_name=$(basename $(readlink -f ${full_path}))
+        local file_name=$(basename ${full_path})
         echo "${file_name}"
     else
         echo "${full_path}"
@@ -94,10 +132,14 @@ function path2fname
 
 function fname2path
 {
-    local full_name="$1"
+    local full_name=$1
+    if contain_str "${full_name}" "-";then 
+        full_name=$(replace_regex "${full_name}" "\-" "\-")
+    fi
+    full_name=$(readlink -f ${full_name})
 
     if contain_str "${full_name}" "/";then
-        local dir_name=$(dirname $(readlink -f ${full_name}))
+        local dir_name=$(dirname ${full_name})
         echo "${dir_name}"
     else
         echo "${full_name}"
@@ -107,12 +149,14 @@ function fname2path
 function process_exist
 {
     local pinfo="$1"
+    [ -z "${pinfo}" ] && return 1
 
     local -a pid_array=($(process_name2pid "${pinfo}"))
     for pid in ${pid_array[*]}
     do
-        ${SUDO} "kill -s 0 ${pid} &> /dev/null"
-        if [ $? -eq 0 ]; then
+        #${SUDO} "kill -s 0 ${pid} &> /dev/null"
+        #if [ $? -eq 0 ]; then
+        if ps -p ${pid} &> /dev/null; then
             return 0
         else
             return 1
@@ -120,8 +164,11 @@ function process_exist
     done
 }
 
-function process_kill
+function process_signal
 {
+    local signal=$1
+    shift
+
     local arr=($*)
     local pid=""
 
@@ -137,13 +184,54 @@ function process_kill
             fi
 
             if process_exist "${pid}"; then
-                ${SUDO} "kill -9 ${pid} &> /dev/null"
-                [ $? -eq 0 ] || return 1
+                local child_pids=($(process_subprocess ${pid}))
+                #echo_debug "$(process_pid2name ${pid})[${pid}] childs: $(echo "${pid[@]}")"
+
+                if [ ${pid} -ne $ROOT_PID ];then
+                    echo_debug "${signal}: $(process_pid2name ${pid})[${pid}]"
+                    ${SUDO} "kill -s ${signal} ${pid} &> /dev/null"
+                fi
+
+                local index=0
+                local total=${#child_pids[*]}
+                while [ ${index} -lt ${total} ]
+                do
+                    local next_pid=${child_pids[${index}]}
+                    if process_exist "${next_pid}"; then
+                        local lower_pids=($(process_subprocess ${next_pid}))
+                        #echo_debug "$(process_pid2name ${next_pid})[${next_pid}] childs: $(echo "${lower_pids[*]}")"
+
+                        if [ ${#lower_pids[*]} -gt 0 ];then
+                            child_pids=(${child_pids[*]} ${lower_pids[*]})
+                            total=${#child_pids[*]}
+                        fi
+
+                        if [ ${next_pid} -ne $ROOT_PID ];then
+                            echo_debug "${signal}: $(process_pid2name ${next_pid})[${next_pid}]"
+                            ${SUDO} "kill -s ${signal} ${next_pid} &> /dev/null"
+                        fi
+                    fi
+
+                    let index++
+                    total=${#child_pids[*]}
+                done
             fi
         done
     done
+}
 
-    return 0
+function process_kill
+{
+    local arr=($*)
+    local pid=""
+
+    [ ${#arr[*]} -eq 0 ] && return 1
+
+    if process_signal KILL "${arr[*]}"; then
+        return 0
+    fi
+
+    return 1
 }
 
 function process_pid2name
@@ -347,50 +435,6 @@ function process_info
             fi
         done
     fi
-}
-
-function process_signal
-{
-    local signal=$1
-    local toppid=$2
-
-    local child_pids=($(process_subprocess ${toppid}))
-    #echo_debug "$(process_pid2name ${toppid})[${toppid}] childs: $(echo "${child_pids[@]}")"
-
-    if ps -p ${toppid} > /dev/null; then
-        if [ ${toppid} -ne $ROOT_PID ];then
-            echo_debug "${signal}: $(process_pid2name ${toppid})[${toppid}]"
-            ${SUDO} "kill -s ${signal} ${toppid} &> /dev/null"
-        fi
-    fi
-
-    local index=0
-    local total=${#child_pids[@]}
-    while [ ${index} -lt ${total} ]
-    do
-        local next_pid=${child_pids[${index}]}
-        if [ -z "${next_pid}" ];then
-            let index++
-            total=${#child_pids[@]}
-        fi
-
-        local lower_pids=($(process_subprocess ${next_pid}))
-        #echo_debug "$(process_pid2name ${next_pid})[${next_pid}] childs: $(echo "${lower_pids[@]}")"
-
-        if [ ${#lower_pids[@]} -gt 0 ];then
-            child_pids=(${child_pids[@]} ${lower_pids[@]})
-        fi
-
-        if ps -p ${next_pid} > /dev/null; then
-            if [ ${next_pid} -ne $ROOT_PID ];then
-                echo_debug "${signal}: $(process_pid2name ${next_pid})[${next_pid}]"
-                ${SUDO} "kill -s ${signal} ${next_pid} &> /dev/null"
-            fi
-        fi
-
-        let index++
-        total=${#child_pids[@]}
-    done
 }
 
 function check_net
@@ -627,7 +671,7 @@ function file_count
     if bool_v "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
-        local self_pid=$(ppid | sed -n '1p')
+        local self_pid=$(ppid | sed -n '2p')
         local tmp_file=/tmp/size.${self_pid}
 
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
@@ -653,7 +697,7 @@ function file_size
     if bool_v "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
-        local self_pid=$(ppid | sed -n '1p')
+        local self_pid=$(ppid | sed -n '2p')
         local tmp_file=/tmp/size.${self_pid}
 
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
@@ -683,6 +727,23 @@ function cursor_pos
     global_set_var y_pos
 }
 
+function array_has
+{
+    local array=($1)
+    local val=$2
+
+    local count=${#array[*]}
+
+    for item in ${array[*]}
+    do
+        if [[ ${item} == ${val} ]];then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 function array_cmp
 {
     local array1=($1)
@@ -707,54 +768,76 @@ function array_cmp
             return 255
         fi
     done
+
     return 0
 }
 
-function print_backtrace
+function config_has
 {
-    # if errexit is not enabled, don't print a backtrace
-    #[[ "$-" =~ e ]] || return 0
+    local conf_file="$1"
+    local keystr="$2"
 
-    local shell_options="$-"
-    set +x
-    echo "========== Backtrace start: =========="
-    echo ""
-    for i in $(seq 1 $((${#FUNCNAME[@]} - 1)))
+    if ! access_ok "${conf_file}";then
+        return 1
+    fi 
+
+    while read line
     do
-        local func="${FUNCNAME[$i]}"
-        local line_nr="${BASH_LINENO[$((i - 1))]}"
-        local src="${BASH_SOURCE[$i]}"
-        [ -z "$src" ] && continue
-        echo "in $src:$line_nr -> $func()"
-        echo "     ..."
-        nl -w 4 -ba -nln $src | grep -B 5 -A 5 "^$line_nr[^0-9]" | sed "s/^/   /g" | sed "s/^   $line_nr /=> $line_nr /g"
-        echo "     ..."
-    done
-    echo ""
-    echo "========== Backtrace end =========="
+        if match_regex "${line}" "^\s*#";then
+            continue
+        fi
 
-    [[ "$shell_options" =~ x ]] && set -x
-    return 0
+        local keyword=$(awk '{ split($0, arr, "="); print arr[1]; }' <<< ${line})
+        keyword=$(replace_regex "${keyword}" "^\s*")
+        keyword=$(replace_regex "${keyword}" "\s*$")
+
+        if [[ ${keystr} == ${keyword} ]];then
+            return 0
+        fi
+    done < ${conf_file}
+    
+    return 1
 }
 
-function enable_backtrace
+function config_add
 {
-    # Same as -E.
-    # -E If set, any trap on ERR is inherited by shell functions,
-    # command substitutions, and commands executed in a sub‐shell environment.  
-    # The ERR trap is normally not inherited in such cases.
-    #set -o xtrace
-    #set -x 
-    #set -o errexit
-    #set -e 
-    set -o errtrace
-    trap "trap - ERR; print_backtrace >&2" ERR
+    local conf_file="$1"
+    local keystr="$2"
+    local valstr="${3}"
+
+    if ! access_ok "${conf_file}";then
+        return 1
+    fi 
+    
+    if config_has "${conf_file}" "${keystr}";then
+        keystr=$(replace_regex "${keystr}" "/" "\/")
+        valstr=$(replace_regex "${valstr}" "/" "\/")
+        sed -i "s/${keystr}=.\+/${keystr}=${valstr}/g" ${conf_file}
+    else
+        sed -i "\$a\\${keystr}=${valstr}" ${conf_file}
+        #echo "${keystr}=${valstr}" >> ${conf_file}
+    fi
+
+    local retcode=$?
+    return ${retcode}
 }
 
-function disable_backtrace
+function config_del
 {
-    #set +e
-    set +o errtrace
+    local conf_file="$1"
+    local keystr="$2"
+
+    if ! access_ok "${conf_file}";then
+        return 1
+    fi 
+    
+    if config_has "${conf_file}" "${keystr}";then
+        keystr=$(replace_regex "${keystr}" "/" "\/")
+        sed -i '/${keystr}.*=.\+$/d' ${conf_file}
+    fi
+
+    local retcode=$?
+    return ${retcode}
 }
 
 COLOR_HEADER='\033[40;35m' #黑底紫字
@@ -768,47 +851,57 @@ FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_file
 {
+    xtrace_disable
     if var_exist "LOG_FILE";then
         local log_type="$1"
         shift
         printf "[%-12s:%5d:%5s] %s\n" "$(path2fname $0)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
     fi
+    xtrace_restore
 }
 
 function echo_header
 {
-    bool_v "${LOG_HEADER}"
-    if [ $? -eq 0 ];then
+    xtrace_disable
+    if bool_v "${LOG_HEADER}";then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
         #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
         local proc_info=$(printf "[%-12s[%5d]]" "$(path2fname $0)" "$$")
         echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
     fi
+    xtrace_restore
 }
 
 function echo_erro
 {
+    xtrace_disable
     local para=$1
     echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
     echo_file "erro" "$*"
+    xtrace_restore
 }
 
 function echo_info
 {
+    xtrace_disable
     local para=$1
     echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     echo_file "info" "$*"
+    xtrace_restore
 }
 
 function echo_warn
 {
+    xtrace_disable
     local para=$1
     echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     echo_file "warn" "$*"
+    xtrace_restore
 }
 
 function echo_debug
 {
+    xtrace_disable
     local para=$1
 
     if bool_v "${DEBUG_ON}"; then
@@ -819,4 +912,38 @@ function echo_debug
         fi
     fi
     echo_file "debug" "$*"
+    xtrace_restore
+}
+
+function export_all
+{
+    xtrace_disable
+    local rand_pid=$(ppid | sed -n '1p')
+    local local_pid=$(ppid | sed -n '2p')
+    local export_file="/tmp/export.${local_pid}"
+
+    cat << EOL >> "${export_file}"
+        #!/bin/bash
+        set -o allexport
+EOL
+
+    declare -xp &>> ${export_file}
+    sed -i 's/declare \-x //g' ${export_file}
+    sed -i 's/declare \-ax //g' ${export_file}
+    sed -i 's/declare \-Ax //g' ${export_file}
+    sed -i "s/'//g" ${export_file}
+    xtrace_restore
+}
+
+function import_all
+{
+    xtrace_disable
+    local parent_pid=$(ppid | sed -n '3p')
+    local import_file="/tmp/export.${parent_pid}"
+
+    if access_ok "${import_file}";then 
+        local import_config=$(< "${import_file}")
+        source <(echo "${import_config//\?=/=}")
+    fi
+    xtrace_restore
 }

@@ -1,14 +1,14 @@
 #!/bin/bash
+source ${TEST_SUIT_ENV}
+
 if ! access_ok "$1"; then
     echo_erro "testcase not exist: $1"
     exit
 fi
+
 source $1
-
-FIO_ROOT=$MY_VIM_DIR/tools/fio
-source ${FIO_ROOT}/include/fio.conf.sh
-
-echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT}"
+source ${FIO_ROOT_DIR}/include/fio.conf.sh
+echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT_DIR}"
 
 g_sed_insert_pre="/;[ ]*[>]\+[ ]*/i\    "
 
@@ -68,7 +68,7 @@ function run_fio_func
         exit -1
     fi
 
-    local fio_result=$(${FIO_ROOT}/parse_result.sh "${output_dir}/${fio_output_file}" "${read_pct}" "${numjobs}")
+    local fio_result=$(${FIO_ROOT_DIR}/parse_result.sh "${output_dir}/${fio_output_file}" "${read_pct}" "${numjobs}")
     local show_result=$(echo "${fio_result}" | grep -v "@return@")
     echo "${show_result}"
 
@@ -89,7 +89,7 @@ function run_fio_func
         local ifgt=$( echo "${test_lat} > 0" | bc )
         if [ ${ifgt} -eq 1 ]; then
             local devs_str=$(echo "${devs_array[*]}" | tr ' ' '-')
-            echo "${devs_str},${numjobs},${iosize},${iodepth},${rwtype},${read_pct},${test_iops},${test_bw},${test_lat},${start_time},${test_spend}" >> ${FIO_TEST_RESULT}
+            echo "${devs_str},${numjobs},${iosize},${iodepth},${rwtype},${read_pct},${test_iops},${test_bw},${test_lat},${start_time},${test_spend}" >> ${FIO_RESULT_FILE}
         else
             echo_erro "failed: ${output_dir}/${conf_full_name}"
         fi
@@ -217,6 +217,7 @@ function start_test_func
     done
 }
 
-echo "device,thread,blk-size,io-depth,rw-type,read-pct,IOPS,BW(MB/s),lat(ms),start-up,spend(s)" > ${FIO_TEST_RESULT}
+echo "device,thread,blk-size,io-depth,rw-type,read-pct,IOPS,BW(MB/s),lat(ms),start-up,spend(s)" > ${FIO_RESULT_FILE}
 start_test_func
-sed -i 's/ *//g' ${FIO_TEST_RESULT}
+sed -i 's/ *//g' ${FIO_RESULT_FILE}
+

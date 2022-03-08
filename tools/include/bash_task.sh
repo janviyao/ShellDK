@@ -24,22 +24,110 @@ GBL_CTRL_SPF1="^"
 GBL_CTRL_SPF2="|"
 GBL_CTRL_SPF3="!"
 
-GBL_SRV_IDNO=$$
 GBL_SRV_ADDR=$(ssh_address)
 GBL_SRV_PORT=7888
+GBL_TRX_PORT=7889
 
-function global_set_var
+function ncat_send_msg
+{
+    local ncat_addr="$1"
+    local ncat_port="$2"
+    local send_msg="$3"
+
+    echo_debug "ncat send: [$*]" 
+    if access_ok "nc";then
+        (echo "${send_msg}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+        while test $? -ne 0
+        do
+            (echo "${send_msg}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+        done
+    fi
+}
+
+function ncat_recv_msg
+{
+    local ncat_port="$1"
+
+    if access_ok "nc";then
+        timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} | while read nc_msg
+        do
+            echo "${nc_msg}"
+        done
+    fi
+}
+
+function remote_push_result
+{
+    local srv_addr="$1"
+    local res_file="$2"
+
+    echo_debug "remote push: [$*]" 
+    if access_ok "${res_file}";then
+        ncat_send_msg ${srv_addr} ${GBL_SRV_PORT} "TRANSFER_FILE${GBL_CTRL_SPF1}${res_file}"
+
+        (nc ${srv_addr} ${GBL_TRX_PORT} < ${res_file}) &> /dev/null
+        while test $? -ne 0
+        do
+            (nc ${srv_addr} ${GBL_TRX_PORT} < ${res_file}) &> /dev/null
+        done
+    fi
+}
+
+function remote_set_var
+{
+    local srv_addr="$1"
+    local var_name="$2"
+    local var_value="$3"
+
+    echo_debug "remote set: [$*]" 
+    ncat_send_msg ${srv_addr} ${GBL_SRV_PORT} "REMOTE_SET${GBL_CTRL_SPF1}${var_name}=${var_value}"
+}
+
+function global_var_exist
 {
     local var_name="$1"
     local one_pipe="$2"
-    echo_debug "global set: [$*]" 
+    echo_debug "global check: [$*]" 
 
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
     access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
-    local var_value=$(eval "echo \"\$${var_name}\"")
+    local check_ret=""
+
+    local get_pipe="${GBL_CTRL_THIS_DIR}/get.$$"
+    mkfifo ${get_pipe}
+    access_ok "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
+
+    local get_fd=0
+    exec {get_fd}<>${get_pipe}
+
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}ENV_EXIST${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${get_pipe}" > ${one_pipe}
+    read check_ret < ${get_pipe}
+
+    eval "exec ${get_fd}>&-"
+    rm -f ${get_pipe}
+    if bool_v "${check_ret}";then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function global_set_var
+{
+    local var_name="$1"
+    local one_pipe="$2"
+
+    if [ -z "${one_pipe}" ];then
+        one_pipe="${GBL_CTRL_THIS_PIPE}"
+    fi
+    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
+
+    local var_value="$(eval "echo \"\$${var_name}\"")"
+
+    echo_debug "global set: [$* = ${var_value}]" 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}SET_ENV${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${var_value}" > ${one_pipe}
 }
 
@@ -124,23 +212,25 @@ function wait_ack
     rm -f ${ack_pipe}
 }
 
-function global_wait_ack
+function global_ncat_ctrl
 {
     local msgctx="$1"
     
     # the first pid is shell where ppid run
-    local self_pid=$(ppid | sed -n '1p')
+    local self_pid=$(ppid | sed -n '2p')
     local ack_fd=$(make_ack "${self_pid}"; echo $?)
     local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
-    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
+    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}NCAT${GBL_CTRL_SPF1}${msgctx}" > ${GBL_CTRL_THIS_PIPE}
 
     wait_ack "${self_pid}" "${ack_fd}"
 }
 
 function _global_ctrl_bg_thread
 {
+    local ncat_work=true
     declare -A _globalMap
+
     while read line
     do
         echo_debug "global ctrl: [${line}]" 
@@ -168,6 +258,17 @@ function _global_ctrl_bg_thread
             
             echo_debug "write [${_globalMap[${var_name}]}] into [${var_pipe}]"
             echo "${_globalMap[${var_name}]}" > ${var_pipe}
+        elif [[ "${req_ctrl}" == "ENV_EXIST" ]];then
+            local var_name=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+            local var_pipe=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
+            
+            if contain_str "${!_globalMap[*]}" "${var_name}";then
+                echo_debug "check [${var_name}] exist for [${var_pipe}]"
+                echo "true" > ${var_pipe}
+            else
+                echo_debug "check [${var_name}] absent for [${var_pipe}]"
+                echo "false" > ${var_pipe}
+            fi
         elif [[ "${req_ctrl}" == "UNSET_ENV" ]];then
             local var_name=${req_mssg}
             unset _globalMap[${var_name}]
@@ -185,43 +286,52 @@ function _global_ctrl_bg_thread
                 done
                 #echo "send \010" | expect 
             fi
-        elif [[ "${req_ctrl}" == "RECV_MSG" ]];then
-            if access_ok "nc";then
-            {
-                if [ -n "${ack_pipe}" ];then
-                    echo "ACK" > ${ack_pipe}
-                fi
-                
-                for pid in `pgrep nc`
-                do
-                    if is_number "${pid}";then
-                        ${SUDO} kill -s INT ${pid}
-                    fi
-                done
-
-                timeout ${OP_TIMEOUT} nc -l -4 ${GBL_SRV_PORT} | while read nc_msg
-                do
-                    #echo "ncat_msg: ${nc_msg}"
-                    local srv_id=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
-                    local srv_msg=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
-
-                    if [ ${srv_id} -eq ${GBL_SRV_IDNO} ];then
-                        if [ -n "${srv_msg}" ];then
-                            local srv_ctrl=$(echo "${srv_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
-                            local srv_act=$(echo "${srv_msg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
-
-                            if [[ "${srv_ctrl}" == "RETURN_CODE" ]];then
-                                local var_name=$(echo "${srv_act}" | cut -d "=" -f 1)
-                                local var_value=$(echo "${srv_act}" | cut -d "=" -f 2)
-
-                                eval "${var_name}=${var_value}"
-                                global_set_var ${var_name}
-                            fi
-                        fi
-                    fi
-                done
-            } &
+        elif [[ "${req_ctrl}" == "NCAT" ]];then
+            if [ -n "${ack_pipe}" ];then
+                echo "ACK" > ${ack_pipe}
             fi
+
+            if [[ "${req_mssg}" == "NCAT_START" ]];then 
+                if access_ok "nc";then
+                {
+                    process_signal INT 'nc'
+                    ncat_work=true
+                    global_set_var "ncat_work"
+
+                    while bool_v "${ncat_work}" 
+                    do
+                        echo_debug "ncat listening into ${GBL_SRV_PORT} ..."
+                        local nc_msg=$(ncat_recv_msg "${GBL_SRV_PORT}")
+
+                        echo_debug "ncat msg: [${nc_msg}]" 
+                        local srv_ctrl=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
+                        local srv_act=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
+
+                        if [[ "${srv_ctrl}" == "REMOTE_SET" ]];then
+                            local var_name=$(echo "${srv_act}" | cut -d "=" -f 1)
+                            local var_value=$(echo "${srv_act}" | cut -d "=" -f 2)
+
+                            eval "${var_name}=${var_value}"
+                            global_set_var "${var_name}"
+                        elif [[ "${srv_ctrl}" == "TRANSFER_FILE" ]];then
+                            timeout ${OP_TIMEOUT} nc -l -4 ${GBL_TRX_PORT} > ${srv_act}
+                        elif [[ "${srv_ctrl}" == "REQ_ACK" ]];then
+                            local remote_addr=$(echo "${srv_act}" | cut -d "${GBL_CTRL_SPF3}" -f 1)
+                            local remote_port=$(echo "${srv_act}" | cut -d "${GBL_CTRL_SPF3}" -f 2)
+                            echo "ACK" | nc ${remote_addr} ${remote_port}
+                        fi
+
+                        global_get_var "ncat_work"
+                    done
+                } &
+                fi
+            elif [[ "${req_mssg}" == "NCAT_QUIT" ]];then
+                if access_ok "nc";then
+                    ncat_work=false
+                    global_set_var "ncat_work"
+                    process_signal INT 'nc'
+                fi
+            fi 
         fi
     done < ${GBL_CTRL_THIS_PIPE}
 }
@@ -249,7 +359,7 @@ function global_send_log_sync
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${GBL_LOGR_THIS_PIPE} ];then
-        local self_pid=$(ppid | sed -n '1p')
+        local self_pid=$(ppid | sed -n '2p')
         local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe=${GBL_CTRL_THIS_DIR}/ack.${self_pid}
 
@@ -349,6 +459,8 @@ function _bash_exit
 
 function _exit_signal
 { 
+    trap - ERR
+
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit
     fi
