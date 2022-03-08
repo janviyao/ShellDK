@@ -5,13 +5,12 @@ if ! access_ok "$1"; then
     echo_erro "testcase not exist: $1"
     exit
 fi
-
 source $1
 source ${FIO_ROOT_DIR}/include/fio.conf.sh
-echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT_DIR}"
+
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 g_sed_insert_pre="/;[ ]*[>]\+[ ]*/i\    "
-
 function run_fio_func
 {
     local case_index="$1"

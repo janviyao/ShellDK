@@ -1,53 +1,22 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(path2fname $0) @${FIO_ROOT}"
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-for ipaddr in ${FIO_SIP_ARRAY[*]}
+for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
-    des_dir=${FIO_WORK_DIR}
-
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "rm -fr ${des_dir}/*.sh"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "mkdir -p ${des_dir}"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "chmod 777 -R ${des_dir}"
-
-    scp_dir=${ipaddr}:${des_dir}
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/include" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/setenv.sh" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/dev_init.sh" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/dev_conf.sh" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/dev_clean.sh" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/stop_p.sh" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/iscsid.conf" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/multipath.conf" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/sysctl.conf" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/log.sh" "${scp_dir}"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/tools/add_sshpk.sh" "${scp_dir}"
-
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "sh ${des_dir}/stop_p.sh kill fio"
-    $MY_VIM_DIR/tools/scplogin.sh "${FIO_ROOT}/fio/fio" "${scp_dir}"
+    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${TOOL_ROOT_DIR}/stop_p.sh KILL fio initiator_init.sh"
+    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${ISCSI_ROOT_DIR}/initiator_init.sh"
 done
 
-$MY_VIM_DIR/tools/stop_p.sh kill "start.sh"
-$MY_VIM_DIR/tools/stop_p.sh kill "fio"
-if [ $? -ne 0 ];then
-    exit -1
-fi
-
-for ipaddr in ${FIO_SIP_ARRAY[*]}
+for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
-    des_dir=${FIO_WORK_DIR}
-
-    ssh_cmd="sh ${des_dir}/setenv.sh"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${ssh_cmd}"
-
-    ssh_cmd="sh ${des_dir}/add_sshpk.sh"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${ssh_cmd}"
-
-    ssh_cmd="sh ${des_dir}/stop_p.sh kill 'dev_clean'"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${ssh_cmd}"
-
-    ssh_cmd="sh ${des_dir}/dev_clean.sh"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${ssh_cmd}"
+    device_file="${WORK_ROOT_DIR}/disk.${ipaddr}"
+    if access_ok "${device_file}";then
+        device_array=($(cat ${device_file}))
+        config_add "${TEST_SUIT_ENV}" "HOST_DISK_MAP['${ipaddr}']" "'${device_array[*]}'"
+    else
+        echo_erro "device empty from { ${ipaddr} }"
+    fi
 done
 
 for ipaddr in ${FIO_SIP_ARRAY[*]}

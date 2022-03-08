@@ -18,4 +18,5 @@ fi
 
 if access_ok "${TMP_RESULT}";then
     cat ${TMP_RESULT}
+    rm -f ${TMP_RESULT}
 fi

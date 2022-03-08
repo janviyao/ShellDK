@@ -1,4 +1,6 @@
 #!/bin/bash
+source ${TEST_SUIT_ENV}
+
 FIO_CPU_MASK=0-63
 FIO_CPU_POLICY=split
 FIO_IO_ENGINE=libaio
@@ -28,6 +30,10 @@ declare -A FIO_HOST_MAP
 FIO_HOST_MAP["4k"]="172.24.15.162,172.24.15.163 vdb,vdc"
 FIO_HOST_MAP["64k"]="172.24.15.162,172.24.15.163 vdb,vdc"
 FIO_HOST_MAP["1m"]="172.24.15.162,172.24.15.163 vdb,vdc"
+#for ipaddr in ${CLIENT_IP_ARRAY[*]}
+#do
+#    device_list=$(echo "${HOST_DISK_MAP[${ipaddr}]}" | tr ' ' ',')
+#done
 
 if [ ${#FIO_CONF_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_JOB_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_DEPTH_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_HOST_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} ]; then
     echo_erro "FIO_BS_ARRAY != FIO_CONF_MAP != FIO_JOB_MAP != FIO_DEPTH_MAP"

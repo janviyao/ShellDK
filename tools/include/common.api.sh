@@ -439,10 +439,10 @@ function process_info
 
 function check_net
 {   
-    timeout=5 
-    target=https://github.com
+    local timeout=5 
+    local target="https://www.baidu.com"
 
-    ret_code=`curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1`   
+    local ret_code=$(curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1)   
     if [ "x$ret_code" = "x200" ]; then   
         return 0
     else   
@@ -917,27 +917,23 @@ function echo_debug
 
 function export_all
 {
-    xtrace_disable
     local rand_pid=$(ppid | sed -n '1p')
     local local_pid=$(ppid | sed -n '2p')
     local export_file="/tmp/export.${local_pid}"
 
-    cat << EOL >> "${export_file}"
-        #!/bin/bash
-        set -o allexport
-EOL
-
-    declare -xp &>> ${export_file}
+    declare -xp &> ${export_file}
     sed -i 's/declare \-x //g' ${export_file}
     sed -i 's/declare \-ax //g' ${export_file}
     sed -i 's/declare \-Ax //g' ${export_file}
     sed -i "s/'//g" ${export_file}
-    xtrace_restore
+
+    sed -i '/^[^=]\+$/d' ${export_file}
+    sed -i '1 i \#!/bin/bash' ${export_file}
+    sed -i '2 i \set -o allexport' ${export_file}
 }
 
 function import_all
 {
-    xtrace_disable
     local parent_pid=$(ppid | sed -n '3p')
     local import_file="/tmp/export.${parent_pid}"
 
@@ -945,5 +941,25 @@ function import_all
         local import_config=$(< "${import_file}")
         source <(echo "${import_config//\?=/=}")
     fi
-    xtrace_restore
 }
+
+function get_local_ip
+{   
+    local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))
+    for ipaddr in ${local_iparray[*]}
+    do
+        if cat /etc/hosts | grep -w -F "${ipaddr}" &> /dev/null;then
+            echo "${ipaddr}"
+            return
+        fi
+    done
+
+    for ipaddr in ${local_iparray[*]}
+    do
+        if check_net "${ipaddr}";then
+            echo "${ipaddr}"
+            return
+        fi
+    done
+}
+LOCAL_IP=$(get_local_ip)

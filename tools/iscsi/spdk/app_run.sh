@@ -1,7 +1,6 @@
 #!/bin/bash
-source ${TEST_SUILT_ENV} 
-
-echo_debug "@@@@@@: $(path2fname $0) @${APP_WORK_DIR} @${LOCAL_IP}"
+source ${TEST_SUIT_ENV} 
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! bool_v "${KEEP_ENV_STATE}";then
     echo_info "kill and start: ${TGT_EXE}"
@@ -42,10 +41,10 @@ access_ok "/core-*" && ${SUDO} rm -f /core-*
 access_ok "/cloud/data/corefile/core-${TGT_EXE}_*" && ${SUDO} rm -f /cloud/data/corefile/core-${TGT_EXE}_*
 access_ok "/var/log/tdc/*" && ${SUDO} rm -fr /var/log/tdc/*
 
-if access_ok "${APP_WORK_DIR}/tgt/td_connector.LOG*";then
-    rm -f ${APP_WORK_DIR}/tgt/td_connector.LOG.*
-    echo "" > ${APP_WORK_DIR}/tgt/td_connector.LOG
-    echo "" > ${APP_WORK_DIR}/log
+if access_ok "${WORK_ROOT_DIR}/tgt/td_connector.LOG*";then
+    rm -f ${WORK_ROOT_DIR}/tgt/td_connector.LOG.*
+    echo "" > ${WORK_ROOT_DIR}/tgt/td_connector.LOG
+    echo "" > ${WORK_ROOT_DIR}/log
 fi
 
 #export NVME_WHITELIST=( \

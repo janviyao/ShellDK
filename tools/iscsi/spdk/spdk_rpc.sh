@@ -1,7 +1,6 @@
 #!/bin/bash
-source /tmp/fio.env
-
-echo_debug "@@@@@@: $(echo `basename $0`) @${APP_WORK_DIR} @${LOCAL_IP}"
+source ${TEST_SUIT_ENV}
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 IS_OK=`${SPDK_SRC_DIR}/scripts/rpc.py get_rpc_methods &> /dev/null`
 while [ $? -ne 0 ]
