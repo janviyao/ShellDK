@@ -1,13 +1,38 @@
 #!/bin/bash
-import_all
-ISCSI_ROOT_DIR=$(current_filedir)
-${ISCSI_ROOT_DIR}/spdk/setup.sh
+source ${TEST_SUIT_ENV}
 
-ISCSI_TARGET_NAME=iqn.2016-06.io.spdk
+RESTART_ISCSI_INITIATOR=false
+RESTART_ISCSI_MUTLIPATH=false
+ISCSI_MULTIPATH_ON=false
+
+ISCSI_SESSION_NR=1
+ISCSI_DEV_SIZE=64
+ISCSI_BLK_SIZE=4096
+ISCSI_DEV_QD=128
+
+ISCSI_HEADER_DIGEST="None"
+ISCSI_DATA_DIGEST="None"
+
+ISCSI_ROOT_DIR=$(current_filedir)
 ISCSI_TARGET_IP_ARRAY=(${SERVER_IP_ARRAY[*]:?"iSCSI target ip address empty"})
 ISCSI_INITIATOR_IP_ARRAY=(${CLIENT_IP_ARRAY[*]:?"iSCSI initiator ip address empty"})
 
 config_add "${TEST_SUIT_ENV}" "ISCSI_ROOT_DIR" "${ISCSI_ROOT_DIR}"
-config_add "${TEST_SUIT_ENV}" "ISCSI_TARGET_NAME" "${ISCSI_TARGET_NAME}"
+
+echo "" >> ${TEST_SUIT_ENV}
 config_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_IP_ARRAY" "(${ISCSI_TARGET_IP_ARRAY[*]})"
 config_add "${TEST_SUIT_ENV}" "declare -a ISCSI_INITIATOR_IP_ARRAY" "(${ISCSI_INITIATOR_IP_ARRAY[*]})"
+
+echo "" >> ${TEST_SUIT_ENV}
+${ISCSI_ROOT_DIR}/${TEST_TARGET}/setup.sh
+
+echo "" >> ${TEST_SUIT_ENV}
+config_add "${TEST_SUIT_ENV}" "RESTART_ISCSI_INITIATOR" "${RESTART_ISCSI_INITIATOR}"
+config_add "${TEST_SUIT_ENV}" "RESTART_ISCSI_MUTLIPATH" "${RESTART_ISCSI_MUTLIPATH}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_MULTIPATH_ON"      "${ISCSI_MULTIPATH_ON}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_SESSION_NR"        "${ISCSI_SESSION_NR}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_DEV_SIZE"          "${ISCSI_DEV_SIZE}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_BLK_SIZE"          "${ISCSI_BLK_SIZE}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_DEV_QD"            "${ISCSI_DEV_QD}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_HEADER_DIGEST"     "${ISCSI_HEADER_DIGEST}"
+config_add "${TEST_SUIT_ENV}" "ISCSI_DATA_DIGEST"       "${ISCSI_DATA_DIGEST}"

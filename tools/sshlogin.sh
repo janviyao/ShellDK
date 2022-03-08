@@ -22,7 +22,8 @@ fi
 
 RET_VAR="sudo_ret$$"
 SRV_MSG="remote_set_var '${GBL_SRV_ADDR}' '${RET_VAR}' \$?"
-CMD_EXE="export MY_VIM_DIR=$MY_VIM_DIR; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_EXE});${SRV_MSG}"
+PASS_ENV="export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
+CMD_EXE="${PASS_ENV}; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_EXE});${SRV_MSG}"
 
 global_ncat_ctrl "NCAT_START"
 

@@ -1,17 +1,6 @@
 #!/bin/bash
-RESTART_ISCSI_INITIATOR=false
-RESTART_ISCSI_MUTLIPATH=false
-
-ISCSI_SESSION_NR=32
-ISCSI_DEV_SIZE=64
-ISCSI_BLK_SIZE=4096
-ISCSI_DEV_QD=256
-
-ISCSI_MULTIPATH_ON=yes
-MULTIPATH_DEV_QD=$((ISCSI_DEV_QD * ISCSI_SESSION_NR))
-
-ISCSI_HEADER_DIGEST="None"
-ISCSI_DATA_DIGEST="None"
+HM_SHM_ID=1
+DEV_TYPE=malloc
 
 declare -A ISCSI_INFO_MAP
 #ISCSI_INFO_MAP["ini-ip key-idx"]="tgt-ip target-name port-group:init-group {[lun-id:bdev-id] ...}"

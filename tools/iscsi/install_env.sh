@@ -81,7 +81,7 @@ fi
 if bool_v "${APPLY_SYSCTRL}";then
     echo_info "restart: sysctl"
     access_ok "sysctl.conf" && mv sysctl.conf /etc/
-    sh log.sh sysctl -p
+    ${TEST_ROOT_DIR}/log.sh sysctl -p
 else
     echo_info "keep: sysctl"
     access_ok "sysctl.conf" && rm -f sysctl.conf

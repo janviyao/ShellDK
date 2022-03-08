@@ -1,17 +1,18 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 
-IS_OK=`${SPDK_SRC_DIR}/scripts/rpc.py get_rpc_methods &> /dev/null`
+IS_OK=$(${TEST_APP_SRC}/scripts/rpc.py get_rpc_methods &> /dev/null)
 while [ $? -ne 0 ]
 do
     sleep 1
-    IS_OK=`${SPDK_SRC_DIR}/scripts/rpc.py get_rpc_methods &> /dev/null`
+    IS_OK=$(${TEST_APP_SRC}/scripts/rpc.py get_rpc_methods &> /dev/null)
 done
 
 op_mode=$1
 ini_ip=$2
-is_check=`echo "${ini_ip}" | grep -P "\d+\.\d+\.\d+\.\d+" -o`
+is_check=$(echo "${ini_ip}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
 if [ -z "${is_check}" ];then
     if [ x${ini_ip,,} == x"all" ];then
         ini_ip="${ISCSI_INITIATOR_IP_ARRAY}"
@@ -31,13 +32,13 @@ fi
 for bdev_id in ${BDEV_ID_LIST}
 do
     if [ "${op_mode}" == "del_bdev" ];then
-        sh log.sh ${SPDK_SRC_DIR}/scripts/rpc.py delete_${DEV_TYPE,,}_bdev ${bdev_pre}${bdev_id}
+        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_${DEV_TYPE,,}_bdev ${bdev_pre}${bdev_id}
         if [ $? -eq 0 ];then
             echo_info "${op_mode}[${ipaddr}]: { ${bdev_pre}${bdev_id} }"
         fi
     elif [ "${op_mode}" == "add_bdev" ];then
         uuid_str=`cat /proc/sys/kernel/random/uuid`
-        sh log.sh ${SPDK_SRC_DIR}/scripts/rpc.py construct_${DEV_TYPE,,}_bdev -b ${bdev_pre}${bdev_id} -u ${uuid_str} ${DEV_SIZE} ${DEV_BLK}
+        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_${DEV_TYPE,,}_bdev -b ${bdev_pre}${bdev_id} -u ${uuid_str} ${DEV_SIZE} ${DEV_BLK}
         if [ $? -eq 0 ];then
             echo_info "${op_mode}[${ipaddr}]: { ${bdev_pre}${bdev_id} }"
         fi
@@ -74,12 +75,12 @@ do
 
             tgt_lun_bdev_map="${tgt_lun_bdev_map} ${bdev_pre}${bdev_id}:${lun_id}"
             if [ "${op_mode}" == "del_lun" ];then
-                sh log.sh ${SPDK_SRC_DIR}/scripts/rpc.py target_node_del_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
+                ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py target_node_del_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
                 if [ $? -eq 0 ];then
                     echo_info "${op_mode}[${ipaddr}]: { lun=${lun_id}  bdev=${bdev_pre}${bdev_id} from ${target_nm_str} }"
                 fi
             elif [ "${op_mode}" == "add_lun" ];then
-                sh log.sh ${SPDK_SRC_DIR}/scripts/rpc.py target_node_add_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
+                ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py target_node_add_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
                 if [ $? -eq 0 ];then
                     echo_info "${op_mode}[${ipaddr}]: { lun=${lun_id}  bdev=${bdev_pre}${bdev_id} to ${target_nm_str} }"
                 fi
@@ -87,12 +88,12 @@ do
         done
         
         if [ "${op_mode}" == "add_node" ];then
-            sh log.sh ${SPDK_SRC_DIR}/scripts/rpc.py construct_target_node -d ${target_nm_str} "alias${ipaddr}" "${tgt_lun_bdev_map}" "${pi_map_str}" 256
+            ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_target_node -d ${target_nm_str} "alias${ipaddr}" "${tgt_lun_bdev_map}" "${pi_map_str}" 256
             if [ $? -eq 0 ];then
                 echo_info "${op_mode}[${ipaddr}]: { ${target_nm_str} { ${tgt_lun_bdev_map} } ${pi_map_str} }"
             fi
         elif [ "${op_mode}" == "del_node" ];then
-            sh log.sh ${SPDK_SRC_DIR}/scripts/rpc.py delete_target_node ${target_nm_str}
+            ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_target_node ${target_nm_str}
             if [ $? -eq 0 ];then
                 echo_info "${op_mode}[${ipaddr}]: { ${target_nm_str} }"
             fi

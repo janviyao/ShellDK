@@ -55,15 +55,15 @@ function run_fio_func
         other_paras="${other_paras} --debug=io"
     fi
 
-    echo_info "${FIO_BIN} --output ${output_dir}/${fio_output_file} ${other_paras}"
+    echo_info "${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}"
     if [ ! -f ${output_dir}/${fio_output_file} ];then
-        ${FIO_BIN} --output ${output_dir}/${fio_output_file} ${other_paras}
+        ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}
     fi
     
     local have_error=$(cat ${output_dir}/${fio_output_file} | grep "error=")
     if [ -n "${have_error}" ]; then
         cat ${output_dir}/${fio_output_file}
-        echo_erro "failed: ${FIO_BIN} ${output_dir}/${conf_full_name} ${other_paras}" 
+        echo_erro "failed: ${FIO_APP_RUNTIME} ${output_dir}/${conf_full_name} ${other_paras}" 
         exit -1
     fi
 
@@ -107,7 +107,7 @@ function start_test_func
     for ipaddr in ${FIO_SIP_ARRAY[*]}
     do
         $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "$MY_VIM_DIR/tools/stop_p.sh 'fio --server'"
-        $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "nohup ${FIO_BIN} --server &"
+        $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "nohup ${FIO_APP_RUNTIME} --server &"
     done
 
     local left_case_num=${case_num}

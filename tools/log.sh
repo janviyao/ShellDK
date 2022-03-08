@@ -18,5 +18,6 @@ errcode=$?
 IFS=$IFS_BACKUP
 if [ ${errcode} -ne 0 ];then
     echo_erro "errno(${errcode}): $*"
-    exit -${errcode}
 fi
+
+exit ${errcode}

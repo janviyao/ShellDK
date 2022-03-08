@@ -1,19 +1,21 @@
 #!/bin/bash
-global_get_var USR_NAME
-global_get_var USR_PASSWORD
-
-declare -F echo_debug &>/dev/null
-if [ $? -eq 0 ];then
-    echo_debug "Username:[ $USR_NAME ]  Password:[ $USR_PASSWORD ]"
-else
-    echo "Username:[ $USR_NAME ]  Password:[ $USR_PASSWORD ]"
+if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+    global_get_var USR_NAME
+    global_get_var USR_PASSWORD
 fi
+
+#declare -F echo_debug &>/dev/null
+#if [ $? -eq 0 ];then
+#    echo_debug "Username:[ ${USR_NAME} ]  Password:[ ${USR_PASSWORD} ]"
+#else
+#    echo "Username:[ ${USR_NAME} ]  Password:[ ${USR_PASSWORD} ]"
+#fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     export USR_NAME=`whoami`
 
     input_val=""
-    read -t 30 -p "Please input username(${USR_NAME}): " input_val
+    read -p "Please input username(${USR_NAME}): " input_val
     export USR_NAME=${input_val:-${USR_NAME}}
 
     input_val=""
