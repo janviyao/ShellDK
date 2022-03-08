@@ -10,7 +10,7 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
     exit 1
 fi
 
-echo_debug "Push { ${CMD_EXE} } to { ${HOST_IP} }"
+echo_info "Push { ${CMD_EXE} } to { ${HOST_IP} }"
 if [ -z "${CMD_EXE}" ];then
     exit 0
 fi

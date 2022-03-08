@@ -19,6 +19,7 @@ config_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
 config_add "${TEST_SUIT_ENV}" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[*]})"
 config_add "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*]})"
 config_add "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP" "(['${LOCAL_IP}']='empty')"
+echo "" >> ${TEST_SUIT_ENV}
 
 config_add "${TEST_SUIT_ENV}" "KEEP_ENV_STATE" "${KEEP_ENV_STATE}"
 config_add "${TEST_SUIT_ENV}" "APPLY_SYSCTRL"  "${APPLY_SYSCTRL}"
@@ -51,7 +52,7 @@ do
     $MY_VIM_DIR/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${HOME_DIR}"
 
     $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "tar -xf ${HOME_DIR}/vim.tar"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${HOME_DIR}/.git.vim/install -o env"
+    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${HOME_DIR}/.git.vim/install.sh -o env"
 done
 
 # Push run env
@@ -65,5 +66,5 @@ do
     $MY_VIM_DIR/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${HOME_DIR}"
 
     $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "tar -xf ${HOME_DIR}/vim.tar"
-    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${HOME_DIR}/.git.vim/install -o env"
+    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "${HOME_DIR}/.git.vim/install.sh -o env"
 done

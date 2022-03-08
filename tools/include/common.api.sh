@@ -116,7 +116,8 @@ function current_filedir
 
 function path2fname
 {
-    local full_path=$1
+    local full_path="$1"
+
     if contain_str "${full_path}" "-";then 
         full_path=$(replace_regex "${full_path}" "\-" "\-")
     fi
@@ -124,8 +125,14 @@ function path2fname
 
     if contain_str "${full_path}" "/";then
         local file_name=$(basename ${full_path})
+        if contain_str "${file_name}" "\\";then 
+            file_name=$(replace_regex "${file_name}" '\\' '')
+        fi
         echo "${file_name}"
     else
+        if contain_str "${full_path}" "\\";then 
+            full_path=$(replace_regex "${full_path}" '\\' '')
+        fi
         echo "${full_path}"
     fi
 }
