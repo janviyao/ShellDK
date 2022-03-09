@@ -21,21 +21,11 @@ if process_exist "iscsid";then
     ${SUDO} systemctl stop iscsid.socket
     ${SUDO} systemctl stop iscsiuio
 fi
+mkdir -p ${TEST_LOG_DIR}
 
-${TOOL_ROOT_DIR}/save_coredump.sh
-
-access_ok "log" && rm -f log
-access_ok "core.*" && rm -f core.*
-access_ok "/core-*" && ${SUDO} rm -f /core-*
-
-access_ok "/cloud/data/corefile/core-${TEST_APP_NAME}_*" && ${SUDO} rm -f /cloud/data/corefile/core-${TEST_APP_NAME}_*
-access_ok "/var/log/tdc/*" && ${SUDO} rm -fr /var/log/tdc/*
-
-if access_ok "${WORK_ROOT_DIR}/tgt/td_connector.LOG*";then
-    rm -f ${WORK_ROOT_DIR}/tgt/td_connector.LOG.*
-    echo "" > ${WORK_ROOT_DIR}/tgt/td_connector.LOG
-    echo "" > ${WORK_ROOT_DIR}/log
-fi
+DATE_TIME=$(date '+%Y%m%d-%H%M%S')
+${ISCSI_ROOT_DIR}/${TEST_TARGET}/save_coredump.sh "${TEST_LOG_DIR}/coredump/${DATE_TIME}"
+access_ok "${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log" && ${SUDO} mv ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log.${DATE_TIME}
 
 if process_exist "${TEST_APP_NAME}";then
     $MY_VIM_DIR/tools/stop_p.sh KILL "${TEST_APP_NAME}"

@@ -19,7 +19,7 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #${SUDO} ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/setup.sh reset
 #sleep 5
 
-${SPDK_ROOT_DIR}/incldue/hugepage.sh
+${ISCSI_ROOT_DIR}/${TEST_TARGET}/private.conf.sh
 
 HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
 HM_SHM_ID=1
