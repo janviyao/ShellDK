@@ -76,11 +76,13 @@ do
     else
         hugepages_target="/sys/devices/system/node/node${HUGENODE}/hugepages/hugepages-${HUGEPGSZ}kB/nr_hugepages"
     fi
-    $SUDO echo "${NRHUGE}" \> "${hugepages_target}"
+    ${SUDO} "echo '${NRHUGE}' > ${hugepages_target}"
 
     sleep 2
     HM_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
     HM_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
 
     echo_warn "HugePages Total: ${HM_TOTAL} Free: ${HM_FREE} Need: ${NRHUGE}" 
+
+    let loop_count--
 done

@@ -6,7 +6,7 @@ HOME_DIR=${HOME}
 DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
-LOG_FILE="/tmp/bash.log.$$"
+LOG_FILE="/tmp/bash.log"
 
 OP_TRY_CNT=3
 OP_TIMEOUT=60

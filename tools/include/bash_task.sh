@@ -484,7 +484,13 @@ function _bash_exit
     rm -fr ${GBL_CTRL_THIS_DIR}
     rm -fr ${GBL_LOGR_THIS_DIR}
 
-    access_ok "${LOG_FILE}" && rm -f ${LOG_FILE}
+    if access_ok "${LOG_FILE}";then
+        if (($(file_size "${LOG_FILE}") > ((10*1024*1024))));then
+            local date_time=$(date '+%Y%m%d-%H%M%S')
+            cp -f ${LOG_FILE} ${LOG_FILE}.${date_time}
+            echo > ${LOG_FILE}
+        fi
+    fi
 }
 
 function _exit_signal
