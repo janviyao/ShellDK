@@ -1,6 +1,7 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
 source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 
 IS_OK=$(${TEST_APP_SRC}/scripts/rpc.py get_rpc_methods &> /dev/null)
@@ -11,41 +12,41 @@ do
 done
 
 op_mode=$1
-ini_ip=$2
-is_check=$(echo "${ini_ip}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
-if [ -z "${is_check}" ];then
-    if [ x${ini_ip,,} == x"all" ];then
-        ini_ip="${ISCSI_INITIATOR_IP_ARRAY}"
+ini_ip_array=($2)
+
+if ! match_regex "${ini_ip_array[*]}" '\d+\.\d+\.\d+\.\d+';then
+    if [ x${ini_ip_array[*],,} == x"all" ];then
+        ini_ip_array=(${ISCSI_INITIATOR_IP_ARRAY[*]})
     else
-        echo_erro "para: ${ini_ip} error"
+        echo_erro "para: ${ini_ip_array[*]} error"
         exit -1
     fi
 fi
 
 bdev_pre=""
-if [ x${DEV_TYPE,,} == x"malloc" ];then
+if [ x${BDEV_TYPE,,} == x"malloc" ];then
     bdev_pre="Malloc"
-elif [ x${DEV_TYPE,,} == x"null" ];then
+elif [ x${BDEV_TYPE,,} == x"null" ];then
     bdev_pre="Null"
 fi
 
 for bdev_id in ${BDEV_ID_LIST}
 do
     if [ "${op_mode}" == "del_bdev" ];then
-        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_${DEV_TYPE,,}_bdev ${bdev_pre}${bdev_id}
+        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_${BDEV_TYPE,,}_bdev ${bdev_pre}${bdev_id}
         if [ $? -eq 0 ];then
             echo_info "${op_mode}[${ipaddr}]: { ${bdev_pre}${bdev_id} }"
         fi
     elif [ "${op_mode}" == "add_bdev" ];then
         uuid_str=`cat /proc/sys/kernel/random/uuid`
-        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_${DEV_TYPE,,}_bdev -b ${bdev_pre}${bdev_id} -u ${uuid_str} ${DEV_SIZE} ${DEV_BLK}
+        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_${BDEV_TYPE,,}_bdev -b ${bdev_pre}${bdev_id} -u ${uuid_str} ${DEV_SIZE} ${DEV_BLK}
         if [ $? -eq 0 ];then
             echo_info "${op_mode}[${ipaddr}]: { ${bdev_pre}${bdev_id} }"
         fi
     fi
 done
 
-for ipaddr in ${ini_ip}
+for ipaddr in ${ini_ip_array[*]}
 do
     for t_index in $(seq 0 ${MAX_TARGET_NUM})
     do

@@ -176,52 +176,31 @@ function process_signal
     local signal=$1
     shift
 
-    local arr=($*)
+    local para_arr=($*)
     local pid=""
+    local exclude_pid_array=($$ $ROOT_PID)
 
-    [ ${#arr[*]} -eq 0 ] && return 1
+    [ ${#para_arr[*]} -eq 0 ] && return 1
 
-    for pid in ${arr[*]}
+    for pid in ${para_arr[*]}
     do
         local -a pid_array=($(process_name2pid "${pid}"))
         for pid in ${pid_array[*]}
         do
-            if (( ${pid} == $$ ));then
+            if array_has "${exclude_pid_array[*]}" "${pid}";then
                 continue
             fi
 
             if process_exist "${pid}"; then
-                local child_pids=($(process_subprocess ${pid}))
-                #echo_debug "$(process_pid2name ${pid})[${pid}] childs: $(echo "${pid[@]}")"
+                local child_pid_array=($(process_subprocess ${pid}))
+                echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pid_array[*]}"
 
-                if [ ${pid} -ne $ROOT_PID ];then
-                    echo_debug "${signal}: $(process_pid2name ${pid})[${pid}]"
+                if ! array_has "${exclude_pid_array[*]}" "${pid}";then
+                    echo_debug "signal { ${signal} } into { $(process_pid2name ${pid})[${pid}] }"
                     ${SUDO} "kill -s ${signal} ${pid} &> /dev/null"
                 fi
 
-                local index=0
-                local total=${#child_pids[*]}
-                while [ ${index} -lt ${total} ]
-                do
-                    local next_pid=${child_pids[${index}]}
-                    if process_exist "${next_pid}"; then
-                        local lower_pids=($(process_subprocess ${next_pid}))
-                        #echo_debug "$(process_pid2name ${next_pid})[${next_pid}] childs: $(echo "${lower_pids[*]}")"
-
-                        if [ ${#lower_pids[*]} -gt 0 ];then
-                            child_pids=(${child_pids[*]} ${lower_pids[*]})
-                            total=${#child_pids[*]}
-                        fi
-
-                        if [ ${next_pid} -ne $ROOT_PID ];then
-                            echo_debug "${signal}: $(process_pid2name ${next_pid})[${next_pid}]"
-                            ${SUDO} "kill -s ${signal} ${next_pid} &> /dev/null"
-                        fi
-                    fi
-
-                    let index++
-                    total=${#child_pids[*]}
-                done
+                process_signal ${signal} ${child_pid_array[*]} 
             fi
         done
     done
@@ -229,12 +208,12 @@ function process_signal
 
 function process_kill
 {
-    local arr=($*)
+    local para_arr=($*)
     local pid=""
 
-    [ ${#arr[*]} -eq 0 ] && return 1
+    [ ${#para_arr[*]} -eq 0 ] && return 1
 
-    if process_signal KILL "${arr[*]}"; then
+    if process_signal KILL "${para_arr[*]}"; then
         return 0
     fi
 
@@ -282,17 +261,17 @@ function process_subprocess
     local ppid=$1
     local -a pid_array=($(process_name2pid "${ppid}"))
 
-    local -a child_pids=($(echo ""))
+    local -a child_pid_array=($(echo ""))
     for ppid in ${pid_array[*]}
     do
         # ps -p $$ -o ppid=
         local subpro_path="/proc/${ppid}/task/${ppid}/children"
         if access_ok "${subpro_path}"; then
-            child_pids=(${child_pids[*]} $(cat ${subpro_path}))
+            child_pid_array=(${child_pid_array[*]} $(cat ${subpro_path}))
         fi
     done
 
-    echo "${child_pids[*]}"
+    echo "${child_pid_array[*]}"
 }
 
 function process_subthread

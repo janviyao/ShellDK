@@ -2,25 +2,33 @@
 #set -x
 EXPORT_FILE=$1
 if [ -z "${EXPORT_FILE}" ];then
-    EXPORT_FILE="vim.tar"
+    EXPORT_FILE="${HOME_DIR}/vim.tar"
 fi
-
-CUR_DIR=$(current_filedir)/..
-CUR_DIR=$(cd ${CUR_DIR};pwd)
-CAMP_DIR=$(trim_str_start "${CUR_DIR}" "${HOME_DIR}/")
+CREATE_DIR=$(fname2path "${EXPORT_FILE}")
 
 # Collect dirs and files 
-C_WHAT="${CAMP_DIR}"
-C_WHAT="${C_WHAT} .vim"
-#C_WHAT="${C_WHAT} .vimrc"
-#C_WHAT="${C_WHAT} .bashrc"
-#C_WHAT="${C_WHAT} .bash_profile"
-#C_WHAT="${C_WHAT} .minttyrc"
-#C_WHAT="${C_WHAT} .inputrc"
-#C_WHAT="${C_WHAT} .astylerc"
+TAR_WHAT="${MY_VIM_DIR}"
+TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.vim"
+#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.vimrc"
+#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.bashrc"
+#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.bash_profile"
+#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.minttyrc"
+#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.inputrc"
+#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.astylerc"
 
 # Start to tar 
-echo "Home Dir: \"${HOME_DIR}\"  Collect: \"${C_WHAT}\""
-cd ${HOME_DIR}
-rm -f ${EXPORT_FILE}
-tar -cf ${EXPORT_FILE} ${C_WHAT}
+access_ok "${EXPORT_FILE}" && rm -f ${EXPORT_FILE}
+for item in ${TAR_WHAT}
+do
+    TAR_DIR=$(fname2path "${item}")
+    TAR_FILE=$(path2fname "${item}")
+
+    echo_info "Collect { $(printf '%-20s' "${item}") } into { ${EXPORT_FILE} }"
+
+    cd ${TAR_DIR}
+    if access_ok "${EXPORT_FILE}";then
+        tar -rf ${EXPORT_FILE} ${TAR_FILE}
+    else
+        tar -cf ${EXPORT_FILE} ${TAR_FILE}
+    fi
+done

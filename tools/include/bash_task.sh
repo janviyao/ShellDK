@@ -96,18 +96,21 @@ function global_var_exist
 
     local check_ret=""
 
-    local get_pipe="${GBL_CTRL_THIS_DIR}/get.$$"
-    mkfifo ${get_pipe}
-    access_ok "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
+    local self_pid=$(ppid | sed -n '1p')
+    local check_pipe="${GBL_CTRL_THIS_DIR}/check.${self_pid}"
+
+    mkfifo ${check_pipe}
+    access_ok "${check_pipe}" || echo_erro "mkfifo: ${check_pipe} fail"
 
     local get_fd=0
-    exec {get_fd}<>${get_pipe}
+    exec {get_fd}<>${check_pipe}
 
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}ENV_EXIST${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${get_pipe}" > ${one_pipe}
-    read check_ret < ${get_pipe}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}ENV_EXIST${GBL_CTRL_SPF1}${var_name}${GBL_CTRL_SPF2}${check_pipe}" > ${one_pipe}
+    read check_ret < ${check_pipe}
 
     eval "exec ${get_fd}>&-"
-    rm -f ${get_pipe}
+    rm -f ${check_pipe}
+
     if bool_v "${check_ret}";then
         return 0
     else
@@ -144,7 +147,9 @@ function global_get_var
 
     local var_value=""
 
-    local get_pipe="${GBL_CTRL_THIS_DIR}/get.$$"
+    local self_pid=$(ppid | sed -n '1p')
+    local get_pipe="${GBL_CTRL_THIS_DIR}/get.${self_pid}"
+
     mkfifo ${get_pipe}
     access_ok "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
 

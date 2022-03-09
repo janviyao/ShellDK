@@ -1,6 +1,6 @@
 #!/bin/bash
 HM_SHM_ID=1
-DEV_TYPE=malloc
+BDEV_TYPE=malloc
 
 declare -A ISCSI_INFO_MAP
 #ISCSI_INFO_MAP["ini-ip key-idx"]="tgt-ip target-name port-group:init-group {[lun-id:bdev-id] ...}"

@@ -63,4 +63,4 @@ else
 fi
 
 #echo_info ""
-#${ISCSI_ROOT_DIR}/${TEST_TARGET}/spdk_rpc.sh create
+#${ISCSI_ROOT_DIR}/${TEST_TARGET}/uctrl.sh create
