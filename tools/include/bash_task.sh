@@ -343,7 +343,8 @@ function _global_ctrl_bg_thread
                 if access_ok "nc";then
                     ncat_work=false
                     global_set_var "ncat_work"
-                    process_signal INT 'nc'
+                    # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
+                    { process_signal INT 'nc'; }&
                 fi
             fi 
         fi
