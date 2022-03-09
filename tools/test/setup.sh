@@ -9,13 +9,13 @@ TEST_ROOT_DIR=$(current_filedir)
 
 TEST_TARGET=istgt
 #TEST_TARGET=spdk
+
 TEST_FILL_DATA=no
 KEEP_ENV_STATE=no
 APPLY_SYSCTRL=no
 
 declare -xa SERVER_IP_ARRAY=(172.24.15.161)
 declare -xa CLIENT_IP_ARRAY=(172.24.15.162 172.24.15.163)
-
 #declare -xa SERVER_IP_ARRAY=(11.160.41.96)
 #declare -xa CLIENT_IP_ARRAY=(11.160.41.224)
 

@@ -28,7 +28,7 @@ ${ISCSI_ROOT_DIR}/${TEST_TARGET}/save_coredump.sh "${TEST_LOG_DIR}/coredump/${DA
 access_ok "${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log" && ${SUDO} mv ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log.${DATE_TIME}
 
 if process_exist "${TEST_APP_NAME}";then
-    $MY_VIM_DIR/tools/stop_p.sh KILL "${TEST_APP_NAME}"
+    ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"
     sleep 1
 fi
 

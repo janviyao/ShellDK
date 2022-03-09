@@ -22,7 +22,6 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 
 HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
-HM_SHM_ID=1
 if is_number "${HM_SHM_ID}";then
     if [ ${HM_SHM_ID} -ge 0 ];then
         HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_${HM_SHM_ID}map_*"
