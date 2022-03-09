@@ -301,10 +301,6 @@ function _global_ctrl_bg_thread
                 #echo "send \010" | expect 
             fi
         elif [[ "${req_ctrl}" == "NCAT" ]];then
-            if [ -n "${ack_pipe}" ];then
-                echo "ACK" > ${ack_pipe}
-            fi
-
             if [[ "${req_mssg}" == "NCAT_START" ]];then 
                 if access_ok "nc";then
                 {
@@ -316,6 +312,10 @@ function _global_ctrl_bg_thread
                     do
                         echo_debug "ncat listening into ${GBL_SRV_PORT} ..."
                         local nc_msg=$(ncat_recv_msg "${GBL_SRV_PORT}")
+                        if [ -z "${nc_msg}" ];then
+                            global_get_var "ncat_work"
+                            continue
+                        fi
 
                         echo_debug "ncat msg: [${nc_msg}]" 
                         local srv_ctrl=$(echo "${nc_msg}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
@@ -347,6 +347,11 @@ function _global_ctrl_bg_thread
                 fi
             fi 
         fi
+
+        if [ -n "${ack_pipe}" ];then
+            echo "ACK" > ${ack_pipe}
+        fi
+        echo_debug "ctrl wait: [${GBL_CTRL_THIS_PIPE}]"
     done < ${GBL_CTRL_THIS_PIPE}
 }
 
@@ -457,6 +462,8 @@ function _global_logr_bg_thread
             echo_debug "ack to [${ack_pipe}]"
             echo "ACK" > ${ack_pipe}
         fi
+
+        echo_debug "logr wait: [${GBL_LOGR_THIS_PIPE}]"
     done < ${GBL_LOGR_THIS_PIPE}
 }
 
