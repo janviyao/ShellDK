@@ -42,7 +42,7 @@ function send_ctrl_to_self_sync
 
     if [ -w ${USR_CTRL_THIS_PIPE} ];then
         local self_pid=$$
-        if access_ok "ppid";then
+        if can_access "ppid";then
             local self_pid=$(ppid | sed -n '2p')
         fi
 
@@ -50,7 +50,7 @@ function send_ctrl_to_self_sync
         local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
+            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
@@ -72,7 +72,7 @@ function send_ctrl_to_parent_sync
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         local self_pid=$$
-        if access_ok "ppid";then
+        if can_access "ppid";then
             local self_pid=$(ppid | sed -n '2p')
         fi
 
@@ -80,7 +80,7 @@ function send_ctrl_to_parent_sync
         local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
+            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
@@ -112,7 +112,7 @@ function usr_ctrl_thread
         local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${line}"
+            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${line}"
         fi
 
         local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
@@ -166,7 +166,7 @@ function usr_ctrl_signal
     send_ctrl_to_parent "CTRL" "EXIT"
     send_ctrl_to_self "CTRL" "EXCEPTION"
 
-    if access_ok "${USR_CTRL_THIS_DIR}";then
+    if can_access "${USR_CTRL_THIS_DIR}";then
         usr_ctrl_exit
         usr_ctrl_clear
     fi
@@ -190,7 +190,7 @@ function usr_ctrl_init_self
 
     rm -f ${USR_CTRL_THIS_PIPE}
     mkfifo ${USR_CTRL_THIS_PIPE}
-    access_ok "${USR_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${USR_CTRL_THIS_PIPE} fail"
+    can_access "${USR_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${USR_CTRL_THIS_PIPE} fail"
 }
 
 function usr_ctrl_launch

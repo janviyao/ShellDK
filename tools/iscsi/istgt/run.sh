@@ -10,10 +10,10 @@ else
 fi
 
 if ! bool_v "${APPLY_SYSCTRL}";then
-    access_ok "sysctl.conf" && ${SUDO} mv sysctl.conf /etc/
+    can_access "sysctl.conf" && ${SUDO} mv sysctl.conf /etc/
     ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
 else
-    access_ok "sysctl.conf" && rm -f sysctl.conf
+    can_access "sysctl.conf" && rm -f sysctl.conf
 fi
 
 if process_exist "iscsid";then
@@ -28,7 +28,7 @@ if process_exist "${TEST_APP_NAME}";then
 fi
 
 ISTGT_CONF="${ISCSI_ROOT_DIR}/${TEST_TARGET}/conf/istgt.conf"
-access_ok "${ISTGT_CONF}" && ${SUDO} cp -f ${ISTGT_CONF} /usr/local/etc/istgt/
+can_access "${ISTGT_CONF}" && ${SUDO} cp -f ${ISTGT_CONF} /usr/local/etc/istgt/
 
 #${SUDO} "nohup ${TEST_APP_RUNTIME} &"
 ${TEST_APP_RUNTIME}

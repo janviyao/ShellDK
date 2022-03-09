@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV}
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! access_ok "$1"; then
+if ! can_access "$1"; then
     echo_erro "testcase not exist: $1"
     exit
 fi

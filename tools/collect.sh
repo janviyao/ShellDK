@@ -17,7 +17,7 @@ TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.vim"
 #TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.astylerc"
 
 # Start to tar 
-access_ok "${EXPORT_FILE}" && rm -f ${EXPORT_FILE}
+can_access "${EXPORT_FILE}" && rm -f ${EXPORT_FILE}
 for item in ${TAR_WHAT}
 do
     TAR_DIR=$(fname2path "${item}")
@@ -26,7 +26,7 @@ do
     echo_info "Collect { $(printf '%-20s' "${item}") } into { ${EXPORT_FILE} }"
 
     cd ${TAR_DIR}
-    if access_ok "${EXPORT_FILE}";then
+    if can_access "${EXPORT_FILE}";then
         tar -rf ${EXPORT_FILE} ${TAR_FILE}
     else
         tar -cf ${EXPORT_FILE} ${TAR_FILE}

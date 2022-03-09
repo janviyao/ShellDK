@@ -48,7 +48,7 @@ replace_list=(${other_paras[*]})
 CUR_DIR=$(pwd)
 for rep_dir in ${replace_list[@]}
 do
-    if ! access_ok "${rep_dir}";then
+    if ! can_access "${rep_dir}";then
         echo_erro "not a directory or file: ${rep_dir}"
         continue
     fi

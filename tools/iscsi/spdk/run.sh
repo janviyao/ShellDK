@@ -10,10 +10,10 @@ else
 fi
 
 if ! bool_v "${APPLY_SYSCTRL}";then
-    access_ok "sysctl.conf" && ${SUDO} mv sysctl.conf /etc/
+    can_access "sysctl.conf" && ${SUDO} mv sysctl.conf /etc/
     ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
 else
-    access_ok "sysctl.conf" && rm -f sysctl.conf
+    can_access "sysctl.conf" && rm -f sysctl.conf
 fi
 
 if process_exist "iscsid";then
@@ -25,7 +25,7 @@ mkdir -p ${TEST_LOG_DIR}
 
 DATE_TIME=$(date '+%Y%m%d-%H%M%S')
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/save_coredump.sh "${TEST_LOG_DIR}/coredump/${DATE_TIME}"
-access_ok "${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log" && ${SUDO} mv ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log.${DATE_TIME}
+can_access "${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log" && ${SUDO} mv ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log.${DATE_TIME}
 
 if process_exist "${TEST_APP_NAME}";then
     ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"

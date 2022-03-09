@@ -7,7 +7,7 @@ mkdir -p ${GBL_CTRL_THIS_DIR}
 
 GBL_CTRL_THIS_FD=${GBL_CTRL_THIS_FD:-6}
 mkfifo ${GBL_CTRL_THIS_PIPE}
-access_ok "${GBL_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_THIS_PIPE} fail"
+can_access "${GBL_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_THIS_PIPE} fail"
 exec {GBL_CTRL_THIS_FD}<>${GBL_CTRL_THIS_PIPE}
 
 GBL_LOGR_THIS_DIR="${_GBL_BASE_DIR}/logr/pid.$$"
@@ -16,7 +16,7 @@ mkdir -p ${GBL_LOGR_THIS_DIR}
 
 GBL_LOGR_THIS_FD=${GBL_LOGR_THIS_FD:-7}
 mkfifo ${GBL_LOGR_THIS_PIPE}
-access_ok "${GBL_LOGR_THIS_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_THIS_PIPE} fail"
+can_access "${GBL_LOGR_THIS_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_THIS_PIPE} fail"
 exec {GBL_LOGR_THIS_FD}<>${GBL_LOGR_THIS_PIPE} # 自动分配FD 
 
 GBL_ACK_SPF="#"
@@ -35,7 +35,7 @@ function ncat_send_msg
     local send_msg="$3"
 
     echo_debug "ncat send: [$*]" 
-    if access_ok "nc";then
+    if can_access "nc";then
         # nc -zvw3 172.24.15.162 7888 --> test ip&port whether net can access 
         (echo "${send_msg}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         while test $? -ne 0
@@ -49,7 +49,7 @@ function ncat_recv_msg
 {
     local ncat_port="$1"
 
-    if access_ok "nc";then
+    if can_access "nc";then
         timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} | while read nc_msg
         do
             echo "${nc_msg}"
@@ -63,7 +63,7 @@ function remote_push_result
     local res_file="$2"
 
     echo_debug "remote push: [$*]" 
-    if access_ok "${res_file}";then
+    if can_access "${res_file}";then
         ncat_send_msg ${srv_addr} ${GBL_SRV_PORT} "TRANSFER_FILE${GBL_CTRL_SPF1}${res_file}"
 
         (nc ${srv_addr} ${GBL_TRX_PORT} < ${res_file}) &> /dev/null
@@ -93,18 +93,18 @@ function global_var_exist
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
-    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
+    can_access "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     local check_ret=""
 
     local self_pid=$$
-    if access_ok "ppid";then
+    if can_access "ppid";then
         local self_pid=$(ppid | sed -n '1p')
     fi
     local check_pipe="${GBL_CTRL_THIS_DIR}/check.${self_pid}"
 
     mkfifo ${check_pipe}
-    access_ok "${check_pipe}" || echo_erro "mkfifo: ${check_pipe} fail"
+    can_access "${check_pipe}" || echo_erro "mkfifo: ${check_pipe} fail"
 
     local get_fd=0
     exec {get_fd}<>${check_pipe}
@@ -130,7 +130,7 @@ function global_set_var
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
-    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
+    can_access "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     local var_value="$(eval "echo \"\$${var_name}\"")"
 
@@ -147,18 +147,18 @@ function global_get_var
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
-    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
+    can_access "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     local var_value=""
 
     local rand_pid=$$
-    if access_ok "ppid";then
+    if can_access "ppid";then
         local rand_pid=$(ppid | sed -n '1p')
     fi
     local get_pipe="${GBL_CTRL_THIS_DIR}/get.${rand_pid}"
 
     mkfifo ${get_pipe}
-    access_ok "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
+    can_access "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
 
     local get_fd=0
     exec {get_fd}<>${get_pipe}
@@ -180,7 +180,7 @@ function global_unset_var
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_THIS_PIPE}"
     fi
-    access_ok "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
+    can_access "${one_pipe}" || echo_erro "pipe invalid: ${one_pipe}"
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}UNSET_ENV${GBL_CTRL_SPF1}${var_name}" > ${one_pipe}
 }
@@ -200,9 +200,9 @@ function make_ack
     local self_pid=$1
     local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
     
-    access_ok "${ack_pipe}" && rm -f ${ack_pipe}
+    can_access "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
-    access_ok "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+    can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
     echo_debug "make ack: ${ack_pipe}"
 
     local ack_fd=0
@@ -231,7 +231,7 @@ function global_ncat_ctrl
     
     # the first pid is shell where ppid run
     local self_pid=$$
-    if access_ok "ppid";then
+    if can_access "ppid";then
         local self_pid=$(ppid | sed -n '2p')
     fi
     local ack_fd=$(make_ack "${self_pid}"; echo $?)
@@ -255,7 +255,7 @@ function _global_ctrl_bg_thread
         local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
+            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
@@ -304,7 +304,7 @@ function _global_ctrl_bg_thread
             fi
         elif [[ "${req_ctrl}" == "NCAT" ]];then
             if [[ "${req_mssg}" == "NCAT_START" ]];then 
-                if access_ok "nc";then
+                if can_access "nc";then
                 {
                     process_signal INT 'nc'
                     ncat_work=true
@@ -343,7 +343,7 @@ function _global_ctrl_bg_thread
                 } &
                 fi
             elif [[ "${req_mssg}" == "NCAT_QUIT" ]];then
-                if access_ok "nc";then
+                if can_access "nc";then
                     ncat_work=false
                     global_set_var "ncat_work"
                     # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
@@ -354,7 +354,7 @@ function _global_ctrl_bg_thread
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            access_ok "${ack_pipe}" && echo "ACK" > ${ack_pipe}
+            can_access "${ack_pipe}" && echo "ACK" > ${ack_pipe}
         fi
 
         echo_debug "ctrl wait: [${GBL_CTRL_THIS_PIPE}]"
@@ -385,14 +385,14 @@ function global_send_log_sync
 
     if [ -w ${GBL_LOGR_THIS_PIPE} ];then
         local self_pid=$$
-        if access_ok "ppid";then
+        if can_access "ppid";then
             local self_pid=$(ppid | sed -n '2p')
         fi
         local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe=${GBL_CTRL_THIS_DIR}/ack.${self_pid}
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
+            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
@@ -416,7 +416,7 @@ function _global_logr_bg_thread
         local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
-            access_ok "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
+            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
         fi
 
         local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
@@ -466,7 +466,7 @@ function _global_logr_bg_thread
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            access_ok "${ack_pipe}" && echo "ACK" > ${ack_pipe}
+            can_access "${ack_pipe}" && echo "ACK" > ${ack_pipe}
         fi
         
         echo_debug "logr wait: [${GBL_LOGR_THIS_PIPE}]"
@@ -484,7 +484,7 @@ function _bash_exit
     rm -fr ${GBL_CTRL_THIS_DIR}
     rm -fr ${GBL_LOGR_THIS_DIR}
 
-    if access_ok "${LOG_FILE}";then
+    if can_access "${LOG_FILE}";then
         local logsize=$(file_size "${LOG_FILE}")
         if [ -z "${logsize}" ];then
             logsize=0

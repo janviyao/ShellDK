@@ -48,7 +48,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
         fi
     fi
 
-    access_ok "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
+    can_access "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
     if process_exist "multipathd";then
         if bool_v "${RESTART_ISCSI_MUTLIPATH}";then
             echo_info "multipath restart"
@@ -79,8 +79,8 @@ fi
 #sh stop_p.sh kill "iscsid"
 #rm -f iscsid.log
 #iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> iscsid.log &
-access_ok "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
-access_ok "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 if process_exist "iscsid";then
     if bool_v "${RESTART_ISCSI_INITIATOR}";then
         echo_info "iscsid restart"
@@ -95,6 +95,7 @@ fi
 
 if bool_v "${APPLY_SYSCTRL}";then
     echo_info "sysctl reload"
-    access_ok "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
+    can_access "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} sysctl -p
 fi
+

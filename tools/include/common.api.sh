@@ -57,7 +57,7 @@ function bool_v
     fi
 }
 
-function access_ok
+function can_access
 {
     local fname="$1"
 
@@ -72,7 +72,7 @@ function access_ok
                 return 1
             fi
 
-            if access_ok "${file}"; then
+            if can_access "${file}"; then
                 return 0
             fi
         done
@@ -276,7 +276,7 @@ function process_subprocess
     do
         # ps -p $$ -o ppid=
         local subpro_path="/proc/${ppid}/task/${ppid}/children"
-        if access_ok "${subpro_path}"; then
+        if can_access "${subpro_path}"; then
             child_pid_array=(${child_pid_array[*]} $(cat ${subpro_path}))
         fi
     done
@@ -293,7 +293,7 @@ function process_subthread
     for ppid in ${pid_array[*]}
     do
         local thread_path="/proc/${ppid}/task"
-        if access_ok "${thread_path}"; then
+        if can_access "${thread_path}"; then
             child_tids=(${child_tids[*]} $(ls --color=never ${thread_path}))
         fi
     done
@@ -668,7 +668,7 @@ function file_count
         echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
         local self_pid=$$
-        if access_ok "ppid";then
+        if can_access "ppid";then
             local self_pid=$(ppid | sed -n '2p')
         fi
         local tmp_file=/tmp/size.${self_pid}
@@ -694,14 +694,14 @@ function file_size
     done
 
     if bool_v "${readable}";then
-        access_ok "fstat" || return 0
+        can_access "fstat" || return 0
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
-        access_ok "ppid" || return 0
+        can_access "ppid" || return 0
         local self_pid=$(ppid | sed -n '2p')
         local tmp_file=/tmp/size.${self_pid}
 
-        access_ok "fstat" || return 0
+        can_access "fstat" || return 0
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
         ${SUDO} "rm -f ${tmp_file} &> /dev/null"
@@ -779,7 +779,7 @@ function config_has
     local conf_file="$1"
     local keystr="$2"
 
-    if ! access_ok "${conf_file}";then
+    if ! can_access "${conf_file}";then
         return 1
     fi 
 
@@ -807,7 +807,7 @@ function config_add
     local keystr="$2"
     local valstr="${3}"
 
-    if ! access_ok "${conf_file}";then
+    if ! can_access "${conf_file}";then
         return 1
     fi 
     
@@ -829,7 +829,7 @@ function config_del
     local conf_file="$1"
     local keystr="$2"
 
-    if ! access_ok "${conf_file}";then
+    if ! can_access "${conf_file}";then
         return 1
     fi 
     
@@ -920,7 +920,7 @@ function echo_debug
 function export_all
 {
     local local_pid=$$
-    if access_ok "ppid";then
+    if can_access "ppid";then
         local local_pid=$(ppid | sed -n '2p')
     fi
 
@@ -940,13 +940,13 @@ function export_all
 function import_all
 {
     local parent_pid=$$
-    if access_ok "ppid";then
+    if can_access "ppid";then
         local parent_pid=$(ppid | sed -n '3p')
     fi
 
     local import_file="/tmp/export.${parent_pid}"
 
-    if access_ok "${import_file}";then 
+    if can_access "${import_file}";then 
         local import_config=$(< "${import_file}")
         source <(echo "${import_config//\?=/=}")
     fi
@@ -958,7 +958,7 @@ function install_from_rpm
     local fname_reg="$2"
     local rpm_file=""
 
-    if ! access_ok "${rpm_dir}";then
+    if ! can_access "${rpm_dir}";then
         echo_erro "rpm dir: ${rpm_dir} donot access"
         return 1
     fi

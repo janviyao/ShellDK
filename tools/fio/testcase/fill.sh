@@ -15,7 +15,7 @@ FIO_TEST_MAP["testcase-1"]="fio.s.w 1m 1 1 172.24.15.162,172.24.15.163 vdb,vdc"
 
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
-    if access_ok "${WORK_ROOT_DIR}/disk.${ipaddr}";then
+    if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
         device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
         config_add "${TEST_SUIT_ENV}" "HOST_DISK_MAP['${ipaddr}']" "'${device_array[*]}'"
 

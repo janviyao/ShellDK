@@ -172,10 +172,10 @@ function deploy_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            access_ok "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
+            can_access "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
             ln -s ${link_file} ${HOME_DIR}/${linkf}
         else
-            access_ok "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
+            can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
             ${SUDO} ln -s ${link_file} ${BIN_DIR}/${linkf}
         fi
     done
@@ -188,7 +188,7 @@ function deploy_env
     cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
     cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim
 
-    if ! access_ok "${HOME_DIR}/.vim/bundle/vundle"; then
+    if ! can_access "${HOME_DIR}/.vim/bundle/vundle"; then
         cd ${ROOT_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
@@ -196,11 +196,11 @@ function deploy_env
         fi
     fi
     
-    access_ok "${HOME_DIR}/.bashrc" || access_ok "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${HOME_DIR}/.bashrc
-    access_ok "${HOME_DIR}/.bash_profile" || access_ok "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
+    can_access "${HOME_DIR}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${HOME_DIR}/.bashrc
+    can_access "${HOME_DIR}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
 
-    access_ok "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
-    access_ok "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
+    can_access "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
+    can_access "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
     sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
     sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
@@ -218,7 +218,7 @@ function update_env
     bool_v "${NEED_NET}"
     if [ $? -eq 0 ]; then
         local need_update=1
-        if access_ok "${HOME_DIR}/.vim/bundle/vundle"; then
+        if can_access "${HOME_DIR}/.vim/bundle/vundle"; then
             git clone https://github.com/gmarik/vundle.git ${HOME_DIR}/.vim/bundle/vundle
             vim +BundleInstall +q +q
             need_update=0
@@ -237,16 +237,16 @@ function clean_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            access_ok "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
+            can_access "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
         else
-            access_ok "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
+            can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
         fi
     done
 
-    access_ok "${HOME_DIR}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
-    access_ok "${HOME_DIR}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
-    access_ok "${HOME_DIR}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
-    access_ok "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
+    can_access "${HOME_DIR}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
+    can_access "${HOME_DIR}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
+    can_access "${HOME_DIR}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
+    can_access "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 }
 
 function install_from_net
@@ -255,7 +255,7 @@ function install_from_net
     local success=1
 
     if [ ${success} -ne 0 ];then
-        if access_ok "yum";then
+        if can_access "yum";then
             ${SUDO} yum install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
@@ -264,7 +264,7 @@ function install_from_net
     fi
 
     if [ ${success} -ne 0 ];then
-        if access_ok "apt";then
+        if can_access "apt";then
             ${SUDO} apt install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
@@ -273,7 +273,7 @@ function install_from_net
     fi
 
     if [ ${success} -ne 0 ];then
-        if access_ok "apt-cyg";then
+        if can_access "apt-cyg";then
             ${SUDO} apt-cyg install ${tool} -y
             if [ $? -eq 0 ];then
                 success=0
@@ -305,11 +305,11 @@ function install_from_make
 
     local filename=$(path2fname `pwd`)
 
-    access_ok "Makefile" || access_ok "configure" 
-    [ $? -ne 0 ] && access_ok "unix/" && cd unix/
-    [ $? -ne 0 ] && access_ok "linux/" && cd linux/
+    can_access "Makefile" || can_access "configure" 
+    [ $? -ne 0 ] && can_access "unix/" && cd unix/
+    [ $? -ne 0 ] && can_access "linux/" && cd linux/
 
-    if access_ok "autogen.sh"; then
+    if can_access "autogen.sh"; then
         echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
@@ -318,7 +318,7 @@ function install_from_make
         fi
     fi
 
-    if access_ok "configure"; then
+    if can_access "configure"; then
         echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
         ./configure --prefix=/usr &>> build.log
         if [ $? -ne 0 ]; then
@@ -329,7 +329,7 @@ function install_from_make
                 exit 1
             fi
 
-            if ! access_ok "Makefile"; then
+            if ! can_access "Makefile"; then
                 ls --color=never -A | xargs -i cp -fr {} ../
                 cd ..
             fi
@@ -348,7 +348,7 @@ function install_from_make
                     exit 1
                 fi
 
-                if ! access_ok "Makefile"; then
+                if ! can_access "Makefile"; then
                     ls --color=never -A | xargs -i cp -fr {} ../
                     cd ..
                 fi
@@ -391,7 +391,7 @@ function update_check
     local local_cmd="$1"
     local fname_reg="$2"
 
-    if access_ok "${local_cmd}";then
+    if can_access "${local_cmd}";then
         ${local_cmd} --version &> /tmp/${local_cmd}.ver
         if [ $? -ne 0 ];then
             return 1
@@ -427,7 +427,7 @@ function inst_deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         for usr_cmd in ${!rpmTodo[@]};
         do
-            if ! access_ok "${usr_cmd}";then
+            if ! can_access "${usr_cmd}";then
                 local todoes="${rpmTodo["${usr_cmd}"]}"
                 install_from_rpm "${ROOT_DIR}/deps" "${todoes}" 
             fi
@@ -435,7 +435,7 @@ function inst_deps
         
         for usr_cmd in ${tarDeps[@]};
         do
-            if ! access_ok "${usr_cmd}";then
+            if ! can_access "${usr_cmd}";then
                 local todoes="${tarTodo[${usr_cmd}]}"
 
                 echo_info "$(printf "[%13s]: %-50s" "Will install" "${usr_cmd}")"
@@ -445,27 +445,27 @@ function inst_deps
 
         for usr_cmd in ${!netDeps[@]};
         do
-            if ! access_ok "${usr_cmd}";then
+            if ! can_access "${usr_cmd}";then
                 local pat_file=${netDeps["${usr_cmd}"]}
                 install_from_net ${pat_file} 
             fi
         done
         
         # Install deno
-        if ! access_ok "deno";then
+        if ! can_access "deno";then
             cd ${ROOT_DIR}/deps
             unzip deno-x86_64-unknown-linux-gnu.zip
             mv -f deno ${BIN_DIR}
         fi
 
         # Install ppid
-        if ! access_ok "ppid";then
+        if ! can_access "ppid";then
             cd ${ROOT_DIR}/tools/app
             gcc ppid.c -o ppid
             mv -f ppid ${BIN_DIR}
         fi
 
-        if ! access_ok "fstat";then
+        if ! can_access "fstat";then
             cd ${ROOT_DIR}/tools/app
             gcc fstat.c -o fstat
             mv -f fstat ${BIN_DIR}
@@ -571,7 +571,7 @@ function inst_vim
 
     ${SUDO} rm -f /usr/local/bin/vim
 
-    access_ok "${BIN_DIR}/vim" && rm -f ${BIN_DIR}/vim
+    can_access "${BIN_DIR}/vim" && rm -f ${BIN_DIR}/vim
     ${SUDO} ln -s /usr/bin/vim ${BIN_DIR}/vim
 }
 
@@ -583,7 +583,7 @@ function inst_tig
     if [ $? -eq 0 ]; then
         git clone https://github.com/jonas/tig.git tig
     else
-        access_ok "tig" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tig-*.tar.gz${CMD_IFS}cd tig-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tig-*/"
+        can_access "tig" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tig-*.tar.gz${CMD_IFS}cd tig-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tig-*/"
     fi
 }
 
@@ -631,7 +631,7 @@ function inst_ack
     if [ $? -eq 0 ]; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        access_ok "ag" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
+        can_access "ag" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
     fi
 }
 

@@ -2,6 +2,8 @@
 source ${TEST_SUIT_ENV} 
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
+source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
+
 #export NVME_WHITELIST=( \
 #    "0000:05:00.0" \
 #    "0000:06:00.0" \
@@ -16,73 +18,95 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #)
 #export SKIP_PCI=1
 
-#${SUDO} ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/setup.sh reset
+#${SUDO} ${TEST_APP_SRC}/scripts/setup.sh reset
 #sleep 5
 
-source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
-
-HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
-if is_number "${HM_SHM_ID}";then
-    if [ ${HM_SHM_ID} -ge 0 ];then
-        HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_${HM_SHM_ID}map_*"
+HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
+if is_number "${HP_SHM_ID}";then
+    if [ ${HP_SHM_ID} -ge 0 ];then
+        HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_${HP_SHM_ID}map_*"
     fi
 fi
+HP_FILE_PREFIX=$(trim_str_end "${HP_MAP_FILE}" "*")
+echo_info "HugePage file-prefix: ${HP_FILE_PREFIX}"
 
-HM_FILE_SIZE=0
-if access_ok "/dev/hugepages/fusion_target_iscsi*";then
-    ${SUDO} chmod -R 777 /dev/hugepages 
-
-    prefix_str=$(trim_str_end "${HM_MAP_FILE}" "*")
-    echo_info "HugePage file-prefix: ${prefix_str}"
-
+HP_FILE_SIZE=0
+CAN_FREE_SIZE=0
+if can_access "/dev/hugepages/fusion_target_iscsi*";then
+    ${SUDO} chmod -R 777 /dev/hugepages
     for hugefile in /dev/hugepages/fusion_target_iscsi*
     do
-        if ! match_str_start "${hugefile}" "${prefix_str}";then
-            echo_info "rm -f ${hugefile}"
-            ${TOOL_ROOT_DIR}/log.sh rm -f ${hugefile} 
+        cur_size=$(file_size ${hugefile} | tail -n 1)
+        if ! match_str_start "${hugefile}" "${HP_FILE_PREFIX}";then
+            let CAN_FREE_SIZE=CAN_FREE_SIZE+cur_size
+            #echo_info "rm -f ${hugefile}"
+            #${TOOL_ROOT_DIR}/log.sh rm -f ${hugefile} 
         else
-            cur_size=$(file_size ${hugefile} | tail -n 1)
-            let HM_FILE_SIZE=HM_FILE_SIZE+cur_size
-            #echo_info "hm size: ${HM_FILE_SIZE} cursize: ${cur_size} ${hugefile}"
+            let HP_FILE_SIZE=HP_FILE_SIZE+cur_size
+            #echo_info "hm size: ${HP_FILE_SIZE} cursize: ${cur_size} ${hugefile}"
         fi
     done
 fi
-HM_FILE_MB=$(( HM_FILE_SIZE / 1024 / 1024 ))
+HP_FILE_MB=$(( HP_FILE_SIZE / 1024 / 1024 ))
+CAN_FREE_MB=$(( CAN_FREE_SIZE / 1024 / 1024 ))
 
 # disable ASLR
-#${SUDO} echo 0 \> /proc/sys/kernel/randomize_va_space
+#${SUDO} "echo 0 > /proc/sys/kernel/randomize_va_space"
 
-HM_NEED_MB=$((10 * 1024))
-HM_PGSZ_KB=$(grep Hugepagesize /proc/meminfo | cut -d : -f 2 | tr -dc '0-9')
-HM_PGSZ_MB=$(( HM_PGSZ_KB / 1024 ))
-HM_NEED_MB=$((((HM_NEED_MB + HM_PGSZ_MB - 1) / HM_PGSZ_MB)*HM_PGSZ_MB))
+HP_NEED_MB=$((10 * 1024))
+HP_PGSZ_KB=$(grep Hugepagesize /proc/meminfo | cut -d : -f 2 | tr -dc '0-9')
+HP_PGSZ_MB=$(( HP_PGSZ_KB / 1024 ))
+HP_NEED_MB=$((((HP_NEED_MB + HP_PGSZ_MB - 1) / HP_PGSZ_MB)*HP_PGSZ_MB))
 
-HM_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
-HM_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
-echo_info "HugePages Total: ${HM_TOTAL} Free: ${HM_FREE} Need: ${HM_NEED_MB} File: ${HM_FILE_MB}" 
+HP_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
+HP_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
+echo_info "HugePages Total: ${HP_TOTAL} Free: ${HP_FREE} Need: ${HP_NEED_MB} Used: ${HP_FILE_MB} CanFree: ${CAN_FREE_MB}" 
 
-loop_count=6
-while (( HM_FREE < HM_NEED_MB )) && (( loop_count >= 0 )) 
+loop_count=0
+while (( HP_FREE < HP_NEED_MB )) && (( loop_count <= 6 )) 
 do
-    if [ ${HM_NEED_MB} -le ${HM_FILE_MB} ];then
+    if [ ${HP_NEED_MB} -le ${HP_FILE_MB} ];then
         break
     fi
 
-    NRHUGE=$((HM_TOTAL + HM_NEED_MB - HM_FREE))
-    #export NRHUGE=${NRHUGE}; ${SUDO} ${TEST_APP_SRC}/scripts/setup.sh
+    NRHUGE=$((HP_TOTAL + HP_NEED_MB - HP_FREE))
+    #export NRHUGE; ${SUDO} ${TEST_APP_SRC}/scripts/setup.sh
 
     if [ -z "${HUGENODE}" ]; then
         hugepages_target="/proc/sys/vm/nr_hugepages"
     else
         hugepages_target="/sys/devices/system/node/node${HUGENODE}/hugepages/hugepages-${HUGEPGSZ}kB/nr_hugepages"
     fi
+
     ${SUDO} "echo '${NRHUGE}' > ${hugepages_target}"
-
     sleep 2
-    HM_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
-    HM_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
 
-    echo_warn "HugePages Total: ${HM_TOTAL} Free: ${HM_FREE} Need: ${NRHUGE}" 
+    HP_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
+    HP_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
 
-    let loop_count--
+    echo_warn "HugePages Total: ${HP_TOTAL} Free: ${HP_FREE} Request: ${NRHUGE}" 
+    let loop_count++
+    if [ ${loop_count} -ge 3 ];then
+        if (( HP_FREE < HP_NEED_MB ));then
+            LEFT_NR=$((HP_NEED_MB - HP_FREE))
+            if can_access "/dev/hugepages/fusion_target_iscsi*";then
+                for hugefile in /dev/hugepages/fusion_target_iscsi*
+                do
+                    if ! match_str_start "${hugefile}" "${HP_FILE_PREFIX}";then
+                        cur_size=$(file_size ${hugefile} | tail -n 1)
+                        cur_size=$(( cur_size / 1024 / 1024 ))
+
+                        ${TOOL_ROOT_DIR}/log.sh rm -f ${hugefile} 
+                        let LEFT_NR=LEFT_NR-cur_size
+                        if [ ${LEFT_NR} -le 0 ];then
+                            break
+                        fi
+                    fi
+                done
+
+                HP_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
+                HP_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
+            fi
+        fi
+    fi
 done

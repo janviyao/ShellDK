@@ -33,7 +33,7 @@ declare -A FIO_HOST_MAP
 
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
-    if access_ok "${WORK_ROOT_DIR}/disk.${ipaddr}";then
+    if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
         device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
         config_add "${TEST_SUIT_ENV}" "HOST_DISK_MAP['${ipaddr}']" "'${device_array[*]}'"
 

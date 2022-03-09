@@ -50,7 +50,7 @@ function create_project
 
     sed -i "s/\.\///g" cscope.files
 
-    if access_ok ".gitignore"; then
+    if can_access ".gitignore"; then
         while read line
         do
             [ -z "${line}" ] && continue
