@@ -33,13 +33,13 @@ fi
 for bdev_id in ${BDEV_ID_LIST}
 do
     if [ "${op_mode}" == "del_bdev" ];then
-        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_${BDEV_TYPE,,}_bdev ${bdev_pre}${bdev_id}
+        ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_${BDEV_TYPE,,}_bdev ${bdev_pre}${bdev_id}
         if [ $? -eq 0 ];then
             echo_info "${op_mode}[${ipaddr}]: { ${bdev_pre}${bdev_id} }"
         fi
     elif [ "${op_mode}" == "add_bdev" ];then
         uuid_str=`cat /proc/sys/kernel/random/uuid`
-        ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_${BDEV_TYPE,,}_bdev -b ${bdev_pre}${bdev_id} -u ${uuid_str} ${DEV_SIZE} ${DEV_BLK}
+        ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_${BDEV_TYPE,,}_bdev -b ${bdev_pre}${bdev_id} -u ${uuid_str} ${DEV_SIZE} ${DEV_BLK}
         if [ $? -eq 0 ];then
             echo_info "${op_mode}[${ipaddr}]: { ${bdev_pre}${bdev_id} }"
         fi
@@ -76,12 +76,12 @@ do
 
             tgt_lun_bdev_map="${tgt_lun_bdev_map} ${bdev_pre}${bdev_id}:${lun_id}"
             if [ "${op_mode}" == "del_lun" ];then
-                ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py target_node_del_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
+                ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py target_node_del_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
                 if [ $? -eq 0 ];then
                     echo_info "${op_mode}[${ipaddr}]: { lun=${lun_id}  bdev=${bdev_pre}${bdev_id} from ${target_nm_str} }"
                 fi
             elif [ "${op_mode}" == "add_lun" ];then
-                ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py target_node_add_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
+                ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py target_node_add_lun ${target_nm_str} ${bdev_pre}${bdev_id} -i ${lun_id}
                 if [ $? -eq 0 ];then
                     echo_info "${op_mode}[${ipaddr}]: { lun=${lun_id}  bdev=${bdev_pre}${bdev_id} to ${target_nm_str} }"
                 fi
@@ -89,12 +89,12 @@ do
         done
         
         if [ "${op_mode}" == "add_node" ];then
-            ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_target_node -d ${target_nm_str} "alias${ipaddr}" "${tgt_lun_bdev_map}" "${pi_map_str}" 256
+            ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py construct_target_node -d ${target_nm_str} "alias${ipaddr}" "${tgt_lun_bdev_map}" "${pi_map_str}" 256
             if [ $? -eq 0 ];then
                 echo_info "${op_mode}[${ipaddr}]: { ${target_nm_str} { ${tgt_lun_bdev_map} } ${pi_map_str} }"
             fi
         elif [ "${op_mode}" == "del_node" ];then
-            ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_target_node ${target_nm_str}
+            ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/rpc.py delete_target_node ${target_nm_str}
             if [ $? -eq 0 ];then
                 echo_info "${op_mode}[${ipaddr}]: { ${target_nm_str} }"
             fi

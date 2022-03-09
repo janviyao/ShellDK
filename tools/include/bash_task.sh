@@ -347,7 +347,7 @@ function _global_ctrl_bg_thread
                     ncat_work=false
                     global_set_var "ncat_work"
                     # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
-                    { process_signal INT 'nc'; }&
+                    { process_signal INT 'nc'; } &
                 fi
             fi 
         fi

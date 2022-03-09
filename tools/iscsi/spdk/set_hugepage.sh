@@ -16,10 +16,10 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #)
 #export SKIP_PCI=1
 
-#${SUDO} ${TEST_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/setup.sh reset
+#${SUDO} ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/setup.sh reset
 #sleep 5
 
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/private.conf.sh
+${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 
 HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
 HM_SHM_ID=1
@@ -40,7 +40,7 @@ if access_ok "/dev/hugepages/fusion_target_iscsi*";then
     do
         if ! match_str_start "${hugefile}" "${prefix_str}";then
             echo_info "rm -f ${hugefile}"
-            ${TEST_ROOT_DIR}/log.sh rm -f ${hugefile} 
+            ${TOOL_ROOT_DIR}/log.sh rm -f ${hugefile} 
         else
             cur_size=$(file_size ${hugefile} | tail -n 1)
             let HM_FILE_SIZE=HM_FILE_SIZE+cur_size

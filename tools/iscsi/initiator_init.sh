@@ -10,7 +10,7 @@ else
 fi
 echo_info "discover: { ${LOCAL_IP} } --> { ${ISCSI_TARGET_IP_ARRAY[*]} }"
 
-${ISCSI_ROOT_DIR}/install_env.sh
+${ISCSI_ROOT_DIR}/check_iscsi_env.sh
 
 function get_iscsi_device
 {

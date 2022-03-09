@@ -14,13 +14,7 @@ if check_net;then
     net_access=true
 fi
 
-ifloaded=$(lsmod | grep dm_multipath | wc -l)
-if ! bool_v "${ISCSI_MULTIPATH_ON}";then
-    echo_info "stop: multipathd"
-    if [ ${ifloaded} -gt 0 ];then
-        systemctl stop multipathd
-    fi
-else
+if bool_v "${ISCSI_MULTIPATH_ON}";then
     is_installed=$(rpm -qa | grep device-mapper | wc -l)
     if [ ${is_installed} -eq 0 ];then
         echo_warn "install device-mapper"
@@ -41,6 +35,7 @@ else
         fi
     fi
 
+    ifloaded=$(lsmod | grep dm_multipath | wc -l)
     if [ ${ifloaded} -eq 0 ];then
         echo_info "modprobe multipath"
         modprobe dm-multipath
@@ -53,10 +48,14 @@ else
         fi
     fi
 
-    ifstart=$(ps -ef | grep multipathd | grep -v grep | wc -l)
-    if [ ${ifstart} -ne 1 ];then
+    if ! process_exist "multipathd";then
         echo_info "start: multipathd"
         systemctl start multipathd
+    fi
+else
+    if process_exist "multipathd";then
+        echo_info "stop: multipathd"
+        systemctl stop multipathd
     fi
 fi
 
@@ -74,8 +73,11 @@ if bool_v "${RESTART_ISCSI_INITIATOR}";then
     echo_info "restart: iscsid"
     mkdir -p /etc/iscsi
     access_ok "iscsid.conf" && mv iscsid.conf /etc/iscsi/
-    systemctl stop iscsid
-    systemctl stop iscsid.socket
+
+    if process_exist "iscsid";then
+        systemctl stop iscsid
+        systemctl stop iscsid.socket
+    fi
     systemctl start iscsid
 
     #sh stop_p.sh kill "iscsid"
@@ -87,9 +89,14 @@ else
 fi
 
 if bool_v "${RSRESTART_ISCSI_MUTLIPATHT_MTP}" && bool_v "${ISCSI_MULTIPATH_ON}";then
-    echo_info "restart: multipath"
     access_ok "multipath.conf" && mv multipath.conf /etc/
-    systemctl restart multipathd
+    if process_exist "multipathd";then
+        echo_info "restart: multipath"
+        systemctl restart multipathd
+    else
+        echo_info "start: multipath"
+        systemctl start multipathd
+    fi
 else
     echo_info "keep: multipath"
     access_ok "multipath.conf" && rm -f multipath.conf
@@ -98,7 +105,7 @@ fi
 if bool_v "${APPLY_SYSCTRL}";then
     echo_info "restart: sysctl"
     access_ok "sysctl.conf" && mv sysctl.conf /etc/
-    ${TEST_ROOT_DIR}/log.sh sysctl -p
+    ${TOOL_ROOT_DIR}/log.sh sysctl -p
 else
     echo_info "keep: sysctl"
     access_ok "sysctl.conf" && rm -f sysctl.conf

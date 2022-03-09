@@ -11,7 +11,7 @@ fi
 
 if ! bool_v "${APPLY_SYSCTRL}";then
     access_ok "sysctl.conf" && ${SUDO} mv sysctl.conf /etc/
-    ${SUDO} ${TEST_ROOT_DIR}/log.sh sysctl -p
+    ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
 else
     access_ok "sysctl.conf" && rm -f sysctl.conf
 fi

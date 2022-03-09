@@ -8,6 +8,7 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 
 TEST_TARGET=istgt
+#TEST_TARGET=spdk
 TEST_FILL_DATA=no
 KEEP_ENV_STATE=no
 APPLY_SYSCTRL=no
@@ -16,7 +17,7 @@ declare -xa SERVER_IP_ARRAY=(172.24.15.161)
 declare -xa CLIENT_IP_ARRAY=(172.24.15.162 172.24.15.163)
 
 #declare -xa SERVER_IP_ARRAY=(11.160.41.96)
-#declare -xa CLIENT_IP_ARRAY=(11.160.41.224 11.160.41.225)
+#declare -xa CLIENT_IP_ARRAY=(11.160.41.224)
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
 config_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
