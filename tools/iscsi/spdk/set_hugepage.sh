@@ -19,7 +19,7 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #${SUDO} ${TOOL_ROOT_DIR}/log.sh ${TEST_APP_SRC}/scripts/setup.sh reset
 #sleep 5
 
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
+source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 
 HM_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
 if is_number "${HM_SHM_ID}";then
@@ -28,12 +28,12 @@ if is_number "${HM_SHM_ID}";then
     fi
 fi
 
-HM_FILE_SIZE=1
+HM_FILE_SIZE=0
 if access_ok "/dev/hugepages/fusion_target_iscsi*";then
     ${SUDO} chmod -R 777 /dev/hugepages 
 
     prefix_str=$(trim_str_end "${HM_MAP_FILE}" "*")
-    echo_info "hugefile prefix: ${prefix_str}"
+    echo_info "HugePage file-prefix: ${prefix_str}"
 
     for hugefile in /dev/hugepages/fusion_target_iscsi*
     do
@@ -53,7 +53,7 @@ HM_FILE_MB=$(( HM_FILE_SIZE / 1024 / 1024 ))
 #${SUDO} echo 0 \> /proc/sys/kernel/randomize_va_space
 
 HM_NEED_MB=$((10 * 1024))
-HM_PGSZ_KB=$(( `grep Hugepagesize /proc/meminfo | cut -d : -f 2 | tr -dc '0-9'` ))
+HM_PGSZ_KB=$(grep Hugepagesize /proc/meminfo | cut -d : -f 2 | tr -dc '0-9')
 HM_PGSZ_MB=$(( HM_PGSZ_KB / 1024 ))
 HM_NEED_MB=$((((HM_NEED_MB + HM_PGSZ_MB - 1) / HM_PGSZ_MB)*HM_PGSZ_MB))
 
@@ -61,7 +61,8 @@ HM_TOTAL=$(cat /proc/meminfo | grep HugePages_Total | grep -P "\d+" -o)
 HM_FREE=$(cat /proc/meminfo | grep HugePages_Free | grep -P "\d+" -o)
 echo_info "HugePages Total: ${HM_TOTAL} Free: ${HM_FREE} Need: ${HM_NEED_MB} File: ${HM_FILE_MB}" 
 
-while [ ${HM_FREE} -lt ${HM_NEED_MB} ]
+loop_count=6
+while (( HM_FREE < HM_NEED_MB )) && (( loop_count >= 0 )) 
 do
     if [ ${HM_NEED_MB} -le ${HM_FILE_MB} ];then
         break
