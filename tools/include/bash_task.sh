@@ -349,9 +349,11 @@ function _global_ctrl_bg_thread
             fi 
         fi
 
-        if [ -n "${ack_pipe}" ];then
-            echo "ACK" > ${ack_pipe}
+        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
+            echo_debug "ack to [${ack_pipe}]"
+            access_ok "${ack_pipe}" && echo "ACK" > ${ack_pipe}
         fi
+
         echo_debug "ctrl wait: [${GBL_CTRL_THIS_PIPE}]"
     done < ${GBL_CTRL_THIS_PIPE}
 }
@@ -459,11 +461,11 @@ function _global_logr_bg_thread
             printf "%s" "${file_log}" 
         fi
 
-        if [ -n "${ack_pipe}" ];then
+        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            echo "ACK" > ${ack_pipe}
+            access_ok "${ack_pipe}" && echo "ACK" > ${ack_pipe}
         fi
-
+        
         echo_debug "logr wait: [${GBL_LOGR_THIS_PIPE}]"
     done < ${GBL_LOGR_THIS_PIPE}
 }

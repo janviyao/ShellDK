@@ -52,9 +52,9 @@ EOF
 count=0
 while ! global_var_exist "${RET_VAR}"
 do
-    sleep 0.001
+    sleep 0.01
     let count++
-    if [ ${count} -gt 1000 ];then
+    if [ ${count} -gt 100 ];then
         break
     fi
 done
