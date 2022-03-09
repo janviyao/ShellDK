@@ -254,9 +254,9 @@ function process_name2pid
     fi
     
     pid_array=($(echo))
-    ps -eo pid,cmd | grep -w -F "${pname}" | while read line
+    ps -eo pid,cmd | grep -w -F "${pname}" | grep -v grep | while read line
     do
-        local matchstr=$(echo "${item}" | grep -P "\b${pname}\s+")    
+        local matchstr=$(echo "${line}" | grep -P "\b${pname}\s+")    
         if [ -n "${matchstr}" ];then
             local pid=$(echo "${line}" | awk '{ print $1 }')    
             pid_array=(${pid_array[*]} ${pid})
