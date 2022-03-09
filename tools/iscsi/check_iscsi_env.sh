@@ -17,96 +17,84 @@ fi
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     is_installed=$(rpm -qa | grep device-mapper | wc -l)
     if [ ${is_installed} -eq 0 ];then
-        echo_warn "install device-mapper"
+        echo_info "install device-mapper"
         if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "device-mapper-.+\.rpm";then
             if bool_v "${net_access}";then
-                yum install -y device-mapper
+                ${SUDO} yum install -y device-mapper
             fi
         fi
     fi
 
     is_installed=$(rpm -qa | grep device-mapper-multipath | wc -l)
     if [ ${is_installed} -eq 0 ];then
-        echo_warn "install device-mapper-multipath"
+        echo_info "install device-mapper-multipath"
         if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "device-mapper-multipath-.+\.rpm";then
             if bool_v "${net_access}";then
-                yum install -y device-mapper-multipath
+                ${SUDO} yum install -y device-mapper-multipath
             fi
         fi
     fi
 
     ifloaded=$(lsmod | grep dm_multipath | wc -l)
     if [ ${ifloaded} -eq 0 ];then
-        echo_info "modprobe multipath"
-        modprobe dm-multipath
-        modprobe dm-round-robin
+        echo_info "multipath modprobe"
+        ${SUDO} modprobe dm-multipath
+        ${SUDO} modprobe dm-round-robin
 
         ifloaded=$(lsmod | grep dm_multipath | wc -l)
         if [ ${ifloaded} -eq 0 ];then
-            echo_erro "multipath ko not loaded" 
-            exit -1
+            echo_erro "multipath.ko donnot loaded" 
+            exit 1
         fi
     fi
 
-    if ! process_exist "multipathd";then
-        echo_info "start: multipathd"
-        systemctl start multipathd
+    access_ok "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
+    if process_exist "multipathd";then
+        if bool_v "${RESTART_ISCSI_MUTLIPATH}";then
+            echo_info "multipath restart"
+            ${SUDO} systemctl restart multipathd
+        fi
+    else
+        echo_info "multipath start"
+        ${SUDO} systemctl start multipathd
     fi
 else
     if process_exist "multipathd";then
-        echo_info "stop: multipathd"
-        systemctl stop multipathd
+        echo_info "multipath stop"
+        ${SUDO} systemctl stop multipathd
     fi
 fi
 
 is_installed=$(rpm -qa | grep iscsi-initiator-utils | wc -l)
 if [ ${is_installed} -eq 0 ];then
-    echo_warn "install iscsi-initiator-utils"
+    echo_info "install iscsi-initiator-utils"
     if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "iscsi-initiator-utils-.+\.rpm";then
         if bool_v "${net_access}";then
-            yum install -y iscsi-initiator-utils
+            ${SUDO} yum install -y iscsi-initiator-utils
         fi
     fi
 fi
 
-if bool_v "${RESTART_ISCSI_INITIATOR}";then
-    echo_info "restart: iscsid"
-    mkdir -p /etc/iscsi
-    access_ok "iscsid.conf" && mv iscsid.conf /etc/iscsi/
-
-    if process_exist "iscsid";then
-        systemctl stop iscsid
-        systemctl stop iscsid.socket
-    fi
-    systemctl start iscsid
-
-    #sh stop_p.sh kill "iscsid"
-    #rm -f iscsid.log
-    #iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> iscsid.log &
-else
-    echo_info "keep: iscsid"
-    access_ok "iscsid.conf" && rm -f iscsid.conf
-fi
-
-if bool_v "${RSRESTART_ISCSI_MUTLIPATHT_MTP}" && bool_v "${ISCSI_MULTIPATH_ON}";then
-    access_ok "multipath.conf" && mv multipath.conf /etc/
-    if process_exist "multipathd";then
-        echo_info "restart: multipath"
-        systemctl restart multipathd
-    else
-        echo_info "start: multipath"
-        systemctl start multipathd
+#debug
+#sh stop_p.sh kill "iscsid"
+#rm -f iscsid.log
+#iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> iscsid.log &
+access_ok "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+access_ok "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+if process_exist "iscsid";then
+    if bool_v "${RESTART_ISCSI_INITIATOR}";then
+        echo_info "iscsid restart"
+        ${SUDO} systemctl restart iscsid
+        ${SUDO} systemctl restart iscsid.socket
     fi
 else
-    echo_info "keep: multipath"
-    access_ok "multipath.conf" && rm -f multipath.conf
+    echo_info "iscsid start"
+    ${SUDO} systemctl start iscsid
+    ${SUDO} systemctl start iscsid.socket
 fi
 
 if bool_v "${APPLY_SYSCTRL}";then
-    echo_info "restart: sysctl"
-    access_ok "sysctl.conf" && mv sysctl.conf /etc/
-    ${TOOL_ROOT_DIR}/log.sh sysctl -p
-else
-    echo_info "keep: sysctl"
-    access_ok "sysctl.conf" && rm -f sysctl.conf
+    echo_info "sysctl reload"
+    access_ok "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
+    ${SUDO} sysctl -p
 fi

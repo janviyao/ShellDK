@@ -8,7 +8,7 @@ mkdir -p ${SAVE_DIR}
 COREDUMP_DIR=$(fname2path "$(cat /proc/sys/kernel/core_pattern)")
 
 echo_info "Save: ${TEST_APP_NAME}"
-access_ok "${TEST_APP_RUNTIME}" && cp -f ${TEST_APP_RUNTIME} ${SAVE_DIR}
+access_ok "${TEST_APP_DIR}/${TEST_APP_NAME}" && cp -f ${TEST_APP_DIR}/${TEST_APP_NAME} ${SAVE_DIR}
 
 echo_info "Save: cordump"
 access_ok "${COREDUMP_DIR}/core-*" && ${SUDO} mv ${COREDUMP_DIR}/core-* ${SAVE_DIR}
