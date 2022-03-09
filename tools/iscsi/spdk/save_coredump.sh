@@ -21,11 +21,10 @@ ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.1 ${SAVE_DIR}
 echo_info "Save: /dev/hugepages/"
 ${SUDO} cp -fr /dev/hugepages ${SAVE_DIR}/
 
-#echo_info "Save: TDC & iSCSI Log"
-#access_ok "/var/log/tdc" && cp -fr /var/log/tdc ${SAVE_DIR}/
-
 ${SUDO} chmod -R 777 ${SAVE_DIR}
-gdb -batch -ex "bt" ${SAVE_DIR}/${TEST_APP_NAME} ${SAVE_DIR}/core-* > ${SAVE_DIR}/backtrace.txt
-cat ${SAVE_DIR}/backtrace.txt
+if access_ok "${SAVE_DIR}/core-*";then
+    gdb -batch -ex "bt" ${SAVE_DIR}/${TEST_APP_NAME} ${SAVE_DIR}/core-* > ${SAVE_DIR}/backtrace.txt
+    cat ${SAVE_DIR}/backtrace.txt
+fi
 
 echo_info "Success to save: ${SAVE_DIR}"

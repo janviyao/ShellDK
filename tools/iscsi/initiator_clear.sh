@@ -18,7 +18,7 @@ if [ -b /dev/dm-0 ];then
     multipath -F
 fi
 
-get_tgt_ips=$(iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq)
+get_tgt_ips=$(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq)
 for ipaddr in ${get_tgt_ips}
 do
     if ! contain_str "${ISCSI_TARGET_IP_ARRAY[*]}" "${ipaddr}";then
