@@ -489,6 +489,7 @@ function _bash_exit
         if [ -z "${logsize}" ];then
             logsize=0
         fi
+
         local maxsize=$((10*1024*1024))
         if (( logsize > maxsize ));then
             local date_time=$(date '+%Y%m%d-%H%M%S')

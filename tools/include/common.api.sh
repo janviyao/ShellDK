@@ -153,6 +153,25 @@ function fname2path
     fi
 }
 
+function process_wait
+{
+    local pinfo="$1"
+    local stime="$2"
+
+    [ -z "${pinfo}" ] && return 1
+    [ -z "${stime}" ] && stime=0.01
+
+    local -a pid_array=($(process_name2pid "${pinfo}"))
+    for pid in ${pid_array[*]}
+    do
+        echo_debug "wait [$(process_pid2name "${pid}")(${pid})] exit"
+        while process_exist "${pid}"
+        do
+            sleep ${stime}
+        done
+    done
+}
+
 function process_exist
 {
     local pinfo="$1"
