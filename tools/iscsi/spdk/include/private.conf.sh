@@ -6,7 +6,7 @@ declare -A ISCSI_INFO_MAP
 #ISCSI_INFO_MAP["ini-ip key-idx"]="tgt-ip target-name port-group:init-group {[lun-id:bdev-id] ...}"
 ISCSI_INFO_MAP["11.160.41.96-0"]="11.164.108.144 iqn.2016-06.io.spdk:disk1 1:1 0:0"
 
-ISCSI_INITIATOR_IP_ARRAY=("")
+ISCSI_INITIATOR_IP_ARRAY=($(echo))
 for mapval in ${!ISCSI_INFO_MAP[*]}
 do
     ipaddr=$(echo "${mapval}" | awk '{ print $1 }' )
@@ -15,7 +15,7 @@ do
     fi
 done
 
-ISCSI_TARGET_IP_ARRAY=("")
+ISCSI_TARGET_IP_ARRAY=($(echo))
 for keyval in ${ISCSI_INFO_MAP[*]}
 do
     ipaddr=$(echo "${keyval}" | grep -P "\d+\.\d+\.\d+\.\d+" -o )
@@ -25,7 +25,7 @@ do
 done
 
 PG_ID_LIST=("0")
-IG_ID_LIST=("")
+IG_ID_LIST=($(echo))
 for mapval in ${!ISCSI_INFO_MAP[*]}
 do
     port_group_id=$(echo "${mapval}" | awk '{ print $3 }' | cut -d ":" -f 1)

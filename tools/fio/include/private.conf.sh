@@ -1,14 +1,14 @@
 #!/bin/bash
-declare -a FIO_SIP_ARRAY=("")
-declare -a DEVICES_ARRAY=("")
+declare -a FIO_SIP_ARRAY=($(echo))
+declare -a DEVICES_ARRAY=($(echo))
 
 function update_fio_sip
 {
     local idx=0
     local case_num=${#FIO_TEST_MAP[*]}
 
-    FIO_SIP_ARRAY=("")
-    DEVICES_ARRAY=("")
+    FIO_SIP_ARRAY=($(echo))
+    DEVICES_ARRAY=($(echo))
     for ((idx=1; idx <= ${case_num}; idx++)) 
     do
         local test_key="testcase-${idx}"
@@ -35,8 +35,9 @@ function update_fio_sip
             fi
         done
     done
+
     echo_info "fio sip: { ${FIO_SIP_ARRAY[*]} }"
     echo_info "devices: { ${DEVICES_ARRAY[*]} }"
 }
 
-update_fio_sip
+#update_fio_sip

@@ -96,7 +96,10 @@ function global_var_exist
 
     local check_ret=""
 
-    local self_pid=$(ppid | sed -n '1p')
+    local self_pid=$$
+    if access_ok "ppid";then
+        local self_pid=$(ppid | sed -n '1p')
+    fi
     local check_pipe="${GBL_CTRL_THIS_DIR}/check.${self_pid}"
 
     mkfifo ${check_pipe}
@@ -147,7 +150,10 @@ function global_get_var
 
     local var_value=""
 
-    local self_pid=$(ppid | sed -n '1p')
+    local self_pid=$$
+    if access_ok "ppid";then
+        local self_pid=$(ppid | sed -n '1p')
+    fi
     local get_pipe="${GBL_CTRL_THIS_DIR}/get.${self_pid}"
 
     mkfifo ${get_pipe}
@@ -222,7 +228,10 @@ function global_ncat_ctrl
     local msgctx="$1"
     
     # the first pid is shell where ppid run
-    local self_pid=$(ppid | sed -n '2p')
+    local self_pid=$$
+    if access_ok "ppid";then
+        local self_pid=$(ppid | sed -n '2p')
+    fi
     local ack_fd=$(make_ack "${self_pid}"; echo $?)
     local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
 
@@ -364,7 +373,10 @@ function global_send_log_sync
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
 
     if [ -w ${GBL_LOGR_THIS_PIPE} ];then
-        local self_pid=$(ppid | sed -n '2p')
+        local self_pid=$$
+        if access_ok "ppid";then
+            local self_pid=$(ppid | sed -n '2p')
+        fi
         local ack_fd=$(make_ack "${self_pid}"; echo $?)
         local ack_pipe=${GBL_CTRL_THIS_DIR}/ack.${self_pid}
 

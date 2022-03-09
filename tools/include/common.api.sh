@@ -248,12 +248,18 @@ function process_name2pid
         echo "${pid_array[*]}"
         return
     fi
+    
+    pid_array=($(echo))
+    ps -eo pid,cmd | grep -w -F "${pname}" | while read line
+    do
+        local matchstr=$(echo "${item}" | grep -P "\b${pname}\s+")    
+        if [ -n "${matchstr}" ];then
+            local pid=$(echo "${line}" | awk '{ print $1 }')    
+            pid_array=(${pid_array[*]} ${pid})
+        fi        
+    done
 
-    pid_array=($(ps -eo pid,cmd | grep -P "\b${pname}\b" | awk '{ print $1 }'))    
-    if [ ${#pid_array[*]} -gt 0 ];then
-        echo "${pid_array[*]}"
-        return
-    fi
+    echo "${pid_array[*]}"
 }
 
 function process_subprocess
@@ -657,7 +663,10 @@ function file_count
     if bool_v "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
-        local self_pid=$(ppid | sed -n '2p')
+        local self_pid=$$
+        if access_ok "ppid";then
+            local self_pid=$(ppid | sed -n '2p')
+        fi
         local tmp_file=/tmp/size.${self_pid}
 
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
@@ -903,8 +912,11 @@ function echo_debug
 
 function export_all
 {
-    local rand_pid=$(ppid | sed -n '1p')
-    local local_pid=$(ppid | sed -n '2p')
+    local local_pid=$$
+    if access_ok "ppid";then
+        local local_pid=$(ppid | sed -n '2p')
+    fi
+
     local export_file="/tmp/export.${local_pid}"
 
     declare -xp &> ${export_file}
@@ -920,7 +932,11 @@ function export_all
 
 function import_all
 {
-    local parent_pid=$(ppid | sed -n '3p')
+    local parent_pid=$$
+    if access_ok "ppid";then
+        local parent_pid=$(ppid | sed -n '3p')
+    fi
+
     local import_file="/tmp/export.${parent_pid}"
 
     if access_ok "${import_file}";then 

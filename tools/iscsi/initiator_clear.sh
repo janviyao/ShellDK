@@ -22,8 +22,8 @@ do
         continue
     fi
     
-    ${SUDO} "${TOOL_ROOT_DIR}/log.sh iscsiadm -m node -p ${ipaddr} --logout"
-    ${SUDO} "${TOOL_ROOT_DIR}/log.sh iscsiadm -m node -p ${ipaddr} -o delete"
+    ${SUDO} "iscsiadm -m node -p ${ipaddr} --logout"
+    ${SUDO} "iscsiadm -m node -p ${ipaddr} -o delete"
 
     echo_info "clean: sessions from ${ipaddr}"
 done

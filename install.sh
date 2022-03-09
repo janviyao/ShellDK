@@ -24,6 +24,7 @@ netDeps["g++"]="gcc-c++"
 
 CMD_IFS="|"
 BUILD_IFS="!"
+
 declare -a tarDeps=("m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
 tarTodo["m4"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf m4-*.tar.gz${CMD_IFS}cd m4-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr m4-*/"
 tarTodo["autoconf"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf autoconf-*.tar.gz${CMD_IFS}cd autoconf*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr autoconf*/"

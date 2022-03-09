@@ -22,16 +22,6 @@ if process_exist "iscsid";then
     ${SUDO} systemctl stop iscsiuio
 fi
 
-if process_exist "iscsi_tgt";then
-    $MY_VIM_DIR/tools/stop_p.sh kill "iscsi_tgt"
-    sleep 1
-fi
-
-if process_exist "td_connector";then
-    $MY_VIM_DIR/tools/stop_p.sh kill "td_connector"
-    sleep 1
-fi
-
 ${TOOL_ROOT_DIR}/save_coredump.sh
 
 access_ok "log" && rm -f log

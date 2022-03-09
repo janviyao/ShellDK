@@ -1,14 +1,13 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! access_ok "$1"; then
     echo_erro "testcase not exist: $1"
     exit
 fi
 source $1
-source ${FIO_ROOT_DIR}/include/fio.conf.sh
-
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+source ${FIO_ROOT_DIR}/include/private.conf.sh
 
 g_sed_insert_pre="/;[ ]*[>]\+[ ]*/i\    "
 function run_fio_func
@@ -103,13 +102,7 @@ function start_test_func
 
     echo_info ""
     echo_debug "all-test: { ${case_num} }  all-time: { ${spend_time}m }"
-
-    for ipaddr in ${FIO_SIP_ARRAY[*]}
-    do
-        $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "$MY_VIM_DIR/tools/stop_p.sh 'fio --server'"
-        $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "nohup ${FIO_APP_RUNTIME} --server &"
-    done
-
+    
     local left_case_num=${case_num}
     for ((idx=1; idx <= ${case_num}; idx++)) 
     do
@@ -209,14 +202,8 @@ function start_test_func
         echo_info "left-case: { ${left_case_num} }  left-time: { ${spend_time}m }"
         echo_info "============================================================================="
     done
-
-    for ipaddr in ${FIO_SIP_ARRAY[*]}
-    do
-        $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "$MY_VIM_DIR/tools/stop_p.sh 'fio --server'"
-    done
 }
 
 echo "device,thread,blk-size,io-depth,rw-type,read-pct,IOPS,BW(MB/s),lat(ms),start-up,spend(s)" > ${FIO_RESULT_FILE}
 start_test_func
 sed -i 's/ *//g' ${FIO_RESULT_FILE}
-

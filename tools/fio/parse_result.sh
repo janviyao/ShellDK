@@ -2,8 +2,6 @@
 source ${TEST_SUIT_ENV}
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-FIO_ROOT=$MY_VIM_DIR/tools/fio
-
 g_result_list="$1"
 g_read_pct="$2"
 

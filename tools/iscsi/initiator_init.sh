@@ -16,7 +16,7 @@ function get_iscsi_device
 {
     local target_ip=$1
     local start_line=1
-    local iscsi_dev_array=("")
+    local iscsi_dev_array=($(echo))
     local iscsi_sessions=$(iscsiadm -m session -P 3)
 
     if [ -z "${iscsi_sessions}" ];then
@@ -51,7 +51,7 @@ function get_iscsi_device
 
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
 do
-    ${SUDO} "${TOOL_ROOT_DIR}/log.sh iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
+    ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
     if [ $? -ne 0 ];then
         echo_erro "discovery { ${ipaddr} } fail"
         exit 1
@@ -85,7 +85,7 @@ do
 done
 sleep 5
 
-iscsi_device_array=("")
+iscsi_device_array=($(echo))
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     ${TOOL_ROOT_DIR}/log.sh multipath -r
 
@@ -135,7 +135,7 @@ else
     done
 fi
 
-echo_info "dev(${#iscsi_device_array[*]}): {${iscsi_device_array}}"
+echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array} }"
 mkdir -p ${WORK_ROOT_DIR}
 echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 
