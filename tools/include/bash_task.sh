@@ -36,6 +36,7 @@ function ncat_send_msg
 
     echo_debug "ncat send: [$*]" 
     if access_ok "nc";then
+        # nc -zvw3 172.24.15.162 7888 --> test ip&port whether net can access 
         (echo "${send_msg}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         while test $? -ne 0
         do
@@ -169,6 +170,7 @@ function global_get_var
     rm -f ${get_pipe}
 
     eval "export ${var_name}=\"${var_value}\""
+    echo_debug "global get: [${var_name} = \"${var_value}\"]" 
 }
 
 function global_unset_var
@@ -313,6 +315,7 @@ function _global_ctrl_bg_thread
                         echo_debug "ncat listening into ${GBL_SRV_PORT} ..."
                         local nc_msg=$(ncat_recv_msg "${GBL_SRV_PORT}")
                         if [ -z "${nc_msg}" ];then
+                            echo_debug "ncat msg empty" 
                             global_get_var "ncat_work"
                             continue
                         fi

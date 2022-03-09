@@ -949,6 +949,41 @@ function import_all
     fi
 }
 
+function install_from_rpm
+{
+    local rpm_dir="$1"
+    local fname_reg="$2"
+    local rpm_file=""
+
+    if ! access_ok "${rpm_dir}";then
+        echo_erro "rpm dir: ${rpm_dir} donot access"
+        return 1
+    fi
+
+    local rpm_pkg_list=$(find ${rpm_dir} -regextype posix-awk  -regex ".*/?${fname_reg}")
+    for rpm_file in ${rpm_pkg_list}    
+    do
+        rpm_file=$(path2fname ${rpm_file})
+        local rpm_name=$(trim_str_end "${rpm_file}" ".rpm")
+
+        local tmp_reg=$(trim_str_end "${fname_reg}" "\.rpm")
+        local installed_list=`rpm -qa | grep -P "^${tmp_reg}" | tr "\n" " "`
+
+        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
+        if ! contain_str "${installed_list}" "${rpm_name}";then
+            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
+            fi
+        fi
+    done
+
+    return 0
+}
+
 function get_local_ip
 {   
     local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))

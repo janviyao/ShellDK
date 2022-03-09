@@ -9,6 +9,11 @@ else
     exit 0
 fi
 
+net_access=false
+if check_net;then
+    net_access=true
+fi
+
 ifloaded=$(lsmod | grep dm_multipath | wc -l)
 if ! bool_v "${ISCSI_MULTIPATH_ON}";then
     echo_info "stop: multipathd"
@@ -19,13 +24,21 @@ else
     is_installed=$(rpm -qa | grep device-mapper | wc -l)
     if [ ${is_installed} -eq 0 ];then
         echo_warn "install device-mapper"
-        yum install -y device-mapper
+        if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "device-mapper-.+\.rpm";then
+            if bool_v "${net_access}";then
+                yum install -y device-mapper
+            fi
+        fi
     fi
 
     is_installed=$(rpm -qa | grep device-mapper-multipath | wc -l)
     if [ ${is_installed} -eq 0 ];then
         echo_warn "install device-mapper-multipath"
-        yum install -y device-mapper-multipath
+        if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "device-mapper-multipath-.+\.rpm";then
+            if bool_v "${net_access}";then
+                yum install -y device-mapper-multipath
+            fi
+        fi
     fi
 
     if [ ${ifloaded} -eq 0 ];then
@@ -50,7 +63,11 @@ fi
 is_installed=$(rpm -qa | grep iscsi-initiator-utils | wc -l)
 if [ ${is_installed} -eq 0 ];then
     echo_warn "install iscsi-initiator-utils"
-    yum install -y iscsi-initiator-utils
+    if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "iscsi-initiator-utils-.+\.rpm";then
+        if bool_v "${net_access}";then
+            yum install -y iscsi-initiator-utils
+        fi
+    fi
 fi
 
 if bool_v "${RESTART_ISCSI_INITIATOR}";then

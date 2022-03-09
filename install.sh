@@ -421,32 +421,6 @@ function update_check
     fi
 }
 
-function install_from_rpm
-{
-    local fname_reg="$1"
-
-    local rpm_pkg_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
-    for rpm_file in ${rpm_pkg_list}    
-    do
-        local rpm_file=$(path2fname ${rpm_file})
-        local rpm_name=$(trim_str_end "${rpm_file}" ".rpm")
-
-        local tmp_reg=$(trim_str_end "${fname_reg}" "\.rpm")
-        local installed_list=`rpm -qa | grep -P "^${tmp_reg}" | tr "\n" " "`
-
-        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${rpm_file}" "${installed_list}")"
-        if ! contain_str "${installed_list}" "${rpm_name}";then
-            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
-            if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
-                exit -1
-            else
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
-            fi
-        fi
-    done
-}
-
 function inst_deps
 {     
     cd ${ROOT_DIR}/deps
@@ -455,7 +429,7 @@ function inst_deps
         do
             if ! access_ok "${usr_cmd}";then
                 local todoes="${rpmTodo["${usr_cmd}"]}"
-                install_from_rpm "${todoes}" 
+                install_from_rpm "${ROOT_DIR}/deps" "${todoes}" 
             fi
         done
         
@@ -672,7 +646,7 @@ function inst_glibc
     if version_lt ${version_cur} ${version_new}; then
         # Install glibc
         install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
-        install_from_rpm "glibc-common-.+\.rpm"
+        install_from_rpm "${ROOT_DIR}/deps" "glibc-common-.+\.rpm"
 
         ${SUDO} "echo 'LANG=en_US.UTF-8' >> /etc/environment"
         ${SUDO} "echo 'LC_ALL=' >> /etc/environment"
