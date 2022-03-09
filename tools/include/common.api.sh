@@ -177,17 +177,19 @@ function process_signal
     shift
 
     local para_arr=($*)
+    local pinfo=""
     local pid=""
     local exclude_pid_array=($$ $ROOT_PID)
 
     [ ${#para_arr[*]} -eq 0 ] && return 1
 
-    for pid in ${para_arr[*]}
+    for pinfo in ${para_arr[*]}
     do
-        local -a pid_array=($(process_name2pid "${pid}"))
+        local -a pid_array=($(process_name2pid "${pinfo}"))
         for pid in ${pid_array[*]}
         do
             if array_has "${exclude_pid_array[*]}" "${pid}";then
+                echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
                 continue
             fi
 
@@ -198,6 +200,8 @@ function process_signal
                 if ! array_has "${exclude_pid_array[*]}" "${pid}";then
                     echo_debug "signal { ${signal} } into { $(process_pid2name ${pid})[${pid}] }"
                     ${SUDO} "kill -s ${signal} ${pid} &> /dev/null"
+                else
+                    echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
                 fi
 
                 process_signal ${signal} ${child_pid_array[*]} 
@@ -850,7 +854,7 @@ function echo_file
     if var_exist "LOG_FILE";then
         local log_type="$1"
         shift
-        printf "[%-12s:%5d:%5s] %s\n" "$(path2fname $0)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
+        printf "[%-18s:%6d:%5s] %s\n" "$(path2fname $0)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
     fi
     xtrace_restore
 }
@@ -861,7 +865,7 @@ function echo_header
     if bool_v "${LOG_HEADER}";then
         cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
         #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
-        local proc_info=$(printf "[%-12s[%5d]]" "$(path2fname $0)" "$$")
+        local proc_info=$(printf "[%-18s[%6d]]" "$(path2fname $0)" "$$")
         echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
     fi
     xtrace_restore

@@ -2,7 +2,7 @@
 TIMEOUT=600
 HOST_IP="$1"
 CMD_EXE="$2"
-echo_debug "parameter: { $* }"
+echo_debug "paras: { $* }"
 
 source $MY_VIM_DIR/tools/password.sh
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then

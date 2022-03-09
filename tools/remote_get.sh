@@ -2,7 +2,7 @@
 HOST_IP="$1"
 CMD_EXE="$2"
 
-echo_debug "parameter: { $* }"
+echo_debug "paras: { $* }"
 echo_debug "Get { ${CMD_EXE} } from { ${HOST_IP} }"
 if [ -z "${CMD_EXE}" ];then
     exit 0

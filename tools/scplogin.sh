@@ -2,7 +2,7 @@
 TIMEOUT=600
 SRC_DIR="$1"
 DES_DIR="$2"
-echo_debug "parameter: { $* }"
+echo_debug "paras: { $* }"
 
 . $MY_VIM_DIR/tools/password.sh
 

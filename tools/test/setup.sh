@@ -42,6 +42,9 @@ echo "" >> ${TEST_SUIT_ENV}
 echo "# [iscsi configure]" >> ${TEST_SUIT_ENV}
 ${TOOL_ROOT_DIR}/iscsi/setup.sh 
 
+echo "" >> ${TEST_SUIT_ENV}
+echo "# [runtime configure]" >> ${TEST_SUIT_ENV}
+
 # Push run env
 $MY_VIM_DIR/tools/collect.sh "/tmp/vim.tar"
 for ipaddr in ${SERVER_IP_ARRAY[*]}

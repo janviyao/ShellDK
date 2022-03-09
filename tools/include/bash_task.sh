@@ -150,11 +150,11 @@ function global_get_var
 
     local var_value=""
 
-    local self_pid=$$
+    local rand_pid=$$
     if access_ok "ppid";then
-        local self_pid=$(ppid | sed -n '1p')
+        local rand_pid=$(ppid | sed -n '1p')
     fi
-    local get_pipe="${GBL_CTRL_THIS_DIR}/get.${self_pid}"
+    local get_pipe="${GBL_CTRL_THIS_DIR}/get.${rand_pid}"
 
     mkfifo ${get_pipe}
     access_ok "${get_pipe}" || echo_erro "mkfifo: ${get_pipe} fail"
