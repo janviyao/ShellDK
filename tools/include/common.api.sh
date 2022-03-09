@@ -694,11 +694,14 @@ function file_size
     done
 
     if bool_v "${readable}";then
+        access_ok "fstat" || return 0
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
+        access_ok "ppid" || return 0
         local self_pid=$(ppid | sed -n '2p')
         local tmp_file=/tmp/size.${self_pid}
 
+        access_ok "fstat" || return 0
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
         ${SUDO} "rm -f ${tmp_file} &> /dev/null"
