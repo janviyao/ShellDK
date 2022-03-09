@@ -37,9 +37,14 @@ do
 
     if [[ "${option:0:2}" == "--" ]];then
         if [[ "${value:0:1}" == "-" ]];then
-            parasMap["${option}"]="true"
+            parasMap[${option}]="true"
         else
-            parasMap["${option}"]="${value}"
+            if [ -n "${parasMap[${option}]}" ];then
+                parasMap[${option}]="${parasMap[${option}]} ${value}"
+            else
+                parasMap[${option}]="${value}"
+            fi
+
             if ! bool_v "${b_single}";then
                 all_paras[${all_cnt}]="$1"
                 let all_cnt++
@@ -49,9 +54,14 @@ do
     else
         if [[ "${option:0:1}" == "-" ]];then
             if [[ "${value:0:1}" == "-" ]];then
-                parasMap["${option}"]="true"
+                parasMap[${option}]="true"
             else
-                parasMap["${option}"]="${value}"
+                if [ -n "${parasMap[${option}]}" ];then
+                    parasMap[${option}]="${parasMap[${option}]} ${value}"
+                else
+                    parasMap[${option}]="${value}"
+                fi
+
                 if ! bool_v "${b_single}";then
                     all_paras[${all_cnt}]="$1"
                     let all_cnt++

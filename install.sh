@@ -109,14 +109,14 @@ NEED_NET="${NEED_NET:-${parasMap['--net']}}"
 NEED_NET="${NEED_NET:-0}"
 
 OP_MATCH=0
-for func in ${!funcMap[@]};
+for func in ${!funcMap[*]};
 do
-    if [ "x${func}" != "x${NEED_OP}" ]; then
+    if contain_str "${NEED_OP}" "${func}"; then
         let OP_MATCH=OP_MATCH+1
     fi
 done
 
-if [ ${OP_MATCH} -eq ${#funcMap[@]} ]; then
+if [ ${OP_MATCH} -eq ${#funcMap[*]} ]; then
     echo_erro "unkown op: ${NEED_OP}"
     echo ""
     inst_usage
@@ -654,9 +654,9 @@ function inst_glibc
     fi
 }
 
-for key in ${!funcMap[@]};
+for key in ${!funcMap[*]};
 do
-    if [ x"${key}" = x"${NEED_OP}" ]; then
+    if contain_str "${NEED_OP}" "${key}"; then
         echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
         echo_info "$(printf "[%13s]: %-6s" "Funcs" "${funcMap[${key}]}")"
         for func in ${funcMap[${key}]};
@@ -665,6 +665,5 @@ do
             ${func}
             echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
         done
-        break
     fi
 done

@@ -485,7 +485,9 @@ function _bash_exit
     rm -fr ${GBL_LOGR_THIS_DIR}
 
     if access_ok "${LOG_FILE}";then
-        if (($(file_size "${LOG_FILE}") > ((10*1024*1024))));then
+        local logsize=$(file_size "${LOG_FILE}")
+        local maxsize=$((10*1024*1024))
+        if (( logsize > maxsize ));then
             local date_time=$(date '+%Y%m%d-%H%M%S')
             cp -f ${LOG_FILE} ${LOG_FILE}.${date_time}
             echo > ${LOG_FILE}
