@@ -21,11 +21,9 @@ if [ $UID -ne 0 ]; then
 fi
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="remote_set_var '${GBL_SRV_ADDR}' '${RET_VAR}' \$?"
+SRV_MSG="remote_set_var '${NCAT_MASTER_ADDR}' '${RET_VAR}' \$?"
 PASS_ENV="export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
-CMD_EXE="${PASS_ENV}; source $MY_VIM_DIR/bash_profile; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_EXE});${SRV_MSG}"
-
-global_ncat_ctrl "NCAT_START"
+CMD_EXE="${PASS_ENV}; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_EXE});${SRV_MSG}"
 
 expect << EOF
     set timeout ${TIMEOUT}
@@ -50,7 +48,7 @@ expect << EOF
 EOF
 
 count=0
-while ! global_var_exist "${RET_VAR}"
+while ! global_check_var "${RET_VAR}"
 do
     sleep 0.01
     let count++
@@ -60,6 +58,5 @@ do
 done
 
 global_get_var ${RET_VAR}
-global_ncat_ctrl "NCAT_QUIT"
 
 eval "exit \$${RET_VAR}"

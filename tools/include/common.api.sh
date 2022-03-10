@@ -1,17 +1,10 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
-HOME_DIR=${HOME}
-
 DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
-LOG_FILE="/tmp/bash.log"
-
-OP_TRY_CNT=3
-OP_TIMEOUT=60
-
-SUDO="$MY_VIM_DIR/tools/sudo.sh"
+LOG_FILE="${GBL_BASE_DIR}/bash.log"
 
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
@@ -667,7 +660,10 @@ function ssh_address
             continue
         fi
         echo "${addr}"
+        return
     done
+
+    echo "$(get_local_ip)"
 }
 
 function file_count
@@ -688,7 +684,8 @@ function file_count
     else
         local self_pid=$$
         if can_access "ppid";then
-            local self_pid=$(ppid | sed -n '2p')
+            local ppids=($(ppid))
+            local self_pid=${ppids[1]}
         fi
         local tmp_file=/tmp/size.${self_pid}
 
@@ -716,8 +713,11 @@ function file_size
         can_access "fstat" || return 0
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
-        can_access "ppid" || return 0
-        local self_pid=$(ppid | sed -n '2p')
+        local self_pid=$$
+        if can_access "ppid";then
+            local ppids=($(ppid))
+            local self_pid=${ppids[1]}
+        fi
         local tmp_file=/tmp/size.${self_pid}
 
         can_access "fstat" || return 0
@@ -876,19 +876,25 @@ function echo_file
     if var_exist "LOG_FILE";then
         local log_type="$1"
         shift
-        printf "[%-18s:%6d:%5s] %s\n" "$(path2fname $0)" "$$" "${log_type}" "$*" >> ${LOG_FILE}
+        printf "[%-18s %5s] %s\n" "$(echo_header false)" "${log_type}" "$*" >> ${LOG_FILE}
     fi
     xtrace_restore
 }
 
 function echo_header
 {
+    local color=${1:-true}
+
     xtrace_disable
     if bool_v "${LOG_HEADER}";then
-        cur_time=`date '+%Y-%m-%d %H:%M:%S'` 
-        #echo "${COLOR_HEADER}${FONT_BOLD}******${GBL_SRV_ADDR}@${cur_time}: ${COLOR_CLOSE}"
+        cur_time=$(date '+%Y-%m-%d %H:%M:%S:%N') 
+        #echo "${COLOR_HEADER}${FONT_BOLD}******${NCAT_MASTER_ADDR}@${cur_time}: ${COLOR_CLOSE}"
         local proc_info=$(printf "[%-18s[%6d]]" "$(path2fname $0)" "$$")
-        echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info}: ${COLOR_CLOSE}"
+        if bool_v "${color}";then
+            echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info} ${COLOR_CLOSE}"
+        else
+            echo "${cur_time} @ ${proc_info}"
+        fi
     fi
     xtrace_restore
 }
@@ -940,7 +946,8 @@ function export_all
 {
     local local_pid=$$
     if can_access "ppid";then
-        local local_pid=$(ppid | sed -n '2p')
+        local ppids=($(ppid))
+        local local_pid=${ppids[1]}
     fi
 
     local export_file="/tmp/export.${local_pid}"
@@ -960,7 +967,8 @@ function import_all
 {
     local parent_pid=$$
     if can_access "ppid";then
-        local parent_pid=$(ppid | sed -n '3p')
+        local ppids=($(ppid))
+        local parent_pid=${ppids[2]}
     fi
 
     local import_file="/tmp/export.${parent_pid}"
@@ -1006,6 +1014,34 @@ function install_from_rpm
     return 0
 }
 
+function make_ack
+{
+    local ack_pipe="$1"
+    
+    echo_debug "make ack: ${ack_pipe}"
+    #can_access "${ack_pipe}" && rm -f ${ack_pipe}
+    mkfifo ${ack_pipe}
+    can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+
+    local ack_fhno=0
+    exec {ack_fhno}<>${ack_pipe}
+    
+    return ${ack_fhno}
+}
+
+function wait_ack
+{
+    local ack_pipe=$1
+    local ack_fhno=$2
+
+    echo_debug "wait ack: ${ack_pipe}"
+    read ack_value < ${ack_pipe}
+    export ack_value
+
+    eval "exec ${ack_fhno}>&-"
+    rm -f ${ack_pipe}
+}
+
 function get_local_ip
 {   
     local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))
@@ -1025,4 +1061,5 @@ function get_local_ip
         fi
     done
 }
-LOCAL_IP=$(get_local_ip)
+
+LOCAL_IP="$(get_local_ip)"

@@ -2,7 +2,7 @@
 INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
 usr_ctrl_init_self
 
-declare -r PRG_FIN="${USR_CTRL_THIS_DIR}/finish"
+declare -r PRG_FIN="${USR_CTRL_DIR}/finish"
 function ctrl_user_handler
 {
     line="$1"
@@ -10,10 +10,10 @@ function ctrl_user_handler
 
     local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
     local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
-    local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
+    local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
-    local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
-    local req_mssg=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
+    local req_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
+    local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
 
     if [[ "${req_ctrl}" == "FIN" ]];then
         echo_debug "touch: ${PRG_FIN}"
@@ -83,9 +83,9 @@ function progress3
     local now=$current
     local last=$((total+1))
     
-    global_send_log "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
-    global_send_log "ERASE_LINE"
-    #global_send_log "CURSOR_HIDE"
+    logr_task_ctrl "CURSOR_MOVE" "${rows}${GBL_SPF2}${cols}"
+    logr_task_ctrl "ERASE_LINE"
+    #logr_task_ctrl "CURSOR_HIDE"
 
     local postfix=('|' '/' '-' '\')
     while [ $now -le $last ] && [ ! -f ${PRG_FIN} ] 
@@ -101,17 +101,17 @@ function progress3
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
 
-        global_send_log "CURSOR_SAVE"
-        global_send_log "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
-        global_send_log "CURSOR_RESTORE"
+        logr_task_ctrl "CURSOR_SAVE"
+        logr_task_ctrl "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
+        logr_task_ctrl "CURSOR_RESTORE"
 
         let now++
         sleep 0.1 
     done
 
-    global_send_log "CURSOR_MOVE" "${rows}${GBL_CTRL_SPF2}${cols}"
-    global_send_log "ERASE_LINE"
-    #global_send_log "CURSOR_SHOW"
+    logr_task_ctrl "CURSOR_MOVE" "${rows}${GBL_SPF2}${cols}"
+    logr_task_ctrl "ERASE_LINE"
+    #logr_task_ctrl "CURSOR_SHOW"
 }
 
 declare -r PRG_CURR="$1"

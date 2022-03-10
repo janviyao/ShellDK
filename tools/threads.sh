@@ -14,30 +14,30 @@ declare -r thread_task=$(eval echo \$$#)
 
 # mkfifo
 declare -r THREAD_BASE_DIR="/tmp/thread"
-declare -r THREAD_THIS_DIR="${THREAD_BASE_DIR}/pid.$$"
-rm -fr ${THREAD_THIS_DIR}
-mkdir -p ${THREAD_THIS_DIR}
+declare -r THREAD_DIR="${THREAD_BASE_DIR}/pid.$$"
+rm -fr ${THREAD_DIR}
+mkdir -p ${THREAD_DIR}
 
-declare -r THREAD_THIS_PIPE="${THREAD_THIS_DIR}/msg"
-mkfifo ${THREAD_THIS_PIPE}
+declare -r THREAD_PIPE="${THREAD_DIR}/msg"
+mkfifo ${THREAD_PIPE}
 
 # clear file, and if not exist, create it
-declare -r THREAD_THIS_RET="${THREAD_THIS_DIR}/retcode"
-:> ${THREAD_THIS_RET}
+declare -r THREAD_RET="${THREAD_DIR}/retcode"
+:> ${THREAD_RET}
 
 declare -i THREAD_FD=${THREAD_FD:-6}
 # get non-block's write fd
-exec {THREAD_FD}<>${THREAD_THIS_PIPE}
-rm -f ${THREAD_THIS_PIPE}
+exec {THREAD_FD}<>${THREAD_PIPE}
+rm -f ${THREAD_PIPE}
 
 usr_ctrl_init_parent
 usr_ctrl_init_self
-send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
+send_ctrl_to_parent "CHILD_FORK" "$$${GBL_SPF2}${USR_CTRL_PIPE}"
 
 declare -a thread_ids=()
 function thread_signal
 {
-    echo "exception" >> ${THREAD_THIS_RET}
+    echo "exception" >> ${THREAD_RET}
     echo "" >&${THREAD_FD}
 
     for tid in ${thread_ids[@]}
@@ -76,12 +76,12 @@ do
             break
         fi
 
-        sed -i '1d' ${THREAD_THIS_RET}
+        sed -i '1d' ${THREAD_RET}
 
         if [[ -n "${thread_state}" ]] && [[ ${thread_state} -eq 0 ]];then
             break
         fi
-    done < ${THREAD_THIS_RET}
+    done < ${THREAD_RET}
 
     if [[ ${thread_state} == "exception" ]];then
         break
@@ -91,7 +91,7 @@ do
         {
             echo_debug "thread-${index}: ${thread_task}"
             eval ${thread_task}             
-            echo $? >> ${THREAD_THIS_RET}
+            echo $? >> ${THREAD_RET}
      
             echo "" >&${THREAD_FD}
             exit 0
@@ -111,7 +111,7 @@ send_ctrl_to_parent "CHILD_EXIT" "$$"
 
 # free thead res
 eval "exec ${THREAD_FD}>&-"
-rm -fr ${THREAD_THIS_DIR}
+rm -fr ${THREAD_DIR}
 echo_debug "**********threads exit"
 
 if [[ ${thread_state} == "exception" ]];then

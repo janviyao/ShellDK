@@ -1,6 +1,10 @@
 export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 #export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 
+export GOPATH=${HOME}/.local
+export GOROOT=${GOPATH}/go
+export PATH=${PATH}:${HOME}/.local/bin:${GOROOT}/bin
+
 # export VIM config
 export VIM_LIGHT=0
 
@@ -30,6 +34,20 @@ unalias rm &> /dev/null || true
 set -o allexport
 
 ROOT_PID=$$
+GBL_BASE_DIR="/tmp/gbl"
+BASH_WORK_DIR="${GBL_BASE_DIR}/bash.${ROOT_PID}"
+mkdir -p ${BASH_WORK_DIR}
+
+HOME_DIR=${HOME}
+SUDO="$MY_VIM_DIR/tools/sudo.sh"
+
+OP_TRY_CNT=3
+OP_TIMEOUT=60
+
+GBL_ACK_SPF="#"
+GBL_SPF1="^"
+GBL_SPF2="|"
+GBL_SPF3="!"
 
 function is_number
 {
@@ -73,4 +91,14 @@ function INCLUDE
 }
 
 INCLUDE "DEBUG_ON" $MY_VIM_DIR/tools/include/common.api.sh
-INCLUDE "_GBL_BASE_DIR" $MY_VIM_DIR/tools/include/bash_task.sh
+INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/include/mdat_task.sh
+INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/include/ncat_task.sh
+INCLUDE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/include/ctrl_task.sh
+INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/include/logr_task.sh
+
+if ! bool_v "${TASK_RUNNING}";then
+    trap "trap - ERR; _bash_mdata_exit; _bash_ncat_exit; _bash_ctrl_exit; _bash_logr_exit; exit 0" EXIT
+    ncat_task_ctrl "HEARTBEAT"
+fi
+
+TASK_RUNNING=true

@@ -211,6 +211,14 @@ function deploy_env
     echo "export TEST_SUIT_ENV=\"${HOME_DIR}/.testrc\"" >> ${HOME_DIR}/.bashrc
     echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
     echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
+    
+    if can_access "/var/spool/cron/$(whoami)";then
+        ${SUDO} chmod 755 /var/spool/cron/$(whoami) 
+        sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
+        echo "*/1 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
+    else
+        ${SUDO} "echo '*/1 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+    fi
 }
 
 function update_env

@@ -5,15 +5,15 @@ USR_CTRL_EXIT=0
 function send_ctrl_to_self
 {
     local req_ctrl="$1"
-    local req_mssg="$2"
-    #echo_debug "ctrl to self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    local req_body="$2"
+    #echo_debug "ctrl to self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
 
-    local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
-    if [ -w ${USR_CTRL_THIS_PIPE} ];then
-        echo "${sendctx}" > ${USR_CTRL_THIS_PIPE}
+    local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
+    if [ -w ${USR_CTRL_PIPE} ];then
+        echo "${sendctx}" > ${USR_CTRL_PIPE}
     else
-        if [ -d ${USR_CTRL_THIS_DIR} ];then
-            echo_erro "removed: ${USR_CTRL_THIS_PIPE}"
+        if [ -d ${USR_CTRL_DIR} ];then
+            echo_erro "removed: ${USR_CTRL_PIPE}"
         fi
     fi
 }
@@ -21,10 +21,10 @@ function send_ctrl_to_self
 function send_ctrl_to_parent
 {
     local req_ctrl="$1"
-    local req_mssg="$2"
-    #echo_debug "ctrl to parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    local req_body="$2"
+    #echo_debug "ctrl to parent: [ctrl: ${req_ctrl} msg: ${req_body}]" 
 
-    local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
+    local sendctx="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
     else
@@ -37,29 +37,26 @@ function send_ctrl_to_parent
 function send_ctrl_to_self_sync
 {
     local req_ctrl="$1"
-    local req_mssg="$2"
-    #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    local req_body="$2"
+    #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
 
-    if [ -w ${USR_CTRL_THIS_PIPE} ];then
+    if [ -w ${USR_CTRL_PIPE} ];then
         local self_pid=$$
         if can_access "ppid";then
-            local self_pid=$(ppid | sed -n '2p')
+            local ppids=($(ppid))
+            local self_pid=${ppids[1]}
         fi
 
-        local ack_fd=$(make_ack "${self_pid}"; echo $?)
-        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
+        local ack_pipe="${GBL_CTRL_DIR}/ack.${self_pid}"
+        local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
+        
+        local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
+        echo "${sendctx}" > ${USR_CTRL_PIPE}
 
-        if [ -n "${ack_pipe}" ];then
-            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
-        fi
-
-        local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
-        echo "${sendctx}" > ${USR_CTRL_THIS_PIPE}
-
-        wait_ack "${self_pid}" "${ack_fd}"
+        wait_ack "${ack_pipe}" "${ack_fhno}"
     else
-        if [ -d ${USR_CTRL_THIS_DIR} ];then
-            echo_erro "removed: ${USR_CTRL_THIS_PIPE}"
+        if [ -d ${USR_CTRL_DIR} ];then
+            echo_erro "removed: ${USR_CTRL_PIPE}"
         fi
     fi
 }
@@ -67,26 +64,23 @@ function send_ctrl_to_self_sync
 function send_ctrl_to_parent_sync
 {
     local req_ctrl="$1"
-    local req_mssg="$2"
-    #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_mssg}]" 
+    local req_body="$2"
+    #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_body}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
         local self_pid=$$
         if can_access "ppid";then
-            local self_pid=$(ppid | sed -n '2p')
+            local ppids=($(ppid))
+            local self_pid=${ppids[1]}
         fi
 
-        local ack_fd=$(make_ack "${self_pid}"; echo $?)
-        local ack_pipe="${GBL_CTRL_THIS_DIR}/ack.${self_pid}"
-
-        if [ -n "${ack_pipe}" ];then
-            can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${ack_pipe}"
-        fi
-
-        local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_CTRL_SPF1}${req_mssg}"
+        local ack_pipe="${GBL_CTRL_DIR}/ack.${self_pid}"
+        local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
+        
+        local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
 
-        wait_ack "${self_pid}" "${ack_fd}"
+        wait_ack "${ack_pipe}" "${ack_fhno}"
     else
         if [ -d ${USR_CTRL_HIGH_DIR} ];then
             echo_erro "removed: ${USR_CTRL_HIGH_PIPE}"
@@ -109,17 +103,17 @@ function usr_ctrl_thread
 
         local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
         local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
-        local  request=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
+        local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
 
         if [ -n "${ack_pipe}" ];then
             can_access "${ack_pipe}" || echo_erro "ack pipe invalid: ${line}"
         fi
 
-        local req_ctrl=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 1)
-        local req_mssg=$(echo "${request}" | cut -d "${GBL_CTRL_SPF1}" -f 2)
+        local req_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
+        local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
 
         if [[ "${req_ctrl}" == "CTRL" ]];then
-            local sub_ctrl=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
+            local sub_ctrl=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             if [[ "${sub_ctrl}" == "EXIT" ]];then
                 USR_CTRL_EXIT=1
                 if [ -n "${ack_pipe}" ];then
@@ -135,13 +129,13 @@ function usr_ctrl_thread
                 process_signal KILL $$
             fi
         elif [[ "${req_ctrl}" == "CHILD_FORK" ]];then
-            local pid=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 1)
-            local pipe=$(echo "${req_mssg}" | cut -d "${GBL_CTRL_SPF2}" -f 2)
+            local pid=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
+            local pipe=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
 
             echo_debug "child: $(process_pid2name "${pid}")[${pid}] fork" 
             childMap["${pid}"]="${pipe}"
         elif [[ "${req_ctrl}" == "CHILD_EXIT" ]];then
-            local pid=${req_mssg}
+            local pid=${req_body}
             pipe="${childMap[${pid}]}"
             if [ -z "${pipe}" ];then
                 echo_debug "child[${pid}] have exited" 
@@ -155,7 +149,7 @@ function usr_ctrl_thread
             echo_debug "ack to [${ack_pipe}]"
             echo "ACK" > ${ack_pipe}
         fi
-    done < ${USR_CTRL_THIS_PIPE}
+    done < ${USR_CTRL_PIPE}
 }
 
 function usr_ctrl_signal
@@ -166,7 +160,7 @@ function usr_ctrl_signal
     send_ctrl_to_parent "CTRL" "EXIT"
     send_ctrl_to_self "CTRL" "EXCEPTION"
 
-    if can_access "${USR_CTRL_THIS_DIR}";then
+    if can_access "${USR_CTRL_DIR}";then
         usr_ctrl_exit
         usr_ctrl_clear
     fi
@@ -180,17 +174,17 @@ function usr_ctrl_init_parent
 
 function usr_ctrl_init_self
 {
-    export USR_CTRL_THIS_DIR="${_USR_BASE_DIR}/ctrl/pid.$$"
+    export USR_CTRL_DIR="${_USR_BASE_DIR}/ctrl/pid.$$"
 
-    rm -fr ${USR_CTRL_THIS_DIR}
-    mkdir -p ${USR_CTRL_THIS_DIR}
+    rm -fr ${USR_CTRL_DIR}
+    mkdir -p ${USR_CTRL_DIR}
 
-    export USR_CTRL_THIS_PIPE="${USR_CTRL_THIS_DIR}/msg"
-    export USR_CTRL_THIS_FD=${USR_CTRL_THIS_FD:-6}
+    export USR_CTRL_PIPE="${USR_CTRL_DIR}/msg"
+    export USR_CTRL_FD=${USR_CTRL_FD:-6}
 
-    rm -f ${USR_CTRL_THIS_PIPE}
-    mkfifo ${USR_CTRL_THIS_PIPE}
-    can_access "${USR_CTRL_THIS_PIPE}" || echo_erro "mkfifo: ${USR_CTRL_THIS_PIPE} fail"
+    rm -f ${USR_CTRL_PIPE}
+    mkfifo ${USR_CTRL_PIPE}
+    can_access "${USR_CTRL_PIPE}" || echo_erro "mkfifo: ${USR_CTRL_PIPE} fail"
 }
 
 function usr_ctrl_launch
@@ -198,14 +192,14 @@ function usr_ctrl_launch
     usr_ctrl_init_parent
     usr_ctrl_init_self
 
-    exec {USR_CTRL_THIS_FD}<>${USR_CTRL_THIS_PIPE} # 自动分配FD 
-    export USR_CTRL_THIS_FD=${USR_CTRL_THIS_FD}
+    exec {USR_CTRL_FD}<>${USR_CTRL_PIPE} # 自动分配FD 
+    export USR_CTRL_FD=${USR_CTRL_FD}
 
     #trap "usr_ctrl_signal" SIGINT SIGTERM SIGKILL EXIT
     trap "usr_ctrl_signal" SIGINT SIGTERM SIGKILL
     usr_ctrl_thread &
 
-    send_ctrl_to_parent "CHILD_FORK" "$$${GBL_CTRL_SPF2}${USR_CTRL_THIS_PIPE}"
+    send_ctrl_to_parent "CHILD_FORK" "$$${GBL_SPF2}${USR_CTRL_PIPE}"
 }
 
 function usr_ctrl_exit
@@ -218,8 +212,8 @@ function usr_ctrl_clear
 {
     send_ctrl_to_parent "CHILD_EXIT" "$$"
 
-    eval "exec ${USR_CTRL_THIS_FD}>&-"
-    rm -fr ${USR_CTRL_THIS_DIR}
+    eval "exec ${USR_CTRL_FD}>&-"
+    rm -fr ${USR_CTRL_DIR}
 }
 
 function ctrl_exited

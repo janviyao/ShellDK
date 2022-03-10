@@ -75,11 +75,14 @@ int main(int argc, char **argv)
 
     if(argc < 2) {
         g_self_pid = syscall(__NR_gettid);
-        //g_self_pid = get_ppid(tid);
+        printf("%d\n", g_self_pid);
+
         ret = print_ppid(g_self_pid);
         exit(ret);
     } else if (argc == 2) {
         g_self_pid = strtol(argv[1], NULL, 10);
+        printf("%d\n", g_self_pid);
+
         ret = print_ppid(g_self_pid);
         exit(ret);
     }

@@ -9,14 +9,14 @@ if [ -z "${CMD_EXE}" ];then
 fi
 
 TMP_RESULT="/tmp/remote_ret$$"
-SRV_MSG="(${CMD_EXE}) &> ${TMP_RESULT}; remote_push_result '${GBL_SRV_ADDR}' '${TMP_RESULT}'"
+PKG_MSG="(${CMD_EXE}) &> ${TMP_RESULT}; remote_send_file ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} '${TMP_RESULT}'"
 
-$MY_VIM_DIR/tools/sshlogin.sh "${HOST_IP}" "${SRV_MSG}"
+$MY_VIM_DIR/tools/sshlogin.sh "${HOST_IP}" "${PKG_MSG}"
 if [ $? -ne 0 ];then
     echo_erro "ssh fail: \"${CMD_EXE}\" @ ${HOST_IP}"
 fi
 
-if can_access "${TMP_RESULT}";then
-    cat ${TMP_RESULT}
-    rm -f ${TMP_RESULT}
+if can_access "${GBL_NCAT_WORK_DIR}${TMP_RESULT}";then
+    cat ${GBL_NCAT_WORK_DIR}${TMP_RESULT}
+    rm -f ${GBL_NCAT_WORK_DIR}${TMP_RESULT}*
 fi
