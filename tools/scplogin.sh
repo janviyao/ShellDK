@@ -1,5 +1,4 @@
 #!/bin/bash
-TIMEOUT=600
 SRC_DIR="$1"
 DES_DIR="$2"
 echo_debug "paras: { $* }"
@@ -36,7 +35,7 @@ if [ $UID -ne 0 ]; then
 fi
 
 expect << EOF
-    set timeout ${TIMEOUT}
+    set timeout ${SSH_TIMEOUT}
 
     #exp_internal 1 #enable debug
     #exp_internal 0 #disable debug

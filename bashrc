@@ -54,6 +54,7 @@ SUDO="$MY_VIM_DIR/tools/sudo.sh"
 
 OP_TRY_CNT=3
 OP_TIMEOUT=60
+SSH_TIMEOUT=600
 
 GBL_ACK_SPF="#"
 GBL_SPF1="^"
@@ -111,4 +112,3 @@ if ! bool_v "${TASK_RUNNING}";then
     trap "trap - ERR; _bash_ncat_exit; _bash_logr_exit; _bash_ctrl_exit; _bash_mdata_exit; exit 0" EXIT
     ncat_watcher_ctrl "HEARTBEAT"
 fi
-#TASK_RUNNING=true

@@ -1,5 +1,4 @@
 #!/bin/bash
-TIMEOUT=600
 HOST_IP="$1"
 CMD_EXE="$2"
 echo_debug "paras: { $* }"
@@ -20,21 +19,21 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
-PASS_ENV="export TASK_RUNNING=true; export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
-_SOURCE="if test -d $MY_VIM_DIR;then if ! declare -F INCLUDE &>/dev/null;then source $MY_VIM_DIR/bashrc; fi; fi"
+PASS_ENV="export TASK_RUNNING=true; export USR_NAME=${USR_NAME}; export USR_PASSWORD=${USR_PASSWORD}; export MY_VIM_DIR=$MY_VIM_DIR"
+_SOURCE="if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/bashrc; fi"
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="if test -d $MY_VIM_DIR;then if ! declare -F INCLUDE &>/dev/null;then source $MY_VIM_DIR/bashrc; remote_set_var '${NCAT_MASTER_ADDR}' '${RET_VAR}' \$?; fi; fi"
-CMD_EXE="${PASS_ENV}; ${_SOURCE}; (${CMD_EXE}); ${SRV_MSG}"
+SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${RET_VAR} \$?;"
+CMD_EXE="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}"
 
 ncat_watcher_ctrl "HEARTBEAT"
 
 expect << EOF
-    set timeout ${TIMEOUT}
+    set timeout ${SSH_TIMEOUT}
 
     #exp_internal 1 #enable debug
     #exp_internal 0 #disable debug
-    #exp_internal -f ~/.expect.log 0 # debug into file and no echo
+    #exp_internal -f ~/expect.log 0 # debug into file and no echo
 
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${CMD_EXE}"
@@ -55,14 +54,14 @@ EOF
 count=0
 while ! global_check_var "${RET_VAR}"
 do
-    sleep 0.01
+    sleep 0.1
     let count++
-    if [ ${count} -gt 10 ];then
+    if [ ${count} -gt 50 ];then
         break
     fi
 done
 
-if [ ${count} -le 10 ];then
+if [ ${count} -le 50 ];then
     global_get_var ${RET_VAR}
 fi
 

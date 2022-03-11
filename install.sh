@@ -55,7 +55,7 @@ rpmTodo["autoconf"]="autoconf-.+\.rpm"
 rpmTodo["automake"]="automake-.+\.rpm"
 rpmTodo["nc"]="nmap-ncat-.+\.rpm"
 rpmTodo["ag"]="the_silver_searcher-.+\.rpm"
-rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-.+\.rpm"
+rpmTodo["/usr/share/doc/perl-Data-Dumper-2.145"]="perl-Data-Dumper-.+\.rpm"
 rpmTodo["/usr/share/doc/perl-Thread-Queue-3.02"]="perl-Thread-Queue-.+\.rpm"
 rpmTodo["locale"]="glibc-common-.+\.rpm"
 #rpmTodo["/usr/lib/golang/api"]="golang-1.+\.rpm"
@@ -468,12 +468,15 @@ function inst_deps
         fi
 
         # Install ppid
+        can_access "${BIN_DIR}/ppid" && rm -f ${BIN_DIR}/ppid
         if ! can_access "ppid";then
             cd ${ROOT_DIR}/tools/app
             gcc ppid.c -o ppid
             mv -f ppid ${BIN_DIR}
         fi
 
+        # Install fstat
+        can_access "${BIN_DIR}/fstat" && rm -f ${BIN_DIR}/fstat
         if ! can_access "fstat";then
             cd ${ROOT_DIR}/tools/app
             gcc fstat.c -o fstat

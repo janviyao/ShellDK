@@ -4,6 +4,7 @@ export MY_VIM_DIR=${ROOT_DIR}
 #export TASK_RUNNING=true
 source $MY_VIM_DIR/bashrc
 
+trap "trap - ERR; _bash_logr_exit; _bash_ctrl_exit; _bash_mdata_exit; exit 0" EXIT
 echo_debug "timer $$ ncat pipe: ${GBL_NCAT_PIPE}"
 ncat_watcher_ctrl "HEARTBEAT"
 

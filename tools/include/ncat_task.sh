@@ -65,9 +65,19 @@ function ncat_send_msg
 
     echo_debug "ncat send: [$*]" 
     if can_access "nc";then
+        if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
+            echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
+            while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
+            do
+                echo_warn "remote[${ncat_addr} ${ncat_port}] wait online"
+                sleep 1
+            done
+        fi
+
         (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         while test $? -ne 0
         do
+            sleep 0.1
             (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         done
     fi
@@ -116,9 +126,7 @@ function remote_set_var
     local var_valu="$3"
 
     echo_debug "remote set: [$*]" 
-    if remote_ncat_alive "${ncat_addr}" "${NCAT_MASTER_PORT}";then
-        ncat_send_msg "${ncat_addr}" "${NCAT_MASTER_PORT}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
-    fi
+    ncat_send_msg "${ncat_addr}" "${NCAT_MASTER_PORT}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
 }
 
 function remote_send_file
@@ -129,15 +137,13 @@ function remote_send_file
 
     echo_debug "remote send file: [$*]" 
     if can_access "${res_file}";then
-        if remote_ncat_alive "${ncat_addr}" "${ncat_port}";then
-            ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
+        ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
 
+        (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
+        while test $? -ne 0
+        do
             (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
-            while test $? -ne 0
-            do
-                (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
-            done
-        fi
+        done
     fi
 }
 
@@ -186,6 +192,9 @@ function _global_ncat_bg_thread
             local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
 
             if [[ "${req_ctrl}" == "EXIT" ]];then
+                if [[ ${req_body} != ${parent_pid} ]];then
+                    echo_warn "{$(process_pid2name "${parent_pid}")[${parent_pid}]}'s ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
+                fi
                 master_work=false
                 global_set_var "master_work"
                 # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
@@ -228,7 +237,7 @@ function _global_ncat_bg_thread
 function _bash_ncat_exit
 { 
     ncat_watcher_ctrl "EXIT"
-    ncat_task_ctrl_sync "EXIT"
+    ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
 
     eval "exec ${GBL_NCAT_FD}>&-"
     rm -fr ${GBL_NCAT_WORK_DIR} 
@@ -240,6 +249,7 @@ if ! bool_v "${TASK_RUNNING}";then
 
     local ppids=($(ppid))
     self_pid=${ppids[1]}
+    export parent_pid=${ppids[2]}
 
     renice -n -1 -p ${self_pid} &> /dev/null
 
