@@ -4,7 +4,6 @@
 DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
-LOG_FILE="${GBL_BASE_DIR}/bash.log"
 
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
@@ -143,6 +142,52 @@ function fname2path
         echo "${dir_name}"
     else
         echo "${full_name}"
+    fi
+}
+
+function process_pptree
+{
+    local pinfo="$1"
+    if [ -z "${pinfo}" ];then
+        pinfo="$$"
+    fi
+
+    if is_number "${pinfo}";then
+        local pid_array=($(ppid ${pinfo}))
+        local pid_num=${#pid_array[*]}
+        for ((idx=0; idx < pid_num; idx++))
+        do
+            local pid=${pid_array[${idx}]}
+            if process_exist "${pid}"; then
+                local pname=$(process_pid2name "${pid}")
+                if (((idx + 1) == pid_num));then
+                    printf "%s[%d]" "${pname}" "${pid}" 
+                else
+                    printf "%s[%d] --> " "${pname}" "${pid}" 
+                fi
+            fi
+        done
+        printf "\n"
+    else
+        local -a some_array=($(process_name2pid "${pinfo}"))
+        for one_pid in ${some_array[*]}
+        do
+            local pid_array=($(ppid ${one_pid}))
+            local pid_num=${#pid_array[*]}
+            for ((idx=0; idx < pid_num; idx++))
+            do
+                local pid=${pid_array[${idx}]}
+                if process_exist "${pid}"; then
+                    local pname=$(process_pid2name "${pid}")
+                    if (((idx + 1) == pid_num));then
+                        printf "%s[%d]" "${pname}" "${pid}" 
+                    else
+                        printf "%s[%d] --> " "${pname}" "${pid}" 
+                    fi
+                fi
+            done
+            printf "\n"
+        done 
     fi
 }
 
@@ -880,10 +925,10 @@ FONT_BLINK='\033[5m'       #字体闪烁
 function echo_file
 {
     xtrace_disable
-    if var_exist "LOG_FILE";then
+    if var_exist "BASHLOG";then
         local log_type="$1"
         shift
-        printf "[%-18s %5s] %s\n" "$(echo_header false)" "${log_type}" "$*" >> ${LOG_FILE}
+        printf "[%-18s %5s] %s\n" "$(echo_header false)" "${log_type}" "$*" >> ${BASHLOG}
     fi
     xtrace_restore
 }

@@ -3,15 +3,10 @@
 #set -u # variable not exist, then exit
 ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
-#source $MY_VIM_DIR/bash_profile
-source $MY_VIM_DIR/bashrc
 
-declare -F INCLUDE &>/dev/null
-if [ $? -eq 0 ];then
-    INCLUDE "DEBUG_ON" ${ROOT_DIR}/tools/include/common.api.sh
-else
-    . ${ROOT_DIR}/tools/include/common.api.sh
-fi
+export REMOTE_SSH=true
+source $MY_VIM_DIR/tools/include/base_task.api.sh
+
 . ${ROOT_DIR}/tools/paraparser.sh
 
 declare -A funcMap

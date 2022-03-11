@@ -19,8 +19,9 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
-PASS_ENV="export TASK_RUNNING=true; export USR_NAME=${USR_NAME}; export USR_PASSWORD=${USR_PASSWORD}; export MY_VIM_DIR=$MY_VIM_DIR"
-_SOURCE="if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/bashrc; fi"
+#PASS_ENV="export TASK_RUNNING=true; export USR_NAME=${USR_NAME}; export USR_PASSWORD=${USR_PASSWORD}; export MY_VIM_DIR=$MY_VIM_DIR"
+PASS_ENV="export USR_NAME=${USR_NAME}; export USR_PASSWORD=${USR_PASSWORD}; export MY_VIM_DIR=$MY_VIM_DIR"
+_SOURCE="if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/tools/include/base_task.api.sh; fi"
 
 RET_VAR="sudo_ret$$"
 SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${RET_VAR} \$?;"
@@ -38,7 +39,7 @@ expect << EOF
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
-    spawn -noecho env "TERM=TASK_RUNNING=true:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
+    spawn -noecho env "TERM=export TASK_RUNNING=false;export REMOTE_SSH=true;:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
 
     expect {
         "*(yes/no)?" { send "yes\r"; exp_continue }

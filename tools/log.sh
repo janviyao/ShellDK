@@ -7,8 +7,8 @@ if bool_v "${DEBUG_ON}";then
     echo $*
     $*
 else
-    if var_exist "LOG_FILE";then
-        $* >> ${LOG_FILE} 2>&1
+    if var_exist "BASHLOG";then
+        $* >> ${BASHLOG} 2>&1
     else
         $* >> log 2>&1
     fi

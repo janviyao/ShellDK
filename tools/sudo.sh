@@ -38,7 +38,7 @@ GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_MDAT_PIPE}"
 
 # trap - EXIT : prevent from removing global directory
 PASS_ENV="export TASK_RUNNING=true; export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
-CMD_STR="${PASS_ENV}; source $MY_VIM_DIR/bashrc; (${CMD_STR}); ${GET_RET}"
+CMD_STR="${PASS_ENV}; source $MY_VIM_DIR/tools/include/base_task.api.sh; (${CMD_STR}); ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF

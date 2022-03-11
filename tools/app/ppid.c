@@ -24,13 +24,13 @@ static pid_t get_ppid(pid_t pid)
 
     sprintf(path, "/proc/%d/stat", pid);
     if(stat(path, &st) != 0) {
-        return -0;
+        return 0;
     }
 
     memset(buf, 0, strlen(buf));
     FILE * fp = fopen(path, "r");
     if(fp == NULL) {
-        return -1;
+        return 0;
     }
 
     fread(buf, 1, 300, fp);
@@ -48,6 +48,10 @@ static int print_ppid(int pid)
     int ret;
 
     pid_t ppid = get_ppid(pid);
+    if(ppid == 0) {
+        return 0;
+    }
+
     //if (ppid != g_self_pid) {
     printf("%d\n", ppid);
     //}
@@ -61,11 +65,11 @@ static int print_ppid(int pid)
     }
 
     ret = print_ppid(ppid);
-    if (ret != 0) {
-        return 1;
+    if (ret == 0) {
+        return 0;
     }
 
-    return 0;
+    return ppid;
 }
 
 int main(int argc, char **argv)  
@@ -76,16 +80,16 @@ int main(int argc, char **argv)
     if(argc < 2) {
         g_self_pid = syscall(__NR_gettid);
         printf("%d\n", g_self_pid);
-
         ret = print_ppid(g_self_pid);
-        exit(ret);
     } else if (argc == 2) {
         g_self_pid = strtol(argv[1], NULL, 10);
         printf("%d\n", g_self_pid);
-
         ret = print_ppid(g_self_pid);
-        exit(ret);
     }
 
-    exit(0);
+    if (ret == 0) {
+        exit(1);
+    } else {
+        exit(0);
+    }
 }
