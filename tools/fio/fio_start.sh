@@ -4,7 +4,7 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! can_access "$1"; then
     echo_erro "testcase not exist: $1"
-    exit
+    exit 1
 fi
 source $1
 source ${FIO_ROOT_DIR}/include/private.conf.sh
@@ -57,13 +57,17 @@ function run_fio_func
     echo_info "${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}"
     if [ ! -f ${output_dir}/${fio_output_file} ];then
         ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}
+        if [ $? -ne 0 ];then
+            echo_erro "please check: ${output_dir}/${fio_output_file} ${other_paras}" 
+            exit 1
+        fi
     fi
     
     local have_error=$(cat ${output_dir}/${fio_output_file} | grep "error=")
     if [ -n "${have_error}" ]; then
         cat ${output_dir}/${fio_output_file}
         echo_erro "failed: ${FIO_APP_RUNTIME} ${output_dir}/${conf_full_name} ${other_paras}" 
-        exit -1
+        exit 1
     fi
 
     local fio_result=$(${FIO_ROOT_DIR}/parse_result.sh "${output_dir}/${fio_output_file}" "${read_pct}" "${numjobs}")

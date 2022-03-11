@@ -20,10 +20,12 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
+PASS_ENV="export TASK_RUNNING=true; export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
 RET_VAR="sudo_ret$$"
-SRV_MSG="remote_set_var '${NCAT_MASTER_ADDR}' '${RET_VAR}' \$?"
-PASS_ENV="export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
-CMD_EXE="${PASS_ENV}; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_EXE});${SRV_MSG}"
+SRV_MSG="if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/bashrc; remote_set_var '${NCAT_MASTER_ADDR}' '${RET_VAR}' \$?; fi"
+CMD_EXE="${PASS_ENV}; if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/bashrc; fi; (${CMD_EXE}); ${SRV_MSG}"
+
+ncat_watcher_ctrl "HEARTBEAT"
 
 expect << EOF
     set timeout ${TIMEOUT}
@@ -34,7 +36,8 @@ expect << EOF
 
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${CMD_EXE}"
-    spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
+    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
+    spawn -noecho env "TERM=TASK_RUNNING=true:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
 
     expect {
         "*(yes/no)?" { send "yes\r"; exp_continue }
@@ -52,11 +55,13 @@ while ! global_check_var "${RET_VAR}"
 do
     sleep 0.01
     let count++
-    if [ ${count} -gt 100 ];then
+    if [ ${count} -gt 10 ];then
         break
     fi
 done
 
-global_get_var ${RET_VAR}
+if [ ${count} -le 10 ];then
+    global_get_var ${RET_VAR}
+fi
 
 eval "exit \$${RET_VAR}"

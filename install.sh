@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
-source $MY_VIM_DIR/bash_profile
+#source $MY_VIM_DIR/bash_profile
 source $MY_VIM_DIR/bashrc
 
 declare -F INCLUDE &>/dev/null
@@ -197,28 +197,29 @@ function deploy_env
     fi
     
     can_access "${HOME_DIR}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${HOME_DIR}/.bashrc
-    can_access "${HOME_DIR}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
+    #can_access "${HOME_DIR}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
 
     can_access "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
-    can_access "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
+    #can_access "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
 
     sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
     sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
     sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
-    sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
+    #sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 
     echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${HOME_DIR}/.bashrc
     echo "export TEST_SUIT_ENV=\"${HOME_DIR}/.testrc\"" >> ${HOME_DIR}/.bashrc
     echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
-    echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
+    #echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
     
     if can_access "/var/spool/cron/$(whoami)";then
-        ${SUDO} chmod 755 /var/spool/cron/$(whoami) 
         sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
         echo "*/1 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
     else
         ${SUDO} "echo '*/1 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
     fi
+    ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
+    ${SUDO} systemctl restart crond
 }
 
 function update_env
@@ -254,7 +255,7 @@ function clean_env
     can_access "${HOME_DIR}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
     can_access "${HOME_DIR}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
     can_access "${HOME_DIR}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
-    can_access "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
+    #can_access "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
 }
 
 function install_from_net

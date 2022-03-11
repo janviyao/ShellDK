@@ -649,23 +649,6 @@ function replace_regex
     fi
 }
 
-function ssh_address
-{
-    local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
-    local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
-
-    for addr in ${ssh_con}
-    do
-        if [[ ${ssh_cli} == ${addr} ]];then
-            continue
-        fi
-        echo "${addr}"
-        return
-    done
-
-    echo "$(get_local_ip)"
-}
-
 function file_count
 {
     local f_array=($*)
@@ -891,9 +874,9 @@ function echo_header
         #echo "${COLOR_HEADER}${FONT_BOLD}******${NCAT_MASTER_ADDR}@${cur_time}: ${COLOR_CLOSE}"
         local proc_info=$(printf "[%-18s[%6d]]" "$(path2fname $0)" "$$")
         if bool_v "${color}";then
-            echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} @ ${proc_info} ${COLOR_CLOSE}"
+            echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} [${LOCAL_IP}] ${proc_info} ${COLOR_CLOSE}"
         else
-            echo "${cur_time} @ ${proc_info}"
+            echo "${cur_time} [${LOCAL_IP}] ${proc_info}"
         fi
     fi
     xtrace_restore
@@ -1043,7 +1026,19 @@ function wait_ack
 }
 
 function get_local_ip
-{   
+{
+    local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+    local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+
+    for ipaddr in ${ssh_con}
+    do
+        if [[ ${ssh_cli} == ${ipaddr} ]];then
+            continue
+        fi
+        echo "${ipaddr}"
+        return
+    done
+
     local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     for ipaddr in ${local_iparray[*]}
     do
@@ -1061,5 +1056,4 @@ function get_local_ip
         fi
     done
 }
-
 LOCAL_IP="$(get_local_ip)"

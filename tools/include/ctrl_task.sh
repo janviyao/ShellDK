@@ -1,5 +1,5 @@
 #!/bin/bash
-GBL_CTRL_PIPE="${BASH_WORK_DIR}/msg"
+GBL_CTRL_PIPE="${BASH_WORK_DIR}/ctrl.pipe"
 GBL_CTRL_FD=${GBL_CTRL_FD:-6}
 mkfifo ${GBL_CTRL_PIPE}
 can_access "${GBL_CTRL_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_PIPE} fail"
@@ -44,6 +44,7 @@ function ctrl_task_ctrl_sync
     fi
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
     local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
+    echo_debug "ctrl fd[${ack_fhno}] for ${ack_pipe}"
 
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ctrl_body}" > ${one_pipe}
 
@@ -105,8 +106,10 @@ if ! bool_v "${TASK_RUNNING}";then
     local ppids=($(ppid))
     self_pid=${ppids[1]}
 
+    touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"
     _global_ctrl_bg_thread
     echo_debug "ctrl_bg_thread[${self_pid}] exit"
+    rm -f ${GBL_CTRL_PIPE}.run
 }&
 fi

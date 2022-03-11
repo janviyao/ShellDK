@@ -1,3 +1,10 @@
+PRIVATE_VAR=${TERM%:*}
+if [[ ${PRIVATE_VAR} != $TERM ]];then
+    export TERM=${TERM##*:}
+    eval "${PRIVATE_VAR}"
+fi
+#echo "$$===TASK_RUNNING=${TASK_RUNNING}"
+
 export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 #export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 
@@ -98,7 +105,6 @@ INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/include/logr_task.sh
 
 if ! bool_v "${TASK_RUNNING}";then
     trap "trap - ERR; _bash_mdata_exit; _bash_ncat_exit; _bash_ctrl_exit; _bash_logr_exit; exit 0" EXIT
-    ncat_task_ctrl "HEARTBEAT"
+    ncat_watcher_ctrl "HEARTBEAT"
 fi
-
-TASK_RUNNING=true
+#TASK_RUNNING=true

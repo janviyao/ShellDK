@@ -1,5 +1,5 @@
 #!/bin/bash
-GBL_LOGR_PIPE="${BASH_WORK_DIR}/log"
+GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
 GBL_LOGR_FD=${GBL_LOGR_FD:-8}
 mkfifo ${GBL_LOGR_PIPE}
 can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
@@ -34,7 +34,8 @@ function logr_task_ctrl_sync
         fi
         local ack_pipe=${BASH_WORK_DIR}/ack.${self_pid}
         local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
- 
+        echo_debug "logr fd[${ack_fhno}] for ${ack_pipe}"
+
         echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${logr_ctrl}${GBL_SPF1}${logr_body}" > ${GBL_LOGR_PIPE}
         wait_ack "${ack_pipe}" "${ack_fhno}"
     else
@@ -126,8 +127,10 @@ if ! bool_v "${TASK_RUNNING}";then
     local ppids=($(ppid))
     self_pid=${ppids[1]}
 
+    touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"
     _global_logr_bg_thread
     echo_debug "logr_bg_thread[${self_pid}] exit"
+    rm -f ${GBL_LOGR_PIPE}.run
 }&
 fi

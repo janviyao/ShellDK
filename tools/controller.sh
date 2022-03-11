@@ -49,7 +49,8 @@ function send_ctrl_to_self_sync
 
         local ack_pipe="${GBL_CTRL_DIR}/ack.${self_pid}"
         local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
-        
+        echo_debug "controller fd[${ack_fhno}] for ${ack_pipe}"
+
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
         echo "${sendctx}" > ${USR_CTRL_PIPE}
 
@@ -76,7 +77,8 @@ function send_ctrl_to_parent_sync
 
         local ack_pipe="${GBL_CTRL_DIR}/ack.${self_pid}"
         local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
-        
+        echo_debug "controller fd[${ack_fhno}] for ${ack_pipe}"
+
         local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
         echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
 

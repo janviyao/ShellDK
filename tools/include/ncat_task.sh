@@ -2,13 +2,13 @@
 GBL_NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
 mkdir -p ${GBL_NCAT_WORK_DIR}
 
-GBL_NCAT_PIPE="${GBL_NCAT_WORK_DIR}/heartbeat"
+GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
 GBL_NCAT_FD=${GBL_NCAT_FD:-9}
 mkfifo ${GBL_NCAT_PIPE}
 can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
 exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
-NCAT_MASTER_ADDR=$(ssh_address)
+NCAT_MASTER_ADDR=$(get_local_ip)
 NCAT_MASTER_PORT=7888
 NCAT_TRFILE_PORT=7889
 
@@ -18,7 +18,23 @@ function ncat_watcher_ctrl
     echo "${ncat_ctrl}" > ${GBL_NCAT_PIPE}
 }
 
-function check_port
+function remote_ncat_alive
+{
+    local ncat_addr="$1"
+    local ncat_port="$2"
+
+    if can_access "nc";then
+        if nc -zvw3 ${ncat_addr} ${ncat_port} &> /dev/null;then
+            return 0
+        else
+            return 1
+        fi
+    else
+        return 1
+    fi
+}
+
+function local_port_available
 {
     local port="$1"
     if netstat -anp | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
@@ -41,22 +57,6 @@ function local_ncat_alive
     fi
 }
 
-function remote_ncat_alive
-{
-    local ncat_addr="$1"
-    local ncat_port="$2"
-
-    if can_access "nc";then
-        if nc -zvw3 ${ncat_addr} ${ncat_port} &> /dev/null;then
-            return 0
-        else
-            return 1
-        fi
-    else
-        return 1
-    fi
-}
-
 function ncat_send_msg
 {
     local ncat_addr="$1"
@@ -65,16 +65,11 @@ function ncat_send_msg
 
     echo_debug "ncat send: [$*]" 
     if can_access "nc";then
-        # nc -zvw3 172.24.15.162 7888 --> test ip&port whether net can access 
-        if check_port "${ncat_port}";then
-            echo_erro "nc ${ncat_addr} ${ncat_port} dead"
-        else
+        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+        while test $? -ne 0
+        do
             (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
-            while test $? -ne 0
-            do
-                (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
-            done
-        fi
+        done
     fi
 }
 
@@ -108,6 +103,7 @@ function ncat_task_ctrl_sync
     fi
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
     local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
+    echo_debug "ncat fd[${ack_fhno}] for ${ack_pipe}"
 
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
     wait_ack "${ack_pipe}" "${ack_fhno}"
@@ -120,7 +116,9 @@ function remote_set_var
     local var_valu="$3"
 
     echo_debug "remote set: [$*]" 
-    ncat_send_msg "${ncat_addr}" "${NCAT_MASTER_PORT}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
+    if remote_ncat_alive "${ncat_addr}" "${NCAT_MASTER_PORT}";then
+        ncat_send_msg "${ncat_addr}" "${NCAT_MASTER_PORT}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
+    fi
 }
 
 function remote_send_file
@@ -131,13 +129,15 @@ function remote_send_file
 
     echo_debug "remote send file: [$*]" 
     if can_access "${res_file}";then
-        ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
+        if remote_ncat_alive "${ncat_addr}" "${ncat_port}";then
+            ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
 
-        (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
-        while test $? -ne 0
-        do
             (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
-        done
+            while test $? -ne 0
+            do
+                (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
+            done
+        fi
     fi
 }
 
@@ -151,7 +151,7 @@ function _global_ncat_bg_thread
             echo_debug "ncat: ${line}" 
         fi
 
-        if ! check_port "${NCAT_MASTER_PORT}";then
+        if ! local_port_available "${NCAT_MASTER_PORT}";then
             echo_debug "ncat port[${NCAT_MASTER_PORT}] ocuppied" 
             continue
         fi
@@ -186,7 +186,8 @@ function _global_ncat_bg_thread
             local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
 
             if [[ "${req_ctrl}" == "EXIT" ]];then
-                global_set_var "master_work=false"
+                master_work=false
+                global_set_var "master_work"
                 # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
                 #{ process_signal INT 'nc'; }&
 
@@ -242,8 +243,10 @@ if ! bool_v "${TASK_RUNNING}";then
 
     renice -n -1 -p ${self_pid} &> /dev/null
 
+    touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"
     _global_ncat_bg_thread
     echo_debug "ncat_bg_thread[${self_pid}] exit"
+    rm -f ${GBL_NCAT_PIPE}.run
 }&
 fi

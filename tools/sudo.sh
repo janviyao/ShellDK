@@ -37,8 +37,8 @@ RET_VAR="sudo_ret$$"
 GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_CTRL_PIPE}"
 
 # trap - EXIT : prevent from removing global directory
-PASS_ENV="export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
-CMD_STR="${PASS_ENV}; source $MY_VIM_DIR/bashrc; trap _bash_exit EXIT SIGINT SIGTERM SIGKILL; (${CMD_STR}); ${GET_RET}"
+PASS_ENV="export TASK_RUNNING=true; export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
+CMD_STR="${PASS_ENV}; source $MY_VIM_DIR/bashrc; (${CMD_STR}); ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF

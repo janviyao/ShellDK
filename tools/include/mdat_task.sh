@@ -1,5 +1,5 @@
 #!/bin/bash
-GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdata"
+GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdat.pipe"
 GBL_MDAT_FD=${GBL_MDAT_FD:-7}
 mkfifo ${GBL_MDAT_PIPE}
 can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
@@ -44,6 +44,7 @@ function mdat_task_ctrl_sync
     fi
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
     local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
+    echo_debug "mdata fd[${ack_fhno}] for ${ack_pipe}"
 
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${mdat_body}" > ${one_pipe}
 
@@ -54,7 +55,16 @@ function global_check_var
 {
     local var_name="$1"
     local one_pipe="$2"
-    echo_debug "global check: [$*]" 
+    echo_debug "mdata check: [$*]" 
+
+    if [ -z "${one_pipe}" ];then
+        one_pipe="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${one_pipe}.run";then
+        echo_erro "mdata task donot run"
+        return 1
+    fi
 
     local self_pid=$$
     if can_access "ppid";then
@@ -88,19 +98,9 @@ function global_set_var
     local one_pipe="$2"
     local var_valu=""
      
-    if var_exist "${var_name}";then
-        var_valu="$(eval "echo \"\$${var_name}\"")"
-    else
-        if contain_str "${var_name}" "=";then
-            var_valu=$(echo "${var_name}" | cut -d "=" -f 2)
-            var_name=$(echo "${var_name}" | cut -d "=" -f 1)
-        else
-            echo_erro "variable { ${var_name} } not exist"
-            return
-        fi
-    fi
-    
-    echo_debug "global set: [$* = ${var_valu}]" 
+    var_valu="$(eval "echo \"\$${var_name}\"")"
+        
+    echo_debug "mdata set: [$* = \"${var_valu}\"]" 
     mdat_task_ctrl "SET_VAR${GBL_SPF1}${var_name}${GBL_SPF2}${var_valu}" "${one_pipe}"
 }
 
@@ -109,8 +109,17 @@ function global_get_var
     local var_name="$1"
     local one_pipe="$2"
     local var_valu=""
-    echo_debug "global get: [$*]" 
- 
+    echo_debug "mdata get: [$*]" 
+
+    if [ -z "${one_pipe}" ];then
+        one_pipe="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${one_pipe}.run";then
+        echo_erro "mdata task donot run"
+        return 1
+    fi
+
     local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
@@ -131,7 +140,7 @@ function global_get_var
     rm -f ${get_pipe}
 
     eval "export ${var_name}=\"${var_valu}\""
-    echo_debug "global get: [${var_name} = \"${var_valu}\"]" 
+    echo_debug "mdata get: [${var_name} = \"${var_valu}\"]" 
 }
 
 function global_unset_var
@@ -277,8 +286,10 @@ if ! bool_v "${TASK_RUNNING}";then
 
     renice -n -2 -p ${self_pid} &> /dev/null
 
+    touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
     _global_mdata_bg_thread
     echo_debug "mdat_bg_thread[${self_pid}] exit"
+    rm -f ${GBL_MDAT_PIPE}.run
 }&
 fi
