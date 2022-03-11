@@ -1059,8 +1059,11 @@ function get_local_ip
         if [[ ${ssh_cli} == ${ipaddr} ]];then
             continue
         fi
-        echo "${ipaddr}"
-        return
+
+        if [ -n "${ipaddr}" ];then
+            echo "${ipaddr}"
+            return
+        fi
     done
 
     local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))

@@ -1,5 +1,5 @@
 if declare -F INCLUDE &>/dev/null;then
-    echo "bashrc has loaded"
+    echo_debug "bashrc has loaded"
 fi
 
 PRIVATE_VAR=${TERM%:*}
@@ -14,7 +14,7 @@ export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\
 
 export GOPATH=${HOME}/.local
 export GOROOT=${GOPATH}/go
-export PATH=${PATH}:${HOME}/.local/bin:${GOROOT}/bin
+export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${HOME}/.local/bin:${GOROOT}/bin
 
 # export VIM config
 export VIM_LIGHT=0
@@ -108,7 +108,7 @@ INCLUDE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/include/ctrl_task.sh
 INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/include/logr_task.sh
 
 if ! bool_v "${TASK_RUNNING}";then
-    trap "trap - ERR; _bash_mdata_exit; _bash_ncat_exit; _bash_ctrl_exit; _bash_logr_exit; exit 0" EXIT
+    trap "trap - ERR; _bash_ncat_exit; _bash_logr_exit; _bash_ctrl_exit; _bash_mdata_exit; exit 0" EXIT
     ncat_watcher_ctrl "HEARTBEAT"
 fi
 #TASK_RUNNING=true

@@ -1,9 +1,10 @@
 #!/bin/bash
 ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
-export TASK_RUNNING=true
+#export TASK_RUNNING=true
 source $MY_VIM_DIR/bashrc
 
+echo_debug "timer $$ ncat pipe: ${GBL_NCAT_PIPE}"
 ncat_watcher_ctrl "HEARTBEAT"
 
 if can_access "${LOG_FILE}";then
