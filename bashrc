@@ -1,3 +1,7 @@
+if declare -F INCLUDE &>/dev/null;then
+    echo "bashrc has loaded"
+fi
+
 PRIVATE_VAR=${TERM%:*}
 if [[ ${PRIVATE_VAR} != $TERM ]];then
     export TERM=${TERM##*:}

@@ -111,5 +111,6 @@ if ! bool_v "${TASK_RUNNING}";then
     _global_ctrl_bg_thread
     echo_debug "ctrl_bg_thread[${self_pid}] exit"
     rm -f ${GBL_CTRL_PIPE}.run
+    exit 0
 }&
 fi

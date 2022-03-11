@@ -197,7 +197,7 @@ function deploy_env
     fi
     
     can_access "${HOME_DIR}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${HOME_DIR}/.bashrc
-    #can_access "${HOME_DIR}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
+    can_access "${HOME_DIR}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
 
     can_access "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
     #can_access "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile

@@ -132,5 +132,6 @@ if ! bool_v "${TASK_RUNNING}";then
     _global_logr_bg_thread
     echo_debug "logr_bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run
+    exit 0
 }&
 fi

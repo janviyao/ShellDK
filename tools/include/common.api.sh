@@ -210,7 +210,7 @@ function process_signal
                 echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pid_array[*]}"
 
                 if ! array_has "${exclude_pid_array[*]}" "${pid}";then
-                    echo_debug "signal { ${signal} } into { $(process_pid2name ${pid})[${pid}] }"
+                    echo_info "signal { ${signal} } into { $(process_pid2name ${pid})[${pid}] }"
                     ${SUDO} "kill -s ${signal} ${pid} &> /dev/null"
                 else
                     echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
@@ -266,14 +266,17 @@ function process_name2pid
     fi
     
     pid_array=($(echo))
-    ps -eo pid,cmd | grep -w -F "${pname}" | grep -v grep | while read line
-    do
-        local matchstr=$(echo "${line}" | grep -P "\b${pname}\s+")    
-        if [ -n "${matchstr}" ];then
-            local pid=$(echo "${line}" | awk '{ print $1 }')    
-            pid_array=(${pid_array[*]} ${pid})
-        fi        
-    done
+    ps -eo pid,cmd | grep -w "${pname}" | grep -v grep | awk '{ print $2 }' | { while read line
+        do
+            local matchstr=$(echo "${line}" | grep -P "\s*${pname}\b\s*")    
+            if [ -n "${matchstr}" ];then
+                local pid=$(echo "${line}" | awk '{ print $1 }')    
+                pid_array=(${pid_array[*]} ${pid})
+            fi        
+        done
+        echo "${pid_array[*]}"
+        return
+    }
 
     echo "${pid_array[*]}"
 }
@@ -358,8 +361,18 @@ function thread_info
         for tid in ${tid_array[*]}
         do
             local -a pinfo=($(cat /proc/${ppid}/stat))
+            
+            local tinfo_str=$(cat /proc/${ppid}/task/${tid}/stat)
+            if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
+                local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
+                local new_str=$(replace_regex "${old_str}" "\s+" "-")
 
-            local -a tinfo=($(cat /proc/${ppid}/task/${tid}/stat))
+                local old_str=$(replace_regex "${old_str}" "\(" "\(")
+                local old_str=$(replace_regex "${old_str}" "\)" "\)")
+                tinfo_str=$(replace_regex "${tinfo_str}" "${old_str}" "${new_str}")
+            fi
+
+            local -a tinfo=(${tinfo_str})
             for header in ${show_header[*]}
             do
                 local -a values=(${index_map[${header}]})
@@ -511,6 +524,16 @@ function string_end
     echo "${string:0-${length}:${length}}"
 }
 
+function string_regex
+{
+    local string="$1"
+    local regstr="$2"
+
+    [ -z "${regstr}" ] && { echo "${string}"; return; } 
+
+    echo $(echo "${string}" | grep -P "${regstr}" -o)
+}
+
 function match_str_start
 {
     local string="$1"
@@ -632,6 +655,7 @@ function replace_regex
     oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
     oldstr="${oldstr//\*/\*}"
+    oldstr="${oldstr//\(/\(}"
 
     if [[ $(string_start "${regstr}" 1) == '^' ]]; then
         oldstr="${oldstr//./\.}"

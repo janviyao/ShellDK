@@ -291,5 +291,6 @@ if ! bool_v "${TASK_RUNNING}";then
     _global_mdata_bg_thread
     echo_debug "mdat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run
+    exit 0
 }&
 fi

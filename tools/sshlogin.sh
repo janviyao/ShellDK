@@ -21,9 +21,11 @@ if [ $UID -ne 0 ]; then
 fi
 
 PASS_ENV="export TASK_RUNNING=true; export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
+_SOURCE="if test -d $MY_VIM_DIR;then if ! declare -F INCLUDE &>/dev/null;then source $MY_VIM_DIR/bashrc; fi; fi"
+
 RET_VAR="sudo_ret$$"
-SRV_MSG="if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/bashrc; remote_set_var '${NCAT_MASTER_ADDR}' '${RET_VAR}' \$?; fi"
-CMD_EXE="${PASS_ENV}; if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/bashrc; fi; (${CMD_EXE}); ${SRV_MSG}"
+SRV_MSG="if test -d $MY_VIM_DIR;then if ! declare -F INCLUDE &>/dev/null;then source $MY_VIM_DIR/bashrc; remote_set_var '${NCAT_MASTER_ADDR}' '${RET_VAR}' \$?; fi; fi"
+CMD_EXE="${PASS_ENV}; ${_SOURCE}; (${CMD_EXE}); ${SRV_MSG}"
 
 ncat_watcher_ctrl "HEARTBEAT"
 
