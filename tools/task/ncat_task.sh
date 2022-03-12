@@ -55,16 +55,15 @@ function _global_ncat_bg_thread
         elif [[ "${req_ctrl}" == "RECV_FILE" ]];then
             local ack_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             local ack_port=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
-            local trx_file=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 3)
+            local trx_file=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 3) 
+            {
+                local recv_port=${ack_port}
+                while ! local_port_available "${recv_port}"
+                do
+                    let recv_port++
+                done
 
-            local recv_port=${ack_port}
-            while ! local_port_available "${recv_port}"
-            do
-                let recv_port++
-            done
-
-            ncat_send_msg "${ack_addr}" "${ack_port}" "RECV_READY${GBL_SPF1}${recv_port}"
-            { 
+                ncat_send_msg "${ack_addr}" "${ack_port}" "RECV_READY${GBL_SPF1}${recv_port}"
                 ${SUDO} "mkdir -p $(fname2path '${recv_file}')"
                 timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > ${recv_file}
             }&

@@ -79,19 +79,19 @@ function ncat_send_msg
 
     echo_debug "ncat send: [$*]" 
     if can_access "nc";then
-        if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
-            echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
-            while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
-            do
-                echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] online"
-                sleep 1
-            done
-        fi
+        #if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
+        #    echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
+        #    while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
+        #    do
+        #        echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] online"
+        #        sleep 1
+        #    done
+        #fi
 
         (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         while test $? -ne 0
         do
-            echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] listen"
+            echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
             sleep 0.1
             (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         done
