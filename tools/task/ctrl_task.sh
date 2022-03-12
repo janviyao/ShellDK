@@ -1,7 +1,7 @@
 #!/bin/bash
 source $MY_VIM_DIR/tools/include/ctrl_task.api.sh
 
-function _global_ctrl_bg_thread
+function _ctrl_thread_main
 {
     while read line
     do
@@ -37,18 +37,26 @@ function _global_ctrl_bg_thread
     done < ${GBL_CTRL_PIPE}
 }
 
-if ! bool_v "${REMOTE_SSH}";then
+function _ctrl_thread
 {
     trap "" SIGINT SIGTERM SIGKILL
-    ppids=($(ppid))
-    self_pid=${ppids[2]}
-    echo_debug "ctrl_bg_thread [$(process_pid2name "${self_pid}")[${self_pid}]] REMOTE_SSH=${REMOTE_SSH}"
+
+    local ppids=($(ppid))
+    local self_pid=${ppids[2]}
+    local ppinfos=($(ppid true))
+    echo_debug "ctrl_bg_thread [${ppinfos[*]}] REMOTE_SSH=${REMOTE_SSH}"
 
     touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"
-    _global_ctrl_bg_thread
+    _ctrl_thread_main
     echo_debug "ctrl_bg_thread[${self_pid}] exit"
     rm -f ${GBL_CTRL_PIPE}.run
+
+    eval "exec ${GBL_CTRL_FD}>&-"
+    rm -f ${GBL_CTRL_PIPE} 
     exit 0
-}&
+}
+
+if ! bool_v "${REMOTE_SSH}";then
+    ( _ctrl_thread & )
 fi

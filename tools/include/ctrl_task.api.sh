@@ -55,11 +55,8 @@ function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit REMOTE_SSH=${REMOTE_SSH}" 
 
-    ctrl_task_ctrl_sync "EXIT"
-
-    eval "exec ${GBL_CTRL_FD}>&-"
-    rm -f ${GBL_CTRL_PIPE} 
-
+    ctrl_task_ctrl "EXIT"
+ 
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit
     fi

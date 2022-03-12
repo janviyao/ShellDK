@@ -1,7 +1,7 @@
 #!/bin/bash
 source $MY_VIM_DIR/tools/include/logr_task.api.sh
 
-function _global_logr_bg_thread
+function _logr_thread_main
 {
     while read line
     do
@@ -68,19 +68,26 @@ function _global_logr_bg_thread
     done < ${GBL_LOGR_PIPE}
 }
 
-if ! bool_v "${REMOTE_SSH}";then
+function _logr_thread
 {
     trap "" SIGINT SIGTERM SIGKILL
 
-    ppids=($(ppid))
-    self_pid=${ppids[2]}
-    echo_debug "logr_bg_thread [$(process_pid2name "${self_pid}")[${self_pid}]] REMOTE_SSH=${REMOTE_SSH}"
+    local ppids=($(ppid))
+    local self_pid=${ppids[2]}
+    local ppinfos=($(ppid true))
+    echo_debug "logr_bg_thread [${ppinfos[*]}] REMOTE_SSH=${REMOTE_SSH}"
 
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"
-    _global_logr_bg_thread
+    _logr_thread_main
     echo_debug "logr_bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run
+
+    eval "exec ${GBL_LOGR_FD}>&-"
+    rm -f ${GBL_LOGR_PIPE}
     exit 0
-}&
+}
+
+if ! bool_v "${REMOTE_SSH}";then
+    ( _logr_thread & )
 fi

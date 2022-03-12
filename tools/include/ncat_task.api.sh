@@ -251,9 +251,6 @@ function _bash_ncat_exit
     echo_debug "ncat signal exit REMOTE_SSH=${REMOTE_SSH}" 
 
     if ! bool_v "${REMOTE_SSH}";then
-        ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
-    fi
-
-    eval "exec ${GBL_NCAT_FD}>&-"
-    rm -fr ${GBL_NCAT_WORK_DIR} 
+        ncat_task_ctrl "EXIT${GBL_SPF1}$$"
+    fi 
 }

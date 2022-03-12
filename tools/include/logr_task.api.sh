@@ -49,8 +49,5 @@ function _bash_logr_exit
 { 
     echo_debug "logr signal exit REMOTE_SSH=${REMOTE_SSH}" 
 
-    logr_task_ctrl_sync "CTRL" "EXIT"
-
-    eval "exec ${GBL_LOGR_FD}>&-"
-    rm -f ${GBL_LOGR_PIPE} 
+    logr_task_ctrl "CTRL" "EXIT" 
 }

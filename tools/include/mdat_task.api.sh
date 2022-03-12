@@ -183,8 +183,5 @@ function _bash_mdata_exit
 { 
     echo_debug "mdata signal exit REMOTE_SSH=${REMOTE_SSH}" 
 
-    mdat_task_ctrl_sync "EXIT"
-
-    eval "exec ${GBL_MDAT_FD}>&-"
-    rm -f ${GBL_MDAT_PIPE} 
+    mdat_task_ctrl "EXIT" 
 }

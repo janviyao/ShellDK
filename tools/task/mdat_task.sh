@@ -1,7 +1,7 @@
 #!/bin/bash
 source $MY_VIM_DIR/tools/include/mdat_task.api.sh
 
-function _global_mdata_bg_thread
+function _mdata_thread_main
 {
     local -A _globalMap
     while read line
@@ -97,20 +97,26 @@ function _global_mdata_bg_thread
     done < ${GBL_MDAT_PIPE}
 }
 
+function _mdat_thread
 {
     trap "" SIGINT SIGTERM SIGKILL
 
-    ppids=($(ppid))
-    self_pid=${ppids[2]}
-    echo_debug "mdat_bg_thread [$(process_pid2name "${self_pid}")[${self_pid}]] REMOTE_SSH=${REMOTE_SSH}"
+    local ppids=($(ppid))
+    local self_pid=${ppids[2]}
+    local ppinfos=($(ppid true))
+    echo_debug "mdat_bg_thread [${ppinfos[*]}] REMOTE_SSH=${REMOTE_SSH}"
 
     #renice -n -2 -p ${self_pid} &> /dev/null
     #renice -n -2 -p ${self_pid}
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
-    _global_mdata_bg_thread
+    _mdata_thread_main
     echo_debug "mdat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run
+
+    eval "exec ${GBL_MDAT_FD}>&-"
+    rm -f ${GBL_MDAT_PIPE}
     exit 0
-}&
+}
+( _mdat_thread & )
