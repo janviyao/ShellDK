@@ -64,8 +64,9 @@ function _global_ncat_bg_thread
                 done
 
                 ncat_send_msg "${ack_addr}" "${ack_port}" "RECV_READY${GBL_SPF1}${recv_port}"
-                ${SUDO} "mkdir -p $(fname2path '${recv_file}')"
-                timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > ${recv_file}
+                ${SUDO} "mkdir -p $(fname2path '${trx_file}')"
+                timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > ${trx_file}
+                echo_debug "recv file: [${trx_file}]"
             }&
         elif [[ "${req_ctrl}" == "REQ_ACK" ]];then
             local remote_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
