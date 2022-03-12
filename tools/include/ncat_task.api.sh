@@ -8,9 +8,31 @@ mkfifo ${GBL_NCAT_PIPE}
 can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
 exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
+function local_port_available
+{
+    local port="$1"
+    if netstat -anp | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
+        return 1
+    else
+        return 0
+    fi
+}
+
 NCAT_MASTER_ADDR=$(get_local_ip)
+
 NCAT_MASTER_PORT=7888
-NCAT_TRFILE_PORT=7889
+while ! local_port_available "${NCAT_MASTER_PORT}"
+do
+    let NCAT_MASTER_PORT++
+done
+echo_info "master port [${NCAT_MASTER_PORT}]"
+
+NCAT_TRFILE_PORT=$((NCAT_MASTER_PORT + 1))
+while ! local_port_available "${NCAT_TRFILE_PORT}"
+do
+    let NCAT_TRFILE_PORT++
+done
+echo_info "trfile port [${NCAT_TRFILE_PORT}]"
 
 function ncat_watcher_ctrl
 {
@@ -22,6 +44,7 @@ function remote_ncat_alive
 {
     local ncat_addr="$1"
     local ncat_port="$2"
+
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
             echo_warn "remote[${ncat_addr} ${ncat_port}] dead"
@@ -40,16 +63,6 @@ function remote_ncat_alive
         fi
     else
         return 1
-    fi
-}
-
-function local_port_available
-{
-    local port="$1"
-    if netstat -anp | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
-        return 1
-    else
-        return 0
     fi
 }
 
@@ -83,11 +96,12 @@ function ncat_send_msg
             done
         fi
 
-        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port})
+        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         while test $? -ne 0
         do
+            echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] listen"
             sleep 0.1
-            (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port})
+            (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         done
     fi
 }
@@ -131,27 +145,29 @@ function ncat_task_ctrl_sync
 function remote_set_var
 {
     local ncat_addr="$1"
-    local var_name="$2"
-    local var_valu="$3"
+    local ncat_port="$2"
+    local var_name="$3"
+    local var_valu="$4"
 
     echo_debug "remote set: [$*]" 
-    ncat_send_msg "${ncat_addr}" "${NCAT_MASTER_PORT}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
+    ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
 }
 
 function remote_send_file
 {
     local ncat_addr="$1"
     local ncat_port="$2"
-    local send_file="$3"
+    local send_port="$3"
+    local send_file="$4"
 
     echo_debug "remote send file: [$*]" 
     if can_access "${res_file}";then
         ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
 
-        (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &>> ${BASHLOG}
+        (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
         while test $? -ne 0
         do
-            (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &>> ${BASHLOG}
+            (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
         done
     fi
 }
@@ -160,7 +176,6 @@ function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit REMOTE_SSH=${REMOTE_SSH}" 
 
-    ncat_watcher_ctrl "EXIT"
     if ! bool_v "${REMOTE_SSH}";then
         ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
     fi

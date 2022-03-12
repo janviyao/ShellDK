@@ -41,10 +41,8 @@ fi\
 "
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${RET_VAR} \$?"
+SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${RET_VAR} \$?"
 SSH_CMD="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}; exit 0"
-
-ncat_watcher_ctrl "HEARTBEAT"
 
 expect << EOF
     set timeout ${SSH_TIMEOUT}

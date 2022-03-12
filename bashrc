@@ -1,4 +1,3 @@
-w
 if declare -F INCLUDE &>/dev/null;then
     echo_debug "bashrc has loaded"
 fi
@@ -24,5 +23,3 @@ else
 
     trap "trap - ERR; _bash_ncat_exit; _bash_logr_exit; _bash_ctrl_exit; _bash_mdata_exit; exit 0" EXIT
 fi
-
-ncat_watcher_ctrl "HEARTBEAT"
