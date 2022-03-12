@@ -76,9 +76,9 @@ function _global_ncat_bg_thread
                 timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}
 
                 ${SUDO} "mkdir -p ${file_path}"
-                ${SUDO} "mv -f '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}' '${trx_file}'"
+                ${SUDO} "mv -f '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}' '${file_path}/${file_name}'"
                 ${SUDO} "rm -fr '${GBL_NCAT_WORK_DIR}${file_path}'"
-                echo_debug "recv file: [${trx_file}]"
+                echo_debug "recv file: [${file_path}/${file_name}]"
             }&
         elif [[ "${req_ctrl}" == "REQ_ACK" ]];then
             local remote_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)

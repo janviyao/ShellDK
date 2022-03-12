@@ -195,7 +195,12 @@ function send_file_to
         do
             (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
         done
-        echo_info "send file finish: [${send_file}]"
+
+        if [ -n "${recv_dire}" ];then
+            echo_info "send [${send_file}] to [${ncat_addr}:${recv_dire}/${file_name}] success"
+        else
+            echo_info "send [${send_file}] to [${ncat_addr}:${file_path}/${file_name}] success"
+        fi
     else
         echo_erro "file: [${send_file}] not exist"
     fi
