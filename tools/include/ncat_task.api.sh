@@ -150,9 +150,19 @@ function send_file_to
     local ncat_addr="$1"
     local ncat_port="$2"
     local send_file="$3"
+    local recv_dire="$4"
 
     echo_debug "remote send file: [$*]" 
     if can_access "${send_file}";then
+        local file_path=$(fname2path "${send_file}")
+        local file_name=$(path2fname "${send_file}")
+        send_file="${file_path}/${file_name}"
+
+        if [ -n "${recv_dire}" ];then
+            local dir_path=$(fname2path "${recv_dire}")
+            local dir_name=$(path2fname "${recv_dire}")
+            recv_dire="${dir_path}/${dir_name}"
+        fi
 
         local send_port=$((NCAT_MASTER_PORT + 1))
         while ! local_port_available "${send_port}"
@@ -162,7 +172,7 @@ function send_file_to
 
         while true
         do
-            ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${NCAT_MASTER_ADDR}${GBL_SPF2}${send_port}${GBL_SPF2}${send_file}"
+            ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${NCAT_MASTER_ADDR}${GBL_SPF2}${send_port}${GBL_SPF2}${send_file}${GBL_SPF2}${recv_dire}"
             local ncat_body=$(ncat_recv_msg "${send_port}")
             if [ -z "${ncat_body}" ];then
                 continue
@@ -186,6 +196,8 @@ function send_file_to
             (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
         done
         echo_info "send file finish: [${send_file}]"
+    else
+        echo_erro "file: [${send_file}] not exist"
     fi
 }
 

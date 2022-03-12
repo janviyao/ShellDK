@@ -56,6 +56,7 @@ function _global_ncat_bg_thread
             local ack_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             local ack_port=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
             local trx_file=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 3) 
+            local trx_dire=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 4) 
             {
                 local recv_port=${ack_port}
                 while ! local_port_available "${recv_port}"
@@ -66,13 +67,17 @@ function _global_ncat_bg_thread
                 ncat_send_msg "${ack_addr}" "${ack_port}" "RECV_READY${GBL_SPF1}${recv_port}"
 
                 local file_path=$(fname2path "${trx_file}")
+                if [ -n "${trx_dire}" ];then
+                    file_path="${trx_dire}"
+                fi
                 local file_name=$(path2fname "${trx_file}")
-                mkdir -p "${GBL_NCAT_WORK_DIR}${file_path}"
 
+                mkdir -p "${GBL_NCAT_WORK_DIR}${file_path}"
                 timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}
 
                 ${SUDO} "mkdir -p ${file_path}"
                 ${SUDO} "mv -f '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}' '${trx_file}'"
+                ${SUDO} "rm -fr '${GBL_NCAT_WORK_DIR}${file_path}'"
                 echo_debug "recv file: [${trx_file}]"
             }&
         elif [[ "${req_ctrl}" == "REQ_ACK" ]];then
