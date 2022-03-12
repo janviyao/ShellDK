@@ -24,7 +24,7 @@ while ! local_port_available "${NCAT_MASTER_PORT}"
 do
     let NCAT_MASTER_PORT++
 done
-echo_info "master port [${NCAT_MASTER_PORT}]"
+echo_debug "master port [${NCAT_MASTER_PORT}]"
 
 function ncat_watcher_ctrl
 {
@@ -145,12 +145,11 @@ function remote_set_var
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
 }
 
-function send_file_to
+function ncat_send_to
 {
     local ncat_addr="$1"
-    local ncat_port="$2"
-    local send_file="$3"
-    local recv_dire="$4"
+    local send_file="$2"
+    local recv_dire="$3"
 
     echo_debug "remote send file: [$*]" 
     if can_access "${send_file}";then
@@ -185,6 +184,17 @@ function send_file_to
             tar -czf "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}.tar.gz ${file_name}
             comp_file="${GBL_NCAT_WORK_DIR}${file_path}/${file_name}.tar.gz"
         fi
+
+        local ncat_port="7888"
+        while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
+        do
+            let ncat_port++
+            if [ ${ncat_port} -gt 65535 ];then
+                echo_erro "remote[${ncat_addr}] ncat offline"
+                return
+            fi
+        done
+        echo_debug "remote[${ncat_addr} ${ncat_port}] online"
 
         while true
         do

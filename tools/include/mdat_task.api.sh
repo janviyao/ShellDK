@@ -97,9 +97,15 @@ function global_set_var
     local var_name="$1"
     local one_pipe="$2"
     local var_valu=""
-     
-    var_valu="$(eval "echo \"\$${var_name}\"")"
-        
+
+    if contain_str "${var_name}" "=";then
+        eval "${var_name}"
+        var_valu="${var_name#*=}"
+        var_name="${var_name%%=*}"
+    else
+        var_valu="$(eval "echo \"\$${var_name}\"")"
+    fi
+
     echo_debug "mdata set: [$* = \"${var_valu}\"]" 
     mdat_task_ctrl "SET_VAR${GBL_SPF1}${var_name}${GBL_SPF2}${var_valu}" "${one_pipe}"
 }

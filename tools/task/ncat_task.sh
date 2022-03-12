@@ -43,16 +43,13 @@ function _global_ncat_bg_thread
                 continue
             fi
 
-            master_work=false
-            global_set_var "master_work"
+            global_set_var "master_work=false"
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
             local var_name=$(echo "${req_body}" | cut -d "=" -f 1)
             local var_valu=$(echo "${req_body}" | cut -d "=" -f 2)
-
-            eval "${var_name}=${var_valu}"
-            global_set_var "${var_name}"
+            global_set_var "${var_name}=${var_valu}"
         elif [[ "${req_ctrl}" == "RECEIVE" ]];then
             local ack_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             local ack_port=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
