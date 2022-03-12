@@ -24,6 +24,9 @@ alias lsblk='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,WWN,ALIGNMENT,MIN
 alias lspci='lspci -vvv -nn'
 alias lsscsi='lsscsi -d -s -g -p -P -i -w'
 
+alias gpush='function git_push { git add -A ./*; git commit -m "$1"; git push; }; git_push'
+alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
+
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
