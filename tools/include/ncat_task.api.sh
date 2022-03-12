@@ -161,7 +161,11 @@ function send_file_to
         if [ -n "${recv_dire}" ];then
             local dir_path=$(fname2path "${recv_dire}")
             local dir_name=$(path2fname "${recv_dire}")
-            recv_dire="${dir_path}/${dir_name}"
+            if [[ "${dir_path}" == "/" ]];then
+                recv_dire="${dir_path}${dir_name}"
+            else
+                recv_dire="${dir_path}/${dir_name}"
+            fi
         fi
 
         local send_port=$((NCAT_MASTER_PORT + 1))
