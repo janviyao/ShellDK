@@ -30,6 +30,7 @@ function _global_ncat_bg_thread
 
         local req_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
         local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
+        local req_foot=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 3)
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
@@ -52,7 +53,7 @@ function _global_ncat_bg_thread
 
             eval "${var_name}=${var_valu}"
             global_set_var "${var_name}"
-        elif [[ "${req_ctrl}" == "RECV_FILE" ]];then
+        elif [[ "${req_ctrl}" == "RECEIVE" ]];then
             local ack_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             local ack_port=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
             local trx_file=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 3) 
@@ -70,15 +71,28 @@ function _global_ncat_bg_thread
                 if [ -n "${trx_dire}" ];then
                     file_path="${trx_dire}"
                 fi
+
+                if [[ "${file_path}" == "/" ]];then
+                    file_path=""
+                fi
                 local file_name=$(path2fname "${trx_file}")
 
                 mkdir -p "${GBL_NCAT_WORK_DIR}${file_path}"
-                timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}
 
-                ${SUDO} "mkdir -p ${file_path}"
-                ${SUDO} "mv -f '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}' '${file_path}/${file_name}'"
-                ${SUDO} "rm -fr '${GBL_NCAT_WORK_DIR}${file_path}'"
-                echo_debug "recv file: [${file_path}/${file_name}]"
+                if [[ "${req_foot}" == "FILE" ]];then
+                    timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}
+                    ${SUDO} "mkdir -p ${file_path}"
+                    ${SUDO} "mv -f '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}' '${file_path}/${file_name}'"
+                    ${SUDO} "rm -fr '${GBL_NCAT_WORK_DIR}${file_path}'"
+                elif [[ "${req_foot}" == "DIRECTORY" ]];then
+                    timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}.tar.gz
+                    ${SUDO} "mkdir -p ${file_path}"
+                    ${SUDO} "tar -xzf '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}.tar.gz' -C '${file_path}'"
+                    ${SUDO} "rm -fr '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}.tar.gz'"
+                fi
+
+                echo_debug "recv [${file_path}/${file_name}] success"
+                exit 0
             }&
         elif [[ "${req_ctrl}" == "REQ_ACK" ]];then
             local remote_addr=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)

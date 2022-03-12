@@ -156,6 +156,9 @@ function send_file_to
     if can_access "${send_file}";then
         local file_path=$(fname2path "${send_file}")
         local file_name=$(path2fname "${send_file}")
+        if [[ "${file_path}" == "/" ]];then
+            file_path=""
+        fi
         send_file="${file_path}/${file_name}"
 
         if [ -n "${recv_dire}" ];then
@@ -173,10 +176,24 @@ function send_file_to
         do
             let send_port++
         done
+        
+        local comp_file=""
+        if [ -d "${send_file}" ];then
+            mkdir -p "${GBL_NCAT_WORK_DIR}${file_path}"
+            local cur_dir=$(pwd)
+            cd ${file_path}
+            tar -czf "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}.tar.gz ${file_name}
+            comp_file="${GBL_NCAT_WORK_DIR}${file_path}/${file_name}.tar.gz"
+        fi
 
         while true
         do
-            ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${NCAT_MASTER_ADDR}${GBL_SPF2}${send_port}${GBL_SPF2}${send_file}${GBL_SPF2}${recv_dire}"
+            if [ -d "${send_file}" ];then
+                ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECEIVE${GBL_SPF1}${NCAT_MASTER_ADDR}${GBL_SPF2}${send_port}${GBL_SPF2}${send_file}${GBL_SPF2}${recv_dire}${GBL_SPF1}DIRECTORY"
+            else
+                ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECEIVE${GBL_SPF1}${NCAT_MASTER_ADDR}${GBL_SPF2}${send_port}${GBL_SPF2}${send_file}${GBL_SPF2}${recv_dire}${GBL_SPF1}FILE"
+            fi
+
             local ncat_body=$(ncat_recv_msg "${send_port}")
             if [ -z "${ncat_body}" ];then
                 continue
@@ -194,11 +211,19 @@ function send_file_to
         done
         echo_debug "transfer file port [${send_port}]"
 
-        (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
-        while test $? -ne 0
-        do
+        if [ -d "${send_file}" ];then
+            (nc ${ncat_addr} ${send_port} < ${comp_file}) &>> ${BASHLOG}
+            while test $? -ne 0
+            do
+                (nc ${ncat_addr} ${send_port} < ${comp_file}) &>> ${BASHLOG}
+            done
+        else
             (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
-        done
+            while test $? -ne 0
+            do
+                (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
+            done
+        fi
 
         if [ -n "${recv_dire}" ];then
             echo_info "send [${send_file}] to [${ncat_addr}:${recv_dire}/${file_name}] success"
