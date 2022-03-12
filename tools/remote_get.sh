@@ -9,7 +9,7 @@ if [ -z "${CMD_EXE}" ];then
 fi
 
 TMP_RESULT="/tmp/remote_ret$$"
-PKG_MSG="(${CMD_EXE}) &> ${TMP_RESULT}; remote_send_file ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${NCAT_TRFILE_PORT} '${TMP_RESULT}'"
+PKG_MSG="(${CMD_EXE}) &> ${TMP_RESULT}; send_file_to ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} '${TMP_RESULT}'"
 
 $MY_VIM_DIR/tools/sshlogin.sh "${HOST_IP}" "${PKG_MSG}"
 if [ $? -ne 0 ];then

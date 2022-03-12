@@ -19,20 +19,12 @@ function local_port_available
 }
 
 NCAT_MASTER_ADDR=$(get_local_ip)
-
 NCAT_MASTER_PORT=7888
 while ! local_port_available "${NCAT_MASTER_PORT}"
 do
     let NCAT_MASTER_PORT++
 done
 echo_info "master port [${NCAT_MASTER_PORT}]"
-
-NCAT_TRFILE_PORT=$((NCAT_MASTER_PORT + 1))
-while ! local_port_available "${NCAT_TRFILE_PORT}"
-do
-    let NCAT_TRFILE_PORT++
-done
-echo_info "trfile port [${NCAT_TRFILE_PORT}]"
 
 function ncat_watcher_ctrl
 {
@@ -153,16 +145,40 @@ function remote_set_var
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
 }
 
-function remote_send_file
+function send_file_to
 {
     local ncat_addr="$1"
     local ncat_port="$2"
-    local send_port="$3"
-    local send_file="$4"
+    local send_file="$3"
 
     echo_debug "remote send file: [$*]" 
-    if can_access "${res_file}";then
-        ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
+    if can_access "${send_file}";then
+
+        local send_port=$((NCAT_MASTER_PORT + 1))
+        while ! local_port_available "${send_port}"
+        do
+            let send_port++
+        done
+
+        while true
+        do
+            ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${NCAT_MASTER_ADDR}${GBL_SPF2}${send_port}${GBL_SPF2}${send_file}"
+            local ncat_body=$(ncat_recv_msg "${send_port}")
+            if [ -z "${ncat_body}" ];then
+                continue
+            fi
+            echo_debug "handshake recv: [${ncat_body}]" 
+
+            local ack_body=$(echo "${ncat_body}" | cut -d "${GBL_ACK_SPF}" -f 3)
+            local req_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
+            local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
+
+            if [[ "${req_ctrl}" == "RECV_READY" ]];then
+                send_port=${req_body}
+                break
+            fi
+        done
+        echo_debug "transfer file port [${send_port}]"
 
         (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
         while test $? -ne 0
