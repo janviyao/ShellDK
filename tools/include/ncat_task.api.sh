@@ -217,6 +217,7 @@ function send_file_to
             do
                 (nc ${ncat_addr} ${send_port} < ${comp_file}) &>> ${BASHLOG}
             done
+            rm -f ${comp_file}
         else
             (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
             while test $? -ne 0
