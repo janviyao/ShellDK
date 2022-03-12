@@ -185,7 +185,7 @@ function send_file_to
         do
             (nc ${ncat_addr} ${send_port} < ${send_file}) &>> ${BASHLOG}
         done
-        echo_info "send file finish: [${trx_file}]"
+        echo_info "send file finish: [${send_file}]"
     fi
 }
 

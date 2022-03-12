@@ -64,8 +64,15 @@ function _global_ncat_bg_thread
                 done
 
                 ncat_send_msg "${ack_addr}" "${ack_port}" "RECV_READY${GBL_SPF1}${recv_port}"
-                ${SUDO} "mkdir -p $(fname2path '${trx_file}')"
-                timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > ${trx_file}
+
+                local file_path=$(fname2path "${trx_file}")
+                local file_name=$(path2fname "${trx_file}")
+                mkdir -p "${GBL_NCAT_WORK_DIR}${file_path}"
+
+                timeout ${OP_TIMEOUT} nc -l -4 ${recv_port} > "${GBL_NCAT_WORK_DIR}${file_path}"/${file_name}
+
+                ${SUDO} "mkdir -p ${file_path}"
+                ${SUDO} "mv -f '${GBL_NCAT_WORK_DIR}${file_path}/${file_name}' '${trx_file}'"
                 echo_debug "recv file: [${trx_file}]"
             }&
         elif [[ "${req_ctrl}" == "REQ_ACK" ]];then
