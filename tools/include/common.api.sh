@@ -928,7 +928,11 @@ function echo_file
     if var_exist "BASHLOG";then
         local log_type="$1"
         shift
-        printf "[%-18s %5s] %s\n" "$(echo_header false)" "${log_type}" "$*" >> ${BASHLOG}
+        if [ -n "${REMOTE_IP}" ];then
+            printf "[%-18s %5s] %s from [%s]\n" "$(echo_header false)" "${log_type}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
+        else
+            printf "[%-18s %5s] %s\n" "$(echo_header false)" "${log_type}" "$*" >> ${BASHLOG}
+        fi
     fi
     xtrace_restore
 }
@@ -955,7 +959,11 @@ function echo_erro
 {
     xtrace_disable
     local para=$1
-    echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+    if [ -n "${REMOTE_IP}" ];then
+        echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+    else
+        echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+    fi
     echo_file "erro" "$*"
     xtrace_restore
 }
@@ -964,7 +972,11 @@ function echo_info
 {
     xtrace_disable
     local para=$1
-    echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+    if [ -n "${REMOTE_IP}" ];then
+        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+    else
+        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+    fi
     echo_file "info" "$*"
     xtrace_restore
 }
@@ -973,7 +985,11 @@ function echo_warn
 {
     xtrace_disable
     local para=$1
-    echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+    if [ -n "${REMOTE_IP}" ];then
+        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+    else
+        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+    fi
     echo_file "warn" "$*"
     xtrace_restore
 }
@@ -987,7 +1003,11 @@ function echo_debug
         local fname=$(path2fname $0)
         contain_str "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then
-            echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+            if [ -n "${REMOTE_IP}" ];then
+                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+            else
+                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+            fi
         fi
     fi
     echo_file "debug" "$*"
@@ -1064,6 +1084,13 @@ function install_from_rpm
     done
 
     return 0
+}
+
+function is_me
+{
+    local user_name="$1"
+    [[ $(whoami) == ${user_name} ]] && return 0    
+    return 1
 }
 
 function make_ack

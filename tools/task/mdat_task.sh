@@ -97,15 +97,12 @@ function _global_mdata_bg_thread
     done < ${GBL_MDAT_PIPE}
 }
 
-if ! bool_v "${TASK_RUNNING}";then
 {
     trap "" SIGINT SIGTERM SIGKILL
-    echo_debug "REMOTE_SSH=${REMOTE_SSH}" 
 
-    local ppids=($(ppid))
+    ppids=($(ppid))
     self_pid=${ppids[2]}
-    #echo_debug "mdat_bg_thread [${ppids[*]}]"
-    echo_debug "mdat_bg_thread [$(process_pptree ${self_pid})]"
+    echo_debug "mdat_bg_thread [$(process_pid2name "${self_pid}")[${self_pid}]] REMOTE_SSH=${REMOTE_SSH}"
 
     #renice -n -2 -p ${self_pid} &> /dev/null
     #renice -n -2 -p ${self_pid}
@@ -117,4 +114,3 @@ if ! bool_v "${TASK_RUNNING}";then
     rm -f ${GBL_MDAT_PIPE}.run
     exit 0
 }&
-fi

@@ -34,19 +34,9 @@ unalias rm &> /dev/null || true
 set -o allexport
 
 ROOT_PID=$$
+MY_HOME=${HOME}
 GBL_BASE_DIR="/tmp/gbl"
-
-source $MY_VIM_DIR/tools/include/common.api.sh
-if bool_v "${REMOTE_SSH}";then
-    BASH_WORK_DIR="${GBL_BASE_DIR}/bash.${ROOT_PID}"
-    mkdir -p ${BASH_WORK_DIR}
-else
-    BASH_WORK_DIR="${GBL_BASE_DIR}/bash.master"
-    mkdir -p ${BASH_WORK_DIR}
-fi
 BASHLOG="${GBL_BASE_DIR}/bash.log"
-
-HOME_DIR=${HOME}
 SUDO="$MY_VIM_DIR/tools/sudo.sh"
 
 OP_TRY_CNT=3
@@ -98,3 +88,22 @@ function INCLUDE
         source ${file} 
     fi
 }
+
+INCLUDE "DEBUG_ON" $MY_VIM_DIR/tools/include/common.api.sh
+
+ppinfos=($(ppid true))
+echo_debug "pstree [${ppinfos[*]}]"
+
+if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
+    echo_debug "specify dir: ${BASH_WORK_DIR}"
+else
+    can_access "${BASH_WORK_DIR}" && { echo_debug "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
+    if bool_v "${REMOTE_SSH}";then
+        BASH_WORK_DIR="${GBL_BASE_DIR}/bash.slaver.${ROOT_PID}"
+    else
+        BASH_WORK_DIR="${GBL_BASE_DIR}/bash.master.${ROOT_PID}"
+    fi
+
+    echo_debug "create dir: ${BASH_WORK_DIR}"
+    mkdir -p ${BASH_WORK_DIR}
+fi

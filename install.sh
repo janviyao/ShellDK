@@ -5,7 +5,10 @@ ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
 
 export REMOTE_SSH=true
-source $MY_VIM_DIR/tools/include/base_task.api.sh
+export REMOTE_IP=127.0.0.1
+source $MY_VIM_DIR/tools/include/bashrc.api.sh
+INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
+INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
 
 . ${ROOT_DIR}/tools/paraparser.sh
 
@@ -135,7 +138,7 @@ if [ $? -eq 0 ]; then
 fi
 
 CMD_PRE="my"
-BIN_DIR="${HOME_DIR}/.local/bin"
+BIN_DIR="${MY_HOME}/.local/bin"
 mkdir -p ${BIN_DIR}
 
 declare -A commandMap
@@ -167,8 +170,8 @@ function deploy_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            can_access "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
-            ln -s ${link_file} ${HOME_DIR}/${linkf}
+            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            ln -s ${link_file} ${MY_HOME}/${linkf}
         else
             can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
             ${SUDO} ln -s ${link_file} ${BIN_DIR}/${linkf}
@@ -178,34 +181,34 @@ function deploy_env
     cd ${ROOT_DIR}/deps
 
     # build vim-work environment
-    mkdir -p ${HOME_DIR}/.vim
+    mkdir -p ${MY_HOME}/.vim
 
-    cp -fr ${ROOT_DIR}/colors ${HOME_DIR}/.vim
-    cp -fr ${ROOT_DIR}/syntax ${HOME_DIR}/.vim
+    cp -fr ${ROOT_DIR}/colors ${MY_HOME}/.vim
+    cp -fr ${ROOT_DIR}/syntax ${MY_HOME}/.vim
 
-    if ! can_access "${HOME_DIR}/.vim/bundle/vundle"; then
+    if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
         cd ${ROOT_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
-            mv -f bundle ${HOME_DIR}/.vim/
+            mv -f bundle ${MY_HOME}/.vim/
         fi
     fi
     
-    can_access "${HOME_DIR}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${HOME_DIR}/.bashrc
-    can_access "${HOME_DIR}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${HOME_DIR}/.bash_profile
+    can_access "${MY_HOME}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc
+    can_access "${MY_HOME}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile
 
-    can_access "${HOME_DIR}/.bashrc" || touch ${HOME_DIR}/.bashrc
-    #can_access "${HOME_DIR}/.bash_profile" || touch ${HOME_DIR}/.bash_profile
+    can_access "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
+    #can_access "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
-    sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
-    sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
-    sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
-    #sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
+    sed -i "/export.\+MY_VIM_DIR.\+/d" ${MY_HOME}/.bashrc
+    sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${MY_HOME}/.bashrc
+    sed -i "/source.\+\/bashrc/d" ${MY_HOME}/.bashrc
+    #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${HOME_DIR}/.bashrc
-    echo "export TEST_SUIT_ENV=\"${HOME_DIR}/.testrc\"" >> ${HOME_DIR}/.bashrc
-    echo "source ${ROOT_DIR}/bashrc" >> ${HOME_DIR}/.bashrc
-    #echo "source ${ROOT_DIR}/bash_profile" >> ${HOME_DIR}/.bash_profile
+    echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${MY_HOME}/.bashrc
+    echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
+    echo "source ${ROOT_DIR}/bashrc" >> ${MY_HOME}/.bashrc
+    #echo "source ${ROOT_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
     
     if can_access "/var/spool/cron/$(whoami)";then
         sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
@@ -222,8 +225,8 @@ function update_env
     bool_v "${NEED_NET}"
     if [ $? -eq 0 ]; then
         local need_update=1
-        if can_access "${HOME_DIR}/.vim/bundle/vundle"; then
-            git clone https://github.com/gmarik/vundle.git ${HOME_DIR}/.vim/bundle/vundle
+        if can_access "${MY_HOME}/.vim/bundle/vundle"; then
+            git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
             vim +BundleInstall +q +q
             need_update=0
         fi
@@ -241,16 +244,16 @@ function clean_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            can_access "${HOME_DIR}/${linkf}" && rm -f ${HOME_DIR}/${linkf}
+            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         else
             can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
         fi
     done
 
-    can_access "${HOME_DIR}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${HOME_DIR}/.bashrc
-    can_access "${HOME_DIR}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${HOME_DIR}/.bashrc
-    can_access "${HOME_DIR}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${HOME_DIR}/.bashrc
-    #can_access "${HOME_DIR}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${HOME_DIR}/.bash_profile
+    can_access "${MY_HOME}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${MY_HOME}/.bashrc
+    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${MY_HOME}/.bashrc
+    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${MY_HOME}/.bashrc
+    #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 }
 
 function install_from_net
@@ -466,7 +469,7 @@ function inst_deps
         can_access "${BIN_DIR}/ppid" && rm -f ${BIN_DIR}/ppid
         if ! can_access "ppid";then
             cd ${ROOT_DIR}/tools/app
-            gcc ppid.c -o ppid
+            gcc ppid.c -g -o ppid
             mv -f ppid ${BIN_DIR}
         fi
 
@@ -474,7 +477,7 @@ function inst_deps
         can_access "${BIN_DIR}/fstat" && rm -f ${BIN_DIR}/fstat
         if ! can_access "fstat";then
             cd ${ROOT_DIR}/tools/app
-            gcc fstat.c -o fstat
+            gcc fstat.c -g -o fstat
             mv -f fstat ${BIN_DIR}
         fi
 
@@ -484,7 +487,7 @@ function inst_deps
         ${SUDO} "sed -i '/\/home\/.\+\/.local\/lib/d' /etc/ld.so.conf"
 
         ${SUDO} "echo '/usr/local/lib' >> /etc/ld.so.conf"
-        ${SUDO} "echo '${HOME_DIR}/.local/lib' >> /etc/ld.so.conf"
+        ${SUDO} "echo '${MY_HOME}/.local/lib' >> /etc/ld.so.conf"
         ${SUDO} ldconfig
 
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then

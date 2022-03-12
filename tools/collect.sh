@@ -2,19 +2,19 @@
 #set -x
 EXPORT_FILE=$1
 if [ -z "${EXPORT_FILE}" ];then
-    EXPORT_FILE="${HOME_DIR}/vim.tar"
+    EXPORT_FILE="${MY_HOME}/vim.tar"
 fi
 CREATE_DIR=$(fname2path "${EXPORT_FILE}")
 
 # Collect dirs and files 
 TAR_WHAT="${MY_VIM_DIR}"
-TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.vim"
-#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.vimrc"
-#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.bashrc"
-#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.bash_profile"
-#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.minttyrc"
-#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.inputrc"
-#TAR_WHAT="${TAR_WHAT} ${HOME_DIR}/.astylerc"
+TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.vim"
+#TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.vimrc"
+#TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.bashrc"
+#TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.bash_profile"
+#TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.minttyrc"
+#TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.inputrc"
+#TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.astylerc"
 
 # Start to tar 
 can_access "${EXPORT_FILE}" && rm -f ${EXPORT_FILE}

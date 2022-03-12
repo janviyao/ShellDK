@@ -1,18 +1,22 @@
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <stdint.h>
+#include <stdbool.h>
+#include <unistd.h>  
+#include <ctype.h>
+#include <string.h>
+
 #include <linux/input.h>  
 #include <fcntl.h>  
 #include <sys/time.h>  
 #include <sys/types.h>  
 #include <sys/stat.h>  
-#include <unistd.h>  
-#include <string.h>
 
-#define MAX_TMPBUF 1024
+#define MAX_TMPBUF 128
 
 #define __NR_gettid 186
-static pid_t g_self_pid = 0;
+static bool  g_print_name = false;
+static pid_t g_self_pid  = 0;
 
 static pid_t get_ppid(pid_t pid)
 {
@@ -39,7 +43,16 @@ static pid_t get_ppid(pid_t pid)
     sscanf(buf, "%*d %*c%s %*c %d %*s", pname, &ppid);
     pname[strlen(pname) - 1] = '\0';
 
-    //printf("%s %d\n", pname, ppid);
+    if(ppid == 0) {
+        return 0;
+    }
+
+    if (g_print_name == true) {
+        printf("%s[%d]\n", pname, pid);
+    } else {
+        printf("%d\n", pid);
+    }
+
     return ppid;
 }
 
@@ -49,12 +62,8 @@ static int print_ppid(int pid)
 
     pid_t ppid = get_ppid(pid);
     if(ppid == 0) {
-        return 0;
+        return 1;
     }
-
-    //if (ppid != g_self_pid) {
-    printf("%d\n", ppid);
-    //}
 
     if(ppid == 1) {
         /* systemd */
@@ -64,32 +73,114 @@ static int print_ppid(int pid)
         return 0; 
     }
 
-    ret = print_ppid(ppid);
-    if (ret == 0) {
-        return 0;
-    }
-
-    return ppid;
+    return print_ppid(ppid);
 }
 
 int main(int argc, char **argv)  
 {
-    int ret = 0;
-    pid_t tid = 0;
+    int idx, ret = 0;
+    pid_t ppid = 0;
+    bool isdigit = true;
+    char buf[MAX_TMPBUF] = {0};
 
     if(argc < 2) {
         g_self_pid = syscall(__NR_gettid);
-        printf("%d\n", g_self_pid);
-        ret = print_ppid(g_self_pid);
+
+        ppid = get_ppid(g_self_pid);
+        if(ppid == 0) {
+            return 1;
+        }
+
+        ret = print_ppid(ppid);
     } else if (argc == 2) {
-        g_self_pid = strtol(argv[1], NULL, 10);
-        printf("%d\n", g_self_pid);
-        ret = print_ppid(g_self_pid);
+        isdigit = true;
+        memcpy(buf, argv[1], MAX_TMPBUF);
+        for(idx = 0; buf[idx]; idx++){
+            if (!isdigit(buf[idx])) {
+                isdigit = false;
+                break;
+            }
+        }
+
+        if (isdigit) {
+            g_self_pid  = strtol(argv[1], NULL, 10);
+        } else {
+            g_self_pid = syscall(__NR_gettid);
+
+            for(idx = 0; buf[idx]; idx++){
+                if (isalpha(buf[idx]) == 1) {
+                    buf[idx] = tolower(buf[idx]);
+                }
+            }
+
+            if (strcmp(buf, "true") == 0) {
+                g_print_name  = true;
+            } else if (strcmp(buf, "false") == 0) {
+                g_print_name  = false;
+            } else {
+                printf("invalid pid[%s]\n", argv[1]);
+                return 1;
+            }
+        }
+
+        ppid = get_ppid(g_self_pid);
+        if(ppid == 0) {
+            return 1;
+        }
+
+        ret = print_ppid(ppid);
+    } else if (argc == 3) {
+        isdigit = true;
+        memcpy(buf, argv[1], MAX_TMPBUF);
+        for(idx = 0; buf[idx]; idx++){
+            if (!isdigit(buf[idx])) {
+                isdigit = false;
+                break;
+            }
+        }
+
+        if (isdigit) {
+            g_self_pid  = strtol(argv[1], NULL, 10);
+        } else {
+            printf("invalid pid[%s]\n", argv[1]);
+            return 1;
+        }
+
+        isdigit = true;
+        memcpy(buf, argv[2], MAX_TMPBUF);
+        for(idx = 0; buf[idx]; idx++){
+            if (!isdigit(buf[idx])) {
+                isdigit = false;
+                break;
+            }
+        }
+
+        if (isdigit) {
+            g_print_name = (bool)strtol(buf, NULL, 10);
+        } else {
+            for(idx = 0; buf[idx]; idx++){
+                if (isalpha(buf[idx]) == 1) {
+                    buf[idx] = tolower(buf[idx]);
+                }
+            }
+
+            if (strcmp(buf, "true") == 0) {
+                g_print_name  = true;
+            } else if (strcmp(buf, "false") == 0) {
+                g_print_name  = false;
+            } else {
+                printf("invalid bool[%s]\n", argv[2]);
+                return 1;
+            }
+        }
+
+        ppid = get_ppid(g_self_pid);
+        if(ppid == 0) {
+            return 1;
+        }
+
+        ret = print_ppid(ppid);
     }
 
-    if (ret == 0) {
-        exit(1);
-    } else {
-        exit(0);
-    }
+    return ret;
 }

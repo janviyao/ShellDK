@@ -37,15 +37,12 @@ function _global_ctrl_bg_thread
     done < ${GBL_CTRL_PIPE}
 }
 
-if ! bool_v "${TASK_RUNNING}";then
+if ! bool_v "${REMOTE_SSH}";then
 {
     trap "" SIGINT SIGTERM SIGKILL
-    echo_debug "REMOTE_SSH=${REMOTE_SSH}" 
-
-    local ppids=($(ppid))
+    ppids=($(ppid))
     self_pid=${ppids[2]}
-    #echo_debug "ctrl_bg_thread [${ppids[*]}]"
-    echo_debug "ctrl_bg_thread [$(process_pptree ${self_pid})]"
+    echo_debug "ctrl_bg_thread [$(process_pid2name "${self_pid}")[${self_pid}]] REMOTE_SSH=${REMOTE_SSH}"
 
     touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"

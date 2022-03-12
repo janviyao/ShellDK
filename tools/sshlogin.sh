@@ -14,18 +14,35 @@ if [ -z "${CMD_EXE}" ];then
     exit 0
 fi
 
+if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
+    eval "${CMD_EXE}"
+    exit $?
+fi
+
 EXPECT_EOF=""
 if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
-#PASS_ENV="export TASK_RUNNING=true; export USR_NAME=${USR_NAME}; export USR_PASSWORD=${USR_PASSWORD}; export MY_VIM_DIR=$MY_VIM_DIR"
-PASS_ENV="export USR_NAME=${USR_NAME}; export USR_PASSWORD=${USR_PASSWORD}; export MY_VIM_DIR=$MY_VIM_DIR"
-_SOURCE="if test -d $MY_VIM_DIR;then source $MY_VIM_DIR/tools/include/base_task.api.sh; fi"
+PASS_ENV="\
+export REMOTE_SSH=true; \
+export REMOTE_IP=${LOCAL_IP}; \
+export USR_NAME='${USR_NAME}'; \
+export USR_PASSWORD='${USR_PASSWORD}'; \
+export MY_VIM_DIR='$MY_VIM_DIR'; \
+source $MY_VIM_DIR/tools/include/common.api.sh; \
+if ! is_me ${USR_NAME};then \
+    if test -d $MY_VIM_DIR;then \
+        source $MY_VIM_DIR/tools/include/bashrc.api.sh; \
+        source $MY_VIM_DIR/tools/task/mdat_task.sh; \
+        source $MY_VIM_DIR/tools/task/ncat_task.sh; \
+    fi;\
+fi\
+"
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${RET_VAR} \$?;"
-CMD_EXE="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}"
+SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${RET_VAR} \$?"
+SSH_CMD="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}; exit 0"
 
 ncat_watcher_ctrl "HEARTBEAT"
 
@@ -36,10 +53,10 @@ expect << EOF
     #exp_internal 0 #disable debug
     #exp_internal -f ~/expect.log 0 # debug into file and no echo
 
-    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${CMD_EXE}"
-    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${CMD_EXE}"
-    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
-    spawn -noecho env "TERM=export TASK_RUNNING=false;export REMOTE_SSH=true;:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${CMD_EXE}"
+    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${SSH_CMD}"
+    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${SSH_CMD}"
+    #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
+    spawn -noecho env "TERM=export REMOTE_SSH=true;export REMOTE_IP=${LOCAL_IP};:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
 
     expect {
         "*(yes/no)?" { send "yes\r"; exp_continue }

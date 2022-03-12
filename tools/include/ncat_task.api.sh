@@ -83,11 +83,11 @@ function ncat_send_msg
             done
         fi
 
-        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port})
         while test $? -ne 0
         do
             sleep 0.1
-            (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+            (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port})
         done
     fi
 }
@@ -148,19 +148,19 @@ function remote_send_file
     if can_access "${res_file}";then
         ncat_send_msg "${ncat_addr}" "${ncat_port}" "RECV_FILE${GBL_SPF1}${send_file}"
 
-        (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
+        (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &>> ${BASHLOG}
         while test $? -ne 0
         do
-            (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &> /dev/null
+            (nc ${ncat_addr} ${NCAT_TRFILE_PORT} < ${send_file}) &>> ${BASHLOG}
         done
     fi
 }
 
 function _bash_ncat_exit
 { 
-    ncat_watcher_ctrl "EXIT"
+    echo_debug "ncat signal exit REMOTE_SSH=${REMOTE_SSH}" 
 
-    echo_debug "REMOTE_SSH=${REMOTE_SSH}" 
+    ncat_watcher_ctrl "EXIT"
     if ! bool_v "${REMOTE_SSH}";then
         ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
     fi

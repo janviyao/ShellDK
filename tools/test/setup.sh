@@ -58,9 +58,9 @@ do
     fi
 
     ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
-    ${TOOL_ROOT_DIR}/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${HOME_DIR}"
+    ${TOOL_ROOT_DIR}/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
 
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "tar -xf ${HOME_DIR}/vim.tar"
+    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
     ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh -o env -o deps"
 done
 
@@ -72,8 +72,9 @@ do
     fi
 
     ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
-    ${TOOL_ROOT_DIR}/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${HOME_DIR}"
+    ${TOOL_ROOT_DIR}/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
 
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "tar -xf ${HOME_DIR}/vim.tar"
+    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
     ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh -o env -o deps"
 done
+

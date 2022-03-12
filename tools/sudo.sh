@@ -37,8 +37,22 @@ RET_VAR="sudo_ret$$"
 GET_RET="${RET_VAR}=\$?; global_set_var ${RET_VAR} ${GBL_MDAT_PIPE}"
 
 # trap - EXIT : prevent from removing global directory
-PASS_ENV="export TASK_RUNNING=true; export USR_NAME='${USR_NAME}'; export USR_PASSWORD='${USR_PASSWORD}'; export MY_VIM_DIR=$MY_VIM_DIR"
-CMD_STR="${PASS_ENV}; source $MY_VIM_DIR/tools/include/base_task.api.sh; (${CMD_STR}); ${GET_RET}"
+PASS_ENV="\
+export REMOTE_SSH=true; \
+export REMOTE_IP=127.0.0.1; \
+export BASH_WORK_DIR='${BASH_WORK_DIR}'; \
+export USR_NAME='${USR_NAME}'; \
+export USR_PASSWORD='${USR_PASSWORD}'; \
+export MY_VIM_DIR=$MY_VIM_DIR; \
+source $MY_VIM_DIR/tools/include/common.api.sh; \
+if ! is_me ${USR_NAME};then \
+    if test -d $MY_VIM_DIR;then \
+        source $MY_VIM_DIR/tools/include/bashrc.api.sh; \
+    fi;\
+fi\
+"
+
+CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF

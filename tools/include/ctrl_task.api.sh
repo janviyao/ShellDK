@@ -53,6 +53,8 @@ function ctrl_task_ctrl_sync
 
 function _bash_ctrl_exit
 { 
+    echo_debug "ctrl signal exit REMOTE_SSH=${REMOTE_SSH}" 
+
     ctrl_task_ctrl_sync "EXIT"
 
     eval "exec ${GBL_CTRL_FD}>&-"
