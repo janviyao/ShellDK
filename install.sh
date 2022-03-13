@@ -4,8 +4,10 @@
 ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
 
-export REMOTE_SSH=true
+export BTASK_LIST="mdat,ncat"
 export REMOTE_IP=127.0.0.1
+
+source $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/include/bashrc.api.sh
 INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
 INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh

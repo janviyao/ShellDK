@@ -24,17 +24,11 @@ alias lsblk='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,WWN,ALIGNMENT,MIN
 alias lspci='lspci -vvv -nn'
 alias lsscsi='lsscsi -d -s -g -p -P -i -w'
 
-alias gpush='function git_push { git add -A ./*; git commit -m "$1"; git push; }; git_push'
+alias gpush='function git_push { git add -A ./*; git commit -s -m "$1"; git push; }; git_push'
 alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
 
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
-
-# all variables and functions exported
-# only function exported: export -f function
-# only variable exported: export var=val
-# NOTE: if variables use declare define, allexport will have no effect to them
-set -o allexport
 
 ROOT_PID=$$
 MY_HOME=${HOME}
@@ -92,8 +86,6 @@ function INCLUDE
     fi
 }
 
-INCLUDE "DEBUG_ON" $MY_VIM_DIR/tools/include/common.api.sh
-
 ppinfos=($(ppid true))
 echo_debug "pstree [${ppinfos[*]}]"
 
@@ -101,10 +93,11 @@ if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
     echo_debug "specify dir: ${BASH_WORK_DIR}"
 else
     can_access "${BASH_WORK_DIR}" && { echo_debug "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
-    if bool_v "${REMOTE_SSH}";then
-        BASH_WORK_DIR="${GBL_BASE_DIR}/bash.slaver.${ROOT_PID}"
-    else
+
+    if contain_str "${BTASK_LIST}" "master";then
         BASH_WORK_DIR="${GBL_BASE_DIR}/bash.master.${ROOT_PID}"
+    else
+        BASH_WORK_DIR="${GBL_BASE_DIR}/bash.slaver.${ROOT_PID}"
     fi
 
     echo_debug "create dir: ${BASH_WORK_DIR}"

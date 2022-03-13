@@ -8,37 +8,6 @@ LOG_HEADER=true
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
 
-function NOT
-{
-    local es=0
-
-    "$@" || es=$?
-
-    # Logic looks like so:
-    #  - return false if command exit successfully
-    #  - return false if command exit after receiving a core signal (FIXME: or any signal?)
-    #  - return true if command exit with an error
-
-    # This naively assumes that the process doesn't exit with > 128 on its own.
-    if ((es > 128)); then
-        es=$((es & ~128))
-        case "$es" in
-            3) ;&       # SIGQUIT
-            4) ;&       # SIGILL
-            6) ;&       # SIGABRT
-            8) ;&       # SIGFPE
-            9) ;&       # SIGKILL
-            11) es=0 ;; # SIGSEGV
-            *) es=1 ;;
-        esac
-    elif [[ -n $EXIT_STATUS ]] && ((es != EXIT_STATUS)); then
-        es=0
-    fi
-
-    # invert error code of any command and also trigger ERR on 0 (unlike bash ! prefix)
-    ((!es == 0))
-}
-
 function bool_v
 {
     local para=$1
@@ -1044,10 +1013,9 @@ function import_all
     fi
 
     local import_file="/tmp/export.${parent_pid}"
-
     if can_access "${import_file}";then 
         local import_config=$(< "${import_file}")
-        source <(echo "${import_config//\?=/=}")
+        source<(echo "${import_config//\?=/=}")
     fi
 }
 
@@ -1093,10 +1061,19 @@ function is_me
     return 1
 }
 
-function make_ack
+function wait_value
 {
-    local ack_pipe="$1"
-    
+    local send_ctnt="$1"
+    local send_pipe="$2"
+
+    # the first pid is shell where ppid run
+    local self_pid=$$
+    if can_access "ppid";then
+        local ppids=($(ppid))
+        local self_pid=${ppids[1]}
+    fi
+    local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
+
     echo_debug "make ack: ${ack_pipe}"
     #can_access "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
@@ -1104,16 +1081,9 @@ function make_ack
 
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
-    
-    return ${ack_fhno}
-}
-
-function wait_ack
-{
-    local ack_pipe=$1
-    local ack_fhno=$2
 
     echo_debug "wait ack: ${ack_pipe}"
+    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_ctnt}" > ${send_pipe}
     read ack_value < ${ack_pipe}
     export ack_value
 
@@ -1156,3 +1126,35 @@ function get_local_ip
     done
 }
 LOCAL_IP="$(get_local_ip)"
+
+function NOT
+{
+    local es=0
+
+    "$@" || es=$?
+
+    # Logic looks like so:
+    #  - return false if command exit successfully
+    #  - return false if command exit after receiving a core signal (FIXME: or any signal?)
+    #  - return true if command exit with an error
+
+    # This naively assumes that the process doesn't exit with > 128 on its own.
+    if ((es > 128)); then
+        es=$((es & ~128))
+        case "$es" in
+            3) ;&       # SIGQUIT
+            4) ;&       # SIGILL
+            6) ;&       # SIGABRT
+            8) ;&       # SIGFPE
+            9) ;&       # SIGKILL
+            11) es=0 ;; # SIGSEGV
+            *) es=1 ;;
+        esac
+    elif [[ -n $EXIT_STATUS ]] && ((es != EXIT_STATUS)); then
+        es=0
+    fi
+
+    # invert error code of any command and also trigger ERR on 0 (unlike bash ! prefix)
+    ((!es == 0))
+}
+

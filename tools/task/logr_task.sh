@@ -1,5 +1,46 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/include/logr_task.api.sh
+GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
+GBL_LOGR_FD=${GBL_LOGR_FD:-8}
+mkfifo ${GBL_LOGR_PIPE}
+can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
+exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
+
+function logr_task_ctrl
+{
+    local logr_ctrl="$1"
+    local logr_body="$2"
+    #echo_debug "log to self: [ctrl: ${logr_ctrl} msg: ${logr_body}]" 
+
+    if [ -w ${GBL_LOGR_PIPE} ];then
+        echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${logr_ctrl}${GBL_SPF1}${logr_body}" > ${GBL_LOGR_PIPE}
+    else
+        if ! can_access "${GBL_LOGR_PIPE}";then
+            echo_erro "removed: ${GBL_LOGR_PIPE}"
+        fi
+    fi
+}
+
+function logr_task_ctrl_sync
+{
+    local logr_ctrl="$1"
+    local logr_body="$2"
+    #echo_debug "log ato self: [ctrl: ${logr_ctrl} msg: ${logr_body}]" 
+
+    if [ -w ${GBL_LOGR_PIPE} ];then
+        echo_debug "logr wait for ${GBL_LOGR_PIPE}"
+        wait_value "${logr_ctrl}${GBL_SPF1}${logr_body}" "${GBL_LOGR_PIPE}"
+    else
+        if ! can_access "${GBL_LOGR_PIPE}";then
+            echo_erro "removed: ${GBL_LOGR_PIPE}"
+        fi
+    fi
+}
+
+function _bash_logr_exit
+{ 
+    echo_debug "logr signal exit BTASK_LIST=${BTASK_LIST}" 
+    logr_task_ctrl "CTRL" "EXIT" 
+}
 
 function _logr_thread_main
 {
@@ -75,7 +116,7 @@ function _logr_thread
     local ppids=($(ppid))
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
-    echo_debug "logr_bg_thread [${ppinfos[*]}] REMOTE_SSH=${REMOTE_SSH}"
+    echo_debug "logr_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
 
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"
@@ -88,6 +129,7 @@ function _logr_thread
     exit 0
 }
 
-if ! bool_v "${REMOTE_SSH}";then
+if contain_str "${BTASK_LIST}" "logr";then
     ( _logr_thread & )
 fi
+

@@ -38,7 +38,7 @@ GET_RET="${RET_VAR}=\$?; global_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
 
 # trap - EXIT : prevent from removing global directory
 PASS_ENV="\
-export REMOTE_SSH=true; \
+export BTASK_LIST='mdat,ncat'; \
 export REMOTE_IP=127.0.0.1; \
 export BASH_WORK_DIR='${BASH_WORK_DIR}'; \
 export USR_NAME='${USR_NAME}'; \
@@ -47,6 +47,7 @@ export MY_VIM_DIR=$MY_VIM_DIR; \
 source $MY_VIM_DIR/tools/include/common.api.sh; \
 if ! is_me ${USR_NAME};then \
     if test -d $MY_VIM_DIR;then \
+        source $MY_VIM_DIR/tools/include/common.api.sh; \
         source $MY_VIM_DIR/tools/include/bashrc.api.sh; \
     fi;\
 fi\

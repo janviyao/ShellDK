@@ -41,20 +41,8 @@ function send_ctrl_to_self_sync
     #echo_debug "ctrl ato self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
 
     if [ -w ${USR_CTRL_PIPE} ];then
-        local self_pid=$$
-        if can_access "ppid";then
-            local ppids=($(ppid))
-            local self_pid=${ppids[1]}
-        fi
-
-        local ack_pipe="${GBL_CTRL_DIR}/ack.${self_pid}"
-        local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
-        echo_debug "controller fd[${ack_fhno}] for ${ack_pipe}"
-
-        local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
-        echo "${sendctx}" > ${USR_CTRL_PIPE}
-
-        wait_ack "${ack_pipe}" "${ack_fhno}"
+        echo_debug "controller wait for ${USR_CTRL_PIPE}"
+        wait_value "${req_ctrl}${GBL_SPF1}${req_body}" "${USR_CTRL_PIPE}"
     else
         if [ -d ${USR_CTRL_DIR} ];then
             echo_erro "removed: ${USR_CTRL_PIPE}"
@@ -69,20 +57,8 @@ function send_ctrl_to_parent_sync
     #echo_debug "ctrl ato parent: [ctrl: ${req_ctrl} msg: ${req_body}]" 
 
     if [ -w ${USR_CTRL_HIGH_PIPE} ];then
-        local self_pid=$$
-        if can_access "ppid";then
-            local ppids=($(ppid))
-            local self_pid=${ppids[1]}
-        fi
-
-        local ack_pipe="${GBL_CTRL_DIR}/ack.${self_pid}"
-        local ack_fhno=$(make_ack "${ack_pipe}"; echo $?)
-        echo_debug "controller fd[${ack_fhno}] for ${ack_pipe}"
-
-        local sendctx="NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
-        echo "${sendctx}" > ${USR_CTRL_HIGH_PIPE}
-
-        wait_ack "${ack_pipe}" "${ack_fhno}"
+        echo_debug "controller wait for ${USR_CTRL_HIGH_PIPE}"
+        wait_value "${req_ctrl}${GBL_SPF1}${req_body}" "${USR_CTRL_HIGH_PIPE}"
     else
         if [ -d ${USR_CTRL_HIGH_DIR} ];then
             echo_erro "removed: ${USR_CTRL_HIGH_PIPE}"
