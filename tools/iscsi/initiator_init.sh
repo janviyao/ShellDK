@@ -58,7 +58,7 @@ do
     fi
     sleep 1
 
-    ${SUDO} "iscsiadm -m node -o update -n node.conn[0].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
+    ${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
     #iscsiadm -m node -o update -n node.conn[0].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}
     if [ $? -ne 0 ];then
         echo_erro "update node.conn[0].iscsi.HeaderDigest { ${ipaddr} } fail"

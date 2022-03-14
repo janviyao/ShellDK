@@ -23,29 +23,29 @@ source $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/include/bashrc.api.sh
 echo_debug "env: ${PRIVATE_VAR}"
 
+INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
 if contain_str "${BTASK_LIST}" "mdat";then
-    INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
     old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")
     [ -n "${old_spec}" ] && trap "${old_spec}; _bash_mdat_exit" EXIT
     [ -z "${old_spec}" ] && trap "_bash_mdat_exit" EXIT
 fi
 
+INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
 if contain_str "${BTASK_LIST}" "ncat";then
-    INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
     old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")
     [ -n "${old_spec}" ] && trap "${old_spec}; _bash_ncat_exit" EXIT
     [ -z "${old_spec}" ] && trap "_bash_ncat_exit" EXIT
 fi
 
+INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh
 if contain_str "${BTASK_LIST}" "logr";then
-    INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh
     old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")
     [ -n "${old_spec}" ] && trap "${old_spec}; _bash_logr_exit" EXIT
     [ -z "${old_spec}" ] && trap "_bash_logr_exit" EXIT
 fi
 
+INCLUDE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/task/ctrl_task.sh
 if contain_str "${BTASK_LIST}" "ctrl";then
-    INCLUDE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/task/ctrl_task.sh
     old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")
     [ -n "${old_spec}" ] && trap "${old_spec}; _bash_ctrl_exit" EXIT
     [ -z "${old_spec}" ] && trap "_bash_ctrl_exit" EXIT

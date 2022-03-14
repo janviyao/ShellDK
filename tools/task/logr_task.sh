@@ -1,9 +1,11 @@
 #!/bin/bash
-GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
-GBL_LOGR_FD=${GBL_LOGR_FD:-8}
-mkfifo ${GBL_LOGR_PIPE}
-can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
-exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
+if contain_str "${BTASK_LIST}" "logr";then
+    GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
+    GBL_LOGR_FD=${GBL_LOGR_FD:-8}
+    mkfifo ${GBL_LOGR_PIPE}
+    can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
+    exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
+fi
 
 function logr_task_ctrl
 {
@@ -132,4 +134,3 @@ function _logr_thread
 if contain_str "${BTASK_LIST}" "logr";then
     ( _logr_thread & )
 fi
-

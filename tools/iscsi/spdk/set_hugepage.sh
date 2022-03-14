@@ -30,6 +30,8 @@ fi
 HP_FILE_PREFIX=$(trim_str_end "${HP_MAP_FILE}" "*")
 echo_info "HugePage file-prefix: ${HP_FILE_PREFIX}"
 
+can_access "${HP_MAP_FILE}" && exit 0
+
 HP_FILE_SIZE=0
 CAN_FREE_SIZE=0
 if can_access "/dev/hugepages/fusion_target_iscsi*";then
@@ -98,6 +100,8 @@ do
 
                         ${TOOL_ROOT_DIR}/log.sh rm -f ${hugefile} 
                         let LEFT_NR=LEFT_NR-cur_size
+
+                        echo_info "left: ${LEFT_NR}, rm -f ${hugefile}"
                         if [ ${LEFT_NR} -le 0 ];then
                             break
                         fi

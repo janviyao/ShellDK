@@ -6,11 +6,7 @@ export MY_VIM_DIR=${ROOT_DIR}
 
 export BTASK_LIST="mdat,ncat"
 export REMOTE_IP=127.0.0.1
-
-source $MY_VIM_DIR/tools/include/common.api.sh
-source $MY_VIM_DIR/tools/include/bashrc.api.sh
-INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
-INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
+source $MY_VIM_DIR/bashrc
 
 . ${ROOT_DIR}/tools/paraparser.sh
 
@@ -33,6 +29,8 @@ tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_
 tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
 tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
 
+rpmTodo["unzip"]="unzip-.+\.rpm"
+rpmTodo["/usr/lib64/libssl.so.10"]="compat-openssl10-.+\.rpm"
 rpmTodo["/usr/bin/python-config"]="python-devel.+\.rpm"
 rpmTodo["/usr/lib64/libpython2.7.so.1.0"]="python-libs.+\.rpm"
 rpmTodo["/usr/bin/python3-config"]="python3-devel.+\.rpm"
@@ -55,7 +53,7 @@ rpmTodo["autoconf"]="autoconf-.+\.rpm"
 rpmTodo["automake"]="automake-.+\.rpm"
 rpmTodo["nc"]="nmap-ncat-.+\.rpm"
 rpmTodo["ag"]="the_silver_searcher-.+\.rpm"
-rpmTodo["/usr/share/doc/perl-Data-Dumper-2.145"]="perl-Data-Dumper-.+\.rpm"
+rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-2.167.+\.rpm"
 rpmTodo["/usr/share/doc/perl-Thread-Queue-3.02"]="perl-Thread-Queue-.+\.rpm"
 rpmTodo["locale"]="glibc-common-.+\.rpm"
 #rpmTodo["/usr/lib/golang/api"]="golang-1.+\.rpm"
@@ -71,10 +69,10 @@ funcMap["cscope"]="inst_cscope"
 funcMap["tig"]="inst_tig"
 funcMap["ack"]="inst_ack"
 funcMap["astyle"]="inst_astyle"
-funcMap["glibc2.18"]="inst_glibc"
+funcMap["app"]="inst_app"
 funcMap["deps"]="inst_deps"
-funcMap["install"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack"
-funcMap["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
+funcMap["all"]="inst_app inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
+funcMap["glibc2.18"]="inst_glibc"
 
 function inst_usage
 {
@@ -87,6 +85,8 @@ function inst_usage
     echo "install.sh -o astyle     @install astyle package"
     echo "install.sh -o ack        @install ack package"
     echo "install.sh -o glibc2.18  @install glibc2.18 package"
+    echo "install.sh -o app        @install all bin tools being used"
+    echo "install.sh -o deps       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
     echo "install.sh -j num        @install with thread-num"
 
@@ -430,36 +430,14 @@ function update_check
     fi
 }
 
-function inst_deps
+function inst_app
 {     
     cd ${ROOT_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        for usr_cmd in ${!rpmTodo[@]};
-        do
-            if ! can_access "${usr_cmd}";then
-                local todoes="${rpmTodo["${usr_cmd}"]}"
-                install_from_rpm "${ROOT_DIR}/deps" "${todoes}" 
-            fi
-        done
-        
-        for usr_cmd in ${tarDeps[@]};
-        do
-            if ! can_access "${usr_cmd}";then
-                local todoes="${tarTodo[${usr_cmd}]}"
+        if ! can_access "unzip";then
+            install_from_rpm "${ROOT_DIR}/deps" "unzip-.+\.rpm" 
+        fi
 
-                echo_info "$(printf "[%13s]: %-50s" "Will install" "${usr_cmd}")"
-                install_from_make "${todoes}" 
-            fi
-        done
-
-        for usr_cmd in ${!netDeps[@]};
-        do
-            if ! can_access "${usr_cmd}";then
-                local pat_file=${netDeps["${usr_cmd}"]}
-                install_from_net ${pat_file} 
-            fi
-        done
-        
         # Install deno
         if ! can_access "deno";then
             cd ${ROOT_DIR}/deps
@@ -485,13 +463,12 @@ function inst_deps
 
         ${SUDO} chmod 777 /etc/ld.so.conf
 
-        ${SUDO} "sed -i '/\/usr\/local\/lib/d' /etc/ld.so.conf"
-        ${SUDO} "sed -i '/\/home\/.\+\/.local\/lib/d' /etc/ld.so.conf"
+        ${SUDO} "sed -i '#/usr/local/lib#d' /etc/ld.so.conf"
+        ${SUDO} "sed -i '#/home/.\+/.local/lib#d' /etc/ld.so.conf"
 
         ${SUDO} "echo '/usr/local/lib' >> /etc/ld.so.conf"
         ${SUDO} "echo '${MY_HOME}/.local/lib' >> /etc/ld.so.conf"
         ${SUDO} ldconfig
-
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         # Install deno
         unzip deno-x86_64-pc-windows-msvc.zip
@@ -501,6 +478,34 @@ function inst_deps
         cp -f apt-cyg ${BIN_DIR}
         chmod +x ${BIN_DIR}/apt-cyg
     fi 
+}
+
+function inst_deps
+{     
+    for usr_cmd in ${!rpmTodo[@]};
+    do
+        if ! can_access "${usr_cmd}";then
+            local todoes="${rpmTodo["${usr_cmd}"]}"
+            install_from_rpm "${ROOT_DIR}/deps" "${todoes}" 
+        fi
+    done
+
+    for usr_cmd in ${tarDeps[@]};
+    do
+        if ! can_access "${usr_cmd}";then
+            local todoes="${tarTodo[${usr_cmd}]}"
+            echo_info "$(printf "[%13s]: %-50s" "Will install" "${usr_cmd}")"
+            install_from_make "${todoes}" 
+        fi
+    done
+
+    for usr_cmd in ${!netDeps[@]};
+    do
+        if ! can_access "${usr_cmd}";then
+            local pat_file=${netDeps["${usr_cmd}"]}
+            install_from_net ${pat_file} 
+        fi
+    done 
 }
 
 function inst_ctags

@@ -25,7 +25,7 @@ mkdir -p ${TEST_LOG_DIR}
 
 DATE_TIME=$(date '+%Y%m%d-%H%M%S')
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/save_coredump.sh "${TEST_LOG_DIR}/coredump/${DATE_TIME}"
-can_access "${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log" && ${SUDO} mv ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log ${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log.${DATE_TIME}
+can_access "${TEST_LOG_DIR}/${TEST_APP_NAME}.log" && ${SUDO} mv ${TEST_LOG_DIR}/${TEST_APP_NAME}.log ${TEST_LOG_DIR}/${TEST_APP_NAME}.log.${DATE_TIME}
 
 if process_exist "${TEST_APP_NAME}";then
     ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"

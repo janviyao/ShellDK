@@ -189,8 +189,8 @@
 
   #DISK0 Storage /dev/nvme6n1 Auto 32k
   #DISK1 Storage /dev/nvme7n1 Auto 32k
-  DISK0 Storage /apsarapangu/fastdisk/1G.img Auto 32k
-  DISK1 Storage /apsarapangu/fastdisk/10G.img Auto 32k
+  DISK0 Storage /apsarapangu/fastdisk/50G.img Auto 32k
+  DISK1 Storage /apsarapangu/fastdisk/100G.img Auto 32k
 
 
   DISK0 Option Unmap Disable

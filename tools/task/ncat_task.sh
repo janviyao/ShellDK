@@ -1,17 +1,21 @@
 #!/bin/bash
-GBL_NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
-mkdir -p ${GBL_NCAT_WORK_DIR}
+if contain_str "${BTASK_LIST}" "ncat";then
+    GBL_NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
+    mkdir -p ${GBL_NCAT_WORK_DIR}
 
-GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
-GBL_NCAT_FD=${GBL_NCAT_FD:-9}
-mkfifo ${GBL_NCAT_PIPE}
-can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
-exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
+    GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
+    GBL_NCAT_FD=${GBL_NCAT_FD:-9}
+    mkfifo ${GBL_NCAT_PIPE}
+    can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
+    exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
+fi
 
 function local_port_available
 {
     local port="$1"
-    if netstat -anp | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
+
+    #echo "${USR_PASSWORD}" | sudo -S 
+    if netstat -at  2>/dev/null | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
         return 1
     else
         return 0

@@ -1,9 +1,11 @@
 #!/bin/bash
-GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdat.pipe"
-GBL_MDAT_FD=${GBL_MDAT_FD:-7}
-mkfifo ${GBL_MDAT_PIPE}
-can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
-exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
+if contain_str "${BTASK_LIST}" "mdat";then
+    GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdat.pipe"
+    GBL_MDAT_FD=${GBL_MDAT_FD:-7}
+    mkfifo ${GBL_MDAT_PIPE}
+    can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
+    exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
+fi
 
 function mdat_task_ctrl
 {

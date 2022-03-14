@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 DEBUG_ON=0
 LOG_ENABLE=".+"
-LOG_HEADER=true
+LOG_HEADER=false
 
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
@@ -195,6 +195,7 @@ function process_exist
             return 1
         fi
     done
+    return 1
 }
 
 function process_signal
@@ -239,7 +240,6 @@ function process_signal
 function process_kill
 {
     local para_arr=($*)
-    local pid=""
 
     [ ${#para_arr[*]} -eq 0 ] && return 1
 
@@ -293,6 +293,7 @@ function process_name2pid
     }
 
     echo "${pid_array[*]}"
+    return
 }
 
 function process_subprocess
