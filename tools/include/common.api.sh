@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 DEBUG_ON=0
 LOG_ENABLE=".+"
-LOG_HEADER=false
+LOG_HEADER=true
 
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
@@ -903,10 +903,16 @@ function echo_file
     if var_exist "BASHLOG";then
         local log_type="$1"
         shift
+
+        local headpart=$(printf "[%-18s %5]" "$(echo_header false)" "${log_type}")
+        if ! bool_v "${LOG_HEADER}";then
+            headpart=$(printf "[%5]" "${log_type}")
+        fi
+
         if [ -n "${REMOTE_IP}" ];then
-            printf "[%-18s %5s] %s from [%s]\n" "$(echo_header false)" "${log_type}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
+            printf "%s %s from [%s]\n" "${headpart}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
         else
-            printf "[%-18s %5s] %s\n" "$(echo_header false)" "${log_type}" "$*" >> ${BASHLOG}
+            printf "%s %s\n" "${headpart}" "$*" >> ${BASHLOG}
         fi
     fi
     xtrace_restore

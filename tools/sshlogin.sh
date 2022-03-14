@@ -33,10 +33,7 @@ export MY_VIM_DIR='$MY_VIM_DIR'; \
 source $MY_VIM_DIR/tools/include/common.api.sh; \
 if ! is_me ${USR_NAME};then \
     if test -d $MY_VIM_DIR;then \
-        source $MY_VIM_DIR/tools/include/common.api.sh; \
-        source $MY_VIM_DIR/tools/include/bashrc.api.sh; \
-        source $MY_VIM_DIR/tools/task/mdat_task.sh; \
-        source $MY_VIM_DIR/tools/task/ncat_task.sh; \
+        source $MY_VIM_DIR/bashrc; \
     fi;\
 fi\
 "

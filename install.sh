@@ -4,8 +4,8 @@
 ROOT_DIR=$(cd `dirname $0`;pwd)
 export MY_VIM_DIR=${ROOT_DIR}
 
-export BTASK_LIST="mdat,ncat"
-export REMOTE_IP=127.0.0.1
+export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
+export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
 source $MY_VIM_DIR/bashrc
 
 . ${ROOT_DIR}/tools/paraparser.sh
