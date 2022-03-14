@@ -60,8 +60,7 @@ cd ${RUN_DIR}
 RUN_DIR=`pwd`
 
 declare -r CMD_STR="$2"
-declare -r log_file="/tmp/$$.log"
-:> ${log_file}
+tmp_file="$(temp_file)"
 
 cursor_pos
 global_get_var x_pos
@@ -86,7 +85,7 @@ do
         $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos}&
         bgpid=$!
 
-        $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${log_file}"
+        $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${tmp_file}"
         if [ $? -ne 0 ];then
             echo_debug "threads exception"
 
@@ -106,7 +105,7 @@ do
 
         logr_task_ctrl "CURSOR_MOVE" "${x_pos}${GBL_SPF2}${y_pos}"
         logr_task_ctrl "ERASE_LINE" 
-        logr_task_ctrl_sync "PRINT_FROM_FILE" "${log_file}"
+        logr_task_ctrl_sync "PRINT_FROM_FILE" "${tmp_file}"
         logr_task_ctrl "NEWLINE"
 
         let x_pos++
@@ -116,6 +115,7 @@ do
 
     cd ${RUN_DIR}
 done
+rm -f ${tmp_file}
 
 usr_ctrl_exit
 wait

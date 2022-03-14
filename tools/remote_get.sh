@@ -8,15 +8,15 @@ if [ -z "${CMD_EXE}" ];then
     exit 0
 fi
 
-TMP_RESULT="/tmp/remote_ret$$"
-PKG_MSG="(${CMD_EXE}) &> ${TMP_RESULT}; ncat_send_to ${NCAT_MASTER_ADDR} '${TMP_RESULT}'"
+tmp_file="$(temp_file)"
+PKG_MSG="(${CMD_EXE}) &> ${tmp_file}; ncat_send_to ${NCAT_MASTER_ADDR} '${tmp_file}'"
 
 $MY_VIM_DIR/tools/sshlogin.sh "${HOST_IP}" "${PKG_MSG}"
 if [ $? -ne 0 ];then
     echo_erro "ssh fail: \"${CMD_EXE}\" @ ${HOST_IP}"
 fi
 
-if can_access "${GBL_NCAT_WORK_DIR}${TMP_RESULT}";then
-    cat ${GBL_NCAT_WORK_DIR}${TMP_RESULT}
-    rm -f ${GBL_NCAT_WORK_DIR}${TMP_RESULT}*
+if can_access "${GBL_NCAT_WORK_DIR}${tmp_file}";then
+    cat ${GBL_NCAT_WORK_DIR}${tmp_file}
+    rm -f ${GBL_NCAT_WORK_DIR}${tmp_file}*
 fi

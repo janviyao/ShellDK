@@ -280,17 +280,18 @@ function process_name2pid
     fi
     
     pid_array=($(echo))
-    ps -eo pid,cmd | grep -w "${pname}" | grep -v grep  | { while read line
-        do
-            local matchstr=$(echo "${line}" | awk '{ print $2 }' | grep -P "\s*${pname}\b\s*")    
-            if [ -n "${matchstr}" ];then
-                local pid=$(echo "${line}" | awk '{ print $1 }')    
-                pid_array=(${pid_array[*]} ${pid})
-            fi        
-        done
-        echo "${pid_array[*]}"
-        return
-    }
+    local tmp_file="$(temp_file)"
+
+    ps -eo pid,cmd | grep -w "${pname}" | grep -v grep > ${tmp_file}
+    while read line
+    do
+        local matchstr=$(echo "${line}" | awk '{ print $2 }' | grep -P "\s*${pname}\b\s*")    
+        if [ -n "${matchstr}" ];then
+            local pid=$(echo "${line}" | awk '{ print $1 }')    
+            pid_array=(${pid_array[*]} ${pid})
+        fi        
+    done < ${tmp_file}
+    rm -f ${tmp_file}
 
     echo "${pid_array[*]}"
     return
@@ -655,6 +656,16 @@ function contain_str
     fi
 }
 
+function temp_file
+{
+    local self_pid=$$
+    if can_access "ppid";then
+        local ppids=($(ppid))
+        local self_pid=${ppids[1]}
+    fi
+    echo "${BASH_WORK_DIR}/tmp.${self_pid}"
+}
+
 function replace_regex
 {
     local string="$1"
@@ -704,16 +715,10 @@ function file_count
     if bool_v "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
-        local self_pid=$$
-        if can_access "ppid";then
-            local ppids=($(ppid))
-            local self_pid=${ppids[1]}
-        fi
-        local tmp_file=/tmp/size.${self_pid}
-
+        local tmp_file="$(temp_file)"
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
-        ${SUDO} "rm -f ${tmp_file} &> /dev/null"
+        rm -f ${tmp_file}
         echo "${fcount}"
     fi
 }

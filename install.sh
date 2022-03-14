@@ -401,12 +401,14 @@ function update_check
     local fname_reg="$2"
 
     if can_access "${local_cmd}";then
-        ${local_cmd} --version &> /tmp/${local_cmd}.ver
+        local tmp_file="$(temp_file)"
+        ${local_cmd} --version &> ${tmp_file} 
         if [ $? -ne 0 ];then
             return 1
         fi
 
-        local version_cur=$(grep -P "\d+\.\d+" -o /tmp/${local_cmd}.ver | head -n 1)
+        local version_cur=$(grep -P "\d+\.\d+" -o ${tmp_file} | head -n 1)
+        rm -f ${tmp_file}
         local local_dir=$(pwd)
         cd ${ROOT_DIR}/deps
 
