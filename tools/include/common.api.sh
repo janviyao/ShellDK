@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 DEBUG_ON=0
 LOG_ENABLE=".+"
-LOG_HEADER=true
+LOG_HEADER=false
 
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
@@ -904,9 +904,9 @@ function echo_file
         local log_type="$1"
         shift
 
-        local headpart=$(printf "[%-18s %5]" "$(echo_header false)" "${log_type}")
+        local headpart=$(printf "[%-18s %5s]\n" "$(echo_header false)" "${log_type}")
         if ! bool_v "${LOG_HEADER}";then
-            headpart=$(printf "[%5]" "${log_type}")
+            headpart=$(printf "[%5s]\n" "${log_type}")
         fi
 
         if [ -n "${REMOTE_IP}" ];then
