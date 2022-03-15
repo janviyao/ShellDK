@@ -35,9 +35,8 @@ do
 
             if process_exist "${pid}";then
                 pname=$(process_pid2name "${pid}")
-                is_exc=`echo "${exclude_pname}" | grep -w "${pname}"` 
-                if [ -z "${is_exc}" ];then
-                    echo_info "${signum}）${signame} ${pname} PID=${pid}"
+                if ! contain_str "${exclude_pname}" "${pname}";then
+                    echo_info "${signum}）${signame} {$(ps -q ${pid} -o cmd=)} PID=${pid}"
                     ${SUDO} kill -s ${signame} ${pid}
                 fi
             fi
