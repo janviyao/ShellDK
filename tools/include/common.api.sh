@@ -3,7 +3,9 @@
 #set -u # variable not exist, then exit
 DEBUG_ON=0
 LOG_ENABLE=".+"
-LOG_HEADER=false
+LOG_HEADER=true
+HEADER_TIME=false
+HEADER_FILE=false
 
 shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/trace.api.sh
@@ -904,9 +906,9 @@ function echo_file
         local log_type="$1"
         shift
 
-        local headpart=$(printf "[%-18s %5s]\n" "$(echo_header false)" "${log_type}")
-        if ! bool_v "${LOG_HEADER}";then
-            headpart=$(printf "[%5s]\n" "${log_type}")
+        local headpart=$(printf "[%5s]" "${log_type}")
+        if bool_v "${LOG_HEADER}";then
+            headpart=$(printf "[%s %5s]" "$(echo_header false)" "${log_type}")
         fi
 
         if [ -n "${REMOTE_IP}" ];then
@@ -924,13 +926,23 @@ function echo_header
 
     xtrace_disable
     if bool_v "${LOG_HEADER}";then
-        cur_time=$(date '+%Y-%m-%d %H:%M:%S:%N') 
-        #echo "${COLOR_HEADER}${FONT_BOLD}******${NCAT_MASTER_ADDR}@${cur_time}: ${COLOR_CLOSE}"
-        local proc_info=$(printf "[%-18s[%6d]]" "$(path2fname $0)" "$$")
-        if bool_v "${color}";then
-            echo "${COLOR_HEADER}${FONT_BOLD}${cur_time} [${LOCAL_IP}] ${proc_info} ${COLOR_CLOSE}"
+        local header=""
+        if bool_v "HEADER_TIME";then
+            header="$(date '+%Y-%m-%d %H:%M:%S:%N')[${LOCAL_IP}]"
         else
-            echo "${cur_time} [${LOCAL_IP}] ${proc_info}"
+            header="[${LOCAL_IP}]"
+        fi
+
+        if bool_v "HEADER_FILE";then
+            header="${header} $(printf "[%-18s[%6d]]" "$(path2fname $0)" "$$")"
+        else
+            header="${header} $(printf "[%6d]" "$$")"
+        fi
+
+        if bool_v "${color}";then
+            echo "${COLOR_HEADER}${FONT_BOLD}${header}${COLOR_CLOSE}"
+        else
+            echo "${header}"
         fi
     fi
     xtrace_restore
