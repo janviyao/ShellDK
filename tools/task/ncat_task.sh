@@ -308,7 +308,7 @@ function _ncat_thread_main
         local req_foot=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 3)
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
-            echo_debug "ncat exit from {$(process_pid2name "${req_body}")[${req_body}]}" 
+            echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
             #global_set_var "master_work=false"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud

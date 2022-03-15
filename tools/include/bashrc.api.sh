@@ -91,7 +91,7 @@ ppinfos=($(ppid true))
 echo_debug "pstree [${ppinfos[*]}]"
 
 if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
-    echo_debug "specify dir: ${BASH_WORK_DIR}"
+    echo_debug "share work: ${BASH_WORK_DIR}"
 else
     can_access "${BASH_WORK_DIR}" && { echo_debug "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
 
