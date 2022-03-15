@@ -908,7 +908,7 @@ function echo_file
 
         local headpart=$(printf "[%5s]" "${log_type}")
         if bool_v "${LOG_HEADER}";then
-            headpart=$(printf "[%s %5s]" "$(echo_header false)" "${log_type}")
+            headpart=$(printf "%s [%5s]" "$(echo_header false)" "${log_type}")
         fi
 
         if [ -n "${REMOTE_IP}" ];then
