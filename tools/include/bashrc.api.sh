@@ -24,6 +24,7 @@ alias lsblk='lsblk -o NAME,FSTYPE,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,WWN,ALIGNMENT,MIN
 alias lspci='lspci -vvv -nn'
 alias lsscsi='lsscsi -d -s -g -p -P -i -w'
 
+alias gpull="$MY_VIM_DIR/tools/loop.sh git pull"
 alias gpush='function git_push { git add -A ./*; git commit -s -m "$1"; git push; }; git_push'
 alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
 
