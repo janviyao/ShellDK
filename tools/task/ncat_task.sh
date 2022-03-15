@@ -107,7 +107,7 @@ function ncat_recv_msg
     local ncat_port="$1"
 
     if can_access "nc";then
-        timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} | while read ncat_body
+        timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>${BASHLOG} | while read ncat_body
         do
             echo "${ncat_body}"
         done
