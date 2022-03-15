@@ -12,3 +12,9 @@ do
     echo_debug "run [ fio client ] @ ${ipaddr}"
     ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${FIO_ROOT_DIR}/client.sh"
 done
+
+if bool_v "${TEST_FILL_DATA}";then
+    ${FIO_ROOT_DIR}/run.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
+fi
+${FIO_ROOT_DIR}/run.sh "${FIO_ROOT_DIR}/testcase/full.sh"
+
