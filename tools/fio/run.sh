@@ -14,7 +14,7 @@ do
 done
 
 if bool_v "${TEST_FILL_DATA}";then
-    ${FIO_ROOT_DIR}/fio_start.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
+    ${FIO_ROOT_DIR}/fio_run.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
 fi
-${FIO_ROOT_DIR}/fio_start.sh "${FIO_ROOT_DIR}/testcase/full.sh"
+${FIO_ROOT_DIR}/fio_run.sh "${FIO_ROOT_DIR}/testcase/full.sh"
 

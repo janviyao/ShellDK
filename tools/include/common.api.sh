@@ -953,9 +953,11 @@ function echo_erro
     xtrace_disable
     local para=$1
     if [ -n "${REMOTE_IP}" ];then
-        echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
     else
-        echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+        #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
     echo_file "erro" "$*"
     xtrace_restore

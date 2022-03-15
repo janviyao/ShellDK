@@ -42,12 +42,13 @@ function run_fio_func
         echo_info "testcs-(${case_index}): { ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} }"
     fi
 
-    local other_paras=""
+    echo > ${output_dir}/hosts
     for ipaddr in ${host_array[*]}
     do
         echo "${ipaddr}" >> ${output_dir}/hosts
     done
     
+    local other_paras=""
     if can_access "${output_dir}/hosts";then
         other_paras="${other_paras} --client=${output_dir}/hosts ${output_dir}/${conf_full_name}"
     fi
