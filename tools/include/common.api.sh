@@ -908,7 +908,7 @@ function echo_file
 
         local headpart=$(printf "[%5s]" "${log_type}")
         if bool_v "${LOG_HEADER}";then
-            headpart=$(printf "%s [%5s]" "$(echo_header false)" "${log_type}")
+            headpart=$(printf "%s [%-5s]" "$(echo_header false)" "${log_type}")
         fi
 
         if [ -n "${REMOTE_IP}" ];then
@@ -934,9 +934,9 @@ function echo_header
         fi
 
         if bool_v "HEADER_FILE";then
-            header="${header} $(printf "[%-18s[%6d]]" "$(path2fname $0)" "$$")"
+            header="${header} $(printf "[%-18s[%-6d]]" "$(path2fname $0)" "$$")"
         else
-            header="${header} $(printf "[%6d]" "$$")"
+            header="${header} $(printf "[%-6d]" "$$")"
         fi
 
         if bool_v "${color}";then
