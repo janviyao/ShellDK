@@ -29,7 +29,7 @@ do
     if [ -n "${PID_LIST[*]}" ];then
         for pid in ${PID_LIST[*]}
         do
-            if [ $$ -eq $pid ]; then
+            if contain_str "$(ppid $$)" "${pid}"; then
                 continue
             fi
 

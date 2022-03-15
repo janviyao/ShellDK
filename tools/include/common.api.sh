@@ -208,7 +208,7 @@ function process_signal
     local para_arr=($*)
     local pinfo=""
     local pid=""
-    local exclude_pid_array=($$ $ROOT_PID)
+    local exclude_pid_array=($(ppid $$))
 
     [ ${#para_arr[*]} -eq 0 ] && return 1
 
