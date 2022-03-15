@@ -29,17 +29,19 @@ export BTASK_LIST='mdat,ncat'; \
 export REMOTE_IP=${LOCAL_IP}; \
 export USR_NAME='${USR_NAME}'; \
 export USR_PASSWORD='${USR_PASSWORD}'; \
+if ls '${MY_VIM_DIR}' &> /dev/null;then \
 export MY_VIM_DIR='$MY_VIM_DIR'; \
 source $MY_VIM_DIR/tools/include/common.api.sh; \
 if ! is_me ${USR_NAME};then \
     if test -d $MY_VIM_DIR;then \
         source $MY_VIM_DIR/bashrc; \
     fi;\
+fi;\
 fi\
 "
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="remote_set_var ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${RET_VAR} \$?"
+SRV_MSG="if declare -F remote_set_var &>/dev/null;then remote_set_var ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${RET_VAR} \$?; fi"
 SSH_CMD="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}; exit 0"
 
 expect << EOF
@@ -55,7 +57,7 @@ expect << EOF
     spawn -noecho env "TERM=export BTASK_LIST='mdat,ncat';export REMOTE_IP=${LOCAL_IP};:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
 
     expect {
-        "*(yes/no)?" { send "yes\r"; exp_continue }
+        "*yes/no*?" { send "yes\r"; exp_continue }
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         #solve: expect: spawn id exp4 not open

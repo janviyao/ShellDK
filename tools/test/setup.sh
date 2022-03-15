@@ -50,31 +50,18 @@ echo "" >> ${TEST_SUIT_ENV}
 echo "# [runtime configure]" >> ${TEST_SUIT_ENV}
 
 # Push run env
-$MY_VIM_DIR/tools/collect.sh "/tmp/vim.tar"
-for ipaddr in ${SERVER_IP_ARRAY[*]}
-do
-    if [[ ${LOCAL_IP} == ${ipaddr} ]];then
-        continue
-    fi
-
-    ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
-    ${TOOL_ROOT_DIR}/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
-
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh -o env -o deps"
-done
-
-# Push run env
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
     if [[ ${LOCAL_IP} == ${ipaddr} ]];then
         continue
     fi
-
     ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
-    ${TOOL_ROOT_DIR}/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
-
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh -o env -o deps"
 done
 
+for ipaddr in ${SERVER_IP_ARRAY[*]}
+do
+    if [[ ${LOCAL_IP} == ${ipaddr} ]];then
+        continue
+    fi
+    ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
+done

@@ -5,16 +5,20 @@ declare -i count=0
 declare -a ip_array
 while read line
 do
-    ipaddr=$(echo "${line}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+    ipaddr=$(echo "${line}" | awk '{ print $1 }')
+    match_regex ""${ipaddr}"" "^\d+\.\d+\.\d+\.\d+$" || continue
 
-    echo_debug "ipaddr: ${ipaddr}"
-    is_local=`ip addr | grep -F "${ipaddr}"`
-    if [ -n "${is_local}" ];then
+    [ -z "${ipaddr}" ] && continue 
+    echo_info "HostName: ${hostnm} IP: ${ipaddr}"
+
+    if ip addr | grep -F "${ipaddr}" &> /dev/null;then
         continue
     fi
 
-    ip_array[${count}]="${ipaddr}"
-    let count++
+    if ! contain_str "${ip_array[*]}" "${ipaddr}";then
+        ip_array[${count}]="${ipaddr}"
+        let count++
+    fi
 done < /etc/hosts
 
 for ((idx=0; idx < ${#ip_array[@]}; idx++))

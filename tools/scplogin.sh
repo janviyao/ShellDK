@@ -46,7 +46,7 @@ expect << EOF
     spawn -noecho scp -r ${SRC_DIR} ${DES_DIR}
 
     expect {
-        "*(yes/no)?" { send "yes\r"; exp_continue }
+        "*yes/no*?" { send "yes\r"; exp_continue }
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         # solve: expect: spawn id exp4 not open

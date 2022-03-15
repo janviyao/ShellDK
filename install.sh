@@ -2,12 +2,22 @@
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
 ROOT_DIR=$(cd `dirname $0`;pwd)
+BIN_DIR="${HOME}/.local/bin"
+mkdir -p ${BIN_DIR}
+
 export MY_VIM_DIR=${ROOT_DIR}
 
 export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
-source $MY_VIM_DIR/bashrc
 
+if ! (ls "${BIN_DIR}/ppid" &> /dev/null);then 
+    cd ${ROOT_DIR}/tools/app
+    gcc ppid.c -g -o ppid
+    mv -f ppid ${BIN_DIR}
+    cd ${ROOT_DIR}
+fi
+
+source $MY_VIM_DIR/bashrc
 . ${ROOT_DIR}/tools/paraparser.sh
 
 declare -A funcMap
@@ -78,6 +88,7 @@ function inst_usage
 {
     echo "=================== Usage ==================="
     echo "install.sh -n true       @all installation packages from net"
+    echo "install.sh -r true       @install packages into other host in '/etc/hosts'"
     echo "install.sh -o clean      @clean vim environment"
     echo "install.sh -o env        @deploy vim's usage environment"
     echo "install.sh -o vim        @install vim package"
@@ -97,6 +108,10 @@ function inst_usage
         printf "Op: %-10s Funcs: %s\n" ${key} "${funcMap[${key}]}"
     done
 }
+
+REMOTE_INST="${parasMap['-r']}"
+REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
+REMOTE_INST="${REMOTE_INST:-0}"
 
 NEED_OP="${parasMap['-o']}"
 NEED_OP="${NEED_OP:-${parasMap['--op']}}"
@@ -126,11 +141,10 @@ fi
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
 echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
 echo_info "$(printf "[%13s]: %-6s" "Need Netwrk" "${NEED_NET}")"
+echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 
-bool_v "${NEED_NET}"
-if [ $? -eq 0 ]; then
-    check_net
-    if [ $? -eq 0 ]; then
+if bool_v "${NEED_NET}"; then
+    if check_net; then
         NEED_NET=1
         echo_info "$(printf "[%13s]: %-6s" "Netwk ping" "Ok")"
     else
@@ -140,8 +154,6 @@ if [ $? -eq 0 ]; then
 fi
 
 CMD_PRE="my"
-BIN_DIR="${MY_HOME}/.local/bin"
-mkdir -p ${BIN_DIR}
 
 declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
@@ -673,16 +685,70 @@ function inst_glibc
     fi
 }
 
-for key in ${!funcMap[*]};
-do
-    if contain_str "${NEED_OP}" "${key}"; then
-        echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
-        echo_info "$(printf "[%13s]: %-6s" "Funcs" "${funcMap[${key}]}")"
-        for func in ${funcMap[${key}]};
+if ! bool_v "${REMOTE_INST}"; then
+    for key in ${!funcMap[*]};
+    do
+        if contain_str "${NEED_OP}" "${key}"; then
+            echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
+            echo_info "$(printf "[%13s]: %-6s" "Funcs" "${funcMap[${key}]}")"
+            for func in ${funcMap[${key}]};
+            do
+                echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
+                ${func}
+                echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
+            done
+        fi
+    done
+else
+    declare -A routeMap
+    declare -a ip_array=($(echo "${other_paras[*]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    if [ -z "${ip_array[*]}" ];then
+        declare -i count=0
+        while read line
         do
-            echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
-            ${func}
-            echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
-        done
+            ipaddr=$(echo "${line}" | awk '{ print $1 }')
+            hostnm=$(echo "${line}" | awk '{ print $2 }')
+            match_regex ""${ipaddr}"" "^\d+\.\d+\.\d+\.\d+$" || continue
+
+            [ -z "${ipaddr}" ] && continue 
+            echo_info "HostName: ${hostnm} IP: ${ipaddr}"
+
+            if ip addr | grep -F "${ipaddr}" &> /dev/null;then
+                continue
+            fi
+
+            if ! contain_str "${ip_array[*]}" "${ipaddr}";then
+                ip_array[${count}]="${ipaddr}"
+                routeMap[${ipaddr}]="${hostnm}"
+                let count++
+            fi
+        done < /etc/hosts
     fi
-done
+    echo_info "Remote install into { ${ip_array[*]} }"
+
+    inst_paras=""
+    for key in ${!parasMap[*]}
+    do
+        if match_regex "${key}" "\-?\-r[a-zA-Z]*";then
+            continue
+        fi
+
+        if [ -n "${inst_paras}" ];then
+            inst_paras="${inst_paras} ${key} ${parasMap[$key]}"
+        else
+            inst_paras="${inst_paras} ${key} ${parasMap[$key]}"
+        fi
+    done
+
+    $MY_VIM_DIR/tools/collect.sh "/tmp/vim.tar"
+    for ((idx=0; idx < ${#ip_array[@]}; idx++))
+    do
+        ipaddr="${ip_array[idx]}"
+        echo_info "Install ${inst_paras} into { ${ipaddr} }"
+
+        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
+        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
+        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh ${inst_paras}"
+    done
+fi
