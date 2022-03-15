@@ -14,12 +14,11 @@ function run_fio_func
 {
     local case_index="$1"
     local output_dir="$2"
-    local conf_brief_name="$3"
+    local conf_full_name="$3"
     local host_array=($4)
     local devs_array=($5)
     
-    local conf_full_name=${conf_brief_name}.local
-    local fio_output_file=${conf_brief_name}.log
+    local fio_output_file=${conf_full_name}.log
     
     local rwtype=$(cat ${output_dir}/${conf_full_name} | sed 's/ //g' | grep -P "^\s*rw\s*=\s*.+" -o | awk -F "=" '{ print $2 }')
     local ioengine=$(cat ${output_dir}/${conf_full_name} | sed 's/ //g' | grep -P "^\s*ioengine\s*=\s*.+" -o | awk -F "=" '{ print $2 }')
@@ -46,9 +45,12 @@ function run_fio_func
     local other_paras=""
     for ipaddr in ${host_array[*]}
     do
-        conf_full_name=${conf_brief_name}.${ipaddr}
-        other_paras="${other_paras} --client=${ipaddr} --remote-config=${output_dir}/${conf_full_name}"
+        echo "${ipaddr}" >> ${output_dir}/hosts
     done
+    
+    if can_access "${output_dir}/hosts";then
+        other_paras="${other_paras} --client=${output_dir}/hosts ${output_dir}/${conf_full_name}"
+    fi
 
     if bool_v "${DEBUG_ON}"; then
         other_paras="${other_paras} --debug=io"
@@ -189,16 +191,16 @@ function start_test_func
         sed -i "s/runtime[ ]*=[ ]*[0-9]\+s\?/runtime=${FIO_TEST_TIME}s/g" ${output_dir}/${conf_full_name}
         sed -i "s/ramp_time[ ]*=[ ]*[0-9]\+s\?/ramp_time=${FIO_RAMP_TIME}s/g" ${output_dir}/${conf_full_name}
 
-        for ipaddr in ${ipaddr_array[*]}
-        do
-            conf_full_name=${conf_brief_name}.${ipaddr}
-            cp -f ${output_dir}/${conf_brief_name}.local ${output_dir}/${conf_full_name}
+        #for ipaddr in ${ipaddr_array[*]}
+        #do
+        #    conf_full_name=${conf_brief_name}.${ipaddr}
+        #    cp -f ${output_dir}/${conf_brief_name}.local ${output_dir}/${conf_full_name}
 
-            $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "mkdir -p ${output_dir}"
-            $MY_VIM_DIR/tools/scplogin.sh "${output_dir}/${conf_full_name}" "${ipaddr}:${output_dir}"
-        done
+        #    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "mkdir -p ${output_dir}"
+        #    $MY_VIM_DIR/tools/scplogin.sh "${output_dir}/${conf_full_name}" "${ipaddr}:${output_dir}"
+        #done
 
-        run_fio_func "${idx}" "${output_dir}" "${conf_brief_name}" "${ipaddr_array[*]}" "${devs_array[*]}" 
+        run_fio_func "${idx}" "${output_dir}" "${conf_full_name}" "${ipaddr_array[*]}" "${devs_array[*]}" 
 
         let left_case_num--
         spend_time=$(((left_case_num * test_time) / 60))
