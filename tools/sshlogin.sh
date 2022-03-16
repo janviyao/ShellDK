@@ -24,8 +24,6 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
-NEW_SUDO="echo '${USR_PASSWORD}' | sudo -S -u 'root'"
-
 PASS_ENV="\
 export BTASK_LIST='mdat,ncat'; \
 export REMOTE_IP=${LOCAL_IP}; \
@@ -40,7 +38,7 @@ if ls '${MY_VIM_DIR}' &> /dev/null;then \
         fi;\
     fi;\
 else \
-    export SUDO='${NEW_SUDO}';\
+    export SUDO=\"echo '${USR_PASSWORD}' | sudo -S -u 'root'\";\
 fi\
 "
 

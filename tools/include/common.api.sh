@@ -701,6 +701,23 @@ function replace_regex
     fi
 }
 
+function replace_str
+{
+    local string="$1"
+    local oldstr="$2"
+    local newstr="$3"
+    
+    #donot use (), because it fork child shell
+    [ -z "${oldstr}" ] && { echo "${string}"; return; }
+
+    oldstr="${oldstr//\\/\\\\}"
+    oldstr="${oldstr//\//\\/}"
+    oldstr="${oldstr//\*/\*}"
+    oldstr="${oldstr//\(/\(}"
+
+    echo "${string//${oldstr}/${newstr}}"
+}
+
 function file_count
 {
     local f_array=($*)

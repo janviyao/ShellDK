@@ -57,7 +57,12 @@ function run_fio_func
         other_paras="${other_paras} --debug=io"
     fi
 
-    echo_info "${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}"
+    local run_cmd="${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}"
+    run_cmd=$(replace_str "${run_cmd}" "${TOOL_ROOT_DIR}/" "")
+    run_cmd=$(replace_str "${run_cmd}" "${WORK_ROOT_DIR}/" "")
+    run_cmd=$(replace_str "${run_cmd}" "${MY_HOME}/" "")
+    echo_info "${run_cmd}"
+
     if [ ! -f ${output_dir}/${fio_output_file} ];then
         ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}
         if [ $? -ne 0 ];then
