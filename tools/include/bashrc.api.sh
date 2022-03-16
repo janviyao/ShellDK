@@ -103,5 +103,5 @@ else
     fi
 
     echo_debug "create dir: ${BASH_WORK_DIR}"
-    mkdir -p ${BASH_WORK_DIR}
+    mkdir -p ${BASH_WORK_DIR} 
 fi
