@@ -30,13 +30,15 @@ export REMOTE_IP=${LOCAL_IP}; \
 export USR_NAME='${USR_NAME}'; \
 export USR_PASSWORD='${USR_PASSWORD}'; \
 if ls '${MY_VIM_DIR}' &> /dev/null;then \
-export MY_VIM_DIR='$MY_VIM_DIR'; \
-source $MY_VIM_DIR/tools/include/common.api.sh; \
-if ! is_me ${USR_NAME};then \
-    if test -d $MY_VIM_DIR;then \
-        source $MY_VIM_DIR/bashrc; \
+    export MY_VIM_DIR='$MY_VIM_DIR'; \
+    source $MY_VIM_DIR/tools/include/common.api.sh; \
+    if ! is_me ${USR_NAME};then \
+        if test -d $MY_VIM_DIR;then \
+            source $MY_VIM_DIR/bashrc; \
+        fi;\
     fi;\
-fi;\
+else \
+    export SUDO=sudo;\
 fi\
 "
 
