@@ -968,7 +968,8 @@ function echo_header
 function echo_erro
 {
     xtrace_disable
-    local para=$1
+    local para=$(replace_str "$*" "${MY_VID_DIR}/" "")
+    para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
@@ -976,41 +977,43 @@ function echo_erro
         #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
-    echo_file "erro" "$*"
+    echo_file "erro" "${para}"
     xtrace_restore
 }
 
 function echo_info
 {
     xtrace_disable
-    local para=$1
+    local para=$(replace_str "$*" "${MY_VID_DIR}/" "")
+    para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
     else
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
-    echo_file "info" "$*"
+    echo_file "info" "${para}"
     xtrace_restore
 }
 
 function echo_warn
 {
     xtrace_disable
-    local para=$1
+    local para=$(replace_str "$*" "${MY_VID_DIR}/" "")
+    para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
     else
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
-    echo_file "warn" "$*"
+    echo_file "warn" "${para}"
     xtrace_restore
 }
 
 function echo_debug
 {
     xtrace_disable
-    local para=$1
-
+    local para=$(replace_str "$*" "${MY_VID_DIR}/" "")
+    para=$(replace_str "${para}" "${MY_HOME}/" "")
     if bool_v "${DEBUG_ON}"; then
         local fname=$(path2fname $0)
         contain_str "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
@@ -1022,7 +1025,7 @@ function echo_debug
             fi
         fi
     fi
-    echo_file "debug" "$*"
+    echo_file "debug" "${para}"
     xtrace_restore
 }
 
