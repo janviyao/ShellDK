@@ -8,7 +8,7 @@ mkdir -p ${SAVE_DIR}
 COREDUMP_DIR=$(fname2path "$(cat /proc/sys/kernel/core_pattern)")
 
 echo_info "Save: ${TEST_APP_LOG}"
-can_access "${TEST_APP_LOG}" && ${SUDO} mv ${TEST_APP_LOG} ${TEST_APP_LOG}.${DATE_TIME}
+can_access "${TEST_APP_LOG}" && ${SUDO} mv ${TEST_APP_LOG} ${SAVE_DIR}
 
 echo_info "Save: ${TEST_APP_NAME}"
 can_access "${TEST_APP_DIR}/${TEST_APP_NAME}" && cp -f ${TEST_APP_DIR}/${TEST_APP_NAME} ${SAVE_DIR}
