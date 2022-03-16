@@ -83,7 +83,11 @@ do
         fi
     done
 done
-sleep 5
+
+while ! (iscsiadm -m session -P 3 | grep "Attached scsi disk" &> /dev/null)
+do
+    sleep 2
+done
 
 iscsi_device_array=($(echo))
 if bool_v "${ISCSI_MULTIPATH_ON}";then
@@ -120,7 +124,7 @@ else
 
         dev_list=$(echo "${dev_list}" | grep -P "@return@" | awk -F@ '{print $3}')
 
-        echo_debug "devs: { ${dev_list} } from ${ipaddr}"
+        echo_debug "devices: { ${dev_list} } from ${ipaddr}"
         iscsi_device_array=(${iscsi_device_array[*]} ${dev_list})
     done
 
@@ -135,7 +139,7 @@ else
     done
 fi
 
-echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array} }"
+echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
 mkdir -p ${WORK_ROOT_DIR}
 echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 

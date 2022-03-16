@@ -746,7 +746,7 @@ else
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
-        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
         ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
         ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
         ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh ${inst_paras}"
