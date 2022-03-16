@@ -24,6 +24,8 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
+NEW_SUDO="echo '${USR_PASSWORD}' | sudo -S -u 'root'"
+
 PASS_ENV="\
 export BTASK_LIST='mdat,ncat'; \
 export REMOTE_IP=${LOCAL_IP}; \
@@ -38,9 +40,13 @@ if ls '${MY_VIM_DIR}' &> /dev/null;then \
         fi;\
     fi;\
 else \
-    export SUDO=sudo;\
+    export SUDO='${NEW_SUDO}';\
 fi\
 "
+
+if match_str_start "${CMD_EXE}" "${SUDO} ";then
+    CMD_EXE="eval \\\$SUDO $(trim_str_start "${CMD_EXE}" "${SUDO} ")"
+fi
 
 RET_VAR="sudo_ret$$"
 SRV_MSG="if declare -F remote_set_var &>/dev/null;then remote_set_var ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${RET_VAR} \$?; fi"
