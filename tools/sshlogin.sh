@@ -38,7 +38,7 @@ if ls '${MY_VIM_DIR}' &> /dev/null;then \
         fi;\
     fi;\
 else \
-    export SUDO=\"echo '${USR_PASSWORD}' | sudo -S -u 'root'\";\
+    export SUDO='echo \'${USR_PASSWORD}\' | sudo -S -u \'root\'';\
 fi\
 "
 
