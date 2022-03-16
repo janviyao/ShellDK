@@ -138,7 +138,7 @@ function start_test_func
         mkdir -p ${output_dir}
 
         local conf_brief_name=${bs_value}.job${job_value}.qd${depth_value}
-        local conf_full_name=${conf_brief_name}.local
+        local conf_full_name=${conf_brief_name}.conf
 
         #echo_info "============================================================================="
         echo_debug "in-test: { ${output_dir}/${conf_full_name} }"
@@ -157,8 +157,7 @@ function start_test_func
 
         sed -i "s/blocksize[ ]*=[ ]*[0-9]\+[kmgKMG]\?/blocksize=${bs_value}/g" ${output_dir}/${conf_full_name}
 
-        local is_verify=$(bool_v "${FIO_VERIFY_ON}"; echo $?)
-        if [ ${is_verify} -ne 0 ]; then
+        if bool_v "${FIO_VERIFY_ON}"; then
             sed -i "${g_sed_insert_pre}verify=md5" ${output_dir}/${conf_full_name}
             sed -i "${g_sed_insert_pre}verify_pattern=0x0ABCDEF0" ${output_dir}/${conf_full_name}
             sed -i "${g_sed_insert_pre}do_verify=1" ${output_dir}/${conf_full_name}
@@ -172,8 +171,7 @@ function start_test_func
         sed -i "s/cpus_allowed[ ]*=[ ]*.\+/cpus_allowed=${FIO_CPU_MASK}/g" ${output_dir}/${conf_full_name}
         sed -i "s/cpus_allowed_policy[ ]*=[ ]*.\+/cpus_allowed_policy=${FIO_CPU_POLICY}/g" ${output_dir}/${conf_full_name}
 
-        local is_thread=$(bool_v "${FIO_THREAD_ON}"; echo $?)
-        if [ ${is_thread} -ne 0 ]; then
+        if bool_v "${FIO_THREAD_ON}"; then
             sed -i "s/thread[ ]*=[ ]*[0-1]/thread=1/g" ${output_dir}/${conf_full_name}
         fi
 
