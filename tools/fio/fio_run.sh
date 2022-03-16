@@ -57,12 +57,11 @@ function run_fio_func
         other_paras="${other_paras} --debug=io"
     fi
 
-    local run_cmd="${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}"
-    run_cmd=$(replace_str "${run_cmd}" "${TOOL_ROOT_DIR}/" "")
-    run_cmd=$(replace_str "${run_cmd}" "${WORK_ROOT_DIR}/" "")
-    run_cmd=$(replace_str "${run_cmd}" "${MY_HOME}/" "")
-    echo_info "${run_cmd}"
-
+    #local run_cmd="${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}"
+    #run_cmd=$(replace_str "${run_cmd}" "${TOOL_ROOT_DIR}/" "")
+    #run_cmd=$(replace_str "${run_cmd}" "${WORK_ROOT_DIR}/" "")
+    #run_cmd=$(replace_str "${run_cmd}" "${MY_HOME}/" "")
+    #echo_info "${run_cmd}"
     if [ ! -f ${output_dir}/${fio_output_file} ];then
         ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}
         if [ $? -ne 0 ];then
@@ -92,6 +91,7 @@ function run_fio_func
     local test_spend=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $5 }' )
     
     echo_info "result-(${case_index}): { ${start_time} | [${devs_array[*]}] | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
+    echo_info "result-log: { ${output_dir}/${fio_output_file} }"
 
     if [ -z "${test_lat}" ]; then
         echo_erro "empty: ${output_dir}/${conf_full_name}"
