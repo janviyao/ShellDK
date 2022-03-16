@@ -73,7 +73,7 @@ function run_fio_func
     local have_error=$(cat ${output_dir}/${fio_output_file} | grep "error=")
     if [ -n "${have_error}" ]; then
         cat ${output_dir}/${fio_output_file}
-        echo_erro "failed: ${FIO_APP_RUNTIME} ${output_dir}/${conf_full_name} ${other_paras}" 
+        echo_erro "failed: ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_output_file} ${other_paras}" 
         exit 1
     fi
 
@@ -94,14 +94,14 @@ function run_fio_func
     echo_info "result-log: { ${output_dir}/${fio_output_file} }"
 
     if [ -z "${test_lat}" ]; then
-        echo_erro "empty: ${output_dir}/${conf_full_name}"
+        echo_erro "empty: ${output_dir}/${fio_output_file}"
     else
         local ifgt=$( echo "${test_lat} > 0" | bc )
         if [ ${ifgt} -eq 1 ]; then
             local devs_str=$(echo "${devs_array[*]}" | tr ' ' '-')
             echo "${devs_str},${numjobs},${iosize},${iodepth},${rwtype},${read_pct},${test_iops},${test_bw},${test_lat},${start_time},${test_spend}" >> ${FIO_RESULT_FILE}
         else
-            echo_erro "failed: ${output_dir}/${conf_full_name}"
+            echo_erro "parse failed: ${output_dir}/${fio_output_file}"
         fi
     fi
 }
