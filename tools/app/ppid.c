@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#include <linux/input.h>  
 #include <fcntl.h>  
 #include <sys/time.h>  
 #include <sys/types.h>  
