@@ -753,9 +753,9 @@ else
     done
 fi
 
-if can_access "git";then
-    git config --global user.email "9971289@qq.com"
-    git config --global user.name "Janvi Yao"
-    git config --global --unset http.proxy
-    git config --global --unset https.proxy
-fi
+#if can_access "git";then
+#    git config --global user.email "9971289@qq.com"
+#    git config --global user.name "Janvi Yao"
+#    git config --global --unset http.proxy
+#    git config --global --unset https.proxy
+#fi

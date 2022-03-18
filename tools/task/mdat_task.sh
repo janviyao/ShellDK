@@ -247,8 +247,7 @@ function _mdat_thread
     local ppinfos=($(ppid true))
     echo_debug "mdat_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
 
-    #renice -n -2 -p ${self_pid} &> /dev/null
-    #renice -n -2 -p ${self_pid}
+    renice -n -2 -p ${self_pid} &> /dev/null
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
@@ -264,4 +263,3 @@ function _mdat_thread
 if contain_str "${BTASK_LIST}" "mdat";then
     ( _mdat_thread & )
 fi
-

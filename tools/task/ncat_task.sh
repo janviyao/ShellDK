@@ -382,7 +382,7 @@ function _ncat_thread
     local ppinfos=($(ppid true))
     echo_debug "ncat_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
 
-    #renice -n -1 -p ${self_pid} &> /dev/null
+    renice -n -1 -p ${self_pid} &> /dev/null
 
     touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"
@@ -398,4 +398,3 @@ function _ncat_thread
 if contain_str "${BTASK_LIST}" "ncat";then
     ( _ncat_thread & )
 fi
-
