@@ -18,7 +18,8 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
     is_installed=$(rpm -qa | grep device-mapper | wc -l)
     if [ ${is_installed} -eq 0 ];then
         echo_info "install device-mapper"
-        if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "device-mapper-.+\.rpm";then
+        cd ${ISCSI_ROOT_DIR}/deps
+        if ! install_from_rpm "device-mapper-.+\.rpm";then
             if bool_v "${net_access}";then
                 ${SUDO} yum install -y device-mapper
             fi
@@ -28,7 +29,8 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
     is_installed=$(rpm -qa | grep device-mapper-multipath | wc -l)
     if [ ${is_installed} -eq 0 ];then
         echo_info "install device-mapper-multipath"
-        if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "device-mapper-multipath-.+\.rpm";then
+        cd ${ISCSI_ROOT_DIR}/deps
+        if ! install_from_rpm "device-mapper-multipath-.+\.rpm";then
             if bool_v "${net_access}";then
                 ${SUDO} yum install -y device-mapper-multipath
             fi
@@ -68,6 +70,7 @@ fi
 is_installed=$(rpm -qa | grep iscsi-initiator-utils | wc -l)
 if [ ${is_installed} -eq 0 ];then
     echo_info "install iscsi-initiator-utils"
+    cd ${ISCSI_ROOT_DIR}/deps
     if ! install_from_rpm "${ISCSI_ROOT_DIR}/deps" "iscsi-initiator-utils-.+\.rpm";then
         if bool_v "${net_access}";then
             ${SUDO} yum install -y iscsi-initiator-utils

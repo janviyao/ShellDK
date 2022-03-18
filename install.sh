@@ -6,83 +6,297 @@ BIN_DIR="${HOME}/.local/bin"
 mkdir -p ${BIN_DIR}
 
 export MY_VIM_DIR=${ROOT_DIR}
-
 export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
-export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
+#export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
 
-if ! (ls "${BIN_DIR}/ppid" &> /dev/null);then 
-    cd ${ROOT_DIR}/tools/app
-    gcc ppid.c -g -o ppid
-    mv -f ppid ${BIN_DIR}
-    cd ${ROOT_DIR}
-fi
+declare -A FUNC_MAP
+declare -A INST_GUIDE
 
-source $MY_VIM_DIR/bashrc
-. ${ROOT_DIR}/tools/paraparser.sh
+CMD1="cd ${ROOT_DIR}/deps"
+CMD2="cd ${ROOT_DIR}/tools/app"
+INST_GUIDE["ppid"]="${CMD2};gcc ppid.c -g -o ppid;mv -f ppid ${BIN_DIR}"
+INST_GUIDE["fstat"]="${CMD2};gcc fstat.c -g -o fstat;mv -f fstat ${BIN_DIR}"
+INST_GUIDE["deno"]="${CMD1};unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${BIN_DIR}"
 
-declare -A funcMap
-declare -A netDeps
-declare -A tarTodo
-declare -A rpmTodo
+INST_GUIDE["make"]="install_from_net make"
+INST_GUIDE["g++"]="install_from_net gcc-c++"
 
-netDeps["make"]="make"
-netDeps["g++"]="gcc-c++"
+INST_GUIDE["ctags"]="${CMD1};install_tar ctags-*.tar.gz;rm -fr ctags-*/"
+INST_GUIDE["cscope"]="${CMD1};install_tar cscope-*.tar.gz;rm -fr cscope-*/"
+INST_GUIDE["tig"]="${CMD1};install_tar tig-*.tar.gz;rm -fr tig-*/"
+INST_GUIDE["ag"]="${CMD1};install_tar the_silver_searcher-*.tar.gz;rm -fr the_silver_searcher-*/"
 
-CMD_IFS="|"
-BUILD_IFS="!"
+INST_GUIDE["glibc-2.18"]="${CMD1};install_tar glibc-2.18.tar.gz;rm -fr glibc-2.18/"
+INST_GUIDE["glibc-common"]="${CMD1};install_from_rpm glibc-common-.+\.rpm"
 
-declare -a tarDeps=("m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
-tarTodo["m4"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf m4-*.tar.gz${CMD_IFS}cd m4-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr m4-*/"
-tarTodo["autoconf"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf autoconf-*.tar.gz${CMD_IFS}cd autoconf*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr autoconf*/"
-tarTodo["automake"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf automake-*.tar.gz${CMD_IFS}cd automake*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr automake*/"
-tarTodo["sshpass"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf sshpass-*.tar.gz${CMD_IFS}cd sshpass*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr sshpass*/"
-tarTodo["tclsh8.6"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tcl*-src.tar.gz${CMD_IFS}cd tcl*/${BUILD_IFS}${CMD_IFS}"
-tarTodo["expect"]="cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf expect*.tar.gz${CMD_IFS}cd expect*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tcl*/${CMD_IFS}rm -fr expect*/"
+INST_GUIDE["m4"]="${CMD1};install_tar m4-*.tar.gz;rm -fr m4-*/"
+INST_GUIDE["autoconf"]="${CMD1};install_tar autoconf-*.tar.gz;rm -fr autoconf-*/"
+INST_GUIDE["automake"]="${CMD1};install_tar automake-*.tar.gz;rm -fr automake-*/"
+INST_GUIDE["sshpass"]="${CMD1};install_tar sshpass-*.tar.gz;rm -fr sshpass-*/"
+INST_GUIDE["tclsh8.6"]="${CMD1};install_tar tcl*-src.tar.gz"
+INST_GUIDE["expect"]="${CMD1};install_tar expect*.tar.gz;rm -fr expect*/;rm -fr tcl*/"
+INST_GUIDE["unzip"]="${CMD1};install_from_rpm unzip-.+\.rpm"
 
-rpmTodo["unzip"]="unzip-.+\.rpm"
-rpmTodo["/usr/lib64/libssl.so.10"]="compat-openssl10-.+\.rpm"
-rpmTodo["/usr/bin/python-config"]="python-devel.+\.rpm"
-rpmTodo["/usr/lib64/libpython2.7.so.1.0"]="python-libs.+\.rpm"
-rpmTodo["/usr/bin/python3-config"]="python3-devel.+\.rpm"
-rpmTodo["/usr/lib64/libpython3.so"]="python3-libs-.+\.rpm"
-rpmTodo["/usr/lib64/liblzma.so.5"]="xz-libs.+\.rpm"
-rpmTodo["/usr/lib64/liblzma.so"]="xz-devel.+\.rpm"
-rpmTodo["/usr/libiconv/lib64/libiconv.so.2"]="libiconv-1.+\.rpm"
-rpmTodo["/usr/libiconv/lib64/libiconv.so"]="libiconv-devel.+\.rpm"
-rpmTodo["/usr/lib64/libpcre.so.1"]="pcre-8.+\.rpm"
-rpmTodo["/usr/lib64/libpcre.so"]="pcre-devel.+\.rpm"
-#rpmTodo["/usr/lib64/libpcrecpp.so.0"]="pcre-cpp.+\.rpm"
-#rpmTodo["/usr/lib64/libpcre16.so.0"]="pcre-utf16.+\.rpm"
-#rpmTodo["/usr/lib64/libpcre32.so.0"]="pcre-utf32.+\.rpm"
-rpmTodo["/usr/lib64/libncurses.so"]="ncurses-devel.+\.rpm"
-rpmTodo["/usr/lib64/libncurses.so.5"]="ncurses-libs.+\.rpm"
-rpmTodo["/usr/lib64/libz.so.1"]="zlib-1.+\.rpm"
-rpmTodo["/usr/lib64/libz.so"]="zlib-devel.+\.rpm"
-rpmTodo["m4"]="m4-.+\.rpm"
-rpmTodo["autoconf"]="autoconf-.+\.rpm"
-rpmTodo["automake"]="automake-.+\.rpm"
-rpmTodo["nc"]="nmap-ncat-.+\.rpm"
-rpmTodo["ag"]="the_silver_searcher-.+\.rpm"
-rpmTodo["/usr/share/doc/perl-Data-Dumper"]="perl-Data-Dumper-2.167.+\.rpm"
-rpmTodo["/usr/share/doc/perl-Thread-Queue-3.02"]="perl-Thread-Queue-.+\.rpm"
-rpmTodo["locale"]="glibc-common-.+\.rpm"
-#rpmTodo["/usr/lib/golang/api"]="golang-1.+\.rpm"
-#rpmTodo["/usr/lib/golang/src"]="golang-src-.+\.rpm"
-#rpmTodo["/usr/lib/golang/bin"]="golang-bin-.+\.rpm"
+INST_GUIDE["/usr/lib64/libssl.so.10"]="${CMD1};install_from_rpm compat-openssl10-.+\.rpm"
+INST_GUIDE["/usr/bin/python-config"]="${CMD1};install_from_rpm python-devel.+\.rpm"
+INST_GUIDE["/usr/lib64/libpython2.7.so.1.0"]="${CMD1};install_from_rpm python-libs.+\.rpm"
+INST_GUIDE["/usr/bin/python3-config"]="${CMD1};install_from_rpm python3-devel.+\.rpm"
+INST_GUIDE["/usr/lib64/libpython3.so"]="${CMD1};install_from_rpm python3-libs-.+\.rpm"
+INST_GUIDE["/usr/lib64/liblzma.so.5"]="${CMD1};install_from_rpm xz-libs.+\.rpm"
+INST_GUIDE["/usr/lib64/liblzma.so"]="${CMD1};install_from_rpm xz-devel.+\.rpm"
+INST_GUIDE["/usr/libiconv/lib64/libiconv.so.2"]="${CMD1};install_from_rpm libiconv-1.+\.rpm"
+INST_GUIDE["/usr/libiconv/lib64/libiconv.so"]="${CMD1};install_from_rpm libiconv-devel.+\.rpm"
+INST_GUIDE["/usr/lib64/libpcre.so.1"]="${CMD1};install_from_rpm pcre-8.+\.rpm"
+INST_GUIDE["/usr/lib64/libpcre.so"]="${CMD1};install_from_rpm pcre-devel.+\.rpm"
+#INST_GUIDE["/usr/lib64/libpcrecpp.so.0"]="${CMD1};install_from_rpm pcre-cpp.+\.rpm"
+#INST_GUIDE["/usr/lib64/libpcre16.so.0"]="${CMD1};install_from_rpm pcre-utf16.+\.rpm"
+#INST_GUIDE["/usr/lib64/libpcre32.so.0"]="${CMD1};install_from_rpm pcre-utf32.+\.rpm"
+INST_GUIDE["/usr/lib64/libncurses.so"]="${CMD1};install_from_rpm ncurses-devel.+\.rpm"
+INST_GUIDE["/usr/lib64/libncurses.so.5"]="${CMD1};install_from_rpm ncurses-libs.+\.rpm"
+INST_GUIDE["/usr/lib64/libz.so.1"]="${CMD1};install_from_rpm zlib-1.+\.rpm"
+INST_GUIDE["/usr/lib64/libz.so"]="${CMD1};install_from_rpm zlib-devel.+\.rpm"
+INST_GUIDE["m4"]="${CMD1};install_from_rpm m4-.+\.rpm"
+INST_GUIDE["autoconf"]="${CMD1};install_from_rpm autoconf-.+\.rpm"
+INST_GUIDE["automake"]="${CMD1};install_from_rpm automake-.+\.rpm"
+INST_GUIDE["nc"]="${CMD1};install_from_rpm nmap-ncat-.+\.rpm"
+INST_GUIDE["ag"]="${CMD1};install_from_rpm the_silver_searcher-.+\.rpm"
+INST_GUIDE["/usr/share/doc/perl-Data-Dumper"]="${CMD1};install_from_rpm perl-Data-Dumper-2.167.+\.rpm"
+INST_GUIDE["/usr/share/doc/perl-Thread-Queue-3.02"]="${CMD1};install_from_rpm perl-Thread-Queue-.+\.rpm"
+INST_GUIDE["locale"]="${CMD1};install_from_rpm glibc-common-.+\.rpm"
+#INST_GUIDE["/usr/lib/golang/api"]="${CMD1};install_from_rpm golang-1.+\.rpm"
+#INST_GUIDE["/usr/lib/golang/src"]="${CMD1};install_from_rpm golang-src-.+\.rpm"
+#INST_GUIDE["/usr/lib/golang/bin"]="${CMD1};install_from_rpm golang-bin-.+\.rpm"
 
-funcMap["env"]="deploy_env"
-funcMap["update"]="update_env"
-funcMap["clean"]="clean_env"
-funcMap["vim"]="inst_vim"
-funcMap["ctags"]="inst_ctags"
-funcMap["cscope"]="inst_cscope"
-funcMap["tig"]="inst_tig"
-funcMap["ack"]="inst_ack"
-funcMap["astyle"]="inst_astyle"
-funcMap["app"]="inst_app"
-funcMap["deps"]="inst_deps"
-funcMap["all"]="inst_app inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env"
-funcMap["glibc2.18"]="inst_glibc"
+FUNC_MAP["env"]="deploy_env"
+FUNC_MAP["update"]="update_env"
+FUNC_MAP["clean"]="clean_env"
+FUNC_MAP["vim"]="inst_vim"
+FUNC_MAP["ctags"]="inst_ctags"
+FUNC_MAP["cscope"]="inst_cscope"
+FUNC_MAP["tig"]="inst_tig"
+FUNC_MAP["ack"]="inst_ack"
+FUNC_MAP["astyle"]="inst_astyle"
+FUNC_MAP["system"]="inst_system"
+FUNC_MAP["deps"]="install_all"
+FUNC_MAP["all"]="install_all inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env inst_system"
+FUNC_MAP["glibc2.18"]="inst_glibc"
+
+function install_tar
+{
+    local tarreg="$1"
+    local workdir="${ROOT_DIR}/deps"
+
+    if match_str_end "${tarreg}" ".tar.gz";then
+        workdir=$(trim_str_end "${tarreg}" ".tar.gz")
+        tar -xzf ${tarreg}
+    elif match_str_end "${tarreg}" ".tar";then
+        workdir=$(trim_str_end "${tarreg}" ".tar")
+        tar -xf ${tarreg}
+    fi
+    
+    install_from_make "${workdir}" 
+}
+
+function install_from_net
+{
+    local tool="$1"
+    local success=1
+
+    if [ ${success} -ne 0 ];then
+        if can_access "yum";then
+            ${SUDO} yum install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=0
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 0 ];then
+        if can_access "apt";then
+            ${SUDO} apt install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=0
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 0 ];then
+        if can_access "apt-cyg";then
+            ${SUDO} apt-cyg install ${tool} -y
+            if [ $? -eq 0 ];then
+                success=0
+            fi
+        fi
+    fi
+
+    if [ ${success} -ne 0 ];then
+        echo_erro " Install: ${tool} failure"
+        exit 1
+    fi
+}
+
+function install_from_make
+{
+    local workdir="$1"
+    local currdir="$(pwd)"
+
+    cd ${workdir} || { echo_erro "enter fail: ${workdir}"; return 1; }
+
+    can_access "Makefile" || can_access "configure" 
+    [ $? -ne 0 ] && can_access "unix/" && cd unix/
+    [ $? -ne 0 ] && can_access "linux/" && cd linux/
+
+    if can_access "autogen.sh"; then
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
+        ./autogen.sh &>> build.log
+        if [ $? -ne 0 ]; then
+            echo_erro " Autogen: ${workdir} fail"
+            cd ${currdir}
+            return 1
+        fi
+    fi
+
+    if can_access "configure"; then
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        ./configure --prefix=/usr &>> build.log
+        if [ $? -ne 0 ]; then
+            mkdir -p build && cd build
+            ../configure --prefix=/usr &>> build.log
+            if [ $? -ne 0 ]; then
+                echo_erro " Configure: ${workdir} fail"
+                cd ${currdir}
+                return 1
+            fi
+
+            if ! can_access "Makefile"; then
+                ls --color=never -A | xargs -i cp -fr {} ../
+                cd ..
+            fi
+        fi
+    else
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
+        make configure &>> build.log
+        if [ $? -eq 0 ]; then
+            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+            ./configure --prefix=/usr &>> build.log
+            if [ $? -ne 0 ]; then
+                mkdir -p build && cd build
+                ../configure --prefix=/usr &>> build.log
+                if [ $? -ne 0 ]; then
+                    echo_erro " Configure: ${workdir} fail"
+                    cd ${currdir}
+                    return 1
+                fi
+
+                if ! can_access "Makefile"; then
+                    ls --color=never -A | xargs -i cp -fr {} ../
+                    cd ..
+                fi
+            fi
+        fi
+    fi
+
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
+    make -j ${MAKE_TD} &>> build.log
+    if [ $? -ne 0 ]; then
+        echo_erro " Make: ${workdir} fail"
+        cd ${currdir}
+        return 1
+    fi
+
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
+    ${SUDO} "make install &>> build.log"
+    if [ $? -ne 0 ]; then
+        echo_erro " Install: ${workdir} fail"
+        cd ${currdir}
+        return 1
+    fi
+
+    cd ${currdir}
+    return 0
+}
+
+function install_all
+{
+    local rid_arr=(glibc-2.18 glibc-common)
+    local -A inst_map
+
+    for key in ${!INST_GUIDE[*]}
+    do
+        inst_map[${key}]="${INST_GUIDE["${key}"]}"
+    done
+
+    for key in ${rid_arr[*]}
+    do
+        unset inst_map[${key}]
+    done
+
+    inst_deps ${!inst_map[*]}
+}
+
+function version_gt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 1 ]; }
+function version_lt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 255 ]; }
+function version_eq() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 0 ]; }
+
+function update_check
+{
+    local local_cmd="$1"
+    local fname_reg="$2"
+
+    if can_access "${local_cmd}";then
+        local tmp_file="$(temp_file)"
+        ${local_cmd} --version &> ${tmp_file} 
+        if [ $? -ne 0 ];then
+            return 1
+        fi
+
+        local version_cur=$(grep -P "\d+\.\d+" -o ${tmp_file} | head -n 1)
+        rm -f ${tmp_file}
+        local local_dir=$(pwd)
+        cd ${ROOT_DIR}/deps
+
+        local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
+        for full_nm in ${file_list}    
+        do
+            local file_name=$(path2fname ${full_nm})
+            echo_debug "local version: ${version_cur}  install version: ${file_name}"
+
+            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
+            if version_lt ${version_cur} ${version_new}; then
+                cd ${local_dir}
+                return 0
+            fi
+        done
+
+        cd ${local_dir}
+        return 1
+    else
+        return 0
+    fi
+}
+
+function inst_deps
+{     
+    local check_arr=($*)
+
+    for usr_cmd in ${check_arr[*]};
+    do
+        if ! can_access "${usr_cmd}";then
+            local guides="${INST_GUIDE["${usr_cmd}"]}"
+            local total=$(echo "${guides}" | awk -F';' '{ print NF }')
+
+            for (( idx = 1; idx <= ${total}; idx++))
+            do
+                local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
+                echo_debug "${action}"
+                eval "${action}"
+                if [ $? -ne 0 ];then
+                    exit 1
+                fi
+            done
+        fi
+    done
+}
 
 function inst_usage
 {
@@ -96,18 +310,24 @@ function inst_usage
     echo "install.sh -o astyle     @install astyle package"
     echo "install.sh -o ack        @install ack package"
     echo "install.sh -o glibc2.18  @install glibc2.18 package"
-    echo "install.sh -o app        @install all bin tools being used"
+    echo "install.sh -o system     @configure run system: linux & windows"
     echo "install.sh -o deps       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
     echo "install.sh -j num        @install with thread-num"
 
     echo ""
     echo "=================== Opers ==================="
-    for key in ${!funcMap[@]};
+    for key in ${!FUNC_MAP[@]};
     do
-        printf "Op: %-10s Funcs: %s\n" ${key} "${funcMap[${key}]}"
+        printf "Op: %-10s Funcs: %s\n" ${key} "${FUNC_MAP[${key}]}"
     done
 }
+
+declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
+inst_deps "${mustDeps[*]}"
+
+source $MY_VIM_DIR/bashrc
+. ${ROOT_DIR}/tools/paraparser.sh
 
 REMOTE_INST="${parasMap['-r']}"
 REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
@@ -124,14 +344,14 @@ NEED_NET="${NEED_NET:-${parasMap['--net']}}"
 NEED_NET="${NEED_NET:-0}"
 
 OP_MATCH=0
-for func in ${!funcMap[*]};
+for func in ${!FUNC_MAP[*]};
 do
     if contain_str "${NEED_OP}" "${func}"; then
         let OP_MATCH=OP_MATCH+1
     fi
 done
 
-if [ ${OP_MATCH} -eq ${#funcMap[*]} ]; then
+if [ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]; then
     echo_erro "unkown op: ${NEED_OP}"
     echo ""
     inst_usage
@@ -236,8 +456,7 @@ function deploy_env
 
 function update_env
 {
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         local need_update=1
         if can_access "${MY_HOME}/.vim/bundle/vundle"; then
             git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
@@ -270,211 +489,10 @@ function clean_env
     #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 }
 
-function install_from_net
-{
-    local tool="$1"
-    local success=1
-
-    if [ ${success} -ne 0 ];then
-        if can_access "yum";then
-            ${SUDO} yum install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=0
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 0 ];then
-        if can_access "apt";then
-            ${SUDO} apt install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=0
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 0 ];then
-        if can_access "apt-cyg";then
-            ${SUDO} apt-cyg install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=0
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 0 ];then
-        echo_erro " Install: ${tool} failure"
-        exit 1
-    fi
-}
-
-function install_from_make
-{
-    local before_orders=$(echo "$*" | cut -d "${BUILD_IFS}" -f 1)
-    local after_orders=$(echo "$*" | cut -d "${BUILD_IFS}" -f 2)
-    
-    local next_act=1
-    local one_act=$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
-    while [ -n "${one_act}" ]
-    do
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "${one_act}")"
-        eval "${one_act}"
-
-        let next_act++
-        one_act=$(echo "${before_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
-    done
-
-    local filename=$(path2fname `pwd`)
-
-    can_access "Makefile" || can_access "configure" 
-    [ $? -ne 0 ] && can_access "unix/" && cd unix/
-    [ $? -ne 0 ] && can_access "linux/" && cd linux/
-
-    if can_access "autogen.sh"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
-        ./autogen.sh &>> build.log
-        if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${filename} fail"
-            exit -1
-        fi
-    fi
-
-    if can_access "configure"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-        ./configure --prefix=/usr &>> build.log
-        if [ $? -ne 0 ]; then
-            mkdir -p build && cd build
-            ../configure --prefix=/usr &>> build.log
-            if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${filename} fail"
-                exit 1
-            fi
-
-            if ! can_access "Makefile"; then
-                ls --color=never -A | xargs -i cp -fr {} ../
-                cd ..
-            fi
-        fi
-    else
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
-        make configure &>> build.log
-        if [ $? -eq 0 ]; then
-            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-            ./configure --prefix=/usr &>> build.log
-            if [ $? -ne 0 ]; then
-                mkdir -p build && cd build
-                ../configure --prefix=/usr &>> build.log
-                if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${filename} fail"
-                    exit 1
-                fi
-
-                if ! can_access "Makefile"; then
-                    ls --color=never -A | xargs -i cp -fr {} ../
-                    cd ..
-                fi
-            fi
-        fi
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
-    make -j ${MAKE_TD} &>> build.log
-    if [ $? -ne 0 ]; then
-        echo_erro " Make: ${filename} fail"
-        exit 1
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    ${SUDO} "make install &>> build.log"
-    if [ $? -ne 0 ]; then
-        echo_erro " Install: ${filename} fail"
-        exit 1
-    fi
-    
-    local next_act=1
-    local one_act=$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
-    while [ -n "${one_act}" ]
-    do
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "${one_act}")"
-        eval "${one_act}"
-
-        let next_act++
-        one_act=$(echo "${after_orders}" | cut -d "${CMD_IFS}" -f ${next_act})
-    done
-}
-
-function version_gt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 1 ]; }
-function version_lt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 255 ]; }
-function version_eq() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 0 ]; }
-
-function update_check
-{
-    local local_cmd="$1"
-    local fname_reg="$2"
-
-    if can_access "${local_cmd}";then
-        local tmp_file="$(temp_file)"
-        ${local_cmd} --version &> ${tmp_file} 
-        if [ $? -ne 0 ];then
-            return 1
-        fi
-
-        local version_cur=$(grep -P "\d+\.\d+" -o ${tmp_file} | head -n 1)
-        rm -f ${tmp_file}
-        local local_dir=$(pwd)
-        cd ${ROOT_DIR}/deps
-
-        local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
-        for full_nm in ${file_list}    
-        do
-            local file_name=$(path2fname ${full_nm})
-            echo_debug "local version: ${version_cur}  install version: ${file_name}"
-
-            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
-            if version_lt ${version_cur} ${version_new}; then
-                cd ${local_dir}
-                return 0
-            fi
-        done
-
-        cd ${local_dir}
-        return 1
-    else
-        return 0
-    fi
-}
-
-function inst_app
+function inst_system
 {     
     cd ${ROOT_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        if ! can_access "unzip";then
-            install_from_rpm "${ROOT_DIR}/deps" "unzip-.+\.rpm" 
-        fi
-
-        # Install deno
-        if ! can_access "deno";then
-            cd ${ROOT_DIR}/deps
-            unzip deno-x86_64-unknown-linux-gnu.zip
-            mv -f deno ${BIN_DIR}
-        fi
-
-        # Install ppid
-        can_access "${BIN_DIR}/ppid" && rm -f ${BIN_DIR}/ppid
-        if ! can_access "ppid";then
-            cd ${ROOT_DIR}/tools/app
-            gcc ppid.c -g -o ppid
-            mv -f ppid ${BIN_DIR}
-        fi
-
-        # Install fstat
-        can_access "${BIN_DIR}/fstat" && rm -f ${BIN_DIR}/fstat
-        if ! can_access "fstat";then
-            cd ${ROOT_DIR}/tools/app
-            gcc fstat.c -g -o fstat
-            mv -f fstat ${BIN_DIR}
-        fi
-
         ${SUDO} chmod 777 /etc/ld.so.conf
 
         ${SUDO} "sed -i '#/usr/local/lib#d' /etc/ld.so.conf"
@@ -494,63 +512,21 @@ function inst_app
     fi 
 }
 
-function inst_deps
-{     
-    for usr_cmd in ${!rpmTodo[@]};
-    do
-        if ! can_access "${usr_cmd}";then
-            local todoes="${rpmTodo["${usr_cmd}"]}"
-            install_from_rpm "${ROOT_DIR}/deps" "${todoes}" 
-        fi
-    done
-
-    for usr_cmd in ${tarDeps[@]};
-    do
-        if ! can_access "${usr_cmd}";then
-            local todoes="${tarTodo[${usr_cmd}]}"
-            echo_info "$(printf "[%13s]: %-50s" "Will install" "${usr_cmd}")"
-            install_from_make "${todoes}" 
-        fi
-    done
-
-    for usr_cmd in ${!netDeps[@]};
-    do
-        if ! can_access "${usr_cmd}";then
-            local pat_file=${netDeps["${usr_cmd}"]}
-            install_from_net ${pat_file} 
-        fi
-    done 
-}
-
 function inst_ctags
 {
-    if ! update_check "ctags" "ctags-.*\.tar\.gz";then
-        return 0     
-    fi
-
-    cd ${ROOT_DIR}/deps
-
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
-        install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf ctags-*.tar.gz${CMD_IFS}cd ctags-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr ctags-*/"
+        inst_deps "ctags"
     fi
 }
 
 function inst_cscope
 {
-    if ! update_check "cscope" "cscope-.*\.tar\.gz";then
-        return 0     
-    fi
-
-    cd ${ROOT_DIR}/deps
-
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
-        install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf cscope-*.tar.gz${CMD_IFS}cd cscope-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr cscope-*/"
+        inst_deps "cscope"
     fi
 }
 
@@ -562,8 +538,7 @@ function inst_vim
 
     cd ${ROOT_DIR}/deps
 
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         git clone https://github.com/vim/vim.git vim
     else
         tar -xzf vim-*.tar.gz
@@ -610,11 +585,10 @@ function inst_tig
 {
     cd ${ROOT_DIR}/deps
 
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         git clone https://github.com/jonas/tig.git tig
     else
-        can_access "tig" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf tig-*.tar.gz${CMD_IFS}cd tig-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr tig-*/"
+        inst_deps "tig"
     fi
 }
 
@@ -626,8 +600,7 @@ function inst_astyle
 
     cd ${ROOT_DIR}/deps
 
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
         cd astyle*/AStyle/build/gcc
     else
@@ -658,11 +631,10 @@ function inst_ack
     chmod 777 ${BIN_DIR}/ack-grep
     
     # install ag
-    bool_v "${NEED_NET}"
-    if [ $? -eq 0 ]; then
+    if bool_v "${NEED_NET}"; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        can_access "ag" || install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf the_silver_searcher-*.tar.gz${CMD_IFS}cd the_silver_searcher-*/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr the_silver_searcher-*/"
+        inst_deps "ag"
     fi
 }
 
@@ -676,8 +648,8 @@ function inst_glibc
 
     if version_lt ${version_cur} ${version_new}; then
         # Install glibc
-        install_from_make "cd ${ROOT_DIR}/deps${CMD_IFS}tar -xzf glibc-2.18.tar.gz${CMD_IFS}cd glibc-2.18/${BUILD_IFS}cd ${ROOT_DIR}/deps${CMD_IFS}rm -fr glibc-2.18/"
-        install_from_rpm "${ROOT_DIR}/deps" "glibc-common-.+\.rpm"
+        inst_deps "glibc-2.18"
+        inst_deps "glibc-common"
 
         ${SUDO} "echo 'LANG=en_US.UTF-8' >> /etc/environment"
         ${SUDO} "echo 'LC_ALL=' >> /etc/environment"
@@ -686,12 +658,12 @@ function inst_glibc
 }
 
 if ! bool_v "${REMOTE_INST}"; then
-    for key in ${!funcMap[*]};
+    for key in ${!FUNC_MAP[*]};
     do
         if contain_str "${NEED_OP}" "${key}"; then
             echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
-            echo_info "$(printf "[%13s]: %-6s" "Funcs" "${funcMap[${key}]}")"
-            for func in ${funcMap[${key}]};
+            echo_info "$(printf "[%13s]: %-6s" "Funcs" "${FUNC_MAP[${key}]}")"
+            for func in ${FUNC_MAP[${key}]};
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
                 ${func}

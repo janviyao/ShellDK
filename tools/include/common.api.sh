@@ -957,9 +957,9 @@ function echo_header
         fi
 
         if bool_v "${color}";then
-            echo "${COLOR_HEADER}${FONT_BOLD}${header}${COLOR_CLOSE}"
+            echo "${COLOR_HEADER}${FONT_BOLD}${header}${COLOR_CLOSE} "
         else
-            echo "${header}"
+            echo "${header} "
         fi
     fi
     xtrace_restore
@@ -1067,16 +1067,10 @@ function import_all
 
 function install_from_rpm
 {
-    local rpm_dir="$1"
-    local fname_reg="$2"
+    local fname_reg="$1"
     local rpm_file=""
-
-    if ! can_access "${rpm_dir}";then
-        echo_erro "rpm dir: ${rpm_dir} donot access"
-        return 1
-    fi
-
-    local rpm_pkg_list=$(find ${rpm_dir} -regextype posix-awk  -regex ".*/?${fname_reg}")
+    
+    local rpm_pkg_list=$(find . -regextype posix-awk  -regex ".*/?${fname_reg}")
     for rpm_file in ${rpm_pkg_list}    
     do
         local full_name=$(path2fname ${rpm_file})
