@@ -242,10 +242,15 @@ function _mdat_thread
 {
     trap "" SIGINT SIGTERM SIGKILL
 
-    local ppids=($(ppid))
-    local self_pid=${ppids[2]}
-    local ppinfos=($(ppid true))
-    echo_debug "mdat_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+    local self_pid=$$
+    if can_access "ppid";then
+        local ppids=($(ppid))
+        self_pid=${ppids[2]}
+        local ppinfos=($(ppid true))
+        echo_debug "mdat_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+    else
+        echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]] BTASK_LIST=${BTASK_LIST}"
+    fi
 
     renice -n -2 -p ${self_pid} &> /dev/null
 

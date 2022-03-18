@@ -305,11 +305,11 @@ function inst_usage
     done
 }
 
-declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
-do_action "${mustDeps[*]}"
-
 source $MY_VIM_DIR/bashrc
 . ${ROOT_DIR}/tools/paraparser.sh
+
+declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
+do_action "${mustDeps[*]}"
 
 REMOTE_INST="${parasMap['-r']}"
 REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
@@ -356,7 +356,6 @@ if bool_v "${NEED_NET}"; then
 fi
 
 CMD_PRE="my"
-
 declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
 commandMap["${CMD_PRE}loop"]="${ROOT_DIR}/tools/loop.sh"
@@ -695,6 +694,12 @@ else
                 let count++
             fi
         done < /etc/hosts
+    else
+        for ipaddr in ${ip_array[*]}
+        do
+            hostnm=$(cat /etc/hosts | grep -F "${ipaddr}" | awk '{ print $2 }')
+            routeMap[${ipaddr}]="${hostnm}"
+        done
     fi
     echo_info "Remote install into { ${ip_array[*]} }"
 

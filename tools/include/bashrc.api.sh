@@ -87,8 +87,10 @@ function INCLUDE
     fi
 }
 
-ppinfos=($(ppid true))
-echo_debug "pstree [${ppinfos[*]}]"
+if can_access "ppid";then
+    ppinfos=($(ppid true))
+    echo_debug "pstree [${ppinfos[*]}]"
+fi
 
 if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
     echo_debug "share work: ${BASH_WORK_DIR}"
