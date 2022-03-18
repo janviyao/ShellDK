@@ -67,8 +67,8 @@ INST_GUIDE["locale"]="${CMD1};install_from_rpm glibc-common-.+\.rpm"
 #INST_GUIDE["/usr/lib/golang/src"]="${CMD1};install_from_rpm golang-src-.+\.rpm"
 #INST_GUIDE["/usr/lib/golang/bin"]="${CMD1};install_from_rpm golang-bin-.+\.rpm"
 
-FUNC_MAP["env"]="deploy_env"
-FUNC_MAP["update"]="update_env"
+FUNC_MAP["env"]="inst_env"
+FUNC_MAP["update"]="inst_update"
 FUNC_MAP["clean"]="clean_env"
 FUNC_MAP["vim"]="inst_vim"
 FUNC_MAP["ctags"]="inst_ctags"
@@ -77,9 +77,32 @@ FUNC_MAP["tig"]="inst_tig"
 FUNC_MAP["ack"]="inst_ack"
 FUNC_MAP["astyle"]="inst_astyle"
 FUNC_MAP["system"]="inst_system"
-FUNC_MAP["deps"]="install_all"
-FUNC_MAP["all"]="install_all inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env deploy_env inst_system"
+FUNC_MAP["deps"]="inst_deps"
+FUNC_MAP["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env inst_system"
 FUNC_MAP["glibc2.18"]="inst_glibc"
+
+function do_action
+{     
+    local check_arr=($*)
+
+    for usr_cmd in ${check_arr[*]};
+    do
+        if ! can_access "${usr_cmd}";then
+            local guides="${INST_GUIDE["${usr_cmd}"]}"
+            local total=$(echo "${guides}" | awk -F';' '{ print NF }')
+
+            for (( idx = 1; idx <= ${total}; idx++))
+            do
+                local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
+                echo_debug "${action}"
+                eval "${action}"
+                if [ $? -ne 0 ];then
+                    exit 1
+                fi
+            done
+        fi
+    done
+}
 
 function install_tar
 {
@@ -216,24 +239,6 @@ function install_from_make
     return 0
 }
 
-function install_all
-{
-    local rid_arr=(glibc-2.18 glibc-common)
-    local -A inst_map
-
-    for key in ${!INST_GUIDE[*]}
-    do
-        inst_map[${key}]="${INST_GUIDE["${key}"]}"
-    done
-
-    for key in ${rid_arr[*]}
-    do
-        unset inst_map[${key}]
-    done
-
-    inst_deps ${!inst_map[*]}
-}
-
 function version_gt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 1 ]; }
 function version_lt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 255 ]; }
 function version_eq() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 0 ]; }
@@ -275,29 +280,6 @@ function update_check
     fi
 }
 
-function inst_deps
-{     
-    local check_arr=($*)
-
-    for usr_cmd in ${check_arr[*]};
-    do
-        if ! can_access "${usr_cmd}";then
-            local guides="${INST_GUIDE["${usr_cmd}"]}"
-            local total=$(echo "${guides}" | awk -F';' '{ print NF }')
-
-            for (( idx = 1; idx <= ${total}; idx++))
-            do
-                local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
-                echo_debug "${action}"
-                eval "${action}"
-                if [ $? -ne 0 ];then
-                    exit 1
-                fi
-            done
-        fi
-    done
-}
-
 function inst_usage
 {
     echo "=================== Usage ==================="
@@ -324,7 +306,7 @@ function inst_usage
 }
 
 declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
-inst_deps "${mustDeps[*]}"
+do_action "${mustDeps[*]}"
 
 source $MY_VIM_DIR/bashrc
 . ${ROOT_DIR}/tools/paraparser.sh
@@ -397,7 +379,26 @@ commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"
 commandMap[".inputrc"]="${ROOT_DIR}/inputrc"
 commandMap[".astylerc"]="${ROOT_DIR}/astylerc"
 
-function deploy_env
+function clean_env
+{
+    for linkf in ${!commandMap[@]};
+    do
+        local link_file=${commandMap["${linkf}"]}
+        echo_debug "remove slink: ${linkf}"
+        if [[ ${linkf:0:1} == "." ]];then
+            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+        else
+            can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
+        fi
+    done
+
+    can_access "${MY_HOME}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${MY_HOME}/.bashrc
+    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${MY_HOME}/.bashrc
+    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${MY_HOME}/.bashrc
+    #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
+}
+
+function inst_env
 { 
     for linkf in ${!commandMap[@]};
     do
@@ -454,7 +455,7 @@ function deploy_env
     ${SUDO} systemctl restart crond
 }
 
-function update_env
+function inst_update
 {
     if bool_v "${NEED_NET}"; then
         local need_update=1
@@ -470,23 +471,22 @@ function update_env
     fi
 }
 
-function clean_env
+function inst_deps
 {
-    for linkf in ${!commandMap[@]};
+    local rid_arr=(glibc-2.18 glibc-common)
+    local -A inst_map
+
+    for key in ${!INST_GUIDE[*]}
     do
-        local link_file=${commandMap["${linkf}"]}
-        echo_debug "remove slink: ${linkf}"
-        if [[ ${linkf:0:1} == "." ]];then
-            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
-        else
-            can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
-        fi
+        inst_map[${key}]="${INST_GUIDE["${key}"]}"
     done
 
-    can_access "${MY_HOME}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${MY_HOME}/.bashrc
-    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${MY_HOME}/.bashrc
-    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${MY_HOME}/.bashrc
-    #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
+    for key in ${rid_arr[*]}
+    do
+        unset inst_map[${key}]
+    done
+
+    do_action ${!inst_map[*]}
 }
 
 function inst_system
@@ -517,7 +517,7 @@ function inst_ctags
     if bool_v "${NEED_NET}"; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
-        inst_deps "ctags"
+        do_action "ctags"
     fi
 }
 
@@ -526,7 +526,7 @@ function inst_cscope
     if bool_v "${NEED_NET}"; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
-        inst_deps "cscope"
+        do_action "cscope"
     fi
 }
 
@@ -588,7 +588,7 @@ function inst_tig
     if bool_v "${NEED_NET}"; then
         git clone https://github.com/jonas/tig.git tig
     else
-        inst_deps "tig"
+        do_action "tig"
     fi
 }
 
@@ -634,7 +634,7 @@ function inst_ack
     if bool_v "${NEED_NET}"; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        inst_deps "ag"
+        do_action "ag"
     fi
 }
 
@@ -648,8 +648,8 @@ function inst_glibc
 
     if version_lt ${version_cur} ${version_new}; then
         # Install glibc
-        inst_deps "glibc-2.18"
-        inst_deps "glibc-common"
+        do_action "glibc-2.18"
+        do_action "glibc-common"
 
         ${SUDO} "echo 'LANG=en_US.UTF-8' >> /etc/environment"
         ${SUDO} "echo 'LC_ALL=' >> /etc/environment"
