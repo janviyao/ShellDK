@@ -73,6 +73,15 @@ function global_set_var
     local _one_pipe_="$2"
     local _var_valu_=""
 
+    if [ -z "${_one_pipe_}" ];then
+        _one_pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_one_pipe_}.run";then
+        echo_erro "mdat task donot run"
+        return 1
+    fi
+
     if contain_str "${_var_name_}" "=";then
         _var_valu_="${_var_name_#*=}"
         _var_name_="${_var_name_%%=*}"
@@ -91,6 +100,13 @@ function global_get_var
     local _one_pipe_="$2"
     local _var_valu_=""
     echo_debug "mdat get: [$*]" 
+    
+    if var_exist "${_var_name_}";then
+        _var_valu_=$(eval "echo \$${_var_name_}")
+        eval "declare -g ${_var_name_}=\"${_var_valu_}\""
+        echo_debug "mdat get: [${_var_name_} = \"${_var_valu_}\"]" 
+        return
+    fi
 
     if [ -z "${_one_pipe_}" ];then
         _one_pipe_="${GBL_MDAT_PIPE}"
@@ -112,7 +128,16 @@ function global_unset_var
 {
     local _var_name_="$1"
     local _one_pipe_="$2"
-    
+
+    if [ -z "${_one_pipe_}" ];then
+        _one_pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_one_pipe_}.run";then
+        echo_erro "mdat task donot run"
+        return 1
+    fi
+
     mdat_task_ctrl "UNSET_VAR${GBL_SPF1}${_var_name_}" "${_one_pipe_}"
 }
 

@@ -3,8 +3,7 @@ SRC_DIR="$1"
 DES_DIR="$2"
 echo_debug "paras: { $* }"
 
-. $MY_VIM_DIR/tools/password.sh
-
+account_check
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
    echo_erro "Username or Password is empty" 
    exit 1

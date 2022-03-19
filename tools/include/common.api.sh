@@ -4,7 +4,7 @@
 DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
-HEADER_TIME=false
+HEADER_TIME=true
 HEADER_FILE=false
 
 shopt -s expand_aliases
@@ -84,7 +84,10 @@ function path2fname
     if contain_str "${full_path}" "-";then 
         full_path=$(replace_regex "${full_path}" "\-" "\-")
     fi
-    full_path=$(readlink -f ${full_path})
+
+    if can_access "${full_path}";then
+        full_path=$(readlink -f ${full_path})
+    fi
 
     if contain_str "${full_path}" "/";then
         local file_name=$(basename ${full_path})
@@ -106,7 +109,10 @@ function fname2path
     if contain_str "${full_name}" "-";then 
         full_name=$(replace_regex "${full_name}" "\-" "\-")
     fi
-    full_name=$(readlink -f ${full_name})
+
+    if can_access "${full_name}";then
+        full_name=$(readlink -f ${full_name})
+    fi
 
     if contain_str "${full_name}" "/";then
         local dir_name=$(dirname ${full_name})
@@ -925,7 +931,7 @@ function echo_file
 
         local headpart=$(printf "[%5s]" "${log_type}")
         if bool_v "${LOG_HEADER}";then
-            headpart=$(printf "%s [%-5s]" "$(echo_header false)" "${log_type}")
+            headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
         fi
 
         if [ -n "${REMOTE_IP}" ];then
@@ -941,16 +947,15 @@ function echo_header
 {
     local color=${1:-true}
 
-    xtrace_disable
     if bool_v "${LOG_HEADER}";then
         local header=""
-        if bool_v "HEADER_TIME";then
-            header="$(date '+%Y-%m-%d %H:%M:%S:%N')[${LOCAL_IP}]"
+        if bool_v "${HEADER_TIME}";then
+            header="[$(date '+%Y-%m-%d %H:%M:%S:%N')] [${LOCAL_IP}]"
         else
             header="[${LOCAL_IP}]"
         fi
 
-        if bool_v "HEADER_FILE";then
+        if bool_v "${HEADER_FILE}";then
             header="${header} $(printf "[%-18s[%-6d]]" "$(path2fname $0)" "$$")"
         else
             header="${header} $(printf "[%-6d]" "$$")"
@@ -962,7 +967,6 @@ function echo_header
             echo "${header} "
         fi
     fi
-    xtrace_restore
 }
 
 function echo_erro
@@ -1198,3 +1202,36 @@ function NOT
     ((!es == 0))
 }
 
+function account_check
+{
+    local input_val=""
+
+    if [ -z "${USR_NAME}" ]; then
+        global_get_var USR_NAME
+    fi
+
+    if [ -z "${USR_NAME}" ]; then
+        USR_NAME=$(whoami)
+        read -p "Please input username(${USR_NAME}): " input_val
+        USR_NAME=${input_val:-${USR_NAME}}
+        global_set_var USR_NAME
+    fi
+
+    if [ -n "${USR_NAME}" ]; then
+        export USR_NAME
+    fi
+
+    if [ -z "${USR_PASSWORD}" ]; then
+        global_get_var USR_PASSWORD
+    fi
+
+    if [ -z "${USR_PASSWORD}" ]; then
+        read -s -p "Please input password: " input_val
+        USR_PASSWORD=${input_val}
+        global_set_var USR_PASSWORD
+    fi
+
+    if [ -n "${USR_PASSWORD}" ]; then
+        export USR_PASSWORD
+    fi
+}

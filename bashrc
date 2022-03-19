@@ -11,7 +11,7 @@ if [[ ${PRIVATE_VAR} != $TERM ]];then
 fi
 
 if [ -z "${BTASK_LIST}" ];then
-    export BTASK_LIST="master,mdat,ncat,logr,ctrl"
+    export BTASK_LIST="master,mdat,ncat,logr,ctrl,xfer"
 fi
 
 # all variables and functions exported
@@ -50,6 +50,13 @@ if contain_str "${BTASK_LIST}" "ctrl";then
     old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")
     [ -n "${old_spec}" ] && trap "${old_spec}; _bash_ctrl_exit" EXIT
     [ -z "${old_spec}" ] && trap "_bash_ctrl_exit" EXIT
+fi
+
+INCLUDE "GBL_XFER_PIPE" $MY_VIM_DIR/tools/task/xfer_task.sh
+if contain_str "${BTASK_LIST}" "xfer";then
+    old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")
+    [ -n "${old_spec}" ] && trap "${old_spec}; _bash_xfer_exit" EXIT
+    [ -z "${old_spec}" ] && trap "_bash_xfer_exit" EXIT
 fi
 
 old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'")

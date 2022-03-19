@@ -26,7 +26,7 @@ else
     fi
 fi
 
-. $MY_VIM_DIR/tools/password.sh
+account_check
 
 EXPECT_EOF=""
 if [ $UID -ne 0 ]; then

@@ -3,7 +3,7 @@ HOST_IP="$1"
 CMD_EXE="$2"
 echo_debug "paras: { $* }"
 
-source $MY_VIM_DIR/tools/password.sh
+account_check
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
     echo_erro "Username or Password is empty"
     exit 1

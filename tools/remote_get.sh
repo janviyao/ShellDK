@@ -9,7 +9,7 @@ if [ -z "${CMD_EXE}" ];then
 fi
 
 tmp_file="$(temp_file)"
-PKG_MSG="(${CMD_EXE}) &> ${tmp_file}; ncat_send_to ${NCAT_MASTER_ADDR} '${tmp_file}'"
+PKG_MSG="(${CMD_EXE}) &> ${tmp_file}; rsync_to '${tmp_file}' ${NCAT_MASTER_ADDR}"
 
 $MY_VIM_DIR/tools/sshlogin.sh "${HOST_IP}" "${PKG_MSG}"
 if [ $? -ne 0 ];then
