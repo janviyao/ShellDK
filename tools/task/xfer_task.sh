@@ -24,7 +24,7 @@ function rsync_to
         return 1
     fi
     
-    can_access "${HOME_DIR}/.rsync.exclude" || touch ${HOME_DIR}/.rsync.exclude
+    can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
         account_check
         for ipaddr in ${xfer_ips[*]}
@@ -52,7 +52,7 @@ function rsync_from
         ${SUDO} "mkdir -p ${xfer_des}"
     fi
     
-    can_access "${HOME_DIR}/.rsync.exclude" || touch ${HOME_DIR}/.rsync.exclude
+    can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
         account_check
         for ipaddr in ${xfer_ips[*]}
@@ -140,7 +140,7 @@ function _xfer_thread_main
             local xfer_src=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
             local xfer_des=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
 
-            can_access "${HOME_DIR}/.rsync.exclude" || touch ${HOME_DIR}/.rsync.exclude
+            can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
                 global_get_var USR_PASSWORD
 
@@ -153,10 +153,10 @@ function _xfer_thread_main
                     remote_cmd="mkdir -p $(fname2path "${xfer_dir}")"
                 fi
 
-                sshpass -p "${USR_PASSWORD}" rsync -azu --rsync-path="${remote_cmd} && rsync" --exclude-from "${HOME_DIR}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                sshpass -p "${USR_PASSWORD}" rsync -azu --rsync-path="${remote_cmd} && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
             else
                 can_access "${xfer_des}" || ${SUDO} "mkdir -p ${xfer_des}"
-                rsync -azu --exclude-from "${HOME_DIR}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                rsync -azu --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
             fi
         fi
 

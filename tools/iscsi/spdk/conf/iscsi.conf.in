@@ -81,9 +81,8 @@
 #  Syntax:
 #    Portal <Name> <IP address>[:<port>[@<cpumask>]]
 [PortalGroup1]
-#  Portal DA1 192.168.2.21:3260
-#  Portal DA2 192.168.2.22:3260@0xF
-  Portal DA1 11.160.41.96:3260
+  Portal DA1 192.168.2.21:3260
+  #Portal DA2 192.168.2.22:3260@0xF
 
 # Users must change the InitiatorGroup section(s) to match the IP
 #  addresses and initiator configuration in their environment.
@@ -92,8 +91,7 @@
 #  Netmask 192.168.1.0/24 <== IP range 192.168.1.*
 [InitiatorGroup1]
   InitiatorName ANY
-  #Netmask 192.168.2.0/24
-  Netmask 11.160.41.0/24
+  Netmask 192.168.2.0/24
 
 # NVMe configuration options
 #[Nvme]
@@ -160,11 +158,11 @@
 # The file name is the backing device
 # The bdev name can be referenced from elsewhere in the configuration file.
 # Block size may be omitted to automatically detect the block size of a disk.
-#[AIO]
-#  AIO /dev/sdb AIO0
-#  AIO /dev/sdc AIO1
-#  AIO /tmp/myfile AIO2 4096
-#
+[AIO]
+  AIO /dev/vdb AIO0
+  AIO /dev/vdc AIO1
+  #AIO /tmp/myfile AIO2 4096
+
 # PMDK libpmemblk-based block device
 #[Pmem]
   # Syntax:
@@ -177,32 +175,15 @@
   #   Split <bdev> <count> [<size_in_megabytes>]
 
   # Split Malloc1 into two equally-sized portions, Malloc1p0 and Malloc1p1
-# Split Malloc1 2
+  #Split Malloc1 2
 
   # Split Malloc2 into eight 1-megabyte portions, Malloc2p0 ... Malloc2p7,
   # leaving the rest of the device inaccessible
-# Split Malloc2 8 1
+  #Split Malloc2 8 1
 
-[CSTOR]
-  #DISK0 Storage 1G 32k
-  #DISK1 Storage 1G 32k
-
-  #DISK0 Storage /dev/nvme6n1 Auto 32k
-  #DISK1 Storage /dev/nvme7n1 Auto 32k
-  DISK0 Storage /apsarapangu/fastdisk/50G.img Auto 32k
-  DISK1 Storage /apsarapangu/fastdisk/100G.img Auto 32k
-
-
-  DISK0 Option Unmap Disable
-  DISK0 Option WZero Disable
-  DISK0 Option ATS Disable
-  DISK0 Option XCOPY Disable
-
-  DISK1 Option Unmap Disable
-  DISK1 Option WZero Disable
-  DISK1 Option ATS Disable
-  DISK1 Option XCOPY Disable
-
+# Users should change the TargetNode section(s) below to match the
+#  desired iSCSI target node configuration.
+# TargetName, Mapping, LUN0 are minimum required
 [TargetNode1]
   TargetName disk1
   TargetAlias "Data Disk1"
@@ -212,44 +193,16 @@
   # Enable header and data digest
   # UseDigest Header Data
   UseDigest Auto
-  
-  ReadOnly No
-  ReplicationFactor 3
-  ConsistencyFactor 2
-  DesiredReplicationFactor 3
-  UnitType Disk
-  UnitOnline Yes
-  BlockLength 4096
+  # Use the first malloc target
+  #LUN0 Malloc0
+  # Using the first AIO target
+  LUN0 AIO0
+  # Using the second storage target
+  LUN1 AIO1
+  # Using the third storage target
+  #LUN2 AIO2
   QueueDepth 128
-  Luworkers 6
-  UnitInquiry "CloudByte" "iscsi" "0" "4059aab98f093c5d95207f7af09d1413"
-  PhysRecordLength 4096
 
-  LUN0 DISK0
-  LUN1 DISK1 
-
-# Users should change the TargetNode section(s) below to match the
-#  desired iSCSI target node configuration.
-# TargetName, Mapping, LUN0 are minimum required
-#[TargetNode1]
-#  TargetName disk1
-#  TargetAlias "Data Disk1"
-#  Mapping PortalGroup1 InitiatorGroup1
-#  AuthMethod Auto
-#  AuthGroup AuthGroup1
-#  # Enable header and data digest
-#  # UseDigest Header Data
-#  UseDigest Auto
-#  # Use the first malloc target
-#  LUN0 Malloc0
-#  # Using the first AIO target
-#  LUN1 AIO0
-#  # Using the second storage target
-#  LUN2 AIO1
-#  # Using the third storage target
-#  LUN3 AIO2
-#  QueueDepth 128
-#
 #[TargetNode2]
 #  TargetName disk2
 #  TargetAlias "Data Disk2"

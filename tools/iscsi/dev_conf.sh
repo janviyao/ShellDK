@@ -9,9 +9,12 @@ if [ -b /dev/${DEV_NAME} ]; then
     SHOW_INFO="/dev/${DEV_NAME}"
     
     if can_access "/sys/block/${DEV_NAME}/queue/scheduler";then
-        ${SUDO} "echo noop > /sys/block/${DEV_NAME}/queue/scheduler"
-        DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
-        SHOW_INFO="${SHOW_INFO} sched:{ ${DEV_INFO}}"
+        supported=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
+        if contain_str "${supported}" "noop";then
+            ${SUDO} "echo noop > /sys/block/${DEV_NAME}/queue/scheduler"
+            DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
+            SHOW_INFO="${SHOW_INFO} sched:{ ${DEV_INFO}}"
+        fi
     fi
 
     if can_access "/sys/block/${DEV_NAME}/queue/nomerges";then

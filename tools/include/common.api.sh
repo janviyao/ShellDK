@@ -4,7 +4,7 @@
 DEBUG_ON=0
 LOG_ENABLE=".+"
 LOG_HEADER=true
-HEADER_TIME=true
+HEADER_TIME=false
 HEADER_FILE=false
 
 shopt -s expand_aliases

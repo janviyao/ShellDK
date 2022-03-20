@@ -2,13 +2,6 @@
 source ${TEST_SUIT_ENV}
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! bool_v "${KEEP_ENV_STATE}";then
-    echo_info "init devs: ${LOCAL_IP}"
-else
-    echo_info "keep devs: ${LOCAL_IP}"
-    exit 0
-fi
-
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     can_access "/usr/sbin/dmsetup" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
     if [ $? -ne 0 ];then
@@ -89,3 +82,5 @@ if bool_v "${APPLY_SYSCTRL}";then
     can_access "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} sysctl -p
 fi
+
+exit 0

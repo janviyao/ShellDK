@@ -6,6 +6,9 @@ SAVE_DIR="$1"
 mkdir -p ${SAVE_DIR}
 
 COREDUMP_DIR=$(fname2path "$(cat /proc/sys/kernel/core_pattern)")
+if ! can_access "${COREDUMP_DIR}";then
+    COREDUMP_DIR=""
+fi
 
 echo_info "Save: ${TEST_APP_NAME}"
 can_access "${TEST_APP_DIR}/${TEST_APP_NAME}" && cp -f ${TEST_APP_DIR}/${TEST_APP_NAME} ${SAVE_DIR}
@@ -16,7 +19,7 @@ can_access "${TEST_APP_DIR}/core-*" && ${SUDO} mv ${TEST_APP_DIR}/core-* ${SAVE_
 can_access "/cloud/data/corefile/core-${TEST_APP_NAME}_*" && ${SUDO} mv /cloud/data/corefile/core-${TEST_APP_NAME}_* ${SAVE_DIR} 
 
 echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
-${SUDO} cp -f /dev/shm/spdk_iscsi_conns.1 ${SAVE_DIR}
+can_access "/dev/shm/spdk_iscsi_conns.*" && ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${SAVE_DIR}
 
 echo_info "Save: /dev/hugepages/"
 ${SUDO} cp -fr /dev/hugepages ${SAVE_DIR}/

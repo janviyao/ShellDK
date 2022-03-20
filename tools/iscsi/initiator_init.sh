@@ -8,8 +8,6 @@ else
     echo_info "keep devs: ${LOCAL_IP}"
     exit 0
 fi
-echo_info "discover: { ${LOCAL_IP} } --> { ${ISCSI_TARGET_IP_ARRAY[*]} }"
-
 ${ISCSI_ROOT_DIR}/check_iscsi_env.sh
 
 function get_iscsi_device
@@ -51,6 +49,7 @@ function get_iscsi_device
 
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
 do
+    echo_info "discover: { ${LOCAL_IP} } --> { ${ipaddr} }"
     ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
     if [ $? -ne 0 ];then
         echo_erro "discovery { ${ipaddr} } fail"
@@ -145,3 +144,4 @@ echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 
 ${TOOL_ROOT_DIR}/sshlogin.sh "${CONTROL_IP}" "mkdir -p ${WORK_ROOT_DIR}"
 ${TOOL_ROOT_DIR}/scplogin.sh "${WORK_ROOT_DIR}/disk.${LOCAL_IP}" "${CONTROL_IP}:${WORK_ROOT_DIR}/disk.${LOCAL_IP}"
+exit 0

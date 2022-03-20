@@ -31,6 +31,15 @@ if process_exist "${TEST_APP_NAME}";then
     sleep 1
 fi
 
+if ! can_access "${TEST_APP_DIR}/${TEST_APP_NAME}";then
+    ${ISCSI_ROOT_DIR}/${TEST_TARGET}/build.sh
+    if [ $? -ne 0 ];then
+        echo_erro "build fail: ${TEST_APP_SRC}"
+        exit 1
+    fi
+fi
+
+${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
 
 ${SUDO} "nohup ${TEST_APP_RUNTIME} &"
@@ -42,10 +51,11 @@ done
 
 if ! process_exist "${TEST_APP_NAME}";then
     echo_erro "${TEST_APP_NAME} launch failed."
-    exit -1
+    exit 1
 else
     echo_info "${TEST_APP_NAME} launch success."
 fi
 
+exit 0
 #echo_info ""
 #${ISCSI_ROOT_DIR}/${TEST_TARGET}/uctrl.sh create

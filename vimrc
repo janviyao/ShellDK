@@ -4,7 +4,7 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 1
+let g:print_log_enable = 0
 let g:quickfix_dump_enable = 0
 
 let g:quickfix_module = "init"

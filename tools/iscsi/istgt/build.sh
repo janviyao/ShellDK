@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV} 
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! can_access "${TEST_APP_SRC}";the
+if ! can_access "${TEST_APP_SRC}";then
     if check_net;then
         myloop git clone https://github.com/elastocloud/istgt.git ${TEST_APP_SRC} 
     else
@@ -16,6 +16,7 @@ can_access "/usr/lib64/libevent.so*" || install_from_net "libevent-devel"
 
 cd ${TEST_APP_SRC}
 
+export CFLAGS="-fcommon"
 ./configure
 if [ $? -ne 0 ];then
     echo_erro "configure fail: ${TEST_APP_SRC}"

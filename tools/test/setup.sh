@@ -7,15 +7,15 @@ WORK_ROOT_DIR=/tmp/test
 TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 
-TEST_TARGET=istgt
-#TEST_TARGET=spdk
+#TEST_TARGET=istgt
+TEST_TARGET=spdk
 
 TEST_FILL_DATA=no
 KEEP_ENV_STATE=no
 APPLY_SYSCTRL=no
 
-declare -xa SERVER_IP_ARRAY=(172.24.15.166)
-declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
+declare -xa SERVER_IP_ARRAY=(172.24.15.167)
+declare -xa CLIENT_IP_ARRAY=(172.24.15.168)
 #declare -xa SERVER_IP_ARRAY=(11.160.41.96)
 #declare -xa CLIENT_IP_ARRAY=(11.160.41.224)
 
