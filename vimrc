@@ -4,7 +4,7 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 0
+let g:print_log_enable = 1
 let g:quickfix_dump_enable = 0
 
 let g:quickfix_module = "init"
@@ -1778,6 +1778,8 @@ let g:isDeleteSave = 0
 
 "工程控制
 function! LoadProject(opmode) 
+    call PrintMsg("file", "LoadProject ".a:opmode)
+
     if a:opmode == "create"
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -d \"".getcwd()."\" -m create"
         silent! execute "qa"

@@ -1071,33 +1071,33 @@ function import_all
 
 function install_from_net
 {
-    local tool="$1"
+    local inst_name="$1"
 
     if can_access "yum";then
-        ${SUDO} yum install ${tool} -y
+        ${SUDO} yum install ${inst_name} -y
         if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${tool}")"
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${inst_name}")"
             return 0
         fi
     fi
 
     if can_access "apt";then
-        ${SUDO} apt install ${tool} -y
+        ${SUDO} apt install ${inst_name} -y
         if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${tool}")"
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${inst_name}")"
             return 0
         fi
     fi
 
     if can_access "apt-cyg";then
-        ${SUDO} apt-cyg install ${tool} -y
+        ${SUDO} apt-cyg install ${inst_name} -y
         if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${tool}")"
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${inst_name}")"
             return 0
         fi
     fi
 
-    echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${tool}")"
+    echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${inst_name}")"
     return 1
 }
 
@@ -1191,6 +1191,7 @@ function install_from_rpm
     local installed_arr=($(rpm -qa | grep -P "^${name_reg}"))
 
     # rpm -qf /usr/bin/nc #query nc rpm package
+    # rpm -ql xxx.rpm     #query rpm package contents
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
     for rpm_file in ${local_arr[*]}    
     do

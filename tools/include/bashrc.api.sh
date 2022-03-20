@@ -23,7 +23,7 @@ alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
 alias mygit='myloop git'
-alias gpull='myloop git pull'
+alias gpull='mygit pull'
 alias gpush='function git_push { git add -A ./*; git commit -s -m "$1"; git push; }; git_push'
 alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
 

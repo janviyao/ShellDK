@@ -27,8 +27,15 @@ if process_exist "${TEST_APP_NAME}";then
     sleep 1
 fi
 
-ISTGT_CONF="${ISCSI_ROOT_DIR}/${TEST_TARGET}/conf/istgt.conf"
-can_access "${ISTGT_CONF}" && ${SUDO} cp -f ${ISTGT_CONF} /usr/local/etc/istgt/
+if ! can_access "${TEST_APP_DIR}/istgt";the
+    ${ISCSI_ROOT_DIR}/${TEST_TARGET}/build.sh
+    if [ $? -ne 0 ];then
+        echo_erro "build fail: ${TEST_APP_SRC}"
+        exit 1
+    fi
+fi
+
+${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 
 #${SUDO} "nohup ${TEST_APP_RUNTIME} &"
 ${TEST_APP_RUNTIME}

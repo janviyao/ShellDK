@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 . $MY_VIM_DIR/tools/paraparser.sh
 #set -x
 
