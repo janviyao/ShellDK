@@ -49,6 +49,9 @@ ${TOOL_ROOT_DIR}/iscsi/setup.sh
 echo "" >> ${TEST_SUIT_ENV}
 echo "# [runtime configure]" >> ${TEST_SUIT_ENV}
 
+# configure core-dump path
+${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
+
 # Push run env
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do

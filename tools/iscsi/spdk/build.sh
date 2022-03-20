@@ -27,6 +27,7 @@ can_access "/usr/include/libaio.h"      || install_from_net "libaio-devel"
 can_access "/usr/include/CUnit/Basic.h" || install_from_net "CUnit-devel" 
 
 cd ${TEST_APP_SRC}
+can_access "${TEST_APP_SRC}/build" && make clean
 
 ./configure --disable-tests --disable-unit-tests --disable-examples
 if [ $? -ne 0 ];then

@@ -5,24 +5,44 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 SAVE_DIR="$1"
 mkdir -p ${SAVE_DIR}
 
+if can_access "${TEST_APP_DIR}/${TEST_APP_NAME}";then 
+    echo_info "Save: ${TEST_APP_NAME}"
+    cp -f ${TEST_APP_DIR}/${TEST_APP_NAME} ${SAVE_DIR}
+fi
+
 COREDUMP_DIR=$(fname2path "$(cat /proc/sys/kernel/core_pattern)")
 if ! can_access "${COREDUMP_DIR}";then
     COREDUMP_DIR=""
+else
+    if [[ ${COREDUMP_DIR} == "/" ]];then
+        COREDUMP_DIR=""
+    fi
 fi
 
-echo_info "Save: ${TEST_APP_NAME}"
-can_access "${TEST_APP_DIR}/${TEST_APP_NAME}" && cp -f ${TEST_APP_DIR}/${TEST_APP_NAME} ${SAVE_DIR}
+if can_access "${COREDUMP_DIR}/core-*";then
+    echo_info "Save: ${COREDUMP_DIR}/core-*"
+    can_access "${COREDUMP_DIR}/core-*" && ${SUDO} mv ${COREDUMP_DIR}/core-* ${SAVE_DIR}
+fi
 
-echo_info "Save: cordump"
-can_access "${COREDUMP_DIR}/core-*" && ${SUDO} mv ${COREDUMP_DIR}/core-* ${SAVE_DIR}
-can_access "${TEST_APP_DIR}/core-*" && ${SUDO} mv ${TEST_APP_DIR}/core-* ${SAVE_DIR}
-can_access "/cloud/data/corefile/core-${TEST_APP_NAME}_*" && ${SUDO} mv /cloud/data/corefile/core-${TEST_APP_NAME}_* ${SAVE_DIR} 
+if can_access "${TEST_APP_DIR}/core-*";then
+    echo_info "Save: ${COREDUMP_DIR}/core-*"
+    can_access "${TEST_APP_DIR}/core-*" && ${SUDO} mv ${TEST_APP_DIR}/core-* ${SAVE_DIR}
+fi
 
-echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
-can_access "/dev/shm/spdk_iscsi_conns.*" && ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${SAVE_DIR}
+if can_access "/cloud/data/corefile/core-${TEST_APP_NAME}_*";then
+    echo_info "Save: /cloud/data/corefile/core-${TEST_APP_NAME}_*"
+    can_access "/cloud/data/corefile/core-${TEST_APP_NAME}_*" && ${SUDO} mv /cloud/data/corefile/core-${TEST_APP_NAME}_* ${SAVE_DIR} 
+fi
 
-echo_info "Save: /dev/hugepages/"
-${SUDO} cp -fr /dev/hugepages ${SAVE_DIR}/
+if can_access "/dev/shm/spdk_iscsi_conns.*";then
+    echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
+    ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${SAVE_DIR}
+fi
+
+if can_access "/dev/hugepages/";then
+    echo_info "Save: /dev/hugepages/"
+    ${SUDO} cp -fr /dev/hugepages ${SAVE_DIR}/
+fi
 
 echo_info "Save: ${TEST_APP_LOG}"
 can_access "${TEST_APP_LOG}" && ${SUDO} mv ${TEST_APP_LOG} ${SAVE_DIR}
