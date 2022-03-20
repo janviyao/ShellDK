@@ -47,7 +47,7 @@ if match_str_start "${CMD_EXE}" "${SUDO} ";then
 fi
 
 RET_VAR="sudo_ret$$"
-SRV_MSG="if declare -F remote_set_var &>/dev/null;then remote_set_var ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${RET_VAR} \$?; fi"
+SRV_MSG="${RET_VAR}=\$?;if declare -F remote_set_var &>/dev/null;then remote_set_var ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT} ${RET_VAR}; fi"
 SSH_CMD="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}; exit 0"
 
 expect << EOF

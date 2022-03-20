@@ -40,7 +40,7 @@ function logr_task_ctrl_sync
 
 function _bash_logr_exit
 { 
-    echo_debug "logr signal exit BTASK_LIST=${BTASK_LIST}" 
+    echo_debug "logr signal exit" 
     logr_task_ctrl "CTRL" "EXIT" 
 }
 
@@ -118,7 +118,7 @@ function _logr_thread
     local ppids=($(ppid))
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
-    echo_debug "logr_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+    echo_debug "logr_bg_thread [${ppinfos[*]}]"
 
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"

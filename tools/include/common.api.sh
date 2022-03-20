@@ -1069,22 +1069,136 @@ function import_all
     fi
 }
 
+function install_from_net
+{
+    local tool="$1"
+
+    if can_access "yum";then
+        ${SUDO} yum install ${tool} -y
+        if [ $? -eq 0 ];then
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${tool}")"
+            return 0
+        fi
+    fi
+
+    if can_access "apt";then
+        ${SUDO} apt install ${tool} -y
+        if [ $? -eq 0 ];then
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${tool}")"
+            return 0
+        fi
+    fi
+
+    if can_access "apt-cyg";then
+        ${SUDO} apt-cyg install ${tool} -y
+        if [ $? -eq 0 ];then
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${tool}")"
+            return 0
+        fi
+    fi
+
+    echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${tool}")"
+    return 1
+}
+
+function install_from_make
+{
+    local workdir="$1"
+    local currdir="$(pwd)"
+
+    cd ${workdir} || { echo_erro "enter fail: ${workdir}"; return 1; }
+
+    can_access "Makefile" || can_access "configure" 
+    [ $? -ne 0 ] && can_access "unix/" && cd unix/
+    [ $? -ne 0 ] && can_access "linux/" && cd linux/
+
+    if can_access "autogen.sh"; then
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
+        ./autogen.sh &>> build.log
+        if [ $? -ne 0 ]; then
+            echo_erro " Autogen: ${workdir} fail"
+            cd ${currdir}
+            return 1
+        fi
+    fi
+
+    if can_access "configure"; then
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        ./configure --prefix=/usr &>> build.log
+        if [ $? -ne 0 ]; then
+            mkdir -p build && cd build
+            ../configure --prefix=/usr &>> build.log
+            if [ $? -ne 0 ]; then
+                echo_erro " Configure: ${workdir} fail"
+                cd ${currdir}
+                return 1
+            fi
+
+            if ! can_access "Makefile"; then
+                ls --color=never -A | xargs -i cp -fr {} ../
+                cd ..
+            fi
+        fi
+    else
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
+        make configure &>> build.log
+        if [ $? -eq 0 ]; then
+            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+            ./configure --prefix=/usr &>> build.log
+            if [ $? -ne 0 ]; then
+                mkdir -p build && cd build
+                ../configure --prefix=/usr &>> build.log
+                if [ $? -ne 0 ]; then
+                    echo_erro " Configure: ${workdir} fail"
+                    cd ${currdir}
+                    return 1
+                fi
+
+                if ! can_access "Makefile"; then
+                    ls --color=never -A | xargs -i cp -fr {} ../
+                    cd ..
+                fi
+            fi
+        fi
+    fi
+
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
+    make -j ${MAKE_TD} &>> build.log
+    if [ $? -ne 0 ]; then
+        echo_erro " Make: ${workdir} fail"
+        cd ${currdir}
+        return 1
+    fi
+
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
+    ${SUDO} "make install &>> build.log"
+    if [ $? -ne 0 ]; then
+        echo_erro " Install: ${workdir} fail"
+        cd ${currdir}
+        return 1
+    fi
+
+    cd ${currdir}
+    return 0
+}
+
 function install_from_rpm
 {
     local fname_reg="$1"
     local rpm_file=""
-    
-    local rpm_pkg_list=$(find . -regextype posix-awk  -regex ".*/?${fname_reg}")
-    for rpm_file in ${rpm_pkg_list}    
+
+    local name_reg=$(trim_str_end "${fname_reg}" "\.rpm")
+    local installed_arr=($(rpm -qa | grep -P "^${name_reg}"))
+
+    # rpm -qf /usr/bin/nc #query nc rpm package
+    local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
+    for rpm_file in ${local_arr[*]}    
     do
         local full_name=$(path2fname ${rpm_file})
         local rpm_name=$(trim_str_end "${full_name}" ".rpm")
 
-        local tmp_reg=$(trim_str_end "${fname_reg}" "\.rpm")
-        local installed_list=`rpm -qa | grep -P "^${tmp_reg}" | tr "\n" " "`
-
-        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${installed_list}")"
-        if ! contain_str "${installed_list}" "${rpm_name}";then
+        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${installed_arr[*]}")"
+        if ! contain_str "${installed_arr[*]}" "${rpm_name}";then
             ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
@@ -1096,6 +1210,22 @@ function install_from_rpm
     done
 
     return 0
+}
+
+function install_from_tar
+{
+    local tarreg="$1"
+    local workdir="${MY_VIM_DIR}/deps"
+
+    if match_str_end "${tarreg}" ".tar.gz";then
+        workdir=$(trim_str_end "${tarreg}" ".tar.gz")
+        tar -xzf ${tarreg}
+    elif match_str_end "${tarreg}" ".tar";then
+        workdir=$(trim_str_end "${tarreg}" ".tar")
+        tar -xf ${tarreg}
+    fi
+    
+    install_from_make "${workdir}" 
 }
 
 function is_me
@@ -1206,32 +1336,24 @@ function account_check
 {
     local input_val=""
 
-    if [ -z "${USR_NAME}" ]; then
+    if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
         global_get_var USR_NAME
+        if [ -n "${USR_NAME}" ];then
+            global_get_var USR_PASSWORD
+        fi
     fi
 
-    if [ -z "${USR_NAME}" ]; then
+    if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
         USR_NAME=$(whoami)
         read -p "Please input username(${USR_NAME}): " input_val
         USR_NAME=${input_val:-${USR_NAME}}
         global_set_var USR_NAME
-    fi
-
-    if [ -n "${USR_NAME}" ]; then
         export USR_NAME
-    fi
 
-    if [ -z "${USR_PASSWORD}" ]; then
-        global_get_var USR_PASSWORD
-    fi
-
-    if [ -z "${USR_PASSWORD}" ]; then
         read -s -p "Please input password: " input_val
+        echo ""
         USR_PASSWORD=${input_val}
         global_set_var USR_PASSWORD
-    fi
-
-    if [ -n "${USR_PASSWORD}" ]; then
         export USR_PASSWORD
     fi
 }

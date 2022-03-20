@@ -15,7 +15,8 @@ function local_port_available
     local port="$1"
 
     #echo "${USR_PASSWORD}" | sudo -S 
-    if netstat -at  2>/dev/null | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
+    #if netstat -at  2>/dev/null | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
+    if ss -tln | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
         return 1
     else
         return 0
@@ -163,13 +164,17 @@ function remote_set_var
     local var_name="$3"
     local var_valu="$4"
 
+    if [ -z "${var_valu}" ];then
+        var_valu="$(eval "echo \"\$${var_name}\"")"
+    fi
+
     echo_debug "remote set: [$*]" 
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
 }
 
 function _bash_ncat_exit
 { 
-    echo_debug "ncat signal exit BTASK_LIST=${BTASK_LIST}"
+    echo_debug "ncat signal exit"
     if contain_str "${BTASK_LIST}" "ncat";then
         ncat_task_ctrl "EXIT${GBL_SPF1}$$"
     fi 
@@ -179,7 +184,7 @@ function _ncat_thread_main
 {
     local master_work=true
     global_set_var "master_work"
-
+ 
     while bool_v "${master_work}" 
     do
         echo_debug "ncat listening into port[${NCAT_MASTER_PORT}] ..."
@@ -236,9 +241,9 @@ function _ncat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "ncat_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+        echo_debug "ncat_bg_thread [${ppinfos[*]}]"
     else
-        echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]] BTASK_LIST=${BTASK_LIST}"
+        echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
     renice -n -1 -p ${self_pid} &> /dev/null

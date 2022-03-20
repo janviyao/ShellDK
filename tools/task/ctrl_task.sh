@@ -44,7 +44,7 @@ function ctrl_task_ctrl_sync
 
 function _bash_ctrl_exit
 { 
-    echo_debug "ctrl signal exit BTASK_LIST=${BTASK_LIST}"
+    echo_debug "ctrl signal exit"
     ctrl_task_ctrl "EXIT"
  
     if [ -f ${HOME}/.bash_exit ];then
@@ -95,7 +95,7 @@ function _ctrl_thread
     local ppids=($(ppid))
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
-    echo_debug "ctrl_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+    echo_debug "ctrl_bg_thread [${ppinfos[*]}]"
 
     touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"

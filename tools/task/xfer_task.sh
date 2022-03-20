@@ -102,7 +102,7 @@ function xfer_task_ctrl_sync
 
 function _bash_xfer_exit
 { 
-    echo_debug "xfer signal exit BTASK_LIST=${BTASK_LIST}"
+    echo_debug "xfer signal exit"
     xfer_task_ctrl "EXIT"
  
     if [ -f ${HOME}/.bash_exit ];then
@@ -176,7 +176,7 @@ function _xfer_thread
     local ppids=($(ppid))
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
-    echo_debug "xfer_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+    echo_debug "xfer_bg_thread [${ppinfos[*]}]"
 
     touch ${GBL_XFER_PIPE}.run
     echo_debug "xfer_bg_thread[${self_pid}] start"

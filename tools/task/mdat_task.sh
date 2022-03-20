@@ -90,7 +90,7 @@ function global_set_var
         _var_valu_="$(eval "echo \"\$${_var_name_}\"")"
     fi
 
-    echo_debug "mdat set: [$* = \"${_var_valu_}\"]" 
+    echo_debug "mdat set: [${_var_name_} = \"${_var_valu_}\"]" 
     mdat_task_ctrl "SET_VAR${GBL_SPF1}${_var_name_}${GBL_SPF2}${_var_valu_}" "${_one_pipe_}"
 }
 
@@ -165,7 +165,7 @@ function global_print_var
 
 function _bash_mdat_exit
 { 
-    echo_debug "mdat signal exit BTASK_LIST=${BTASK_LIST}"
+    echo_debug "mdat signal exit"
     mdat_task_ctrl "EXIT" 
 }
 
@@ -272,9 +272,9 @@ function _mdat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "mdat_bg_thread [${ppinfos[*]}] BTASK_LIST=${BTASK_LIST}"
+        echo_debug "mdat_bg_thread [${ppinfos[*]}]"
     else
-        echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]] BTASK_LIST=${BTASK_LIST}"
+        echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
     renice -n -2 -p ${self_pid} &> /dev/null

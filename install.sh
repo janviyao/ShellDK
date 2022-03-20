@@ -21,22 +21,23 @@ INST_GUIDE["deno"]="${CMD1};unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno $
 INST_GUIDE["make"]="install_from_net make"
 INST_GUIDE["g++"]="install_from_net gcc-c++"
 
-INST_GUIDE["ctags"]="${CMD1};install_tar ctags-*.tar.gz;rm -fr ctags-*/"
-INST_GUIDE["cscope"]="${CMD1};install_tar cscope-*.tar.gz;rm -fr cscope-*/"
-INST_GUIDE["tig"]="${CMD1};install_tar tig-*.tar.gz;rm -fr tig-*/"
-INST_GUIDE["ag"]="${CMD1};install_tar the_silver_searcher-*.tar.gz;rm -fr the_silver_searcher-*/"
+INST_GUIDE["ctags"]="${CMD1};install_from_tar ctags-*.tar.gz;rm -fr ctags-*/"
+INST_GUIDE["cscope"]="${CMD1};install_from_tar cscope-*.tar.gz;rm -fr cscope-*/"
+INST_GUIDE["tig"]="${CMD1};install_from_tar tig-*.tar.gz;rm -fr tig-*/"
+INST_GUIDE["ag"]="${CMD1};install_from_tar the_silver_searcher-*.tar.gz;rm -fr the_silver_searcher-*/"
 
-INST_GUIDE["glibc-2.18"]="${CMD1};install_tar glibc-2.18.tar.gz;rm -fr glibc-2.18/"
+INST_GUIDE["glibc-2.18"]="${CMD1};install_from_tar glibc-2.18.tar.gz;rm -fr glibc-2.18/"
 INST_GUIDE["glibc-common"]="${CMD1};install_from_rpm glibc-common-.+\.rpm"
 
-INST_GUIDE["m4"]="${CMD1};install_tar m4-*.tar.gz;rm -fr m4-*/"
-INST_GUIDE["autoconf"]="${CMD1};install_tar autoconf-*.tar.gz;rm -fr autoconf-*/"
-INST_GUIDE["automake"]="${CMD1};install_tar automake-*.tar.gz;rm -fr automake-*/"
-INST_GUIDE["sshpass"]="${CMD1};install_tar sshpass-*.tar.gz;rm -fr sshpass-*/"
-INST_GUIDE["tclsh8.6"]="${CMD1};install_tar tcl*-src.tar.gz"
-INST_GUIDE["expect"]="${CMD1};install_tar expect*.tar.gz;rm -fr expect*/;rm -fr tcl*/"
+INST_GUIDE["m4"]="${CMD1};install_from_tar m4-*.tar.gz;rm -fr m4-*/"
+INST_GUIDE["autoconf"]="${CMD1};install_from_tar autoconf-*.tar.gz;rm -fr autoconf-*/"
+INST_GUIDE["automake"]="${CMD1};install_from_tar automake-*.tar.gz;rm -fr automake-*/"
+INST_GUIDE["sshpass"]="${CMD1};install_from_tar sshpass-*.tar.gz;rm -fr sshpass-*/"
+INST_GUIDE["tclsh8.6"]="${CMD1};install_from_tar tcl*-src.tar.gz"
+INST_GUIDE["expect"]="${CMD1};install_from_tar expect*.tar.gz;rm -fr expect*/;rm -fr tcl*/"
 INST_GUIDE["unzip"]="${CMD1};install_from_rpm unzip-.+\.rpm"
 
+INST_GUIDE["ss"]="${CMD1};install_from_rpm iproute-.+\.rpm"
 INST_GUIDE["rsync"]="${CMD1};install_from_rpm rsync-.+\.rpm"
 INST_GUIDE["nc"]="${CMD1};install_from_rpm nmap-ncat-.+\.rpm"
 INST_GUIDE["m4"]="${CMD1};install_from_rpm m4-.+\.rpm"
@@ -104,141 +105,6 @@ function do_action
             done
         fi
     done
-}
-
-function install_tar
-{
-    local tarreg="$1"
-    local workdir="${ROOT_DIR}/deps"
-
-    if match_str_end "${tarreg}" ".tar.gz";then
-        workdir=$(trim_str_end "${tarreg}" ".tar.gz")
-        tar -xzf ${tarreg}
-    elif match_str_end "${tarreg}" ".tar";then
-        workdir=$(trim_str_end "${tarreg}" ".tar")
-        tar -xf ${tarreg}
-    fi
-    
-    install_from_make "${workdir}" 
-}
-
-function install_from_net
-{
-    local tool="$1"
-    local success=1
-
-    if [ ${success} -ne 0 ];then
-        if can_access "yum";then
-            ${SUDO} yum install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=0
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 0 ];then
-        if can_access "apt";then
-            ${SUDO} apt install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=0
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 0 ];then
-        if can_access "apt-cyg";then
-            ${SUDO} apt-cyg install ${tool} -y
-            if [ $? -eq 0 ];then
-                success=0
-            fi
-        fi
-    fi
-
-    if [ ${success} -ne 0 ];then
-        echo_erro " Install: ${tool} failure"
-        exit 1
-    fi
-}
-
-function install_from_make
-{
-    local workdir="$1"
-    local currdir="$(pwd)"
-
-    cd ${workdir} || { echo_erro "enter fail: ${workdir}"; return 1; }
-
-    can_access "Makefile" || can_access "configure" 
-    [ $? -ne 0 ] && can_access "unix/" && cd unix/
-    [ $? -ne 0 ] && can_access "linux/" && cd linux/
-
-    if can_access "autogen.sh"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
-        ./autogen.sh &>> build.log
-        if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${workdir} fail"
-            cd ${currdir}
-            return 1
-        fi
-    fi
-
-    if can_access "configure"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-        ./configure --prefix=/usr &>> build.log
-        if [ $? -ne 0 ]; then
-            mkdir -p build && cd build
-            ../configure --prefix=/usr &>> build.log
-            if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${workdir} fail"
-                cd ${currdir}
-                return 1
-            fi
-
-            if ! can_access "Makefile"; then
-                ls --color=never -A | xargs -i cp -fr {} ../
-                cd ..
-            fi
-        fi
-    else
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
-        make configure &>> build.log
-        if [ $? -eq 0 ]; then
-            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-            ./configure --prefix=/usr &>> build.log
-            if [ $? -ne 0 ]; then
-                mkdir -p build && cd build
-                ../configure --prefix=/usr &>> build.log
-                if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${workdir} fail"
-                    cd ${currdir}
-                    return 1
-                fi
-
-                if ! can_access "Makefile"; then
-                    ls --color=never -A | xargs -i cp -fr {} ../
-                    cd ..
-                fi
-            fi
-        fi
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
-    make -j ${MAKE_TD} &>> build.log
-    if [ $? -ne 0 ]; then
-        echo_erro " Make: ${workdir} fail"
-        cd ${currdir}
-        return 1
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    ${SUDO} "make install &>> build.log"
-    if [ $? -ne 0 ]; then
-        echo_erro " Install: ${workdir} fail"
-        cd ${currdir}
-        return 1
-    fi
-
-    cd ${currdir}
-    return 0
 }
 
 function version_gt() { array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"; [ $? -eq 1 ]; }
