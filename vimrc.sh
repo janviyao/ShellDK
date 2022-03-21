@@ -95,7 +95,8 @@ function create_project
         done < .gitignore
     fi
     
-    if [ $(sed -n '$=' cscope.files) -le 1 ];then
+    local line_nr=$(sed -n '$=' cscope.files)
+    if [ -n "${line_nr}" ] && [ ${line_nr} -le 1 ];then
         echo_erro "cscope.files empty"
         return 1
     fi
@@ -129,9 +130,14 @@ function create_project
 case ${OP_MODE} in
     create)
         create_project
+        if [ $? -ne 0 ];then
+            exit 1
+        fi
         ;;
     *)
         echo_erro "opmode: ${OP_MODE} invalid"
         exit 1
         ;;
 esac
+
+exit 0

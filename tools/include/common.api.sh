@@ -709,7 +709,7 @@ function replace_regex
 
     oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
-    oldstr="${oldstr//\*/\*}"
+    oldstr="${oldstr//\*/\\*}"
     oldstr="${oldstr//\(/\(}"
 
     if [[ $(string_start "${regstr}" 1) == '^' ]]; then
