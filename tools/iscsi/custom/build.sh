@@ -4,6 +4,7 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! can_access "${TEST_APP_SRC}";then
     if check_net;then
+        ${SUDO} mkdir -p ${TEST_APP_SRC}
         myloop git clone git@gitlab.alibaba-inc.com:FusionTarget/FusionTarget.git ${TEST_APP_SRC} 
         cd ${TEST_APP_SRC}
         myloop git checkout k8s_cstor

@@ -4,8 +4,8 @@ SPDK_ROOT_DIR=$(current_filedir)
 SPDK_APP_NAME=iscsi_tgt
 SPDK_CONF_DIR=${MY_HOME}/.local/etc/spdk
 
-SPDK_SRC_ROOT=/apsarapangu/develop/FusionTarget
-SPDK_LOG_DIR=/apsarapangu/fastdisk/${SPDK_APP_NAME}
+SPDK_SRC_ROOT=${MY_HOME}/develop/FusionTarget
+SPDK_LOG_DIR=${MY_HOME}/${SPDK_APP_NAME}
 SPDK_APP_DIR=${SPDK_SRC_ROOT}/app/iscsi_tgt
 
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log

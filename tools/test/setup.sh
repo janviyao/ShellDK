@@ -17,8 +17,8 @@ APPLY_SYSCTRL=no
 
 #declare -xa SERVER_IP_ARRAY=(172.24.15.166)
 #declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
-declare -xa SERVER_IP_ARRAY=(11.165.150.31)
-declare -xa CLIENT_IP_ARRAY=(11.160.41.224)
+declare -xa SERVER_IP_ARRAY=(11.158.227.241)
+declare -xa CLIENT_IP_ARRAY=(11.164.100.228)
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
 config_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
