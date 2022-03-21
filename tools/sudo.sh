@@ -7,6 +7,8 @@ CMD_STR="$*"
 #done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 #CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
+account_check
+
 if [ $UID -eq 0 ]; then
     echo_debug "root: ${CMD_STR}"
     eval "${CMD_STR}"
@@ -21,12 +23,10 @@ else
 
     if ! which expect &> /dev/null; then
         echo_erro "expect not supported"
-        eval "sudo ${CMD_STR}"
+        eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${CMD_STR}"
         exit $?
     fi
 fi
-
-account_check
 
 EXPECT_EOF=""
 if [ $UID -ne 0 ]; then
@@ -63,6 +63,7 @@ expect << EOF
     #set time 30
     spawn -noecho sudo bash -c "${CMD_STR}"
     expect {
+        "*username*:" { send "${USR_NAME}\r" }
         "*password*:" { send "${USR_PASSWORD}\r" }
         "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
         #solve: expect: spawn id exp4 not open
