@@ -16,7 +16,7 @@ function local_port_available
 
     #echo "${USR_PASSWORD}" | sudo -S 
     #if netstat -at  2>/dev/null | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
-    if ss -tln | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
+    if ss -tln | awk '{ print $4 }' | grep -F ":${port}" &> /dev/null;then
         return 1
     else
         return 0
