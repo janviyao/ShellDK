@@ -19,6 +19,7 @@ fi
 LOCAL_CONF="${ISCSI_ROOT_DIR}/${TEST_TARGET}/conf/iscsi.conf.in"
 can_access "${APP_CONF_DIR}" || ${SUDO} "mkdir -p ${APP_CONF_DIR}"
 can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${APP_CONF_DIR}
+${SUDO} chmod 755 ${APP_CONF_DIR}/iscsi.conf.in
 
 sed -i "s/${keystr}=.\+/${keystr}=${valstr}/g" ${APP_CONF_DIR}/iscsi.conf.in
 
