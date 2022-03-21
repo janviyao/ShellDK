@@ -8,16 +8,17 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 
 #TEST_TARGET=istgt
-TEST_TARGET=spdk
+#TEST_TARGET=spdk
+TEST_TARGET=custom
 
 TEST_FILL_DATA=no
 KEEP_ENV_STATE=no
 APPLY_SYSCTRL=no
 
-declare -xa SERVER_IP_ARRAY=(172.24.15.167)
-declare -xa CLIENT_IP_ARRAY=(172.24.15.168)
-#declare -xa SERVER_IP_ARRAY=(11.160.41.96)
-#declare -xa CLIENT_IP_ARRAY=(11.160.41.224)
+#declare -xa SERVER_IP_ARRAY=(172.24.15.166)
+#declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
+declare -xa SERVER_IP_ARRAY=(11.165.150.31)
+declare -xa CLIENT_IP_ARRAY=(11.160.41.224)
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
 config_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
@@ -48,9 +49,6 @@ ${TOOL_ROOT_DIR}/iscsi/setup.sh
 
 echo "" >> ${TEST_SUIT_ENV}
 echo "# [runtime configure]" >> ${TEST_SUIT_ENV}
-
-# configure core-dump path
-${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
 
 # Push run env
 for ipaddr in ${CLIENT_IP_ARRAY[*]}

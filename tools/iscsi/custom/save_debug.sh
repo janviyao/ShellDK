@@ -30,6 +30,11 @@ if can_access "${TEST_APP_DIR}/core-*";then
     can_access "${TEST_APP_DIR}/core-*" && ${SUDO} mv ${TEST_APP_DIR}/core-* ${SAVE_DIR}
 fi
 
+if can_access "/cloud/data/corefile/core-${TEST_APP_NAME}_*";then
+    echo_info "Save: /cloud/data/corefile/core-${TEST_APP_NAME}_*"
+    can_access "/cloud/data/corefile/core-${TEST_APP_NAME}_*" && ${SUDO} mv /cloud/data/corefile/core-${TEST_APP_NAME}_* ${SAVE_DIR} 
+fi
+
 if can_access "/dev/shm/spdk_iscsi_conns.*";then
     echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
     ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${SAVE_DIR}

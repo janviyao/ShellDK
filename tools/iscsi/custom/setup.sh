@@ -4,9 +4,9 @@ SPDK_ROOT_DIR=$(current_filedir)
 SPDK_APP_NAME=iscsi_tgt
 SPDK_CONF_DIR=${MY_HOME}/.local/etc/spdk
 
-SPDK_SRC_ROOT=${MY_HOME}/spdk
-SPDK_LOG_DIR=${MY_HOME}/${SPDK_APP_NAME}
-SPDK_APP_DIR=${SPDK_SRC_ROOT}/build/bin
+SPDK_SRC_ROOT=/apsarapangu/develop/FusionTarget
+SPDK_LOG_DIR=/apsarapangu/fastdisk/${SPDK_APP_NAME}
+SPDK_APP_DIR=${SPDK_SRC_ROOT}/app/iscsi_tgt
 
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log
 SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -c ${SPDK_CONF_DIR}/iscsi.conf.in -m 0XFF --shm-id=1 --logflag iscsi --logflag scsi --logflag bdev --logflag bdev_malloc &> ${SPDK_APP_LOG}"

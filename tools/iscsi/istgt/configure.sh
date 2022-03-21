@@ -2,6 +2,20 @@
 source ${TEST_SUIT_ENV} 
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
+# configure core-dump path
+${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
+
+if bool_v "${APPLY_SYSCTRL}";then
+    can_access "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
+    ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
+fi
+
+if process_exist "iscsid";then
+    ${SUDO} systemctl stop iscsid
+    ${SUDO} systemctl stop iscsid.socket
+    ${SUDO} systemctl stop iscsiuio
+fi
+
 LOCAL_CONF="${ISCSI_ROOT_DIR}/${TEST_TARGET}/conf/istgt.conf"
 can_access "${APP_CONF_DIR}" || ${SUDO} "mkdir -p ${APP_CONF_DIR}"
 can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${APP_CONF_DIR}
