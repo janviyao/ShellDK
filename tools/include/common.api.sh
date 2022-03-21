@@ -1215,18 +1215,23 @@ function install_from_rpm
 
 function install_from_tar
 {
-    local tarreg="$1"
+    local fname_reg="$1"
     local workdir="${MY_VIM_DIR}/deps"
 
-    if match_str_end "${tarreg}" ".tar.gz";then
-        workdir=$(trim_str_end "${tarreg}" ".tar.gz")
-        tar -xzf ${tarreg}
-    elif match_str_end "${tarreg}" ".tar";then
-        workdir=$(trim_str_end "${tarreg}" ".tar")
-        tar -xf ${tarreg}
-    fi
-    
-    install_from_make "${workdir}" 
+    local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
+    for tar_file in ${local_arr[*]}    
+    do
+        local full_name=$(path2fname ${tar_file})
+
+        if match_str_end "${full_name}" ".tar.gz";then
+            tar -xzf ${full_name}
+        elif match_str_end "${full_name}" ".tar";then
+            tar -xf ${full_name}
+        fi
+
+        workdir=$(string_regex "${full_name}" "^[0-9a-zA-Z.]+")
+        install_from_make "${workdir}"
+    done
 }
 
 function is_me
