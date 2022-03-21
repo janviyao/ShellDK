@@ -44,21 +44,24 @@ function remote_ncat_alive
 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
-            echo_warn "remote[${ncat_addr} ${ncat_port}] dead"
+            echo_debug "remote[${ncat_addr} ${ncat_port}] offline"
             return 1
         else
-            echo_info "remote[${ncat_addr} ${ncat_port}] alive"
+            echo_debug "remote[${ncat_addr} ${ncat_port}] online"
             return 0
         fi
     fi
 
     if can_access "nc";then
         if nc -zvw3 ${ncat_addr} ${ncat_port} &> /dev/null;then
+            echo_debug "remote[${ncat_addr} ${ncat_port}] online"
             return 0
         else
+            echo_debug "remote[${ncat_addr} ${ncat_port}] offline"
             return 1
         fi
     else
+        echo_debug "remote[${ncat_addr} ${ncat_port}] offline"
         return 1
     fi
 }
@@ -83,6 +86,15 @@ function ncat_send_msg
     local ncat_body="$3"
 
     echo_debug "ncat send: [$*]" 
+    if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
+        if local_port_available "${ncat_port}";then
+            if ! can_access "${GBL_NCAT_PIPE}.run";then
+                echo_erro "ncat task donot run"
+                return 1
+            fi
+        fi
+    fi
+
     if can_access "nc";then
         #if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
         #    echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
@@ -100,7 +112,12 @@ function ncat_send_msg
             sleep 0.1
             (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         done
+    else
+        echo_erro "ncat donot installed"
+        return 1
     fi
+
+    return 0
 }
 
 function ncat_recv_msg
@@ -111,8 +128,14 @@ function ncat_recv_msg
         timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASHLOG} | while read ncat_body
         do
             echo "${ncat_body}"
+            return 0
         done
+    else
+        echo_erro "ncat donot installed"
+        return 1
     fi
+
+    return 0
 }
 
 function ncat_wait_resp
@@ -138,17 +161,22 @@ function ncat_wait_resp
     echo_debug "wait ncat's response: ${ack_pipe}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
 
-    read ack_value < ${ack_pipe}
-    export ack_value
+    local retcode=$?
+    if [ ${retcode} -eq 0 ];then
+        read ack_value < ${ack_pipe}
+        export ack_value
+    fi
 
     eval "exec ${ack_fhno}>&-"
     rm -f ${ack_pipe}
+    return ${retcode}
 }
 
 function ncat_task_ctrl
 {
     local ncat_body="$1"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${ncat_body}" 
+    return $?
 }
 
 function ncat_task_ctrl_sync
@@ -170,6 +198,7 @@ function remote_set_var
 
     echo_debug "remote set: [$*]" 
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
+    return $?
 }
 
 function _bash_ncat_exit
