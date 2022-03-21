@@ -1231,7 +1231,7 @@ function install_from_tar
         fi
 
         workdir=$(string_regex "${full_name}" "^[0-9a-zA-Z]+")
-        install_from_make "${workdir}"
+        install_from_make "${workdir}*"
     done
 }
 
