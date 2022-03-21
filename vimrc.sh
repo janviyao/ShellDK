@@ -55,6 +55,7 @@ function create_project
         while read line
         do
             [ -z "${line}" ] && continue
+            echo_debug "gitignore: ${line}"
 
             if match_regex "${line}" "^#";then
                 continue
@@ -88,8 +89,15 @@ function create_project
             fi
  
             line=$(replace_regex "${line}" '/' '\/')
+
+            echo_debug "delete: ${line}"
             sed -i "/${line}/d" cscope.files
         done < .gitignore
+    fi
+    
+    if [ $(sed -n '$=' cscope.files) -le 1 ];then
+        echo_erro "cscope.files empty"
+        return 1
     fi
 
     rm -f tags
@@ -102,10 +110,20 @@ function create_project
     else
         ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
     fi
+    if ! can_access "tags";then
+        echo_erro "tags create fail"
+        return 1
+    fi
+
     cscope -ckbq -i cscope.files
-    
+    if ! can_access "cscope.*";then
+        echo_erro "cscope.out create fail"
+        return 1
+    fi
+
     rm -f ncscope.*
     rm -f cscope.files
+    return 0
 }
 
 case ${OP_MODE} in
