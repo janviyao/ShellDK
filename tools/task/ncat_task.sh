@@ -23,7 +23,7 @@ function local_port_available
     fi
 }
 
-NCAT_MASTER_ADDR=$(get_local_ip)
+NCAT_MASTER_ADDR=$(get_ipaddr)
 NCAT_MASTER_PORT=7888
 while ! local_port_available "${NCAT_MASTER_PORT}"
 do

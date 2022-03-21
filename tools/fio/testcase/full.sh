@@ -13,7 +13,7 @@ declare -a FIO_BS_ARRAY=(4k 64k 1m)
 
 declare -A FIO_CONF_MAP
 FIO_CONF_MAP["4k"]="fio.r.w fio.r.r fio.s.w fio.s.r fio.r.rw70"
-FIO_CONF_MAP["64k"]="fio.r.w fio.r.r fio.s.w fio.s.r"
+FIO_CONF_MAP["64k"]="fio.r.w fio.r.r fio.s.w fio.s.r fio.r.rw70"
 FIO_CONF_MAP["1m"]="fio.r.w fio.r.r fio.s.w fio.s.r"
 
 declare -A FIO_JOB_MAP
@@ -35,7 +35,7 @@ for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
     if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
         device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
-        config_add "${TEST_SUIT_ENV}" "HOST_DISK_MAP['${ipaddr}']" "'${device_array[*]}'"
+        kvconf_add "${TEST_SUIT_ENV}" "HOST_DISK_MAP['${ipaddr}']" "'${device_array[*]}'"
 
         for bs_value in ${FIO_BS_ARRAY[*]}
         do
