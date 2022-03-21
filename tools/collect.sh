@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #set -x
 EXPORT_FILE=$1
 if [ -z "${EXPORT_FILE}" ];then

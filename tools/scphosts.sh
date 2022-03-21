@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 SRC_FD="$1"
 DES_FD="$2"
 

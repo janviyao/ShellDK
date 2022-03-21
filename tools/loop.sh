@@ -1,4 +1,6 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
 CMD_STR=""
 while [ -n "$1" ]
 do

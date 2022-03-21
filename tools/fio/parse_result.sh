@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 g_result_list="$1"
 g_read_pct="$2"

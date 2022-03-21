@@ -1,4 +1,6 @@
 #!/bin/bash
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
 #set -e
 #set -o errtrace
 #trap "trap - ERR; print_backtrace >&2" ERR

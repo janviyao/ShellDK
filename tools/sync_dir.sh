@@ -1,4 +1,6 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
 declare -r USR_NAME=$1
 declare -r USR_PWD=$2
 declare -r DES_IPA=$3

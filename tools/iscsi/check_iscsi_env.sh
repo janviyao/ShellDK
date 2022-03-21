@@ -1,6 +1,6 @@
 #!/bin/sh
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     can_access "/usr/sbin/dmsetup" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }

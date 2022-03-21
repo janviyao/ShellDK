@@ -1,6 +1,6 @@
 #!/bin/sh
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! bool_v "${KEEP_ENV_STATE}";then
     echo_info "init devs: ${LOCAL_IP}"
@@ -139,7 +139,7 @@ else
 fi
 
 echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
-mkdir -p ${WORK_ROOT_DIR}
+${SUDO} mkdir -p ${WORK_ROOT_DIR}
 echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 
 ${TOOL_ROOT_DIR}/sshlogin.sh "${CONTROL_IP}" "mkdir -p ${WORK_ROOT_DIR}"

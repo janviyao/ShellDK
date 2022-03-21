@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 SRC_DIR="$1"
 DES_DIR="$2"
 echo_debug "paras: { $* }"

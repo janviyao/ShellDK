@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 . $MY_VIM_DIR/tools/paraparser.sh
 
 function replace_file

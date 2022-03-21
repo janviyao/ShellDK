@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 CMD_STR="$*"
 
 declare -i count=0

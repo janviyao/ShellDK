@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 IFS_BACKUP=$IFS
 #IFS=$(echo -en "\n\b")
 IFS=$(echo -en "\n\r")

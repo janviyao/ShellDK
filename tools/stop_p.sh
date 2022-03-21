@@ -1,4 +1,5 @@
 #!/bin/bash
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 . $MY_VIM_DIR/tools/paraparser.sh
 
 typeset -u signame
@@ -8,7 +9,6 @@ signame=$(trim_str_start "${signame}" "SIG")
 unset other_paras[0]
 pname_list="${other_paras[*]}"
 
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 echo_debug "stop [${pname_list}] with [${signame}] @[${LOCAL_IP}]"
 
 exclude_pname="vim"

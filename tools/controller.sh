@@ -1,4 +1,6 @@
 #!/bin/bash
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
 _USR_BASE_DIR="/tmp/usr"
 USR_CTRL_EXIT=0
 

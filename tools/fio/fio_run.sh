@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! can_access "$1"; then
     echo_erro "testcase not exist: $1"
@@ -68,6 +68,7 @@ function run_fio_func
             echo_erro "please check: ${output_dir}/${fio_output_file} ${other_paras}" 
             exit 1
         fi
+        echo ""
     fi
     
     local have_error=$(cat ${output_dir}/${fio_output_file} | grep "error=")

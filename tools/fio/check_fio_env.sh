@@ -1,6 +1,6 @@
 #!/bin/sh
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 can_access "/usr/lib64/libpmemblk.so.*"             || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "libpmemblk-.+\.rpm"; }
 can_access "/usr/lib64/libpmem.so.*"                || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "libpmem-.+\.rpm"; }

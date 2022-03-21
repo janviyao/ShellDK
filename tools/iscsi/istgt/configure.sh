@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 # configure core-dump path
 ${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
@@ -37,7 +37,7 @@ do
     if [ -n "${match_ln}" ];then
         netmask=$(string_regex "${ipaddr}" "^\d+\.\d+\.\d+")
         sed -i "${match_ln}a\  Netmask ${netmask}.0/24" ${APP_CONF_DIR}/istgt.conf
-        echo_info "add: Netmask ${netmask}.0/24 @${match_ln}"
+        echo_info "   add: Netmask ${netmask}.0/24 @${match_ln}"
     fi
 done
 

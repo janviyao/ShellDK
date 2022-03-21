@@ -956,7 +956,8 @@ function echo_file
         fi
 
         if [ -n "${REMOTE_IP}" ];then
-            printf "%s %s from [%s]\n" "${headpart}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
+            #printf "%s %s from [%s]\n" "${headpart}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
+            printf "%s %s\n" "${headpart}" "$*" >> ${BASHLOG}
         else
             printf "%s %s\n" "${headpart}" "$*" >> ${BASHLOG}
         fi
@@ -997,7 +998,8 @@ function echo_erro
     para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        #echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     else
         #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
@@ -1012,7 +1014,8 @@ function echo_info
     local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
     para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
-        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        #echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     else
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
@@ -1026,7 +1029,8 @@ function echo_warn
     local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
     para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
-        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        #echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     else
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
@@ -1044,7 +1048,8 @@ function echo_debug
         contain_str "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
         if [ $? -eq 0 ]; then
             if [ -n "${REMOTE_IP}" ];then
-                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+                #echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
             else
                 echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
             fi
