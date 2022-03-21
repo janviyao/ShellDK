@@ -28,7 +28,7 @@ fi
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
 
-${SUDO} "nohup ${TEST_APP_RUNTIME} &"
+${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${TEST_APP_RUNTIME}' &"
 sleep 1
 while ! (cat ${TEST_APP_LOG} | grep "spdk_app_start" &> /dev/null)
 do

@@ -158,11 +158,11 @@
 # The file name is the backing device
 # The bdev name can be referenced from elsewhere in the configuration file.
 # Block size may be omitted to automatically detect the block size of a disk.
-[AIO]
-  AIO /dev/vdb AIO0
-  AIO /dev/vdc AIO1
-  #AIO /tmp/myfile AIO2 4096
-
+#[AIO]
+#  AIO /dev/sdb AIO0
+#  AIO /dev/sdc AIO1
+#  AIO /tmp/myfile AIO2 4096
+#
 # PMDK libpmemblk-based block device
 #[Pmem]
   # Syntax:
@@ -175,15 +175,31 @@
   #   Split <bdev> <count> [<size_in_megabytes>]
 
   # Split Malloc1 into two equally-sized portions, Malloc1p0 and Malloc1p1
-  #Split Malloc1 2
+# Split Malloc1 2
 
   # Split Malloc2 into eight 1-megabyte portions, Malloc2p0 ... Malloc2p7,
   # leaving the rest of the device inaccessible
-  #Split Malloc2 8 1
+# Split Malloc2 8 1
 
-# Users should change the TargetNode section(s) below to match the
-#  desired iSCSI target node configuration.
-# TargetName, Mapping, LUN0 are minimum required
+[CSTOR]
+  DISK0 Storage 5G 32k
+  DISK1 Storage 5G 32k
+
+  #DISK0 Storage /dev/nvme6n1 Auto 32k
+  #DISK1 Storage /dev/nvme7n1 Auto 32k
+  #DISK0 Storage /apsarapangu/fastdisk/1G.img Auto 32k
+  #DISK1 Storage /apsarapangu/fastdisk/10G.img Auto 32k
+
+  DISK0 Option Unmap Disable
+  DISK0 Option WZero Disable
+  DISK0 Option ATS Disable
+  DISK0 Option XCOPY Disable
+
+  DISK1 Option Unmap Disable
+  DISK1 Option WZero Disable
+  DISK1 Option ATS Disable
+  DISK1 Option XCOPY Disable
+
 [TargetNode1]
   TargetName disk1
   TargetAlias "Data Disk1"
@@ -193,16 +209,44 @@
   # Enable header and data digest
   # UseDigest Header Data
   UseDigest Auto
-  # Use the first malloc target
-  #LUN0 Malloc0
-  # Using the first AIO target
-  LUN0 AIO0
-  # Using the second storage target
-  LUN1 AIO1
-  # Using the third storage target
-  #LUN2 AIO2
+  
+  ReadOnly No
+  ReplicationFactor 3
+  ConsistencyFactor 2
+  DesiredReplicationFactor 3
+  UnitType Disk
+  UnitOnline Yes
+  BlockLength 4096
   QueueDepth 128
+  Luworkers 6
+  UnitInquiry "CloudByte" "iscsi" "0" "4059aab98f093c5d95207f7af09d1413"
+  PhysRecordLength 4096
 
+  LUN0 DISK0
+  LUN1 DISK1 
+
+# Users should change the TargetNode section(s) below to match the
+#  desired iSCSI target node configuration.
+# TargetName, Mapping, LUN0 are minimum required
+#[TargetNode1]
+#  TargetName disk1
+#  TargetAlias "Data Disk1"
+#  Mapping PortalGroup1 InitiatorGroup1
+#  AuthMethod Auto
+#  AuthGroup AuthGroup1
+#  # Enable header and data digest
+#  # UseDigest Header Data
+#  UseDigest Auto
+#  # Use the first malloc target
+#  LUN0 Malloc0
+#  # Using the first AIO target
+#  LUN1 AIO0
+#  # Using the second storage target
+#  LUN2 AIO1
+#  # Using the third storage target
+#  LUN3 AIO2
+#  QueueDepth 128
+#
 #[TargetNode2]
 #  TargetName disk2
 #  TargetAlias "Data Disk2"
