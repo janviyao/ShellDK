@@ -80,6 +80,7 @@ function current_filedir
 function path2fname
 {
     local full_path="$1"
+    local file_name=""
 
     if contain_str "${full_path}" "-";then 
         full_path=$(replace_regex "${full_path}" "\-" "\-")
@@ -93,7 +94,7 @@ function path2fname
         fi
     fi
 
-    local file_name=$(basename ${full_path})
+    file_name=$(basename ${full_path})
     if [ $? -ne 0 ];then
         echo_erro "basename fail: ${full_path}"    
         return
@@ -108,6 +109,8 @@ function path2fname
 function fname2path
 {
     local full_name="$1"
+    local dir_name=""
+
     if contain_str "${full_name}" "-";then 
         full_name=$(replace_regex "${full_name}" "\-" "\-")
     fi
@@ -120,7 +123,7 @@ function fname2path
         fi
     fi
 
-    local dir_name=$(dirname ${full_name})
+    dir_name=$(dirname ${full_name})
     if [ $? -ne 0 ];then
         echo_erro "dirname fail: ${full_name}"    
         return
