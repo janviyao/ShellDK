@@ -41,6 +41,7 @@ function rsync_from
 {
     local xfer_src="$1"
     shift
+    local xfer_des="$1"
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
         xfer_des=$(fname2path "${xfer_src}")
     else

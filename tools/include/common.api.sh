@@ -89,18 +89,11 @@ function path2fname
         full_path=$(readlink -f ${full_path})
     fi
 
-    if contain_str "${full_path}" "/";then
-        local file_name=$(basename ${full_path})
-        if contain_str "${file_name}" "\\";then 
-            file_name=$(replace_regex "${file_name}" '\\' '')
-        fi
-        echo "${file_name}"
-    else
-        if contain_str "${full_path}" "\\";then 
-            full_path=$(replace_regex "${full_path}" '\\' '')
-        fi
-        echo "${full_path}"
+    local file_name=$(basename ${full_path})
+    if contain_str "${file_name}" "\\";then 
+        file_name=$(replace_regex "${file_name}" '\\' '')
     fi
+    echo "${file_name}"
 }
 
 function fname2path
@@ -114,12 +107,8 @@ function fname2path
         full_name=$(readlink -f ${full_name})
     fi
 
-    if contain_str "${full_name}" "/";then
-        local dir_name=$(dirname ${full_name})
-        echo "${dir_name}"
-    else
-        echo "${full_name}"
-    fi
+    local dir_name=$(dirname ${full_name})
+    echo "${dir_name}"
 }
 
 function process_pptree
