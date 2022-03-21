@@ -81,7 +81,7 @@ FUNC_MAP["ack"]="inst_ack"
 FUNC_MAP["astyle"]="inst_astyle"
 FUNC_MAP["system"]="inst_system"
 FUNC_MAP["deps"]="inst_deps"
-FUNC_MAP["all"]="inst_deps inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env inst_system"
+FUNC_MAP["all"]="inst_deps inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
 FUNC_MAP["glibc2.18"]="inst_glibc"
 
 function do_action
@@ -100,7 +100,7 @@ function do_action
                 echo_debug "${action}"
                 eval "${action}"
                 if [ $? -ne 0 ];then
-                    exit 1
+                    echo_erro "${action}"
                 fi
             done
         fi
