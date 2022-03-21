@@ -1234,7 +1234,7 @@ function install_from_tar
         for tar_dir in ${dir_arr[*]}    
         do
             local workdir=$(path2fname ${tar_dir})
-            install_from_make "${workdir}*"
+            install_from_make "${workdir}"
         done
     done
 }
