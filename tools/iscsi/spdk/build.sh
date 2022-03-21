@@ -5,6 +5,7 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 if ! can_access "${TEST_APP_SRC}";then
     if check_net;then
         ${SUDO} mkdir -p ${TEST_APP_SRC}
+        ${SUDO} chmod -R 777 ${TEST_APP_SRC}
         myloop git clone https://github.com/spdk/spdk.git ${TEST_APP_SRC} 
         cd ${TEST_APP_SRC}
         myloop git submodule update --init
