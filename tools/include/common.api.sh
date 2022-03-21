@@ -1216,7 +1216,6 @@ function install_from_rpm
 function install_from_tar
 {
     local fname_reg="$1"
-    local workdir="${MY_VIM_DIR}/deps"
 
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
     for tar_file in ${local_arr[*]}    
@@ -1230,8 +1229,13 @@ function install_from_tar
             tar -xf ${full_name}
         fi
 
-        workdir=$(string_regex "${full_name}" "^[0-9a-zA-Z]+")
-        install_from_make "${workdir}*"
+        local fprefix=$(string_regex "${full_name}" "^[0-9a-zA-Z]+")
+        local dir_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        for tar_dir in ${dir_arr[*]}    
+        do
+            local workdir=$(path2fname ${tar_dir})
+            install_from_make "${workdir}*"
+        done
     done
 }
 
