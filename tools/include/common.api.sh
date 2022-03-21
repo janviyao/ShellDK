@@ -1223,13 +1223,14 @@ function install_from_tar
     do
         local full_name=$(path2fname ${tar_file})
 
+        echo_info "$(printf "[%13s]: %-50s" "Will install" "${full_name}")"
         if match_str_end "${full_name}" ".tar.gz";then
             tar -xzf ${full_name}
         elif match_str_end "${full_name}" ".tar";then
             tar -xf ${full_name}
         fi
 
-        workdir=$(string_regex "${full_name}" "^[0-9a-zA-Z.]+")
+        workdir=$(string_regex "${full_name}" "^[0-9a-zA-Z]+")
         install_from_make "${workdir}"
     done
 }
