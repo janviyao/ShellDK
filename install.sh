@@ -550,12 +550,11 @@ else
             match_regex ""${ipaddr}"" "^\d+\.\d+\.\d+\.\d+$" || continue
 
             [ -z "${ipaddr}" ] && continue 
-            echo_info "HostName: ${hostnm} IP: ${ipaddr}"
-
             if ip addr | grep -F "${ipaddr}" &> /dev/null;then
                 continue
             fi
 
+            echo_info "HostName: ${hostnm} IP: ${ipaddr}"
             if ! contain_str "${ip_array[*]}" "${ipaddr}";then
                 ip_array[${count}]="${ipaddr}"
                 routeMap[${ipaddr}]="${hostnm}"
@@ -566,6 +565,7 @@ else
         for ipaddr in ${ip_array[*]}
         do
             hostnm=$(cat /etc/hosts | grep -F "${ipaddr}" | awk '{ print $2 }')
+            echo_info "HostName: ${hostnm} IP: ${ipaddr}"
             routeMap[${ipaddr}]="${hostnm}"
         done
     fi
