@@ -87,9 +87,18 @@ function path2fname
 
     if can_access "${full_path}";then
         full_path=$(readlink -f ${full_path})
+        if [ $? -ne 0 ];then
+            echo_erro "readlink fail: ${full_path}"    
+            return
+        fi
     fi
 
     local file_name=$(basename ${full_path})
+    if [ $? -ne 0 ];then
+        echo_erro "basename fail: ${full_path}"    
+        return
+    fi
+
     if contain_str "${file_name}" "\\";then 
         file_name=$(replace_regex "${file_name}" '\\' '')
     fi
@@ -98,16 +107,25 @@ function path2fname
 
 function fname2path
 {
-    local full_name=$1
+    local full_name="$1"
     if contain_str "${full_name}" "-";then 
         full_name=$(replace_regex "${full_name}" "\-" "\-")
     fi
 
     if can_access "${full_name}";then
         full_name=$(readlink -f ${full_name})
+        if [ $? -ne 0 ];then
+            echo_erro "readlink fail: ${full_name}"    
+            return
+        fi
     fi
 
     local dir_name=$(dirname ${full_name})
+    if [ $? -ne 0 ];then
+        echo_erro "dirname fail: ${full_name}"    
+        return
+    fi
+
     echo "${dir_name}"
 }
 
