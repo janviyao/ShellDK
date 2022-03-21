@@ -4,8 +4,9 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if ! can_access "${TEST_APP_SRC}";then
     if check_net;then
-        myloop git clone https://github.com/spdk/spdk.git ${TEST_APP_SRC} 
+        myloop git clone git@gitlab.alibaba-inc.com:FusionTarget/FusionTarget.git ${TEST_APP_SRC} 
         cd ${TEST_APP_SRC}
+        myloop git checkout k8s_cstor
         myloop git submodule update --init
     else
         echo_erro "network fail: ${TEST_APP_SRC}"
@@ -29,7 +30,7 @@ can_access "/usr/include/CUnit/Basic.h" || install_from_net "CUnit-devel"
 cd ${TEST_APP_SRC}
 can_access "${TEST_APP_SRC}/build" && make clean
 
-./configure --disable-tests --disable-unit-tests --disable-examples
+./configure --enable-replication
 if [ $? -ne 0 ];then
     echo_erro "configure fail: ${TEST_APP_SRC}"
     exit 1
