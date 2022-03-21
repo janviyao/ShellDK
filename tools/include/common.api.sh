@@ -1073,6 +1073,7 @@ function install_from_net
 {
     local inst_name="$1"
 
+    echo_info "$(printf "[%13s]: %-50s" "Will install" "${inst_name}")"
     if can_access "yum";then
         ${SUDO} yum install ${inst_name} -y
         if [ $? -eq 0 ];then
@@ -1202,10 +1203,10 @@ function install_from_rpm
         if ! contain_str "${installed_arr[*]}" "${rpm_name}";then
             ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${rpm_file}")"
+                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${rpm_file}")"
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${full_name}")"
             fi
         fi
     done
@@ -1235,6 +1236,12 @@ function install_from_tar
         do
             local workdir=$(path2fname ${tar_dir})
             install_from_make "${workdir}"
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${full_name}")"
+            fi
         done
     done
 }
