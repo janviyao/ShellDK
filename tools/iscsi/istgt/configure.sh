@@ -4,6 +4,8 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 # configure core-dump path
 ${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
+${SUDO} mkdir -p ${TEST_LOG_DIR}
+${SUDO} chmod -R 777 ${TEST_LOG_DIR}
 
 if bool_v "${APPLY_SYSCTRL}";then
     can_access "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/

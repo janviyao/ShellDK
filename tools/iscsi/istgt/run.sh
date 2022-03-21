@@ -16,12 +16,6 @@ else
     can_access "sysctl.conf" && rm -f sysctl.conf
 fi
 
-if process_exist "iscsid";then
-    ${SUDO} systemctl stop iscsid
-    ${SUDO} systemctl stop iscsid.socket
-    ${SUDO} systemctl stop iscsiuio
-fi
-
 if process_exist "${TEST_APP_NAME}";then
     ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"
     sleep 1

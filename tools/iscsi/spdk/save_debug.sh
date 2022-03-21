@@ -4,7 +4,8 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 mkdir -p ${TEST_LOG_DIR}
 
 SAVE_DIR="$1"
-mkdir -p ${SAVE_DIR}
+${SUDO} mkdir -p ${SAVE_DIR}
+${SUDO} chmod -R 777 ${SAVE_DIR}
 
 if can_access "${TEST_APP_DIR}/${TEST_APP_NAME}";then 
     echo_info "Save: ${TEST_APP_NAME}"
@@ -22,12 +23,12 @@ fi
 
 if can_access "${COREDUMP_DIR}/core-*";then
     echo_info "Save: ${COREDUMP_DIR}/core-*"
-    can_access "${COREDUMP_DIR}/core-*" && ${SUDO} mv ${COREDUMP_DIR}/core-* ${SAVE_DIR}
+    can_access "${COREDUMP_DIR}/core-*" && ${SUDO} mv -f ${COREDUMP_DIR}/core-* ${SAVE_DIR}
 fi
 
 if can_access "${TEST_APP_DIR}/core-*";then
     echo_info "Save: ${COREDUMP_DIR}/core-*"
-    can_access "${TEST_APP_DIR}/core-*" && ${SUDO} mv ${TEST_APP_DIR}/core-* ${SAVE_DIR}
+    can_access "${TEST_APP_DIR}/core-*" && ${SUDO} mv -f ${TEST_APP_DIR}/core-* ${SAVE_DIR}
 fi
 
 if can_access "/dev/shm/spdk_iscsi_conns.*";then
@@ -41,7 +42,7 @@ if can_access "/dev/hugepages/";then
 fi
 
 echo_info "Save: ${TEST_APP_LOG}"
-can_access "${TEST_APP_LOG}" && ${SUDO} mv ${TEST_APP_LOG} ${SAVE_DIR}
+can_access "${TEST_APP_LOG}" && ${SUDO} mv -f ${TEST_APP_LOG} ${SAVE_DIR}
 
 ${SUDO} chmod -R 777 ${SAVE_DIR}
 if can_access "${SAVE_DIR}/core-*";then
