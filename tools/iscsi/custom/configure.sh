@@ -10,11 +10,11 @@ if bool_v "${APPLY_SYSCTRL}";then
     ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
 fi
 
-if process_exist "iscsid";then
-    ${SUDO} systemctl stop iscsid
-    ${SUDO} systemctl stop iscsid.socket
-    ${SUDO} systemctl stop iscsiuio
-fi
+#if process_exist "iscsid";then
+#    ${SUDO} systemctl stop iscsid
+#    ${SUDO} systemctl stop iscsid.socket
+#    ${SUDO} systemctl stop iscsiuio
+#fi
 
 LOCAL_CONF="${ISCSI_ROOT_DIR}/${TEST_TARGET}/conf/iscsi.conf.in"
 can_access "${APP_CONF_DIR}" || ${SUDO} "mkdir -p ${APP_CONF_DIR}"
