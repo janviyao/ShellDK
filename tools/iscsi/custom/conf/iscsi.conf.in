@@ -183,7 +183,7 @@
 
 [CSTOR]
   DISK0 Storage 5G 32k
-  DISK1 Storage 5G 32k
+  #DISK1 Storage 5G 32k
 
   #DISK0 Storage /dev/nvme6n1 Auto 32k
   #DISK1 Storage /dev/nvme7n1 Auto 32k
@@ -195,13 +195,13 @@
   DISK0 Option ATS Disable
   DISK0 Option XCOPY Disable
 
-  DISK1 Option Unmap Disable
-  DISK1 Option WZero Disable
-  DISK1 Option ATS Disable
-  DISK1 Option XCOPY Disable
+  #DISK1 Option Unmap Disable
+  #DISK1 Option WZero Disable
+  #DISK1 Option ATS Disable
+  #DISK1 Option XCOPY Disable
 
 [TargetNode1]
-  TargetName disk1
+  TargetName volume1
   TargetAlias "Data Disk1"
   Mapping PortalGroup1 InitiatorGroup1
   AuthMethod Auto
@@ -220,11 +220,10 @@
   QueueDepth 128
   Luworkers 6
   UnitInquiry "vCNS" "iscsi" "0" "4059aab98f093c5d95207f7af09d1413"
-  UnitInquiry "vCNS" "iscsi" "1" "4059aab98f093c5d95207f7af09d1414"
   PhysRecordLength 4096
 
   LUN0 DISK0
-  LUN1 DISK1 
+  #LUN1 DISK1 
 
 # Users should change the TargetNode section(s) below to match the
 #  desired iSCSI target node configuration.
