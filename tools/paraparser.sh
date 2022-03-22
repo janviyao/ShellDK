@@ -79,7 +79,7 @@ do
     shift
 done
 
-#if bool_v "${DEBUG_ON}";then
+#if bool_v "${LOG_OPEN}";then
 #    for key in ${!parasMap[*]}
 #    do
 #        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${parasMap[$key]}")"

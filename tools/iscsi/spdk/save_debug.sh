@@ -6,6 +6,14 @@ SAVE_DIR="$1"
 ${SUDO} mkdir -p ${SAVE_DIR}
 ${SUDO} chmod -R 777 ${SAVE_DIR}
 
+echo_info "Save: ${TEST_APP_LOG}"
+can_access "${TEST_APP_LOG}" && ${SUDO} mv -f ${TEST_APP_LOG} ${SAVE_DIR}
+
+if ! bool_v "${TEST_LOG_SAVE}";then
+    echo_info "Success to save: ${SAVE_DIR}"
+    exit 0
+fi
+
 if can_access "${TEST_APP_DIR}/${TEST_APP_NAME}";then 
     echo_info "Save: ${TEST_APP_NAME}"
     cp -f ${TEST_APP_DIR}/${TEST_APP_NAME} ${SAVE_DIR}
@@ -39,9 +47,6 @@ if can_access "/dev/hugepages/";then
     echo_info "Save: /dev/hugepages/"
     ${SUDO} cp -fr /dev/hugepages ${SAVE_DIR}/
 fi
-
-echo_info "Save: ${TEST_APP_LOG}"
-can_access "${TEST_APP_LOG}" && ${SUDO} mv -f ${TEST_APP_LOG} ${SAVE_DIR}
 
 ${SUDO} chmod -R 777 ${SAVE_DIR}
 if can_access "${SAVE_DIR}/core-*";then

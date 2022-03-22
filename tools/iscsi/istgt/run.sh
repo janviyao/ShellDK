@@ -9,13 +9,6 @@ else
     exit 0
 fi
 
-if ! bool_v "${APPLY_SYSCTRL}";then
-    can_access "sysctl.conf" && ${SUDO} mv sysctl.conf /etc/
-    ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
-else
-    can_access "sysctl.conf" && rm -f sysctl.conf
-fi
-
 if process_exist "${TEST_APP_NAME}";then
     ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"
     sleep 1

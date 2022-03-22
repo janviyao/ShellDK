@@ -1,8 +1,8 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
-DEBUG_ON=0
-LOG_ENABLE=".+"
+LOG_OPEN=0
+LOG_FLAG=".+"
 LOG_HEADER=true
 HEADER_TIME=false
 HEADER_FILE=false
@@ -398,9 +398,9 @@ function echo_debug
     xtrace_disable
     local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
     para=$(replace_str "${para}" "${MY_HOME}/" "")
-    if bool_v "${DEBUG_ON}"; then
+    if bool_v "${LOG_OPEN}"; then
         local fname=$(path2fname $0)
-        contain_str "${LOG_ENABLE}" "${fname}" || match_regex "${fname}" "${LOG_ENABLE}" 
+        contain_str "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}" 
         if [ $? -eq 0 ]; then
             if [ -n "${REMOTE_IP}" ];then
                 #echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"

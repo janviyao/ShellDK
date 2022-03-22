@@ -4,7 +4,7 @@ IFS_BACKUP=$IFS
 #IFS=$(echo -en "\n\b")
 IFS=$(echo -en "\n\r")
 
-if bool_v "${DEBUG_ON}";then
+if bool_v "${LOG_OPEN}";then
     echo $*
     $*
 else
