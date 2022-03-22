@@ -11,7 +11,7 @@ TEST_TARGET=custom
 #TEST_TARGET=istgt
 #TEST_TARGET=spdk
 
-TEST_LOG_SAVE=no
+TEST_DUMP_SAVE=no
 TEST_FILL_DATA=no
 KEEP_ENV_STATE=no
 APPLY_SYSCTRL=no
@@ -30,7 +30,7 @@ kvconf_add "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*
 kvconf_add "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP" "(['${LOCAL_IP}']='empty')"
 echo "" >> ${TEST_SUIT_ENV}
 
-kvconf_add "${TEST_SUIT_ENV}" "TEST_LOG_SAVE"  "${TEST_LOG_SAVE}"
+kvconf_add "${TEST_SUIT_ENV}" "TEST_DUMP_SAVE" "${TEST_DUMP_SAVE}"
 kvconf_add "${TEST_SUIT_ENV}" "TEST_TARGET"    "${TEST_TARGET}"
 kvconf_add "${TEST_SUIT_ENV}" "TEST_FILL_DATA" "${TEST_FILL_DATA}"
 kvconf_add "${TEST_SUIT_ENV}" "KEEP_ENV_STATE" "${KEEP_ENV_STATE}"

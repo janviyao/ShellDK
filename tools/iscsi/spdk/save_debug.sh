@@ -9,7 +9,7 @@ ${SUDO} chmod -R 777 ${SAVE_DIR}
 echo_info "Save: ${TEST_APP_LOG}"
 can_access "${TEST_APP_LOG}" && ${SUDO} mv -f ${TEST_APP_LOG} ${SAVE_DIR}
 
-if ! bool_v "${TEST_LOG_SAVE}";then
+if ! bool_v "${TEST_DUMP_SAVE}";then
     echo_info "Success to save: ${SAVE_DIR}"
     exit 0
 fi
