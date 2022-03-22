@@ -7,18 +7,18 @@ WORK_ROOT_DIR=/tmp/test
 TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 
-#TEST_TARGET=custom
-TEST_TARGET=istgt
+TEST_TARGET=custom
+#TEST_TARGET=istgt
 #TEST_TARGET=spdk
 
 TEST_FILL_DATA=no
 KEEP_ENV_STATE=no
 APPLY_SYSCTRL=no
 
-#declare -xa SERVER_IP_ARRAY=(11.158.227.241)
-#declare -xa CLIENT_IP_ARRAY=(11.164.100.228)
-declare -xa SERVER_IP_ARRAY=(172.24.15.166)
-declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
+declare -xa SERVER_IP_ARRAY=(11.158.227.241)
+declare -xa CLIENT_IP_ARRAY=(11.164.100.228)
+#declare -xa SERVER_IP_ARRAY=(172.24.15.166)
+#declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
 kvconf_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
