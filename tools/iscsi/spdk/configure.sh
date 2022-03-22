@@ -3,6 +3,7 @@ source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 # configure core-dump path
+${SUDO} ulimit -c unlimited
 ${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
 ${SUDO} mkdir -p ${TEST_LOG_DIR}
 ${SUDO} chmod -R 777 ${TEST_LOG_DIR}
