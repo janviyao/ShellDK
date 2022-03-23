@@ -14,3 +14,5 @@ can_access "/usr/lib64/libboost_random-mt.so.*"     || { cd ${FIO_ROOT_DIR}/deps
 can_access "/usr/lib64/libboost_iostreams-mt.so.*"  || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "boost-iostreams-.+\.rpm"; }
 can_access "/usr/lib64/libboost_thread-mt.so.*"     || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "boost-thread-.+\.rpm"; }
 can_access "/usr/lib64/libboost_system-mt.so.*"     || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "boost-system-.+\.rpm"; }
+can_access "/usr/sbin/rdma-ndd"                     || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "rdma-core-.+\.rpm"; }
+can_access "/usr/lib64/libibverbs.so.*"             || { cd ${FIO_ROOT_DIR}/deps; install_from_rpm "libibverbs-.+\.rpm"; }
