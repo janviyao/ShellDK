@@ -141,7 +141,5 @@ fi
 echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
 ${SUDO} mkdir -p ${WORK_ROOT_DIR}
 echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
-
-${TOOL_ROOT_DIR}/sshlogin.sh "${CONTROL_IP}" "mkdir -p ${WORK_ROOT_DIR}"
 ${TOOL_ROOT_DIR}/scplogin.sh "${WORK_ROOT_DIR}/disk.${LOCAL_IP}" "${CONTROL_IP}:${WORK_ROOT_DIR}/disk.${LOCAL_IP}"
 exit 0
