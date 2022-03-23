@@ -357,7 +357,11 @@ function inst_deps
 }
 
 function inst_system
-{     
+{  
+    if ! can_access "${MY_HOME}/.timerc";then
+        echo "#!/bin/bash" > ${MY_HOME}/.timerc
+    fi
+
     cd ${ROOT_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         ${SUDO} chmod 777 /etc/ld.so.conf
