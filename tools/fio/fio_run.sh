@@ -215,6 +215,7 @@ function start_test_func
     done
 }
 
+mkdir -p ${FIO_OUTPUT_DIR}
 echo "device,thread,blk-size,io-depth,rw-type,read-pct,IOPS,BW(MB/s),lat(ms),start-up,spend(s)" > ${FIO_RESULT_FILE}
 start_test_func
 sed -i 's/ *//g' ${FIO_RESULT_FILE}
