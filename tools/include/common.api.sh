@@ -349,8 +349,7 @@ function echo_header
 function echo_erro
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
-    para=$(replace_str "${para}" "${MY_HOME}/" "")
+    local para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         #echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
@@ -366,8 +365,7 @@ function echo_erro
 function echo_info
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
-    para=$(replace_str "${para}" "${MY_HOME}/" "")
+    local para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         #echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
@@ -381,8 +379,7 @@ function echo_info
 function echo_warn
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
-    para=$(replace_str "${para}" "${MY_HOME}/" "")
+    local para=$(replace_str "${para}" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         #echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
@@ -396,8 +393,7 @@ function echo_warn
 function echo_debug
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_VIM_DIR}/" "")
-    para=$(replace_str "${para}" "${MY_HOME}/" "")
+    local para=$(replace_str "${para}" "${MY_HOME}/" "")
     if bool_v "${LOG_OPEN}"; then
         local fname=$(path2fname $0)
         contain_str "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}" 
