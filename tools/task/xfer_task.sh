@@ -19,6 +19,14 @@ function rsync_to
     fi
     local xfer_ips=($*)
 
+    if [ -z "${xfer_ips[*]}" ];then
+        if [ -z "${xfer_des}" ];then
+            return 0
+        elif [[ ${xfer_src} == ${xfer_des} ]];then
+            return 0
+        fi
+    fi
+
     if ! can_access "${xfer_src}";then
         echo_erro "{ ${xfer_src} } not exist"
         return 1
@@ -35,6 +43,8 @@ function rsync_to
     else
         xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
     fi
+
+    return 0
 }
 
 function rsync_from
@@ -64,6 +74,8 @@ function rsync_from
     else
         xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
     fi
+
+    return 0
 }
 
 function xfer_task_ctrl
