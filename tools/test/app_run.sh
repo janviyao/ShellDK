@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-mkdir -p ${WORK_ROOT_DIR}
+${SUDO} "mkdir -p ${WORK_ROOT_DIR}; chmod -R 777 ${WORK_ROOT_DIR}"
 
 ${ISCSI_ROOT_DIR}/run.sh
 if [ $? -ne 0 ];then
