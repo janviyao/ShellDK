@@ -9,58 +9,45 @@ fi
 
 function mdat_task_ctrl
 {
-    local mdat_body="$1"
-    local _one_pipe_="$2"
+    local _body_="$1"
+    local _pipe_="$2"
 
-    if [ -z "${_one_pipe_}" ];then
-        _one_pipe_="${GBL_MDAT_PIPE}"
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
     fi
 
-    if ! can_access "${_one_pipe_}";then
-        echo_erro "pipe invalid: ${_one_pipe_}"
+    if ! can_access "${_pipe_}";then
+        echo_erro "pipe invalid: ${_pipe_}"
         return 1
     fi
 
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${mdat_body}" > ${_one_pipe_}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body_}" > ${_pipe_}
 }
 
 function mdat_task_ctrl_sync
 {
-    local mdat_body="$1"
-    local _one_pipe_="$2"
+    local _body_="$1"
+    local _pipe_="$2"
 
-    if [ -z "${_one_pipe_}" ];then
-        _one_pipe_="${GBL_MDAT_PIPE}"
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
     fi
 
-    if ! can_access "${_one_pipe_}";then
-        echo_erro "pipe invalid: ${_one_pipe_}"
+    if ! can_access "${_pipe_}";then
+        echo_erro "pipe invalid: ${_pipe_}"
         return 1
     fi
     
-    echo_debug "mdat wait for ${_one_pipe_}"
-    wait_value "${mdat_body}" "${_one_pipe_}"
+    echo_debug "mdat wait for ${_pipe_}"
+    wait_value "${_body_}" "${_pipe_}"
 }
 
 function global_check_var
 {
-    local _var_name_="$1"
-    local _one_pipe_="$2"
-    echo_debug "mdat check: [$*]" 
-
-    if [ -z "${_one_pipe_}" ];then
-        _one_pipe_="${GBL_MDAT_PIPE}"
-    fi
-
-    if ! can_access "${_one_pipe_}.run";then
-        echo_erro "mdat task donot run"
-        return 1
-    fi
+    local _xkey_="$1"
+    local _pipe_="$2"
     
-    echo_debug "mdat wait for ${_one_pipe_}"
-    wait_value "VAR_EXIST${GBL_SPF1}${_var_name_}" "${_one_pipe_}"
-
-    if bool_v "${ack_value}";then
+    if global_kv_has "${_xkey_}" "${_pipe_}";then
         return 0
     else
         return 1
@@ -69,98 +56,150 @@ function global_check_var
 
 function global_set_var
 {
-    local _var_name_="$1"
-    local _one_pipe_="$2"
-    local _var_valu_=""
-
-    if [ -z "${_one_pipe_}" ];then
-        _one_pipe_="${GBL_MDAT_PIPE}"
-    fi
-
-    if ! can_access "${_one_pipe_}.run";then
-        echo_erro "mdat task donot run"
-        return 1
-    fi
-
-    if contain_str "${_var_name_}" "=";then
-        _var_valu_="${_var_name_#*=}"
-        _var_name_="${_var_name_%%=*}"
-        eval "declare -g ${_var_name_}=\"${_var_valu_}\""
+    local _xkey_="$1"
+    local _pipe_="$2"
+    local _xval_=""
+    
+    if contain_str "${_xkey_}" "=";then
+        _xval_="${_xkey_#*=}"
+        _xkey_="${_xkey_%%=*}"
+        eval "declare -g ${_xkey_}=\"${_xval_}\""
     else
-        _var_valu_="$(eval "echo \"\$${_var_name_}\"")"
+        _xval_="$(eval "echo \"\$${_xkey_}\"")"
     fi
-
-    echo_debug "mdat set: [${_var_name_} = \"${_var_valu_}\"]" 
-    mdat_task_ctrl "SET_VAR${GBL_SPF1}${_var_name_}${GBL_SPF2}${_var_valu_}" "${_one_pipe_}"
+    
+    global_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
 }
 
 function global_get_var
 {
-    local _var_name_="$1"
-    local _one_pipe_="$2"
-    local _var_valu_=""
-    echo_debug "mdat get: [$*]" 
+    local _xkey_="$1"
+    local _pipe_="$2"
+    local _xval_=""
     
-    if var_exist "${_var_name_}";then
-        _var_valu_=$(eval "echo \$${_var_name_}")
-        eval "declare -g ${_var_name_}=\"${_var_valu_}\""
-        echo_debug "mdat get: [${_var_name_} = \"${_var_valu_}\"]" 
+    if var_exist "${_xkey_}";then
+        _xval_=$(eval "echo \$${_xkey_}")
+        eval "declare -g ${_xkey_}=\"${_xval_}\""
         return
     fi
-
-    if [ -z "${_one_pipe_}" ];then
-        _one_pipe_="${GBL_MDAT_PIPE}"
-    fi
-
-    if ! can_access "${_one_pipe_}.run";then
-        echo_erro "mdat task donot run"
-        return 1
-    fi
-
-    echo_debug "mdat wait for ${_one_pipe_}"
-    wait_value "GET_VAR${GBL_SPF1}${_var_name_}" "${_one_pipe_}"
-
-    eval "declare -g ${_var_name_}=\"${ack_value}\""
-    echo_debug "mdat get: [${_var_name_} = \"${ack_value}\"]" 
+    
+    _xval_=$(global_kv_get "${_xkey_}" "${_pipe_}")
+    eval "declare -g ${_xkey_}=\"${_xval_}\""
 }
 
 function global_unset_var
 {
-    local _var_name_="$1"
-    local _one_pipe_="$2"
-
-    if [ -z "${_one_pipe_}" ];then
-        _one_pipe_="${GBL_MDAT_PIPE}"
-    fi
-
-    if ! can_access "${_one_pipe_}.run";then
-        echo_erro "mdat task donot run"
-        return 1
-    fi
-
-    mdat_task_ctrl "UNSET_VAR${GBL_SPF1}${_var_name_}" "${_one_pipe_}"
+    local _xkey_="$1"
+    local _pipe_="$2"
+    global_kv_unset "${_xkey_}" "${_pipe_}"
 }
 
 function global_clear_var
 {
-    local _var_name_="$*"
+    local _xkey_="$*"
 
-    if [ -z "${_var_name_}" ];then
-        mdat_task_ctrl "CLEAR_VAR${GBL_SPF1}ALL"
+    if [ -z "${_xkey_}" ];then
+        mdat_task_ctrl "KEY_CLR${GBL_SPF1}ALL"
     else
-        mdat_task_ctrl "CLEAR_VAR${GBL_SPF1}${_var_name_}"
+        mdat_task_ctrl "KEY_CLR${GBL_SPF1}${_xkey_}"
     fi
 }
 
 function global_print_var
 {
-    local _var_name_="$*"
+    local _xkey_="$*"
 
-    if [ -z "${_var_name_}" ];then
-        mdat_task_ctrl "PRINT_VAR${GBL_SPF1}ALL"
+    if [ -z "${_xkey_}" ];then
+        mdat_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
     else
-        mdat_task_ctrl "PRINT_VAR${GBL_SPF1}${_var_name_}"
+        mdat_task_ctrl "KEY_PRT${GBL_SPF1}${_xkey_}"
     fi
+}
+
+function global_kv_has
+{
+    local _xkey_="$1"
+    local _pipe_="$2"
+    echo_debug "mdat check: [$*]" 
+
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_pipe_}.run";then
+        echo_erro "mdat task donot run"
+        return 1
+    fi
+    
+    echo_debug "mdat wait for ${_pipe_}"
+    wait_value "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
+
+    if bool_v "${ack_value}";then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function global_kv_unset
+{
+    local _xkey_="$1"
+    local _pipe_="$2"
+
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_pipe_}.run";then
+        echo_erro "mdat task donot run"
+        return 1
+    fi
+
+    mdat_task_ctrl "KV_UNSET${GBL_SPF1}${_xkey_}" "${_pipe_}"
+}
+
+function global_kv_set
+{
+    local _xkey_="$1"
+    local _xval_="$2"
+    local _pipe_="$3"
+
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_pipe_}.run";then
+        echo_erro "mdat task donot run"
+        return 1
+    fi
+    
+    echo_debug "mdat set: [${_xkey_} = \"${_xval_}\"]" 
+    mdat_task_ctrl "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    return 0
+}
+
+function global_kv_get
+{
+    local _xkey_="$1"
+    local _pipe_="$2"
+    local _xval_=""
+    echo_debug "mdat get: [$*]" 
+    
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_pipe_}.run";then
+        echo_erro "mdat task donot run"
+        return 1
+    fi
+
+    echo_debug "mdat wait for ${_pipe_}"
+    wait_value "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    echo_debug "mdat get: [${_xkey_} = \"${ack_value}\"]" 
+
+    echo "${ack_value}"
+    return 0
 }
 
 function _bash_mdat_exit
@@ -171,7 +210,7 @@ function _bash_mdat_exit
 
 function _mdat_thread_main
 {
-    local -A _globalMap
+    local -A _global_map_
     while read line
     do
         echo_debug "mdat task: [${line}]" 
@@ -195,58 +234,58 @@ function _mdat_thread_main
                 echo "ACK" > ${ack_pipe}
             fi
             return 
-        elif [[ "${req_ctrl}" == "SET_VAR" ]];then
-            local _var_name_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
-            local _var_valu_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
+        elif [[ "${req_ctrl}" == "KV_SET" ]];then
+            local _xkey_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
+            local _xval_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
 
-            _globalMap[${_var_name_}]="${_var_valu_}"
-        elif [[ "${req_ctrl}" == "GET_VAR" ]];then
-            local _var_name_=${req_body}
-            echo_debug "write [${_globalMap[${_var_name_}]}] into [${ack_pipe}]"
-            echo "${_globalMap[${_var_name_}]}" > ${ack_pipe}
+            _global_map_[${_xkey_}]="${_xval_}"
+        elif [[ "${req_ctrl}" == "KV_GET" ]];then
+            local _xkey_=${req_body}
+            echo_debug "write [${_global_map_[${_xkey_}]}] into [${ack_pipe}]"
+            echo "${_global_map_[${_xkey_}]}" > ${ack_pipe}
             ack_ctrl="donot need ack"
-        elif [[ "${req_ctrl}" == "VAR_EXIST" ]];then
-            local _var_name_=${req_body}
-            if contain_str "${!_globalMap[*]}" "${_var_name_}";then
-                echo_debug "check [${_var_name_}] exist for [${ack_pipe}]"
+        elif [[ "${req_ctrl}" == "KEY_HAS" ]];then
+            local _xkey_=${req_body}
+            if contain_str "${!_global_map_[*]}" "${_xkey_}";then
+                echo_debug "check [${_xkey_}] exist for [${ack_pipe}]"
                 echo "true" > ${ack_pipe}
             else
-                echo_debug "check [${_var_name_}] absent for [${ack_pipe}]"
+                echo_debug "check [${_xkey_}] absent for [${ack_pipe}]"
                 echo "false" > ${ack_pipe}
             fi
             ack_ctrl="donot need ack"
-        elif [[ "${req_ctrl}" == "UNSET_VAR" ]];then
-            local _var_name_=${req_body}
-            unset _globalMap[${_var_name_}]
-        elif [[ "${req_ctrl}" == "CLEAR_VAR" ]];then
-            if [ ${#_globalMap[*]} -ne 0 ];then
+        elif [[ "${req_ctrl}" == "KV_UNSET" ]];then
+            local _xkey_=${req_body}
+            unset _global_map_[${_xkey_}]
+        elif [[ "${req_ctrl}" == "KEY_CLR" ]];then
+            if [ ${#_global_map_[*]} -ne 0 ];then
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _var_name_ in ${!_globalMap[*]};do
-                        unset _globalMap[${_var_name_}]
+                    for _xkey_ in ${!_global_map_[*]};do
+                        unset _global_map_[${_xkey_}]
                     done
                 else
                     local var_array=(${req_body})
-                    for _var_name_ in ${var_array[*]}
+                    for _xkey_ in ${var_array[*]}
                     do
-                        if [ -n "${_globalMap[${_var_name_}]}" ];then
-                            unset _globalMap[${_var_name_}]
+                        if [ -n "${_global_map_[${_xkey_}]}" ];then
+                            unset _global_map_[${_xkey_}]
                         fi
                     done
                 fi
             fi
-        elif [[ "${req_ctrl}" == "PRINT_VAR" ]];then
-            if [ ${#_globalMap[*]} -ne 0 ];then
+        elif [[ "${req_ctrl}" == "KEY_PRT" ]];then
+            if [ ${#_global_map_[*]} -ne 0 ];then
                 echo ""
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _var_name_ in ${!_globalMap[*]};do
-                        echo "$(printf "[%15s]: %s" "${_var_name_}" "${_globalMap[${_var_name_}]}")"
+                    for _xkey_ in ${!_global_map_[*]};do
+                        echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                     done
                 else
                     local var_array=(${req_body})
-                    for _var_name_ in ${var_array[*]}
+                    for _xkey_ in ${var_array[*]}
                     do
-                        if [ -n "${_globalMap[${_var_name_}]}" ];then
-                            echo "$(printf "[%15s]: %s" "${_var_name_}" "${_globalMap[${_var_name_}]}")"
+                        if [ -n "${_global_map_[${_xkey_}]}" ];then
+                            echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                         fi
                     done
                 fi
