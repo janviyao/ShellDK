@@ -7,6 +7,22 @@ if can_access "${MY_HOME}/.timerc";then
     ${MY_HOME}/.timerc
 fi
 
+if can_access "${TEST_SUIT_ENV}";then
+    source ${TEST_SUIT_ENV} 
+
+    logsize=$(file_size "${TEST_APP_LOG}")
+    if [ -z "${logsize}" ];then
+        logsize=0
+    fi
+
+    maxsize=$((1024*1024*1024))
+    if (( logsize > maxsize ));then
+        date_time=$(date '+%Y%m%d-%H%M%S')
+        cp -f ${TEST_APP_LOG} ${TEST_APP_LOG}.${date_time}
+        echo > ${TEST_APP_LOG}
+    fi
+fi
+
 if can_access "${BASHLOG}";then
     logsize=$(file_size "${BASHLOG}")
     if [ -z "${logsize}" ];then
