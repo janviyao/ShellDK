@@ -323,6 +323,7 @@ function inst_env
         echo "*.o"      >> ${MY_HOME}/.rsync.exclude
         echo "*.cmd"    >> ${MY_HOME}/.rsync.exclude
     fi
+    ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
 
     if can_access "/var/spool/cron/$(whoami)";then
         sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
@@ -330,12 +331,13 @@ function inst_env
     else
         ${SUDO} "echo '*/1 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
     fi
+    ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
 
     if ! can_access "${MY_HOME}/.timerc";then
         echo "#!/bin/bash" > ${MY_HOME}/.timerc
     fi
-
     ${SUDO} chmod +x ${MY_HOME}/.timerc 
+
     ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
     ${SUDO} systemctl restart crond
 }
