@@ -26,6 +26,11 @@ ${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 
 #${SUDO} "nohup ${TEST_APP_RUNTIME} &"
 ${TEST_APP_RUNTIME}
+
+if can_access "${TEST_APP_LOG}";then
+    ${SUDO} "chmod 777 ${TEST_APP_LOG}"
+fi
+
 if ! process_exist "${TEST_APP_NAME}";then
     echo_erro "${TEST_APP_NAME} launch failed."
     exit 1

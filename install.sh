@@ -311,13 +311,31 @@ function inst_env
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
     echo "source ${ROOT_DIR}/bashrc" >> ${MY_HOME}/.bashrc
     #echo "source ${ROOT_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
-    
+
+    if ! can_access "${MY_HOME}/.rsync.exclude";then
+        echo "build"    >  ${MY_HOME}/.rsync.exclude
+        echo ".git*"    >> ${MY_HOME}/.rsync.exclude
+        echo "tags"     >> ${MY_HOME}/.rsync.exclude
+        echo "cscope.*" >> ${MY_HOME}/.rsync.exclude
+        echo "*.~"      >> ${MY_HOME}/.rsync.exclude
+        echo "*.a"      >> ${MY_HOME}/.rsync.exclude
+        echo "*.d"      >> ${MY_HOME}/.rsync.exclude
+        echo "*.o"      >> ${MY_HOME}/.rsync.exclude
+        echo "*.cmd"    >> ${MY_HOME}/.rsync.exclude
+    fi
+
     if can_access "/var/spool/cron/$(whoami)";then
         sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
         echo "*/1 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
     else
         ${SUDO} "echo '*/1 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
     fi
+
+    if ! can_access "${MY_HOME}/.timerc";then
+        echo "#!/bin/bash" > ${MY_HOME}/.timerc
+    fi
+
+    ${SUDO} chmod +x ${MY_HOME}/.timerc 
     ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
     ${SUDO} systemctl restart crond
 }
@@ -357,11 +375,7 @@ function inst_deps
 }
 
 function inst_system
-{  
-    if ! can_access "${MY_HOME}/.timerc";then
-        echo "#!/bin/bash" > ${MY_HOME}/.timerc
-    fi
-
+{
     cd ${ROOT_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         ${SUDO} chmod 777 /etc/ld.so.conf
