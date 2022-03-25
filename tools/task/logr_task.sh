@@ -48,7 +48,7 @@ function _logr_thread_main
 {
     while read line
     do
-        echo_debug "logr task: [${line}]" 
+        #echo_debug "logr task: [${line}]" 
         local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
         local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
         local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
@@ -107,7 +107,7 @@ function _logr_thread_main
             echo "ACK" > ${ack_pipe}
         fi
         
-        echo_debug "logr wait: [${GBL_LOGR_PIPE}]"
+        #echo_debug "logr wait: [${GBL_LOGR_PIPE}]"
     done < ${GBL_LOGR_PIPE}
 }
 

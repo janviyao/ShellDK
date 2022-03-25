@@ -1,5 +1,12 @@
 #!/bin/bash
-INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
+ppinfos=($(ppid))
+SELF_PID=${ppinfos[1]}
+LAST_PID=${ppinfos[2]}
+
+ppinfos=($(ppid true))
+echo_debug "threads [${ppinfos[*]}]"
+
+global_kv_append "${LAST_PID}" "${SELF_PID}"
 
 declare -r all_num="$1"
 declare -r concurrent_num="$2"
@@ -30,29 +37,6 @@ declare -i THREAD_FD=${THREAD_FD:-6}
 exec {THREAD_FD}<>${THREAD_PIPE}
 rm -f ${THREAD_PIPE}
 
-usr_ctrl_init_parent
-usr_ctrl_init_self
-send_ctrl_to_parent "CHILD_FORK" "$$${GBL_SPF2}${USR_CTRL_PIPE}"
-
-declare -a thread_ids=()
-function thread_signal
-{
-    echo "exception" >> ${THREAD_RET}
-    echo "" >&${THREAD_FD}
-
-    for tid in ${thread_ids[@]}
-    do
-        if process_exist "${tid}";then
-            echo_debug "kill thread-bg: ${tid}"
-            process_signal KILL ${tid}    
-        fi
-    done
-
-    send_ctrl_to_parent "CTRL" "EXCEPTION"
-    send_ctrl_to_parent "CTRL" "EXIT"
-}
-trap "thread_signal" SIGINT SIGTERM SIGKILL
-
 # create file placeholders
 for ((i=1; i<=${concurrent_num}; i++))
 do
@@ -61,10 +45,42 @@ do
 }
 done >&${THREAD_FD}
 
-thread_state=1
+function thread_exit
+{
+    echo_debug "threads exit signal"
+    trap "" EXIT
+
+    echo "exception" >> ${THREAD_RET}
+    echo "" >&${THREAD_FD}
+    rm -fr ${THREAD_DIR}
+
+    global_kv_unset_val "${LAST_PID}" "${SELF_PID}"
+    exit 0
+}
+trap "thread_exit" EXIT
+
+function thread_signal
+{
+    echo_debug "threads exception signal"
+    trap "" SIGINT SIGTERM SIGKILL
+ 
+    local pid_array=($(global_kv_get "${SELF_PID}"))
+    for task in ${pid_array[*]} 
+    do
+        echo_debug "kill thread-task: ${task}"
+        process_signal KILL ${task}
+    done
+
+    global_kv_unset_key "${SELF_PID}"
+
+    thread_exit
+    exit 0
+}
+trap "thread_signal" SIGINT SIGTERM SIGKILL
 
 # thread work
-for index in `seq 1 $((all_num+1))`
+thread_state=1
+for index in $(seq 1 $((all_num+1)))
 do
 {
     read -u ${THREAD_FD}
@@ -89,31 +105,27 @@ do
 
     if [[ -z "${thread_state}" ]] || [[ ${thread_state} -ne 0 ]];then
         {
-            echo_debug "thread-${index}: ${thread_task}"
-            eval ${thread_task}             
+            ppids=($(ppid))
+            self_pid=${ppids[1]}
+            echo_debug "thread[${self_pid}]-${index}: ${thread_task}"
+
+            eval "${thread_task}"             
             echo $? >> ${THREAD_RET}
-     
             echo "" >&${THREAD_FD}
+
+            global_kv_unset_val "${SELF_PID}" "${self_pid}"
             exit 0
         } &
 
         bgpid=$!
-        thread_ids[${index}]=${bgpid}
+        global_kv_append "${SELF_PID}" "${bgpid}"
     else
         break
     fi
 }
 done
 
-echo_debug "**********threads finish"
-wait
-send_ctrl_to_parent "CHILD_EXIT" "$$"
-
-# free thead res
-eval "exec ${THREAD_FD}>&-"
-rm -fr ${THREAD_DIR}
 echo_debug "**********threads exit"
-
 if [[ ${thread_state} == "exception" ]];then
     exit 1
 else

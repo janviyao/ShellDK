@@ -247,17 +247,36 @@ function replace_str
 function array_has
 {
     local array=($1)
-    local val=$2
-
-    local count=${#array[*]}
+    local value="$2"
 
     for item in ${array[*]}
     do
-        if [[ ${item} == ${val} ]];then
+        if [[ ${item} == ${value} ]];then
             return 0
         fi
     done
 
+    return 1
+}
+
+function array_index
+{
+    local array=($1)
+    local value="$2"
+
+    local index=0
+    local count=${#array[*]}
+    while (( index < count))
+    do
+        local item=${array[${index}]}
+        if [[ ${item} == ${value} ]];then
+            echo "${index}"
+            return 0
+        fi
+        let index++
+    done
+
+    echo "-1"
     return 1
 }
 
@@ -266,8 +285,8 @@ function array_cmp
     local array1=($1)
     local array2=($2)
 
-    local count1=${#array1[@]}
-    local count2=${#array2[@]}
+    local count1=${#array1[*]}
+    local count2=${#array2[*]}
 
     local min_cnt=${count1}
     if [ ${min_cnt} -gt ${count2} ];then
@@ -300,10 +319,11 @@ FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_file
 {
-    xtrace_disable
+    xtrace_disable 
     if var_exist "BASHLOG";then
         local log_type="$1"
         shift
+        local para=$(replace_str "$*" "${MY_HOME}/" "")
 
         local headpart=$(printf "[%5s]" "${log_type}")
         if bool_v "${LOG_HEADER}";then
@@ -312,9 +332,9 @@ function echo_file
 
         if [ -n "${REMOTE_IP}" ];then
             #printf "%s %s from [%s]\n" "${headpart}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
-            printf "%s %s\n" "${headpart}" "$*" >> ${BASHLOG}
+            printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
         else
-            printf "%s %s\n" "${headpart}" "$*" >> ${BASHLOG}
+            printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
         fi
     fi
     xtrace_restore
@@ -333,9 +353,9 @@ function echo_header
         fi
 
         if bool_v "${HEADER_FILE}";then
-            header="${header} $(printf "[%-18s[%-6d]]" "$(path2fname $0)" "$$")"
+            header="${header} $(printf "[%-18s[%-7d]]" "$(path2fname $0)" "$$")"
         else
-            header="${header} $(printf "[%-6d]" "$$")"
+            header="${header} $(printf "[%-7d]" "$$")"
         fi
 
         if bool_v "${color}";then
@@ -358,7 +378,7 @@ function echo_erro
         #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
-    echo_file "erro" "${para}"
+    echo_file "erro" "$*"
     xtrace_restore
 }
 
@@ -372,7 +392,7 @@ function echo_info
     else
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
-    echo_file "info" "${para}"
+    echo_file "info" "$*"
     xtrace_restore
 }
 
@@ -386,7 +406,7 @@ function echo_warn
     else
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
-    echo_file "warn" "${para}"
+    echo_file "warn" "$*"
     xtrace_restore
 }
 
@@ -406,7 +426,7 @@ function echo_debug
             fi
         fi
     fi
-    echo_file "debug" "${para}"
+    echo_file "debug" "$*"
     xtrace_restore
 }
 
@@ -664,4 +684,3 @@ function wait_value
     eval "exec ${ack_fhno}>&-"
     rm -f ${ack_pipe}
 }
-

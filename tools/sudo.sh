@@ -12,11 +12,11 @@ CMD_STR="$*"
 account_check
 
 if [ $UID -eq 0 ]; then
-    echo_debug "ROOT ${CMD_STR}"
+    echo_debug "[ROOT] ${CMD_STR}"
     eval "${CMD_STR}"
     exit $?
 else
-    echo_debug "SUDO ${CMD_STR}"
+    echo_debug "[SUDO] ${CMD_STR}"
     if ! which sudo &> /dev/null; then
         echo_erro "sudo not supported"
         eval "${CMD_STR}"

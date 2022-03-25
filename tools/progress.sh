@@ -1,26 +1,42 @@
 #!/bin/bash
-INCLUDE "_USR_BASE_DIR" $MY_VIM_DIR/tools/controller.sh
-usr_ctrl_init_self
+declare -r PRG_FIN="${GBL_BASE_DIR}/progresss.fin"
+if can_access "${PRG_FIN}";then
+    rm -f ${PRG_FIN}
+fi
 
-declare -r PRG_FIN="${USR_CTRL_DIR}/finish"
-function ctrl_user_handler
+ppinfos=($(ppid))
+SELF_PID=${ppinfos[1]}
+LAST_PID=${ppinfos[2]}
+
+ppinfos=($(ppid true))
+echo_debug "progress [${ppinfos[*]}]"
+
+global_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
+global_kv_append "${LAST_PID}" "${SELF_PID}"
+
+function progress_exit
 {
-    line="$1"
-    echo_debug "progress: ${line}"
+    echo_debug "gitloop exit signal"
+    trap "" EXIT
 
-    local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
-    local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
-    local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
+    global_kv_unset_key "${SELF_PID}"
+    global_kv_unset_val "${LAST_PID}" "${SELF_PID}"
 
-    local req_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
-    local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
-
-    if [[ "${req_ctrl}" == "FIN" ]];then
-        echo_debug "touch: ${PRG_FIN}"
-        touch ${PRG_FIN}
-    fi
+    exit 0
 }
-usr_ctrl_launch
+trap "progress_exit" EXIT
+
+function progress_signal
+{
+    echo_debug "progress exception signal"
+    trap "" SIGINT SIGTERM SIGKILL
+
+    touch ${PRG_FIN}
+
+    progress_exit
+    exit 0
+}
+trap "progress_signal" SIGINT SIGTERM SIGKILL
 
 function progress
 {
@@ -120,9 +136,4 @@ declare -r POS_ROWS="$3"
 declare -r POS_COLS="$4"
 
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${POS_ROWS}" "${POS_COLS}"
-
-echo_debug "**********progress finish"
-usr_ctrl_exit
-wait
-usr_ctrl_clear
 echo_debug "**********progress exit"

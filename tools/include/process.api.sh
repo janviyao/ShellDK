@@ -110,7 +110,7 @@ function process_signal
                 echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pid_array[*]}"
 
                 if ! array_has "${exclude_pid_array[*]}" "${pid}";then
-                    echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
+                    echo_debug "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
                     ${SUDO} "kill -s ${signal} ${pid}"
                 else
                     echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
