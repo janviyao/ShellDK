@@ -49,6 +49,14 @@ function process_wait
 {
     local pinfo="$1"
     local stime="$2"
+    local pid=""
+
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: pinfo"
+        echo "\$2: stime(default: 0.01s)"
+        return 1
+    fi
 
     [ -z "${pinfo}" ] && return 1
     [ -z "${stime}" ] && stime=0.01
@@ -62,11 +70,14 @@ function process_wait
             sleep ${stime}
         done
     done
+    return 0
 }
 
 function process_exist
 {
     local pinfo="$1"
+    local pid=""
+
     [ -z "${pinfo}" ] && return 1
 
     local -a pid_array=($(process_name2pid "${pinfo}"))
@@ -138,30 +149,31 @@ function process_kill
 function process_pid2name
 {
     local pid="$1"
-    is_number "${pid}" || { echo "${pid}"; return; }
+    is_number "${pid}" || { echo "${pid}"; return 1; }
 
     # ps -p 2133 -o args=
     # ps -p 2133 -o cmd=
     # cat /proc/${pid}/status
     echo "$(ps -q ${pid} -o comm=)"
+    return 0
 }
 
 function process_name2pid
 {
     local pname="$1"
 
-    is_number "${pname}" && { echo "${pname}"; return; }
+    is_number "${pname}" && { echo "${pname}"; return 0; }
 
     local -a pid_array=($(ps -C ${pname} -o pid=))
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
-        return
+        return 0
     fi
 
     pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pname}$/) print \$1 }"))    
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
-        return
+        return 0
     fi
     
     pid_array=($(echo))
@@ -179,12 +191,12 @@ function process_name2pid
     rm -f ${tmp_file}
 
     echo "${pid_array[*]}"
-    return
+    return 0
 }
 
 function process_subprocess
 {
-    local ppid=$1
+    local ppid="$1"
     local -a pid_array=($(process_name2pid "${ppid}"))
 
     local -a child_pid_array=($(echo ""))
@@ -198,11 +210,12 @@ function process_subprocess
     done
 
     echo "${child_pid_array[*]}"
+    return 0
 }
 
 function process_subthread
 {
-    local ppid=$1
+    local ppid="$1"
     local -a pid_array=($(process_name2pid "${ppid}"))
 
     local -a child_tids=($(echo ""))
@@ -215,12 +228,20 @@ function process_subthread
     done
      
     echo "${child_tids[*]}"
+    return 0
 }
 
 function thread_info
 {
-    local ppid=$1
+    local ppid="$1"
     local shead=${2:-true}
+
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: ppid"
+        echo "\$2: shead(default: true)"
+        return 1
+    fi
 
     local -a show_header=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
     local -A index_map={}
@@ -316,12 +337,20 @@ function thread_info
             thread_info "${subpid}" "false"
         done
     done
+    return 0
 }
 
 function process_info
 {
     local pid="$1"
     local shead=${2:-true}
+
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: pid"
+        echo "\$2: shead(default: true)"
+        return 1
+    fi
 
     local ps_header="comm,ppid,pid,lwp=TID,nlwp=TD-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,%cpu,maj_flt,min_flt,flags=FLAG,sz,vsz,%mem,wchan:15,stackp,etime,cmd"
 
@@ -357,5 +386,5 @@ function process_info
             fi
         done
     fi
+    return 0
 }
-

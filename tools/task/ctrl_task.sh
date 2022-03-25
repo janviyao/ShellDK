@@ -12,6 +12,13 @@ function ctrl_task_ctrl
     local ctrl_body="$1"
     local one_pipe="$2"
 
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: ctrl_body"
+        echo "\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
+        return 1
+    fi
+
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_PIPE}"
     fi
@@ -22,12 +29,20 @@ function ctrl_task_ctrl
     fi
 
     echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${ctrl_body}" > ${one_pipe}
+    return 0
 }
 
 function ctrl_task_ctrl_sync
 {
     local ctrl_body="$1"
     local one_pipe="$2"
+
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: ctrl_body"
+        echo "\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
+        return 1
+    fi
 
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_CTRL_PIPE}"
@@ -40,6 +55,7 @@ function ctrl_task_ctrl_sync
 
     echo_debug "ctrl wait for ${one_pipe}"
     wait_value "${ctrl_body}" "${one_pipe}"
+    return 0
 }
 
 function _bash_ctrl_exit
@@ -111,4 +127,3 @@ function _ctrl_thread
 if contain_str "${BTASK_LIST}" "ctrl";then
     ( _ctrl_thread & )
 fi
-

@@ -9,6 +9,14 @@ fi
 
 function rsync_to
 {
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: xfer_src"
+        echo "\$2: xfer_des"
+        echo "\$*: xfer_ips"
+        return 1
+    fi
+
     local xfer_src="$1"
     shift
     local xfer_des="$1"
@@ -37,7 +45,9 @@ function rsync_to
         account_check
         for ipaddr in ${xfer_ips[*]}
         do
-            xfer_des="${USR_NAME}@${ipaddr}:${xfer_des}"
+            if [[ ${ipaddr} != ${LOCAL_IP} ]];then
+                xfer_des="${USR_NAME}@${ipaddr}:${xfer_des}"
+            fi
             xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
         done
     else
@@ -49,6 +59,14 @@ function rsync_to
 
 function rsync_from
 {
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: xfer_src"
+        echo "\$2: xfer_des"
+        echo "\$*: xfer_ips"
+        return 1
+    fi
+
     local xfer_src="$1"
     shift
     local xfer_des="$1"
@@ -83,6 +101,13 @@ function xfer_task_ctrl
     local xfer_body="$1"
     local one_pipe="$2"
 
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: xfer_body"
+        echo "\$2: one_pipe(default: ${GBL_XFER_PIPE})"
+        return 1
+    fi
+
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_XFER_PIPE}"
     fi
@@ -99,6 +124,13 @@ function xfer_task_ctrl_sync
 {
     local xfer_body="$1"
     local one_pipe="$2"
+
+    if [ $# -lt 1 ];then
+        #echo "Usage: "
+        echo "\$1: xfer_body"
+        echo "\$2: one_pipe(default: ${GBL_XFER_PIPE})"
+        return 1
+    fi
 
     if [ -z "${one_pipe}" ];then
         one_pipe="${GBL_XFER_PIPE}"

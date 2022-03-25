@@ -30,6 +30,13 @@ function match_regex
     local string="$1"
     local regstr="$2"
 
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: regstr"
+        return 1
+    fi
+
     [ -z "${regstr}" ] && return 1 
 
     echo "${string}" | grep -P "${regstr}" &> /dev/null
@@ -45,11 +52,19 @@ function string_start
     local string="$1"
     local length="$2"
 
-    is_number "${length}" || { echo "${string}"; return; }
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: length"
+        return 1
+    fi
+
+    is_number "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
     #echo "${chars}"
     echo "${string:0:${length}}"
+    return 0
 }
 
 function string_substr
@@ -58,12 +73,21 @@ function string_substr
     local start="$2"
     local length="$3"
 
-    is_number "${start}" || { echo "${string}"; return; }
-    is_number "${length}" || { echo "${string:${start}}"; return; }
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: start"
+        echo "\$3: length"
+        return 1
+    fi
+
+    is_number "${start}" || { echo "${string}"; return 1; }
+    is_number "${length}" || { echo "${string:${start}}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
     #echo "${chars}"
     echo "${string:${start}:${length}}"
+    return 0
 }
 
 function string_end
@@ -71,11 +95,19 @@ function string_end
     local string="$1"
     local length="$2"
 
-    is_number "${length}" || { echo "${string}"; return; }
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: length"
+        return 1
+    fi
+
+    is_number "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
     #echo "${chars}"
     echo "${string:0-${length}:${length}}"
+    return 0
 }
 
 function string_regex
@@ -83,16 +115,31 @@ function string_regex
     local string="$1"
     local regstr="$2"
 
-    [ -z "${regstr}" ] && { echo "${string}"; return; } 
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: regstr"
+        return 1
+    fi
+
+    [ -z "${regstr}" ] && { echo "${string}"; return 1; } 
 
     echo $(echo "${string}" | grep -P "${regstr}" -o)
+    return 0
 }
 
 function match_str_start
 {
     local string="$1"
     local substr="$2"
-    
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: substr"
+        return 1
+    fi
+
     local sublen=${#substr}
 
     if [[ ${substr} == *\\* ]];then
@@ -114,7 +161,14 @@ function match_str_end
 {
     local string="$1"
     local substr="$2"
-    
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: substr"
+        return 1
+    fi
+
     local sublen=${#substr}
 
     if [[ ${substr} == *\\* ]];then
@@ -136,7 +190,14 @@ function trim_str_start
 {
     local string="$1"
     local substr="$2"
-    
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: substr"
+        return 1
+    fi
+
     if match_str_start "${string}" "${substr}"; then
         #local sublen=${#substr}
         #let sublen++
@@ -150,13 +211,21 @@ function trim_str_start
     else
         echo "${string}"
     fi
+    return 0
 }
 
 function trim_str_end
 {
     local string="$1"
     local substr="$2"
-     
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: substr"
+        return 1
+    fi
+
     if match_str_end "${string}" "${substr}"; then
         #local total=${#string}
         #local sublen=${#substr}
@@ -172,12 +241,21 @@ function trim_str_end
     else
         echo "${string}"
     fi
+
+    return 0
 }
 
 function contain_str
 {
     local string="$1"
     local substr="$2"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: substr"
+        return 1
+    fi
 
     if [[ ${substr} == *\\* ]];then
         substr="${substr//\\/\\\\}"
@@ -199,12 +277,20 @@ function replace_regex
     local string="$1"
     local regstr="$2"
     local newstr="$3"
-    
+
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: regstr"
+        echo "\$3: newstr"
+        return 1
+    fi
+
     #donot use (), because it fork child shell
-    [ -z "${regstr}" ] && { echo "${string}"; return; }
+    [ -z "${regstr}" ] && { echo "${string}"; return 1; }
  
     local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
-    [ -z "${oldstr}" ] && { echo "${string}"; return; }
+    [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
     oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
@@ -225,6 +311,8 @@ function replace_regex
     else
         echo "${string//${oldstr}/${newstr}}"
     fi
+
+    return 0
 }
 
 function replace_str
@@ -232,9 +320,17 @@ function replace_str
     local string="$1"
     local oldstr="$2"
     local newstr="$3"
-    
+
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: string"
+        echo "\$2: oldstr"
+        echo "\$3: newstr"
+        return 1
+    fi
+
     #donot use (), because it fork child shell
-    [ -z "${oldstr}" ] && { echo "${string}"; return; }
+    [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
     oldstr="${oldstr//\\/\\\\}"
     oldstr="${oldstr//\//\\/}"
@@ -242,12 +338,20 @@ function replace_str
     oldstr="${oldstr//\(/\(}"
 
     echo "${string//${oldstr}/${newstr}}"
+    return 0
 }
 
 function array_has
 {
     local array=($1)
     local value="$2"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: array"
+        echo "\$2: value"
+        return 1
+    fi
 
     for item in ${array[*]}
     do
@@ -263,6 +367,13 @@ function array_index
 {
     local array=($1)
     local value="$2"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: array"
+        echo "\$2: value"
+        return 1
+    fi
 
     local index=0
     local count=${#array[*]}
@@ -284,6 +395,13 @@ function array_cmp
 {
     local array1=($1)
     local array2=($2)
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: array1"
+        echo "\$2: array2"
+        return 1
+    fi
 
     local count1=${#array1[*]}
     local count2=${#array2[*]}
@@ -657,8 +775,15 @@ function import_all
 
 function wait_value
 {
-    local send_ctnt="$1"
+    local send_body="$1"
     local send_pipe="$2"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: send_body"
+        echo "\$2: send_pipe"
+        return 1
+    fi
 
     # the first pid is shell where ppid run
     local self_pid=$$
@@ -677,10 +802,11 @@ function wait_value
     exec {ack_fhno}<>${ack_pipe}
 
     echo_debug "wait ack: ${ack_pipe}"
-    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_ctnt}" > ${send_pipe}
+    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
     read ack_value < ${ack_pipe}
     export ack_value
 
     eval "exec ${ack_fhno}>&-"
     rm -f ${ack_pipe}
+    return 0
 }

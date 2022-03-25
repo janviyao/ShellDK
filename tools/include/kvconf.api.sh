@@ -5,6 +5,14 @@ function kvconf_has
     local key_str="$2"
     local split_c="${3:-=}"
 
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: kv_file"
+        echo "\$2: key_str"
+        echo "\$3: split_c(default: =)"
+        return 1
+    fi
+
     if ! can_access "${kv_file}";then
         return 1
     fi 
@@ -42,6 +50,15 @@ function kvconf_add
     local val_str="$3"
     local split_c="${4:-=}"
 
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: kv_file"
+        echo "\$2: key_str"
+        echo "\$3: val_str"
+        echo "\$4: split_c(default: =)"
+        return 1
+    fi
+
     if ! can_access "${kv_file}";then
         return 1
     fi 
@@ -66,6 +83,16 @@ function kvconf_insert
     local line_nr="${4:-$}"
     local split_c="${5:-=}"
 
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: kv_file"
+        echo "\$2: key_str"
+        echo "\$3: val_str"
+        echo "\$4: line_nr(default: $)"
+        echo "\$5: split_c(default: =)"
+        return 1
+    fi
+
     if ! can_access "${kv_file}";then
         return 1
     fi 
@@ -81,6 +108,14 @@ function kvconf_del
     local kv_file="$1"
     local key_str="$2"
     local split_c="${3:-=}"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: kv_file"
+        echo "\$2: key_str"
+        echo "\$3: split_c(default: =)"
+        return 1
+    fi
 
     if ! can_access "${kv_file}";then
         return 1
@@ -100,6 +135,13 @@ function kvconf_del_line
     local kv_file="$1"
     local line_nr="$2"
 
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: kv_file"
+        echo "\$2: line_nr"
+        return 1
+    fi
+
     if ! can_access "${kv_file}";then
         return 1
     fi 
@@ -115,6 +157,14 @@ function kvconf_line_nr
     local kv_file="$1"
     local key_str="$2"
     local split_c="${3:-=}"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: kv_file"
+        echo "\$2: key_str"
+        echo "\$3: split_c(default: =)"
+        return 1
+    fi
 
     if ! can_access "${kv_file}";then
         echo ""

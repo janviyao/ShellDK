@@ -127,5 +127,3 @@ function get_ipaddr
     done
 }
 LOCAL_IP="$(get_ipaddr)"
-
-

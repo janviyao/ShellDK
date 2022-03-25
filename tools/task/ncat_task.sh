@@ -42,6 +42,13 @@ function remote_ncat_alive
     local ncat_addr="$1"
     local ncat_port="$2"
 
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: ncat_addr"
+        echo "\$2: ncat_port"
+        return 1
+    fi
+
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
             echo_debug "remote[${ncat_addr} ${ncat_port}] offline"
@@ -84,6 +91,14 @@ function ncat_send_msg
     local ncat_addr="$1"
     local ncat_port="$2"
     local ncat_body="$3"
+
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: ncat_addr"
+        echo "\$2: ncat_port"
+        echo "\$3: ncat_body"
+        return 1
+    fi
 
     echo_debug "ncat send: [$*]" 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
@@ -191,6 +206,15 @@ function remote_set_var
     local ncat_port="$2"
     local var_name="$3"
     local var_valu="$4"
+
+    if [ $# -lt 3 ];then
+        #echo "Usage: "
+        echo "\$1: ncat_addr"
+        echo "\$2: ncat_port"
+        echo "\$3: var_name"
+        echo "\$4: var_valu"
+        return 1
+    fi
 
     if [ -z "${var_valu}" ];then
         var_valu="$(eval "echo \"\$${var_name}\"")"

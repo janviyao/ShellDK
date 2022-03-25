@@ -175,4 +175,3 @@ function install_from_tar
         done
     done
 }
-

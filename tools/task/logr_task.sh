@@ -11,6 +11,14 @@ function logr_task_ctrl
 {
     local logr_ctrl="$1"
     local logr_body="$2"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: logr_ctrl"
+        echo "\$2: logr_body"
+        return 1
+    fi
+
     #echo_debug "log to self: [ctrl: ${logr_ctrl} msg: ${logr_body}]" 
 
     if [ -w ${GBL_LOGR_PIPE} ];then
@@ -20,12 +28,21 @@ function logr_task_ctrl
             echo_erro "removed: ${GBL_LOGR_PIPE}"
         fi
     fi
+    return 0
 }
 
 function logr_task_ctrl_sync
 {
     local logr_ctrl="$1"
     local logr_body="$2"
+
+    if [ $# -lt 2 ];then
+        #echo "Usage: "
+        echo "\$1: logr_ctrl"
+        echo "\$2: logr_body"
+        return 1
+    fi
+
     #echo_debug "log ato self: [ctrl: ${logr_ctrl} msg: ${logr_body}]" 
 
     if [ -w ${GBL_LOGR_PIPE} ];then
