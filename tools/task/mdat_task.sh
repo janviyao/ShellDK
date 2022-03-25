@@ -63,7 +63,7 @@ function global_set_var
     if contain_str "${_xkey_}" "=";then
         _xval_="${_xkey_#*=}"
         _xkey_="${_xkey_%%=*}"
-        eval "declare -g ${_xkey_}=\"${_xval_}\""
+        #eval "declare -g ${_xkey_}=\"${_xval_}\""
     else
         _xval_="$(eval "echo \"\$${_xkey_}\"")"
     fi
