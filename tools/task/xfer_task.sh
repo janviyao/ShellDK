@@ -156,6 +156,7 @@ function _xfer_thread_main
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
                 global_get_var USR_PASSWORD
+                USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
 
                 local remote_cmd="echo"
                 if match_regex "${xfer_src}" "\d+\.\d+\.\d+\.\d+";then

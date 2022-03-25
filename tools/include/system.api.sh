@@ -10,14 +10,24 @@ function system_encrypt
 {
     local content="$*"
     # 251421 is secret key
-    echo "$(echo "${content}" | openssl aes-128-cbc -k 251421 -base64 2>/dev/null)"
+    local convert=$(echo "${content}" | openssl aes-128-cbc -k 251421 -base64 2>/dev/null)
+    if [ -n "${convert}" ];then
+        echo "${convert}"
+    else
+        echo "${content}"
+    fi
 }
 
 function system_decrypt
 {
     local content="$*"
     # 251421 is secret key
-    echo "$(echo "${content}" | openssl aes-128-cbc -d -k 251421 -base64 2>/dev/null)"
+    local convert=$(echo "${content}" | openssl aes-128-cbc -d -k 251421 -base64 2>/dev/null)
+    if [ -n "${convert}" ];then
+        echo "${convert}"
+    else
+        echo "${content}"
+    fi
 }
 
 function account_check
