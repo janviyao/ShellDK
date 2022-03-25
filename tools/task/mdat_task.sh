@@ -42,18 +42,6 @@ function mdat_task_ctrl_sync
     wait_value "${_body_}" "${_pipe_}"
 }
 
-function global_check_var
-{
-    local _xkey_="$1"
-    local _pipe_="$2"
-    
-    if global_kv_has "${_xkey_}" "${_pipe_}";then
-        return 0
-    else
-        return 1
-    fi
-}
-
 function global_set_var
 {
     local _xkey_="$1"
@@ -85,35 +73,6 @@ function global_get_var
     
     _xval_=$(global_kv_get "${_xkey_}" "${_pipe_}")
     eval "declare -g ${_xkey_}=\"${_xval_}\""
-}
-
-function global_unset_var
-{
-    local _xkey_="$1"
-    local _pipe_="$2"
-    global_kv_unset_key "${_xkey_}" "${_pipe_}"
-}
-
-function global_clear_var
-{
-    local _xkey_="$*"
-
-    if [ -z "${_xkey_}" ];then
-        mdat_task_ctrl "KEY_CLR${GBL_SPF1}ALL"
-    else
-        mdat_task_ctrl "KEY_CLR${GBL_SPF1}${_xkey_}"
-    fi
-}
-
-function global_print_var
-{
-    local _xkey_="$*"
-
-    if [ -z "${_xkey_}" ];then
-        mdat_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
-    else
-        mdat_task_ctrl "KEY_PRT${GBL_SPF1}${_xkey_}"
-    fi
 }
 
 function global_kv_has
@@ -257,6 +216,28 @@ function global_kv_get
     return 0
 }
 
+function global_kv_print
+{
+    local _xkey_="$*"
+
+    if [ -z "${_xkey_}" ];then
+        mdat_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
+    else
+        mdat_task_ctrl "KEY_PRT${GBL_SPF1}${_xkey_}"
+    fi
+}
+
+function global_kv_clear
+{
+    local _xkey_="$*"
+
+    if [ -z "${_xkey_}" ];then
+        mdat_task_ctrl "KEY_CLR${GBL_SPF1}ALL"
+    else
+        mdat_task_ctrl "KEY_CLR${GBL_SPF1}${_xkey_}"
+    fi
+}
+
 function _bash_mdat_exit
 { 
     echo_debug "mdat signal exit"
@@ -339,14 +320,14 @@ function _mdat_thread_main
                 _global_map_[${_xkey_}]="${_val_arr_[*]}"
             fi
         elif [[ "${req_ctrl}" == "KEY_CLR" ]];then
-            if [ ${#_global_map_[*]} -ne 0 ];then
+            if [ ${#_global_map_[*]} -gt 0 ];then
                 if [[ "${req_body}" == "ALL" ]];then
                     for _xkey_ in ${!_global_map_[*]};do
                         unset _global_map_[${_xkey_}]
                     done
                 else
-                    local var_array=(${req_body})
-                    for _xkey_ in ${var_array[*]}
+                    local _var_arr_=(${req_body})
+                    for _xkey_ in ${_var_arr_[*]}
                     do
                         if [ -n "${_global_map_[${_xkey_}]}" ];then
                             unset _global_map_[${_xkey_}]
@@ -355,15 +336,15 @@ function _mdat_thread_main
                 fi
             fi
         elif [[ "${req_ctrl}" == "KEY_PRT" ]];then
-            if [ ${#_global_map_[*]} -ne 0 ];then
+            if [ ${#_global_map_[*]} -gt 0 ];then
                 echo ""
                 if [[ "${req_body}" == "ALL" ]];then
                     for _xkey_ in ${!_global_map_[*]};do
                         echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                     done
                 else
-                    local var_array=(${req_body})
-                    for _xkey_ in ${var_array[*]}
+                    local _var_arr_=(${req_body})
+                    for _xkey_ in ${_var_arr_[*]}
                     do
                         if [ -n "${_global_map_[${_xkey_}]}" ];then
                             echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"

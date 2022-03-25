@@ -77,7 +77,7 @@ expect << EOF
 EOF
 
 count=0
-while ! global_check_var "${RET_VAR}"
+while ! global_kv_has "${RET_VAR}"
 do
     sleep 0.1
     let count++

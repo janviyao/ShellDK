@@ -84,6 +84,6 @@ expect << EOF
 EOF
 
 global_get_var ${RET_VAR}
-global_unset_var ${RET_VAR}
+global_kv_unset_key ${RET_VAR}
 
 eval "exit \$${RET_VAR}"
