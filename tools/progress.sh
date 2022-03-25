@@ -32,8 +32,8 @@ function progress_signal
     trap "" SIGINT SIGTERM SIGKILL
 
     touch ${PRG_FIN}
-
     progress_exit
+
     exit 0
 }
 trap "progress_signal" SIGINT SIGTERM SIGKILL

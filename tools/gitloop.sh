@@ -16,7 +16,6 @@ tmp_file="$(temp_file)"
 
 ppinfos=($(ppid))
 SELF_PID=${ppinfos[1]}
-LAST_PID=${ppinfos[2]}
 
 ppinfos=($(ppid true))
 echo_debug "gitloop [${ppinfos[*]}]"
@@ -27,6 +26,7 @@ function gitloop_exit
     trap "" EXIT
 
     global_kv_unset_key "gitloop-quit"
+    global_kv_unset_key "${SELF_PID}"
     rm -f ${tmp_file}
 
     exit 0
@@ -46,6 +46,7 @@ function gitloop_signal
     do
         echo_debug "kill gitloop-child: ${pid}"
         process_signal KILL ${pid}
+        global_kv_unset_key "${pid}"
     done
 
     gitloop_exit
