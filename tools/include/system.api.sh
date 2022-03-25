@@ -6,6 +6,20 @@ function is_me
     return 1
 }
 
+function system_encrypt
+{
+    local content="$*"
+    # 251421 is secret key
+    echo "$(echo "${content}" | openssl aes-128-cbc -k 251421 -base64 2>/dev/null)"
+}
+
+function system_decrypt
+{
+    local content="$*"
+    # 251421 is secret key
+    echo "$(echo "${content}" | openssl aes-128-cbc -d -k 251421 -base64 2>/dev/null)"
+}
+
 function account_check
 {
     local input_val=""
@@ -14,6 +28,7 @@ function account_check
         global_get_var USR_NAME
         if [ -n "${USR_NAME}" ];then
             global_get_var USR_PASSWORD
+            export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
         fi
     fi
 
@@ -26,8 +41,10 @@ function account_check
 
         read -s -p "Please input password: " input_val
         echo ""
-        USR_PASSWORD=${input_val}
+        USR_PASSWORD="$(system_encrypt "${input_val}")"
         global_set_var USR_PASSWORD
+
+        USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
         export USR_PASSWORD
     fi
 }
