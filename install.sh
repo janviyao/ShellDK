@@ -175,6 +175,7 @@ function inst_usage
 
 source $MY_VIM_DIR/bashrc
 . ${ROOT_DIR}/tools/paraparser.sh
+account_check
 
 declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
 do_action "${mustDeps[*]}"
@@ -336,7 +337,10 @@ function inst_env
     ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
 
     if ! can_access "${MY_HOME}/.timerc";then
-        echo "#!/bin/bash" > ${MY_HOME}/.timerc
+        USR_PASSWORD="$(system_encrypt "${USR_PASSWORD}")"
+        echo "#!/bin/bash"                                   >  ${MY_HOME}/.timerc
+        echo "global_set_var 'USR_NAME=${USR_NAME}'"         >> ${MY_HOME}/.timerc
+        echo "global_set_var 'USR_PASSWORD=${USR_PASSWORD}'" >> ${MY_HOME}/.timerc
     fi
     ${SUDO} chmod +x ${MY_HOME}/.timerc 
 
