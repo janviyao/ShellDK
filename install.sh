@@ -313,14 +313,16 @@ function inst_env
     #echo "source ${ROOT_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
 
     if ! can_access "${MY_HOME}/.rsync.exclude";then
-        echo "build"    >  ${MY_HOME}/.rsync.exclude
-        echo ".git*"    >> ${MY_HOME}/.rsync.exclude
+        echo "build/*"  >  ${MY_HOME}/.rsync.exclude
+        echo "dpdk*/*"  >> ${MY_HOME}/.rsync.exclude
+        echo ".git/*"   >> ${MY_HOME}/.rsync.exclude
         echo "tags"     >> ${MY_HOME}/.rsync.exclude
         echo "cscope.*" >> ${MY_HOME}/.rsync.exclude
         echo "*.~"      >> ${MY_HOME}/.rsync.exclude
         echo "*.a"      >> ${MY_HOME}/.rsync.exclude
         echo "*.d"      >> ${MY_HOME}/.rsync.exclude
         echo "*.o"      >> ${MY_HOME}/.rsync.exclude
+        echo "*.swp"    >> ${MY_HOME}/.rsync.exclude
         echo "*.cmd"    >> ${MY_HOME}/.rsync.exclude
     fi
     ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
@@ -340,6 +342,7 @@ function inst_env
 
     ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
     ${SUDO} systemctl restart crond
+    ${SUDO} systemctl status crond
 }
 
 function inst_update

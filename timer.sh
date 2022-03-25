@@ -1,7 +1,7 @@
 #!/bin/bash
-ROOT_DIR=$(cd `dirname $0`;pwd)
-export MY_VIM_DIR=${ROOT_DIR}
-source $MY_VIM_DIR/tools/include/common.api.sh
+export MY_HOME=${HOME}
+export BTASK_LIST="master,mdat,ncat,xfer"
+source ${MY_HOME}/.bashrc
 
 if can_access "${MY_HOME}/.timerc";then
     ${MY_HOME}/.timerc
@@ -29,7 +29,7 @@ if can_access "${BASHLOG}";then
         logsize=0
     fi
 
-    maxsize=$((10*1024*1024))
+    maxsize=$((100*1024*1024))
     if (( logsize > maxsize ));then
         date_time=$(date '+%Y%m%d-%H%M%S')
         cp -f ${BASHLOG} ${BASHLOG}.${date_time}
