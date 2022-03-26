@@ -2,11 +2,12 @@
 source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! can_access "$1"; then
+g_testcase_file="$1"
+if ! can_access "${g_testcase_file}"; then
     echo_erro "testcase not exist: $1"
     exit 1
 fi
-source $1
+source ${g_testcase_file}
 source ${FIO_ROOT_DIR}/include/private.conf.sh
 
 g_sed_insert_pre="/;[ ]*[>]\+[ ]*/i\    "
@@ -18,7 +19,7 @@ function run_fio_func
     local host_array=($4)
     local devs_array=($5)
     
-    local fio_output_file=${conf_full_name}.log
+    local fio_output_file="${conf_full_name}.log"
     
     local rwtype=$(cat ${output_dir}/${conf_full_name} | sed 's/ //g' | grep -P "^\s*rw\s*=\s*.+" -o | awk -F "=" '{ print $2 }')
     local ioengine=$(cat ${output_dir}/${conf_full_name} | sed 's/ //g' | grep -P "^\s*ioengine\s*=\s*.+" -o | awk -F "=" '{ print $2 }')
@@ -78,18 +79,22 @@ function run_fio_func
         exit 1
     fi
 
-    local fio_result=$(${FIO_ROOT_DIR}/parse_result.sh "${output_dir}/${fio_output_file}" "${read_pct}" "${numjobs}")
-    local show_result=$(echo "${fio_result}" | grep -v "@return@")
-    echo "${show_result}"
+    local tmp_file="$(temp_file)"
+    ${FIO_ROOT_DIR}/parse_result.sh -o "${tmp_file}" -r "${read_pct}" "${output_dir}/${fio_output_file}" 
+    if [ $? -ne 0 ];then
+        echo_erro "parse failed: ${output_dir}/${fio_output_file}"
+        exit 1
+    fi
 
-    fio_result=$(echo "${fio_result}" | grep "@return@" | grep -P "{.+}" -o)
+    local fio_result=$(cat ${tmp_file})
+    rm -f ${tmp_file}
     echo_debug "result: ${fio_result}"
 
-    local start_time=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $1 }' )
-    local test_iops=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $2 }' )
-    local test_bw=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $3 }' )
-    local test_lat=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $4 }' )
-    local test_spend=$( echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $5 }' )
+    local start_time=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $1 }')
+    local test_iops=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $2 }')
+    local test_bw=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $3 }')
+    local test_lat=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $4 }')
+    local test_spend=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $5 }')
     
     echo_info "result-(${case_index}): { ${start_time} | [${devs_array[*]}] | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
     echo_info "result-log: { ${output_dir}/${fio_output_file} }"
@@ -195,16 +200,7 @@ function start_test_func
 
         sed -i "s/runtime[ ]*=[ ]*[0-9]\+s\?/runtime=${FIO_TEST_TIME}s/g" ${output_dir}/${conf_full_name}
         sed -i "s/ramp_time[ ]*=[ ]*[0-9]\+s\?/ramp_time=${FIO_RAMP_TIME}s/g" ${output_dir}/${conf_full_name}
-
-        #for ipaddr in ${ipaddr_array[*]}
-        #do
-        #    conf_full_name=${conf_brief_name}.${ipaddr}
-        #    cp -f ${output_dir}/${conf_brief_name}.local ${output_dir}/${conf_full_name}
-
-        #    $MY_VIM_DIR/tools/sshlogin.sh "${ipaddr}" "mkdir -p ${output_dir}"
-        #    $MY_VIM_DIR/tools/scplogin.sh "${output_dir}/${conf_full_name}" "${ipaddr}:${output_dir}"
-        #done
-
+        
         run_fio_func "${idx}" "${output_dir}" "${conf_full_name}" "${ipaddr_array[*]}" "${devs_array[*]}" 
 
         let left_case_num--

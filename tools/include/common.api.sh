@@ -673,6 +673,7 @@ function temp_file
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
     fi
+    echo > ${BASH_WORK_DIR}/tmp.${self_pid}
     echo "${BASH_WORK_DIR}/tmp.${self_pid}"
 }
 
