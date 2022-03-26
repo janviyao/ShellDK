@@ -13,7 +13,7 @@ function ctrl_task_ctrl
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: ctrl_body"
         echo "\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
         return 1
@@ -38,7 +38,7 @@ function ctrl_task_ctrl_sync
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: ctrl_body"
         echo "\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
         return 1

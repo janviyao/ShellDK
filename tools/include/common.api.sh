@@ -31,7 +31,7 @@ function match_regex
     local regstr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: regstr"
         return 1
@@ -53,7 +53,7 @@ function string_start
     local length="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: length"
         return 1
@@ -62,7 +62,6 @@ function string_start
     is_number "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
-    #echo "${chars}"
     echo "${string:0:${length}}"
     return 0
 }
@@ -74,7 +73,7 @@ function string_substr
     local length="$3"
 
     if [ $# -lt 3 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: start"
         echo "\$3: length"
@@ -85,7 +84,6 @@ function string_substr
     is_number "${length}" || { echo "${string:${start}}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
-    #echo "${chars}"
     echo "${string:${start}:${length}}"
     return 0
 }
@@ -96,7 +94,7 @@ function string_end
     local length="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: length"
         return 1
@@ -105,7 +103,6 @@ function string_end
     is_number "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
-    #echo "${chars}"
     echo "${string:0-${length}:${length}}"
     return 0
 }
@@ -116,7 +113,7 @@ function string_regex
     local regstr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: regstr"
         return 1
@@ -134,7 +131,7 @@ function match_str_start
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: substr"
         return 1
@@ -163,7 +160,7 @@ function match_str_end
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: substr"
         return 1
@@ -192,7 +189,7 @@ function trim_str_start
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: substr"
         return 1
@@ -203,7 +200,6 @@ function trim_str_start
         #let sublen++
 
         #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
-        #echo "${new_str}"
         substr=$(replace_regex "${substr}" '\*' '\*')
         substr=$(replace_regex "${substr}" '\\' '\\')
 
@@ -220,7 +216,7 @@ function trim_str_end
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: substr"
         return 1
@@ -231,7 +227,6 @@ function trim_str_end
         #local sublen=${#substr}
 
         #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
-        #echo "${new_str}"
         string=$(replace_regex "${string}" '\*' '\*')
 
         substr=$(replace_regex "${substr}" '\*' '\*')
@@ -251,7 +246,7 @@ function contain_str
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: substr"
         return 1
@@ -279,7 +274,7 @@ function replace_regex
     local newstr="$3"
 
     if [ $# -lt 3 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: regstr"
         echo "\$3: newstr"
@@ -322,7 +317,7 @@ function replace_str
     local newstr="$3"
 
     if [ $# -lt 3 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: string"
         echo "\$2: oldstr"
         echo "\$3: newstr"
@@ -347,7 +342,7 @@ function array_has
     local value="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: array"
         echo "\$2: value"
         return 1
@@ -369,7 +364,7 @@ function array_index
     local value="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: array"
         echo "\$2: value"
         return 1
@@ -397,7 +392,7 @@ function array_cmp
     local array2=($2)
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: array1"
         echo "\$2: array2"
         return 1
@@ -489,11 +484,11 @@ function echo_erro
     xtrace_disable
     local para=$(replace_str "$*" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
-        #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        #echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
+        # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        # echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     else
-        #echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+        # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
     echo_file "erro" "$*"
@@ -505,8 +500,8 @@ function echo_info
     xtrace_disable
     local para=$(replace_str "$*" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
-        #echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        # echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     else
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
@@ -519,8 +514,8 @@ function echo_warn
     xtrace_disable
     local para=$(replace_str "$*" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
-        #echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        # echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     else
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
@@ -537,8 +532,8 @@ function echo_debug
         contain_str "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}" 
         if [ $? -eq 0 ]; then
             if [ -n "${REMOTE_IP}" ];then
-                #echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+                # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
             else
                 echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
             fi
@@ -779,7 +774,7 @@ function wait_value
     local send_pipe="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: send_body"
         echo "\$2: send_pipe"
         return 1

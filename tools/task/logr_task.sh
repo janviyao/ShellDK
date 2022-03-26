@@ -13,7 +13,7 @@ function logr_task_ctrl
     local logr_body="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: logr_ctrl"
         echo "\$2: logr_body"
         return 1
@@ -37,7 +37,7 @@ function logr_task_ctrl_sync
     local logr_body="$2"
 
     if [ $# -lt 2 ];then
-        #echo "Usage: "
+        echo "Usage: "
         echo "\$1: logr_ctrl"
         echo "\$2: logr_body"
         return 1
