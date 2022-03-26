@@ -10,7 +10,7 @@ fi
 function rsync_to
 {
     if [ $# -lt 2 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: xfer_src"
         echo "\$2: xfer_des"
         echo "\$*: xfer_ips"
@@ -60,7 +60,7 @@ function rsync_to
 function rsync_from
 {
     if [ $# -lt 2 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: xfer_src"
         echo "\$2: xfer_des"
         echo "\$*: xfer_ips"
@@ -102,7 +102,7 @@ function xfer_task_ctrl
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: xfer_body"
         echo "\$2: one_pipe(default: ${GBL_XFER_PIPE})"
         return 1
@@ -126,7 +126,7 @@ function xfer_task_ctrl_sync
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: xfer_body"
         echo "\$2: one_pipe(default: ${GBL_XFER_PIPE})"
         return 1

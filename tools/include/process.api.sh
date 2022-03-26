@@ -52,7 +52,7 @@ function process_wait
     local pid=""
 
     if [ $# -lt 1 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: pinfo"
         echo "\$2: stime(default: 0.01s)"
         return 1
@@ -237,7 +237,7 @@ function thread_info
     local shead=${2:-true}
 
     if [ $# -lt 1 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: ppid"
         echo "\$2: shead(default: true)"
         return 1
@@ -346,7 +346,7 @@ function process_info
     local shead=${2:-true}
 
     if [ $# -lt 1 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: pid"
         echo "\$2: shead(default: true)"
         return 1

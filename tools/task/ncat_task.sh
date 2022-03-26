@@ -42,7 +42,7 @@ function remote_ncat_alive
     local ncat_port="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: ncat_addr"
         echo "\$2: ncat_port"
         return 1
@@ -92,7 +92,7 @@ function ncat_send_msg
     local ncat_body="$3"
 
     if [ $# -lt 3 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: ncat_addr"
         echo "\$2: ncat_port"
         echo "\$3: ncat_body"
@@ -207,7 +207,7 @@ function remote_set_var
     local var_valu="$4"
 
     if [ $# -lt 3 ];then
-        echo "Usage: "
+        echo "Usage: [$@]"
         echo "\$1: ncat_addr"
         echo "\$2: ncat_port"
         echo "\$3: var_name"
