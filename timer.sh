@@ -4,7 +4,9 @@ export BTASK_LIST="master,mdat,ncat,xfer"
 source ${MY_HOME}/.bashrc
 
 if can_access "${MY_HOME}/.timerc";then
-    ${MY_HOME}/.timerc
+    source ${MY_HOME}/.timerc
+else
+    exit 0
 fi
 
 if can_access "${TEST_SUIT_ENV}";then

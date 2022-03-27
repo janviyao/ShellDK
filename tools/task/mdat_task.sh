@@ -7,6 +7,15 @@ if contain_str "${BTASK_LIST}" "mdat";then
     exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
 fi
 
+function mdat_task_alive
+{
+    if can_access "${GBL_MDAT_PIPE}.run";then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function mdat_task_ctrl
 {
     local _body_="$1"
@@ -126,7 +135,7 @@ function global_kv_has
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run"
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         return 1
     fi
     
@@ -180,7 +189,7 @@ function global_kv_unset_key
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run"
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         return 1
     fi
 
@@ -208,7 +217,7 @@ function global_kv_unset_val
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run"
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         return 1
     fi
 
@@ -236,7 +245,7 @@ function global_kv_append
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run"
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         return 1
     fi
     
@@ -264,7 +273,7 @@ function global_kv_set
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run"
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         return 1
     fi
     
@@ -293,7 +302,7 @@ function global_kv_get
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run"
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         return 1
     fi
 
@@ -471,6 +480,7 @@ function _mdat_thread
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
+    ( { sleep 1; global_kv_append "BASH_TASK" "${self_pid}"; }& )
     _mdat_thread_main
     echo_debug "mdat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run

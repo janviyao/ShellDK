@@ -112,8 +112,8 @@ function xfer_task_ctrl
         one_pipe="${GBL_XFER_PIPE}"
     fi
 
-    if ! can_access "${one_pipe}";then
-        echo_erro "pipe invalid: ${one_pipe}"
+    if ! can_access "${one_pipe}.run";then
+        echo_erro "xfer task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
 
@@ -136,8 +136,8 @@ function xfer_task_ctrl_sync
         one_pipe="${GBL_XFER_PIPE}"
     fi
 
-    if ! can_access "${one_pipe}";then
-        echo_erro "pipe invalid: ${one_pipe}"
+    if ! can_access "${one_pipe}.run";then
+        echo_erro "xfer task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
 
@@ -226,6 +226,7 @@ function _xfer_thread
 
     touch ${GBL_XFER_PIPE}.run
     echo_debug "xfer_bg_thread[${self_pid}] start"
+    global_kv_append "BASH_TASK" "${self_pid}"
     _xfer_thread_main
     echo_debug "xfer_bg_thread[${self_pid}] exit"
     rm -f ${GBL_XFER_PIPE}.run

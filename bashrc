@@ -64,3 +64,5 @@ old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'"
 [ -n "${old_spec}" ] && trap "trap - ERR; ${old_spec}; exit 0" EXIT
 [ -z "${old_spec}" ] && trap "trap - ERR; exit 0" EXIT
 unset old_spec
+
+global_kv_append "BASH_TASK" "${ROOT_PID}"

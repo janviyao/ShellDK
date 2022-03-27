@@ -68,7 +68,7 @@ function thread_signal
     for task in ${pid_array[*]} 
     do
         echo_debug "kill thread-task: ${task}"
-        process_signal KILL ${task}
+        process_signal KILL ${task} &> /dev/null
     done
 
     global_kv_unset_key "${SELF_PID}"

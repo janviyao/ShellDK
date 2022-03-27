@@ -45,7 +45,7 @@ function gitloop_signal
     for pid in ${pid_array[*]} 
     do
         echo_debug "kill gitloop-child: ${pid}"
-        process_signal KILL ${pid}
+        process_signal KILL ${pid} &> /dev/null
         global_kv_unset_key "${pid}"
     done
 

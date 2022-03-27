@@ -125,5 +125,7 @@ function get_ipaddr
             return
         fi
     done
+
+    echo "127.0.0.1"
 }
 LOCAL_IP="$(get_ipaddr)"

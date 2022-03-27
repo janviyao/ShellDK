@@ -12,7 +12,7 @@ function logr_task_ctrl
     local logr_ctrl="$1"
     local logr_body="$2"
 
-    if [ $# -lt 2 ];then
+    if [ $# -lt 1 ];then
         echo "Usage: [$@]"
         echo "\$1: logr_ctrl"
         echo "\$2: logr_body"
@@ -20,14 +20,12 @@ function logr_task_ctrl
     fi
 
     #echo_debug "log to self: [ctrl: ${logr_ctrl} msg: ${logr_body}]" 
-
-    if [ -w ${GBL_LOGR_PIPE} ];then
-        echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${logr_ctrl}${GBL_SPF1}${logr_body}" > ${GBL_LOGR_PIPE}
-    else
-        if ! can_access "${GBL_LOGR_PIPE}";then
-            echo_erro "removed: ${GBL_LOGR_PIPE}"
-        fi
+    if ! can_access "${GBL_LOGR_PIPE}.run";then
+        echo_erro "logr task [${GBL_LOGR_PIPE}.run] donot run for [$@]"
+        return 1
     fi
+    
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${logr_ctrl}${GBL_SPF1}${logr_body}" > ${GBL_LOGR_PIPE}
     return 0
 }
 
@@ -44,15 +42,14 @@ function logr_task_ctrl_sync
     fi
 
     #echo_debug "log ato self: [ctrl: ${logr_ctrl} msg: ${logr_body}]" 
-
-    if [ -w ${GBL_LOGR_PIPE} ];then
-        echo_debug "logr wait for ${GBL_LOGR_PIPE}"
-        wait_value "${logr_ctrl}${GBL_SPF1}${logr_body}" "${GBL_LOGR_PIPE}"
-    else
-        if ! can_access "${GBL_LOGR_PIPE}";then
-            echo_erro "removed: ${GBL_LOGR_PIPE}"
-        fi
+    if ! can_access "${GBL_LOGR_PIPE}.run";then
+        echo_erro "logr task [${GBL_LOGR_PIPE}.run] donot run for [$@]"
+        return 1
     fi
+
+    echo_debug "logr wait for ${GBL_LOGR_PIPE}"
+    wait_value "${logr_ctrl}${GBL_SPF1}${logr_body}" "${GBL_LOGR_PIPE}"
+    return 0
 }
 
 function _bash_logr_exit
@@ -139,6 +136,7 @@ function _logr_thread
 
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"
+    global_kv_append "BASH_TASK" "${self_pid}"
     _logr_thread_main
     echo_debug "logr_bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run

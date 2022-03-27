@@ -682,11 +682,16 @@ function file_count
     local f_array=($*)
     local readable=true
 
+    can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
+
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
-            readable=false
-            break
+            ${SUDO} "chmod +r ${file}"
+            if [ $? -ne 0 ];then
+                readable=false
+                break
+            fi
         fi
     done
 
@@ -706,29 +711,26 @@ function file_size
     local f_array=($*)
     local readable=true
 
+    can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
+
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
-            readable=false
-            break
+            ${SUDO} "chmod +r ${file}"
+            if [ $? -ne 0 ];then
+                readable=false
+                break
+            fi
         fi
     done
 
     if bool_v "${readable}";then
-        can_access "fstat" || return 0
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
-        local self_pid=$$
-        if can_access "ppid";then
-            local ppids=($(ppid))
-            local self_pid=${ppids[1]}
-        fi
-        local tmp_file=/tmp/size.${self_pid}
-
-        can_access "fstat" || return 0
+        local tmp_file="$(temp_file)"
         ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
-        ${SUDO} "rm -f ${tmp_file} &> /dev/null"
+        rm -f ${tmp_file}
         echo "${fcount}"
     fi
 }

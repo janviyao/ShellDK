@@ -30,12 +30,6 @@ do
 done
 echo_debug "master port [${NCAT_MASTER_PORT}]"
 
-function ncat_watcher_ctrl
-{
-    local ncat_ctrl="$1"
-    echo "${ncat_ctrl}" > ${GBL_NCAT_PIPE}
-}
-
 function remote_ncat_alive
 {
     local ncat_addr="$1"
@@ -99,7 +93,7 @@ function ncat_send_msg
         return 1
     fi
 
-    echo_debug "ncat send: [$*]" 
+    echo_debug "ncat send: [$@]" 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
             if ! can_access "${GBL_NCAT_PIPE}.run";then
@@ -302,6 +296,7 @@ function _ncat_thread
 
     touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"
+    global_kv_append "BASH_TASK" "${self_pid}"
     _ncat_thread_main
     echo_debug "ncat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_NCAT_PIPE}.run

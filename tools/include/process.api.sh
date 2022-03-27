@@ -102,9 +102,17 @@ function process_signal
     local para_arr=($*)
     local pinfo=""
     local pid=""
-    local exclude_pid_array=($(ppid $$))
+    local exclude_pid_array=($(global_kv_get "BASH_TASK"))
 
     [ ${#para_arr[*]} -eq 0 ] && return 1
+
+    if ! is_number "${signal}";then
+        signal=$(trim_str_start "${signal^^}" "SIG")
+        if ! kill -l | grep -P "SIG${signal}\s+" &> /dev/null;then
+            echo_erro "signal { ${signal} } invalid"
+            return 1
+        fi
+    fi
 
     for pinfo in ${para_arr[*]}
     do
@@ -121,16 +129,27 @@ function process_signal
                 echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pid_array[*]}"
 
                 if ! array_has "${exclude_pid_array[*]}" "${pid}";then
-                    echo_debug "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
-                    ${SUDO} "kill -s ${signal} ${pid}"
+                    echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
+
+                    if is_number "${signal}";then
+                        ${SUDO} "kill -${signal} ${pid}"
+                    else
+                        ${SUDO} "kill -s ${signal} ${pid}"
+                    fi
                 else
                     echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
                 fi
 
-                process_signal ${signal} ${child_pid_array[*]} 
+                if [ -n "${child_pid_array[*]}" ];then
+                    process_signal ${signal} ${child_pid_array[*]} 
+                    if [ $? -ne 0 ];then
+                        return 1
+                    fi
+                fi
             fi
         done
     done
+    return 0
 }
 
 function process_kill
@@ -288,10 +307,7 @@ function thread_info
             if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
                 local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
                 local new_str=$(replace_regex "${old_str}" "\s+" "-")
-
-                local old_str=$(replace_regex "${old_str}" "\(" "\(")
-                local old_str=$(replace_regex "${old_str}" "\)" "\)")
-                tinfo_str=$(replace_regex "${tinfo_str}" "${old_str}" "${new_str}")
+                tinfo_str=$(replace_regex "${tinfo_str}" "\(\S+\s+\S+\)" "${new_str}")
             fi
 
             local -a tinfo=(${tinfo_str})
