@@ -689,6 +689,7 @@ function file_count
         if ! test -r ${file};then
             ${SUDO} "chmod +r ${file}"
             if [ $? -ne 0 ];then
+                echo_file "debug" "sudo fail: chmod +r ${file}"
                 readable=false
                 break
             fi
@@ -718,6 +719,7 @@ function file_size
         if ! test -r ${file};then
             ${SUDO} "chmod +r ${file}"
             if [ $? -ne 0 ];then
+                echo_file "debug" "sudo fail: chmod +r ${file}"
                 readable=false
                 break
             fi
