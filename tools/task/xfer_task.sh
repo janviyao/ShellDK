@@ -9,7 +9,7 @@ fi
 
 function rsync_to
 {
-    if [ $# -lt 2 ];then
+    if [ $# -lt 1 ];then
         echo "Usage: [$@]"
         echo "\$1: xfer_src"
         echo "\$2: xfer_des"

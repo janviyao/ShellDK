@@ -10,6 +10,6 @@ ISCSI_INFO_MAP["11.160.41.96-0"]="11.164.108.144 iqn.2016-06.io.spdk:disk1 1:1 0
 
 for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[*]}
 do
-    
+    echo
 done
 
