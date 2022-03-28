@@ -1,6 +1,7 @@
 #!/bin/bash
+GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
+
 if contain_str "${BTASK_LIST}" "logr";then
-    GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
     GBL_LOGR_FD=${GBL_LOGR_FD:-8}
     mkfifo ${GBL_LOGR_PIPE}
     can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"

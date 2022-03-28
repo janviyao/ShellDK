@@ -1,6 +1,7 @@
 #!/bin/bash
+GBL_CTRL_PIPE="${BASH_WORK_DIR}/ctrl.pipe"
+
 if contain_str "${BTASK_LIST}" "ctrl";then
-    GBL_CTRL_PIPE="${BASH_WORK_DIR}/ctrl.pipe"
     GBL_CTRL_FD=${GBL_CTRL_FD:-6}
     mkfifo ${GBL_CTRL_PIPE}
     can_access "${GBL_CTRL_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_PIPE} fail"

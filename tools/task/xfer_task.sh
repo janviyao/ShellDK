@@ -1,6 +1,7 @@
 #!/bin/bash
+GBL_XFER_PIPE="${BASH_WORK_DIR}/xfer.pipe"
+
 if contain_str "${BTASK_LIST}" "xfer";then
-    GBL_XFER_PIPE="${BASH_WORK_DIR}/xfer.pipe"
     GBL_XFER_FD=${GBL_XFER_FD:-6}
     mkfifo ${GBL_XFER_PIPE}
     can_access "${GBL_XFER_PIPE}" || echo_erro "mkfifo: ${GBL_XFER_PIPE} fail"
