@@ -58,12 +58,13 @@ function rsync_to
         account_check
         for ipaddr in ${xfer_ips[*]}
         do
+            local sync_des=${xfer_des}
             if [[ ${ipaddr} != ${LOCAL_IP} ]];then
-                xfer_des="${USR_NAME}@${ipaddr}:${xfer_des}"
+                sync_des="${USR_NAME}@${ipaddr}:${xfer_des}"
             fi
 
-            echo_info "Rsync { ${xfer_src} } to { ${xfer_des} }"
-            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
+            echo_info "Rsync { ${xfer_src} } to { ${sync_des} }"
+            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${sync_des}"
         done
     else
         echo_info "Rsync { ${xfer_src} } to { ${xfer_des} }"
@@ -105,10 +106,10 @@ function rsync_from
         account_check
         for ipaddr in ${xfer_ips[*]}
         do
-            xfer_src="${USR_NAME}@${ipaddr}:${xfer_src}"
+            local sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
 
-            echo_info "Rsync { ${xfer_src} } to { ${xfer_des} }"
-            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
+            echo_info "Rsync { ${sync_src} } to { ${xfer_des} }"
+            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${sync_src}${GBL_SPF2}${xfer_des}"
         done
     else
         echo_info "Rsync { ${xfer_src} } to { ${xfer_des} }"
