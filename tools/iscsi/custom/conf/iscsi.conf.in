@@ -40,7 +40,7 @@
 
   #AuthFile /usr/local/etc/spdk/auth.conf
 
-  MinConnectionsPerCore 4
+  MinConnectionsPerCore 1
 
   # Socket I/O timeout sec. (0 is infinite)
   Timeout 30

@@ -101,7 +101,7 @@ done
 
 iscsi_device_array=($(echo))
 if bool_v "${ISCSI_MULTIPATH_ON}";then
-    ${TOOL_ROOT_DIR}/log.sh multipath -r
+    ${SUDO} multipath -r
 
     iscsi_device_array=("dm-0")
     for index in {1..64}

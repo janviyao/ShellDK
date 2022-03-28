@@ -76,12 +76,12 @@ if process_exist "iscsid";then
     if bool_v "${RESTART_ISCSI_INITIATOR}";then
         echo_info "iscsid restart"
         ${SUDO} systemctl restart iscsid
-        ${SUDO} systemctl restart iscsid.socket
+        #${SUDO} systemctl restart iscsid.socket
     fi
 else
     echo_info "iscsid start"
     ${SUDO} systemctl start iscsid
-    ${SUDO} systemctl start iscsid.socket
+    #${SUDO} systemctl start iscsid.socket
 fi
 
 if bool_v "${APPLY_SYSCTRL}";then
