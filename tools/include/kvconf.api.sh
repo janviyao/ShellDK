@@ -6,10 +6,7 @@ function kvconf_has
     local split_c="${3:-=}"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: kv_file"
-        echo "\$2: key_str"
-        echo "\$3: split_c(default: =)"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: split_c(default: =)"
         return 1
     fi
 
@@ -51,11 +48,7 @@ function kvconf_add
     local split_c="${4:-=}"
 
     if [ $# -lt 3 ];then
-        echo "Usage: [$@]"
-        echo "\$1: kv_file"
-        echo "\$2: key_str"
-        echo "\$3: val_str"
-        echo "\$4: split_c(default: =)"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: split_c(default: =)"
         return 1
     fi
 
@@ -84,12 +77,7 @@ function kvconf_insert
     local split_c="${5:-=}"
 
     if [ $# -lt 3 ];then
-        echo "Usage: [$@]"
-        echo "\$1: kv_file"
-        echo "\$2: key_str"
-        echo "\$3: val_str"
-        echo "\$4: line_nr(default: $)"
-        echo "\$5: split_c(default: =)"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: line_nr(default: $)\n\$5: split_c(default: =)"
         return 1
     fi
 
@@ -110,10 +98,7 @@ function kvconf_del
     local split_c="${3:-=}"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: kv_file"
-        echo "\$2: key_str"
-        echo "\$3: split_c(default: =)"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: split_c(default: =)"
         return 1
     fi
 
@@ -136,9 +121,7 @@ function kvconf_del_line
     local line_nr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: kv_file"
-        echo "\$2: line_nr"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: line_nr"
         return 1
     fi
 
@@ -159,10 +142,7 @@ function kvconf_line_nr
     local split_c="${3:-=}"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: kv_file"
-        echo "\$2: key_str"
-        echo "\$3: split_c(default: =)"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: split_c(default: =)"
         return 1
     fi
 

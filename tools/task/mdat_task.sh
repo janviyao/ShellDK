@@ -23,9 +23,7 @@ function mdat_task_ctrl
     local _pipe_="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: body"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: body\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -48,9 +46,7 @@ function mdat_task_ctrl_sync
     local _pipe_="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: body"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: body\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -75,9 +71,7 @@ function global_set_var
     local _xval_=""
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -100,9 +94,7 @@ function global_get_var
     local _xval_=""
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -123,9 +115,7 @@ function global_kv_has
     local _pipe_="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -157,9 +147,7 @@ function global_kv_bool
     local _xval_=""
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -179,9 +167,7 @@ function global_kv_unset_key
     local _pipe_="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -206,10 +192,7 @@ function global_kv_unset_val
     local _pipe_="$3"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: xval"
-        echo "\$3: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -234,10 +217,7 @@ function global_kv_append
     local _pipe_="$3"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: xval"
-        echo "\$3: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -262,10 +242,7 @@ function global_kv_set
     local _pipe_="$3"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: xval"
-        echo "\$3: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 
@@ -290,9 +267,7 @@ function global_kv_get
     local _xval_=""
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: xkey"
-        echo "\$2: pipe(default: ${GBL_MDAT_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${GBL_MDAT_PIPE})"
         return 1
     fi
 

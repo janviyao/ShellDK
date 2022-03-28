@@ -11,6 +11,10 @@ function print_backtrace
     for i in $(seq 1 $((${#FUNCNAME[*]} - 1)))
     do
         local func="${FUNCNAME[$i]}"
+        if [[ ${func} == echo_erro ]] || [[ ${func} == echo_file ]];then
+            continue
+        fi
+
         local line_nr="${BASH_LINENO[$((i - 1))]}"
         local src="${BASH_SOURCE[$i]}"
         if [ -z "$src" ];then
@@ -20,7 +24,7 @@ function print_backtrace
 
         echo "in $src:$line_nr -> $func()"
         echo "     ..."
-        nl -w 4 -ba -nln $src | grep -B 5 -A 5 "^$line_nr[^0-9]" | sed "s/^/   /g" | sed "s/^   $line_nr /=> $line_nr /g"
+        nl -w 4 -ba -nln $src 2>/dev/null | grep -B 5 -A 5 "^$line_nr[^0-9]" | sed "s/^/   /g" | sed "s/^   $line_nr /=> $line_nr /g"
         echo "     ..."
     done
     echo ""

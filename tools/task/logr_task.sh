@@ -14,9 +14,7 @@ function logr_task_ctrl
     local logr_body="$2"
 
     if [ $# -lt 1 ];then
-        echo "Usage: [$@]"
-        echo "\$1: logr_ctrl"
-        echo "\$2: logr_body"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
         return 1
     fi
 
@@ -36,9 +34,7 @@ function logr_task_ctrl_sync
     local logr_body="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: logr_ctrl"
-        echo "\$2: logr_body"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
         return 1
     fi
 

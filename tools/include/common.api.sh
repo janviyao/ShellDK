@@ -31,9 +31,7 @@ function match_regex
     local regstr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: regstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr"
         return 1
     fi
 
@@ -53,9 +51,7 @@ function string_start
     local length="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: length"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
         return 1
     fi
 
@@ -73,10 +69,7 @@ function string_substr
     local length="$3"
 
     if [ $# -lt 3 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: start"
-        echo "\$3: length"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: start\n\$3: length"
         return 1
     fi
 
@@ -94,9 +87,7 @@ function string_end
     local length="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: length"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
         return 1
     fi
 
@@ -113,9 +104,7 @@ function string_regex
     local regstr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: regstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr"
         return 1
     fi
 
@@ -131,9 +120,7 @@ function match_str_start
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
         return 1
     fi
 
@@ -160,9 +147,7 @@ function match_str_end
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
         return 1
     fi
 
@@ -189,9 +174,7 @@ function trim_str_start
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
         return 1
     fi
 
@@ -216,9 +199,7 @@ function trim_str_end
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
         return 1
     fi
 
@@ -246,9 +227,7 @@ function contain_str
     local substr="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
         return 1
     fi
 
@@ -274,10 +253,7 @@ function replace_regex
     local newstr="$3"
 
     if [ $# -lt 3 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: regstr"
-        echo "\$3: newstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr\n\$3: newstr"
         return 1
     fi
 
@@ -317,10 +293,7 @@ function replace_str
     local newstr="$3"
 
     if [ $# -lt 3 ];then
-        echo "Usage: [$@]"
-        echo "\$1: string"
-        echo "\$2: oldstr"
-        echo "\$3: newstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: oldstr\n\$3: newstr"
         return 1
     fi
 
@@ -342,9 +315,7 @@ function array_has
     local value="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: array"
-        echo "\$2: value"
+        echo_erro "\nUsage: [$@]\n\$1: array\n\$2: value"
         return 1
     fi
 
@@ -364,9 +335,7 @@ function array_index
     local value="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: array"
-        echo "\$2: value"
+        echo_erro "\nUsage: [$@]\n\$1: array\n\$2: value"
         return 1
     fi
 
@@ -392,9 +361,7 @@ function array_cmp
     local array2=($2)
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: array1"
-        echo "\$2: array2"
+        echo_erro "\nUsage: [$@]\n\$1: array1\n\$2: array2"
         return 1
     fi
 
@@ -445,9 +412,15 @@ function echo_file
 
         if [ -n "${REMOTE_IP}" ];then
             #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASHLOG}
-            printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+            #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+            echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
         else
-            printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+            #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+            echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
+        fi
+
+        if [[ ${log_type} == "erro" ]];then
+            echo -e "$(print_backtrace)" >> ${BASHLOG}
         fi
     fi
     xtrace_restore
@@ -779,9 +752,7 @@ function wait_value
     local send_pipe="$2"
 
     if [ $# -lt 2 ];then
-        echo "Usage: [$@]"
-        echo "\$1: send_body"
-        echo "\$2: send_pipe"
+        echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe"
         return 1
     fi
 
