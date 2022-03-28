@@ -17,6 +17,13 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
         fi
     fi
 
+    can_access "/usr/lib64/libmultipath.so.*" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-multipath-libs-.+\.rpm"; }
+    if [ $? -ne 0 ];then
+        if check_net;then
+            ${SUDO} yum install -y device-mapper-multipath-libs
+        fi
+    fi
+
     can_access "/usr/sbin/multipathd" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-multipath-.+\.rpm"; }
     if [ $? -ne 0 ];then
         if check_net;then
