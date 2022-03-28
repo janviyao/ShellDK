@@ -22,7 +22,7 @@ if can_access "${TEST_SUIT_ENV}";then
         if (( logsize > maxsize ));then
             date_time=$(date '+%Y%m%d-%H%M%S')
             cp -f ${TEST_APP_LOG} ${TEST_APP_LOG}.${date_time}
-            echo > ${TEST_APP_LOG}
+            : > ${TEST_APP_LOG}
         fi
     fi
 fi
@@ -37,6 +37,6 @@ if can_access "${BASHLOG}";then
     if (( logsize > maxsize ));then
         date_time=$(date '+%Y%m%d-%H%M%S')
         cp -f ${BASHLOG} ${BASHLOG}.${date_time}
-        echo > ${BASHLOG}
+        : > ${BASHLOG}
     fi
 fi
