@@ -153,6 +153,7 @@ function inst_usage
     echo "=================== Usage ==================="
     echo "install.sh -n true       @all installation packages from net"
     echo "install.sh -r true       @install packages into other host in '/etc/hosts'"
+    echo "install.sh -c true       @copy packages into other host in '/etc/hosts' limited by '-r' option"
     echo "install.sh -o clean      @clean vim environment"
     echo "install.sh -o env        @deploy vim's usage environment"
     echo "install.sh -o vim        @install vim package"
@@ -184,6 +185,10 @@ REMOTE_INST="${parasMap['-r']}"
 REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
 REMOTE_INST="${REMOTE_INST:-0}"
 
+COPY_PKG="${parasMap['-c']}"
+COPY_PKG="${COPY_PKG:-${parasMap['--copy']}}"
+COPY_PKG="${COPY_PKG:-0}"
+
 NEED_OP="${parasMap['-o']}"
 NEED_OP="${NEED_OP:-${parasMap['--op']}}"
 NEED_OP="${NEED_OP:?'Please specify -o option'}"
@@ -213,6 +218,7 @@ echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
 echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
 echo_info "$(printf "[%13s]: %-6s" "Need Netwrk" "${NEED_NET}")"
 echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
+echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 
 if bool_v "${NEED_NET}"; then
     if check_net; then
@@ -612,15 +618,20 @@ else
         fi
     done
 
-    $MY_VIM_DIR/tools/collect.sh "/tmp/vim.tar"
+    if bool_v "${COPY_PKG}"; then
+        $MY_VIM_DIR/tools/collect.sh "/tmp/vim.tar"
+    fi
+
     for ((idx=0; idx < ${#ip_array[@]}; idx++))
     do
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
         ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
-        ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
-        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
+        if bool_v "${COPY_PKG}"; then
+            ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
+        fi
         ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh ${inst_paras}"
     done
 fi
