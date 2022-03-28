@@ -348,7 +348,7 @@ function array_has
         return 1
     fi
 
-    for item in ${array[@]}
+    for item in ${array[*]}
     do
         if [[ ${item} == ${value} ]];then
             return 0
@@ -371,7 +371,7 @@ function array_index
     fi
 
     local index=0
-    local count=${#array[@]}
+    local count=${#array[*]}
     while (( index < count))
     do
         local item=${array[${index}]}
@@ -398,8 +398,8 @@ function array_cmp
         return 1
     fi
 
-    local count1=${#array1[@]}
-    local count2=${#array2[@]}
+    local count1=${#array1[*]}
+    local count2=${#array2[*]}
 
     local min_cnt=${count1}
     if [ ${min_cnt} -gt ${count2} ];then
@@ -684,7 +684,7 @@ function file_count
 
     can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
-    for file in ${f_array[@]}
+    for file in ${f_array[*]}
     do
         if ! test -r ${file};then
             ${SUDO} "chmod +r ${file}"
@@ -697,10 +697,10 @@ function file_count
     done
 
     if bool_v "${readable}";then
-        echo $(fstat "${f_array[@]}" | awk '{ print $1 }')
+        echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
         local tmp_file="$(temp_file)"
-        ${SUDO} "fstat '${f_array[@]}' &> ${tmp_file}"
+        ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
         rm -f ${tmp_file}
         echo "${fcount}"
@@ -714,7 +714,7 @@ function file_size
 
     can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
-    for file in ${f_array[@]}
+    for file in ${f_array[*]}
     do
         if ! test -r ${file};then
             ${SUDO} "chmod +r ${file}"
@@ -727,10 +727,10 @@ function file_size
     done
 
     if bool_v "${readable}";then
-        echo $(fstat "${f_array[@]}" | awk '{ print $2 }')
+        echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
         local tmp_file="$(temp_file)"
-        ${SUDO} "fstat '${f_array[@]}' &> ${tmp_file}"
+        ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
         rm -f ${tmp_file}
         echo "${fcount}"

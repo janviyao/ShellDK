@@ -18,7 +18,7 @@ ppinfos=($(ppid))
 SELF_PID=${ppinfos[1]}
 
 ppinfos=($(ppid true))
-echo_debug "gitloop [${ppinfos[@]}]"
+echo_debug "gitloop [${ppinfos[*]}]"
 
 function gitloop_exit
 {
@@ -41,8 +41,8 @@ function gitloop_signal
     global_kv_set "gitloop-quit" "true"
 
     local pid_array=($(global_kv_get "${SELF_PID}"))
-    echo_debug "gitloop-childs: ${pid_array[@]}"
-    for pid in ${pid_array[@]} 
+    echo_debug "gitloop-childs: ${pid_array[*]}"
+    for pid in ${pid_array[*]} 
     do
         echo_debug "kill gitloop-child: ${pid}"
         process_signal KILL ${pid} &> /dev/null

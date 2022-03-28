@@ -21,8 +21,8 @@ fi
 get_tgt_ips=$(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq)
 for ipaddr in ${get_tgt_ips}
 do
-    if ! contain_str "${ISCSI_TARGET_IP_ARRAY[@]}" "${ipaddr}";then
-        echo_info "other sessions from ${ipaddr}, but not in { ${ISCSI_TARGET_IP_ARRAY[@]} }"
+    if ! contain_str "${ISCSI_TARGET_IP_ARRAY[*]}" "${ipaddr}";then
+        echo_info "other sessions from ${ipaddr}, but not in { ${ISCSI_TARGET_IP_ARRAY[*]} }"
         continue
     fi
     

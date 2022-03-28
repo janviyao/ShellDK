@@ -44,7 +44,7 @@ function run_fio_func
     fi
 
     echo > ${output_dir}/hosts
-    for ipaddr in ${host_array[@]}
+    for ipaddr in ${host_array[*]}
     do
         echo "${ipaddr}" >> ${output_dir}/hosts
     done
@@ -96,7 +96,7 @@ function run_fio_func
     local test_lat=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $4 }')
     local test_spend=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $5 }')
     
-    echo_info "result-(${case_index}): { ${start_time} | [${devs_array[@]}] | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
+    echo_info "result-(${case_index}): { ${start_time} | [${devs_array[*]}] | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
     echo_info "result-log: { ${output_dir}/${fio_output_file} }"
 
     if [ -z "${test_lat}" ]; then
@@ -104,7 +104,7 @@ function run_fio_func
     else
         local ifgt=$( echo "${test_lat} > 0" | bc )
         if [ ${ifgt} -eq 1 ]; then
-            local devs_str=$(echo "${devs_array[@]}" | tr ' ' '-')
+            local devs_str=$(echo "${devs_array[*]}" | tr ' ' '-')
             echo "${devs_str},${numjobs},${iosize},${iodepth},${rwtype},${read_pct},${test_iops},${test_bw},${test_lat},${start_time},${test_spend}" >> ${FIO_RESULT_FILE}
         else
             echo_erro "parse failed: ${output_dir}/${fio_output_file}"
@@ -114,7 +114,7 @@ function run_fio_func
 
 function start_test_func
 {
-    local case_num=${#FIO_TEST_MAP[@]}
+    local case_num=${#FIO_TEST_MAP[*]}
     local test_time=$((FIO_TEST_TIME + FIO_RAMP_TIME))
     local spend_time=$(((case_num * test_time) / 60))
 
@@ -154,7 +154,7 @@ function start_test_func
         sed -i '/\[group-disk-.*\]/,$d' ${output_dir}/${conf_full_name}
 
         local devs_array=($(echo "${devs_value}" | tr ',' ' '))
-        for sub_dev in ${devs_array[@]}
+        for sub_dev in ${devs_array[*]}
         do
             echo "[group-disk-${sub_dev}]" >> ${output_dir}/${conf_full_name}
             echo -e "\tname=group-disk-${sub_dev}" >> ${output_dir}/${conf_full_name}
@@ -201,7 +201,7 @@ function start_test_func
         sed -i "s/runtime[ ]*=[ ]*[0-9]\+s\?/runtime=${FIO_TEST_TIME}s/g" ${output_dir}/${conf_full_name}
         sed -i "s/ramp_time[ ]*=[ ]*[0-9]\+s\?/ramp_time=${FIO_RAMP_TIME}s/g" ${output_dir}/${conf_full_name}
         
-        run_fio_func "${idx}" "${output_dir}" "${conf_full_name}" "${ipaddr_array[@]}" "${devs_array[@]}" 
+        run_fio_func "${idx}" "${output_dir}" "${conf_full_name}" "${ipaddr_array[*]}" "${devs_array[*]}" 
 
         let left_case_num--
         spend_time=$(((left_case_num * test_time) / 60))

@@ -15,13 +15,13 @@ do
         continue
     fi
 
-    if ! contain_str "${ip_array[@]}" "${ipaddr}";then
+    if ! contain_str "${ip_array[*]}" "${ipaddr}";then
         ip_array[${count}]="${ipaddr}"
         let count++
     fi
 done < /etc/hosts
 
-for ((idx=0; idx < ${#ip_array[@]}; idx++))
+for ((idx=0; idx < ${#ip_array[*]}; idx++))
 do
     ipaddr="${ip_array[idx]}"
 

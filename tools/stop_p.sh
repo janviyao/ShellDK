@@ -7,7 +7,7 @@ signame="${other_paras[0]}"
 signame=$(trim_str_start "${signame}" "SIG")
 
 unset other_paras[0]
-pname_list="${other_paras[@]}"
+pname_list="${other_paras[*]}"
 
 echo_debug "stop [${pname_list}] with [${signame}] @[${LOCAL_IP}]"
 
@@ -26,8 +26,8 @@ do
     signum=`printf "%02d" ${signum}`
 
     PID_LIST=($(process_name2pid "${pname}"))
-    if [ -n "${PID_LIST[@]}" ];then
-        for pid in ${PID_LIST[@]}
+    if [ -n "${PID_LIST[*]}" ];then
+        for pid in ${PID_LIST[*]}
         do
             if contain_str "$(ppid $$)" "${pid}"; then
                 continue

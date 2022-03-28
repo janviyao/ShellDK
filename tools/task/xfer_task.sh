@@ -31,7 +31,7 @@ function rsync_to
     fi
 
     local xfer_ips=($@)
-    if [ -z "${xfer_ips[@]}" ];then        
+    if [ -z "${xfer_ips[*]}" ];then        
         local count=0
         while read line
         do
@@ -42,7 +42,7 @@ function rsync_to
                 continue
             fi
 
-            if ! contain_str "${xfer_ips[@]}" "${ipaddr}";then
+            if ! contain_str "${xfer_ips[*]}" "${ipaddr}";then
                 xfer_ips[${count}]="${ipaddr}"
                 let count++
             fi
@@ -55,9 +55,9 @@ function rsync_to
     fi
     
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
-    if [ -n "${xfer_ips[@]}" ];then
+    if [ -n "${xfer_ips[*]}" ];then
         account_check
-        for ipaddr in ${xfer_ips[@]}
+        for ipaddr in ${xfer_ips[*]}
         do
             local sync_des=${xfer_des}
             if [[ ${ipaddr} != ${LOCAL_IP} ]];then
@@ -103,9 +103,9 @@ function rsync_from
     fi
     
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
-    if [ -n "${xfer_ips[@]}" ];then
+    if [ -n "${xfer_ips[*]}" ];then
         account_check
-        for ipaddr in ${xfer_ips[@]}
+        for ipaddr in ${xfer_ips[*]}
         do
             local sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
 
@@ -246,7 +246,7 @@ function _xfer_thread
     local ppids=($(ppid))
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
-    echo_debug "xfer_bg_thread [${ppinfos[@]}]"
+    echo_debug "xfer_bg_thread [${ppinfos[*]}]"
 
     touch ${GBL_XFER_PIPE}.run
     echo_debug "xfer_bg_thread[${self_pid}] start"

@@ -289,7 +289,7 @@ function _ncat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "ncat_bg_thread [${ppinfos[@]}]"
+        echo_debug "ncat_bg_thread [${ppinfos[*]}]"
     else
         echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]]"
     fi

@@ -13,7 +13,7 @@ if [ -z "${BAK_ROOT}" ];then
     suffix=`date '+%Y%m%d-%H%M%S'`
     BAK_ROOT=~/${suffix}
 
-    if [ ${#paras_list[@]} -ge 2 ];then
+    if [ ${#paras_list[*]} -ge 2 ];then
         # remove the first two item
         unset other_paras[0]
         unset other_paras[1]
@@ -32,8 +32,8 @@ else
     unset other_paras[1]
 fi
 
-EXCLUDE_FILS=(${other_paras[@]} "\w+\.d" "\w+\.o" "\w+\.gcno")
-EXCLUDE_DIRS=(${other_paras[@]} "build")
+EXCLUDE_FILS=(${other_paras[*]} "\w+\.d" "\w+\.o" "\w+\.gcno")
+EXCLUDE_DIRS=(${other_paras[*]} "build")
 
 function git_backup
 {
@@ -41,7 +41,7 @@ function git_backup
 
     local is_exclude=1
     if [ -f ${git_item} ];then
-        for regex in ${EXCLUDE_FILS[@]}
+        for regex in ${EXCLUDE_FILS[*]}
         do
             [ -z "${regex}" ] && continue
             if match_regex "${git_item}" "${regex}";then 
@@ -60,7 +60,7 @@ function git_backup
             echo_info "Copy File: ${git_item}"
         fi
     else
-        for regex in ${EXCLUDE_DIRS[@]}
+        for regex in ${EXCLUDE_DIRS[*]}
         do
             [ -z "${regex}" ] && continue
             if match_regex "${git_item}" "${regex}";then 
@@ -83,7 +83,7 @@ function git_backup
 
 cd ${SRC_ROOT}
 FLIST=($(git status -s | awk '{ print $2 }'))
-for git_item in ${FLIST[@]}
+for git_item in ${FLIST[*]}
 do
     git_backup "${git_item}"
 done

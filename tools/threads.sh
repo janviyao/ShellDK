@@ -4,7 +4,7 @@ SELF_PID=${ppinfos[1]}
 LAST_PID=${ppinfos[2]}
 
 ppinfos=($(ppid true))
-echo_debug "threads [${ppinfos[@]}]"
+echo_debug "threads [${ppinfos[*]}]"
 
 global_kv_append "${LAST_PID}" "${SELF_PID}"
 
@@ -65,7 +65,7 @@ function thread_signal
     trap "" SIGINT SIGTERM SIGKILL
  
     local pid_array=($(global_kv_get "${SELF_PID}"))
-    for task in ${pid_array[@]} 
+    for task in ${pid_array[*]} 
     do
         echo_debug "kill thread-task: ${task}"
         process_signal KILL ${task} &> /dev/null

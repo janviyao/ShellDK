@@ -68,7 +68,7 @@ function var_exist
     # local check="\$(set -u ;: \$${var_name})"
     # eval "$check" &> /dev/null
     local arr="$(eval eval -- echo -n "\$$1")"
-    if [[ -n ${arr[@]} ]]; then
+    if [[ -n ${arr[*]} ]]; then
         # variable exist and its value is not empty
         return 0
     fi
@@ -89,7 +89,7 @@ function INCLUDE
 
 if can_access "ppid";then
     ppinfos=($(ppid true))
-    echo_debug "pstree [${ppinfos[@]}]"
+    echo_debug "pstree [${ppinfos[*]}]"
 fi
 
 if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then

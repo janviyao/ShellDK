@@ -24,13 +24,13 @@ can_access "${APP_CONF_DIR}" || ${SUDO} "mkdir -p ${APP_CONF_DIR}"
 can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${APP_CONF_DIR}
 ${SUDO} chmod -R 777 ${APP_CONF_DIR}
 
-for ipaddr in ${ISCSI_TARGET_IP_ARRAY[@]}
+for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
 do
     sed -i "s#Portal\s\+\(.*\)\s\+[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+:3260\+#Portal \1 ${ipaddr}:3260#g" ${APP_CONF_DIR}/iscsi.conf.in
     echo_info "update: Portal ${ipaddr}:3260"
 done
 
-for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[@]}
+for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[*]}
 do
     match_ln=$(sed -n "\#Netmask\s\+[0-9]\+\.[0-9]\+\.[0-9]\+\.0/[0-9]\+#=" ${APP_CONF_DIR}/iscsi.conf.in | tail -n 1)
     if [ -n "${match_ln}" ];then

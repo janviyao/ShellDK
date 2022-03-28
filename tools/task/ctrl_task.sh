@@ -112,7 +112,7 @@ function _ctrl_thread
     local ppids=($(ppid))
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
-    echo_debug "ctrl_bg_thread [${ppinfos[@]}]"
+    echo_debug "ctrl_bg_thread [${ppinfos[*]}]"
 
     touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"

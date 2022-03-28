@@ -80,23 +80,23 @@ do
 done
 
 #if bool_v "${LOG_OPEN}";then
-#    for key in ${!parasMap[@]}
+#    for key in ${!parasMap[*]}
 #    do
 #        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${parasMap[$key]}")"
 #    done
 #
 #    echo
 #    printf "%-13s: " "all_paras"
-#    printf "%2d=( " "${#all_paras[@]}"
-#    for ((idx=0; idx < ${#all_paras[@]}; idx++)) 
+#    printf "%2d=( " "${#all_paras[*]}"
+#    for ((idx=0; idx < ${#all_paras[*]}; idx++)) 
 #    do
 #        printf "\"%s\" " "${all_paras[${idx}]}" 
 #    done
 #    echo ")"
 #
 #    printf "%-13s: " "other_paras"
-#    printf "%2d=( " "${#other_paras[@]}"
-#    for ((idx=0; idx < ${#other_paras[@]}; idx++)) 
+#    printf "%2d=( " "${#other_paras[*]}"
+#    for ((idx=0; idx < ${#other_paras[*]}; idx++)) 
 #    do
 #        printf "\"%s\" " "${other_paras[${idx}]}" 
 #    done

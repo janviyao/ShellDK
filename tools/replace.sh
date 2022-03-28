@@ -47,10 +47,10 @@ OLD_STR="${other_paras[0]}"
 NEW_STR="${other_paras[1]}"
 unset other_paras[0]
 unset other_paras[1]
-replace_list=(${other_paras[@]})
+replace_list=(${other_paras[*]})
 
 CUR_DIR=$(pwd)
-for rep_dir in ${replace_list[@]}
+for rep_dir in ${replace_list[*]}
 do
     if ! can_access "${rep_dir}";then
         echo_erro "not a directory or file: ${rep_dir}"

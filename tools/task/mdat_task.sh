@@ -390,7 +390,7 @@ function _mdat_thread_main
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "KEY_HAS" ]];then
             local _xkey_=${req_body}
-            if contain_str "${!_global_map_[@]}" "${_xkey_}";then
+            if contain_str "${!_global_map_[*]}" "${_xkey_}";then
                 echo_debug "mdat key: [${_xkey_}] exist for [${ack_pipe}]"
                 echo "true" > ${ack_pipe}
             else
@@ -406,27 +406,27 @@ function _mdat_thread_main
             local _xval_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
 
             local _val_arr_=(${_global_map_[${_xkey_}]})
-            local _index_=$(array_index "${_val_arr_[@]}" "${_xval_}") 
+            local _index_=$(array_index "${_val_arr_[*]}" "${_xval_}") 
 
-            echo_debug "unset val: [${_val_arr_[@]}] index${_index_}=${_val_arr_[${_index_}]}"
+            echo_debug "unset val: [${_val_arr_[*]}] index${_index_}=${_val_arr_[${_index_}]}"
             if [ ${_index_} -ge 0 ];then
                 unset _val_arr_[${_index_}]
             fi
 
-            if [ ${#_val_arr_[@]} -eq 0 ];then
+            if [ ${#_val_arr_[*]} -eq 0 ];then
                 unset _global_map_[${_xkey_}]
             else
-                _global_map_[${_xkey_}]="${_val_arr_[@]}"
+                _global_map_[${_xkey_}]="${_val_arr_[*]}"
             fi
         elif [[ "${req_ctrl}" == "KEY_CLR" ]];then
-            if [ ${#_global_map_[@]} -gt 0 ];then
+            if [ ${#_global_map_[*]} -gt 0 ];then
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _xkey_ in ${!_global_map_[@]};do
+                    for _xkey_ in ${!_global_map_[*]};do
                         unset _global_map_[${_xkey_}]
                     done
                 else
                     local _var_arr_=(${req_body})
-                    for _xkey_ in ${_var_arr_[@]}
+                    for _xkey_ in ${_var_arr_[*]}
                     do
                         if [ -n "${_global_map_[${_xkey_}]}" ];then
                             unset _global_map_[${_xkey_}]
@@ -435,15 +435,15 @@ function _mdat_thread_main
                 fi
             fi
         elif [[ "${req_ctrl}" == "KEY_PRT" ]];then
-            if [ ${#_global_map_[@]} -gt 0 ];then
+            if [ ${#_global_map_[*]} -gt 0 ];then
                 echo ""
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _xkey_ in ${!_global_map_[@]};do
+                    for _xkey_ in ${!_global_map_[*]};do
                         echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                     done
                 else
                     local _var_arr_=(${req_body})
-                    for _xkey_ in ${_var_arr_[@]}
+                    for _xkey_ in ${_var_arr_[*]}
                     do
                         if [ -n "${_global_map_[${_xkey_}]}" ];then
                             echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
@@ -472,7 +472,7 @@ function _mdat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "mdat_bg_thread [${ppinfos[@]}]"
+        echo_debug "mdat_bg_thread [${ppinfos[*]}]"
     else
         echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi

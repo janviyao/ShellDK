@@ -11,7 +11,7 @@ g_return_file="${parasMap['-o']}"
 g_return_file="${g_return_file:-${parasMap['--output']}}"
 can_access "${g_return_file}" || { echo_erro "invalid return file: ${g_return_file}"; exit 1; } 
 
-g_output_arr=(${other_paras[@]})
+g_output_arr=(${other_paras[*]})
 
 g_start_time=""
 g_run_time=0
@@ -313,7 +313,7 @@ function summary_calc
     echo_debug "******write_bdwd: { ${g_write_bw} } avg: { ${avg_write_bandwidth} }"
     echo_debug "******write_late: { ${g_write_lat} } avg: { ${avg_write_latency} }"
 
-    local result_num=${#g_output_arr[@]}
+    local result_num=${#g_output_arr[*]}
     if FLOAT_IF "${g_read_runtime} > 0";then
         local avg_run_time=$(FLOAT "${g_read_runtime}/${result_num}" 1)
     else
@@ -324,7 +324,7 @@ function summary_calc
 }
 
 param_init
-for test_output in ${g_output_arr[@]};
+for test_output in ${g_output_arr[*]};
 do 
     collect_result "${test_output}"
 done

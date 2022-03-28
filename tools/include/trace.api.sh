@@ -8,7 +8,7 @@ function print_backtrace
     set +x
     echo "========== Backtrace start: =========="
     echo ""
-    for i in $(seq 1 $((${#FUNCNAME[@]} - 1)))
+    for i in $(seq 1 $((${#FUNCNAME[*]} - 1)))
     do
         local func="${FUNCNAME[$i]}"
         local line_nr="${BASH_LINENO[$((i - 1))]}"
