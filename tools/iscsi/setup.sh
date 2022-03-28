@@ -14,14 +14,14 @@ ISCSI_HEADER_DIGEST="None"
 ISCSI_DATA_DIGEST="None"
 
 ISCSI_ROOT_DIR=$(current_filedir)
-ISCSI_TARGET_IP_ARRAY=(${SERVER_IP_ARRAY[*]:?"iSCSI target ip address empty"})
-ISCSI_INITIATOR_IP_ARRAY=(${CLIENT_IP_ARRAY[*]:?"iSCSI initiator ip address empty"})
+ISCSI_TARGET_IP_ARRAY=(${SERVER_IP_ARRAY[@]:?"iSCSI target ip address empty"})
+ISCSI_INITIATOR_IP_ARRAY=(${CLIENT_IP_ARRAY[@]:?"iSCSI initiator ip address empty"})
 
 kvconf_add "${TEST_SUIT_ENV}" "ISCSI_ROOT_DIR" "${ISCSI_ROOT_DIR}"
 
 echo "" >> ${TEST_SUIT_ENV}
-kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_IP_ARRAY" "(${ISCSI_TARGET_IP_ARRAY[*]})"
-kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_INITIATOR_IP_ARRAY" "(${ISCSI_INITIATOR_IP_ARRAY[*]})"
+kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_IP_ARRAY" "(${ISCSI_TARGET_IP_ARRAY[@]})"
+kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_INITIATOR_IP_ARRAY" "(${ISCSI_INITIATOR_IP_ARRAY[@]})"
 
 echo "" >> ${TEST_SUIT_ENV}
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/setup.sh

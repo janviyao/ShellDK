@@ -15,7 +15,7 @@ do
         continue
     fi
 
-    if ! contain_str "${ip_array[*]}" "${ipaddr}";then
+    if ! contain_str "${ip_array[@]}" "${ipaddr}";then
         ip_array[${count}]="${ipaddr}"
         let count++
     fi

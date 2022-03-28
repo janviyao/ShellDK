@@ -124,13 +124,13 @@ function install_from_rpm
     # rpm -qf /usr/bin/nc #query nc rpm package
     # rpm -ql xxx.rpm     #query rpm package contents
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
-    for rpm_file in ${local_arr[*]}    
+    for rpm_file in ${local_arr[@]}    
     do
         local full_name=$(path2fname ${rpm_file})
         local rpm_name=$(trim_str_end "${full_name}" ".rpm")
 
-        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${installed_arr[*]}")"
-        if ! contain_str "${installed_arr[*]}" "${rpm_name}";then
+        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${installed_arr[@]}")"
+        if ! contain_str "${installed_arr[@]}" "${rpm_name}";then
             ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
@@ -149,7 +149,7 @@ function install_from_tar
     local fname_reg="$1"
 
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
-    for tar_file in ${local_arr[*]}    
+    for tar_file in ${local_arr[@]}    
     do
         local full_name=$(path2fname ${tar_file})
 
@@ -162,7 +162,7 @@ function install_from_tar
 
         local fprefix=$(string_regex "${full_name}" "^[0-9a-zA-Z]+")
         local dir_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
-        for tar_dir in ${dir_arr[*]}    
+        for tar_dir in ${dir_arr[@]}    
         do
             local workdir=$(path2fname ${tar_dir})
             install_from_make "${workdir}"

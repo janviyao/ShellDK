@@ -9,7 +9,7 @@ SELF_PID=${ppinfos[1]}
 LAST_PID=${ppinfos[2]}
 
 ppinfos=($(ppid true))
-echo_debug "progress [${ppinfos[*]}]"
+echo_debug "progress [${ppinfos[@]}]"
 
 global_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
 global_kv_append "${LAST_PID}" "${SELF_PID}"

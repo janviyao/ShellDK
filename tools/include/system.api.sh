@@ -110,7 +110,7 @@ function get_ipaddr
     done
 
     local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))
-    for ipaddr in ${local_iparray[*]}
+    for ipaddr in ${local_iparray[@]}
     do
         if cat /etc/hosts | grep -w -F "${ipaddr}" &> /dev/null;then
             echo "${ipaddr}"
@@ -118,7 +118,7 @@ function get_ipaddr
         fi
     done
 
-    for ipaddr in ${local_iparray[*]}
+    for ipaddr in ${local_iparray[@]}
     do
         if check_net "${ipaddr}";then
             echo "${ipaddr}"

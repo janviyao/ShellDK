@@ -15,7 +15,7 @@ ISCSI_NODE_BASE=$(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*NodeBase\
 ISCSI_TARGET_NAME=($(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*TargetName\s+" | awk '{ print $2 }'))
 
 kvconf_add "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE" "${ISCSI_NODE_BASE}"
-kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[*]})"
+kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[@]})"
 
 kvconf_add "${TEST_SUIT_ENV}" "APP_CONF_DIR"     "${ISTGT_CONF_DIR}"
 kvconf_add "${TEST_SUIT_ENV}" "TEST_APP_NAME"    "${ISTGT_APP_NAME}"

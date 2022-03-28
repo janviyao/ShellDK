@@ -88,7 +88,7 @@ function do_action
 {     
     local check_arr=($@)
 
-    for usr_cmd in ${check_arr[*]};
+    for usr_cmd in ${check_arr[@]};
     do
         if ! can_access "${usr_cmd}";then
             local guides="${INST_GUIDE["${usr_cmd}"]}"
@@ -179,7 +179,7 @@ source $MY_VIM_DIR/bashrc
 account_check
 
 declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
-do_action "${mustDeps[*]}"
+do_action "${mustDeps[@]}"
 
 REMOTE_INST="${parasMap['-r']}"
 REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
@@ -200,14 +200,14 @@ NEED_NET="${NEED_NET:-${parasMap['--net']}}"
 NEED_NET="${NEED_NET:-0}"
 
 OP_MATCH=0
-for func in ${!FUNC_MAP[*]};
+for func in ${!FUNC_MAP[@]};
 do
     if contain_str "${NEED_OP}" "${func}"; then
         let OP_MATCH=OP_MATCH+1
     fi
 done
 
-if [ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]; then
+if [ ${OP_MATCH} -eq ${#FUNC_MAP[@]} ]; then
     echo_erro "unkown op: ${NEED_OP}"
     echo ""
     inst_usage
@@ -376,17 +376,17 @@ function inst_deps
     local rid_arr=(glibc-2.18 glibc-common)
     local -A inst_map
 
-    for key in ${!INST_GUIDE[*]}
+    for key in ${!INST_GUIDE[@]}
     do
         inst_map[${key}]="${INST_GUIDE["${key}"]}"
     done
 
-    for key in ${rid_arr[*]}
+    for key in ${rid_arr[@]}
     do
         unset inst_map[${key}]
     done
 
-    do_action ${!inst_map[*]}
+    do_action ${!inst_map[@]}
 }
 
 function inst_system
@@ -558,7 +558,7 @@ function inst_glibc
 }
 
 if ! bool_v "${REMOTE_INST}"; then
-    for key in ${!FUNC_MAP[*]};
+    for key in ${!FUNC_MAP[@]};
     do
         if contain_str "${NEED_OP}" "${key}"; then
             echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
@@ -573,14 +573,14 @@ if ! bool_v "${REMOTE_INST}"; then
     done
 else
     declare -A routeMap
-    declare -a ip_array=($(echo "${other_paras[*]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
-    if [ -z "${ip_array[*]}" ];then
+    declare -a ip_array=($(echo "${other_paras[@]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    if [ -z "${ip_array[@]}" ];then
         declare -i count=0
         while read line
         do
             ipaddr=$(echo "${line}" | awk '{ print $1 }')
             hostnm=$(echo "${line}" | awk '{ print $2 }')
-            match_regex ""${ipaddr}"" "^\d+\.\d+\.\d+\.\d+$" || continue
+            match_regex "${ipaddr}" "^\d+\.\d+\.\d+\.\d+$" || continue
 
             [ -z "${ipaddr}" ] && continue 
             if ip addr | grep -F "${ipaddr}" &> /dev/null;then
@@ -588,24 +588,24 @@ else
             fi
 
             echo_info "HostName: ${hostnm} IP: ${ipaddr}"
-            if ! contain_str "${ip_array[*]}" "${ipaddr}";then
+            if ! contain_str "${ip_array[@]}" "${ipaddr}";then
                 ip_array[${count}]="${ipaddr}"
                 routeMap[${ipaddr}]="${hostnm}"
                 let count++
             fi
         done < /etc/hosts
     else
-        for ipaddr in ${ip_array[*]}
+        for ipaddr in ${ip_array[@]}
         do
             hostnm=$(cat /etc/hosts | grep -F "${ipaddr}" | awk '{ print $2 }')
             echo_info "HostName: ${hostnm} IP: ${ipaddr}"
             routeMap[${ipaddr}]="${hostnm}"
         done
     fi
-    echo_info "Remote install into { ${ip_array[*]} }"
+    echo_info "Remote install into { ${ip_array[@]} }"
 
     inst_paras=""
-    for key in ${!parasMap[*]}
+    for key in ${!parasMap[@]}
     do
         if match_regex "${key}" "\-?\-r[a-zA-Z]*";then
             continue

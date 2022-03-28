@@ -6,17 +6,17 @@ source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 
 PG_ID_LIST=("0")
 IG_ID_LIST=($(echo))
-for mapval in ${!ISCSI_INFO_MAP[*]}
+for mapval in ${!ISCSI_INFO_MAP[@]}
 do
     port_group_id=$(echo "${mapval}" | awk '{ print $3 }' | cut -d ":" -f 1)
     init_group_id=$(echo "${mapval}" | awk '{ print $3 }' | cut -d ":" -f 2)
 
-    if ! array_has "${PG_ID_LIST[*]}" "${port_group_id}";then
-        PG_ID_LIST=(${PG_ID_LIST[*]} ${port_group_id})
+    if ! array_has "${PG_ID_LIST[@]}" "${port_group_id}";then
+        PG_ID_LIST=(${PG_ID_LIST[@]} ${port_group_id})
     fi
 
-    if ! array_has "${IG_ID_LIST[*]}" "${init_group_id}";then
-        IG_ID_LIST=(${IG_ID_LIST[*]} ${init_group_id})
+    if ! array_has "${IG_ID_LIST[@]}" "${init_group_id}";then
+        IG_ID_LIST=(${IG_ID_LIST[@]} ${init_group_id})
     fi
 done
 
@@ -26,7 +26,7 @@ DEVICE_LIST=""
 LUN_TOTAL_NUM=0
 
 declare -A ignetMap
-for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[*]}
+for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[@]}
 do
     iplen24=$(echo "${ipaddr}" | grep -P "\d+\.\d+\.\d+" -o)
     
@@ -80,17 +80,17 @@ LINUX_DEV_NUM=$((LUN_TOTAL_NUM * ISCSI_SESSION_NR))
 #echo_debug "LUN_ID_LIST: {${LUN_ID_LIST} } DEVICE_LIST: {${DEVICE_LIST} }"
 #echo_debug "ALL_LUN: { ${LUN_TOTAL_NUM} } ISCSI_LUN_NUM: { ${ISCSI_LUN_NUM} } LINUX_DEV_NUM: { ${LINUX_DEV_NUM} } SPDK_BDEV_NUM: { ${SPDK_BDEV_NUM} }"G_ID_LIST=("0")
 IG_ID_LIST=($(echo))
-for mapval in ${!ISCSI_INFO_MAP[*]}
+for mapval in ${!ISCSI_INFO_MAP[@]}
 do
     port_group_id=$(echo "${mapval}" | awk '{ print $3 }' | cut -d ":" -f 1)
     init_group_id=$(echo "${mapval}" | awk '{ print $3 }' | cut -d ":" -f 2)
 
-    if ! array_has "${PG_ID_LIST[*]}" "${port_group_id}";then
-        PG_ID_LIST=(${PG_ID_LIST[*]} ${port_group_id})
+    if ! array_has "${PG_ID_LIST[@]}" "${port_group_id}";then
+        PG_ID_LIST=(${PG_ID_LIST[@]} ${port_group_id})
     fi
 
-    if ! array_has "${IG_ID_LIST[*]}" "${init_group_id}";then
-        IG_ID_LIST=(${IG_ID_LIST[*]} ${init_group_id})
+    if ! array_has "${IG_ID_LIST[@]}" "${init_group_id}";then
+        IG_ID_LIST=(${IG_ID_LIST[@]} ${init_group_id})
     fi
 done
 
@@ -100,7 +100,7 @@ DEVICE_LIST=""
 LUN_TOTAL_NUM=0
 
 declare -A ignetMap
-for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[*]}
+for ipaddr in ${ISCSI_INITIATOR_IP_ARRAY[@]}
 do
     iplen24=$(echo "${ipaddr}" | grep -P "\d+\.\d+\.\d+" -o)
     
@@ -163,11 +163,11 @@ done
 op_mode=$1
 ini_ip_array=($2)
 
-if ! match_regex "${ini_ip_array[*]}" '\d+\.\d+\.\d+\.\d+';then
-    if [ x${ini_ip_array[*],,} == x"all" ];then
-        ini_ip_array=(${ISCSI_INITIATOR_IP_ARRAY[*]})
+if ! match_regex "${ini_ip_array[@]}" '\d+\.\d+\.\d+\.\d+';then
+    if [ x${ini_ip_array[@],,} == x"all" ];then
+        ini_ip_array=(${ISCSI_INITIATOR_IP_ARRAY[@]})
     else
-        echo_erro "para: ${ini_ip_array[*]} error"
+        echo_erro "para: ${ini_ip_array[@]} error"
         exit -1
     fi
 fi
@@ -195,7 +195,7 @@ do
     fi
 done
 
-for ipaddr in ${ini_ip_array[*]}
+for ipaddr in ${ini_ip_array[@]}
 do
     for t_index in $(seq 0 ${MAX_TARGET_NUM})
     do

@@ -18,7 +18,7 @@ function get_iscsi_device
     local iscsi_sessions=$(iscsiadm -m session -P 3)
 
     if [ -z "${iscsi_sessions}" ];then
-        echo "@return@${iscsi_dev_array[*]}"
+        echo "@return@${iscsi_dev_array[@]}"
         return
     fi
 
@@ -31,7 +31,7 @@ function get_iscsi_device
                 local dev_name=$(echo "${iscsi_sessions}" | sed -n "${start_line},${tar_line}p" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
                 #echo_debug "line ${start_line}-${tar_line}=${dev_name}"
                 if [ ! -z "${dev_name}" ];then
-                    iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_name})
+                    iscsi_dev_array=(${iscsi_dev_array[@]} ${dev_name})
                 fi
             fi
         fi
@@ -39,15 +39,15 @@ function get_iscsi_device
     done
     
     local dev_array=($(echo "${iscsi_sessions}" | sed -n "${start_line},\$p" | grep -w -F "scsi disk" | grep -w -F "running" | awk -v ORS=" " '{ print $4 }'))
-    if [ -n "${dev_array[*]}" ];then
-        #echo_debug "line ${start_line}-$=${dev_array[*]}"
-        iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_array[*]})
+    if [ -n "${dev_array[@]}" ];then
+        #echo_debug "line ${start_line}-$=${dev_array[@]}"
+        iscsi_dev_array=(${iscsi_dev_array[@]} ${dev_array[@]})
     fi
     
-    echo "@return@${iscsi_dev_array[*]}"
+    echo "@return@${iscsi_dev_array[@]}"
 }
 
-for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
+for ipaddr in ${ISCSI_TARGET_IP_ARRAY[@]} 
 do
     echo_info "discover: { ${LOCAL_IP} } --> { ${ipaddr} }"
     ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
@@ -73,7 +73,7 @@ do
     #${SUDO} "${TOOL_ROOT_DIR}/log.sh iscsiadm -m node -T ${ISCSI_NODE_BASE} -p ${ipaddr} --login"
     #${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE} -p ${ipaddr} --login"
 
-    for targe_name in ${ISCSI_TARGET_NAME[*]} 
+    for targe_name in ${ISCSI_TARGET_NAME[@]} 
     do
         ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${targe_name} -p ${ipaddr} --login"
         if [ $? -ne 0 ];then
@@ -96,11 +96,11 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
     for index in {1..64}
     do
         if [ -b /dev/dm-${index} ];then
-            iscsi_device_array=(${iscsi_device_array[*]} dm-${index})
+            iscsi_device_array=(${iscsi_device_array[@]} dm-${index})
         fi
     done
 
-    for mdev in ${iscsi_device_array[*]}
+    for mdev in ${iscsi_device_array[@]}
     do
         if [ -b /dev/${mdev} ];then
             ${ISCSI_ROOT_DIR}/dev_conf.sh ${mdev} $((ISCSI_DEV_QD * ISCSI_SESSION_NR))
@@ -113,7 +113,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
         fi
     done
 else
-    for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
+    for ipaddr in ${ISCSI_TARGET_IP_ARRAY[@]}
     do
         dev_list=$(get_iscsi_device "${ipaddr}")
         show_res=$(echo "${dev_list}" | grep -v "@return@")                                                                                                                                                
@@ -124,7 +124,7 @@ else
         dev_list=$(echo "${dev_list}" | grep -P "@return@" | awk -F@ '{print $3}')
 
         echo_debug "devices: { ${dev_list} } from ${ipaddr}"
-        iscsi_device_array=(${iscsi_device_array[*]} ${dev_list})
+        iscsi_device_array=(${iscsi_device_array[@]} ${dev_list})
     done
 
     for dev in ${iscsi_device_array}
@@ -138,10 +138,10 @@ else
     done
 fi
 
-echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
+echo_info "dev(${#iscsi_device_array[@]}): { ${iscsi_device_array[@]} }"
 ${SUDO} "mkdir -p ${WORK_ROOT_DIR}; chmod -R 777 ${WORK_ROOT_DIR}"
 
-echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
+echo "${iscsi_device_array[@]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 ${TOOL_ROOT_DIR}/scplogin.sh "${WORK_ROOT_DIR}/disk.${LOCAL_IP}" "${CONTROL_IP}:${WORK_ROOT_DIR}/disk.${LOCAL_IP}"
 
 exit 0

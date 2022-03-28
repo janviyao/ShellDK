@@ -27,8 +27,8 @@ echo "# [global configure]" >> ${TEST_SUIT_ENV}
 kvconf_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
 echo "" >> ${TEST_SUIT_ENV}
 
-kvconf_add "${TEST_SUIT_ENV}" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[*]})"
-kvconf_add "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*]})"
+kvconf_add "${TEST_SUIT_ENV}" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[@]})"
+kvconf_add "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[@]})"
 kvconf_add "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP" "(['${LOCAL_IP}']='empty')"
 echo "" >> ${TEST_SUIT_ENV}
 
@@ -55,7 +55,7 @@ echo "" >> ${TEST_SUIT_ENV}
 echo "# [runtime configure]" >> ${TEST_SUIT_ENV}
 
 # Push run env
-for ipaddr in ${CLIENT_IP_ARRAY[*]}
+for ipaddr in ${CLIENT_IP_ARRAY[@]}
 do
     if [[ ${LOCAL_IP} == ${ipaddr} ]];then
         continue
@@ -63,7 +63,7 @@ do
     ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
 done
 
-for ipaddr in ${SERVER_IP_ARRAY[*]}
+for ipaddr in ${SERVER_IP_ARRAY[@]}
 do
     if [[ ${LOCAL_IP} == ${ipaddr} ]];then
         continue
