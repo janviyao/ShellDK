@@ -12,14 +12,20 @@ ${ISCSI_ROOT_DIR}/check_iscsi_env.sh
 
 function get_iscsi_device
 {
-    local target_ip=$1
+    local target_ip="$1"
+    local return_file="$2"
+
     local start_line=1
     local iscsi_dev_array=($(echo))
     local iscsi_sessions=$(iscsiadm -m session -P 3)
 
     if [ -z "${iscsi_sessions}" ];then
-        echo "@return@${iscsi_dev_array[*]}"
-        return
+        if can_access "${return_file}";then
+            echo "${iscsi_dev_array[*]}" > ${return_file}
+        else
+            echo "${iscsi_dev_array[*]}"
+        fi
+        return 0
     fi
 
     local tar_lines=$(echo "${iscsi_sessions}" | grep -n "Target:" | awk -F: '{ print $1 }')
@@ -44,7 +50,12 @@ function get_iscsi_device
         iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_array[*]})
     fi
     
-    echo "@return@${iscsi_dev_array[*]}"
+    if can_access "${return_file}";then
+        echo "${iscsi_dev_array[*]}" > ${return_file}
+    else
+        echo "${iscsi_dev_array[*]}"
+    fi
+    return 0
 }
 
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
@@ -113,19 +124,19 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
         fi
     done
 else
+    tmp_file="$(temp_file)"
     for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
     do
-        dev_list=$(get_iscsi_device "${ipaddr}")
-        show_res=$(echo "${dev_list}" | grep -v "@return@")                                                                                                                                                
-        if [ ! -z "${show_res}" ];then
-            echo "${show_res}"
+        if ! get_iscsi_device "${ipaddr}" "${tmp_file}";then
+            echo_erro "iscsi device fail from { ${ipaddr} }"
+            continue
         fi
-
-        dev_list=$(echo "${dev_list}" | grep -P "@return@" | awk -F@ '{print $3}')
+        dev_list=$(cat ${tmp_file})
 
         echo_debug "devices: { ${dev_list} } from ${ipaddr}"
         iscsi_device_array=(${iscsi_device_array[*]} ${dev_list})
     done
+    rm -f ${tmp_file}
 
     for dev in ${iscsi_device_array}
     do
