@@ -6,8 +6,7 @@ declare -i count=0
 declare -a ip_array
 while read line
 do
-    ipaddr=$(echo "${line}" | awk '{ print $1 }')
-    match_regex ""${ipaddr}"" "^\d+\.\d+\.\d+\.\d+$" || continue
+    ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
 
     [ -z "${ipaddr}" ] && continue 
     echo_info "HostName: ${hostnm} IP: ${ipaddr}"

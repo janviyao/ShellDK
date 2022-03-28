@@ -24,8 +24,6 @@ can_access "${APP_CONF_DIR}" || ${SUDO} "mkdir -p ${APP_CONF_DIR}"
 can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${APP_CONF_DIR}
 ${SUDO} chmod -R 777 ${APP_CONF_DIR}
 
-sed -i "s/${keystr}=.\+/${keystr}=${valstr}/g" ${APP_CONF_DIR}/istgt.conf
-
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
 do
     sed -i "s#Portal\s\+\(.*\)\s\+[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+:3260\+#Portal \1 ${ipaddr}:3260#g" ${APP_CONF_DIR}/istgt.conf

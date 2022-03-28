@@ -24,15 +24,28 @@ function rsync_to
         xfer_des=$(fname2path "${xfer_src}")
     else
         shift
-    fi
-    local xfer_ips=($*)
-
-    if [ -z "${xfer_ips[*]}" ];then
         if [ -z "${xfer_des}" ];then
-            return 0
-        elif [[ ${xfer_src} == ${xfer_des} ]];then
-            return 0
+            xfer_des=$(fname2path "${xfer_src}")
         fi
+    fi
+
+    local xfer_ips=($*)
+    if [ -z "${xfer_ips[*]}" ];then        
+        local count=0
+        while read line
+        do
+            local ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
+            [ -z "${ipaddr}" ] && continue 
+
+            if ip addr | grep -F "${ipaddr}" &> /dev/null;then
+                continue
+            fi
+
+            if ! contain_str "${xfer_ips[*]}" "${ipaddr}";then
+                xfer_ips[${count}]="${ipaddr}"
+                let count++
+            fi
+        done < /etc/hosts
     fi
 
     if ! can_access "${xfer_src}";then
@@ -74,6 +87,9 @@ function rsync_from
         xfer_des=$(fname2path "${xfer_src}")
     else
         shift
+        if [ -z "${xfer_des}" ];then
+            xfer_des=$(fname2path "${xfer_src}")
+        fi
     fi
     local xfer_ips=($*)
 
