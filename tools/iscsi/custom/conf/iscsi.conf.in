@@ -219,8 +219,8 @@
   BlockLength 4096
   QueueDepth 128
   Luworkers 6
-  UnitInquiry "vCNS" "iscsi" "0" "4059aab98f093c5d95207f7af09d1413"
-  PhysRecordLength 4096
+  UnitInquiry "Alibaba" "vCNS" "0" "4059aab98f093c5d95207f7af09d1413"
+  PhysRecordLength 512
 
   LUN0 DISK0
   #LUN1 DISK1 

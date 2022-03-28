@@ -5,15 +5,15 @@ FIO_IO_DEBUG=false
 FIO_CPU_MASK=0-63
 FIO_CPU_POLICY=split
 FIO_IO_ENGINE=libaio
-FIO_TEST_TIME=10
+FIO_TEST_TIME=30
 FIO_RAMP_TIME=10
 FIO_THREAD_ON=1
 FIO_VERIFY_ON=0
-LOG_OPEN=0
 
 declare -A FIO_TEST_MAP
 FIO_TEST_MAP["testcase-1"]="fio.s.w 1m 1 1 172.24.15.162,172.24.15.163 vdb,vdc"
 
+declare -A FIO_HOST_MAP
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
     if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then

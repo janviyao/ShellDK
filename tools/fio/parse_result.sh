@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh
 source ${TEST_SUIT_ENV}
 

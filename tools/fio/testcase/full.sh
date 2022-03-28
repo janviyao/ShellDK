@@ -5,7 +5,7 @@ FIO_IO_DEBUG=false
 FIO_CPU_MASK=0-63
 FIO_CPU_POLICY=split
 FIO_IO_ENGINE=libaio
-FIO_TEST_TIME=10
+FIO_TEST_TIME=30
 FIO_RAMP_TIME=10
 FIO_THREAD_ON=1
 FIO_VERIFY_ON=0
@@ -61,13 +61,8 @@ do
     fi
 done
 
-if [ ${#FIO_CONF_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_JOB_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_DEPTH_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} -o ${#FIO_HOST_MAP[*]} -ne ${#FIO_BS_ARRAY[*]} ]; then
-    echo_erro "FIO_BS_ARRAY != FIO_CONF_MAP != FIO_JOB_MAP != FIO_DEPTH_MAP"
-    exit
-fi
-
 declare -A FIO_TEST_MAP
-case_num=1
+declare -i case_num=1
 for bs_value in ${FIO_BS_ARRAY[*]}
 do
     for template in ${FIO_CONF_MAP[${bs_value}]}
