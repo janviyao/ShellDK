@@ -3,34 +3,35 @@ function print_backtrace
 {
     # if errexit is not enabled, don't print a backtrace
     #[[ "$-" =~ e ]] || return 0
-
     local shell_options="$-"
     set +x
-    echo "========== Backtrace start: =========="
-    echo ""
-    for i in $(seq 1 $((${#FUNCNAME[*]} - 1)))
-    do
-        local func="${FUNCNAME[$i]}"
-        if [[ ${func} == echo_erro ]] || [[ ${func} == echo_file ]];then
-            continue
-        fi
+    if [ ${#FUNCNAME[*]} -gt 0 ];then
+        echo "========== Backtrace start: =========="
+        echo ""
+        for i in $(seq 1 $((${#FUNCNAME[*]} - 1)))
+        do
+            local func="${FUNCNAME[$i]}"
+            if [[ ${func} == echo_erro ]] || [[ ${func} == echo_file ]];then
+                continue
+            fi
 
-        local line_nr="${BASH_LINENO[$((i - 1))]}"
-        local src="${BASH_SOURCE[$i]}"
-        if [ -z "$src" ];then
-            echo "in $line_nr -> $func()"
-            continue
-        fi
+            local line_nr="${BASH_LINENO[$((i - 1))]}"
+            local src="${BASH_SOURCE[$i]}"
+            if [ -z "${src}" ];then
+                echo "in ${line_nr} -> ${func}()"
+                continue
+            fi
 
-        echo "in $src:$line_nr -> $func()"
-        echo "     ..."
-        nl -w 4 -ba -nln $src 2>/dev/null | grep -B 5 -A 5 "^$line_nr[^0-9]" | sed "s/^/   /g" | sed "s/^   $line_nr /=> $line_nr /g"
-        echo "     ..."
-    done
-    echo ""
-    echo "========== Backtrace end =========="
+            echo "in ${src}:${line_nr} -> ${func}()"
+            echo "     ..."
+            nl -w 4 -ba -nln ${src} 2>/dev/null | grep -B 5 -A 5 "^${line_nr}[^0-9]" | sed "s/^/   /g" | sed "s/^   ${line_nr} /=> ${line_nr} /g"
+            echo "     ..."
+        done
+        echo ""
+        echo "========== Backtrace end =========="
+    fi
+    [[ "${shell_options}" =~ x ]] && set -x
 
-    [[ "$shell_options" =~ x ]] && set -x
     return 0
 }
 
@@ -67,13 +68,13 @@ function xtrace_fd()
 
 function xtrace_disable() 
 {
-    if [ "$XTRACE_DISABLED" != "yes" ]; then
+    if [ "${XTRACE_DISABLED}" != "yes" ]; then
         PREV_BASH_OPTS="$-"
-        if [[ "$PREV_BASH_OPTS" == *"x"* ]]; then
+        if [[ "${PREV_BASH_OPTS}" == *"x"* ]]; then
             XTRACE_DISABLED="yes"
         fi
         set +x
-    elif [ -z $XTRACE_NESTING_LEVEL ]; then
+    elif [ -z ${XTRACE_NESTING_LEVEL} ]; then
         XTRACE_NESTING_LEVEL=1
     else
         XTRACE_NESTING_LEVEL=$((++XTRACE_NESTING_LEVEL))
@@ -92,25 +93,25 @@ function xtrace_enable()
 # Keep it as alias to avoid xtrace_enable backtrace always pointing to xtrace_restore.
 # xtrace_enable will appear as called directly from the user script, from the same line
 # that "called" xtrace_restore.
-#alias xtrace_restore='if [ -z $XTRACE_NESTING_LEVEL ]; then
-#        if [[ "$PREV_BASH_OPTS" == *"x"* ]]; then
+#alias xtrace_restore='if [ -z ${XTRACE_NESTING_LEVEL} ]; then
+#        if [[ "${PREV_BASH_OPTS}" == *"x"* ]]; then
 #        XTRACE_DISABLED="no"; PREV_BASH_OPTS=""; set -x; xtrace_enable;
 #    fi
 #else
 #    XTRACE_NESTING_LEVEL=$((--XTRACE_NESTING_LEVEL));
-#    if [ $XTRACE_NESTING_LEVEL -eq "0" ]; then
+#    if [ ${XTRACE_NESTING_LEVEL} -eq "0" ]; then
 #        unset XTRACE_NESTING_LEVEL
 #    fi
 #fi'
 function xtrace_restore()
 {
-    if [ -z $XTRACE_NESTING_LEVEL ]; then
-        if [[ "$PREV_BASH_OPTS" == *"x"* ]]; then
+    if [ -z ${XTRACE_NESTING_LEVEL} ]; then
+        if [[ "${PREV_BASH_OPTS}" == *"x"* ]]; then
             XTRACE_DISABLED="no"; PREV_BASH_OPTS=""; set -x; xtrace_enable;
         fi
     else
         XTRACE_NESTING_LEVEL=$((--XTRACE_NESTING_LEVEL));
-        if [ $XTRACE_NESTING_LEVEL -eq "0" ]; then
+        if [ ${XTRACE_NESTING_LEVEL} -eq "0" ]; then
             unset XTRACE_NESTING_LEVEL
         fi
     fi
@@ -122,7 +123,7 @@ function xtrace_restore()
 #PS4='\t -- ${BASH_SOURCE#${BASH_SOURCE%/*/*}/}@${LINENO} -- \$ '
 
 : ${SPDK_AUTOTEST_X:=false}
-if $SPDK_AUTOTEST_X; then
+if ${SPDK_AUTOTEST_X}; then
     # explicitly enable xtraces, overriding any tracking information.
     unset XTRACE_DISABLED
     unset XTRACE_NESTING_LEVEL
