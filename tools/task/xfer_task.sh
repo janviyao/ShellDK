@@ -14,7 +14,7 @@ function rsync_to
         echo "Usage: [$@]"
         echo "\$1: xfer_src"
         echo "\$2: xfer_des"
-        echo "\$*: xfer_ips"
+        echo "\$@: xfer_ips"
         return 1
     fi
 
@@ -30,7 +30,7 @@ function rsync_to
         fi
     fi
 
-    local xfer_ips=($*)
+    local xfer_ips=($@)
     if [ -z "${xfer_ips[*]}" ];then        
         local count=0
         while read line
@@ -81,7 +81,7 @@ function rsync_from
         echo "Usage: [$@]"
         echo "\$1: xfer_src"
         echo "\$2: xfer_des"
-        echo "\$*: xfer_ips"
+        echo "\$@: xfer_ips"
         return 1
     fi
 
@@ -96,7 +96,7 @@ function rsync_from
             xfer_des=$(fname2path "${xfer_src}")
         fi
     fi
-    local xfer_ips=($*)
+    local xfer_ips=($@)
 
     if ! can_access "${xfer_des}";then
         ${SUDO} "mkdir -p ${xfer_des}"

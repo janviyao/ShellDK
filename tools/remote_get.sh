@@ -3,7 +3,7 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 HOST_IP="$1"
 CMD_EXE="$2"
 
-echo_debug "paras: { $* }"
+echo_debug "paras: { $@ }"
 echo_debug "Get { ${CMD_EXE} } from { ${HOST_IP} }"
 if [ -z "${CMD_EXE}" ];then
     exit 0

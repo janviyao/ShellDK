@@ -1,7 +1,7 @@
 #!/bin/bash
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-CMD_STR="$*"
+CMD_STR="$@"
 #while [ -n "$1" ]
 #do
 #    CMD_STR="${CMD_STR} $1"

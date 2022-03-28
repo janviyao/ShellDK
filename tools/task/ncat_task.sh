@@ -215,7 +215,7 @@ function remote_set_var
         var_valu="$(eval "echo \"\$${var_name}\"")"
     fi
 
-    echo_debug "remote set: [$*]" 
+    echo_debug "remote set: [$@]" 
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
     return $?
 }

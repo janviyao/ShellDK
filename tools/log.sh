@@ -5,20 +5,20 @@ IFS_BACKUP=$IFS
 IFS=$(echo -en "\n\r")
 
 if bool_v "${LOG_OPEN}";then
-    echo $*
-    $*
+    echo "$@"
+    eval "$@"
 else
     if var_exist "BASHLOG";then
-        $* >> ${BASHLOG} 2>&1
+        eval "$@" >> ${BASHLOG} 2>&1
     else
-        $* >> log 2>&1
+        eval "$@" >> log 2>&1
     fi
 fi
 errcode=$?
 
 IFS=$IFS_BACKUP
 if [ ${errcode} -ne 0 ];then
-    echo_erro "errno(${errcode}): $*"
+    echo_erro "errno(${errcode}): $@"
 fi
 
 exit ${errcode}

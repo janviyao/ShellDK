@@ -10,7 +10,7 @@ function FLOAT
 
 function FLOAT_IF
 {
-    local expre="$*"
+    local expre="$@"
 
     if [ $(echo "${expre}" | bc -l) -eq 1 ];then
         return 0

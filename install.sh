@@ -86,7 +86,7 @@ FUNC_MAP["glibc2.18"]="inst_glibc"
 
 function do_action
 {     
-    local check_arr=($*)
+    local check_arr=($@)
 
     for usr_cmd in ${check_arr[*]};
     do

@@ -2,7 +2,7 @@
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 SRC_DIR="$1"
 DES_DIR="$2"
-echo_debug "paras: { $* }"
+echo_debug "paras: { $@ }"
 
 account_check
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then

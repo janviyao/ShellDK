@@ -8,7 +8,7 @@ function is_me
 
 function system_encrypt
 {
-    local content="$*"
+    local content="$@"
     # 251421 is secret key
     local convert=$(echo "${content}" | openssl aes-128-cbc -k 251421 -base64 2>/dev/null)
     if [ -n "${convert}" ];then
@@ -20,7 +20,7 @@ function system_encrypt
 
 function system_decrypt
 {
-    local content="$*"
+    local content="$@"
     # 251421 is secret key
     local convert=$(echo "${content}" | openssl aes-128-cbc -d -k 251421 -base64 2>/dev/null)
     if [ -n "${convert}" ];then

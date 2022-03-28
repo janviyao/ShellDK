@@ -436,7 +436,7 @@ function echo_file
     if var_exist "BASHLOG";then
         local log_type="$1"
         shift
-        local para=$(replace_str "$*" "${MY_HOME}/" "")
+        local para=$(replace_str "$@" "${MY_HOME}/" "")
 
         local headpart=$(printf "[%5s]" "${log_type}")
         if bool_v "${LOG_HEADER}";then
@@ -444,7 +444,7 @@ function echo_file
         fi
 
         if [ -n "${REMOTE_IP}" ];then
-            #printf "%s %s from [%s]\n" "${headpart}" "$*" "${REMOTE_IP}" >> ${BASHLOG}
+            #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASHLOG}
             printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
         else
             printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
@@ -482,7 +482,7 @@ function echo_header
 function echo_erro
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_HOME}/" "")
+    local para=$(replace_str "$@" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
@@ -491,42 +491,42 @@ function echo_erro
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
-    echo_file "erro" "$*"
+    echo_file "erro" "$@"
     xtrace_restore
 }
 
 function echo_info
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_HOME}/" "")
+    local para=$(replace_str "$@" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         # echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     else
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
-    echo_file "info" "$*"
+    echo_file "info" "$@"
     xtrace_restore
 }
 
 function echo_warn
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_HOME}/" "")
+    local para=$(replace_str "$@" "${MY_HOME}/" "")
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         # echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     else
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
-    echo_file "warn" "$*"
+    echo_file "warn" "$@"
     xtrace_restore
 }
 
 function echo_debug
 {
     xtrace_disable
-    local para=$(replace_str "$*" "${MY_HOME}/" "")
+    local para=$(replace_str "$@" "${MY_HOME}/" "")
     if bool_v "${LOG_OPEN}"; then
         local fname=$(path2fname $0)
         contain_str "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}" 
@@ -539,7 +539,7 @@ function echo_debug
             fi
         fi
     fi
-    echo_file "debug" "$*"
+    echo_file "debug" "$@"
     xtrace_restore
 }
 
@@ -679,7 +679,7 @@ function temp_file
 
 function file_count
 {
-    local f_array=($*)
+    local f_array=($@)
     local readable=true
 
     can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
@@ -709,7 +709,7 @@ function file_count
 
 function file_size
 {
-    local f_array=($*)
+    local f_array=($@)
     local readable=true
 
     can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }

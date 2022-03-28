@@ -129,7 +129,7 @@ function global_kv_has
         return 1
     fi
 
-    echo_file "debug" "mdat check: [$*]"
+    echo_file "debug" "mdat check: [$@]"
     
     if [ -z "${_pipe_}" ];then
         _pipe_="${GBL_MDAT_PIPE}"
@@ -163,7 +163,7 @@ function global_kv_bool
         return 1
     fi
 
-    echo_file "debug" "mdat bool: [$*]"
+    echo_file "debug" "mdat bool: [$@]"
      
     _xval_=$(global_kv_get "${_xkey_}" "${_pipe_}")
     if bool_v "${_xval_}";then
@@ -296,7 +296,7 @@ function global_kv_get
         return 1
     fi
 
-    echo_file "debug" "mdat get: [$*]"
+    echo_file "debug" "mdat get: [$@]"
 
     if [ -z "${_pipe_}" ];then
         _pipe_="${GBL_MDAT_PIPE}"
@@ -317,7 +317,7 @@ function global_kv_get
 
 function global_kv_print
 {
-    local _xkey_="$*"
+    local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
         mdat_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
@@ -328,7 +328,7 @@ function global_kv_print
 
 function global_kv_clear
 {
-    local _xkey_="$*"
+    local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
         mdat_task_ctrl "KEY_CLR${GBL_SPF1}ALL"

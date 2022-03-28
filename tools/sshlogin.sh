@@ -3,7 +3,7 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 HOST_IP="$1"
 CMD_EXE="$2"
-echo_debug "paras: { $* }"
+echo_debug "paras: { $@ }"
 
 account_check
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
