@@ -55,6 +55,37 @@ function _bash_logr_exit
     logr_task_ctrl "CTRL" "EXIT" 
 }
 
+function _redirect_func
+{
+    local log_file="$1"
+
+    local self_pid=$$
+    if can_access "ppid";then
+        local ppids=($(ppid))
+        self_pid=${ppids[2]}
+    fi
+    renice -n -1 -p ${self_pid} &> /dev/null
+
+    local log_pipe="${BASH_WORK_DIR}/log.redirect.pipe.${self_pid}"
+    local pipe_fd=0
+
+    mkfifo ${log_pipe}
+    exec {pipe_fd}<>${log_pipe}
+
+    global_kv_set "${log_file}" "${log_pipe}"
+    while read line
+    do
+        if [[ "${line}" == "EXIT" ]];then
+            eval "exec ${pipe_fd}>&-"
+            global_kv_unset_key "${log_file}"
+            rm -f ${log_pipe}
+            return
+        fi
+
+        echo "${line}" >> ${log_file}
+    done < ${log_pipe}
+}
+
 function _logr_thread_main
 {
     while read line
@@ -82,6 +113,9 @@ function _logr_thread_main
                 fi
                 return
             fi
+        elif [[ "${logr_ctrl}" == "REDIRECT" ]];then
+            local log_file="${logr_body}"
+            ( _redirect_func "${log_file}" & )
         elif [[ "${logr_ctrl}" == "CURSOR_MOVE" ]];then
             local x_val=$(echo "${logr_body}" | cut -d "${GBL_SPF2}" -f 1)
             local y_val=$(echo "${logr_body}" | cut -d "${GBL_SPF2}" -f 2)

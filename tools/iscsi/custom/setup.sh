@@ -9,7 +9,7 @@ SPDK_LOG_DIR=/home/fastdisk/${SPDK_APP_NAME}
 SPDK_APP_DIR=${SPDK_SRC_ROOT}/app/iscsi_tgt
 
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log
-SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -c ${SPDK_CONF_DIR}/iscsi.conf.in -m 0XFF --shm-id=1 --logflag iscsi --logflag scsi --logflag bdev --logflag bdev_malloc &> ${SPDK_APP_LOG}"
+SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -c ${SPDK_CONF_DIR}/iscsi.conf.in -m 0XFF --shm-id=1 --logflag iscsi --logflag scsi --logflag bdev --logflag bdev_malloc"
 
 #ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 ISCSI_NODE_BASE=$(cat ${SPDK_ROOT_DIR}/conf/iscsi.conf.in | grep -P "^\s*NodeBase\s+" | awk '{ print $2 }' | grep -P "[0-9a-zA-Z\-\.]+" -o)

@@ -452,7 +452,7 @@ function _mdat_thread
         echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
-    renice -n -2 -p ${self_pid} &> /dev/null
+    renice -n -5 -p ${self_pid} &> /dev/null
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
