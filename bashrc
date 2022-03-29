@@ -65,19 +65,26 @@ old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'"
 [ -z "${old_spec}" ] && trap "trap - ERR; exit 0" EXIT
 unset old_spec
 
-if can_access "${GBL_BASE_DIR}/.userc";then
-    source ${GBL_BASE_DIR}/.userc 
+if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+    if can_access "${GBL_BASE_DIR}/.userc";then
+        source ${GBL_BASE_DIR}/.userc 
+    fi
 fi
 
-task_pid=$(global_kv_get "mdat.task.pid")
-if process_exist "${task_pid}";then
-    ${SUDO} "renice -n -5 -p ${task_pid} &> /dev/null"
+if contain_str "${BTASK_LIST}" "mdat";then
+    task_pid=$(global_kv_get "mdat.task.pid")
+    if process_exist "${task_pid}";then
+        ${SUDO} "renice -n -5 -p ${task_pid} &> /dev/null"
+    fi
+    unset task_pid
 fi
 
-task_pid=$(global_kv_get "ncat.task.pid")
-if process_exist "${task_pid}";then
-    ${SUDO} "renice -n -3 -p ${task_pid} &> /dev/null"
+if contain_str "${BTASK_LIST}" "ncat";then
+    task_pid=$(global_kv_get "ncat.task.pid")
+    if process_exist "${task_pid}";then
+        ${SUDO} "renice -n -3 -p ${task_pid} &> /dev/null"
+    fi
+    unset task_pid
 fi
-unset task_pid
 
 global_kv_append "BASH_TASK" "${ROOT_PID}"
