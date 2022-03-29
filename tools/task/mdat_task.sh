@@ -353,15 +353,15 @@ function _mdat_thread_main
             local _xkey_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             local _xval_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
             
-            if [ -n "${_global_map_['${_xkey_}']}" ];then
-                _global_map_["${_xkey_}"]="${_global_map_['${_xkey_}']} ${_xval_}"
+            if [ -n "${_global_map_[${_xkey_}]}" ];then
+                _global_map_["${_xkey_}"]="${_global_map_[${_xkey_}]} ${_xval_}"
             else
                 _global_map_["${_xkey_}"]="${_xval_}"
             fi
         elif [[ "${req_ctrl}" == "KV_GET" ]];then
             local _xkey_=${req_body}
-            echo_debug "write [${_global_map_['${_xkey_}']}] into [${ack_pipe}]"
-            echo "${_global_map_['${_xkey_}']}" > ${ack_pipe}
+            echo_debug "write [${_global_map_[${_xkey_}]}] into [${ack_pipe}]"
+            echo "${_global_map_[${_xkey_}]}" > ${ack_pipe}
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "KEY_HAS" ]];then
             local _xkey_=${req_body}
@@ -403,7 +403,7 @@ function _mdat_thread_main
                     local _var_arr_=(${req_body})
                     for _xkey_ in ${_var_arr_[*]}
                     do
-                        if [ -n "${_global_map_['${_xkey_}']}" ];then
+                        if [ -n "${_global_map_[${_xkey_}]}" ];then
                             unset _global_map_["${_xkey_}"]
                         fi
                     done
@@ -414,14 +414,14 @@ function _mdat_thread_main
                 echo ""
                 if [[ "${req_body}" == "ALL" ]];then
                     for _xkey_ in ${!_global_map_[*]};do
-                        echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_['${_xkey_}']}")"
+                        echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                     done
                 else
                     local _var_arr_=(${req_body})
                     for _xkey_ in ${_var_arr_[*]}
                     do
-                        if [ -n "${_global_map_['${_xkey_}']}" ];then
-                            echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_['${_xkey_}']}")"
+                        if [ -n "${_global_map_[${_xkey_}]}" ];then
+                            echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                         fi
                     done
                 fi
