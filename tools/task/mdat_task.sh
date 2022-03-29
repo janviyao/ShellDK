@@ -452,10 +452,9 @@ function _mdat_thread
         echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
-    global_kv_set "mdat.task.pid" "${self_pid}"
-
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
+    global_kv_set "mdat.task.pid" "${self_pid}"
     global_kv_append "BASH_TASK" "${self_pid}"
     _mdat_thread_main
     echo_debug "mdat_bg_thread[${self_pid}] exit"

@@ -285,10 +285,9 @@ function _ncat_thread
         echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
-    global_kv_set "ncat.task.pid" "${self_pid}"
-
     touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"
+    global_kv_set "ncat.task.pid" "${self_pid}"
     global_kv_append "BASH_TASK" "${self_pid}"
     _ncat_thread_main
     echo_debug "ncat_bg_thread[${self_pid}] exit"

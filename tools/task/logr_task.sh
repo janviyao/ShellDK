@@ -165,10 +165,9 @@ function _logr_thread
     local ppinfos=($(ppid true))
     echo_debug "logr_bg_thread [${ppinfos[*]}]"
 
-    global_kv_set "logr.task.pid" "${self_pid}"
-
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"
+    global_kv_set "logr.task.pid" "${self_pid}"
     global_kv_append "BASH_TASK" "${self_pid}"
     _logr_thread_main
     echo_debug "logr_bg_thread[${self_pid}] exit"
