@@ -22,7 +22,7 @@ set -o allexport
 
 source $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/include/bashrc.api.sh
-echo_debug "env: ${PRIVATE_VAR}"
+echo_debug "env: ${PRIVATE_VAR} tasks: ${BTASK_LIST}"
 
 INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
 INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh

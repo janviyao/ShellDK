@@ -2,15 +2,6 @@
 GBL_NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
 GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
 
-if contain_str "${BTASK_LIST}" "ncat";then
-    mkdir -p ${GBL_NCAT_WORK_DIR}
-
-    GBL_NCAT_FD=${GBL_NCAT_FD:-9}
-    mkfifo ${GBL_NCAT_PIPE}
-    can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
-    exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
-fi
-
 function local_port_available
 {
     local port="$1"
@@ -23,13 +14,22 @@ function local_port_available
     fi
 }
 
-NCAT_MASTER_ADDR=$(get_ipaddr)
-NCAT_MASTER_PORT=7888
-while ! local_port_available "${NCAT_MASTER_PORT}"
-do
-    let NCAT_MASTER_PORT++
-done
-echo_debug "master port [${NCAT_MASTER_PORT}]"
+if contain_str "${BTASK_LIST}" "ncat";then
+    mkdir -p ${GBL_NCAT_WORK_DIR}
+
+    GBL_NCAT_FD=${GBL_NCAT_FD:-9}
+    mkfifo ${GBL_NCAT_PIPE}
+    can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
+    exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
+
+    NCAT_MASTER_ADDR=$(get_ipaddr)
+    NCAT_MASTER_PORT=7888
+    while ! local_port_available "${NCAT_MASTER_PORT}"
+    do
+        let NCAT_MASTER_PORT++
+    done
+    echo_debug "master port [${NCAT_MASTER_PORT}]"
+fi
 
 function remote_ncat_alive
 {

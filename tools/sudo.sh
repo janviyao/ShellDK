@@ -9,18 +9,18 @@ CMD_STR="$@"
 #done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 #CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
-account_check
-if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    echo_erro "empty: [USR_NAME] or [USR_PASSWORD]"
-    eval "${CMD_STR}"
-    exit $?
-fi
-
 if [ $UID -eq 0 ]; then
     echo_debug "[ROOT] ${CMD_STR}"
     eval "${CMD_STR}"
     exit $?
 else
+    account_check
+    if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+        echo_erro "empty: [USR_NAME] or [USR_PASSWORD]"
+        eval "${CMD_STR}"
+        exit $?
+    fi
+
     echo_debug "[SUDO] ${CMD_STR}"
     if ! which sudo &> /dev/null; then
         echo_erro "sudo not supported"
@@ -48,6 +48,7 @@ PASS_ENV="\
 export BTASK_LIST='master'; \
 export REMOTE_IP=127.0.0.1; \
 export BASH_WORK_DIR='${BASH_WORK_DIR}'; \
+export NCAT_MASTER_PORT='${NCAT_MASTER_PORT}'; \
 export USR_NAME='${USR_NAME}'; \
 export USR_PASSWORD='${USR_PASSWORD}'; \
 export MY_VIM_DIR=$MY_VIM_DIR; \

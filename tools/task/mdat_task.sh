@@ -82,7 +82,7 @@ function global_set_var
     else
         _xval_="$(eval "echo \"\$${_xkey_}\"")"
     fi
-    
+
     global_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
     return $?
 }
@@ -271,7 +271,7 @@ function global_kv_get
         return 1
     fi
 
-    echo_file "debug" "mdat get: [$@]"
+    echo_file "debug" "mdat get: [$*]"
 
     if [ -z "${_pipe_}" ];then
         _pipe_="${GBL_MDAT_PIPE}"
