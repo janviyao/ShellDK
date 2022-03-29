@@ -18,11 +18,12 @@ if can_access "${TEST_SUIT_ENV}";then
             logsize=0
         fi
 
-        maxsize=$((1024*1024*1024))
+        maxsize=$((600*1024*1024))
         if (( logsize > maxsize ));then
             date_time=$(date '+%Y%m%d-%H%M%S')
             cp -f ${TEST_APP_LOG} ${TEST_APP_LOG}.${date_time}
-            truncate -s 0 ${TEST_APP_LOG}
+            #truncate -s 0 ${TEST_APP_LOG}
+            cat /dev/null > ${TEST_APP_LOG}
         fi
     fi
 fi
@@ -33,10 +34,10 @@ if can_access "${BASHLOG}";then
         logsize=0
     fi
 
-    maxsize=$((100*1024*1024))
+    maxsize=$((300*1024*1024))
     if (( logsize > maxsize ));then
         date_time=$(date '+%Y%m%d-%H%M%S')
         cp -f ${BASHLOG} ${BASHLOG}.${date_time}
-        truncate -s 0 ${BASHLOG}
+        cat /dev/null > ${BASHLOG}
     fi
 fi

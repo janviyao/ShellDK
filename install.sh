@@ -336,9 +336,9 @@ function inst_env
 
     if can_access "/var/spool/cron/$(whoami)";then
         sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
-        echo "*/5 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
+        echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
     else
-        ${SUDO} "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+        ${SUDO} "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
     fi
     ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
 
