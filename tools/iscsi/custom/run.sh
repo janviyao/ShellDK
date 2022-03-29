@@ -28,14 +28,14 @@ fi
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
 
-REDIRECT_LOG_FILE=$(global_kv_get "${SPDK_APP_LOG}")
+REDIRECT_LOG_FILE=$(global_kv_get "${TEST_APP_LOG}")
 if  can_access "${REDIRECT_LOG_FILE}";then
     echo "EXIT" > ${REDIRECT_LOG_FILE}
 fi
 
-logr_task_ctrl_sync "REDIRECT" "${SPDK_APP_LOG}" 
+logr_task_ctrl_sync "REDIRECT" "${TEST_APP_LOG}" 
 count=0
-while ! global_kv_has "${SPDK_APP_LOG}"
+while ! global_kv_has "${TEST_APP_LOG}"
 do
     echo_info "wait for redirect fini ..."
     sleep 0.1
@@ -45,7 +45,7 @@ do
     fi
 done
 
-REDIRECT_LOG_FILE=$(global_kv_get "${SPDK_APP_LOG}")
+REDIRECT_LOG_FILE=$(global_kv_get "${TEST_APP_LOG}")
 if ! can_access "${REDIRECT_LOG_FILE}";then
     echo_erro "redirect file invalid: { ${REDIRECT_LOG_FILE} }"
     exit 1
