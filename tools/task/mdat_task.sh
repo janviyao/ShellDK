@@ -452,7 +452,7 @@ function _mdat_thread
         echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
-    renice -n -5 -p ${self_pid} &> /dev/null
+    global_kv_set "mdat.task.pid" "${self_pid}"
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"

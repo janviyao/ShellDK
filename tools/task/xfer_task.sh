@@ -238,6 +238,8 @@ function _xfer_thread
     local ppinfos=($(ppid true))
     echo_debug "xfer_bg_thread [${ppinfos[*]}]"
 
+    global_kv_set "xfer.task.pid" "${self_pid}"
+
     touch ${GBL_XFER_PIPE}.run
     echo_debug "xfer_bg_thread[${self_pid}] start"
     global_kv_append "BASH_TASK" "${self_pid}"

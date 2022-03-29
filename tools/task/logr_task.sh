@@ -64,7 +64,7 @@ function _redirect_func
         local ppids=($(ppid))
         self_pid=${ppids[2]}
     fi
-    renice -n -1 -p ${self_pid} &> /dev/null
+    ${SUDO} "renice -n -1 -p ${self_pid} &> /dev/null"
 
     local log_pipe="${BASH_WORK_DIR}/log.redirect.pipe.${self_pid}"
     local pipe_fd=0
@@ -164,6 +164,8 @@ function _logr_thread
     local self_pid=${ppids[2]}
     local ppinfos=($(ppid true))
     echo_debug "logr_bg_thread [${ppinfos[*]}]"
+
+    global_kv_set "logr.task.pid" "${self_pid}"
 
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"

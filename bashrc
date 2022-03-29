@@ -65,4 +65,19 @@ old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'"
 [ -z "${old_spec}" ] && trap "trap - ERR; exit 0" EXIT
 unset old_spec
 
+if can_access "${GBL_BASE_DIR}/.userc";then
+    source ${GBL_BASE_DIR}/.userc 
+fi
+
+task_pid=$(global_kv_get "mdat.task.pid")
+if process_exist "${task_pid}";then
+    ${SUDO} "renice -n -5 -p ${task_pid} &> /dev/null"
+fi
+
+task_pid=$(global_kv_get "ncat.task.pid")
+if process_exist "${task_pid}";then
+    ${SUDO} "renice -n -3 -p ${task_pid} &> /dev/null"
+fi
+unset task_pid
+
 global_kv_append "BASH_TASK" "${ROOT_PID}"

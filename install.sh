@@ -342,13 +342,20 @@ function inst_env
     fi
     ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
 
-    if ! can_access "${MY_HOME}/.timerc";then
+    can_access "${GBL_BASE_DIR}/.userc" && rm -f ${GBL_BASE_DIR}/.userc
+    if ! can_access "${GBL_BASE_DIR}/.userc";then
         USR_PASSWORD="$(system_encrypt "${USR_PASSWORD}")"
-        echo "#!/bin/bash"                                   >  ${MY_HOME}/.timerc
-        echo "global_set_var 'USR_NAME=${USR_NAME}'"         >> ${MY_HOME}/.timerc
-        echo "global_set_var 'USR_PASSWORD=${USR_PASSWORD}'" >> ${MY_HOME}/.timerc
+        echo "#!/bin/bash"                                   >  ${GBL_BASE_DIR}/.userc
+        echo "global_set_var 'USR_NAME=${USR_NAME}'"         >> ${GBL_BASE_DIR}/.userc
+        echo "global_set_var 'USR_PASSWORD=${USR_PASSWORD}'" >> ${GBL_BASE_DIR}/.userc
+        ${SUDO} chmod +x ${GBL_BASE_DIR}/.userc 
     fi
-    ${SUDO} chmod +x ${MY_HOME}/.timerc 
+
+    if ! can_access "${MY_HOME}/.timerc";then
+        echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
+        echo "source ${GBL_BASE_DIR}/.userc"   >> ${MY_HOME}/.timerc
+        ${SUDO} chmod +x ${MY_HOME}/.timerc 
+    fi
 
     ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
     ${SUDO} systemctl restart crond

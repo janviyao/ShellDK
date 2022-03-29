@@ -285,7 +285,7 @@ function _ncat_thread
         echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
-    renice -n -3 -p ${self_pid} &> /dev/null
+    global_kv_set "ncat.task.pid" "${self_pid}"
 
     touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"

@@ -110,6 +110,8 @@ function _ctrl_thread
     local ppinfos=($(ppid true))
     echo_debug "ctrl_bg_thread [${ppinfos[*]}]"
 
+    global_kv_set "ctrl.task.pid" "${self_pid}"
+
     touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"
     global_kv_append "BASH_TASK" "${self_pid}"

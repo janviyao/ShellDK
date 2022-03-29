@@ -10,6 +10,11 @@ CMD_STR="$@"
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 #CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
 account_check
+if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+    echo_erro "empty: [USR_NAME] or [USR_PASSWORD]"
+    eval "${CMD_STR}"
+    exit $?
+fi
 
 if [ $UID -eq 0 ]; then
     echo_debug "[ROOT] ${CMD_STR}"
