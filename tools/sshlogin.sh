@@ -63,9 +63,9 @@ expect << EOF
 
     expect {
         "*yes/no*?" { send "yes\r"; exp_continue }
-        "*username*:" { send "${USR_NAME}\r" }
-        "*password*:" { send "${USR_PASSWORD}\r" }
-        "*\u5bc6\u7801\uff1a" { send "${USR_PASSWORD}\r" }
+        "*username*:*" { send "${USR_NAME}\r" }
+        "*password*:*" { send "${USR_PASSWORD}\r" }
+        "*\u5bc6\u7801\uff1a*" { send "${USR_PASSWORD}\r" }
         #solve: expect: spawn id exp4 not open
         "*Connection*closed*" { }
         "\r\n" { exp_continue }
