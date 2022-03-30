@@ -1817,8 +1817,7 @@ function! EnterHandler()
 
         call RestoreLoad()
     endif
-
-    silent! normal! M
+    "silent! normal! M
 endfunction
 
 "VIM退出事件

@@ -660,7 +660,7 @@ function file_count
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
-            ${SUDO} "chmod +r ${file}"
+            sudo_it "chmod +r ${file}"
             if [ $? -ne 0 ];then
                 echo_file "debug" "sudo fail: chmod +r ${file}"
                 readable=false
@@ -673,7 +673,7 @@ function file_count
         echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
         local tmp_file="$(temp_file)"
-        ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
+        sudo_it "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
         rm -f ${tmp_file}
         echo "${fcount}"
@@ -690,7 +690,7 @@ function file_size
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
-            ${SUDO} "chmod +r ${file}"
+            sudo_it "chmod +r ${file}"
             if [ $? -ne 0 ];then
                 echo_file "debug" "sudo fail: chmod +r ${file}"
                 readable=false
@@ -703,7 +703,7 @@ function file_size
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
         local tmp_file="$(temp_file)"
-        ${SUDO} "fstat '${f_array[*]}' &> ${tmp_file}"
+        sudo_it "fstat '${f_array[*]}' &> ${tmp_file}"
         local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
         rm -f ${tmp_file}
         echo "${fcount}"

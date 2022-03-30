@@ -35,7 +35,7 @@ else
 
     if ! which expect &> /dev/null; then
         echo_erro "expect not supported"
-        eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${CMD_STR}"
+        sudo_it "${CMD_STR}"
         exit $?
     fi
 fi

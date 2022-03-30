@@ -37,7 +37,7 @@ do
                 pname=$(process_pid2name "${pid}")
                 if ! contain_str "${exclude_pname}" "${pname}";then
                     echo_info "${signum}）${signame} {$(ps -q ${pid} -o cmd=)} PID=${pid}"
-                    ${SUDO} kill -s ${signame} ${pid}
+                    sudo_it "kill -s ${signame} ${pid}"
                 fi
             fi
         done

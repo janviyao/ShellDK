@@ -70,16 +70,24 @@ function sudo_it
 {
     local cmd="$@"
 
-    if [ -z "${USR_PASSWORD}" ]; then
-        while [ -z "${USR_PASSWORD}" ]
-        do
-            sleep 0.02
-            global_get_var USR_PASSWORD
-        done
-        USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
+    if [ $UID -eq 0 ]; then
+        eval "${cmd}"
+    else
+        if [ -z "${USR_PASSWORD}" ]; then
+            local count=0
+            while [ -z "${USR_PASSWORD}" ]
+            do
+                sleep 0.02
+                global_get_var USR_PASSWORD
+                let count++
+                [ ${count} -lt 1500 ] && return 1
+            done
+            export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
+        fi
+        eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${cmd}"
     fi
 
-    eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${cmd}"
+    return $?
 }
 
 function check_net
