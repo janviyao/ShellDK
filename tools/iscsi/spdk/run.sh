@@ -13,7 +13,7 @@ DATE_TIME=$(date '+%Y%m%d-%H%M%S')
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/save_debug.sh "${TEST_LOG_DIR}/debug/${DATE_TIME}"
 
 if process_exist "${TEST_APP_NAME}";then
-    ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"
+    process_kill "${TEST_APP_NAME}"
     sleep 1
 fi
 

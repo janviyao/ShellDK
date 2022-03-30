@@ -10,7 +10,7 @@ else
 fi
 
 if process_exist "${TEST_APP_NAME}";then
-    ${TOOL_ROOT_DIR}/stop_p.sh KILL "${TEST_APP_NAME}"
+    process_kill "${TEST_APP_NAME}"
     sleep 1
 fi
 
