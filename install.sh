@@ -24,7 +24,8 @@ INST_GUIDE["g++"]="install_from_net gcc-c++"
 INST_GUIDE["ctags"]="${CMD1};install_from_tar 'ctags-.+\.tar\.gz';rm -fr ctags-*/"
 INST_GUIDE["cscope"]="${CMD1};install_from_tar 'cscope-.+\.tar\.gz';rm -fr cscope-*/"
 INST_GUIDE["tig"]="${CMD1};install_from_tar 'tig-.+\.tar\.gz';rm -fr tig-*/"
-INST_GUIDE["ag"]="${CMD1};install_from_tar 'the_silver_searcher-.+\.tar\.gz';rm -fr the_silver_searcher-*/"
+#INST_GUIDE["ag"]="${CMD1};install_from_tar 'the_silver_searcher-.+\.tar\.gz';rm -fr the_silver_searcher-*/"
+INST_GUIDE["ag"]="${CMD1};install_from_rpm 'the_silver_searcher-.+\.rpm'"
 
 INST_GUIDE["glibc-2.18"]="${CMD1};install_from_tar 'glibc-2.18.tar.gz';rm -fr glibc-2.18/"
 INST_GUIDE["glibc-common"]="${CMD1};install_from_rpm 'glibc-common-.+\.rpm'"
@@ -43,7 +44,6 @@ INST_GUIDE["nc"]="${CMD1};install_from_rpm 'nmap-ncat-.+\.rpm'"
 INST_GUIDE["m4"]="${CMD1};install_from_rpm 'm4-.+\.rpm'"
 INST_GUIDE["autoconf"]="${CMD1};install_from_rpm 'autoconf-.+\.rpm'"
 INST_GUIDE["automake"]="${CMD1};install_from_rpm 'automake-.+\.rpm'"
-INST_GUIDE["ag"]="${CMD1};install_from_rpm 'the_silver_searcher-.+\.rpm'"
 
 INST_GUIDE["/usr/lib64/libssl.so.10"]="${CMD1};install_from_rpm 'compat-openssl10-.+\.rpm'"
 INST_GUIDE["/usr/bin/python-config"]="${CMD1};install_from_rpm 'python-devel.+\.rpm'"
@@ -383,7 +383,7 @@ function inst_update
 
 function inst_deps
 {
-    local rid_arr=(glibc-2.18 glibc-common)
+    local rid_arr=(glibc-2.18 glibc-common ctags cscope vim tig astyle ag)
     local -A inst_map
 
     for key in ${!INST_GUIDE[*]}
