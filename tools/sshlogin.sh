@@ -26,11 +26,8 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
+TERM_ENV="export BTASK_LIST='mdat,ncat';export REMOTE_IP=${LOCAL_IP};export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';"
 PASS_ENV="\
-export BTASK_LIST='mdat,ncat'; \
-export REMOTE_IP=${LOCAL_IP}; \
-export USR_NAME='${USR_NAME}'; \
-export USR_PASSWORD='${USR_PASSWORD}'; \
 if ls '${MY_VIM_DIR}' &> /dev/null;then \
     export MY_VIM_DIR='$MY_VIM_DIR'; \
     source $MY_VIM_DIR/tools/include/common.api.sh; \
@@ -62,7 +59,7 @@ expect << EOF
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${SSH_CMD}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${SSH_CMD}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
-    spawn -noecho env "TERM=export BTASK_LIST='mdat,ncat';export REMOTE_IP=${LOCAL_IP};:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
+    spawn -noecho env "TERM=${TERM_ENV}:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
 
     expect {
         "*yes/no*?" { send "yes\r"; exp_continue }
