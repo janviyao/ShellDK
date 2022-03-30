@@ -1,5 +1,5 @@
 if declare -F INCLUDE &>/dev/null;then
-    echo_debug "bashrc has loaded"
+    echo_file "debug" "bashrc has loaded"
     return
 fi
 
@@ -22,8 +22,8 @@ set -o allexport
 
 source $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/include/bashrc.api.sh
-echo_debug "envir: ${PRIVATE_VAR}"
-echo_debug "tasks: ${BTASK_LIST}"
+echo_file "debug" "envir: ${PRIVATE_VAR}"
+echo_file "debug" "tasks: ${BTASK_LIST}"
 
 INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
 INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh

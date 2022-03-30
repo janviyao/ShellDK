@@ -582,14 +582,14 @@ function path2fname
     if can_access "${full_path}";then
         full_path=$(readlink -f ${full_path})
         if [ $? -ne 0 ];then
-            echo_debug "readlink fail: ${full_path}"    
+            echo_file "erro" "readlink fail: ${full_path}"    
             return 1
         fi
     fi
 
     file_name=$(basename ${full_path})
     if [ $? -ne 0 ];then
-        echo_debug "basename fail: ${full_path}"    
+        echo_file "erro" "basename fail: ${full_path}"    
         return 1
     fi
 
@@ -617,14 +617,14 @@ function fname2path
     if can_access "${full_name}";then
         full_name=$(readlink -f ${full_name})
         if [ $? -ne 0 ];then
-            echo_debug "readlink fail: ${full_name}"    
+            echo_file "erro" "readlink fail: ${full_name}"    
             return 1
         fi
     fi
     
     dir_name=$(dirname ${full_name})
     if [ $? -ne 0 ];then
-        echo_debug "dirname fail: ${full_name}"    
+        echo_file "erro" "dirname fail: ${full_name}"    
         return 1
     fi
 

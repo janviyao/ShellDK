@@ -89,13 +89,13 @@ function INCLUDE
 
 if can_access "ppid";then
     ppinfos=($(ppid true))
-    echo_debug "pstree [${ppinfos[*]}]"
+    echo_file "debug" "pstree [${ppinfos[*]}]"
 fi
 
 if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
-    echo_debug "share work: ${BASH_WORK_DIR}"
+    echo_file "debug" "share work: ${BASH_WORK_DIR}"
 else
-    can_access "${BASH_WORK_DIR}" && { echo_debug "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
+    can_access "${BASH_WORK_DIR}" && { echo_file "debug" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
 
     if contain_str "${BTASK_LIST}" "master";then
         BASH_WORK_DIR="${GBL_BASE_DIR}/bash.master.${ROOT_PID}"
@@ -103,6 +103,6 @@ else
         BASH_WORK_DIR="${GBL_BASE_DIR}/bash.slaver.${ROOT_PID}"
     fi
 
-    echo_debug "create dir: ${BASH_WORK_DIR}"
+    echo_file "debug" "create dir: ${BASH_WORK_DIR}"
     mkdir -p ${BASH_WORK_DIR} 
 fi
