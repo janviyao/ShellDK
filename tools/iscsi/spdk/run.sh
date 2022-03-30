@@ -28,12 +28,19 @@ fi
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
 
-${SUDO} "nohup ${TEST_APP_RUNTIME} &"
-sleep 1
-while ! (cat ${TEST_APP_LOG} | grep "spdk_app_start" &> /dev/null)
-do
+if bool_v "${TEST_DEBUG_OPEN}";then
+    ${SUDO} "nohup ${TEST_APP_RUNTIME} &> ${TEST_APP_LOG} &"
+
     sleep 1
-done
+    while ! (cat ${TEST_APP_LOG} | grep "spdk_app_start" &> /dev/null)
+    do
+        sleep 1
+    done
+else
+    ${SUDO} "nohup ${TEST_APP_RUNTIME} &> /dev/null &"
+
+    sleep 30
+fi
 
 if can_access "${TEST_APP_LOG}";then
     ${SUDO} "chmod 777 ${TEST_APP_LOG}"

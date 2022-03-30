@@ -54,7 +54,7 @@ function run_fio_func
         other_paras="${other_paras} --client=${output_dir}/hosts ${output_dir}/${conf_fname}"
     fi
 
-    if bool_v "${FIO_IO_DEBUG}"; then
+    if bool_v "${TEST_DEBUG_OPEN}";then
         other_paras="${other_paras} --debug=io"
     fi
 

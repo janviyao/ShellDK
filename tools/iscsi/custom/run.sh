@@ -28,35 +28,41 @@ fi
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
 
-REDIRECT_LOG_FILE=$(global_kv_get "${TEST_APP_LOG}")
-if  can_access "${REDIRECT_LOG_FILE}";then
-    echo "EXIT" > ${REDIRECT_LOG_FILE}
-fi
-
-logr_task_ctrl_sync "REDIRECT" "${TEST_APP_LOG}" 
-count=0
-while ! global_kv_has "${TEST_APP_LOG}"
-do
-    echo_info "wait for redirect fini ..."
-    sleep 0.1
-    let count++
-    if [ ${count} -gt 50 ];then
-        break
+if bool_v "${TEST_DEBUG_OPEN}";then
+    REDIRECT_LOG_FILE=$(global_kv_get "${TEST_APP_LOG}")
+    if  can_access "${REDIRECT_LOG_FILE}";then
+        echo "EXIT" > ${REDIRECT_LOG_FILE}
     fi
-done
 
-REDIRECT_LOG_FILE=$(global_kv_get "${TEST_APP_LOG}")
-if ! can_access "${REDIRECT_LOG_FILE}";then
-    echo_erro "redirect file invalid: { ${REDIRECT_LOG_FILE} }"
-    exit 1
-fi
+    logr_task_ctrl_sync "REDIRECT" "${TEST_APP_LOG}" 
+    count=0
+    while ! global_kv_has "${TEST_APP_LOG}"
+    do
+        echo_info "wait for redirect fini ..."
+        sleep 0.1
+        let count++
+        if [ ${count} -gt 50 ];then
+            break
+        fi
+    done
 
-${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${TEST_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
-sleep 1
-while ! (cat ${TEST_APP_LOG} | grep "spdk_app_start" &> /dev/null)
-do
+    REDIRECT_LOG_FILE=$(global_kv_get "${TEST_APP_LOG}")
+    if ! can_access "${REDIRECT_LOG_FILE}";then
+        echo_erro "redirect file invalid: { ${REDIRECT_LOG_FILE} }"
+        exit 1
+    fi
+
+    ${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${TEST_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
+
     sleep 1
-done
+    while ! (cat ${TEST_APP_LOG} | grep "spdk_app_start" &> /dev/null)
+    do
+        sleep 1
+    done
+else
+    ${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${TEST_APP_RUNTIME} &> /dev/null' &"
+    sleep 30
+fi
 
 if can_access "${TEST_APP_LOG}";then
     ${SUDO} "chmod 777 ${TEST_APP_LOG}"

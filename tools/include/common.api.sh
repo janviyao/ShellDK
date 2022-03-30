@@ -18,7 +18,7 @@ source $MY_VIM_DIR/tools/include/math.api.sh
 function bool_v
 {
     local para=$1
-    if [ "${para,,}" == "yes" -o "${para,,}" == "true" -o "${para,,}" == "y" -o "${para}" == "1" ]; then
+    if [[ "${para,,}" == "yes" ]] || [[ "${para,,}" == "true" ]] || [[ "${para,,}" == "y" ]] || [[ "${para,,}" == "1" ]]; then
         return 0
     else
         return 1

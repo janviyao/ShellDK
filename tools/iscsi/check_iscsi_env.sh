@@ -66,28 +66,54 @@ if [ $? -ne 0 ];then
     fi
 fi
 
-#debug
-#sh stop_p.sh kill "iscsid"
-#rm -f iscsid.log
-#iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> iscsid.log &
-can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
-can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
-if process_exist "iscsid";then
-    if bool_v "${RESTART_ISCSI_INITIATOR}";then
-        echo_info "iscsid restart"
-        ${SUDO} systemctl restart iscsid
-        #${SUDO} systemctl restart iscsid.socket
-    fi
-else
-    echo_info "iscsid start"
-    ${SUDO} systemctl start iscsid
-    #${SUDO} systemctl start iscsid.socket
-fi
-
 if bool_v "${APPLY_SYSCTRL}";then
     echo_info "sysctl reload"
     can_access "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} sysctl -p
+fi
+
+can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+
+if bool_v "${TEST_DEBUG_OPEN}";then
+    echo_info "open iscsid-debug"
+    if process_exist "iscsid";then
+        ${SUDO} systemctl stop iscsid.service
+        ${SUDO} systemctl stop iscsid.socket
+    fi
+ 
+    ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
+    ${SUDO} "echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
+    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
+    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
+    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
+    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
+    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
+
+    if process_exist "iscsid";then
+        process_kill iscsid
+    fi
+    ${SUDO} "nohup iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> ${ISCSI_INITIATOR_LOG_FILE} &"
+else
+    ${SUDO} "echo 0 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
+    ${SUDO} "echo 0 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
+    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
+    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
+    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
+    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
+    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
+
+    if process_exist "iscsid";then
+        if bool_v "${RESTART_ISCSI_INITIATOR}";then
+            echo_info "iscsid restart"
+            ${SUDO} systemctl restart iscsid
+            ${SUDO} systemctl restart iscsid.socket
+        fi
+    else
+        echo_info "iscsid start"
+        ${SUDO} systemctl start iscsid
+        ${SUDO} systemctl start iscsid.socket
+    fi
 fi
 
 exit 0

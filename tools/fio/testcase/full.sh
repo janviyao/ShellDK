@@ -1,7 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
 
-FIO_IO_DEBUG=true
 FIO_CPU_MASK=0-63
 FIO_CPU_POLICY=split
 FIO_IO_ENGINE=libaio

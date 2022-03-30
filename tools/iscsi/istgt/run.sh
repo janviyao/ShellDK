@@ -24,8 +24,12 @@ fi
 
 ${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
 
-#${SUDO} "nohup ${TEST_APP_RUNTIME} &"
-${TEST_APP_RUNTIME}
+if bool_v "${TEST_DEBUG_OPEN}";then
+    #${SUDO} "nohup ${TEST_APP_RUNTIME} &"
+    ${TEST_APP_RUNTIME}
+else
+    ${TEST_APP_RUNTIME}
+fi
 
 if can_access "${TEST_APP_LOG}";then
     ${SUDO} "chmod 777 ${TEST_APP_LOG}"
