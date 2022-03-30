@@ -284,7 +284,8 @@ function _ncat_thread
     else
         echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
-    ${SUDO} "renice -n -3 -p ${self_pid} &> /dev/null" &
+
+    ( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"

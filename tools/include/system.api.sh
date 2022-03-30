@@ -44,11 +44,10 @@ function account_check
     fi
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-        if [[ $- != *i* ]];then
-            # not interactive shell
-            return 1
-        fi
-
+        #if [[ $- != *i* ]];then
+        #    # not interactive shell
+        #    return 1
+        #fi
         USR_NAME=$(whoami)
         read -p "Please input username(${USR_NAME}): " input_val
         USR_NAME=${input_val:-${USR_NAME}}
@@ -65,6 +64,22 @@ function account_check
     fi
 
     return 0
+}
+
+function sudo_it
+{
+    local cmd="$@"
+
+    if [ -z "${USR_PASSWORD}" ]; then
+        while [ -z "${USR_PASSWORD}" ]
+        do
+            sleep 0.02
+            global_get_var USR_PASSWORD
+        done
+        USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
+    fi
+
+    eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${cmd}"
 }
 
 function check_net

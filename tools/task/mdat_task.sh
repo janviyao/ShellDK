@@ -451,7 +451,8 @@ function _mdat_thread
     else
         echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
-    ${SUDO} "renice -n -5 -p ${self_pid} &> /dev/null" &
+
+    ( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
