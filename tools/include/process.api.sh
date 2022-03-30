@@ -106,7 +106,7 @@ function process_signal
 
     if ! is_number "${signal}";then
         signal=$(trim_str_start "${signal^^}" "SIG")
-        if ! kill -l | grep -P "SIG${signal}\s+" &> /dev/null;then
+        if ! (kill -l | grep -P "SIG${signal}\s+" &> /dev/null);then
             echo_erro "signal { ${signal} } invalid"
             return 1
         fi

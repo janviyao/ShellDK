@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV}
 
 FIO_ROOT_DIR=$(current_filedir)
-FIO_APP_RUNTIME=$MY_VIM_DIR/tools/app/fio
+FIO_APP_RUNTIME="$MY_VIM_DIR/tools/app/fio --alloc-size=131072"
 FIO_CONF_DIR=$MY_VIM_DIR/tools/fio/conf
 
 FIO_OUTPUT_DIR=${HOME}/$(date '+%Y%m%d-%H%M%S')
