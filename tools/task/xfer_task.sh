@@ -53,7 +53,11 @@ function rsync_to
     
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        account_check
+        if ! account_check;then
+            echo_erro "Username or Password check fail"
+            return 1
+        fi
+
         for ipaddr in ${xfer_ips[*]}
         do
             local sync_des=${xfer_des}
@@ -98,7 +102,11 @@ function rsync_from
     
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        account_check
+        if ! account_check;then
+            echo_erro "Username or Password check fail"
+            return 1
+        fi
+
         for ipaddr in ${xfer_ips[*]}
         do
             local sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
@@ -240,7 +248,6 @@ function _xfer_thread
 
     touch ${GBL_XFER_PIPE}.run
     echo_debug "xfer_bg_thread[${self_pid}] start"
-    global_kv_set "xfer.task.pid" "${self_pid}"
     global_kv_append "BASH_TASK" "${self_pid}"
     _xfer_thread_main
     echo_debug "xfer_bg_thread[${self_pid}] exit"

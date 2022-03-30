@@ -112,7 +112,6 @@ function _ctrl_thread
 
     touch ${GBL_CTRL_PIPE}.run
     echo_debug "ctrl_bg_thread[${self_pid}] start"
-    global_kv_set "ctrl.task.pid" "${self_pid}"
     global_kv_append "BASH_TASK" "${self_pid}"
     _ctrl_thread_main
     echo_debug "ctrl_bg_thread[${self_pid}] exit"

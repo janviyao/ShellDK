@@ -54,10 +54,15 @@ function gitloop_signal
 }
 trap "gitloop_signal" SIGINT SIGTERM SIGKILL
 
-account_check
-if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
-    echo_erro "Username or Password is empty"
-    exit 1
+if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+    if can_access "${GBL_BASE_DIR}/.userc";then
+        source ${GBL_BASE_DIR}/.userc 
+    fi
+
+    if ! account_check;then
+        echo_erro "Username or Password check fail"
+        exit 1
+    fi
 fi
 
 cursor_pos

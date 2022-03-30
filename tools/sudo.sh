@@ -9,11 +9,16 @@ CMD_STR="$@"
 #done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 #CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
-account_check
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    echo_erro "empty: [USR_NAME] or [USR_PASSWORD]"
-    eval "${CMD_STR}"
-    exit $?
+    if can_access "${GBL_BASE_DIR}/.userc";then
+        source ${GBL_BASE_DIR}/.userc 
+    fi
+
+    if ! account_check;then
+        echo_erro "Username or Password check fail"
+        eval "${CMD_STR}"
+        exit $?
+    fi
 fi
 
 if [ $UID -eq 0 ]; then

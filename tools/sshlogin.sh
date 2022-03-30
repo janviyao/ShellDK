@@ -5,10 +5,15 @@ HOST_IP="$1"
 CMD_EXE="$2"
 echo_debug "paras: { $@ }"
 
-account_check
-if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
-    echo_erro "Username or Password is empty"
-    exit 1
+if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+    if can_access "${GBL_BASE_DIR}/.userc";then
+        source ${GBL_BASE_DIR}/.userc 
+    fi
+
+    if ! account_check;then
+        echo_erro "Username or Password check fail"
+        exit 1
+    fi
 fi
 
 echo_info "Push { ${CMD_EXE} } to { ${HOST_IP} }"

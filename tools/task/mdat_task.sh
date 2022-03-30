@@ -451,10 +451,10 @@ function _mdat_thread
     else
         echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
+    ${SUDO} "renice -n -5 -p ${self_pid} &> /dev/null" &
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
-    global_kv_set "mdat.task.pid" "${self_pid}"
     global_kv_append "BASH_TASK" "${self_pid}"
     _mdat_thread_main
     echo_debug "mdat_bg_thread[${self_pid}] exit"

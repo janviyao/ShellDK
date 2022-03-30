@@ -39,10 +39,16 @@ function account_check
         if [ -n "${USR_NAME}" ];then
             global_get_var USR_PASSWORD
             export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
+            return 0
         fi
     fi
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+        if [[ $- != *i* ]];then
+            # not interactive shell
+            return 1
+        fi
+
         USR_NAME=$(whoami)
         read -p "Please input username(${USR_NAME}): " input_val
         USR_NAME=${input_val:-${USR_NAME}}
@@ -57,6 +63,8 @@ function account_check
         USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
         export USR_PASSWORD
     fi
+
+    return 0
 }
 
 function check_net

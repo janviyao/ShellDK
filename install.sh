@@ -176,7 +176,10 @@ function inst_usage
 
 source $MY_VIM_DIR/bashrc
 . ${ROOT_DIR}/tools/paraparser.sh
-account_check
+if ! account_check;then
+    echo_erro "Username or Password check fail"
+    exit 1
+fi
 
 declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
 do_action "${mustDeps[*]}"
@@ -617,7 +620,7 @@ else
     inst_paras=""
     for key in ${!parasMap[*]}
     do
-        if match_regex "${key}" "\-?\-r[a-zA-Z]*";then
+        if match_regex "${key}" "\-?\-[rc][a-zA-Z]*";then
             continue
         fi
 
