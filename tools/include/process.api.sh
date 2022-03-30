@@ -130,9 +130,9 @@ function process_signal
                     echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
 
                     if is_number "${signal}";then
-                        ${SUDO} "kill -${signal} ${pid}"
+                        sudo_it "kill -${signal} ${pid} &> /dev/null"
                     else
-                        ${SUDO} "kill -s ${signal} ${pid}"
+                        sudo_it "kill -s ${signal} ${pid} &> /dev/null"
                     fi
                 else
                     echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
