@@ -2,22 +2,14 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-${SUDO} mkdir -p ${TEST_LOG_DIR}
-${SUDO} chmod -R 777 ${TEST_LOG_DIR}
-
-if can_access "${ISCSI_APP_LOG}";then
-    echo_info "Save: ${ISCSI_APP_LOG}"
-    ${SUDO} mv -f ${ISCSI_APP_LOG}* ${TEST_LOG_DIR}
-fi
-
 if bool_v "${KERNEL_DEBUG_ON}";then
-    dmesg &> ${TEST_LOG_DIR}/target.dmesg.log 
+    dmesg &> ${ISCSI_LOG_DIR}/target.dmesg.log 
 fi
 
 if bool_v "${DUMP_SAVE_ON}";then
     if can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
         echo_info "Save: ${ISCSI_APP_NAME}"
-        cp -f ${ISCSI_APP_DIR}/${ISCSI_APP_NAME} ${TEST_LOG_DIR}
+        cp -f ${ISCSI_APP_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}
     fi
 
     COREDUMP_DIR=$(fname2path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
@@ -31,32 +23,32 @@ if bool_v "${DUMP_SAVE_ON}";then
 
     if can_access "${COREDUMP_DIR}/core-*";then
         echo_info "Save: ${COREDUMP_DIR}/core-*"
-        can_access "${COREDUMP_DIR}/core-*" && ${SUDO} mv -f ${COREDUMP_DIR}/core-* ${TEST_LOG_DIR}
+        can_access "${COREDUMP_DIR}/core-*" && ${SUDO} mv -f ${COREDUMP_DIR}/core-* ${ISCSI_LOG_DIR}
     fi
 
     if can_access "${ISCSI_APP_DIR}/core-*";then
         echo_info "Save: ${COREDUMP_DIR}/core-*"
-        can_access "${ISCSI_APP_DIR}/core-*" && ${SUDO} mv -f ${ISCSI_APP_DIR}/core-* ${TEST_LOG_DIR}
+        can_access "${ISCSI_APP_DIR}/core-*" && ${SUDO} mv -f ${ISCSI_APP_DIR}/core-* ${ISCSI_LOG_DIR}
     fi
 
     if can_access "/dev/shm/spdk_iscsi_conns.*";then
         echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
-        ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${TEST_LOG_DIR}
+        ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${ISCSI_LOG_DIR}
     fi
 
     if can_access "/dev/hugepages/";then
         echo_info "Save: /dev/hugepages/"
-        ${SUDO} cp -fr /dev/hugepages ${TEST_LOG_DIR}/
+        ${SUDO} cp -fr /dev/hugepages ${ISCSI_LOG_DIR}/
     fi
 
-    ${SUDO} chmod -R 777 ${TEST_LOG_DIR}
-    if can_access "${TEST_LOG_DIR}/core-*";then
-        gdb -batch -ex "bt" ${TEST_LOG_DIR}/${ISCSI_APP_NAME} ${TEST_LOG_DIR}/core-* > ${TEST_LOG_DIR}/backtrace.txt
-        cat ${TEST_LOG_DIR}/backtrace.txt
+    ${SUDO} chmod -R 777 ${ISCSI_LOG_DIR}
+    if can_access "${ISCSI_LOG_DIR}/core-*";then
+        gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
+        cat ${ISCSI_LOG_DIR}/backtrace.txt
     fi
 fi
 
-echo_info "Success to save: ${TEST_LOG_DIR}"
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
-    rsync_to ${TEST_LOG_DIR} ${CONTROL_IP}
+    echo_info "Push { ${ISCSI_LOG_DIR} } to { ${CONTROL_IP} }"
+    rsync_to ${ISCSI_LOG_DIR} ${CONTROL_IP}
 fi
