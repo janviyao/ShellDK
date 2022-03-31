@@ -6,8 +6,8 @@ ${TEST_ROOT_DIR}/app_clear.sh
 
 ${TEST_ROOT_DIR}/app_run.sh
 if [ $? -ne 0 ];then
-    echo_erro "fail: ${TEST_ROOT_DIR}/app_run.sh"
     ${TEST_ROOT_DIR}/save_debug.sh
+    echo_erro "fail: ${TEST_ROOT_DIR}/app_run.sh"
     exit 1
 fi
 
