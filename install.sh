@@ -45,6 +45,8 @@ INST_GUIDE["m4"]="${CMD1};install_from_rpm 'm4-.+\.rpm'"
 INST_GUIDE["autoconf"]="${CMD1};install_from_rpm 'autoconf-.+\.rpm'"
 INST_GUIDE["automake"]="${CMD1};install_from_rpm 'automake-.+\.rpm'"
 
+INST_GUIDE["/lib64/libreadline.so.6"]="${CMD1};install_from_rpm 'readline-.+\.rpm'"
+INST_GUIDE["/usr/include/readline"]="${CMD1};install_from_rpm 'readline-devel-.+\.rpm'"
 INST_GUIDE["/usr/lib64/libssl.so.10"]="${CMD1};install_from_rpm 'compat-openssl10-.+\.rpm'"
 INST_GUIDE["/usr/bin/python-config"]="${CMD1};install_from_rpm 'python-devel.+\.rpm'"
 INST_GUIDE["/usr/lib64/libpython2.7.so.1.0"]="${CMD1};install_from_rpm 'python-libs.+\.rpm'"
