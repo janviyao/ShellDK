@@ -2,9 +2,6 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-# configure core-dump path
-${SUDO} ulimit -c unlimited
-${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
 ${SUDO} "mkdir -p ${ISCSI_LOG_DIR}; chmod -R 777 ${ISCSI_LOG_DIR}" 
 
 if  bool_v "${APPLY_SYSCTRL}";then
@@ -40,4 +37,3 @@ do
 done
 
 exit 0
-

@@ -81,11 +81,11 @@ fi
 can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
 can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
+${SUDO} "echo > /var/log/messages; rm -f /var/log/messages-*"
+${SUDO} "echo > /var/log/kern; rm -f /var/log/kern-*"
+
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
-    ${SUDO} "echo > /var/log/messages; rm -f /var/log/messages-*"
-    ${SUDO} "echo > /var/log/kern; rm -f /var/log/kern-*"
-
     ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
     ${SUDO} "echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
     ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"

@@ -14,7 +14,7 @@ else
 fi
 
 if [ -b /dev/dm-0 ];then
-    echo_info "remove old-mpath device"
+    echo_info "remove mpath device"
     ${SUDO} "multipath -F"
 fi
 

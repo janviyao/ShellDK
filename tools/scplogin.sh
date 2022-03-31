@@ -60,3 +60,5 @@ expect << EOF
     }
     expect eof
 EOF
+
+exit 0
