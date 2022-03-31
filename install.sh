@@ -554,7 +554,7 @@ function inst_glibc
     # install ack
     cd ${ROOT_DIR}/deps
 
-    local version_cur=`getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o`
+    local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
     local version_new=2.18
 
     if version_lt ${version_cur} ${version_new}; then

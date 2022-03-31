@@ -104,6 +104,12 @@ else
     ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
 
     if process_exist "iscsid";then
+        if ps -A -o cmd | grep iscsid | grep -w "\-d 8" &> /dev/null;then
+            process_kill iscsid
+        fi
+    fi
+
+    if process_exist "iscsid";then
         if bool_v "${RESTART_ISCSI_INITIATOR}";then
             echo_info "iscsid restart"
             ${SUDO} systemctl restart iscsid

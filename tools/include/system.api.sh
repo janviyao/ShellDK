@@ -90,6 +90,38 @@ function sudo_it
     return $?
 }
 
+function linux_info
+{
+    local value=""
+    local width="13"
+
+    if can_access "/etc/centos-release";then
+        value=$(cat /etc/centos-release)
+        printf "[%${width}s]: %s\n" "System Vendor" "${value}"
+    elif can_access "/etc/redhat-release";then
+        value=$(cat /etc/redhat-release)
+        printf "[%${width}s]: %s\n" "System Vendor" "${value}"
+    else
+        value=$(cat /etc/issue | head -n 1)
+        printf "[%${width}s]: %s\n" "System Vendor" "${value}"
+    fi
+
+    value=$(cat /proc/version | awk '{ print $3 }')
+    printf "[%${width}s]: %s\n" "Linux Version" "${value}"
+ 
+    value=$(gcc --version | grep -P "\d+(\.\d+)*" -o | head -n 1)
+    printf "[%${width}s]: %s\n" "GCC Version" "${value}"
+
+    value=$(getconf GNU_LIBC_VERSION | grep -P "\d+(\.\d+)*" -o)
+    printf "[%${width}s]: %s\n" "GLIBC Version" "${value}"
+
+    value=$(uname -i)
+    printf "[%${width}s]: %s\n" "HW Platform" "${value}"
+
+    value=$(getconf LONG_BIT)
+    printf "[%${width}s]: %s\n" "CPU mode" "${value}"
+}
+
 function check_net
 {   
     local timeout=5 
