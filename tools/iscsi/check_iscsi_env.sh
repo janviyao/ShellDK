@@ -44,7 +44,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
 
     can_access "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
     if process_exist "multipathd";then
-        if bool_v "${RESTART_ISCSI_MUTLIPATH}";then
+        if bool_v "${ISCSI_MUTLIPATH_RESTART}";then
             echo_info "multipath restart"
             ${SUDO} systemctl restart multipathd
         fi
@@ -75,7 +75,7 @@ fi
 can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
 can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
-if bool_v "${TEST_DEBUG_OPEN}";then
+if bool_v "${INITIATOR_DEBUG_ON}";then
     echo_info "open iscsid-debug"
     if process_exist "iscsid";then
         ${SUDO} systemctl stop iscsid.service
@@ -93,7 +93,7 @@ if bool_v "${TEST_DEBUG_OPEN}";then
     if process_exist "iscsid";then
         process_kill iscsid
     fi
-    ${SUDO} "nohup iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> ${ISCSI_INITIATOR_LOG_FILE} &"
+    ${SUDO} "nohup iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> ${ISCSI_INITIATOR_LOG} &"
 else
     ${SUDO} "echo 0 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
     ${SUDO} "echo 0 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
@@ -110,7 +110,7 @@ else
     fi
 
     if process_exist "iscsid";then
-        if bool_v "${RESTART_ISCSI_INITIATOR}";then
+        if bool_v "${ISCSI_INITIATOR_RESTART}";then
             echo_info "iscsid restart"
             ${SUDO} systemctl restart iscsid
             ${SUDO} systemctl restart iscsid.socket

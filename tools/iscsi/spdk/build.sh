@@ -2,15 +2,15 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! can_access "${TEST_APP_SRC}";then
+if ! can_access "${ISCSI_APP_SRC}";then
     if check_net;then
-        ${SUDO} mkdir -p ${TEST_APP_SRC}
-        ${SUDO} chmod -R 777 ${TEST_APP_SRC}
-        myloop git clone https://github.com/spdk/spdk.git ${TEST_APP_SRC} 
-        cd ${TEST_APP_SRC}
+        ${SUDO} mkdir -p ${ISCSI_APP_SRC}
+        ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
+        myloop git clone https://github.com/spdk/spdk.git ${ISCSI_APP_SRC} 
+        cd ${ISCSI_APP_SRC}
         myloop git submodule update --init
     else
-        echo_erro "network fail: ${TEST_APP_SRC}"
+        echo_erro "network fail: ${ISCSI_APP_SRC}"
         exit 1
     fi
 fi
@@ -29,18 +29,18 @@ can_access "/usr/include/openssl/md5.h" || install_from_net "openssl-devel"
 can_access "/usr/include/libaio.h"      || install_from_net "libaio-devel" 
 can_access "/usr/include/CUnit/Basic.h" || install_from_net "CUnit-devel" 
 
-cd ${TEST_APP_SRC}
-can_access "${TEST_APP_SRC}/build" && make clean
+cd ${ISCSI_APP_SRC}
+can_access "${ISCSI_APP_SRC}/build" && make clean
 
 ./configure --disable-tests --disable-unit-tests --disable-examples
 if [ $? -ne 0 ];then
-    echo_erro "configure fail: ${TEST_APP_SRC}"
+    echo_erro "configure fail: ${ISCSI_APP_SRC}"
     exit 1
 fi
 
 make -j 32
 if [ $? -ne 0 ];then
-    echo_erro "make fail: ${TEST_APP_SRC}"
+    echo_erro "make fail: ${ISCSI_APP_SRC}"
     exit 1
 fi
 

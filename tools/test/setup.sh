@@ -3,15 +3,15 @@
 mkdir -p $(fname2path "${TEST_SUIT_ENV}")
 echo "#!/bin/bash" > ${TEST_SUIT_ENV}
 
-WORK_ROOT_DIR=/tmp/test
+WORK_ROOT_DIR=${GBL_BASE_DIR}/test
 TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
+TEST_LOG_DIR="/home/fastdisk/$(date '+%Y%m%d-%H%M%S')"
 
-TEST_DEBUG_OPEN=true
-TEST_DUMP_SAVE=false
 TEST_FILL_DATA=false
 KEEP_ENV_STATE=false
 APPLY_SYSCTRL=false
+DUMP_SAVE_ON=false
 
 #TEST_TARGET=spdk
 if [[ "${LOCAL_IP}" == "172.24.15.166" ]];then
@@ -25,25 +25,26 @@ elif [[ "${LOCAL_IP}" == "11.158.227.241" ]];then
 fi
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
-kvconf_add "${TEST_SUIT_ENV}" "CONTROL_IP" "${LOCAL_IP}"
+kvconf_add "${TEST_SUIT_ENV}" "export PATH"     "$HOME/.local/bin:/sbin/:$PATH"
+kvconf_add "${TEST_SUIT_ENV}" "CONTROL_IP"      "${LOCAL_IP}"
 echo "" >> ${TEST_SUIT_ENV}
 
 kvconf_add "${TEST_SUIT_ENV}" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[*]})"
 kvconf_add "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*]})"
-kvconf_add "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP" "(['${LOCAL_IP}']='empty')"
+kvconf_add "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP"   "(['${LOCAL_IP}']='empty')"
 echo "" >> ${TEST_SUIT_ENV}
 
-kvconf_add "${TEST_SUIT_ENV}" "TEST_DEBUG_OPEN" "${TEST_DEBUG_OPEN}"
-kvconf_add "${TEST_SUIT_ENV}" "TEST_DUMP_SAVE"  "${TEST_DUMP_SAVE}"
+kvconf_add "${TEST_SUIT_ENV}" "WORK_ROOT_DIR"   "${WORK_ROOT_DIR}"
+kvconf_add "${TEST_SUIT_ENV}" "TOOL_ROOT_DIR"   "${TOOL_ROOT_DIR}"
+kvconf_add "${TEST_SUIT_ENV}" "APPLY_SYSCTRL"   "${APPLY_SYSCTRL}"
+kvconf_add "${TEST_SUIT_ENV}" "DUMP_SAVE_ON"    "${DUMP_SAVE_ON}"
+
+kvconf_add "${TEST_SUIT_ENV}" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
 kvconf_add "${TEST_SUIT_ENV}" "TEST_TARGET"     "${TEST_TARGET}"
 kvconf_add "${TEST_SUIT_ENV}" "TEST_FILL_DATA"  "${TEST_FILL_DATA}"
-kvconf_add "${TEST_SUIT_ENV}" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
-kvconf_add "${TEST_SUIT_ENV}" "APPLY_SYSCTRL"   "${APPLY_SYSCTRL}"
 
-kvconf_add "${TEST_SUIT_ENV}" "WORK_ROOT_DIR"   "${WORK_ROOT_DIR}"
 kvconf_add "${TEST_SUIT_ENV}" "TEST_ROOT_DIR"   "${TEST_ROOT_DIR}"
-kvconf_add "${TEST_SUIT_ENV}" "TOOL_ROOT_DIR"   "${TOOL_ROOT_DIR}"
-kvconf_add "${TEST_SUIT_ENV}" "export PATH"     "$HOME/.local/bin:/sbin/:$PATH"
+kvconf_add "${TEST_SUIT_ENV}" "TEST_LOG_DIR"    "${TEST_LOG_DIR}"
 
 echo "" >> ${TEST_SUIT_ENV}
 echo "# [fio configure]" >> ${TEST_SUIT_ENV}

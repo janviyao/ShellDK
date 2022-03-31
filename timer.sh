@@ -12,8 +12,8 @@ fi
 if can_access "${TEST_SUIT_ENV}";then
     source ${TEST_SUIT_ENV} 
 
-    if can_access "${TEST_APP_LOG}";then
-        logsize=$(file_size "${TEST_APP_LOG}")
+    if can_access "${ISCSI_APP_LOG}";then
+        logsize=$(file_size "${ISCSI_APP_LOG}")
         if [ -z "${logsize}" ];then
             logsize=0
         fi
@@ -21,9 +21,9 @@ if can_access "${TEST_SUIT_ENV}";then
         maxsize=$((600*1024*1024))
         if (( logsize > maxsize ));then
             date_time=$(date '+%Y%m%d-%H%M%S')
-            cp -f ${TEST_APP_LOG} ${TEST_APP_LOG}.${date_time}
-            #truncate -s 0 ${TEST_APP_LOG}
-            cat /dev/null > ${TEST_APP_LOG}
+            cp -f ${ISCSI_APP_LOG} ${ISCSI_APP_LOG}.${date_time}
+            #truncate -s 0 ${ISCSI_APP_LOG}
+            cat /dev/null > ${ISCSI_APP_LOG}
         fi
     fi
 fi

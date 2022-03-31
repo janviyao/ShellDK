@@ -54,7 +54,7 @@ function run_fio_func
         other_paras="${other_paras} --client=${output_dir}/hosts ${output_dir}/${conf_fname}"
     fi
 
-    if bool_v "${TEST_DEBUG_OPEN}";then
+    if bool_v "${FIO_DEBUG_ON}";then
         other_paras="${other_paras} --debug=io"
     fi
 
@@ -145,7 +145,7 @@ function start_test_func
 
         #echo_info "============================================================================="
         echo_debug "in-test: { ${output_dir}/${conf_fname} }"
-        cp -f ${FIO_CONF_DIR}/${testcase_tpl} ${output_dir}/${conf_fname}
+        cp -f ${FIO_ROOT_DIR}/conf/${testcase_tpl} ${output_dir}/${conf_fname}
 
         #replace parameter
         sed -i '/\[group-disk-.*\]/,$d' ${output_dir}/${conf_fname}

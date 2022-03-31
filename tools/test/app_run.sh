@@ -10,6 +10,8 @@ fi
 
 ${FIO_ROOT_DIR}/run.sh
 if [ $? -ne 0 ];then
-    echo_erro "fail: ${FIO_ROOT_DIR}/run.sh"
+    echo_erro "fail: ${FIO_ROOT_DIR}/run.sh" 
     exit 1
 fi
+
+exit 0

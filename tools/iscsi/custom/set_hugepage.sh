@@ -18,7 +18,7 @@ source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
 #)
 #export SKIP_PCI=1
 
-#${SUDO} ${TEST_APP_SRC}/scripts/setup.sh reset
+#${SUDO} ${ISCSI_APP_SRC}/scripts/setup.sh reset
 #sleep 5
 
 HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
@@ -72,7 +72,7 @@ do
     fi
 
     NRHUGE=$((HP_TOTAL + HP_NEED_MB - HP_FREE))
-    #export NRHUGE; ${SUDO} ${TEST_APP_SRC}/scripts/setup.sh
+    #export NRHUGE; ${SUDO} ${ISCSI_APP_SRC}/scripts/setup.sh
 
     if [ -z "${HUGENODE}" ]; then
         hugepages_target="/proc/sys/vm/nr_hugepages"
