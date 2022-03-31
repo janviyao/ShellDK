@@ -93,6 +93,8 @@ if bool_v "${INITIATOR_DEBUG_ON}";then
     if process_exist "iscsid";then
         process_kill iscsid
     fi
+
+    ${SUDO} "mkdir -p ${TEST_LOG_DIR}; chmod -R 777 ${TEST_LOG_DIR}"
     ${SUDO} "nohup iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> ${ISCSI_INITIATOR_LOG} &"
 else
     ${SUDO} "echo 0 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"

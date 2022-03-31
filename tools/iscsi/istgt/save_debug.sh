@@ -10,6 +10,10 @@ if can_access "${ISCSI_APP_LOG}";then
     ${SUDO} mv -f ${ISCSI_APP_LOG}* ${TEST_LOG_DIR}
 fi
 
+if bool_v "${KERNEL_DEBUG_ON}";then
+    dmesg &> ${TEST_LOG_DIR}/target.dmesg.log 
+fi
+
 echo_info "Success to save: ${TEST_LOG_DIR}"
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
     rsync_to ${TEST_LOG_DIR} ${CONTROL_IP}
