@@ -80,7 +80,7 @@ function run_fio_func
     fi
 
     local tmp_file="$(temp_file)"
-    ${FIO_ROOT_DIR}/parse_result.sh -o "${tmp_file}" -r "${read_pct}" "${output_dir}/${fio_ofile}" 
+    ${FIO_ROOT_DIR}/parse.sh -o "${tmp_file}" -r "${read_pct}" "${output_dir}/${fio_ofile}" 
     if [ $? -ne 0 ];then
         echo_erro "parse failed: ${output_dir}/${fio_ofile}"
         exit 1

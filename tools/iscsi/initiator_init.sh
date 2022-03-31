@@ -8,7 +8,6 @@ else
     echo_info "keep devs: ${LOCAL_IP}"
     exit 0
 fi
-${ISCSI_ROOT_DIR}/check_iscsi_env.sh
 
 function get_iscsi_device
 {
@@ -58,6 +57,8 @@ function get_iscsi_device
     return 0
 }
 
+${ISCSI_ROOT_DIR}/check_env.sh
+
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
 do
     echo_info "discover: { ${LOCAL_IP} } --> { ${ipaddr} }"
@@ -69,7 +70,7 @@ do
     sleep 1
 
     ${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
-    #iscsiadm -m node -o update -n node.conn[0].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}
+    #${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}"
     if [ $? -ne 0 ];then
         echo_erro "update node.conn[0].iscsi.HeaderDigest { ${ipaddr} } fail"
         exit 1
@@ -80,9 +81,6 @@ do
         echo_erro "update node.session.nr_sessions { ${ipaddr} } fail"
         exit 1
     fi
-
-    #${SUDO} "${TOOL_ROOT_DIR}/log.sh iscsiadm -m node -T ${ISCSI_NODE_BASE} -p ${ipaddr} --login"
-    #${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE} -p ${ipaddr} --login"
 
     for targe_name in ${ISCSI_TARGET_NAME[*]} 
     do
@@ -150,8 +148,6 @@ else
 fi
 
 echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
-${SUDO} "mkdir -p ${WORK_ROOT_DIR}; chmod -R 777 ${WORK_ROOT_DIR}"
-
 echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 ${TOOL_ROOT_DIR}/scplogin.sh "${WORK_ROOT_DIR}/disk.${LOCAL_IP}" "${CONTROL_IP}:${WORK_ROOT_DIR}/disk.${LOCAL_IP}"
 
