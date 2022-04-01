@@ -8,10 +8,10 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 TEST_LOG_DIR="/home/fastdisk/$(date '+%Y%m%d-%H%M%S')"
 
-KERNEL_DEBUG_ON=false
+KERNEL_DEBUG_ON=true
 TEST_FILL_DATA=false
 KEEP_ENV_STATE=false
-APPLY_SYSCTRL=false
+APPLY_SYSCTRL=true
 DUMP_SAVE_ON=false
 
 #TEST_TARGET=spdk
