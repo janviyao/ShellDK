@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-source ${ISCSI_ROOT_DIR}/${TEST_TARGET}/include/private.conf.sh
+source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 
 #export NVME_WHITELIST=( \
 #    "0000:05:00.0" \

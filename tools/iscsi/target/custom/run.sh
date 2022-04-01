@@ -9,22 +9,17 @@ else
     exit 0
 fi
 
-if process_exist "${ISCSI_APP_NAME}";then
-    process_kill "${ISCSI_APP_NAME}"
-    sleep 1
-fi
-
 if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
-    ${ISCSI_ROOT_DIR}/${TEST_TARGET}/build.sh
+    ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/build.sh
     if [ $? -ne 0 ];then
         echo_erro "build fail: ${ISCSI_APP_SRC}"
         exit 1
     fi
 fi
 
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/check_env.sh
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh
 
 if bool_v "${TARGET_DEBUG_ON}";then
     REDIRECT_LOG_FILE=$(global_kv_get "${ISCSI_APP_LOG}")
@@ -75,4 +70,4 @@ fi
 
 exit 0
 #echo_info ""
-#${ISCSI_ROOT_DIR}/${TEST_TARGET}/uctrl.sh create
+#${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/uctrl.sh create

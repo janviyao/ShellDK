@@ -313,7 +313,7 @@ function _xfer_thread_main
                     remote_cmd="cd $(fname2path "${xfer_dir}")"
                 elif match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
                     local xfer_dir=$(echo "${xfer_des}" | awk -F':' '{ print $2 }')
-                    remote_cmd="sudo mkdir -p $(fname2path "${xfer_dir}")"
+                    remote_cmd="mkdir -p $(fname2path "${xfer_dir}")"
                 fi
 
                 sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="${remote_cmd} && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}

@@ -28,7 +28,7 @@ kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_IP_ARRAY" "(${ISCSI_TARGE
 kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_INITIATOR_IP_ARRAY" "(${ISCSI_INITIATOR_IP_ARRAY[*]})"
 
 echo "" >> ${TEST_SUIT_ENV}
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/setup.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/setup.sh
 
 echo "" >> ${TEST_SUIT_ENV}
 kvconf_add "${TEST_SUIT_ENV}" "TARGET_DEBUG_ON"           "${TARGET_DEBUG_ON}"

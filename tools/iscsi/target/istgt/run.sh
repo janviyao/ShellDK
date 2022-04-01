@@ -9,35 +9,22 @@ else
     exit 0
 fi
 
-if process_exist "${ISCSI_APP_NAME}";then
-    process_kill "${ISCSI_APP_NAME}"
-    sleep 1
-fi
-
 if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
-    ${ISCSI_ROOT_DIR}/${TEST_TARGET}/build.sh
+    ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/build.sh
     if [ $? -ne 0 ];then
         echo_erro "build fail: ${ISCSI_APP_SRC}"
         exit 1
     fi
 fi
 
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/check_env.sh
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/configure.sh
-${ISCSI_ROOT_DIR}/${TEST_TARGET}/set_hugepage.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
 
 if bool_v "${TARGET_DEBUG_ON}";then
-    ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG} &"
-
-    sleep 1
-    while ! (cat ${ISCSI_APP_LOG} | grep "spdk_app_start" &> /dev/null)
-    do
-        sleep 1
-    done
+    #${SUDO} "nohup ${ISCSI_APP_RUNTIME} &"
+    ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG}
 else
-    ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> /dev/null &"
-
-    sleep 30
+    ${ISCSI_APP_RUNTIME}
 fi
 
 if can_access "${ISCSI_APP_LOG}";then
@@ -52,5 +39,3 @@ else
 fi
 
 exit 0
-#echo_info ""
-#${ISCSI_ROOT_DIR}/${TEST_TARGET}/uctrl.sh create
