@@ -4,8 +4,8 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "Save: kernel log"
-    cp -f /var/log/messages* ${ISCSI_LOG_DIR}
-    cp -f /var/log/kern* ${ISCSI_LOG_DIR}
+    ${SUDO} "cp -f /var/log/messages* ${ISCSI_LOG_DIR}"
+    ${SUDO} "cp -f /var/log/kern* ${ISCSI_LOG_DIR}"
     dmesg &> ${ISCSI_LOG_DIR}/target.dmesg.log 
 fi
 

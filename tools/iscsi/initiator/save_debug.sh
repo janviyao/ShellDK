@@ -6,8 +6,8 @@ ${SUDO} "mkdir -p ${INITIATOR_LOG_DIR}; chmod -R 777 ${INITIATOR_LOG_DIR}"
 
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "Save: kernel log"
-    cp -f /var/log/messages* ${INITIATOR_LOG_DIR}
-    cp -f /var/log/kern* ${INITIATOR_LOG_DIR}
+    ${SUDO} "cp -f /var/log/messages* ${INITIATOR_LOG_DIR}"
+    ${SUDO} "cp -f /var/log/kern* ${INITIATOR_LOG_DIR}"
     dmesg &> ${INITIATOR_LOG_DIR}/initiator.dmesg.log 
 fi
 
