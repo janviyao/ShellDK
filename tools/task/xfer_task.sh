@@ -8,6 +8,57 @@ if contain_str "${BTASK_LIST}" "xfer";then
     exec {GBL_XFER_FD}<>${GBL_XFER_PIPE}
 fi
 
+function do_rsync
+{
+    local x_direct="$1"
+    local xfer_act="$2"
+    local xfer_src="$3"
+    local xfer_des="$4"
+    local xfer_ips=($5)
+
+    if [ $# -lt 5 ];then
+        echo_erro "\nUsage: [$@]\n\$1: x_direct\n\$2: xfer_act\$3: xfer_src\$4: xfer_des\n\$5: xfer_ips"
+        return 1
+    fi
+
+    local sync_src=${xfer_src}
+    local sync_des=${xfer_des}
+
+    can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
+    if [ -n "${xfer_ips[*]}" ];then
+        if ! account_check;then
+            echo_erro "Username or Password check fail"
+            return 1
+        fi
+
+        for ipaddr in ${xfer_ips[*]}
+        do
+            if [[ ${x_direct} == "TO" ]];then
+                if [[ ${ipaddr} != ${LOCAL_IP} ]];then
+                    if ! match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
+                        sync_des="${USR_NAME}@${ipaddr}:${xfer_des}"
+                    fi
+                fi
+            elif [[ ${x_direct} == "FROM" ]];then
+                if [[ ${ipaddr} != ${LOCAL_IP} ]];then
+                    if ! match_regex "${xfer_src}" "\d+\.\d+\.\d+\.\d+";then
+                        sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
+                    fi
+                fi
+            fi
+
+            echo_info "Rsync { ${xfer_src} } ${xfer_act} to { ${sync_des} }"
+            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_act}${GBL_SPF2}${sync_src}${GBL_SPF2}${sync_des}"
+        done
+    else
+        echo_info "Rsync { ${xfer_src} } ${xfer_act} to { ${xfer_des} }"
+        xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_act}${GBL_SPF2}${sync_src}${GBL_SPF2}${sync_des}"
+    fi
+
+    return 0
+}
+
+
 function rsync_to
 {
     if [ $# -lt 1 ];then
@@ -50,30 +101,9 @@ function rsync_to
         echo_erro "{ ${xfer_src} } not exist"
         return 1
     fi
-    
-    can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
-    if [ -n "${xfer_ips[*]}" ];then
-        if ! account_check;then
-            echo_erro "Username or Password check fail"
-            return 1
-        fi
 
-        for ipaddr in ${xfer_ips[*]}
-        do
-            local sync_des=${xfer_des}
-            if [[ ${ipaddr} != ${LOCAL_IP} ]];then
-                sync_des="${USR_NAME}@${ipaddr}:${xfer_des}"
-            fi
-
-            echo_info "Rsync { ${xfer_src} } to { ${sync_des} }"
-            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${sync_des}"
-        done
-    else
-        echo_info "Rsync { ${xfer_src} } to { ${xfer_des} }"
-        xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
-    fi
-
-    return 0
+    do_rsync "TO" "UPDATE" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
+    return $?
 }
 
 function rsync_from
@@ -100,26 +130,83 @@ function rsync_from
         ${SUDO} "mkdir -p ${xfer_des}"
     fi
     
-    can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
-    if [ -n "${xfer_ips[*]}" ];then
-        if ! account_check;then
-            echo_erro "Username or Password check fail"
-            return 1
-        fi
+    do_rsync "FROM" "UPDATE" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
+    return $?
+}
 
-        for ipaddr in ${xfer_ips[*]}
-        do
-            local sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
-
-            echo_info "Rsync { ${sync_src} } to { ${xfer_des} }"
-            xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${sync_src}${GBL_SPF2}${xfer_des}"
-        done
-    else
-        echo_info "Rsync { ${xfer_src} } to { ${xfer_des} }"
-        xfer_task_ctrl_sync "RSYNC${GBL_SPF1}${xfer_src}${GBL_SPF2}${xfer_des}"
+function rsync_p2p_to
+{
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfer_src\n\$2: xfer_des\n\$@: xfer_ips"
+        return 1
     fi
 
-    return 0
+    local xfer_src="$1"
+    shift
+    local xfer_des="$1"
+    if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
+        xfer_des=$(fname2path "${xfer_src}")
+    else
+        shift
+        if [ -z "${xfer_des}" ];then
+            xfer_des=$(fname2path "${xfer_src}")
+        fi
+    fi
+
+    local xfer_ips=($@)
+    if [ -z "${xfer_ips[*]}" ];then        
+        local count=0
+        while read line
+        do
+            local ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
+            [ -z "${ipaddr}" ] && continue 
+
+            if ip addr | grep -F "${ipaddr}" &> /dev/null;then
+                continue
+            fi
+
+            if ! contain_str "${xfer_ips[*]}" "${ipaddr}";then
+                xfer_ips[${count}]="${ipaddr}"
+                let count++
+            fi
+        done < /etc/hosts
+    fi
+
+    if ! can_access "${xfer_src}";then
+        echo_erro "{ ${xfer_src} } not exist"
+        return 1
+    fi
+    
+    do_rsync "TO" "EQUAL" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
+    return $?
+}
+
+function rsync_p2p_from
+{
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfer_src\n\$2: xfer_des\n\$@: xfer_ips"
+        return 1
+    fi
+
+    local xfer_src="$1"
+    shift
+    local xfer_des="$1"
+    if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
+        xfer_des=$(fname2path "${xfer_src}")
+    else
+        shift
+        if [ -z "${xfer_des}" ];then
+            xfer_des=$(fname2path "${xfer_src}")
+        fi
+    fi
+    local xfer_ips=($@)
+
+    if ! can_access "${xfer_des}";then
+        ${SUDO} "mkdir -p ${xfer_des}"
+    fi
+    
+    do_rsync "FROM" "EQUAL" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
+    return $?
 }
 
 function xfer_task_ctrl
@@ -204,8 +291,16 @@ function _xfer_thread_main
             fi
             return 
         elif [[ "${req_xfer}" == "RSYNC" ]];then
-            local xfer_src=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
-            local xfer_des=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+            local xfer_act=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
+            local xfer_src=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+            local xfer_des=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 3) 
+
+            local action=""
+            if [[ "${xfer_act}" == "UPDATE" ]];then
+                action="--update"
+            elif [[ "${xfer_act}" == "EQUAL" ]];then
+                action="--delete"
+            fi
 
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
@@ -221,10 +316,10 @@ function _xfer_thread_main
                     remote_cmd="mkdir -p $(fname2path "${xfer_dir}")"
                 fi
 
-                sshpass -p "${USR_PASSWORD}" rsync -azu --rsync-path="${remote_cmd} && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="${remote_cmd} && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
             else
                 can_access "${xfer_des}" || ${SUDO} "mkdir -p ${xfer_des}"
-                rsync -azu --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                rsync -az ${action} --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
             fi
         fi
 
