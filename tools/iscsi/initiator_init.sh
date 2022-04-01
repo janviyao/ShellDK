@@ -94,21 +94,22 @@ done
 
 while ! (iscsiadm -m session -P 3 | grep "Attached scsi disk" &> /dev/null)
 do
+    echo_info "wait iscsi devices loading ..."
     sleep 2
 done
 
-iscsi_device_array=($(echo))
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     ${SUDO} multipath -r
-
-    iscsi_device_array=("dm-0")
-    for index in {1..64}
+    while ! can_access "/dev/dm-*" 
     do
-        if [ -b /dev/dm-${index} ];then
-            iscsi_device_array=(${iscsi_device_array[*]} dm-${index})
-        fi
+        echo_info "wait mpath devices loading ..."
+        sleep 2
     done
+fi
 
+iscsi_device_array=($(echo))
+if bool_v "${ISCSI_MULTIPATH_ON}";then
+    iscsi_device_array=($(cd /dev; ls dm-*))
     for mdev in ${iscsi_device_array[*]}
     do
         if [ -b /dev/${mdev} ];then
