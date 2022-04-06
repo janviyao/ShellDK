@@ -53,5 +53,6 @@ fi
 
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
     echo_info "Push { ${ISCSI_LOG_DIR} } to { ${CONTROL_IP} }"
+    ${SUDO} "chmod -R 777 ${ISCSI_LOG_DIR}"
     rsync_to ${ISCSI_LOG_DIR} ${CONTROL_IP}
 fi

@@ -58,6 +58,7 @@ function get_iscsi_device
 }
 
 ${ISCSI_ROOT_DIR}/initiator/check_env.sh
+${ISCSI_ROOT_DIR}/initiator/configure.sh
 
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
 do
