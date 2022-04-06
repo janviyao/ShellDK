@@ -71,6 +71,7 @@ function sudo_it
     local cmd="$@"
 
     if [ $UID -eq 0 ]; then
+        echo_file "debug" "[ROOT] ${cmd}"
         eval "${cmd}"
     else
         if [ -z "${USR_PASSWORD}" ]; then
@@ -84,6 +85,8 @@ function sudo_it
             done
             export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
         fi
+
+        echo_file "debug" "[SUDO] ${cmd}"
         eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${cmd}"
     fi
 

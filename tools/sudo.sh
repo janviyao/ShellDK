@@ -22,11 +22,9 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
 fi
 
 if [ $UID -eq 0 ]; then
-    echo_debug "[ROOT] ${CMD_STR}"
-    eval "${CMD_STR}"
+    sudo_it "${CMD_STR}"
     exit $?
 else 
-    echo_debug "[SUDO] ${CMD_STR}"
     if ! which sudo &> /dev/null; then
         echo_erro "sudo not supported"
         eval "${CMD_STR}"
@@ -38,6 +36,8 @@ else
         sudo_it "${CMD_STR}"
         exit $?
     fi
+
+    echo_debug "[sudo.sh] ${CMD_STR}"
 fi
 
 EXPECT_EOF=""
@@ -61,7 +61,13 @@ source $MY_VIM_DIR/tools/include/common.api.sh; \
 if ! is_me ${USR_NAME};then \
     if test -d $MY_VIM_DIR;then \
         source $MY_VIM_DIR/bashrc; \
+    else \
+        sudo_it '${CMD_STR}'; \
+        exit \$?; \
     fi;\
+else \
+    sudo_it '${CMD_STR}'; \
+    exit \$?; \
 fi\
 "
 

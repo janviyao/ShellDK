@@ -93,6 +93,7 @@ function _bash_exit
         source ${HOME}/.bash_exit
     fi
 
+    echo_file "debug" "rm -fr ${BASH_WORK_DIR}"
     rm -fr ${BASH_WORK_DIR} 
 }
 
