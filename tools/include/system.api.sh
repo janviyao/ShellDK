@@ -164,8 +164,12 @@ function du_find
             continue
         fi
 
-        local dir_size=$(sudo_it "du --block-size=1 -s ${sub_dir} 2>/dev/null" | awk '{ print $1 }')
-        size_map["${sub_dir}"]=${dir_size}
+        local dir_size=$(sudo_it "du -b -t ${size} -s ${sub_dir} 2>/dev/null" | awk '{ print $1 }')
+        if is_number "${dir_size}";then
+            size_map["${sub_dir}"]=${dir_size}
+        else
+            echo_warn "size error: ${sub_dir}(${dir_size})"
+        fi
     done
 
     while [ ${#size_map[*]} -gt 0 ]
@@ -188,6 +192,7 @@ function du_find
                 return 1
             fi
         else
+            echo_erro "invalid: ${max_path}(${max_size})"
             echo_erro "exception: \nKey: ${!size_map[*]}\nVal: ${size_map[*]}"
             return 1
         fi
@@ -197,7 +202,7 @@ function du_find
         dpath=""
     fi
 
-    sudo_it "du --block-size=1 -s ${dpath}/* 2>/dev/null" | sort -ur -n -t ' ' -k 1 | while read line
+    sudo_it "du -b -s ${dpath}/* 2>/dev/null" | sort -ur -n -t ' ' -k 1 | while read line
     do
         local obj_info=$(echo "${line}" | awk '{ print $2 }')
         if [ -d "${obj_info}" ];then
