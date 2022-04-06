@@ -9,6 +9,11 @@ if bool_v "${KERNEL_DEBUG_ON}";then
     dmesg &> ${ISCSI_LOG_DIR}/target.dmesg.log 
 fi
 
+if can_access "${BASHLOG}";then
+    echo_info "Save: ${BASHLOG}"
+    ${SUDO} mv -f ${BASHLOG}* ${ISCSI_LOG_DIR}
+fi
+
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
     echo_info "Push { ${ISCSI_LOG_DIR} } to { ${CONTROL_IP} }"
     ${SUDO} "chmod -R 777 ${ISCSI_LOG_DIR}"

@@ -9,6 +9,9 @@ else
     exit 0
 fi
 
+${ISCSI_ROOT_DIR}/initiator/configure.sh
+${ISCSI_ROOT_DIR}/initiator/check_env.sh
+
 function get_iscsi_device
 {
     local target_ip="$1"
@@ -56,9 +59,6 @@ function get_iscsi_device
     fi
     return 0
 }
-
-${ISCSI_ROOT_DIR}/initiator/check_env.sh
-${ISCSI_ROOT_DIR}/initiator/configure.sh
 
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
 do

@@ -34,9 +34,6 @@ else
     ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
 fi
 
-${SUDO} "mkdir -p ${TEST_LOG_DIR}; chmod -R 777 ${TEST_LOG_DIR}"
-${SUDO} "mkdir -p ${WORK_ROOT_DIR}; chmod -R 777 ${WORK_ROOT_DIR}"
-
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     can_access "/usr/sbin/dmsetup" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
     can_access "/usr/lib64/libdevmapper.so.*" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-libs-.+\.rpm"; }

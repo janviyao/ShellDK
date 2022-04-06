@@ -16,6 +16,11 @@ if can_access "${ISCSI_INITIATOR_LOG}";then
     fi
 fi
 
+if can_access "${BASHLOG}";then
+    echo_info "Save: ${BASHLOG}"
+    ${SUDO} mv -f ${BASHLOG}* ${INITIATOR_LOG_DIR}
+fi
+
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
     echo_info "Push { ${INITIATOR_LOG_DIR} } to { ${CONTROL_IP} }"
     ${SUDO} "chmod -R 777 ${INITIATOR_LOG_DIR}"

@@ -17,8 +17,8 @@ if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
     fi
 fi
 
-${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh
 
 if bool_v "${TARGET_DEBUG_ON}";then
