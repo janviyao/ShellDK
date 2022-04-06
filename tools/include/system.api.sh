@@ -125,6 +125,102 @@ function linux_info
     printf "[%${width}s]: %s\n" "CPU mode" "${value}"
 }
 
+function du_find
+{
+    local dpath="$1"
+    local limit="${2:-1MB}"
+
+    if ! can_access "${dpath}";then
+        echo_erro "path invalid: ${dpath}"
+        return 1
+    fi
+
+    local size="${limit}"
+    local unit=""
+    if ! is_number "${size}";then
+        if match_regex "${size^^}" "^\d+KB?$";then
+            size=$(string_regex "${size^^}" "^\d+")
+            size=$((size*1024))
+            unit="KB"
+        elif match_regex "${size^^}" "^\d+MB?$";then
+            size=$(string_regex "${size^^}" "^\d+")
+            size=$((size*1024*1024))
+            unit="MB"
+        elif match_regex "${size^^}" "^\d+GB?$";then
+            size=$(string_regex "${size^^}" "^\d+")
+            size=$((size*1024*1024*1024))
+            unit="GB"
+        else
+            echo_erro "size invalid: ${size}"
+            return 1
+        fi
+    fi
+
+    local -A size_map
+    local dir_arr=($(find ${dpath} -maxdepth 1 -type d))
+    for sub_dir in ${dir_arr[*]}
+    do
+        if [[ ${dpath} == ${sub_dir} ]];then
+            continue
+        fi
+
+        local dir_size=$(sudo_it "du --block-size=1 -s ${sub_dir} 2>/dev/null" | awk '{ print $1 }')
+        size_map["${sub_dir}"]=${dir_size}
+    done
+
+    while [ ${#size_map[*]} -gt 0 ]
+    do
+        local max_path=""
+        local max_size="0"
+
+        for sub_dir in ${!size_map[*]}
+        do
+            if [ ${size_map["${sub_dir}"]} -ge ${max_size} ];then
+                max_path="${sub_dir}"
+                max_size=${size_map["${sub_dir}"]}
+            fi
+        done
+
+        if [ -n "${max_path}" ];then
+            unset size_map["${max_path}"]
+            du_find "${max_path}" "${limit}"
+            if [ $? -ne 0 ];then
+                return 1
+            fi
+        else
+            echo_erro "exception: \nKey: ${!size_map[*]}\nVal: ${size_map[*]}"
+            return 1
+        fi
+    done
+
+    if [[ "${dpath}" == "/" ]];then
+        dpath=""
+    fi
+
+    sudo_it "du --block-size=1 -s ${dpath}/* 2>/dev/null" | sort -ur -n -t ' ' -k 1 | while read line
+    do
+        local obj_info=$(echo "${line}" | awk '{ print $2 }')
+        if [ -d "${obj_info}" ];then
+            continue
+        fi
+
+        local obj_size=$(echo "${line}" | awk '{ print $1 }')
+        if [ ${obj_size} -ge ${size} ];then
+            if [[ ${unit} == "KB" ]];then
+                echo "$(printf "%-10s %s" "$(FLOAT "${obj_size}/1024" 1)KB" "${obj_info}")"
+            elif [[ ${unit} == "MB" ]];then
+                echo "$(printf "%-8s %s" "$(FLOAT "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
+            elif [[ ${unit} == "GB" ]];then
+                echo "$(printf "%-4s %s" "$(FLOAT "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
+            else
+                echo "$(printf "%-12s %s" "${obj_size}" "${obj_info}")"
+            fi
+        fi
+    done
+
+    return 0
+}
+
 function check_net
 {   
     local timeout=5 
