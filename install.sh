@@ -347,11 +347,11 @@ function inst_env
 
     can_access "${GBL_BASE_DIR}/.userc" && rm -f ${GBL_BASE_DIR}/.userc
     if ! can_access "${GBL_BASE_DIR}/.userc";then
-        USR_PASSWORD="$(system_encrypt "${USR_PASSWORD}")"
+        new_password="$(system_encrypt "${USR_PASSWORD}")"
         echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/.userc
         echo "if [ -z \"\${USR_NAME}\" -o -z \"\${USR_PASSWORD}\" ];then"  >> ${GBL_BASE_DIR}/.userc
         echo "    global_set_var 'USR_NAME=${USR_NAME}'"                   >> ${GBL_BASE_DIR}/.userc
-        echo "    global_set_var 'USR_PASSWORD=${USR_PASSWORD}'"           >> ${GBL_BASE_DIR}/.userc
+        echo "    global_set_var 'USR_PASSWORD=${new_password}'"           >> ${GBL_BASE_DIR}/.userc
         echo "    account_check"                                           >> ${GBL_BASE_DIR}/.userc
         echo "fi"                                                          >> ${GBL_BASE_DIR}/.userc
         ${SUDO} chmod +x ${GBL_BASE_DIR}/.userc 
