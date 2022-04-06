@@ -58,7 +58,7 @@ fi
 
 if can_access "${BASHLOG}";then
     echo_info "Save: ${BASHLOG}"
-    ${SUDO} mv -f ${BASHLOG}* ${ISCSI_LOG_DIR}
+    ${SUDO} cp -f ${BASHLOG} ${ISCSI_LOG_DIR}
 fi
 
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then

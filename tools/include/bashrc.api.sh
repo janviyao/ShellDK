@@ -87,6 +87,15 @@ function INCLUDE
     fi
 }
 
+function _bash_exit
+{ 
+    if [ -f ${HOME}/.bash_exit ];then
+        source ${HOME}/.bash_exit
+    fi
+
+    rm -fr ${BASH_WORK_DIR} 
+}
+
 if can_access "ppid";then
     ppinfos=($(ppid true))
     echo_file "debug" "pstree [${ppinfos[*]}]"
@@ -105,4 +114,6 @@ else
 
     echo_file "debug" "create dir: ${BASH_WORK_DIR}"
     mkdir -p ${BASH_WORK_DIR} 
+
+    trap "_bash_exit" EXIT
 fi
