@@ -16,6 +16,9 @@ fi
 if [ -b /dev/dm-0 ];then
     echo_info "remove mpath device"
     ${SUDO} "multipath -F"
+    if [ $? -ne 0 ];then
+        ${SUDO} "multipath -v4 -ll"
+    fi
 fi
 
 get_tgt_ips=$(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq)

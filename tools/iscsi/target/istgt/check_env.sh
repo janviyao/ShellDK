@@ -6,8 +6,8 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 ${SUDO} ulimit -c unlimited
 ${SUDO} "echo '/core-%e-%p-%t' > /proc/sys/kernel/core_pattern"
 
-${SUDO} "echo > /var/log/messages; rm -f /var/log/messages-*"
-${SUDO} "echo > /var/log/kern; rm -f /var/log/kern-*"
+${SUDO} "cat /dev/null > /var/log/messages; rm -f /var/log/messages-*"
+${SUDO} "cat /dev/null > /var/log/kern; rm -f /var/log/kern-*"
 
 if bool_v "${APPLY_SYSCTRL}";then
     can_access "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
