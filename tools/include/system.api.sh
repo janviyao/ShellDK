@@ -169,7 +169,7 @@ function du_find
     fi
 
     local -A size_map
-    local dir_arr=($(find ${dpath} -maxdepth 1 -type d))
+    local dir_arr=($(sudo_it "find ${dpath} -maxdepth 1 -type d"))
     for sub_dir in ${dir_arr[*]}
     do
         if [[ ${dpath} == ${sub_dir} ]];then
