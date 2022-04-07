@@ -12,7 +12,7 @@ KERNEL_DEBUG_ON=true
 TEST_FILL_DATA=false
 KEEP_ENV_STATE=false
 APPLY_SYSCTRL=true
-DUMP_SAVE_ON=false
+DUMP_SAVE_ON=true
 
 #TEST_TARGET=spdk
 if [[ "${LOCAL_IP}" == "172.24.15.166" ]];then
