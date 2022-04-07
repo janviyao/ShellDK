@@ -22,7 +22,6 @@ if can_access "${BASHLOG}";then
 fi
 
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
-    echo_info "Push { ${INITIATOR_LOG_DIR} } to { ${CONTROL_IP} }"
     ${SUDO} "chmod -R 777 ${INITIATOR_LOG_DIR}"
     rsync_to ${INITIATOR_LOG_DIR} ${CONTROL_IP}
 fi
