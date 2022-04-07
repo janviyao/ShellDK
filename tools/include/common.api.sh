@@ -55,7 +55,7 @@ function string_start
         return 1
     fi
 
-    is_number "${length}" || { echo "${string}"; return 1; }
+    is_integer "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
     echo "${string:0:${length}}"
@@ -73,8 +73,8 @@ function string_substr
         return 1
     fi
 
-    is_number "${start}" || { echo "${string}"; return 1; }
-    is_number "${length}" || { echo "${string:${start}}"; return 1; }
+    is_integer "${start}" || { echo "${string}"; return 1; }
+    is_integer "${length}" || { echo "${string:${start}}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
     echo "${string:${start}:${length}}"
@@ -91,7 +91,7 @@ function string_end
         return 1
     fi
 
-    is_number "${length}" || { echo "${string}"; return 1; }
+    is_integer "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
     echo "${string:0-${length}:${length}}"

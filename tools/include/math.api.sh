@@ -1,4 +1,28 @@
 #!/bin/bash
+function is_integer
+{
+    # is argument an integer?
+    local re='^-?[0-9]+$'
+    if [[ -n $1 ]]; then
+        [[ $1 =~ $re ]] && return 0
+        return 1
+    else
+        return 2
+    fi
+}
+
+function is_float
+{
+    # is argument an integer?
+    local re='^-?[0-9]+\.?[0-9]+$'
+    if [[ -n $1 ]]; then
+        [[ $1 =~ $re ]] && return 0
+        return 1
+    else
+        return 2
+    fi
+}
+
 function FLOAT
 {
     local expre="$1"

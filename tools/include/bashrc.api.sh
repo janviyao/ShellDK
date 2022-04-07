@@ -46,21 +46,13 @@ GBL_SPF1="^"
 GBL_SPF2="|"
 GBL_SPF3="!"
 
-function is_number
-{
-    # is argument an integer?
-    local re='^-?[0-9]+$'
-    if [[ -n $1 ]]; then
-        [[ $1 =~ $re ]] && return 0
-        return 1
-    else
-        return 2
-    fi
-}
-
 function var_exist
 {
-    if is_number "$1"; then
+    if [[ -n $1 ]]; then
+        if [[ $1 =~ ^-?[0-9]+$ ]]; then
+            return 1
+        fi
+    else
         return 1
     fi
 

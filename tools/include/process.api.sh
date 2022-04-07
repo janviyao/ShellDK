@@ -6,7 +6,7 @@ function process_pptree
         pinfo="$$"
     fi
 
-    if is_number "${pinfo}";then
+    if is_integer "${pinfo}";then
         local pid_array=($(ppid ${pinfo}))
         local pid_num=${#pid_array[*]}
         for ((idx=0; idx < pid_num; idx++))
@@ -104,7 +104,7 @@ function process_signal
 
     [ ${#para_arr[*]} -eq 0 ] && return 1
 
-    if ! is_number "${signal}";then
+    if ! is_integer "${signal}";then
         signal=$(trim_str_start "${signal^^}" "SIG")
         if ! (trap -l | grep -P "SIG${signal}\s*" &> /dev/null);then
             echo_erro "signal: { $(trap -l | grep -P "SIG${signal}\s*" -o) } invalid: { ${signal} }"
@@ -130,7 +130,7 @@ function process_signal
                 if ! array_has "${exclude_pid_array[*]}" "${pid}";then
                     echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
 
-                    if is_number "${signal}";then
+                    if is_integer "${signal}";then
                         sudo_it "kill -${signal} ${pid} &> /dev/null"
                     else
                         sudo_it "kill -s ${signal} ${pid} &> /dev/null"
@@ -167,7 +167,7 @@ function process_kill
 function process_pid2name
 {
     local pid="$1"
-    is_number "${pid}" || { echo "${pid}"; return 1; }
+    is_integer "${pid}" || { echo "${pid}"; return 1; }
 
     # ps -p 2133 -o args=
     # ps -p 2133 -o cmd=
@@ -180,7 +180,7 @@ function process_name2pid
 {
     local pname="$1"
 
-    is_number "${pname}" && { echo "${pname}"; return 0; }
+    is_integer "${pname}" && { echo "${pname}"; return 0; }
 
     local -a pid_array=($(ps -C ${pname} -o pid=))
     if [ ${#pid_array[*]} -gt 0 ];then

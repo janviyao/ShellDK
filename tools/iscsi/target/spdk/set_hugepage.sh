@@ -22,7 +22,7 @@ source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 #sleep 5
 
 HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
-if is_number "${HP_SHM_ID}";then
+if is_integer "${HP_SHM_ID}";then
     if [ ${HP_SHM_ID} -ge 0 ];then
         HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_${HP_SHM_ID}map_*"
     fi

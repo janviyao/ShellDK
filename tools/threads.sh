@@ -129,6 +129,7 @@ echo_debug "**********threads exit"
 if [[ ${thread_state} == "exception" ]];then
     exit 1
 else
-    is_number "${thread_state}" && exit ${thread_state}
+    is_integer "${thread_state}" && exit ${thread_state}
     exit 0
 fi
+

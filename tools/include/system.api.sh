@@ -137,18 +137,30 @@ function du_find
 
     local size="${limit}"
     local unit=""
-    if ! is_number "${size}";then
-        if match_regex "${size^^}" "^\d+KB?$";then
-            size=$(string_regex "${size^^}" "^\d+")
-            size=$((size*1024))
+    if ! is_integer "${size}" && ! is_float "${size}";then
+        if match_regex "${size^^}" "^\d+(\.\d+)?KB?$";then
+            size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
+            if is_integer "${size}";then
+                size=$((size*1024))
+            elif is_float "${size}";then
+                size=$(FLOAT "${size}*1024" 0)
+            fi
             unit="KB"
-        elif match_regex "${size^^}" "^\d+MB?$";then
-            size=$(string_regex "${size^^}" "^\d+")
-            size=$((size*1024*1024))
+        elif match_regex "${size^^}" "^\d+(\.\d+)?MB?$";then
+            size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
+            if is_integer "${size}";then
+                size=$((size*1024*1024))
+            elif is_float "${size}";then
+                size=$(FLOAT "${size}*1024*10244" 0)
+            fi
             unit="MB"
-        elif match_regex "${size^^}" "^\d+GB?$";then
-            size=$(string_regex "${size^^}" "^\d+")
-            size=$((size*1024*1024*1024))
+        elif match_regex "${size^^}" "^\d+(\.\d+)?GB?$";then
+            size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
+            if is_integer "${size}";then
+                size=$((size*1024*1024*1024))
+            elif is_float "${size}";then
+                size=$(FLOAT "${size}*1024*1024*1024" 0)
+            fi
             unit="GB"
         else
             echo_erro "size invalid: ${size}"
@@ -165,10 +177,8 @@ function du_find
         fi
 
         local dir_size=$(sudo_it "du -b -t ${size} -s ${sub_dir} 2>/dev/null" | awk '{ print $1 }')
-        if is_number "${dir_size}";then
+        if is_integer "${dir_size}";then
             size_map["${sub_dir}"]=${dir_size}
-        else
-            echo_warn "size error: ${sub_dir}(${dir_size})"
         fi
     done
 
@@ -210,15 +220,17 @@ function du_find
         fi
 
         local obj_size=$(echo "${line}" | awk '{ print $1 }')
-        if [ ${obj_size} -ge ${size} ];then
-            if [[ ${unit} == "KB" ]];then
-                echo "$(printf "%-10s %s" "$(FLOAT "${obj_size}/1024" 1)KB" "${obj_info}")"
-            elif [[ ${unit} == "MB" ]];then
-                echo "$(printf "%-8s %s" "$(FLOAT "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
-            elif [[ ${unit} == "GB" ]];then
-                echo "$(printf "%-4s %s" "$(FLOAT "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
-            else
-                echo "$(printf "%-12s %s" "${obj_size}" "${obj_info}")"
+        if is_integer "${obj_size}" || is_float "${obj_size}";then
+            if [ ${obj_size} -ge ${size} ];then
+                if [[ ${unit} == "KB" ]];then
+                    echo "$(printf "%-10s %s" "$(FLOAT "${obj_size}/1024" 1)KB" "${obj_info}")"
+                elif [[ ${unit} == "MB" ]];then
+                    echo "$(printf "%-8s %s" "$(FLOAT "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
+                elif [[ ${unit} == "GB" ]];then
+                    echo "$(printf "%-4s %s" "$(FLOAT "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
+                else
+                    echo "$(printf "%-12s %s" "${obj_size}" "${obj_info}")"
+                fi
             fi
         fi
     done
