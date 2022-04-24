@@ -25,5 +25,18 @@ if process_exist "${ISCSI_APP_NAME}";then
     sleep 1
 fi
 
+${SUDO} "mkdir -p ${ISCSI_LOG_DIR}; chmod -R 777 ${ISCSI_LOG_DIR}" 
+
+#if process_exist "iscsid";then
+#    ${SUDO} systemctl stop iscsid
+#    ${SUDO} systemctl stop iscsid.socket
+#    ${SUDO} systemctl stop iscsiuio
+#fi
+
+LOCAL_CONF="${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/conf/iscsi.conf.in"
+can_access "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
+can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
+${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
+
 exit 0
 

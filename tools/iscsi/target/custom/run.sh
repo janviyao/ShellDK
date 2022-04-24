@@ -17,7 +17,6 @@ if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
     fi
 fi
 
-${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh
 
@@ -67,6 +66,8 @@ if ! process_exist "${ISCSI_APP_NAME}";then
 else
     echo_info "${ISCSI_APP_NAME} launch success."
 fi
+
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
 
 exit 0
 #echo_info ""
