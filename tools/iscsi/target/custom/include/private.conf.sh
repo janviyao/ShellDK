@@ -1,6 +1,4 @@
 #!/bin/bash
-source ${TEST_SUIT_ENV} 
-
 : ${HP_SHM_ID:=1}
 : ${BDEV_TYPE:=cstor}
 

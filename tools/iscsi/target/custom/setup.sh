@@ -9,7 +9,7 @@ SPDK_SRC_ROOT=${MY_HOME}/vcns_spdk
 SPDK_APP_DIR=${SPDK_SRC_ROOT}/build/bin
 SPDK_LOG_DIR=${TEST_LOG_DIR}/${SPDK_APP_NAME}
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log
-SPDK_APP_UCTRL="${SPDK_SRC_ROOT}/scripts/rpc.py"
+SPDK_APP_UCTRL="${SUDO} ${SPDK_SRC_ROOT}/scripts/rpc.py"
 SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0XFF --shm-id=1 --iova-mode=va --logflag iscsi --logflag scsi --logflag bdev --logflag bdev_malloc --wait-for-rpc"
 
 #ISCSI_NODE_BASE=iqn.2016-06.io.spdk
@@ -25,7 +25,7 @@ kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_SRC"     "${SPDK_SRC_ROOT}"
 kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_DIR"     "${SPDK_APP_DIR}"
 kvconf_add "${TEST_SUIT_ENV}" "ISCSI_LOG_DIR"     "${SPDK_LOG_DIR}"
 kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_LOG"     "${SPDK_APP_LOG}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_UCTRL"   "${SPDK_APP_UCTRL}"
+kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_UCTRL"   "\"${SPDK_APP_UCTRL}\""
 kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_RUNTIME" "\"${SPDK_APP_RUNTIME}\""
 
 
