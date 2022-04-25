@@ -1,7 +1,7 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
 
-FIO_DEBUG_ON=true
+FIO_DEBUG_ON=false
 FIO_ROOT_DIR=$(current_filedir)
 FIO_APP_RUNTIME="$MY_VIM_DIR/tools/app/fio --alloc-size=131072"
 
