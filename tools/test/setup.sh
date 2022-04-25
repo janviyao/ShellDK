@@ -8,13 +8,13 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 TEST_LOG_DIR="/home/fastdisk/$(date '+%Y%m%d-%H%M%S')"
 
-KERNEL_DEBUG_ON=true
+KERNEL_DEBUG_ON=false
 TEST_FILL_DATA=false
 KEEP_ENV_STATE=false
+DUMP_SAVE_ON=false
 APPLY_SYSCTRL=true
-DUMP_SAVE_ON=true
 
-#TEST_TARGET=spdk
+# TEST_TARGET=spdk
 if [[ "${LOCAL_IP}" == "172.24.15.166" ]];then
     TEST_TARGET=istgt
     declare -xa SERVER_IP_ARRAY=(172.24.15.166)

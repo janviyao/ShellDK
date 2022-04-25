@@ -101,10 +101,16 @@ done
 
 if bool_v "${ISCSI_MULTIPATH_ON}";then
     ${SUDO} multipath -r
+    count=300
     while ! can_access "/dev/dm-*" 
     do
         echo_info "wait mpath devices loading ..."
         sleep 2
+        let count--
+        if [ ${count} -le 0 ];then
+            echo_erro "mpath devices load fail"
+            exit 1
+        fi
     done
 fi
 
