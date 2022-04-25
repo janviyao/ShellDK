@@ -35,7 +35,7 @@ do
             ig_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 2)
 
             echo_info "create initiator group: ${netmask}.0/24"
-            ${ISCSI_APP_UCTRL} iscsi_create_initiator_group ${ig_id} ANY ${netmask}/24
+            ${ISCSI_APP_UCTRL} iscsi_create_initiator_group ${ig_id} ANY ${netmask}.0/24
             if [ $? -ne 0 ];then
                 echo_erro "create initiator group: ${netmask}.0/24 fail"
                 exit 1
