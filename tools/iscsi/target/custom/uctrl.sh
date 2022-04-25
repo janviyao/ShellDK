@@ -34,6 +34,7 @@ do
         elif [[ "${op_mode}" == "create_initiator_group" ]];then
             ig_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 2)
 
+            echo_info "create initiator group: ${netmask}.0/24"
             ${ISCSI_APP_UCTRL} iscsi_create_initiator_group ${ig_id} ANY ${netmask}/24
             if [ $? -ne 0 ];then
                 echo_erro "create initiator group: ${netmask}.0/24 fail"
@@ -59,7 +60,7 @@ do
                 let arr_idx++
             done
 
-            echo_info "create target: ${ISCSI_NODE_BASE}:${targe_name}"
+            echo_info "create target node: ${ISCSI_NODE_BASE}:${targe_name} { ${bdev_name_id_pairs[*]} } { ${pg_id}:${ig_id} }"
             ${ISCSI_APP_UCTRL} iscsi_create_target_node ${ISCSI_NODE_BASE}:${tgt_name} ${tgt_name}_alias "${bdev_name_id_pairs[*]}" ${pg_id}:${ig_id} 256 -d
             if [ $? -ne 0 ];then
                 echo_erro "create target: ${ISCSI_NODE_BASE}:${tgt_name} fail"
@@ -67,6 +68,7 @@ do
             fi
 
             if [[ ${BDEV_TYPE,,} == "cstor" ]];then
+                echo_info "set target node vcns: ${ISCSI_NODE_BASE}:${tgt_name}"
                 ${ISCSI_APP_UCTRL} iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name}
                 if [ $? -ne 0 ];then
                     echo_erro "set vcns target: ${ISCSI_NODE_BASE}:${tgt_name} fail"
