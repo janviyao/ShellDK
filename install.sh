@@ -183,6 +183,21 @@ if ! account_check;then
     exit 1
 fi
 
+OP_MATCH=0
+for func in ${!FUNC_MAP[*]};
+do
+    if contain_str "${NEED_OP}" "${func}"; then
+        let OP_MATCH=OP_MATCH+1
+    fi
+done
+
+if [[ ${OP_MATCH} -eq 0 ]] || [[ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
+    echo_erro "unkown op: ${NEED_OP}"
+    echo ""
+    inst_usage
+    exit -1
+fi
+
 declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
 do_action "${mustDeps[*]}"
 
@@ -203,21 +218,6 @@ MAKE_TD=${parasMap['-j']:-8}
 NEED_NET="${parasMap['-n']}"
 NEED_NET="${NEED_NET:-${parasMap['--net']}}"
 NEED_NET="${NEED_NET:-0}"
-
-OP_MATCH=0
-for func in ${!FUNC_MAP[*]};
-do
-    if contain_str "${NEED_OP}" "${func}"; then
-        let OP_MATCH=OP_MATCH+1
-    fi
-done
-
-if [ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]; then
-    echo_erro "unkown op: ${NEED_OP}"
-    echo ""
-    inst_usage
-    exit -1
-fi
 
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
 echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"

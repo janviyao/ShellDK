@@ -44,6 +44,7 @@ if bool_v "${TARGET_DEBUG_ON}";then
         exit 1
     fi
 
+    ${SUDO} "echo > ${REDIRECT_LOG_FILE}"
     ${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${ISCSI_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
 
     sleep 1

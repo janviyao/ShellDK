@@ -182,7 +182,7 @@ function start_test_func
         sed -i "s/iodepth[ ]*=[ ]*[0-9]\+/iodepth=${depth_value}/g" ${output_dir}/${conf_fname}
 
         sed -i "s/ioengine[ ]*=[ ]*.\+/ioengine=${FIO_IO_ENGINE}/g" ${output_dir}/${conf_fname}
-        if [ "${FIO_IO_ENGINE}" == "libaio" ]; then
+        if [[ "${FIO_IO_ENGINE}" == "libaio" ]]; then
             sed -i "${g_sed_insert_pre}userspace_reap" ${output_dir}/${conf_fname}
 
             let "iodepth_x=${depth_value}/2"
@@ -193,6 +193,8 @@ function start_test_func
             sed -i "${g_sed_insert_pre}iodepth_batch=${iodepth_x}" ${output_dir}/${conf_fname}
             sed -i "${g_sed_insert_pre}iodepth_low=${iodepth_x}" ${output_dir}/${conf_fname}
             sed -i "${g_sed_insert_pre}iodepth_batch_complete=${iodepth_x}" ${output_dir}/${conf_fname}
+        elif [[ "${FIO_IO_ENGINE}" == "io_uring" ]]; then
+            sed -i "${g_sed_insert_pre}sqthread_poll=1" ${output_dir}/${conf_fname}
         fi
 
         sed -i "s/runtime[ ]*=[ ]*[0-9]\+s\?/runtime=${FIO_TEST_TIME}s/g" ${output_dir}/${conf_fname}
