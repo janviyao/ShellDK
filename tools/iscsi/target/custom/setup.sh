@@ -6,7 +6,7 @@ SPDK_ROOT_DIR=$(current_filedir)
 
 SPDK_APP_NAME=iscsi_tgt
 SPDK_CONF_DIR=${MY_HOME}/.local/etc/spdk
-SPDK_SRC_ROOT=${MY_HOME}/vcns_spdk
+SPDK_SRC_ROOT=/home/fastdisk/${MY_NAME}/vcns_spdk
 SPDK_APP_DIR=${SPDK_SRC_ROOT}/build/bin
 SPDK_LOG_DIR=${TEST_LOG_DIR}/${SPDK_APP_NAME}
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log

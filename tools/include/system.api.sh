@@ -48,7 +48,7 @@ function account_check
         #    # not interactive shell
         #    return 1
         #fi
-        USR_NAME=$(whoami)
+        USR_NAME=${MY_NAME}
         read -p "Please input username(${USR_NAME}): " input_val
         USR_NAME=${input_val:-${USR_NAME}}
         global_set_var USR_NAME

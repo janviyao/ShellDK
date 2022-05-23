@@ -31,6 +31,7 @@ unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
 ROOT_PID=$$
+MY_NAME=$(whoami)
 MY_HOME=${HOME}
 GBL_BASE_DIR="/tmp/gbl"
 mkdir -p ${GBL_BASE_DIR}
