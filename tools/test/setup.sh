@@ -19,10 +19,10 @@ if [[ "${LOCAL_IP}" == "172.24.15.166" ]];then
     TEST_TARGET=istgt
     declare -xa SERVER_IP_ARRAY=(172.24.15.166)
     declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
-elif [[ "${LOCAL_IP}" == "11.158.227.241" ]];then
+elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
     TEST_TARGET=custom
-    declare -xa SERVER_IP_ARRAY=(11.158.227.241)
-    declare -xa CLIENT_IP_ARRAY=(11.167.232.47)
+    declare -xa SERVER_IP_ARRAY=(100.69.248.137)
+    declare -xa CLIENT_IP_ARRAY=(11.158.227.241)
 fi
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
