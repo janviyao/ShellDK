@@ -183,6 +183,10 @@ if ! account_check;then
     exit 1
 fi
 
+NEED_OP="${parasMap['-o']}"
+NEED_OP="${NEED_OP:-${parasMap['--op']}}"
+NEED_OP="${NEED_OP:?'Please specify -o option'}"
+
 OP_MATCH=0
 for func in ${!FUNC_MAP[*]};
 do
@@ -208,10 +212,6 @@ REMOTE_INST="${REMOTE_INST:-0}"
 COPY_PKG="${parasMap['-c']}"
 COPY_PKG="${COPY_PKG:-${parasMap['--copy']}}"
 COPY_PKG="${COPY_PKG:-0}"
-
-NEED_OP="${parasMap['-o']}"
-NEED_OP="${NEED_OP:-${parasMap['--op']}}"
-NEED_OP="${NEED_OP:?'Please specify -o option'}"
 
 MAKE_TD=${parasMap['-j']:-8}
 
