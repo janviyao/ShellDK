@@ -1,0 +1,14 @@
+#please do not try to modify anything in this file, it is protected by the gemclient programs automatically
+#reposity for ops,sa and pe
+
+[ops.$releasever.$basearch]
+name=ops basearch
+baseurl=http://yum.tbsite.net/ops/$releasever/$basearch
+gpgcheck=0
+
+[ops.$releasever.noarch]
+name=ops noarch
+baseurl=http://yum.tbsite.net/ops/$releasever/noarch
+gpgcheck=0
+
+

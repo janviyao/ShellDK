@@ -1,0 +1,7 @@
+#please do not modify anything in this file,it is protected. if there is anything you want to do with yum/rp,.please contact with jigang.djg@alibaba-inc.com
+
+[alios.7u2.base.$basearch]
+name=alios
+baseurl=http://yum.tbsite.net/alios/7u2/os/$basearch/
+gpgcheck=0
+

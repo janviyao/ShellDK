@@ -2,6 +2,12 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
+can_access "/usr/bin/meson"             || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "meson-.+\.rpm"; }
+can_access "/usr/bin/ninja"             || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "ninja-build-.+\.rpm"; }
+can_access "/usr/lib64/libuuid.so.*"    || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "libuuid-2.+\.rpm"; }
+can_access "/usr/include/uuid/uuid.h"   || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "libuuid-devel-.+\.rpm"; }
+can_access "/usr/lib64/libjson-c.so.*"  || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "json-c-.+\.rpm"; }
+
 # configure core-dump path
 ${SUDO} ulimit -c unlimited
 ${SUDO} "echo '/core-%e-%s-%u-%g-%p-%t' > /proc/sys/kernel/core_pattern"

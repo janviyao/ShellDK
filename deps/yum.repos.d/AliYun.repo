@@ -1,0 +1,58 @@
+## Note, this file is written by cloud-init on first boot of an instance
+## modifications made here will not survive a re-bundle.
+## if you wish to make changes you can:
+## a.) do the same in user-data
+## b.) add sources in /etc/yum.repos.d/
+## c.) make changes to template file /etc/cloud/templates/sources.list.aliyun.tmpl
+###
+
+# alinux3-module.repo
+#
+
+[alinux3-module]
+name=alinux3-module
+baseurl=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/module/$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/RPM-GPG-KEY-ALINUX-3
+
+# alinux3-updates.repo
+#
+
+[alinux3-updates]
+name=alinux3-updates
+baseurl=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/updates/$basearch/
+gpgkey=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/RPM-GPG-KEY-ALINUX-3
+enabled=1
+gpgcheck=1
+
+# alinux3-plus.repo
+#
+
+[alinux3-plus]
+name=alinux3-plus
+baseurl=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/plus/$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/RPM-GPG-KEY-ALINUX-3
+
+# alinux3-powertools.repo
+#
+
+[alinux3-powertools]
+name=alinux3-powertools
+baseurl=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/powertools/$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/RPM-GPG-KEY-ALINUX-3
+
+# alinux3-os.repo
+#
+
+[alinux3-os]
+name=alinux3-os
+baseurl=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/os/$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=http://mirrors.cloud.aliyuncs.com/alinux/$releasever/RPM-GPG-KEY-ALINUX-3
+
