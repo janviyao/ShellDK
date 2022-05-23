@@ -185,7 +185,7 @@ fi
 
 NEED_OP="${parasMap['-o']}"
 NEED_OP="${NEED_OP:-${parasMap['--op']}}"
-NEED_OP="${NEED_OP:?'Please specify -o option'}"
+#NEED_OP="${NEED_OP:?'Please specify -o option'}"
 
 OP_MATCH=0
 for func in ${!FUNC_MAP[*]};
