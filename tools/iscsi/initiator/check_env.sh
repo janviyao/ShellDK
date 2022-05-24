@@ -15,6 +15,10 @@ if bool_v "${APPLY_SYSCTRL}";then
     ${SUDO} sysctl -p
 fi
 
+can_access "/usr/sbin/iscsid" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
+can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
     ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
@@ -67,10 +71,6 @@ else
         ${SUDO} systemctl stop multipathd
     fi
 fi
-
-can_access "/usr/sbin/iscsid" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
-can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
-can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
 if bool_v "${INITIATOR_DEBUG_ON}";then
     echo_info "enable iscsid debug"
