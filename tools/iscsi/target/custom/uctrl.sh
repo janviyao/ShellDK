@@ -5,6 +5,7 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 
 op_mode="$1"
+echo_info "uctrl: ${op_mode}"
 
 LUN_MAX_NUM=64
 for ini_ip in ${ISCSI_INITIATOR_IP_ARRAY[*]} 
@@ -14,12 +15,17 @@ do
     do
         map_value="${ISCSI_INFO_MAP[${ini_ip}-${index}]}"
         if [ -z "${map_value}" ];then
+            if [ ${index} -eq 0 ];then
+                echo_erro "initiator(${ini_ip}) not configed in custom/private.conf"
+                exit 1
+            fi
             break
         fi
 
         tgt_ip=$(echo "${map_value}" | awk '{ print $1 }')
         if ! array_has "${ISCSI_TARGET_IP_ARRAY[*]}" "${tgt_ip}";then
-            break
+            echo_erro "target(${tgt_ip}) not configed in custom/private.conf"
+            exit 1
         fi
         
         if [[ "${op_mode}" == "create_portal_group" ]];then
@@ -105,3 +111,5 @@ do
         fi 
     done
 done
+
+exit 0
