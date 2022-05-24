@@ -14,11 +14,14 @@ RUN_DIR=`pwd`
 declare -r CMD_STR="$2"
 tmp_file="$(temp_file)"
 
-ppinfos=($(ppid))
-SELF_PID=${ppinfos[1]}
+SELF_PID=$$
+if can_access "ppid";then
+    ppinfos=($(ppid))
+    SELF_PID=${ppinfos[1]}
 
-ppinfos=($(ppid true))
-echo_debug "gitloop [${ppinfos[*]}]"
+    ppinfos=($(ppid true))
+    echo_debug "gitloop [${ppinfos[*]}]"
+fi
 
 function gitloop_exit
 {

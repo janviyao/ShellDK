@@ -1,10 +1,14 @@
 #!/bin/bash
-ppinfos=($(ppid))
-SELF_PID=${ppinfos[1]}
-LAST_PID=${ppinfos[2]}
+SELF_PID=$$
+LAST_PID=$$
+if can_access "ppid";then
+    ppinfos=($(ppid))
+    SELF_PID=${ppinfos[1]}
+    LAST_PID=${ppinfos[2]}
 
-ppinfos=($(ppid true))
-echo_debug "threads [${ppinfos[*]}]"
+    ppinfos=($(ppid true))
+    echo_debug "threads [${ppinfos[*]}]"
+fi
 
 global_kv_append "${LAST_PID}" "${SELF_PID}"
 

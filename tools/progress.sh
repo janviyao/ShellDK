@@ -4,12 +4,16 @@ if can_access "${PRG_FIN}";then
     rm -f ${PRG_FIN}
 fi
 
-ppinfos=($(ppid))
-SELF_PID=${ppinfos[1]}
-LAST_PID=${ppinfos[2]}
+SELF_PID=$$
+LAST_PID=$$
+if can_access "ppid";then
+    ppinfos=($(ppid))
+    SELF_PID=${ppinfos[1]}
+    LAST_PID=${ppinfos[2]}
 
-ppinfos=($(ppid true))
-echo_debug "progress [${ppinfos[*]}]"
+    ppinfos=($(ppid true))
+    echo_debug "progress [${ppinfos[*]}]"
+fi
 
 global_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
 global_kv_append "${LAST_PID}" "${SELF_PID}"
