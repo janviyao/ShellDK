@@ -85,6 +85,7 @@ do
 
     for targe_name in ${ISCSI_TARGET_NAME[*]} 
     do
+        echo_info "login: { ${ISCSI_NODE_BASE}:${targe_name} } from { ${ipaddr} }"
         ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${targe_name} -p ${ipaddr} --login"
         if [ $? -ne 0 ];then
             echo_erro "login { ${ipaddr} } fail"
