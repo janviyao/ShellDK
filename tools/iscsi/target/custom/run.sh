@@ -45,7 +45,7 @@ if bool_v "${TARGET_DEBUG_ON}";then
     fi
 
     ${SUDO} "echo > ${REDIRECT_LOG_FILE}"
-    ${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${ISCSI_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
+    ${SUDO} "nohup bash -c 'export externalIP=${LOCAL_IP}; ${ISCSI_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
 
     sleep 1
     while ! (cat ${ISCSI_APP_LOG} | grep "spdk_app_start" &> /dev/null)
