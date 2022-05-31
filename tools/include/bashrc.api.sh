@@ -44,7 +44,7 @@ SSH_TIMEOUT=600
 
 GBL_ACK_SPF="#"
 GBL_SPF1="^"
-GBL_SPF2="|"
+GBL_SPF2="%"
 GBL_SPF3="!"
 
 function var_exist
