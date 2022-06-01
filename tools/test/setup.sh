@@ -11,7 +11,7 @@ TEST_LOG_DIR="/home/fastdisk/$(date '+%Y%m%d-%H%M%S')"
 KERNEL_DEBUG_ON=false
 TEST_FILL_DATA=false
 KEEP_ENV_STATE=false
-DUMP_SAVE_ON=false
+DUMP_SAVE_ON=true
 APPLY_SYSCTRL=true
 
 # TEST_TARGET=spdk
