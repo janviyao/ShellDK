@@ -55,10 +55,10 @@ function do_rsync
                     if ls '${MY_VIM_DIR}' &> /dev/null;then\
                         source $MY_VIM_DIR/tools/include/system.api.sh;\
                         sudo_it mkdir -p '${xfer_dir}';\
-                        sudo_it chmod -R 755 '${xfer_dir}';\
+                        sudo_it chmod -R 777 '${xfer_dir}';\
                     else\
                         echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}';\
-                        echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod -R 755 '${xfer_dir}';\
+                        echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod -R 777 '${xfer_dir}';\
                     fi\
                     "
                 elif [[ ${x_direct} == "FROM" ]];then
@@ -73,7 +73,7 @@ function do_rsync
 
                     if ! can_access "${xfer_dir}";then
                         ${SUDO} "mkdir -p ${xfer_dir}"
-                        ${SUDO} "chmod -R 755 ${xfer_dir}"
+                        ${SUDO} "chmod -R 777 ${xfer_dir}"
                     fi
                 fi
             fi
