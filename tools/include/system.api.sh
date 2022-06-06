@@ -271,6 +271,61 @@ function cursor_pos
     global_set_var y_pos
 }
 
+function get_iscsi_device
+{
+    local target_ip="$1"
+    local return_file="$2"
+
+    local iscsi_dev_array=($(echo))
+    local iscsi_sessions=$(iscsiadm -m session -P 3)
+
+    if [ -z "${iscsi_sessions}" ];then
+        if can_access "${return_file}";then
+            echo "${iscsi_dev_array[*]}" > ${return_file}
+        else
+            echo "${iscsi_dev_array[*]}"
+        fi
+
+        return 1
+    fi
+
+    local line_idx=1
+    local tgt_lines=$(echo "${iscsi_sessions}" | grep -n "Target:" | awk -F: '{ print $1 }')
+    for line_nr in ${tgt_lines}
+    do
+        if [ ${line_idx} -lt ${line_nr} ];then
+            if echo "${iscsi_sessions}" | sed -n "${line_idx},${line_nr}p" | grep -w -F "${target_ip}" &> /dev/null;then
+                local dev_name=$(echo "${iscsi_sessions}" | sed -n "${line_idx},${line_nr}p" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
+                #echo_debug "line ${line_idx}-${line_nr}=${dev_name}"
+                if [ -n "${dev_name}" ];then
+                    iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_name})
+                fi
+            fi
+        fi
+        line_idx=${line_nr}
+    done
+
+    if echo "${iscsi_sessions}" | sed -n "${line_idx},\$p" | grep -w -F "${target_ip}" &> /dev/null;then
+        local dev_name=$(echo "${iscsi_sessions}" | sed -n "${line_idx},\$p" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
+        #echo_debug "line ${line_idx}-$=${dev_name}"
+        if [ -n "${dev_name}" ];then
+            iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_name})
+        fi
+    fi
+ 
+    if can_access "${return_file}";then
+        echo "${iscsi_dev_array[*]}" > ${return_file}
+    else
+        echo "${iscsi_dev_array[*]}"
+    fi
+    
+    if [ -n "${iscsi_dev_array[*]}" ];then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function get_ipaddr
 {
     local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)

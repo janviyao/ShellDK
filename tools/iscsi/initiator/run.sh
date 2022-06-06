@@ -9,56 +9,19 @@ else
     exit 0
 fi
 
+tmp_file="$(temp_file)"
+for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
+do
+    if ! get_iscsi_device "${ipaddr}" &> /dev/null;then
+        break
+    fi
+
+    ${ISCSI_ROOT_DIR}/initiator/clear.sh
+done
+rm -f ${tmp_file}
+
 ${ISCSI_ROOT_DIR}/initiator/configure.sh
 ${ISCSI_ROOT_DIR}/initiator/check_env.sh
-
-function get_iscsi_device
-{
-    local target_ip="$1"
-    local return_file="$2"
-
-    local start_line=1
-    local iscsi_dev_array=($(echo))
-    local iscsi_sessions=$(iscsiadm -m session -P 3)
-
-    if [ -z "${iscsi_sessions}" ];then
-        if can_access "${return_file}";then
-            echo "${iscsi_dev_array[*]}" > ${return_file}
-        else
-            echo "${iscsi_dev_array[*]}"
-        fi
-        return 0
-    fi
-
-    local tar_lines=$(echo "${iscsi_sessions}" | grep -n "Target:" | awk -F: '{ print $1 }')
-    for tar_line in ${tar_lines}
-    do
-        if [ ${start_line} -lt ${tar_line} ];then
-            local is_match=$(echo "${iscsi_sessions}" | sed -n "${start_line},${tar_line}p" | grep -w -F "${target_ip}")
-            if [ ! -z "${is_match}" ];then
-                local dev_name=$(echo "${iscsi_sessions}" | sed -n "${start_line},${tar_line}p" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
-                #echo_debug "line ${start_line}-${tar_line}=${dev_name}"
-                if [ ! -z "${dev_name}" ];then
-                    iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_name})
-                fi
-            fi
-        fi
-        start_line=${tar_line}
-    done
-    
-    local dev_array=($(echo "${iscsi_sessions}" | sed -n "${start_line},\$p" | grep -w -F "scsi disk" | grep -w -F "running" | awk -v ORS=" " '{ print $4 }'))
-    if [ -n "${dev_array[*]}" ];then
-        #echo_debug "line ${start_line}-$=${dev_array[*]}"
-        iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_array[*]})
-    fi
-    
-    if can_access "${return_file}";then
-        echo "${iscsi_dev_array[*]}" > ${return_file}
-    else
-        echo "${iscsi_dev_array[*]}"
-    fi
-    return 0
-}
 
 for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
 do

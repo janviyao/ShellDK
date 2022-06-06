@@ -23,10 +23,12 @@ if contain_str "${BTASK_LIST}" "ncat";then
     exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
     NCAT_MASTER_ADDR=$(get_ipaddr)
-    NCAT_MASTER_PORT=7888
+    #NCAT_MASTER_PORT=7888
+    NCAT_MASTER_PORT=${RANDOM}
     while ! local_port_available "${NCAT_MASTER_PORT}"
     do
-        let NCAT_MASTER_PORT++
+        #let NCAT_MASTER_PORT++
+        NCAT_MASTER_PORT=${RANDOM}
     done
     echo_debug "master port [${NCAT_MASTER_PORT}]"
 fi
@@ -108,12 +110,16 @@ function ncat_send_msg
         #        sleep 1
         #    done
         #fi
-
+        local try_count=0
         (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         while test $? -ne 0
         do
-            echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
             sleep 0.1
+            let try_count++
+            if [ ${try_count} -ge 300 ];then
+                echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
+                try_count=0
+            fi
             (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
         done
     else
