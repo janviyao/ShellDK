@@ -18,14 +18,14 @@ FIO_CONF_MAP["64k"]="fio.r.w fio.r.r fio.s.w fio.s.r fio.r.rw70"
 FIO_CONF_MAP["1m"]="fio.r.w fio.r.r fio.s.w fio.s.r"
 
 declare -A FIO_JOB_MAP
-FIO_JOB_MAP["4k"]="1 32"
-FIO_JOB_MAP["64k"]="1 32"
-FIO_JOB_MAP["1m"]="1 32"
+FIO_JOB_MAP["4k"]="1 16 32"
+FIO_JOB_MAP["64k"]="1 16 32"
+FIO_JOB_MAP["1m"]="1 16"
 
 declare -A FIO_DEPTH_MAP
-FIO_DEPTH_MAP["4k"]="1 8 32 128"
-FIO_DEPTH_MAP["64k"]="1 8 32 128"
-FIO_DEPTH_MAP["1m"]="1 8 32"
+FIO_DEPTH_MAP["4k"]="1 8 16 32"
+FIO_DEPTH_MAP["64k"]="1 8 16 32"
+FIO_DEPTH_MAP["1m"]="1 8 16 32"
 
 declare -A FIO_HOST_MAP
 #FIO_HOST_MAP["4k"]="172.24.15.162,172.24.15.163 vdb,vdc"

@@ -11,7 +11,8 @@ SPDK_APP_DIR=${SPDK_SRC_ROOT}/build/bin
 SPDK_LOG_DIR=${TEST_LOG_DIR}/${SPDK_APP_NAME}
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log
 SPDK_APP_UCTRL="${SUDO} ${SPDK_SRC_ROOT}/scripts/rpc.py"
-SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0XFF --shm-id=1 --iova-mode=va --wait-for-rpc"
+#SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0XFF --shm-id=1 --iova-mode=va --wait-for-rpc"
+SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0XFFFFFFFF --shm-id=1 --iova-mode=va"
 
 ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 
