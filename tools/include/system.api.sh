@@ -129,10 +129,10 @@ function linux_info
         local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
         for ndev in ${net_arr[*]}
         do
-            local speed=$($SUDO ethtool ${ndev} | grep "Speed:")
+            local speed=$($SUDO ethtool ${ndev} 2>/dev/null | grep "Speed:")
             speed=$(replace_regex "${speed}" '^\s*' "")
 
-            local nmode=$($SUDO ethtool ${ndev} | grep "Duplex:")
+            local nmode=$($SUDO ethtool ${ndev} 2>/dev/null | grep "Duplex:")
             nmode=$(replace_regex "${nmode}" '^\s*' "")
 
             if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
@@ -298,7 +298,7 @@ function get_iscsi_device
     local return_file="$2"
 
     local iscsi_dev_array=($(echo))
-    local iscsi_sessions=$(iscsiadm -m session -P 3)
+    local iscsi_sessions=$(iscsiadm -m session -P 3 2>/dev/null)
 
     if [ -z "${iscsi_sessions}" ];then
         if can_access "${return_file}";then
