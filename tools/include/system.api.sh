@@ -122,7 +122,17 @@ function linux_info
     printf "[%${width}s]: %s\n" "HW Platform" "${value}"
 
     value=$(getconf LONG_BIT)
-    printf "[%${width}s]: %s\n" "CPU mode" "${value}"
+
+    local cpu_list=$(lscpu | grep "list" | awk -F: '{ print $2 }')
+    cpu_list=$(replace_regex "${cpu_list}" '^\s*' "")
+
+    local core_thread=$(lscpu | grep "Thread" | awk -F: '{ print $2 }')
+    core_thread=$(replace_regex "${core_thread}" '^\s*' "")
+
+    local socket_core=$(lscpu | grep "socket" | awk -F: '{ print $2 }')
+    socket_core=$(replace_regex "${socket_core}" '^\s*' "")
+
+    printf "[%${width}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
 
     if can_access "ethtool";then
         printf "[%${width}s]: \n" "Network card"
