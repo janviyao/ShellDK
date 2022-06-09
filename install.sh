@@ -340,7 +340,11 @@ function inst_env
 
     # timer
     TIMER_RUNDIR=/var/run/timer
-    ${SUDO} mkdir -p ${TIMER_RUNDIR}
+    if ! can_access "${TIMER_RUNDIR}";then
+        ${SUDO} mkdir -p ${TIMER_RUNDIR}
+        ${SUDO} chmod 777 ${TIMER_RUNDIR}
+    fi
+
     if can_access "${TIMER_RUNDIR}/timer.conf";then
         sed -i "/.\+MY_HOME.\+/d" ${TIMER_RUNDIR}/timerc
         echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
