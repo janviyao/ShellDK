@@ -96,7 +96,7 @@ function sudo_it
 function linux_info
 {
     local value=""
-    local width="13"
+    local width="15"
 
     if can_access "/etc/centos-release";then
         value=$(cat /etc/centos-release)
@@ -123,6 +123,27 @@ function linux_info
 
     value=$(getconf LONG_BIT)
     printf "[%${width}s]: %s\n" "CPU mode" "${value}"
+
+    if can_access "ethtool";then
+        printf "[%${width}s]: %s\n" "Network card" ""
+        local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
+        for ndev in ${net_arr[*]}
+        do
+            local speed=$($SUDO ethtool ${ndev} | grep "Speed:")
+            speed=$(replace_regex "${speed}" '^\s*' "")
+
+            local nmode=$($SUDO ethtool ${ndev} | grep "Duplex:")
+            nmode=$(replace_regex "${nmode}" '^\s*' "")
+
+            if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
+                printf "  %${width}s: %s\n" "${ndev}" "${speed}  ${nmode}"
+            fi
+        done
+    fi
+
+    if can_access "iscsiadm";then
+        printf "[%${width}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
+    fi
 }
 
 function du_find
