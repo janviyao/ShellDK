@@ -338,6 +338,17 @@ function inst_env
     fi
     ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
 
+    # timer
+    TIMER_RUNDIR=/var/run/timer
+    ${SUDO} mkdir -p ${TIMER_RUNDIR}
+    if can_access "${TIMER_RUNDIR}/timer.conf";then
+        sed -i "/.\+MY_HOME.\+/d" ${TIMER_RUNDIR}/timerc
+        echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
+    else
+        echo "#!/bin/bash"                > ${TIMER_RUNDIR}/timerc
+        echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
+    fi
+
     if can_access "/var/spool/cron/$(whoami)";then
         sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
         echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
