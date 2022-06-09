@@ -38,6 +38,7 @@ INST_GUIDE["tclsh8.6"]="${CMD1};install_from_tar 'tcl.+\.tar\.gz';rm -fr tcl*/"
 INST_GUIDE["expect"]="${CMD1};install_from_tar 'tcl.+\.tar\.gz';${CMD1};install_from_tar 'expect.+\.tar\.gz';rm -fr expect*/;rm -fr tcl*/"
 INST_GUIDE["unzip"]="${CMD1};install_from_rpm 'unzip-.+\.rpm'"
 
+INST_GUIDE["iperf3"]="${CMD1};install_from_rpm 'iperf3-.+\.rpm'"
 INST_GUIDE["ss"]="${CMD1};install_from_rpm 'iproute-.+\.rpm'"
 INST_GUIDE["rsync"]="${CMD1};install_from_rpm 'rsync-.+\.rpm'"
 INST_GUIDE["nc"]="${CMD1};install_from_rpm 'nmap-ncat-.+\.rpm'"
