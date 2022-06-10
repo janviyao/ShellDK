@@ -24,11 +24,11 @@ if contain_str "${BTASK_LIST}" "ncat";then
 
     NCAT_MASTER_ADDR=$(get_ipaddr)
     #NCAT_MASTER_PORT=7888
-    NCAT_MASTER_PORT=${RANDOM}
+    NCAT_MASTER_PORT=$(($RANDOM + $RANDOM))
     while ! local_port_available "${NCAT_MASTER_PORT}"
     do
         #let NCAT_MASTER_PORT++
-        NCAT_MASTER_PORT=${RANDOM}
+        NCAT_MASTER_PORT=$(($RANDOM + $RANDOM))
     done
     echo_debug "master port [${NCAT_MASTER_PORT}]"
 fi

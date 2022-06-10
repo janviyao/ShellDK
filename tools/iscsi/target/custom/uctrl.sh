@@ -74,8 +74,9 @@ do
             fi
 
             if [[ ${BDEV_TYPE,,} == "cstor" ]];then
-                echo_info "iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name} -r 3 -c 2 -b 512 --lr-size 4096 --unit-vendor \"CloudByte\" --unit-product \"iSCSI\" --unit-revision \"0001\" --replicas \"6361:6361 6362:6362 6363:6363\""
-                ${ISCSI_APP_UCTRL} iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name} -r 3 -c 2 -b 512 --lr-size 4096 --unit-vendor "CloudByte" --unit-product "iSCSI" --unit-revision "0001" --replicas "6361:6361 6362:6362 6363:6363"
+                #echo_info "iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name} -r 3 -c 2 -b 512 --lr-size 4096 --unit-vendor \"CloudByte\" --unit-product \"iSCSI\" --unit-revision \"0001\" --replicas \"6361:6361 6362:6362 6363:6363\""
+                echo_info "iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name}"
+                ${ISCSI_APP_UCTRL} iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name}
                 if [ $? -ne 0 ];then
                     echo_erro "set vcns target: ${ISCSI_NODE_BASE}:${tgt_name} fail"
                     exit 1

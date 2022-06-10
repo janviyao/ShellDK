@@ -53,7 +53,7 @@ if bool_v "${TARGET_DEBUG_ON}";then
         sleep 1
     done
 else
-    ${SUDO} "nohup bash -c 'export externalIP=127.0.0.1; ${ISCSI_APP_RUNTIME} &> /dev/null' &"
+    ${SUDO} "nohup bash -c 'export externalIP=${LOCAL_IP}; ${ISCSI_APP_RUNTIME} &> /dev/null' &"
     sleep 30
 fi
 

@@ -10,21 +10,22 @@ FIO_RAMP_TIME=10
 FIO_THREAD_ON=1
 FIO_VERIFY_ON=0
 
-declare -a FIO_BS_ARRAY=(4k 64k 1m)
+#declare -a FIO_BS_ARRAY=(4k 64k 1m)
+declare -a FIO_BS_ARRAY=(4k 1m)
 
 declare -A FIO_CONF_MAP
 FIO_CONF_MAP["4k"]="fio.r.w fio.r.r fio.s.w fio.s.r fio.r.rw70"
-FIO_CONF_MAP["64k"]="fio.r.w fio.r.r fio.s.w fio.s.r fio.r.rw70"
+#FIO_CONF_MAP["64k"]="fio.r.w fio.r.r fio.s.w fio.s.r fio.r.rw70"
 FIO_CONF_MAP["1m"]="fio.r.w fio.r.r fio.s.w fio.s.r"
 
 declare -A FIO_JOB_MAP
 FIO_JOB_MAP["4k"]="1 16 32"
-FIO_JOB_MAP["64k"]="1 16 32"
+#FIO_JOB_MAP["64k"]="1 16 32"
 FIO_JOB_MAP["1m"]="1 16"
 
 declare -A FIO_DEPTH_MAP
 FIO_DEPTH_MAP["4k"]="1 8 16 32"
-FIO_DEPTH_MAP["64k"]="1 8 16 32"
+#FIO_DEPTH_MAP["64k"]="1 8 16 32"
 FIO_DEPTH_MAP["1m"]="1 8 16 32"
 
 declare -A FIO_HOST_MAP
