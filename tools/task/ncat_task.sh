@@ -256,7 +256,6 @@ function _ncat_thread_main
         if [[ "${req_ctrl}" == "EXIT" ]];then
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
             #mdata_set_var "master_work=false"
-            mdata_kv_unset_val "NCAT_PORT" "${NCAT_MASTER_PORT}"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 

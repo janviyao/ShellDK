@@ -33,7 +33,7 @@ unalias rm &> /dev/null || true
 ROOT_PID=$$
 MY_NAME=$(whoami)
 MY_HOME=${HOME}
-GBL_BASE_DIR="/var/run/mybash"
+GBL_BASE_DIR="/tmp/gbl"
 mkdir -p ${GBL_BASE_DIR}
 BASHLOG="${GBL_BASE_DIR}/bash.log"
 SUDO="$MY_VIM_DIR/tools/sudo.sh"
