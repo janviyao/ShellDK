@@ -21,14 +21,14 @@ ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh
 
 if bool_v "${TARGET_DEBUG_ON}";then
-    REDIRECT_LOG_FILE=$(global_kv_get "${ISCSI_APP_LOG}")
+    REDIRECT_LOG_FILE=$(mdata_kv_get "${ISCSI_APP_LOG}")
     if  can_access "${REDIRECT_LOG_FILE}";then
         echo "EXIT" > ${REDIRECT_LOG_FILE}
     fi
 
     logr_task_ctrl_sync "REDIRECT" "${ISCSI_APP_LOG}" 
     count=0
-    while ! global_kv_has "${ISCSI_APP_LOG}"
+    while ! mdata_kv_has_key "${ISCSI_APP_LOG}"
     do
         echo_info "wait for redirect fini ..."
         sleep 0.1
@@ -38,7 +38,7 @@ if bool_v "${TARGET_DEBUG_ON}";then
         fi
     done
 
-    REDIRECT_LOG_FILE=$(global_kv_get "${ISCSI_APP_LOG}")
+    REDIRECT_LOG_FILE=$(mdata_kv_get "${ISCSI_APP_LOG}")
     if ! can_access "${REDIRECT_LOG_FILE}";then
         echo_erro "redirect file invalid: { ${REDIRECT_LOG_FILE} }"
         exit 1

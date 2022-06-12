@@ -15,16 +15,16 @@ if can_access "ppid";then
     echo_debug "progress [${ppinfos[*]}]"
 fi
 
-global_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
-global_kv_append "${LAST_PID}" "${SELF_PID}"
+mdata_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
+mdata_kv_append "${LAST_PID}" "${SELF_PID}"
 
 function progress_exit
 {
     echo_debug "gitloop exit signal"
     trap "" EXIT
 
-    global_kv_unset_key "${SELF_PID}"
-    global_kv_unset_val "${LAST_PID}" "${SELF_PID}"
+    mdata_kv_unset_key "${SELF_PID}"
+    mdata_kv_unset_val "${LAST_PID}" "${SELF_PID}"
 
     exit 0
 }

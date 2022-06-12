@@ -72,12 +72,12 @@ function _redirect_func
     mkfifo ${log_pipe}
     exec {pipe_fd}<>${log_pipe}
 
-    global_kv_set "${log_file}" "${log_pipe}"
+    mdata_kv_set "${log_file}" "${log_pipe}"
     while read line
     do
         if [[ "${line}" == "EXIT" ]];then
             eval "exec ${pipe_fd}>&-"
-            global_kv_unset_key "${log_file}"
+            mdata_kv_unset_key "${log_file}"
             rm -f ${log_pipe}
             return
         fi
@@ -170,7 +170,7 @@ function _logr_thread
 
     touch ${GBL_LOGR_PIPE}.run
     echo_debug "logr_bg_thread[${self_pid}] start"
-    global_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}"
     _logr_thread_main
     echo_debug "logr_bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run

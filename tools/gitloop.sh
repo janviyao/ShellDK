@@ -28,8 +28,8 @@ function gitloop_exit
     echo_debug "gitloop exit signal"
     trap "" EXIT
 
-    global_kv_unset_key "gitloop-quit"
-    global_kv_unset_key "${SELF_PID}"
+    mdata_kv_unset_key "gitloop-quit"
+    mdata_kv_unset_key "${SELF_PID}"
     rm -f ${tmp_file}
 
     exit 0
@@ -41,15 +41,15 @@ function gitloop_signal
     echo_debug "gitloop exception signal"
     trap "" SIGINT SIGTERM SIGKILL
 
-    global_kv_set "gitloop-quit" "true"
+    mdata_kv_set "gitloop-quit" "true"
 
-    local pid_array=($(global_kv_get "${SELF_PID}"))
+    local pid_array=($(mdata_kv_get "${SELF_PID}"))
     echo_debug "gitloop-childs: ${pid_array[*]}"
     for pid in ${pid_array[*]} 
     do
         echo_debug "kill gitloop-child: ${pid}"
         process_signal KILL ${pid} &> /dev/null
-        global_kv_unset_key "${pid}"
+        mdata_kv_unset_key "${pid}"
     done
 
     gitloop_exit
@@ -69,13 +69,13 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
 fi
 
 cursor_pos
-global_get_var x_pos
+mdata_get_var x_pos
 let x_pos--
 y_pos=0
 
 for gitdir in `ls -d */`
 do
-    if global_kv_bool "gitloop-quit";then
+    if mdata_kv_bool "gitloop-quit";then
         break
     fi
 
@@ -91,7 +91,7 @@ do
         $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos} &
         prg_pid=$!
         sleep 2
-        prg_cmd=$(global_kv_get "${prg_pid}")
+        prg_cmd=$(mdata_kv_get "${prg_pid}")
 
         $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${tmp_file}"
         if [ $? -ne 0 ];then

@@ -33,7 +33,7 @@ unalias rm &> /dev/null || true
 ROOT_PID=$$
 MY_NAME=$(whoami)
 MY_HOME=${HOME}
-GBL_BASE_DIR="/tmp/gbl"
+GBL_BASE_DIR="/var/run/mybash"
 mkdir -p ${GBL_BASE_DIR}
 BASHLOG="${GBL_BASE_DIR}/bash.log"
 SUDO="$MY_VIM_DIR/tools/sudo.sh"
@@ -111,3 +111,6 @@ else
 
     trap "_bash_exit" EXIT
 fi
+
+METADATA_DIR="${BASH_WORK_DIR}/metadata"
+mkdir -p ${METADATA_DIR} 

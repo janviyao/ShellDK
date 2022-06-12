@@ -8,7 +8,7 @@ if contain_str "${BTASK_LIST}" "mdat";then
     exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
 fi
 
-function mdat_task_alive
+function mdata_task_alive
 {
     if can_access "${GBL_MDAT_PIPE}.run";then
         return 0
@@ -17,7 +17,7 @@ function mdat_task_alive
     fi
 }
 
-function mdat_task_ctrl
+function mdata_task_ctrl
 {
     local _body_="$1"
     local _pipe_="$2"
@@ -40,7 +40,7 @@ function mdat_task_ctrl
     return 0
 }
 
-function mdat_task_ctrl_sync
+function mdata_task_ctrl_sync
 {
     local _body_="$1"
     local _pipe_="$2"
@@ -64,7 +64,7 @@ function mdat_task_ctrl_sync
     return 0
 }
 
-function global_set_var
+function mdata_set_var
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -83,11 +83,11 @@ function global_set_var
         _xval_="$(eval "echo \"\$${_xkey_}\"")"
     fi
 
-    global_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
+    mdata_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
     return $?
 }
 
-function global_get_var
+function mdata_get_var
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -104,12 +104,12 @@ function global_get_var
         return 0
     fi
     
-    _xval_=$(global_kv_get "${_xkey_}" "${_pipe_}")
+    _xval_=$(mdata_kv_get "${_xkey_}" "${_pipe_}")
     eval "declare -g ${_xkey_}=\"${_xval_}\""
     return 0
 }
 
-function global_kv_has
+function mdata_kv_has_key
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -140,7 +140,40 @@ function global_kv_has
     fi
 }
 
-function global_kv_bool
+function mdata_kv_has_val
+{
+    local _xkey_="$1"
+    local _xval_="$2"
+    local _pipe_="$3"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${GBL_MDAT_PIPE})"
+        return 1
+    fi
+
+    echo_file "debug" "mdat check: [$@]"
+    
+    if [ -z "${_pipe_}" ];then
+        _pipe_="${GBL_MDAT_PIPE}"
+    fi
+
+    if ! can_access "${_pipe_}.run";then
+        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        return 1
+    fi
+    
+    echo_file "debug" "mdat wait for ${_pipe_}"
+    wait_value "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+
+    if bool_v "${ack_value}";then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
+function mdata_kv_bool
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -153,7 +186,7 @@ function global_kv_bool
 
     echo_file "debug" "mdat bool: [$@]"
      
-    _xval_=$(global_kv_get "${_xkey_}" "${_pipe_}")
+    _xval_=$(mdata_kv_get "${_xkey_}" "${_pipe_}")
     if bool_v "${_xval_}";then
         return 0
     else
@@ -161,7 +194,7 @@ function global_kv_bool
     fi
 }
 
-function global_kv_unset_key
+function mdata_kv_unset_key
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -181,11 +214,11 @@ function global_kv_unset_key
     fi
 
     echo_file "debug" "mdat unset-key: [${_xkey_}]"
-    mdat_task_ctrl "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    mdata_task_ctrl "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
     return $?
 }
 
-function global_kv_unset_val
+function mdata_kv_unset_val
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -206,11 +239,11 @@ function global_kv_unset_val
     fi
 
     echo_file "debug" "mdat unset-val: [${_xkey_} = \"${_xval_}\"]"
-    mdat_task_ctrl "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdata_task_ctrl "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return $?
 }
 
-function global_kv_append
+function mdata_kv_append
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -231,11 +264,11 @@ function global_kv_append
     fi
     
     echo_file "debug" "mdat append: [${_xkey_} = \"${_xval_}\"]"
-    mdat_task_ctrl "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdata_task_ctrl "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
 
-function global_kv_set
+function mdata_kv_set
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -256,11 +289,11 @@ function global_kv_set
     fi
     
     echo_file "debug" "mdat set: [${_xkey_} = \"${_xval_}\"]"
-    mdat_task_ctrl "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdata_task_ctrl "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
 
-function global_kv_get
+function mdata_kv_get
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -290,32 +323,32 @@ function global_kv_get
     return 0
 }
 
-function global_kv_print
+function mdata_kv_print
 {
     local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
-        mdat_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
+        mdata_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
     else
-        mdat_task_ctrl "KEY_PRT${GBL_SPF1}${_xkey_}"
+        mdata_task_ctrl "KEY_PRT${GBL_SPF1}${_xkey_}"
     fi
 }
 
-function global_kv_clear
+function mdata_kv_clear
 {
     local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
-        mdat_task_ctrl "KEY_CLR${GBL_SPF1}ALL"
+        mdata_task_ctrl "KEY_CLR${GBL_SPF1}ALL"
     else
-        mdat_task_ctrl "KEY_CLR${GBL_SPF1}${_xkey_}"
+        mdata_task_ctrl "KEY_CLR${GBL_SPF1}${_xkey_}"
     fi
 }
 
 function _bash_mdat_exit
 { 
     echo_debug "mdat signal exit"
-    mdat_task_ctrl "EXIT" 
+    mdata_task_ctrl "EXIT" 
 }
 
 function _mdat_thread_main
@@ -370,6 +403,17 @@ function _mdat_thread_main
                 echo "true" > ${ack_pipe}
             else
                 echo_debug "mdat key: [${_xkey_}] absent for [${ack_pipe}]"
+                echo "false" > ${ack_pipe}
+            fi
+            ack_ctrl="donot need ack"
+        elif [[ "${req_ctrl}" == "VAL_HAS" ]];then
+            local _xkey_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
+            local _xval_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
+            if contain_str "${_global_map_[${_xkey_}]}" "${_xval_}";then
+                echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] exist for [${ack_pipe}]"
+                echo "true" > ${ack_pipe}
+            else
+                echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] absent for [${ack_pipe}]"
                 echo "false" > ${ack_pipe}
             fi
             ack_ctrl="donot need ack"
@@ -456,7 +500,7 @@ function _mdat_thread
 
     touch ${GBL_MDAT_PIPE}.run
     echo_debug "mdat_bg_thread[${self_pid}] start"
-    global_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}"
     _mdat_thread_main
     echo_debug "mdat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run

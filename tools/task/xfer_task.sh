@@ -36,7 +36,7 @@ function do_rsync
         do
             if [[ ${ipaddr} != ${LOCAL_IP} ]];then
                 if [[ ${x_direct} == "TO" ]];then
-                    global_get_var USR_PASSWORD
+                    mdata_get_var USR_PASSWORD
                     USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
 
                     local xfer_dir=${xfer_des}
@@ -331,7 +331,7 @@ function _xfer_thread_main
 
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-                global_get_var USR_PASSWORD
+                mdata_get_var USR_PASSWORD
                 USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
  
                 sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
@@ -364,7 +364,7 @@ function _xfer_thread
 
     touch ${GBL_XFER_PIPE}.run
     echo_debug "xfer_bg_thread[${self_pid}] start"
-    global_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}"
     _xfer_thread_main
     echo_debug "xfer_bg_thread[${self_pid}] exit"
     rm -f ${GBL_XFER_PIPE}.run

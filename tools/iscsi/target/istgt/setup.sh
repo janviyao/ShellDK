@@ -15,16 +15,16 @@ ISTGT_APP_RUNTIME="${ISTGT_APP_DIR}/${ISTGT_APP_NAME}"
 ISCSI_NODE_BASE=$(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*NodeBase\s+" | awk '{ print $2 }' | grep -P "[0-9a-zA-Z\-\.]+" -o)
 ISCSI_TARGET_NAME=($(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*TargetName\s+" | awk '{ print $2 }'))
 
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE" "${ISCSI_NODE_BASE}"
-kvconf_add "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[*]})"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE" "${ISCSI_NODE_BASE}"
+kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[*]})"
 
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_CONF_DIR"    "${ISTGT_CONF_DIR}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_NAME"    "${ISTGT_APP_NAME}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_SRC"     "${ISTGT_SRC_ROOT}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_DIR"     "${ISTGT_APP_DIR}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_LOG_DIR"     "${ISTGT_LOG_DIR}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_LOG"     "${ISTGT_APP_LOG}"
-kvconf_add "${TEST_SUIT_ENV}" "ISCSI_APP_RUNTIME" "\"${ISTGT_APP_RUNTIME}\""
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_CONF_DIR"    "${ISTGT_CONF_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_NAME"    "${ISTGT_APP_NAME}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_SRC"     "${ISTGT_SRC_ROOT}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_DIR"     "${ISTGT_APP_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_LOG_DIR"     "${ISTGT_LOG_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_LOG"     "${ISTGT_APP_LOG}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_RUNTIME" "\"${ISTGT_APP_RUNTIME}\""
 
 
 

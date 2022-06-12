@@ -1,4 +1,12 @@
 #!/bin/bash
+function lock_run
+{
+    (
+        flock -x 8  #flock文件锁，-x表示独享锁
+        exec "$@"
+    ) 8<>${GBL_BASE_DIR}/base.lock
+}
+
 function is_me
 {
     local user_name="$1"
@@ -35,9 +43,9 @@ function account_check
     local input_val=""
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-        global_get_var USR_NAME
+        mdata_get_var USR_NAME
         if [ -n "${USR_NAME}" ];then
-            global_get_var USR_PASSWORD
+            mdata_get_var USR_PASSWORD
             export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
             return 0
         fi
@@ -51,13 +59,13 @@ function account_check
         USR_NAME=${MY_NAME}
         read -p "Please input username(${USR_NAME}): " input_val
         USR_NAME=${input_val:-${USR_NAME}}
-        global_set_var USR_NAME
+        mdata_set_var USR_NAME
         export USR_NAME
 
         read -s -p "Please input password: " input_val
         echo ""
         USR_PASSWORD="$(system_encrypt "${input_val}")"
-        global_set_var USR_PASSWORD
+        mdata_set_var USR_PASSWORD
 
         USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
         export USR_PASSWORD
@@ -79,7 +87,7 @@ function sudo_it
             while [ -z "${USR_PASSWORD}" ]
             do
                 sleep 0.02
-                global_get_var USR_PASSWORD
+                mdata_get_var USR_PASSWORD
                 let count++
                 [ ${count} -lt 1500 ] && return 1
             done
@@ -298,8 +306,8 @@ function cursor_pos
     local x_pos=$(echo "${pos}" | cut -d ';' -f 1)
     local y_pos=$(echo "${pos}" | cut -d ';' -f 2)
 
-    global_set_var x_pos
-    global_set_var y_pos
+    mdata_set_var x_pos
+    mdata_set_var y_pos
 }
 
 function get_iscsi_device

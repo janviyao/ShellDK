@@ -72,4 +72,5 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     fi
 fi
 
-global_kv_append "BASH_TASK" "${ROOT_PID}"
+mdata_kv_append "BASH_TASK" "${ROOT_PID}"
+

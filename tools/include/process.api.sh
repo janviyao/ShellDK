@@ -100,7 +100,7 @@ function process_signal
     local para_arr=($@)
     local pinfo=""
     local pid=""
-    local exclude_pid_array=($(global_kv_get "BASH_TASK"))
+    local exclude_pid_array=($(mdata_kv_get "BASH_TASK"))
 
     [ ${#para_arr[*]} -eq 0 ] && return 1
 

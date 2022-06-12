@@ -23,13 +23,11 @@ if contain_str "${BTASK_LIST}" "ncat";then
     exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
     NCAT_MASTER_ADDR=$(get_ipaddr)
-    #NCAT_MASTER_PORT=7888
-    NCAT_MASTER_PORT=$(($RANDOM + 32767))
+    NCAT_MASTER_PORT=$(($$%32767 + 32767))
     while ! local_port_available "${NCAT_MASTER_PORT}"
     do
-        NCAT_MASTER_PORT=$(($RANDOM + 32767))
-    done
-    echo_debug "master port [${NCAT_MASTER_PORT}]"
+        NCAT_MASTER_PORT=$(($RANDOM%$$ + 32767))
+    done 
 fi
 
 function remote_ncat_alive
@@ -227,14 +225,14 @@ function _bash_ncat_exit
 function _ncat_thread_main
 {
     local master_work=true
-    global_set_var "master_work"
+    mdata_set_var "master_work"
  
     while bool_v "${master_work}" 
     do
         echo_debug "ncat listening into port[${NCAT_MASTER_PORT}] ..."
         local ncat_body=$(ncat_recv_msg "${NCAT_MASTER_PORT}")
         if [ -z "${ncat_body}" ];then
-            global_get_var "master_work"
+            mdata_get_var "master_work"
             continue
         fi
         echo_debug "ncat recv: [${ncat_body}]" 
@@ -246,7 +244,7 @@ function _ncat_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
                 echo_erro "ack pipe invalid: ${ack_pipe}"
-                global_get_var "master_work"
+                mdata_get_var "master_work"
                 continue
             fi
         fi
@@ -257,14 +255,15 @@ function _ncat_thread_main
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
-            #global_set_var "master_work=false"
+            #mdata_set_var "master_work=false"
+            mdata_kv_unset_val "NCAT_PORT" "${NCAT_MASTER_PORT}"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
             local var_name=$(echo "${req_body}" | cut -d "=" -f 1)
             local var_valu=$(echo "${req_body}" | cut -d "=" -f 2)
-            global_set_var "${var_name}=${var_valu}"
+            mdata_set_var "${var_name}=${var_valu}"
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
@@ -272,7 +271,7 @@ function _ncat_thread_main
             echo "ACK" > ${ack_pipe}
         fi
 
-        global_get_var "master_work"
+        mdata_get_var "master_work"
     done
 }
 
@@ -294,7 +293,7 @@ function _ncat_thread
 
     touch ${GBL_NCAT_PIPE}.run
     echo_debug "ncat_bg_thread[${self_pid}] start"
-    global_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}"
     _ncat_thread_main
     echo_debug "ncat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_NCAT_PIPE}.run

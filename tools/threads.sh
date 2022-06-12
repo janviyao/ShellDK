@@ -10,7 +10,7 @@ if can_access "ppid";then
     echo_debug "threads [${ppinfos[*]}]"
 fi
 
-global_kv_append "${LAST_PID}" "${SELF_PID}"
+mdata_kv_append "${LAST_PID}" "${SELF_PID}"
 
 declare -r all_num="$1"
 declare -r concurrent_num="$2"
@@ -58,7 +58,7 @@ function thread_exit
     echo "" >&${THREAD_FD}
     rm -fr ${THREAD_DIR}
 
-    global_kv_unset_val "${LAST_PID}" "${SELF_PID}"
+    mdata_kv_unset_val "${LAST_PID}" "${SELF_PID}"
     exit 0
 }
 trap "thread_exit" EXIT
@@ -68,14 +68,14 @@ function thread_signal
     echo_debug "threads exception signal"
     trap "" SIGINT SIGTERM SIGKILL
  
-    local pid_array=($(global_kv_get "${SELF_PID}"))
+    local pid_array=($(mdata_kv_get "${SELF_PID}"))
     for task in ${pid_array[*]} 
     do
         echo_debug "kill thread-task: ${task}"
         process_signal KILL ${task} &> /dev/null
     done
 
-    global_kv_unset_key "${SELF_PID}"
+    mdata_kv_unset_key "${SELF_PID}"
 
     thread_exit
     exit 0
@@ -117,12 +117,12 @@ do
             echo $? >> ${THREAD_RET}
             echo "" >&${THREAD_FD}
 
-            global_kv_unset_val "${SELF_PID}" "${self_pid}"
+            mdata_kv_unset_val "${SELF_PID}" "${self_pid}"
             exit 0
         } &
 
         bgpid=$!
-        global_kv_append "${SELF_PID}" "${bgpid}"
+        mdata_kv_append "${SELF_PID}" "${bgpid}"
     else
         break
     fi

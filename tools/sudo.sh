@@ -46,7 +46,7 @@ if [ $UID -ne 0 ]; then
 fi
 
 RET_VAR="sudo_ret$$"
-GET_RET="${RET_VAR}=\$?; global_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
+GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
 
 # trap - EXIT : prevent from removing global directory
 PASS_ENV="\
@@ -100,7 +100,8 @@ expect << EOF
     }
 EOF
 
-global_get_var ${RET_VAR}
-global_kv_unset_key ${RET_VAR}
+mdata_get_var ${RET_VAR}
+mdata_kv_unset_key ${RET_VAR}
 
 eval "exit \$${RET_VAR}"
+
