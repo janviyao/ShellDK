@@ -30,8 +30,9 @@ if contain_str "${BTASK_LIST}" "ncat";then
     NCAT_MASTER_PORT=$(($$%32767 + 32767))
     while ! local_port_available "${NCAT_MASTER_PORT}"
     do
-        NCAT_MASTER_PORT=$(($RANDOM%$$ + 32767))
+        NCAT_MASTER_PORT=$(($RANDOM + 32767))
     done 
+    echo_debug "ncat [${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT}] available"
 fi
 
 function remote_ncat_alive
