@@ -40,10 +40,12 @@ do
         exit 1
     fi
 
-    ${SUDO} "iscsiadm -m node -o update -n node.session.nr_sessions -v ${ISCSI_SESSION_NR}"
-    if [ $? -ne 0 ];then
-        echo_erro "update node.session.nr_sessions { ${ipaddr} } fail"
-        exit 1
+    if bool_v "${ISCSI_MULTIPATH_ON}";then
+        ${SUDO} "iscsiadm -m node -o update -n node.session.nr_sessions -v ${ISCSI_SESSION_NR}"
+        if [ $? -ne 0 ];then
+            echo_erro "update node.session.nr_sessions { ${ipaddr} } fail"
+            exit 1
+        fi
     fi
 
     for targe_name in ${ISCSI_TARGET_NAME[*]} 
