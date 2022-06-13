@@ -10,7 +10,11 @@ function local_port_available
     if ss -tln | awk '{ print $4 }' | grep -F ":${port}" &> /dev/null;then
         return 1
     else
-        return 0
+        if netstat -nap 2>/dev/null | awk '{ print $4 }' | grep -F ":${port}" &> /dev/null;then
+            return 1
+        else
+            return 0
+        fi
     fi
 }
 
