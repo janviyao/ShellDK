@@ -1,5 +1,6 @@
 #!/bin/bash
-TIMER_RUNDIR=/var/run/timer
+GBL_BASE_DIR="/tmp/gbl"
+TIMER_RUNDIR=${GBL_BASE_DIR}/timer
 if [ -f ${TIMER_RUNDIR}/timerc ];then
     source ${TIMER_RUNDIR}/timerc
 
@@ -44,4 +45,10 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
             cat /dev/null > ${BASHLOG}
         fi
     fi
+
+    process_kill timer.sh
+    echo_debug "timer finish"
+else
+    echo_debug "lost: ${TIMER_RUNDIR}/timerc"
 fi
+

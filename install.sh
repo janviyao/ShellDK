@@ -339,7 +339,7 @@ function inst_env
     ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
 
     # timer
-    TIMER_RUNDIR=/var/run/timer
+    TIMER_RUNDIR=${GBL_BASE_DIR}/timer
     if ! can_access "${TIMER_RUNDIR}";then
         ${SUDO} mkdir -p ${TIMER_RUNDIR}
         ${SUDO} chmod 777 ${TIMER_RUNDIR}

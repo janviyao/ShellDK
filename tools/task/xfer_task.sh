@@ -280,7 +280,7 @@ function xfer_task_ctrl_sync
 function _bash_xfer_exit
 { 
     echo_debug "xfer signal exit"
-    xfer_task_ctrl "EXIT"
+    xfer_task_ctrl_sync "EXIT"
  
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit

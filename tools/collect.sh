@@ -18,7 +18,7 @@ TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.vim"
 #TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.astylerc"
 
 # Start to tar 
-can_access "${EXPORT_FILE}" && rm -f ${EXPORT_FILE}
+can_access "${EXPORT_FILE}" && $SUDO rm -f ${EXPORT_FILE}
 for item in ${TAR_WHAT}
 do
     TAR_DIR=$(fname2path "${item}")

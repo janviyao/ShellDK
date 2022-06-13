@@ -58,7 +58,7 @@ function ctrl_task_ctrl_sync
 function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit"
-    ctrl_task_ctrl "EXIT"
+    ctrl_task_ctrl_sync "EXIT"
  
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit

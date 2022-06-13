@@ -52,7 +52,7 @@ function logr_task_ctrl_sync
 function _bash_logr_exit
 { 
     echo_debug "logr signal exit" 
-    logr_task_ctrl "CTRL" "EXIT" 
+    logr_task_ctrl_sync "CTRL" "EXIT" 
 }
 
 function _redirect_func

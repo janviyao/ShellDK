@@ -223,7 +223,7 @@ function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
     if contain_str "${BTASK_LIST}" "ncat";then
-        ncat_task_ctrl "EXIT${GBL_SPF1}$$"
+        ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
     fi 
 }
 
@@ -260,6 +260,10 @@ function _ncat_thread_main
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
+            if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
+                echo_debug "ack to [${ack_pipe}]"
+                echo "ACK" > ${ack_pipe}
+            fi
             #mdata_set_var "master_work=false"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud

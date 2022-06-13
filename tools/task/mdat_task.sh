@@ -348,7 +348,7 @@ function mdata_kv_clear
 function _bash_mdat_exit
 { 
     echo_debug "mdat signal exit"
-    mdata_task_ctrl "EXIT" 
+    mdata_task_ctrl_sync "EXIT" 
 }
 
 function _mdat_thread_main
