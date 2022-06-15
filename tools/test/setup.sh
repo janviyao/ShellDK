@@ -6,7 +6,7 @@ echo "#!/bin/bash" > ${TEST_SUIT_ENV}
 WORK_ROOT_DIR=${GBL_BASE_DIR}/test
 TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
-TEST_LOG_DIR="/home/fastdisk/test_report/$(date '+%Y%m%d-%H%M%S')"
+TEST_LOG_DIR="/home/fastdisk/report_$(date '+%Y%m%d')/$(date '+%H%M%S')"
 
 #TESTCASE_SUITE="fill,custom,full"
 TESTCASE_SUITE="custom"
