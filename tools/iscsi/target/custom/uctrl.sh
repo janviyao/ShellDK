@@ -95,15 +95,15 @@ do
                 bdev_name=$(echo "${bdev_lun_map}" | cut -d ":" -f 1)
                 
                 if [[ ${BDEV_TYPE,,} == "malloc" ]];then
-                    echo_info "bdev_malloc_create -b ${bdev_name} 10240 4096"
-                    ${ISCSI_APP_UCTRL} bdev_malloc_create -b ${bdev_name} 10240 4096
+                    echo_info "bdev_malloc_create -b ${bdev_name} ${BDEV_SIZE_MB} 4096"
+                    ${ISCSI_APP_UCTRL} bdev_malloc_create -b ${bdev_name} ${BDEV_SIZE_MB} 4096
                 elif [[ ${BDEV_TYPE,,} == "null" ]];then
-                    echo_info "bdev_null_create ${bdev_name} 10240 4096"
-                    ${ISCSI_APP_UCTRL} bdev_null_create ${bdev_name} 10240 4096
+                    echo_info "bdev_null_create ${bdev_name} ${BDEV_SIZE_MB} 4096"
+                    ${ISCSI_APP_UCTRL} bdev_null_create ${bdev_name} ${BDEV_SIZE_MB} 4096
                 elif [[ ${BDEV_TYPE,,} == "cstor" ]];then
                     bdev_id=$(string_regex "${bdev_name}" "\d+")
-                    echo_info "bdev_cstor_create -i ${bdev_id} --size 10GB --rsize 512"
-                    ${ISCSI_APP_UCTRL} bdev_cstor_create -i ${bdev_id} --size 10GB --rsize 512
+                    echo_info "bdev_cstor_create -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
+                    ${ISCSI_APP_UCTRL} bdev_cstor_create -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512
                 fi
 
                 if [ $? -ne 0 ];then

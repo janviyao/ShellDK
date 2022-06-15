@@ -662,6 +662,8 @@ function file_count
 
     can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
+    local -i index=0
+    local -a c_array=($(echo ""))
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
@@ -671,6 +673,8 @@ function file_count
                 readable=false
                 break
             fi
+            c_array[${index}]="${file}"
+            let index++
         fi
     done
 
@@ -683,6 +687,13 @@ function file_count
         rm -f ${tmp_file}
         echo "${fcount}"
     fi
+
+    for file in ${c_array[*]}
+    do
+        if test -r ${file};then
+            sudo_it "chmod -r ${file}"
+        fi
+    done
 }
 
 function file_size
@@ -692,6 +703,8 @@ function file_size
 
     can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
+    local -i index=0
+    local -a c_array=($(echo ""))
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
@@ -701,6 +714,8 @@ function file_size
                 readable=false
                 break
             fi
+            c_array[${index}]="${file}"
+            let index++
         fi
     done
 
@@ -713,6 +728,13 @@ function file_size
         rm -f ${tmp_file}
         echo "${fcount}"
     fi
+
+    for file in ${c_array[*]}
+    do
+        if test -r ${file};then
+            sudo_it "chmod -r ${file}"
+        fi
+    done
 }
 
 function export_all

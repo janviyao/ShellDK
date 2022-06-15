@@ -19,7 +19,7 @@ do
     fi
 done
 
-if bool_v "${TEST_FILL_DATA}";then
+if contain_str "${TESTCASE_SUITE}" "fill";then
     ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
     if [ $? -ne 0 ];then
         echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/fill.sh"
@@ -27,10 +27,20 @@ if bool_v "${TEST_FILL_DATA}";then
     fi
 fi
 
-${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/full.sh"
-if [ $? -ne 0 ];then
-    echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/full.sh"
-    exit 1
+if contain_str "${TESTCASE_SUITE}" "custom";then
+    ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/custom.sh"
+    if [ $? -ne 0 ];then
+        echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/custom.sh"
+        exit 1
+    fi
+fi
+
+if contain_str "${TESTCASE_SUITE}" "full";then
+    ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/full.sh"
+    if [ $? -ne 0 ];then
+        echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/full.sh"
+        exit 1
+    fi
 fi
 
 exit 0

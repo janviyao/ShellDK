@@ -11,7 +11,7 @@ FIO_THREAD_ON=1
 FIO_VERIFY_ON=0
 
 declare -A FIO_TEST_MAP
-FIO_TEST_MAP["testcase-1"]="fio.s.w 1m 1 1 172.24.15.162,172.24.15.163 vdb,vdc"
+FIO_TEST_MAP["testcase-1"]="fio.r.w 4k 32 32"
 
 declare -A FIO_HOST_MAP
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
@@ -29,3 +29,5 @@ do
     testcase=${FIO_TEST_MAP[${test_key}]}
     FIO_TEST_MAP[${test_key}]="${testcase} $(echo "${!FIO_HOST_MAP[*]}" | tr ' ' ',') $(echo "${FIO_HOST_MAP[*]}" | tr ' ' ',')"
 done
+
+#FIO_TEST_MAP["testcase-x"]="fio.s.w 1m 1 1 172.24.15.162,172.24.15.163 vdb,vdc"

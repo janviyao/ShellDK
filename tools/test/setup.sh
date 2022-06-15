@@ -8,8 +8,9 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 TEST_LOG_DIR="/home/fastdisk/test_report/$(date '+%Y%m%d-%H%M%S')"
 
+#TESTCASE_SUITE="fill,custom,full"
+TESTCASE_SUITE="custom"
 KERNEL_DEBUG_ON=false
-TEST_FILL_DATA=false
 KEEP_ENV_STATE=false
 DUMP_SAVE_ON=true
 APPLY_SYSCTRL=true
@@ -32,7 +33,7 @@ echo "" >> ${TEST_SUIT_ENV}
 
 kvconf_set "${TEST_SUIT_ENV}" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[*]})"
 kvconf_set "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*]})"
-kvconf_set "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP"   "(['${LOCAL_IP}']='empty')"
+#kvconf_set "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP"   "(['${LOCAL_IP}']='empty')"
 echo "" >> ${TEST_SUIT_ENV}
 
 kvconf_set "${TEST_SUIT_ENV}" "WORK_ROOT_DIR"   "${WORK_ROOT_DIR}"
@@ -43,7 +44,7 @@ kvconf_set "${TEST_SUIT_ENV}" "DUMP_SAVE_ON"    "${DUMP_SAVE_ON}"
 
 kvconf_set "${TEST_SUIT_ENV}" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
 kvconf_set "${TEST_SUIT_ENV}" "TEST_TARGET"     "${TEST_TARGET}"
-kvconf_set "${TEST_SUIT_ENV}" "TEST_FILL_DATA"  "${TEST_FILL_DATA}"
+kvconf_set "${TEST_SUIT_ENV}" "TESTCASE_SUITE"  "\"${TESTCASE_SUITE}\""
 
 kvconf_set "${TEST_SUIT_ENV}" "TEST_ROOT_DIR"   "${TEST_ROOT_DIR}"
 kvconf_set "${TEST_SUIT_ENV}" "TEST_LOG_DIR"    "${TEST_LOG_DIR}"

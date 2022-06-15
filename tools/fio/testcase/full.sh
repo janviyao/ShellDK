@@ -28,40 +28,6 @@ FIO_DEPTH_MAP["4k"]="1 8 16 32"
 #FIO_DEPTH_MAP["64k"]="1 8 16 32"
 FIO_DEPTH_MAP["1m"]="1 8 16 32"
 
-declare -A FIO_HOST_MAP
-#FIO_HOST_MAP["4k"]="172.24.15.162,172.24.15.163 vdb,vdc"
-#FIO_HOST_MAP["64k"]="172.24.15.162,172.24.15.163 vdb,vdc"
-#FIO_HOST_MAP["1m"]="172.24.15.162,172.24.15.163 vdb,vdc"
-
-for ipaddr in ${CLIENT_IP_ARRAY[*]}
-do
-    if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
-        device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
-        kvconf_set "${TEST_SUIT_ENV}" "HOST_DISK_MAP['${ipaddr}']" "'${device_array[*]}'"
-
-        for bs_value in ${FIO_BS_ARRAY[*]}
-        do
-            if [ -z "${FIO_HOST_MAP[${bs_value}]}" ];then
-                FIO_HOST_MAP[${bs_value}]="${ipaddr} $(echo "${device_array[*]}" | tr ' ' ',')"
-            else
-                ipaddr_list=$(echo "${FIO_HOST_MAP[${bs_value}]}" | awk '{print $1}')
-                if ! contain_str "${ipaddr_list}" "${ipaddr}";then
-                    ipaddr_list="${ipaddr_list},${ipaddr}"
-                fi
-
-                device_list=$(echo "${FIO_HOST_MAP[${bs_value}]}" | awk '{print $2}')
-                if ! contain_str "${device_list}" "$(echo "${device_array[*]}" | tr ' ' ',')";then
-                    device_list="${device_list},$(echo "${device_array[*]}" | tr ' ' ',')"
-                fi
-
-                FIO_HOST_MAP[${bs_value}]="${ipaddr_list} ${device_list}"
-            fi
-        done
-    else
-        echo_erro "device empty from { ${ipaddr} }"
-    fi
-done
-
 declare -A FIO_TEST_MAP
 declare -i case_num=1
 for bs_value in ${FIO_BS_ARRAY[*]}
@@ -73,7 +39,7 @@ do
             for depth_value in ${FIO_DEPTH_MAP[${bs_value}]}
             do
                 test_key="testcase-${case_num}"
-                test_val="${template} ${bs_value} ${job_value} ${depth_value} ${FIO_HOST_MAP[${bs_value}]}"
+                test_val="${template} ${bs_value} ${job_value} ${depth_value}"
 
                 FIO_TEST_MAP["${test_key}"]="${test_val}"
                 let case_num++
@@ -81,4 +47,21 @@ do
             done
         done
     done
+done
+
+declare -A FIO_HOST_MAP
+for ipaddr in ${CLIENT_IP_ARRAY[*]}
+do
+    if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
+        device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
+        FIO_HOST_MAP[${ipaddr}]="$(echo "${device_array[*]}" | tr ' ' ',')"
+    else
+        echo_erro "device empty from { ${ipaddr} }"
+    fi
+done
+
+for test_key in ${!FIO_TEST_MAP[*]}
+do
+    testcase=${FIO_TEST_MAP[${test_key}]}
+    FIO_TEST_MAP[${test_key}]="${testcase} $(echo "${!FIO_HOST_MAP[*]}" | tr ' ' ',') $(echo "${FIO_HOST_MAP[*]}" | tr ' ' ',')"
 done
