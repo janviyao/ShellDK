@@ -29,5 +29,5 @@ if [ -b /dev/${DEV_NAME} ]; then
         SHOW_INFO="${SHOW_INFO} queue:{ ${DEV_INFO} }"
     fi
 
-    echo_debug "${SHOW_INFO}"
+    echo_info "${SHOW_INFO}"
 fi

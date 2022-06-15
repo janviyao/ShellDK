@@ -38,9 +38,9 @@ function run_fio_func
     fi
     
     if bool_v "${FIO_VERIFY_ON}"; then
-        echo_info "testcs-(${case_index}): { ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} | verify }"
+        echo_info "testcs-(${case_index}): { [${host_array}] | [${devs_array}] | ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} | verify }"
     else
-        echo_info "testcs-(${case_index}): { ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} }"
+        echo_info "testcs-(${case_index}): { [${host_array}] | [${devs_array}] | ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} }"
     fi
 
     echo > ${output_dir}/hosts
@@ -96,7 +96,7 @@ function run_fio_func
     local test_lat=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $4 }')
     local test_spend=$(echo ${fio_result} | sed "s/[{}]//g" | awk -F "," '{ print $5 }')
     
-    echo_info "result-(${case_index}): { ${start_time} | [${devs_array[*]}] | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
+    echo_info "result-(${case_index}): { ${start_time} | ${test_iops} | ${test_bw}MB/s | ${test_lat}ms | ${test_spend}s }"
     echo_info "result-log: { ${output_dir}/${fio_ofile} }"
 
     if [ -z "${test_lat}" ]; then
