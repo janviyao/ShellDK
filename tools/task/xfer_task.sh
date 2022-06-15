@@ -111,21 +111,7 @@ function rsync_to
 
     local xfer_ips=($@)
     if [ -z "${xfer_ips[*]}" ];then        
-        local count=0
-        while read line
-        do
-            local ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
-            [ -z "${ipaddr}" ] && continue 
-
-            if ip addr | grep -F "${ipaddr}" &> /dev/null;then
-                continue
-            fi
-
-            if ! contain_str "${xfer_ips[*]}" "${ipaddr}";then
-                xfer_ips[${count}]="${ipaddr}"
-                let count++
-            fi
-        done < /etc/hosts
+        xfer_ips=($(get_hosts_ip))
     fi
 
     if ! can_access "${xfer_src}";then
@@ -182,21 +168,7 @@ function rsync_p2p_to
 
     local xfer_ips=($@)
     if [ -z "${xfer_ips[*]}" ];then        
-        local count=0
-        while read line
-        do
-            local ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
-            [ -z "${ipaddr}" ] && continue 
-
-            if ip addr | grep -F "${ipaddr}" &> /dev/null;then
-                continue
-            fi
-
-            if ! contain_str "${xfer_ips[*]}" "${ipaddr}";then
-                xfer_ips[${count}]="${ipaddr}"
-                let count++
-            fi
-        done < /etc/hosts
+        xfer_ips=($(get_hosts_ip))
     fi
 
     if ! can_access "${xfer_src}";then
