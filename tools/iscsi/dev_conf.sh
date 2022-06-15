@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 DEV_NAME=$1
 DEV_QD=$2
@@ -30,4 +30,6 @@ if [ -b /dev/${DEV_NAME} ]; then
     fi
 
     echo_info "${SHOW_INFO}"
+else
+    echo_erro "/dev/${DEV_NAME} not present"
 fi

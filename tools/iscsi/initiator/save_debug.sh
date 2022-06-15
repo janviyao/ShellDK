@@ -23,7 +23,7 @@ fi
 
 if can_access "${TEST_SUIT_ENV}";then
     echo_info "Save: ${TEST_SUIT_ENV}"
-    ${SUDO} cp -f ${TEST_SUIT_ENV} ${TEST_LOG_DIR}
+    ${SUDO} cp -f ${TEST_SUIT_ENV} ${INITIATOR_LOG_DIR}
 fi
 
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then

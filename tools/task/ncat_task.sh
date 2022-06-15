@@ -26,7 +26,7 @@ if contain_str "${BTASK_LIST}" "ncat";then
     can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
     exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
-    NCAT_MASTER_ADDR=$(get_ipaddr)
+    NCAT_MASTER_ADDR=$(get_local_ip)
     NCAT_MASTER_PORT=$(($$%32767 + 32767))
     while ! local_port_available "${NCAT_MASTER_PORT}"
     do

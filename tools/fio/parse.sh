@@ -314,7 +314,7 @@ function summary_calc
     echo_debug "******write_late: { ${g_write_lat} } avg: { ${avg_write_latency} }"
 
     local result_num=${#g_output_arr[*]}
-    if FLOAT_IF "${g_read_runtime} > 0";then
+    if EXPR_IF "${g_read_runtime} > 0";then
         local avg_run_time=$(FLOAT "${g_read_runtime}/${result_num}" 1)
     else
         local avg_run_time=$(FLOAT "${g_write_runtime}/${result_num}" 1)

@@ -365,7 +365,30 @@ function get_iscsi_device
     fi
 }
 
-function get_ipaddr
+function get_hosts_ip
+{
+    local -a ip_array
+
+    local -i count=0
+    while read line
+    do
+        local ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
+        [ -z "${ipaddr}" ] && continue 
+
+        if ip addr | grep -F "${ipaddr}" &> /dev/null;then
+            continue
+        fi
+
+        if ! contain_str "${ip_array[*]}" "${ipaddr}";then
+            ip_array[${count}]="${ipaddr}"
+            let count++
+        fi
+    done < /etc/hosts
+
+    echo "${ip_array[*]}" 
+}
+
+function get_local_ip
 {
     local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
     local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
@@ -401,4 +424,4 @@ function get_ipaddr
 
     echo "127.0.0.1"
 }
-LOCAL_IP="$(get_ipaddr)"
+LOCAL_IP="$(get_local_ip)"

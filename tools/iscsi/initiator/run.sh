@@ -40,7 +40,7 @@ do
         exit 1
     fi
 
-    if bool_v "${ISCSI_MULTIPATH_ON}";then
+    if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
         ${SUDO} "iscsiadm -m node -o update -n node.session.nr_sessions -v ${ISCSI_SESSION_NR}"
         if [ $? -ne 0 ];then
             echo_erro "update node.session.nr_sessions { ${ipaddr} } fail"
@@ -59,13 +59,13 @@ do
     done
 done
 
-while ! (iscsiadm -m session -P 3 | grep "Attached scsi disk" &> /dev/null)
+while ! (${SUDO} iscsiadm -m session -P 3 | grep "Attached scsi disk" &> /dev/null)
 do
     echo_info "wait iscsi devices loading ..."
     sleep 2
 done
 
-if bool_v "${ISCSI_MULTIPATH_ON}";then
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     ${SUDO} multipath -r
     count=300
     while ! can_access "/dev/dm-*" 
@@ -81,7 +81,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}";then
 fi
 
 iscsi_device_array=($(echo))
-if bool_v "${ISCSI_MULTIPATH_ON}";then
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     iscsi_device_array=($(cd /dev; ls dm-*))
     for mdev in ${iscsi_device_array[*]}
     do

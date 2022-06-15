@@ -70,7 +70,7 @@ do
     lba_val=$(FLOAT "${lba_exp}" 0)
     
     #echo "${lba_tim} >= ${LBA_S} && ${lba_tim} <= ${LBA_E}"
-    if FLOAT_IF "${lba_tim} >= ${LBA_S}" && FLOAT_IF "${lba_tim} <= ${LBA_E}";then
+    if EXPR_IF "${lba_tim} >= ${LBA_S}" && EXPR_IF "${lba_tim} <= ${LBA_E}";then
         related_line=$(cat ${FNAME} | grep " ${lba_exp} " | sed "s/[ ]\+/ /g" | sort -n -k 4)
         echo "${related_line}" >> ${FNAME}.sort 
 
@@ -79,7 +79,7 @@ do
         echo "${dc_content}" >> ${FNAME}.dc
     fi
 
-    if FLOAT_IF "${lba_tim} > ${LBA_E}";then
+    if EXPR_IF "${lba_tim} > ${LBA_E}";then
         break
     fi
 done < ${FNAME}.lba

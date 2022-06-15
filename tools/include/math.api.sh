@@ -32,7 +32,7 @@ function FLOAT
     return 0
 }
 
-function FLOAT_IF
+function EXPR_IF
 {
     local expre="$@"
 

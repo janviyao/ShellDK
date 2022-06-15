@@ -11,5 +11,5 @@ echo_debug "Infinite time：${CMD_STR}"
 ${CMD_STR}
 while [ $? -ne 0 ]
 do
-    ${CMD_STR}
+    eval "${CMD_STR}"
 done

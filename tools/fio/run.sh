@@ -1,5 +1,15 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
+echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
+for ipaddr in ${SERVER_IP_ARRAY[*]}
+do
+    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${FIO_ROOT_DIR}/client.sh"
+    if [ $? -ne 0 ];then
+        echo_erro "fail: ${FIO_ROOT_DIR}/client.sh"
+        exit 1
+    fi
+done
 
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
@@ -10,14 +20,7 @@ do
     fi
 done
 
-for ipaddr in ${SERVER_IP_ARRAY[*]}
-do
-    ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${FIO_ROOT_DIR}/client.sh"
-    if [ $? -ne 0 ];then
-        echo_erro "fail: ${FIO_ROOT_DIR}/client.sh"
-        exit 1
-    fi
-done
+${FIO_ROOT_DIR}/check_env.sh
 
 if contain_str "${TESTCASE_SUITE}" "fill";then
     ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
@@ -44,4 +47,3 @@ if contain_str "${TESTCASE_SUITE}" "full";then
 fi
 
 exit 0
-

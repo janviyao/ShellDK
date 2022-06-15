@@ -15,9 +15,14 @@ if bool_v "${APPLY_SYSCTRL}";then
     ${SUDO} sysctl -p
 fi
 
-can_access "/usr/sbin/iscsid" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
-can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
-can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+can_access "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+    can_access "/usr/sbin/dmsetup" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
+    can_access "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-libs-.+\.rpm"; }
+    can_access "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-libs-.+\.rpm"; }
+    can_access "/usr/sbin/multipathd" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-.+\.rpm"; }
+    can_access "/usr/lib64/libaio.so.*"                 || { cd ${MY_VIM_DIR}/deps; install_from_rpm "libaio-.+\.rpm"; }
+fi
 
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
@@ -38,39 +43,8 @@ else
     ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
 fi
 
-if bool_v "${ISCSI_MULTIPATH_ON}";then
-    can_access "/usr/sbin/dmsetup" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
-    can_access "/usr/lib64/libdevmapper.so.*" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-libs-.+\.rpm"; }
-    can_access "/usr/lib64/libmultipath.so.*" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-multipath-libs-.+\.rpm"; }
-    can_access "/usr/sbin/multipathd" || { cd ${ISCSI_ROOT_DIR}/deps; install_from_rpm "device-mapper-multipath-.+\.rpm"; }
-
-    if ! (lsmod | grep dm_multipath &> /dev/null);then
-        echo_info "multipath modprobe"
-        ${SUDO} modprobe dm-multipath
-        ${SUDO} modprobe dm-round-robin
-
-        if ! (lsmod | grep dm_multipath &> /dev/null);then
-            echo_erro "multipath.ko donnot loaded" 
-            exit 1
-        fi
-    fi
-
-    can_access "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
-    if process_exist "multipathd";then
-        if bool_v "${ISCSI_MUTLIPATH_RESTART}";then
-            echo_info "multipath restart"
-            ${SUDO} systemctl restart multipathd
-        fi
-    else
-        echo_info "multipath start"
-        ${SUDO} systemctl start multipathd
-    fi
-else
-    if process_exist "multipathd";then
-        echo_info "multipath stop"
-        ${SUDO} systemctl stop multipathd
-    fi
-fi
+can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
 if bool_v "${INITIATOR_DEBUG_ON}";then
     echo_info "enable iscsid debug"
@@ -103,6 +77,35 @@ else
         echo_info "iscsid start"
         ${SUDO} systemctl start iscsid
         ${SUDO} systemctl start iscsid.socket
+    fi
+fi
+
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+    if ! (lsmod | grep dm_multipath &> /dev/null);then
+        echo_info "multipath modprobe"
+        ${SUDO} modprobe dm-multipath
+        ${SUDO} modprobe dm-round-robin
+
+        if ! (lsmod | grep dm_multipath &> /dev/null);then
+            echo_erro "multipath.ko donnot loaded" 
+            exit 1
+        fi
+    fi
+
+    can_access "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
+    if process_exist "multipathd";then
+        if bool_v "${ISCSI_MUTLIPATH_RESTART}";then
+            echo_info "multipath restart"
+            ${SUDO} systemctl restart multipathd
+        fi
+    else
+        echo_info "multipath start"
+        ${SUDO} systemctl start multipathd
+    fi
+else
+    if process_exist "multipathd";then
+        echo_info "multipath stop"
+        ${SUDO} systemctl stop multipathd
     fi
 fi
 

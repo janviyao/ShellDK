@@ -21,10 +21,9 @@ ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
 
 if bool_v "${TARGET_DEBUG_ON}";then
-    #${SUDO} "nohup ${ISCSI_APP_RUNTIME} &"
-    ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG}
+    ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG} &"
 else
-    ${ISCSI_APP_RUNTIME}
+    ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &"
 fi
 
 if can_access "${ISCSI_APP_LOG}";then

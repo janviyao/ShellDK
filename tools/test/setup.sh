@@ -24,6 +24,21 @@ elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
     TEST_TARGET=custom
     declare -xa SERVER_IP_ARRAY=(100.69.248.137)
     declare -xa CLIENT_IP_ARRAY=(100.69.248.139)
+else
+    TEST_TARGET=istgt
+    declare -a ip_array=($(get_hosts_ip))
+    if [ ${#ip_array[*]} -ge 1 ];then
+        if [ ${#ip_array[*]} -ge 2 ];then
+            declare -xa SERVER_IP_ARRAY=(${ip_array[0]})
+            declare -xa CLIENT_IP_ARRAY=(${ip_array[1]})
+        else
+            declare -xa SERVER_IP_ARRAY=(${ip_array[0]})
+            declare -xa CLIENT_IP_ARRAY=(${ip_array[0]})
+        fi
+    else
+        echo_erro "server ip and client ip is empty"
+        exit 1
+    fi
 fi
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}

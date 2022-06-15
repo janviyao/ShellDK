@@ -67,6 +67,11 @@ if can_access "${BASHLOG}";then
     ${SUDO} cp -f ${BASHLOG} ${ISCSI_LOG_DIR}
 fi
 
+if can_access "${TEST_SUIT_ENV}";then
+    echo_info "Save: ${TEST_SUIT_ENV}"
+    ${SUDO} cp -f ${TEST_SUIT_ENV} ${ISCSI_LOG_DIR}
+fi
+
 if [[ ${LOCAL_IP} != ${CONTROL_IP} ]];then
     ${SUDO} "chmod -R 777 ${ISCSI_LOG_DIR}"
     rsync_to ${ISCSI_LOG_DIR} ${CONTROL_IP}

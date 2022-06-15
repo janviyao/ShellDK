@@ -2,6 +2,8 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
+source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
+
 ${SUDO} "mkdir -p ${ISCSI_LOG_DIR}; chmod -R 777 ${ISCSI_LOG_DIR}" 
 
 LOCAL_CONF="${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/conf/istgt.conf"
@@ -24,6 +26,11 @@ do
         echo_info "   add: Netmask ${netmask}.0/24 @${match_ln}"
     fi
 done
+
+device_path=$(fname2path "${DEVICE_NAME}")
+${SUDO} "mkdir -p ${device_path}; chmod -R 777 ${device_path}" 
+${SUDO} fallocate -l ${DEVICE_SIZE} ${DEVICE_NAME}
+sed -i "s#/dev/vdb#${DEVICE_NAME}#g" ${ISCSI_CONF_DIR}/istgt.conf
 
 exit 0
 
