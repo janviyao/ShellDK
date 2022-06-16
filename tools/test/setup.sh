@@ -32,12 +32,13 @@ else
             declare -xa SERVER_IP_ARRAY=(${ip_array[0]})
             declare -xa CLIENT_IP_ARRAY=(${ip_array[1]})
         else
-            declare -xa SERVER_IP_ARRAY=(${ip_array[0]})
+            declare -xa SERVER_IP_ARRAY=(${LOCAL_IP})
             declare -xa CLIENT_IP_ARRAY=(${ip_array[0]})
         fi
     else
-        echo_erro "server ip and client ip is empty"
-        exit 1
+        declare -xa SERVER_IP_ARRAY=(${LOCAL_IP})
+        declare -xa CLIENT_IP_ARRAY=(${LOCAL_IP})
+        echo_warn "/etc/hosts not config"
     fi
 fi
 
