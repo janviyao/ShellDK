@@ -606,29 +606,24 @@ else
     declare -A routeMap
     declare -a ip_array=($(echo "${other_paras[*]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
-        declare -i count=0
-        while read line
+        declare -a ip_array=($(get_hosts_ip))
+        for ipaddr in ${ip_array[*]}
         do
+            line=$(grep -F "${ipaddr}" /etc/hosts)
             ipaddr=$(echo "${line}" | awk '{ print $1 }')
             hostnm=$(echo "${line}" | awk '{ print $2 }')
-            match_regex "${ipaddr}" "^\d+\.\d+\.\d+\.\d+$" || continue
-
-            [ -z "${ipaddr}" ] && continue 
-            if ip addr | grep -F "${ipaddr}" &> /dev/null;then
-                continue
-            fi
-
+            
             echo_info "HostName: ${hostnm} IP: ${ipaddr}"
             if ! contain_str "${ip_array[*]}" "${ipaddr}";then
                 ip_array[${count}]="${ipaddr}"
                 routeMap[${ipaddr}]="${hostnm}"
                 let count++
             fi
-        done < /etc/hosts
+        done
     else
         for ipaddr in ${ip_array[*]}
         do
-            hostnm=$(cat /etc/hosts | grep -F "${ipaddr}" | awk '{ print $2 }')
+            hostnm=$(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }')
             echo_info "HostName: ${hostnm} IP: ${ipaddr}"
             routeMap[${ipaddr}]="${hostnm}"
         done
