@@ -335,6 +335,7 @@ function inst_env
         echo "*.o"      >> ${MY_HOME}/.rsync.exclude
         echo "*.swp"    >> ${MY_HOME}/.rsync.exclude
         echo "*.cmd"    >> ${MY_HOME}/.rsync.exclude
+        echo "*.out"    >> ${MY_HOME}/.rsync.exclude
     fi
     ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
 
