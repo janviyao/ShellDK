@@ -323,6 +323,7 @@ function inst_env
     echo "source ${ROOT_DIR}/bashrc" >> ${MY_HOME}/.bashrc
     #echo "source ${ROOT_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
 
+    can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
     if ! can_access "${MY_HOME}/.rsync.exclude";then
         echo "build/*"  >  ${MY_HOME}/.rsync.exclude
         echo "dpdk*/*"  >> ${MY_HOME}/.rsync.exclude
