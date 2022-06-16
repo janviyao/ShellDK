@@ -614,10 +614,8 @@ else
             hostnm=$(echo "${line}" | awk '{ print $2 }')
             
             echo_info "HostName: ${hostnm} IP: ${ipaddr}"
-            if ! contain_str "${ip_array[*]}" "${ipaddr}";then
-                ip_array[${count}]="${ipaddr}"
+            if ! contain_str "${!routeMap[*]}" "${ipaddr}";then
                 routeMap[${ipaddr}]="${hostnm}"
-                let count++
             fi
         done
     else
