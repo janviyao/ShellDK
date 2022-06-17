@@ -2,8 +2,8 @@
 CUR_DIR=$(pwd)
 tracefs=$(sed -ne 's/^tracefs \(.*\) tracefs.*/\1/p' /proc/mounts)
 
-echo nop > ${tracefs}/current_tracer
 echo 0 > ${tracefs}/tracing_on
+echo nop > ${tracefs}/current_tracer
 
 #echo function > ${tracefs}/current_tracer
 # 当current_tracer为function时，设备func_stack_trace会记录每个函数调用栈，与set_ftrace_filter配合使用，否则影响系统性能
@@ -65,8 +65,9 @@ echo 1 > ${tracefs}/tracing_on
 echo "*** Wait {$(ps -q ${TRACE_PID} -o comm=)[${TRACE_PID}]} exit ..."
 wait ${TRACE_PID}
 
-echo 0 > ${tracefs}/tracing_on
 cat ${tracefs}/trace > ${CUR_DIR}/ftrace.log
+echo 0 > ${tracefs}/tracing_on
+echo nop > ${tracefs}/current_tracer
 
 echo "*** Ftrace Output: ${CUR_DIR}/ftrace.log"
 
@@ -91,3 +92,6 @@ cat ${CUR_DIR}/ftrace.log | grep "| \@" > ${CUR_DIR}/ftrace.100ms.log
 
 echo "*** the function exceeded 1 sec into { ${CUR_DIR}/ftrace.1s.log }"
 cat ${CUR_DIR}/ftrace.log | grep "| \$" > ${CUR_DIR}/ftrace.1s.log
+
+echo "*** exceeded 100 sec all into { ${CUR_DIR}/ftrace.max.log }"
+cat ${CUR_DIR}/ftrace.log | grep -E "\| \$|\| \@|\| \*|\| #|\| !" > ${CUR_DIR}/ftrace.max.log

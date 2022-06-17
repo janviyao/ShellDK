@@ -183,16 +183,16 @@ function start_test_func
 
         sed -i "s/ioengine[ ]*=[ ]*.\+/ioengine=${FIO_IO_ENGINE}/g" ${output_dir}/${conf_fname}
         if [[ "${FIO_IO_ENGINE}" == "libaio" ]]; then
-            sed -i "${g_sed_insert_pre}userspace_reap" ${output_dir}/${conf_fname}
+            #sed -i "${g_sed_insert_pre}userspace_reap" ${output_dir}/${conf_fname}
 
-            let "iodepth_x=${depth_value}/2"
+            local iodepth_x=$((${depth_value}/2))
             if [ ${iodepth_x} -le 0 ]; then
                 iodepth_x=${depth_value}
             fi
 
-            sed -i "${g_sed_insert_pre}iodepth_batch=${iodepth_x}" ${output_dir}/${conf_fname}
-            sed -i "${g_sed_insert_pre}iodepth_low=${iodepth_x}" ${output_dir}/${conf_fname}
-            sed -i "${g_sed_insert_pre}iodepth_batch_complete=${iodepth_x}" ${output_dir}/${conf_fname}
+            #sed -i "${g_sed_insert_pre}iodepth_batch=${iodepth_x}" ${output_dir}/${conf_fname}
+            #sed -i "${g_sed_insert_pre}iodepth_low=${iodepth_x}" ${output_dir}/${conf_fname}
+            #sed -i "${g_sed_insert_pre}iodepth_batch_complete=${iodepth_x}" ${output_dir}/${conf_fname}
         elif [[ "${FIO_IO_ENGINE}" == "io_uring" ]]; then
             sed -i "${g_sed_insert_pre}sqthread_poll=1" ${output_dir}/${conf_fname}
         fi

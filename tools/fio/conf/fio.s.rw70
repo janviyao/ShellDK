@@ -18,7 +18,7 @@
 
     ;<<<<<<<<<<<<
     cpus_allowed=0
-    ;cpus_allowed_policy=share
+    cpus_allowed_policy=shared
     ;>>>>>>>>>>>>
     
 [group-disk-sdb]
