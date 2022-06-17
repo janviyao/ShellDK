@@ -643,7 +643,7 @@ else
     done
 
     if bool_v "${COPY_PKG}"; then
-        $MY_VIM_DIR/tools/collect.sh "/tmp/vim.tar"
+        $MY_VIM_DIR/tools/collect.sh "${MY_HOME}/vim.tar"
     fi
 
     for ((idx=0; idx < ${#ip_array[*]}; idx++))
@@ -651,15 +651,21 @@ else
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
-        ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        if [ -n "${routeMap[${ipaddr}]}" ];then
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        fi
+
         if bool_v "${COPY_PKG}"; then
             ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
             ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
         fi
         ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh ${inst_paras}"
     done
-fi
 
+    if bool_v "${COPY_PKG}"; then
+        ${SUDO} rm -f ${MY_HOME}/vim.tar
+    fi
+fi
 #if can_access "git";then
 #    git config --global user.email "9971289@qq.com"
 #    git config --global user.name "Janvi Yao"
