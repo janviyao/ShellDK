@@ -59,19 +59,49 @@ do
     done
 done
 
-while ! (${SUDO} iscsiadm -m session -P 3 | grep "Attached scsi disk" &> /dev/null)
+while ! (${SUDO} iscsiadm -m session -P 3 2>/dev/null | grep "Attached scsi disk" &> /dev/null)
 do
     echo_info "wait iscsi devices loading ..."
     sleep 2
 done
 
+tmp_file="$(temp_file)"
+iscsi_device_array=($(echo))
+for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
+do
+    if ! get_iscsi_device "${ipaddr}" "${tmp_file}";then
+        echo_erro "iscsi device fail from { ${ipaddr} }"
+        continue
+    fi
+    devs_array=$(cat ${tmp_file})
+
+    echo_debug "devices: { ${devs_array} } from ${ipaddr}"
+    iscsi_device_array=(${iscsi_device_array[*]} ${devs_array}) 
+done
+rm -f ${tmp_file}
+
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     ${SUDO} multipath -r
-    count=300
-    while ! can_access "/dev/dm-*" 
+
+    count=30
+    while true 
     do
-        echo_info "wait mpath devices loading ..."
-        sleep 2
+        loaded_fin=true
+        for iscsi_dev in ${iscsi_device_array[*]}
+        do
+            dm_device_array=($(ls /sys/block/${iscsi_dev}/holders 2>/dev/null))
+            if [ ${#dm_device_array[*]} -eq 0 ];then
+                echo_info "wait mpath devices loading ..."
+                loaded_fin=false
+                sleep 2
+                break
+            fi
+        done
+
+        if bool_v "${loaded_fin}";then
+            break
+        fi
+
         let count--
         if [ ${count} -le 0 ];then
             echo_erro "mpath devices load fail"
@@ -80,49 +110,38 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     done
 fi
 
-iscsi_device_array=($(echo))
+dm_device_array=($(echo))
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
-    iscsi_device_array=($(cd /dev; ls dm-*))
-    for mdev in ${iscsi_device_array[*]}
+    for iscsi_dev in ${iscsi_device_array[*]}
     do
-        if [ -b /dev/${mdev} ];then
-            ${ISCSI_ROOT_DIR}/dev_conf.sh ${mdev} $((ISCSI_DEV_QD * ISCSI_SESSION_NR))
-            for slave in $(ls /sys/block/${mdev}/slaves)
-            do
-                ${ISCSI_ROOT_DIR}/dev_conf.sh ${slave} ${ISCSI_DEV_QD}
-            done
-        else
-            echo_erro "absence: { /dev/${mdev} }"
-        fi
-    done
-else
-    tmp_file="$(temp_file)"
-    for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
-    do
-        if ! get_iscsi_device "${ipaddr}" "${tmp_file}";then
-            echo_erro "iscsi device fail from { ${ipaddr} }"
-            continue
-        fi
-        dev_list=$(cat ${tmp_file})
-
-        echo_debug "devices: { ${dev_list} } from ${ipaddr}"
-        iscsi_device_array=(${iscsi_device_array[*]} ${dev_list})
-    done
-    rm -f ${tmp_file}
-
-    for dev in ${iscsi_device_array}
-    do
-        if [ -b /dev/${dev} ];then
-            ${ISCSI_ROOT_DIR}/dev_conf.sh ${dev} ${ISCSI_DEV_QD}
-        else
-            echo_erro "absence: { /dev/${dev} }"
-            exit 1
-        fi
+        for dm_dev in $(ls /sys/block/${iscsi_dev}/holders)
+        do
+            if ! contain_str "${dm_device_array[*]}" "${dm_dev}";then
+                dm_device_array=(${dm_device_array[*]} ${dm_dev}) 
+            fi
+        done
     done
 fi
 
-echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
-echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
+for iscsi_dev in ${iscsi_device_array}
+do
+    ${ISCSI_ROOT_DIR}/dev_conf.sh ${iscsi_dev} ${ISCSI_DEV_QD}
+done
+
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+    for mdev in ${dm_device_array[*]}
+    do
+        ${ISCSI_ROOT_DIR}/dev_conf.sh ${mdev} $((ISCSI_DEV_QD * ISCSI_SESSION_NR))
+    done
+fi
+
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+    echo_info "dev(${#dm_device_array[*]}): { ${dm_device_array[*]} }"
+    echo "${dm_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
+else
+    echo_info "dev(${#iscsi_device_array[*]}): { ${iscsi_device_array[*]} }"
+    echo "${iscsi_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
+fi
 ${TOOL_ROOT_DIR}/scplogin.sh "${WORK_ROOT_DIR}/disk.${LOCAL_IP}" "${CONTROL_IP}:${WORK_ROOT_DIR}/disk.${LOCAL_IP}"
 
 exit 0

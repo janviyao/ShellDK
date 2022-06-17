@@ -316,7 +316,7 @@ function get_iscsi_device
     local return_file="$2"
 
     local iscsi_dev_array=($(echo))
-    local iscsi_sessions=$(iscsiadm -m session -P 3 2>/dev/null)
+    local iscsi_sessions=$(${SUDO} iscsiadm -m session -P 3 2>/dev/null)
 
     if [ -z "${iscsi_sessions}" ];then
         if can_access "${return_file}";then

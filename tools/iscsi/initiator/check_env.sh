@@ -71,7 +71,7 @@ else
         if bool_v "${ISCSI_INITIATOR_RESTART}";then
             echo_info "iscsid restart"
             ${SUDO} systemctl restart iscsid
-            ${SUDO} systemctl restart iscsid.socket
+            #${SUDO} systemctl restart iscsid.socket
         fi
     else
         echo_info "iscsid start"

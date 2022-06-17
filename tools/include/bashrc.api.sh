@@ -24,7 +24,7 @@ alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
 alias mygit='myloop git'
 alias gpull='mygit pull'
-alias gpush='function git_push { git add -A ./*; git commit -s -m "$1"; git push; }; git_push'
+alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push; }; git_push'
 alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
 
 unalias cp &> /dev/null || true
