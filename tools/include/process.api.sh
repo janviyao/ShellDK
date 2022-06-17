@@ -223,7 +223,7 @@ function process_subprocess
         # ps -p $$ -o ppid=
         local subpro_path="/proc/${ppid}/task/${ppid}/children"
         if can_access "${subpro_path}"; then
-            child_pid_array=(${child_pid_array[*]} $(cat ${subpro_path}))
+            child_pid_array=(${child_pid_array[*]} $(cat ${subpro_path} 2>/dev/null))
         fi
     done
 
