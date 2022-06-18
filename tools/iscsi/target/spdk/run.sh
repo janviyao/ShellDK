@@ -17,9 +17,23 @@ if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
     fi
 fi
 
-${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
+if [ $? -ne 0 ];then
+    echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh"
+    exit 1
+fi
+
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
+if [ $? -ne 0 ];then
+    echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh"
+    exit 1
+fi
+
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh
+if [ $? -ne 0 ];then
+    echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh"
+    exit 1
+fi
 
 if bool_v "${TARGET_DEBUG_ON}";then
     ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG} &"
