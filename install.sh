@@ -46,6 +46,7 @@ INST_GUIDE["m4"]="${CMD1};install_from_rpm 'm4-.+\.rpm'"
 INST_GUIDE["autoconf"]="${CMD1};install_from_rpm 'autoconf-.+\.rpm'"
 INST_GUIDE["automake"]="${CMD1};install_from_rpm 'automake-.+\.rpm'"
 
+INST_GUIDE["/usr/libexec/sudo/libsudo_util.so.0"]="${CMD1};install_from_rpm 'sudo-.+\.rpm'"
 INST_GUIDE["/lib64/libreadline.so.6"]="${CMD1};install_from_rpm 'readline-.+\.rpm'"
 INST_GUIDE["/usr/include/readline"]="${CMD1};install_from_rpm 'readline-devel-.+\.rpm'"
 INST_GUIDE["/usr/lib64/libssl.so.10"]="${CMD1};install_from_rpm 'compat-openssl10-.+\.rpm'"
