@@ -6,16 +6,16 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #${ISCSI_APP_UCTRL} framework_start_init
 
 if bool_v "${TARGET_DEBUG_ON}";then
-    ${ISCSI_APP_UCTRL} log_set_level DEBUG
-    ${ISCSI_APP_UCTRL} log_set_print_level DEBUG
+    eval "${ISCSI_APP_UCTRL} log_set_level DEBUG"
+    eval "${ISCSI_APP_UCTRL} log_set_print_level DEBUG"
 
-    ${ISCSI_APP_UCTRL} log_set_flag iscsi 
-    ${ISCSI_APP_UCTRL} log_set_flag scsi
-    ${ISCSI_APP_UCTRL} log_set_flag bdev
-    ${ISCSI_APP_UCTRL} log_set_flag bdev_malloc
-    ${ISCSI_APP_UCTRL} log_set_flag thread
-    ${ISCSI_APP_UCTRL} log_set_flag rpc
-    ${ISCSI_APP_UCTRL} log_set_flag log_rpc
+    eval "${ISCSI_APP_UCTRL} log_set_flag iscsi"
+    eval "${ISCSI_APP_UCTRL} log_set_flag scsi"
+    eval "${ISCSI_APP_UCTRL} log_set_flag bdev"
+    eval "${ISCSI_APP_UCTRL} log_set_flag bdev_malloc"
+    eval "${ISCSI_APP_UCTRL} log_set_flag thread"
+    eval "${ISCSI_APP_UCTRL} log_set_flag rpc"
+    eval "${ISCSI_APP_UCTRL} log_set_flag log_rpc"
 fi
 
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/uctrl.sh create_portal_group
