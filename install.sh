@@ -204,7 +204,7 @@ if [[ ${OP_MATCH} -eq 0 ]] || [[ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
     exit -1
 fi
 
-declare -a mustDeps=("ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
+declare -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
 do_action "${mustDeps[*]}"
 
 REMOTE_INST="${parasMap['-r']}"

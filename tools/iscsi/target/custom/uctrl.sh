@@ -7,6 +7,7 @@ source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 op_mode="$1"
 echo_info "uctrl: ${op_mode}"
 
+do_success=false
 LUN_MAX_NUM=64
 for ini_ip in ${ISCSI_INITIATOR_IP_ARRAY[*]} 
 do
@@ -27,7 +28,11 @@ do
             echo_erro "target(${tgt_ip}) not configed in custom/private.conf"
             exit 1
         fi
-        
+
+        if [[ "${tgt_ip}" != "${LOCAL_IP}" ]];then
+            continue
+        fi
+
         if [[ "${op_mode}" == "create_portal_group" ]];then
             pg_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 1)
 
@@ -37,6 +42,7 @@ do
                 echo_erro "create target group: ${tgt_ip}:3260 fail"
                 exit 1
             fi
+            do_success=true
         elif [[ "${op_mode}" == "create_initiator_group" ]];then
             ig_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 2)
 
@@ -46,6 +52,7 @@ do
                 echo_erro "create initiator group: ${netmask}.0/24 fail"
                 exit 1
             fi
+            do_success=true
         elif [[ "${op_mode}" == "create_target_node" ]];then
             tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
             pg_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 1)
@@ -72,6 +79,7 @@ do
                 echo_erro "create target: ${ISCSI_NODE_BASE}:${tgt_name} fail"
                 exit 1
             fi
+            do_success=true
 
             if [[ ${BDEV_TYPE,,} == "cstor" ]];then
                 #echo_info "iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name} -r 3 -c 2 -b 512 --lr-size 4096 --unit-vendor \"CloudByte\" --unit-product \"iSCSI\" --unit-revision \"0001\" --replicas \"6361:6361 6362:6362 6363:6363\""
@@ -104,6 +112,9 @@ do
                     bdev_id=$(string_regex "${bdev_name}" "\d+")
                     echo_info "bdev_cstor_create -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
                     ${ISCSI_APP_UCTRL} bdev_cstor_create -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512
+                else
+                    echo_erro "bdev_type { ${BDEV_TYPE,,} } don't be identified"
+                    exit 1
                 fi
 
                 if [ $? -ne 0 ];then
@@ -111,8 +122,14 @@ do
                     exit 1
                 fi
             done
+            do_success=true
         fi 
     done
 done
 
-exit 0
+if bool_v "${do_success}";then
+    exit 0
+else
+    echo_erro "fail. please check { "${op_mode}" } or { custom/private.conf }"
+    exit 1
+fi

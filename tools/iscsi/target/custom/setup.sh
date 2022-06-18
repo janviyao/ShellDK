@@ -29,6 +29,7 @@ do
 
         tgt_ip=$(echo "${map_value}" | awk '{ print $1 }')
         if ! array_has "${ISCSI_TARGET_IP_ARRAY[*]}" "${tgt_ip}";then
+            echo_erro "iscsi map { ${tgt_ip} } not in { ${ISCSI_TARGET_IP_ARRAY[*]} }, please check { custom/private.conf }"
             break
         fi
 

@@ -31,7 +31,7 @@ if [ $UID -ne 0 ]; then
     EXPECT_EOF="expect eof"
 fi
 
-TERM_ENV="export BTASK_LIST='mdat,ncat,xfer';export REMOTE_IP=${LOCAL_IP};export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';"
+TERM_ENV="export BTASK_LIST='mdat,ncat,xfer,logr';export REMOTE_IP=${LOCAL_IP};export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';"
 PASS_ENV="\
 if ls '${MY_VIM_DIR}' &> /dev/null;then \
     export MY_VIM_DIR='$MY_VIM_DIR'; \

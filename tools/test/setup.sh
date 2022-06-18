@@ -22,7 +22,7 @@ if [[ "${LOCAL_IP}" == "172.24.15.166" ]];then
     declare -xa CLIENT_IP_ARRAY=(172.24.15.167)
 elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
     TEST_TARGET=custom
-    declare -xa SERVER_IP_ARRAY=(100.69.248.137)
+    declare -xa SERVER_IP_ARRAY=(100.69.248.137  100.69.248.141)
     declare -xa CLIENT_IP_ARRAY=(100.69.248.139)
 else
     TEST_TARGET=istgt
