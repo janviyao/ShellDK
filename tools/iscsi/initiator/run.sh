@@ -31,32 +31,35 @@ do
         echo_erro "discovery { ${ipaddr} } fail"
         exit 1
     fi
-    sleep 1
+    sleep 1 
+done
 
-    ${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
-    #${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}"
+${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
+#${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}"
+if [ $? -ne 0 ];then
+    echo_erro "update node.conn[0].iscsi.HeaderDigest=${ISCSI_HEADER_DIGEST} fail"
+    exit 1
+fi
+
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+    ${SUDO} "iscsiadm -m node -o update -n node.session.nr_sessions -v ${ISCSI_SESSION_NR}"
     if [ $? -ne 0 ];then
-        echo_erro "update node.conn[0].iscsi.HeaderDigest { ${ipaddr} } fail"
+        echo_erro "update node.session.nr_sessions=${ISCSI_SESSION_NR} fail"
         exit 1
     fi
+fi
 
-    if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
-        ${SUDO} "iscsiadm -m node -o update -n node.session.nr_sessions -v ${ISCSI_SESSION_NR}"
-        if [ $? -ne 0 ];then
-            echo_erro "update node.session.nr_sessions { ${ipaddr} } fail"
-            exit 1
-        fi
+for item in ${ISCSI_TARGET_NAME[*]}
+do
+    ipaddr=$(echo "${item}" | awk -F: '{ print $1 }')
+    target_name=$(echo "${item}" | awk -F: '{ print $2 }')
+
+    echo_info "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${ipaddr} }"
+    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${target_name} -p ${ipaddr} --login"
+    if [ $? -ne 0 ];then
+        echo_erro "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${ipaddr} } fail"
+        exit 1
     fi
-
-    for targe_name in ${ISCSI_TARGET_NAME[*]} 
-    do
-        echo_info "login: { ${ISCSI_NODE_BASE}:${targe_name} } from { ${ipaddr} }"
-        ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${targe_name} -p ${ipaddr} --login"
-        if [ $? -ne 0 ];then
-            echo_erro "login { ${ipaddr} } fail"
-            exit 1
-        fi
-    done
 done
 
 while ! (${SUDO} iscsiadm -m session -P 3 2>/dev/null | grep "Attached scsi disk" &> /dev/null)

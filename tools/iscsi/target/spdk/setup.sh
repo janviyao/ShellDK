@@ -14,7 +14,19 @@ SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -c ${SPDK_CONF_DIR}/iscsi.con
 
 #ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 ISCSI_NODE_BASE=$(cat ${SPDK_ROOT_DIR}/conf/iscsi.conf.in | grep -P "^\s*NodeBase\s+" | awk '{ print $2 }' | grep -P "[0-9a-zA-Z\-\.]+" -o)
-ISCSI_TARGET_NAME=($(cat ${SPDK_ROOT_DIR}/conf/iscsi.conf.in | grep -P "^\s*TargetName\s+" | awk '{ print $2 }'))
+
+declare -a target_name_array=($(cat ${SPDK_ROOT_DIR}/conf/iscsi.conf.in | grep -P "^\s*TargetName\s+" | awk '{ print $2 }'))
+ISCSI_TARGET_NAME=($(echo))
+for tgt_ip in ${ISCSI_TARGET_IP_ARRAY[*]} 
+do
+    for tgt_name in ${target_name_array[*]} 
+    do
+        if ! array_has "${ISCSI_TARGET_NAME[*]}" "${tgt_ip}:${tgt_name}";then
+            arr_idx=${#ISCSI_TARGET_NAME[*]}
+            ISCSI_TARGET_NAME[${arr_idx}]="${tgt_ip}:${tgt_name}"
+        fi    
+    done
+done
 
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE" "${ISCSI_NODE_BASE}"
 kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[*]})"

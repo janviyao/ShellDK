@@ -13,7 +13,19 @@ ISTGT_APP_RUNTIME="${ISTGT_APP_DIR}/${ISTGT_APP_NAME}"
 
 #ISCSI_NODE_BASE=iqn.2007-09.jp.ne.peach.istgt
 ISCSI_NODE_BASE=$(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*NodeBase\s+" | awk '{ print $2 }' | grep -P "[0-9a-zA-Z\-\.]+" -o)
-ISCSI_TARGET_NAME=($(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*TargetName\s+" | awk '{ print $2 }'))
+
+declare -a target_name_array=($(cat ${ISTGT_ROOT_DIR}/conf/istgt.conf | grep -P "^\s*TargetName\s+" | awk '{ print $2 }'))
+ISCSI_TARGET_NAME=($(echo))
+for tgt_ip in ${ISCSI_TARGET_IP_ARRAY[*]} 
+do
+    for tgt_name in ${target_name_array[*]} 
+    do
+        if ! array_has "${ISCSI_TARGET_NAME[*]}" "${tgt_ip}:${tgt_name}";then
+            arr_idx=${#ISCSI_TARGET_NAME[*]}
+            ISCSI_TARGET_NAME[${arr_idx}]="${tgt_ip}:${tgt_name}"
+        fi    
+    done
+done
 
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE" "${ISCSI_NODE_BASE}"
 kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[*]})"
