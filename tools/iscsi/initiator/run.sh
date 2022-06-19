@@ -97,7 +97,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
         for iscsi_dev in ${iscsi_device_array[*]}
         do
             dm_device_array=($(ls /sys/block/${iscsi_dev}/holders 2>/dev/null))
-            if [ ${#dm_device_array[*]} -ne ${ISCSI_SESSION_NR} ];then
+            if [ ${#dm_device_array[*]} -eq 0 ];then
                 echo_info "wait mpath devices loading ..."
                 loaded_fin=false
                 sleep 2
@@ -130,7 +130,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     done
 fi
 
-for iscsi_dev in ${iscsi_device_array}
+for iscsi_dev in ${iscsi_device_array[*]}
 do
     ${ISCSI_ROOT_DIR}/dev_conf.sh ${iscsi_dev} ${ISCSI_DEV_QD}
 done
