@@ -328,25 +328,30 @@ function get_iscsi_device
         return 1
     fi
 
+    local line_nr=1
     local line_idx=1
-    local tgt_lines=$(echo "${iscsi_sessions}" | grep -n "Target:" | awk -F: '{ print $1 }')
-    for line_nr in ${tgt_lines}
+    local line_array=($(echo "${iscsi_sessions}" | grep -n "Current Portal:" | awk -F: '{ print $1 }'))
+    for line_nr in ${line_array[*]}
     do
+        line_nr=$((line_nr - 1))
         if [ ${line_idx} -lt ${line_nr} ];then
-            if echo "${iscsi_sessions}" | sed -n "${line_idx},${line_nr}p" | grep -w -F "${target_ip}" &> /dev/null;then
-                local dev_name=$(echo "${iscsi_sessions}" | sed -n "${line_idx},${line_nr}p" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
-                #echo_debug "line ${line_idx}-${line_nr}=${dev_name}"
+            local range_ctx=$(echo "${iscsi_sessions}" | sed -n "${line_idx},${line_nr}p")
+            if echo "${range_ctx}" | grep -w -F "${target_ip}" &> /dev/null;then
+                local dev_name=$(echo "${range_ctx}" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
+                #echo_info "line ${line_idx}-${line_nr}=${dev_name}"
                 if [ -n "${dev_name}" ];then
                     iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_name})
                 fi
             fi
         fi
+        line_nr=$((line_nr + 2))
         line_idx=${line_nr}
     done
 
-    if echo "${iscsi_sessions}" | sed -n "${line_idx},\$p" | grep -w -F "${target_ip}" &> /dev/null;then
-        local dev_name=$(echo "${iscsi_sessions}" | sed -n "${line_idx},\$p" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
-        #echo_debug "line ${line_idx}-$=${dev_name}"
+    local range_ctx=$(echo "${iscsi_sessions}" | sed -n "${line_idx},\$p")
+    if echo "${range_ctx}" | grep -w -F "${target_ip}" &> /dev/null;then
+        local dev_name=$(echo "${range_ctx}" | grep "scsi disk" | grep "running" | awk -v ORS=" " '{ print $4 }')
+        #echo_info "line ${line_idx}-$=${dev_name}"
         if [ -n "${dev_name}" ];then
             iscsi_dev_array=(${iscsi_dev_array[*]} ${dev_name})
         fi

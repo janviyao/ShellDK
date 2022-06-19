@@ -34,7 +34,7 @@ do
         
         if [ -n "${INITIATOR_TARGET_MAP[${ini_ip}]}" ];then
             if ! array_has "${INITIATOR_TARGET_MAP[${ini_ip}]}" "${tgt_ip}:${tgt_name}";then
-                INITIATOR_TARGET_MAP[${ini_ip}]]="${INITIATOR_TARGET_MAP[${ini_ip}]} ${tgt_ip}:${tgt_name}"
+                INITIATOR_TARGET_MAP[${ini_ip}]="${INITIATOR_TARGET_MAP[${ini_ip}]} ${tgt_ip}:${tgt_name}"
             fi
         else
             INITIATOR_TARGET_MAP[${ini_ip}]="${tgt_ip}:${tgt_name}"

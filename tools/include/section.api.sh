@@ -183,6 +183,7 @@ function section_set
             local nr_end=${line_array[1]}
             sed -i "${nr_end}a\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
         else
+            echo "" >> ${sec_file}
             echo "[${sec_name}]" >> ${sec_file}
             echo "${HEADER_SPACE}${key_str} ${val_str}" >> ${sec_file}
         fi

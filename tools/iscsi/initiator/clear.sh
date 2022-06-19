@@ -29,7 +29,7 @@ do
     tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
 
     if ! array_has "${session_ip_array[*]}" "${tgt_ip}";then
-        echo_info "other sessions from ${tgt_ip}, but not in { ${it_array[*]} }"
+        echo_info "other sessions from ${tgt_ip}, but not in { ${session_ip_array[*]} }"
         continue
     fi
     

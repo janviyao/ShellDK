@@ -19,16 +19,16 @@ can_access "/usr/lib64/libevent.so*" || install_from_net "libevent-devel"
 cd ${ISCSI_APP_SRC}
 
 export CFLAGS="-fcommon"
-./configure
+./configure &> ${ISCSI_APP_SRC}/build.log
 if [ $? -ne 0 ];then
-    echo_erro "configure fail: ${ISCSI_APP_SRC}"
+    echo_erro "configure fail. please check: ${ISCSI_APP_SRC}/build.log"
     exit 1
 fi
 
 export CFLAGS="-fcommon"
-make -j 32
+make -j 32 &>> ${ISCSI_APP_SRC}/build.log
 if [ $? -ne 0 ];then
-    echo_erro "make fail: ${ISCSI_APP_SRC}"
+    echo_erro "make fail. please check: ${ISCSI_APP_SRC}/build.log"
     exit 1
 fi
 

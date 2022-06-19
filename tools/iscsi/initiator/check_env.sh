@@ -90,6 +90,34 @@ else
     fi
 fi
 
+KERNEL_MODULE="/sys/module/libiscsi"
+while ! can_access "${KERNEL_MODULE}"
+do
+    echo_info "wait ${KERNEL_MODULE} loading ..."
+    sleep 1
+done
+
+KERNEL_MODULE="/sys/module/iscsi_tcp"
+while ! can_access "${KERNEL_MODULE}"
+do
+    echo_info "wait ${KERNEL_MODULE} loading ..."
+    sleep 1
+done
+
+KERNEL_MODULE="/sys/module/libiscsi_tcp"
+while ! can_access "${KERNEL_MODULE}"
+do
+    echo_info "wait ${KERNEL_MODULE} loading ..."
+    sleep 1
+done
+
+KERNEL_MODULE="/sys/module/scsi_transport_iscsi"
+while ! can_access "${KERNEL_MODULE}"
+do
+    echo_info "wait ${KERNEL_MODULE} loading ..."
+    sleep 1
+done
+
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
     ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
