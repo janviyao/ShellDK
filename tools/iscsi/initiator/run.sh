@@ -12,8 +12,8 @@ fi
 it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
 for item in ${it_array[*]}
 do
-    ipaddr=$(echo "${item}" | awk -F: '{ print $1 }')
-    if ! get_iscsi_device "${ipaddr}" &> /dev/null;then
+    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+    if ! get_iscsi_device "${tgt_ip}" &> /dev/null;then
         break
     fi
 
@@ -25,12 +25,12 @@ ${ISCSI_ROOT_DIR}/initiator/check_env.sh
 
 for item in ${it_array[*]} 
 do
-    ipaddr=$(echo "${item}" | awk -F: '{ print $1 }')
+    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
 
-    echo_info "discover: { ${LOCAL_IP} } --> { ${ipaddr} }"
-    ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
+    echo_info "discover: { ${LOCAL_IP} } --> { ${tgt_ip} }"
+    ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${tgt_ip}"
     if [ $? -ne 0 ];then
-        echo_erro "discovery { ${ipaddr} } fail"
+        echo_erro "discovery { ${tgt_ip} } fail"
         exit 1
     fi
     sleep 1 
@@ -72,15 +72,16 @@ done
 
 tmp_file="$(temp_file)"
 iscsi_device_array=($(echo))
-for ipaddr in ${it_array[*]}
+for item in ${it_array[*]}
 do
-    if ! get_iscsi_device "${ipaddr}" "${tmp_file}";then
-        echo_erro "iscsi device fail from { ${ipaddr} }"
+    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+    if ! get_iscsi_device "${tgt_ip}" "${tmp_file}";then
+        echo_erro "iscsi device fail from { ${tgt_ip} }"
         continue
     fi
     devs_array=$(cat ${tmp_file})
 
-    echo_debug "devices: { ${devs_array} } from ${ipaddr}"
+    echo_debug "devices: { ${devs_array} } from ${tgt_ip}"
     iscsi_device_array=(${iscsi_device_array[*]} ${devs_array}) 
 done
 rm -f ${tmp_file}

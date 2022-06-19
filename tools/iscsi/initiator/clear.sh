@@ -22,17 +22,19 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
 fi
 
 session_ip_array=($(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq))
-target_ip_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
-for ipaddr in ${target_ip_array[*]}
+it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
+for item in ${it_array[*]}
 do
+    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+    tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
 
-    if ! array_has "${session_ip_array[*]}" "${ipaddr}";then
-        echo_info "other sessions from ${ipaddr}, but not in { ${target_ip_array[*]} }"
+    if ! array_has "${session_ip_array[*]}" "${tgt_ip}";then
+        echo_info "other sessions from ${tgt_ip}, but not in { ${it_array[*]} }"
         continue
     fi
     
-    ${SUDO} "iscsiadm -m node -p ${ipaddr} --logout"
-    ${SUDO} "iscsiadm -m node -p ${ipaddr} -o delete"
+    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${tgt_name} -p ${tgt_ip} --logout"
+    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${tgt_name} -p ${tgt_ip} -o delete"
 
-    echo_info "clean all sessions from ${ipaddr}"
+    echo_info "clean all sessions from ${tgt_ip}"
 done
