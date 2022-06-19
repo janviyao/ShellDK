@@ -9,8 +9,8 @@ else
     exit 0
 fi
 
-tmp_file="$(temp_file)"
-for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
+target_ip_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
+for ipaddr in ${target_ip_array[*]}
 do
     if ! get_iscsi_device "${ipaddr}" &> /dev/null;then
         break
@@ -18,12 +18,11 @@ do
 
     ${ISCSI_ROOT_DIR}/initiator/clear.sh
 done
-rm -f ${tmp_file}
 
 ${ISCSI_ROOT_DIR}/initiator/configure.sh
 ${ISCSI_ROOT_DIR}/initiator/check_env.sh
 
-for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]} 
+for ipaddr in ${target_ip_array[*]} 
 do
     echo_info "discover: { ${LOCAL_IP} } --> { ${ipaddr} }"
     ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
@@ -49,17 +48,22 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     fi
 fi
 
-for item in ${ISCSI_TARGET_NAME[*]}
+for ipaddr in ${target_ip_array[*]} 
 do
-    ipaddr=$(echo "${item}" | awk -F: '{ print $1 }')
-    target_name=$(echo "${item}" | awk -F: '{ print $2 }')
+    for item in ${ISCSI_TARGET_INFO_ARRAY[*]}
+    do
+        target_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+        if [[ ${target_ip} == ${ipaddr} ]];then
+            target_name=$(echo "${item}" | awk -F: '{ print $2 }')
 
-    echo_info "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${ipaddr} }"
-    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${target_name} -p ${ipaddr} --login"
-    if [ $? -ne 0 ];then
-        echo_erro "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${ipaddr} } fail"
-        exit 1
-    fi
+            echo_info "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${target_ip} }"
+            ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${target_name} -p ${target_ip} --login"
+            if [ $? -ne 0 ];then
+                echo_erro "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${target_ip} } fail"
+                exit 1
+            fi
+        fi
+    done
 done
 
 while ! (${SUDO} iscsiadm -m session -P 3 2>/dev/null | grep "Attached scsi disk" &> /dev/null)
@@ -70,7 +74,7 @@ done
 
 tmp_file="$(temp_file)"
 iscsi_device_array=($(echo))
-for ipaddr in ${ISCSI_TARGET_IP_ARRAY[*]}
+for ipaddr in ${target_ip_array[*]}
 do
     if ! get_iscsi_device "${ipaddr}" "${tmp_file}";then
         echo_erro "iscsi device fail from { ${ipaddr} }"

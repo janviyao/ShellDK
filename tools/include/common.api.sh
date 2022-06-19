@@ -11,6 +11,7 @@ shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/system.api.sh
 source $MY_VIM_DIR/tools/include/trace.api.sh
 source $MY_VIM_DIR/tools/include/kvconf.api.sh
+source $MY_VIM_DIR/tools/include/section.api.sh
 source $MY_VIM_DIR/tools/include/process.api.sh
 source $MY_VIM_DIR/tools/include/install.api.sh
 source $MY_VIM_DIR/tools/include/math.api.sh

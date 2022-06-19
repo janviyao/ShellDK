@@ -15,12 +15,13 @@ SPDK_APP_UCTRL="${SUDO} ${SPDK_SRC_ROOT}/scripts/rpc.py"
 SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0X0FFFFFFFFFFFFFF0 --shm-id=1"
 
 ISCSI_NODE_BASE=iqn.2016-06.io.spdk
+ISCSI_LUN_MAX_NUM=64
 
-LUN_MAX_NUM=64
-ISCSI_TARGET_NAME=($(echo))
+declare -a ISCSI_TARGET_INFO_ARRAY
+declare -A INITIATOR_TARGET_MAP
 for ini_ip in ${ISCSI_INITIATOR_IP_ARRAY[*]} 
 do
-    for index in $(seq 0 ${LUN_MAX_NUM})
+    for index in $(seq 0 ${ISCSI_LUN_MAX_NUM})
     do
         map_value="${ISCSI_INFO_MAP[${ini_ip}-${index}]}"
         if [ -z "${map_value}" ];then
@@ -34,15 +35,25 @@ do
         fi
 
         tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
-        if ! array_has "${ISCSI_TARGET_NAME[*]}" "${tgt_ip}:${tgt_name}";then
-            arr_idx=${#ISCSI_TARGET_NAME[*]}
-            ISCSI_TARGET_NAME[${arr_idx}]="${tgt_ip}:${tgt_name}"
+        if ! array_has "${ISCSI_TARGET_INFO_ARRAY[*]}" "${tgt_ip}:${tgt_name}";then
+            arr_idx=${#ISCSI_TARGET_INFO_ARRAY[*]}
+            ISCSI_TARGET_INFO_ARRAY[${arr_idx}]="${tgt_ip}:${tgt_name}"
+        fi
+
+        if [ -n "${INITIATOR_TARGET_MAP[${ini_ip}]}" ];then
+            if ! array_has "${INITIATOR_TARGET_MAP[${ini_ip}]}" "${tgt_ip}";then
+                INITIATOR_TARGET_MAP[${ini_ip}]]="${INITIATOR_TARGET_MAP[${ini_ip}]} ${tgt_ip}"
+            fi
+        else
+            INITIATOR_TARGET_MAP[${ini_ip}]="${tgt_ip}"
         fi
     done
 done
 
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE" "${ISCSI_NODE_BASE}"
-kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_NAME" "(${ISCSI_TARGET_NAME[*]})"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE"   "${ISCSI_NODE_BASE}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_LUN_MAX_NUM" "${ISCSI_LUN_MAX_NUM}"
+kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_INFO_ARRAY" "(${ISCSI_TARGET_INFO_ARRAY[*]})"
+kvconf_set "${TEST_SUIT_ENV}" "declare -A INITIATOR_TARGET_MAP"   "$(string_regex "$(declare -p INITIATOR_TARGET_MAP)" '\(.+\)')"
 
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_CONF_DIR"    "${SPDK_CONF_DIR}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_NAME"    "${SPDK_APP_NAME}"

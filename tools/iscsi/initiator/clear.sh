@@ -13,7 +13,7 @@ else
     echo_info "clean devce from ${LOCAL_IP}"
 fi
 
-if [ -b /dev/dm-0 ];then
+if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     echo_info "remove mpath device"
     ${SUDO} "multipath -F"
     if [ $? -ne 0 ];then
@@ -21,11 +21,13 @@ if [ -b /dev/dm-0 ];then
     fi
 fi
 
-get_tgt_ips=$(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq)
-for ipaddr in ${get_tgt_ips}
+session_ip_array=($(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq))
+target_ip_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
+for ipaddr in ${target_ip_array[*]}
 do
-    if ! contain_str "${ISCSI_TARGET_IP_ARRAY[*]}" "${ipaddr}";then
-        echo_info "other sessions from ${ipaddr}, but not in { ${ISCSI_TARGET_IP_ARRAY[*]} }"
+
+    if ! array_has "${session_ip_array[*]}" "${ipaddr}";then
+        echo_info "other sessions from ${ipaddr}, but not in { ${target_ip_array[*]} }"
         continue
     fi
     
