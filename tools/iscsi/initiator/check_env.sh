@@ -24,25 +24,6 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     can_access "/usr/lib64/libaio.so.*"                 || { cd ${MY_VIM_DIR}/deps; install_from_rpm "libaio-.+\.rpm"; }
 fi
 
-if bool_v "${KERNEL_DEBUG_ON}";then
-    echo_info "enable kernel iscsi debug"
-    ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
-    ${SUDO} "echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
-    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
-    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
-    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
-    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
-    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
-else
-    ${SUDO} "echo 0 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
-    ${SUDO} "echo 0 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
-    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
-    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
-    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
-    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
-    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
-fi
-
 can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
 can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
@@ -107,6 +88,25 @@ else
         echo_info "multipath stop"
         ${SUDO} systemctl stop multipathd
     fi
+fi
+
+if bool_v "${KERNEL_DEBUG_ON}";then
+    echo_info "enable kernel iscsi debug"
+    ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
+    ${SUDO} "echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
+    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
+    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
+    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
+    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
+    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
+else
+    ${SUDO} "echo 0 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
+    ${SUDO} "echo 0 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
+    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
+    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
+    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
+    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
+    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
 fi
 
 exit 0

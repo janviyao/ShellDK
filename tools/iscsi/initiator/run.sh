@@ -9,9 +9,10 @@ else
     exit 0
 fi
 
-target_ip_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
-for ipaddr in ${target_ip_array[*]}
+it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
+for item in ${it_array[*]}
 do
+    ipaddr=$(echo "${item}" | awk -F: '{ print $1 }')
     if ! get_iscsi_device "${ipaddr}" &> /dev/null;then
         break
     fi
@@ -22,8 +23,10 @@ done
 ${ISCSI_ROOT_DIR}/initiator/configure.sh
 ${ISCSI_ROOT_DIR}/initiator/check_env.sh
 
-for ipaddr in ${target_ip_array[*]} 
+for item in ${it_array[*]} 
 do
+    ipaddr=$(echo "${item}" | awk -F: '{ print $1 }')
+
     echo_info "discover: { ${LOCAL_IP} } --> { ${ipaddr} }"
     ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${ipaddr}"
     if [ $? -ne 0 ];then
@@ -31,6 +34,19 @@ do
         exit 1
     fi
     sleep 1 
+done
+
+for item in ${it_array[*]} 
+do
+    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+    tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
+
+    echo_info "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} }"
+    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${tgt_name} -p ${tgt_ip} --login"
+    if [ $? -ne 0 ];then
+        echo_erro "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} } fail"
+        exit 1
+    fi
 done
 
 ${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
@@ -48,24 +64,6 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     fi
 fi
 
-for ipaddr in ${target_ip_array[*]} 
-do
-    for item in ${ISCSI_TARGET_INFO_ARRAY[*]}
-    do
-        target_ip=$(echo "${item}" | awk -F: '{ print $1 }')
-        if [[ ${target_ip} == ${ipaddr} ]];then
-            target_name=$(echo "${item}" | awk -F: '{ print $2 }')
-
-            echo_info "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${target_ip} }"
-            ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${target_name} -p ${target_ip} --login"
-            if [ $? -ne 0 ];then
-                echo_erro "login: { ${ISCSI_NODE_BASE}:${target_name} } from { ${target_ip} } fail"
-                exit 1
-            fi
-        fi
-    done
-done
-
 while ! (${SUDO} iscsiadm -m session -P 3 2>/dev/null | grep "Attached scsi disk" &> /dev/null)
 do
     echo_info "wait iscsi devices loading ..."
@@ -74,7 +72,7 @@ done
 
 tmp_file="$(temp_file)"
 iscsi_device_array=($(echo))
-for ipaddr in ${target_ip_array[*]}
+for ipaddr in ${it_array[*]}
 do
     if ! get_iscsi_device "${ipaddr}" "${tmp_file}";then
         echo_erro "iscsi device fail from { ${ipaddr} }"

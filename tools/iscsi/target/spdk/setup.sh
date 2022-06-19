@@ -15,7 +15,6 @@ SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -c ${SPDK_CONF_DIR}/iscsi.con
 ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 ISCSI_LUN_MAX_NUM=64
 
-declare -a ISCSI_TARGET_INFO_ARRAY
 declare -A INITIATOR_TARGET_MAP
 for ini_ip in ${ISCSI_INITIATOR_IP_ARRAY[*]} 
 do
@@ -31,26 +30,23 @@ do
             echo_erro "iscsi map { ${tgt_ip} } not in { ${ISCSI_TARGET_IP_ARRAY[*]} }, please check { custom/private.conf }"
             break
         fi
-
         tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
-        if ! array_has "${ISCSI_TARGET_INFO_ARRAY[*]}" "${tgt_ip}:${tgt_name}";then
-            arr_idx=${#ISCSI_TARGET_INFO_ARRAY[*]}
-            ISCSI_TARGET_INFO_ARRAY[${arr_idx}]="${tgt_ip}:${tgt_name}"
-        fi
-
+        
         if [ -n "${INITIATOR_TARGET_MAP[${ini_ip}]}" ];then
-            if ! array_has "${INITIATOR_TARGET_MAP[${ini_ip}]}" "${tgt_ip}";then
-                INITIATOR_TARGET_MAP[${ini_ip}]]="${INITIATOR_TARGET_MAP[${ini_ip}]} ${tgt_ip}"
+            if ! array_has "${INITIATOR_TARGET_MAP[${ini_ip}]}" "${tgt_ip}:${tgt_name}";then
+                INITIATOR_TARGET_MAP[${ini_ip}]]="${INITIATOR_TARGET_MAP[${ini_ip}]} ${tgt_ip}:${tgt_name}"
             fi
         else
-            INITIATOR_TARGET_MAP[${ini_ip}]="${tgt_ip}"
+            INITIATOR_TARGET_MAP[${ini_ip}]="${tgt_ip}:${tgt_name}"
         fi
     done
 done
 
+kvconf_set "${TEST_SUIT_ENV}" "declare -A INITIATOR_TARGET_MAP"   "$(string_regex "$(declare -p INITIATOR_TARGET_MAP)" '\(.+\)')"
+
+echo "" >> ${TEST_SUIT_ENV}
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_NODE_BASE"   "${ISCSI_NODE_BASE}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_LUN_MAX_NUM" "${ISCSI_LUN_MAX_NUM}"
-kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_INFO_ARRAY" "(${ISCSI_TARGET_INFO_ARRAY[*]})"
 
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_CONF_DIR"    "${SPDK_CONF_DIR}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_NAME"    "${SPDK_APP_NAME}"
