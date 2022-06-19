@@ -80,10 +80,10 @@ do
         echo_erro "iscsi device fail from { ${tgt_ip} }"
         continue
     fi
-    devs_array=$(cat ${tmp_file})
+    devs_array=($(cat ${tmp_file}))
+    echo_info "iscsi devices: { ${devs_array[*]} } from { ${tgt_ip} }"
 
-    echo_debug "devices: { ${devs_array} } from ${tgt_ip}"
-    iscsi_device_array=(${iscsi_device_array[*]} ${devs_array}) 
+    iscsi_device_array=(${iscsi_device_array[*]} ${devs_array[*]}) 
 done
 rm -f ${tmp_file}
 
@@ -97,7 +97,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
         for iscsi_dev in ${iscsi_device_array[*]}
         do
             dm_device_array=($(ls /sys/block/${iscsi_dev}/holders 2>/dev/null))
-            if [ ${#dm_device_array[*]} -eq 0 ];then
+            if [ ${#dm_device_array[*]} -ne ${ISCSI_SESSION_NR} ];then
                 echo_info "wait mpath devices loading ..."
                 loaded_fin=false
                 sleep 2
