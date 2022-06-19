@@ -36,19 +36,6 @@ do
     sleep 1 
 done
 
-for item in ${it_array[*]} 
-do
-    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
-    tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
-
-    echo_info "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} }"
-    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${tgt_name} -p ${tgt_ip} --login"
-    if [ $? -ne 0 ];then
-        echo_erro "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} } fail"
-        exit 1
-    fi
-done
-
 ${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
 #${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}"
 if [ $? -ne 0 ];then
@@ -64,6 +51,19 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     fi
 fi
 
+for item in ${it_array[*]} 
+do
+    tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+    tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
+
+    echo_info "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} }"
+    ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${tgt_name} -p ${tgt_ip} --login"
+    if [ $? -ne 0 ];then
+        echo_erro "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} } fail"
+        exit 1
+    fi
+done
+
 while ! (${SUDO} iscsiadm -m session -P 3 2>/dev/null | grep "Attached scsi disk" &> /dev/null)
 do
     echo_info "wait iscsi devices loading ..."
@@ -75,6 +75,7 @@ iscsi_device_array=($(echo))
 for item in ${it_array[*]}
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
+
     if ! get_iscsi_device "${tgt_ip}" "${tmp_file}";then
         echo_erro "iscsi device fail from { ${tgt_ip} }"
         continue
