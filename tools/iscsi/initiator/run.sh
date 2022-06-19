@@ -2,9 +2,7 @@
 source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! bool_v "${KEEP_ENV_STATE}";then
-    echo_info "init devs: ${LOCAL_IP}"
-else
+if bool_v "${KEEP_ENV_STATE}";then
     echo_info "keep devs: ${LOCAL_IP}"
     exit 0
 fi
