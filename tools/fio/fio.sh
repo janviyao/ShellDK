@@ -134,8 +134,6 @@ function start_test_func
         local bs_value=$(echo "${test_case}" | awk '{print $2}')
         local job_value=$(echo "${test_case}" | awk '{print $3}')
         local depth_value=$(echo "${test_case}" | awk '{print $4}')
-        local ipaddr_value=$(echo "${test_case}" | awk '{print $5}')
-        local devs_value=$(echo "${test_case}" | awk '{print $6}')
 
         local output_dir=${FIO_OUTPUT_DIR}/${testcase_tpl}
         mkdir -p ${output_dir}
@@ -150,8 +148,36 @@ function start_test_func
         #replace parameter
         sed -i '/\[group-disk-.*\]/,$d' ${output_dir}/${conf_fname}
 
-        local devs_array=($(echo "${devs_value}" | tr ',' ' '))
-        for sub_dev in ${devs_array[*]}
+        local -a ip_array
+        local -a dev_array
+        local start_idx=5
+        while true
+        do
+            local host_info=$(echo "${test_case}" | awk "{print \$${start_idx}}")
+            if [ -z "${host_info}" ];then
+                break
+            fi
+
+            local host_ip=$(echo "${host_info}" | awk -F: '{print $1}')
+            if ! array_has "${ip_array[*]}" "${host_ip}";then
+                local array_idx=${#ip_array[*]}
+                ip_array[${array_idx}]="${host_ip}"
+            fi
+
+            local tmp_array=($(echo "${host_info}" | awk -F: '{print $2}' | tr ',' ' '))
+            for sub_dev in ${tmp_array[*]}
+            do
+                if ! array_has "${dev_array[*]}" "${sub_dev}";then
+                    local array_idx=${#dev_array[*]}
+                    dev_array[${array_idx}]="${sub_dev}"
+                fi
+            done
+
+            let start_idx++
+        done
+
+        local ipaddr_value=$(echo "${test_case}" | awk '{print $5}')
+        for sub_dev in ${dev_array[*]}
         do
             echo "[group-disk-${sub_dev}]" >> ${output_dir}/${conf_fname}
             echo -e "\tname=group-disk-${sub_dev}" >> ${output_dir}/${conf_fname}
@@ -200,8 +226,7 @@ function start_test_func
         sed -i "s/runtime[ ]*=[ ]*[0-9]\+s\?/runtime=${FIO_TEST_TIME}s/g" ${output_dir}/${conf_fname}
         sed -i "s/ramp_time[ ]*=[ ]*[0-9]\+s\?/ramp_time=${FIO_RAMP_TIME}s/g" ${output_dir}/${conf_fname}
         
-        local ipaddr_array=($(echo "${ipaddr_value}" | tr ',' ' '))
-        run_fio_func "${idx}" "${output_dir}" "${conf_fname}" "${ipaddr_array[*]}" "${devs_array[*]}" 
+        run_fio_func "${idx}" "${output_dir}" "${conf_fname}" "${ip_array[*]}" "${dev_array[*]}" 
 
         let left_count--
         take_time=$(((left_count * test_time) / 60))

@@ -54,14 +54,26 @@ for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
     if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
         device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
-        FIO_HOST_MAP[${ipaddr}]="$(echo "${device_array[*]}" | tr ' ' ',')"
+        for device in ${device_array[*]}
+        do
+            if ! array_has "${FIO_HOST_MAP[${ipaddr}]}" "${device}";then
+                FIO_HOST_MAP[${ipaddr}]="${FIO_HOST_MAP[${ipaddr}]} ${device}"
+            fi
+        done
     else
         echo_erro "device empty from { ${ipaddr} }"
     fi
 done
 
+declare -a all_array
+for host_ip in ${!FIO_HOST_MAP[*]}
+do
+    array_idx=${#all_array[*]}
+    all_array[${array_idx}]="${host_ip}:$(echo "${FIO_HOST_MAP[${host_ip}]}" | tr ' ' ',')"
+done
+
 for test_key in ${!FIO_TEST_MAP[*]}
 do
     testcase=${FIO_TEST_MAP[${test_key}]}
-    FIO_TEST_MAP[${test_key}]="${testcase} $(echo "${!FIO_HOST_MAP[*]}" | tr ' ' ',') $(echo "${FIO_HOST_MAP[*]}" | tr ' ' ',')"
+    FIO_TEST_MAP[${test_key}]="${testcase} ${all_array[*]}"
 done
