@@ -58,4 +58,3 @@ kvconf_set "${TEST_SUIT_ENV}" "ISCSI_LOG_DIR"     "${SPDK_LOG_DIR}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_LOG"     "${SPDK_APP_LOG}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_UCTRL"   "\"${SPDK_APP_UCTRL}\""
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_RUNTIME" "\"${SPDK_APP_RUNTIME}\""
-

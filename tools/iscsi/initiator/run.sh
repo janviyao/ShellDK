@@ -25,7 +25,7 @@ for item in ${it_array[*]}
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
 
-    echo_info "discover: { ${LOCAL_IP} } --> { ${tgt_ip} }"
+    echo_info "discover { ${LOCAL_IP} } into { ${tgt_ip} }"
     ${SUDO} "iscsiadm -m discovery -t sendtargets -p ${tgt_ip}"
     if [ $? -ne 0 ];then
         echo_erro "discovery { ${tgt_ip} } fail"
@@ -54,10 +54,10 @@ do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
     tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
 
-    echo_info "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} }"
+    echo_info "login { ${ISCSI_NODE_BASE}:${tgt_name} } into { ${tgt_ip} }"
     ${SUDO} "iscsiadm -m node -T ${ISCSI_NODE_BASE}:${tgt_name} -p ${tgt_ip} --login"
     if [ $? -ne 0 ];then
-        echo_erro "login: { ${ISCSI_NODE_BASE}:${tgt_name} } from { ${tgt_ip} } fail"
+        echo_erro "login: { ${ISCSI_NODE_BASE}:${tgt_name} } into { ${tgt_ip} } fail"
         exit 1
     fi
 done

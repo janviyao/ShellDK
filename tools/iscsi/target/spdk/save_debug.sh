@@ -9,7 +9,7 @@ if bool_v "${KERNEL_DEBUG_ON}";then
     dmesg &> ${ISCSI_LOG_DIR}/dmesg.log 
 fi
 
-if bool_v "${DUMP_SAVE_ON}";then 
+if bool_v "${DUMP_SAVE_ON}";then
     coredump_dir=$(fname2path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
     if ! can_access "${coredump_dir}";then
         coredump_dir=""
@@ -26,6 +26,12 @@ if bool_v "${DUMP_SAVE_ON}";then
         have_coredump=true
     fi
 
+    if can_access "${ISCSI_APP_DIR}/core-*";then
+        echo_info "Save: ${coredump_dir}/core-*"
+        ${SUDO} mv -f ${ISCSI_APP_DIR}/core-* ${ISCSI_LOG_DIR}
+        have_coredump=true
+    fi
+    
     if bool_v "${have_coredump}";then
         if can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
             echo_info "Save: ${ISCSI_APP_NAME}"
@@ -44,8 +50,10 @@ if bool_v "${DUMP_SAVE_ON}";then
 
         ${SUDO} chmod -R 777 ${ISCSI_LOG_DIR}
         if can_access "${ISCSI_LOG_DIR}/core-*";then
-            gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
-            cat ${ISCSI_LOG_DIR}/backtrace.txt
+            if can_access "gdb";then
+                gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
+                cat ${ISCSI_LOG_DIR}/backtrace.txt
+            fi
         fi
     fi
 fi

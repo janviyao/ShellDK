@@ -1,8 +1,7 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
-
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 op_mode="$1"
 echo_info "uctrl: ${op_mode}"

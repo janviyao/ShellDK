@@ -1,5 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
+source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 
 SPDK_ROOT_DIR=$(current_filedir)
 SPDK_APP_NAME=iscsi_tgt
@@ -9,8 +10,8 @@ SPDK_SRC_ROOT=${MY_HOME}/spdk
 SPDK_APP_DIR=${SPDK_SRC_ROOT}/build/bin
 SPDK_LOG_DIR=${TEST_LOG_DIR}/${SPDK_APP_NAME}
 SPDK_APP_LOG=${SPDK_LOG_DIR}/${SPDK_APP_NAME}.log
-SPDK_APP_UCTRL="${SPDK_SRC_ROOT}/scripts/rpc.py"
-SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -c ${SPDK_CONF_DIR}/iscsi.conf.in -m 0XFF --shm-id=1 --logflag iscsi --logflag scsi --logflag bdev --logflag bdev_malloc"
+SPDK_APP_UCTRL="${SUDO} ${SPDK_SRC_ROOT}/scripts/rpc.py"
+SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0XFF --shm-id=1"
 
 ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 ISCSI_LUN_MAX_NUM=64
@@ -54,6 +55,5 @@ kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_SRC"     "${SPDK_SRC_ROOT}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_DIR"     "${SPDK_APP_DIR}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_LOG_DIR"     "${SPDK_LOG_DIR}"
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_LOG"     "${SPDK_APP_LOG}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_UCTRL"   "${SPDK_APP_UCTRL}"
+kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_UCTRL"   "\"${SPDK_APP_UCTRL}\""
 kvconf_set "${TEST_SUIT_ENV}" "ISCSI_APP_RUNTIME" "\"${SPDK_APP_RUNTIME}\""
-

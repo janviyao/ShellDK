@@ -23,12 +23,6 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
-if [ $? -ne 0 ];then
-    echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh"
-    exit 1
-fi
-
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh
 if [ $? -ne 0 ];then
     echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh"
@@ -36,7 +30,31 @@ if [ $? -ne 0 ];then
 fi
 
 if bool_v "${TARGET_DEBUG_ON}";then
-    ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG} &"
+    REDIRECT_LOG_FILE=$(mdata_kv_get "${ISCSI_APP_LOG}")
+    if  can_access "${REDIRECT_LOG_FILE}";then
+        echo "EXIT" > ${REDIRECT_LOG_FILE}
+    fi
+
+    logr_task_ctrl_sync "REDIRECT" "${ISCSI_APP_LOG}" 
+    count=0
+    while ! mdata_kv_has_key "${ISCSI_APP_LOG}"
+    do
+        echo_info "wait for redirect fini ..."
+        sleep 0.1
+        let count++
+        if [ ${count} -gt 50 ];then
+            break
+        fi
+    done
+
+    REDIRECT_LOG_FILE=$(mdata_kv_get "${ISCSI_APP_LOG}")
+    if ! can_access "${REDIRECT_LOG_FILE}";then
+        echo_erro "redirect file invalid: { ${REDIRECT_LOG_FILE} }"
+        exit 1
+    fi
+
+    ${SUDO} "echo > ${REDIRECT_LOG_FILE}"
+    ${SUDO} "nohup bash -c '${ISCSI_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
 
     sleep 1
     while ! (cat ${ISCSI_APP_LOG} | grep "spdk_app_start" &> /dev/null)
@@ -44,8 +62,7 @@ if bool_v "${TARGET_DEBUG_ON}";then
         sleep 1
     done
 else
-    ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> /dev/null &"
-
+    ${SUDO} "nohup bash -c '${ISCSI_APP_RUNTIME} &> /dev/null' &"
     sleep 30
 fi
 
@@ -60,6 +77,10 @@ else
     echo_info "${ISCSI_APP_NAME} launch success."
 fi
 
+${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
+if [ $? -ne 0 ];then
+    echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh"
+    exit 1
+fi
+
 exit 0
-#echo_info ""
-#${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/uctrl.sh create

@@ -84,5 +84,3 @@ if [ $? -ne 0 ];then
 fi
 
 exit 0
-#echo_info ""
-#${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/uctrl.sh create

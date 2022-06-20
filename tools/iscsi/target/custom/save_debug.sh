@@ -31,13 +31,7 @@ if bool_v "${DUMP_SAVE_ON}";then
         ${SUDO} mv -f ${ISCSI_APP_DIR}/core-* ${ISCSI_LOG_DIR}
         have_coredump=true
     fi
-
-    if can_access "/cloud/data/corefile/core-${ISCSI_APP_NAME}_*";then
-        echo_info "Save: /cloud/data/corefile/core-${ISCSI_APP_NAME}_*"
-        ${SUDO} mv -f /cloud/data/corefile/core-${ISCSI_APP_NAME}_* ${ISCSI_LOG_DIR} 
-        have_coredump=true
-    fi
-
+    
     if bool_v "${have_coredump}";then
         if can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
             echo_info "Save: ${ISCSI_APP_NAME}"
@@ -56,8 +50,10 @@ if bool_v "${DUMP_SAVE_ON}";then
 
         ${SUDO} chmod -R 777 ${ISCSI_LOG_DIR}
         if can_access "${ISCSI_LOG_DIR}/core-*";then
-            gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
-            cat ${ISCSI_LOG_DIR}/backtrace.txt
+            if can_access "gdb";then
+                gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
+                cat ${ISCSI_LOG_DIR}/backtrace.txt
+            fi
         fi
     fi
 fi

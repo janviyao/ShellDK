@@ -46,4 +46,3 @@ can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
 ${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
 
 exit 0
-

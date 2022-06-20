@@ -44,8 +44,10 @@ if bool_v "${DUMP_SAVE_ON}";then
 
         ${SUDO} chmod -R 777 ${ISCSI_LOG_DIR}
         if can_access "${ISCSI_LOG_DIR}/core-*";then
-            gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
-            cat ${ISCSI_LOG_DIR}/backtrace.txt
+            if can_access "gdb";then
+                gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
+                cat ${ISCSI_LOG_DIR}/backtrace.txt
+            fi
         fi
     fi
 fi
