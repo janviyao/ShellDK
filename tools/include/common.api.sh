@@ -572,25 +572,37 @@ function can_access
     return 1
 }
 
-function path2fname
+function real_path
 {
-    local full_path="$1"
-    local file_name=""
+    local this_path="$1"
 
-    if [ -z "${full_path}" ];then
+    if [ -z "${this_path}" ];then
         return 1
     fi
 
-    if contain_str "${full_path}" "-";then 
-        full_path=$(replace_regex "${full_path}" "\-" "\-")
+    if contain_str "${this_path}" "-";then
+        this_path=$(replace_regex "${this_path}" "\-" "\-")
     fi
 
-    if can_access "${full_path}";then
-        full_path=$(readlink -f ${full_path})
+    if can_access "${this_path}";then
+        this_path=$(readlink -f ${this_path})
         if [ $? -ne 0 ];then
-            echo_file "erro" "readlink fail: ${full_path}"    
+            echo_file "erro" "readlink fail: ${this_path}"
             return 1
         fi
+    fi
+
+    echo "${this_path}"
+    return 0
+}
+
+function path2fname
+{
+    local file_name=""
+
+    local full_path=$(real_path "$1")
+    if [ -z "${full_path}" ];then
+        return 1
     fi
 
     file_name=$(basename ${full_path})
@@ -609,28 +621,16 @@ function path2fname
 
 function fname2path
 {
-    local full_name="$1"
     local dir_name=""
-    
+
+    local full_name=$(real_path "$1")
     if [ -z "${full_name}" ];then
         return 1
     fi
 
-    if contain_str "${full_name}" "-";then 
-        full_name=$(replace_regex "${full_name}" "\-" "\-")
-    fi
-
-    if can_access "${full_name}";then
-        full_name=$(readlink -f ${full_name})
-        if [ $? -ne 0 ];then
-            echo_file "erro" "readlink fail: ${full_name}"    
-            return 1
-        fi
-    fi
-    
     dir_name=$(dirname ${full_name})
     if [ $? -ne 0 ];then
-        echo_file "erro" "dirname fail: ${full_name}"    
+        echo_file "erro" "dirname fail: ${full_name}"
         return 1
     fi
 

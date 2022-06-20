@@ -118,7 +118,9 @@ function rsync_to
         echo_erro "{ ${xfer_src} } not exist"
         return 1
     fi
-
+ 
+    xfer_src=$(real_path "${xfer_src}")
+    xfer_des=$(real_path "${xfer_des}")
     do_rsync "TO" "UPDATE" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -142,7 +144,9 @@ function rsync_from
         fi
     fi
     local xfer_ips=($@)
-    
+
+    xfer_src=$(real_path "${xfer_src}")
+    xfer_des=$(real_path "${xfer_des}")
     do_rsync "FROM" "UPDATE" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -175,7 +179,9 @@ function rsync_p2p_to
         echo_erro "{ ${xfer_src} } not exist"
         return 1
     fi
-    
+
+    xfer_src=$(real_path "${xfer_src}")
+    xfer_des=$(real_path "${xfer_des}")
     do_rsync "TO" "EQUAL" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -200,6 +206,8 @@ function rsync_p2p_from
     fi
     local xfer_ips=($@)
  
+    xfer_src=$(real_path "${xfer_src}")
+    xfer_des=$(real_path "${xfer_des}")
     do_rsync "FROM" "EQUAL" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
