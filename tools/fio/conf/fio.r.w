@@ -22,6 +22,6 @@
     cpus_allowed_policy=shared
     ;>>>>>>>>>>>>
 
-[group-disk-sdb]
-    name=group-disk-sdb
+[disk-sdb]
+    name=disk-sdb
     filename=/dev/sdb
