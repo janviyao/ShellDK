@@ -580,7 +580,7 @@ function real_path
         return 1
     fi
 
-    if contain_str "${this_path}" "-";then
+    if match_regex "${this_path}" "^-";then
         this_path=$(replace_regex "${this_path}" "\-" "\-")
     fi
 
