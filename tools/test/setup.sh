@@ -17,7 +17,7 @@ APPLY_SYSCTRL=true
 
 # TEST_TARGET=spdk
 if [[ "${LOCAL_IP}" == "172.24.15.170" ]];then
-    TEST_TARGET=spdk
+    TEST_TARGET=istgt
     declare -xa SERVER_IP_ARRAY=(172.24.15.170)
     declare -xa CLIENT_IP_ARRAY=(172.24.15.172 172.24.15.171)
 elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
@@ -25,7 +25,7 @@ elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
     declare -xa SERVER_IP_ARRAY=(100.69.248.137)
     declare -xa CLIENT_IP_ARRAY=(100.69.248.139 100.69.248.141)
 else
-    TEST_TARGET=istgt
+    TEST_TARGET=spdk
     declare -a ip_array=($(get_hosts_ip))
     if [ ${#ip_array[*]} -ge 1 ];then
         if [ ${#ip_array[*]} -ge 2 ];then
