@@ -16,12 +16,14 @@ if bool_v "${APPLY_SYSCTRL}";then
 fi
 
 can_access "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
+can_access "sg_raw"           || { cd ${MY_VIM_DIR}/deps; install_from_rpm "sg3_utils-.+\.rpm"; }
+
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
-    can_access "/usr/sbin/dmsetup" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
+    can_access "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
     can_access "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-libs-.+\.rpm"; }
     can_access "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-libs-.+\.rpm"; }
-    can_access "/usr/sbin/multipathd" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-.+\.rpm"; }
-    can_access "/usr/lib64/libaio.so.*"                 || { cd ${MY_VIM_DIR}/deps; install_from_rpm "libaio-.+\.rpm"; }
+    can_access "/usr/sbin/multipathd"         || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-.+\.rpm"; }
+    can_access "/usr/lib64/libaio.so.*"       || { cd ${MY_VIM_DIR}/deps; install_from_rpm "libaio-.+\.rpm"; }
 fi
 
 can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
