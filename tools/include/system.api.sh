@@ -14,6 +14,55 @@ function is_me
     return 1
 }
 
+function sshto
+{
+    local des_key="$1"
+
+    eval "declare -A ip_map=($(get_hosts_ip map))"
+    if [ -z "${des_key}" ];then
+        local ipaddr=$(select_one ${!ip_map[*]})
+        ssh ${ipaddr}
+        return 0
+    fi
+
+    if is_integer "${des_key}";then
+        local ip_array=($(echo ${!ip_map[*]} | grep -P "(\.?\d+\.?)*${des_key}(\.?\d+\.?)*" -o))
+        if [ ${#ip_array[*]} -eq 1 ];then
+            ssh "${ip_array[0]}" 
+        elif [ ${#ip_array[*]} -gt 1 ];then
+            local ipaddr=$(select_one ${ip_array[*]})
+            ssh ${ipaddr}
+        else
+            local ipaddr=$(select_one ${!ip_map[*]})
+            ssh ${ipaddr}
+        fi
+    else
+        local hn_array=($(echo ${ip_map[*]} | grep -P "[^ ]*${des_key}[^ ]*" -o))
+        if [ ${#hn_array[*]} -eq 1 ];then
+            for key in ${!ip_map[*]}
+            do
+                if [[ ${ip_map[${key}]} == ${hn_array[0]} ]];then
+                    ssh "${key}" 
+                    break
+                fi
+            done
+        elif [ ${#hn_array[*]} -gt 1 ];then
+            local hname=$(select_one ${hn_array[*]})
+            for key in ${!ip_map[*]}
+            do
+                if [[ ${ip_map[${key}]} == ${hname} ]];then
+                    ssh "${key}" 
+                    break
+                fi
+            done
+        else
+            local ipaddr=$(select_one ${!ip_map[*]})
+            ssh ${ipaddr}
+        fi
+    fi
+    return 0
+}
+
 function system_encrypt
 {
     local content="$@"
@@ -372,25 +421,35 @@ function get_iscsi_device
 
 function get_hosts_ip
 {
-    local -a ip_array
+    local ret_type="$1"
+    local -A ip_map
 
-    local -i count=0
     while read line
     do
-        local ipaddr=$(string_regex "${line}" "^\s*\d+\.\d+\.\d+\.\d+\s+")
-        [ -z "${ipaddr}" ] && continue 
+        ipaddr=$(echo "${line}" | awk '{ print $1 }')
+        hostnm=$(echo "${line}" | awk '{ print $2 }')
+
+        test -z "${ipaddr}" && continue 
+        match_regex "${ipaddr}" "^\s*\d+\.\d+\.\d+\.\d+" || continue 
 
         if ip addr | grep -F "${ipaddr}" &> /dev/null;then
             continue
         fi
 
-        if ! contain_str "${ip_array[*]}" "${ipaddr}";then
-            ip_array[${count}]="${ipaddr}"
-            let count++
+        if ! array_has "${!ip_map[*]}" "${ipaddr}";then
+            ip_map[${ipaddr}]="${hostnm}"
         fi
     done < /etc/hosts
-
-    echo "${ip_array[*]}" 
+    
+    if [[ "${ret_type,,}" == "map" ]];then
+        local map_str=$(declare -p ip_map)
+        map_str=$(string_regex "${map_str}" '\(.+\)')
+        map_str=$(string_regex "${map_str}" '[^()]+')
+        echo "${map_str}" 
+    else
+        echo "${!ip_map[*]}" 
+    fi
+    return 0
 }
 
 function get_local_ip

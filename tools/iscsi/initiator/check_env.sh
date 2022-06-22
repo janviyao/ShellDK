@@ -118,6 +118,20 @@ do
     sleep 1
 done
 
+if can_access "/sys/module/dm_mod/parameters/use_blk_mq";then
+    para_val=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
+    if [[ "${para_val}" != "Y" ]];then
+        echo_warn "dm blk_mq feature disable: /sys/module/dm_mod/parameters/use_blk_mq"
+    fi
+fi
+
+if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
+    para_val=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
+    if [[ "${para_val}" != "Y" ]];then
+        echo_warn "scsi blk_mq feature disable: /sys/module/scsi_mod/parameters/use_blk_mq"
+    fi
+fi
+
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
     ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"

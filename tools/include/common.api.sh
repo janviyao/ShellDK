@@ -809,3 +809,40 @@ function wait_value
     rm -f ${ack_pipe}
     return 0
 }
+
+function select_one
+{
+    local array=($@)
+    
+    if [ ${#array[*]} -eq 0 ];then
+        return 1
+    fi
+
+    local index=1
+    for item in ${array[*]}
+    do
+        printf "%2d) %s\n" "${index}" "${item}" &> /dev/tty
+        let index++
+    done
+    
+    if [ ${index} -gt 1 ];then
+        let index--
+    fi
+
+    local selected=1
+    read -p "Please select one(default 1): " input_val
+    if [ -n "${input_val}" ];then
+        while ! is_integer "${input_val}"
+        do
+            read -p "Please input number(1-${index}): " input_val
+            if [ -z "${input_val}" ];then
+                break
+            fi
+        done
+    fi
+
+    selected=${input_val:-${selected}}
+    selected=$((selected - 1))
+    echo "${array[${selected}]}"
+    return 0
+}
