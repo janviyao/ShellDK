@@ -53,7 +53,7 @@ function do_rsync
                     sync_cmd="\
                     export USR_PASSWORD='${USR_PASSWORD}';\
                     if ls '${MY_VIM_DIR}' &> /dev/null;then\
-                        source $MY_VIM_DIR/tools/include/system.api.sh;\
+                        source $MY_VIM_DIR/tools/include/common.api.sh;\
                         if ! test -d '${xfer_dir}';then\
                             sudo_it mkdir -p '${xfer_dir}';\
                             sudo_it chmod +w '${xfer_dir}';\
