@@ -20,9 +20,20 @@ function sshto
 
     eval "declare -A ip_map=($(get_hosts_ip map))"
     if [ -z "${des_key}" ];then
-        local ipaddr=$(select_one ${!ip_map[*]})
-        ssh ${ipaddr}
-        return 0
+        local -a select_array
+        for key in ${!ip_map[*]}
+        do
+            select_array[${#select_array[*]}]="${ip_map[${key}]}[${key}]" 
+        done
+
+        local select_str=$(select_one ${select_array[*]})
+        for key in ${!ip_map[*]}
+        do
+            if contain_str "${select_str}" "${key}";then
+                ssh ${key}
+                return 0
+            fi
+        done
     fi
 
     if is_integer "${des_key}";then

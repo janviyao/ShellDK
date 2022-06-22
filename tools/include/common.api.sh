@@ -580,6 +580,11 @@ function real_path
         return 1
     fi
 
+    local last_char=""
+    if [[ $(string_end "${this_path}" 1) == '/' ]]; then
+        last_char="/"
+    fi
+
     if match_regex "${this_path}" "^-";then
         this_path=$(replace_regex "${this_path}" "\-" "\-")
     fi
@@ -591,8 +596,12 @@ function real_path
             return 1
         fi
     fi
-
-    echo "${this_path}"
+    
+    if [ -n "${last_char}" ];then
+        echo "${this_path}${last_char}"
+    else
+        echo "${this_path}"
+    fi
     return 0
 }
 

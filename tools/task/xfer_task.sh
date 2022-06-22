@@ -54,11 +54,23 @@ function do_rsync
                     export USR_PASSWORD='${USR_PASSWORD}';\
                     if ls '${MY_VIM_DIR}' &> /dev/null;then\
                         source $MY_VIM_DIR/tools/include/system.api.sh;\
-                        sudo_it mkdir -p '${xfer_dir}';\
-                        sudo_it chmod -R 777 '${xfer_dir}';\
+                        if ! test -d '${xfer_dir}';then\
+                            sudo_it mkdir -p '${xfer_dir}';\
+                            sudo_it chmod +w '${xfer_dir}';\
+                        else\
+                            if ! test -w '${xfer_dir}';then\
+                                sudo_it chmod +w '${xfer_dir}';\
+                            fi;\
+                        fi;\
                     else\
-                        echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}';\
-                        echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod -R 777 '${xfer_dir}';\
+                        if ! test -d '${xfer_dir}';then\
+                            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}';\
+                            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}';\
+                        else\
+                            if ! test -w '${xfer_dir}';then\
+                                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}';\
+                            fi;\
+                        fi;\
                     fi\
                     "
                 elif [[ ${x_direct} == "FROM" ]];then
