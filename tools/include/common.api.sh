@@ -58,7 +58,7 @@ function string_start
 
     is_integer "${length}" || { echo "${string}"; return 1; }
 
-    #local chars="`echo "${string}" | cut -c 1-${length}`"
+    #local chars="$(echo "${string}" | cut -c 1-${length})"
     echo "${string:0:${length}}"
     return 0
 }

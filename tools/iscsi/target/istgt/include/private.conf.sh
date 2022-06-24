@@ -5,6 +5,34 @@ DEVICE_SIZE=10G
 
 declare -A ISCSI_INFO_MAP
 # ISCSI_INFO_MAP["ini_ip-idx"]="tgt_ip target_name port_group_id:ini_group_id {bdev name:LUN ID ...}"
-ISCSI_INFO_MAP["172.24.15.172-0"]="172.24.15.170 disk1 1:1 ${MY_HOME}/volume:0"
-#ISCSI_INFO_MAP["172.24.15.172-1"]="172.24.15.171 disk1 1:1 ${MY_HOME}/volume:0"
-ISCSI_INFO_MAP["172.24.15.171-0"]="172.24.15.170 disk2 1:1 ${MY_HOME}/volume:0"
+ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 1:1 ${MY_HOME}/volume:0"
+ISCSI_INFO_MAP["INI1-0"]="TGT0 disk2 1:1 ${MY_HOME}/volume:0"
+
+for map_key in ${!ISCSI_INFO_MAP[*]}
+do
+    if ! match_regex "${map_key}" "INI\d+-\d+";then
+        echo_erro "ISCSI_INFO_MAP KEY{ ${map_key} } invalid"
+        exit 1
+    fi
+
+    map_idx=$(echo "${map_key}" | awk -F- '{ print $2 }')
+    ini_idx=$(echo "${map_key}" | awk -F- '{ print $1 }' | grep -P "\d+" -o)
+
+    ini_ip=${ISCSI_INITIATOR_IP_ARRAY[${ini_idx}]}     
+    if [ -z "${ini_ip}" ];then
+        echo_erro "ISCSI_INITIATOR_IP_ARRAY[${ini_idx}] invalid"
+        exit 1
+    fi
+    new_key="${ini_ip}-${map_idx}"
+    
+    map_val="${ISCSI_INFO_MAP[${map_key}]}"
+    tgt_idx=$(echo "${map_val}" | awk '{ print $1 }' | grep -P "\d+" -o)
+    tgt_ip=${ISCSI_TARGET_IP_ARRAY[${tgt_idx}]}     
+    if [ -z "${tgt_ip}" ];then
+        echo_erro "ISCSI_TARGET_IP_ARRAY[${tgt_idx}] invalid"
+        exit 1
+    fi
+    new_val="${tgt_ip} $(echo "${map_val}" | cut -d ' ' -f 2-)"
+
+    ISCSI_INFO_MAP["${new_key}"]="${new_val}" 
+done
