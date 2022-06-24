@@ -10,15 +10,23 @@ UCTRL_CMD_MAP["create_portal_group"]="iscsi_create_portal_group"
 UCTRL_CMD_MAP["create_initiator_group"]="iscsi_create_initiator_group"
 UCTRL_CMD_MAP["create_bdev_malloc"]="bdev_malloc_create"
 UCTRL_CMD_MAP["create_bdev_null"]="bdev_null_create"
-UCTRL_CMD_MAP["create_bdev_cstor"]="bdev_cstor_create"
+UCTRL_CMD_MAP["create_bdev_disk"]="bdev_cstor_create"
 UCTRL_CMD_MAP["create_target_node"]="iscsi_create_target_node"
 
 declare -A ISCSI_INFO_MAP
 # ISCSI_INFO_MAP["ini_ip-idx"]="tgt_ip target_name port_group_id:ini_group_id {bdev name:LUN ID ...}"
-ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 0:0 Malloc0:0"
-ISCSI_INFO_MAP["INI0-1"]="TGT0 disk1 0:0 Null0:0"
-ISCSI_INFO_MAP["INI0-2"]="TGT0 disk2 0:0 DISK0:0"
-ISCSI_INFO_MAP["INI1-0"]="TGT0 disk2 0:0 Malloc0:0"
+if [[ "${BDEV_TYPE,,}" == "malloc" ]];then
+    ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 0:0 Malloc0:0"
+    ISCSI_INFO_MAP["INI1-0"]="TGT0 disk1 0:0 Malloc0:0"
+
+    ISCSI_INFO_MAP["INI0-1"]="TGT0 disk1 0:0 Malloc0:0"
+    ISCSI_INFO_MAP["INI0-2"]="TGT1 disk1 0:0 Malloc0:0"
+elif [[ "${BDEV_TYPE,,}" == "null" ]];then
+    ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 0:0 Null0:0"
+    ISCSI_INFO_MAP["INI0-1"]="TGT0 disk1 0:0 Null0:0"
+elif [[ "${BDEV_TYPE,,}" == "cstor" ]];then
+    ISCSI_INFO_MAP["INI0-2"]="TGT0 disk2 0:0 DISK0:0"
+fi
 
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do
