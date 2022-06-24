@@ -138,16 +138,13 @@ fi
 if [[ "${op_mode}" == "create_bdev" ]];then
     for item in ${create_bdev_array[*]} 
     do
-        if [[ ${BDEV_TYPE,,} == "malloc" ]];then
+        name_type=$(string_regex "${item,,}" "[a-z]+")
+        if [[ ${name_type} == "malloc" ]];then
             echo_info "${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -b ${item} ${BDEV_SIZE_MB} 4096"
             eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -b ${item} ${BDEV_SIZE_MB} 4096"
-        elif [[ ${BDEV_TYPE,,} == "null" ]];then
+        elif [[ ${name_type} == "null" ]];then
             echo_info "${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} ${item} ${BDEV_SIZE_MB} 4096"
             eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} ${item} ${BDEV_SIZE_MB} 4096"
-        elif [[ ${BDEV_TYPE,,} == "cstor" ]];then
-            bdev_id=$(string_regex "${item}" "\d+")
-            echo_info "${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
-            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
         else
             echo_erro "bdev_type { ${BDEV_TYPE,,} } don't be identified"
             exit 1
