@@ -140,22 +140,22 @@ if [[ "${op_mode}" == "create_bdev" ]];then
     do
         name_type=$(string_regex "${item,,}" "[a-z]+")
         if [[ ${name_type} == "malloc" ]];then
-            echo_info "${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -b ${item} ${BDEV_SIZE_MB} 4096"
-            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -b ${item} ${BDEV_SIZE_MB} 4096"
+            echo_info "${UCTRL_CMD_MAP[${op_mode}_${name_type}]} -b ${item} ${BDEV_SIZE_MB} 4096"
+            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${name_type}]} -b ${item} ${BDEV_SIZE_MB} 4096"
         elif [[ ${name_type} == "null" ]];then
-            echo_info "${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} ${item} ${BDEV_SIZE_MB} 4096"
-            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} ${item} ${BDEV_SIZE_MB} 4096"
+            echo_info "${UCTRL_CMD_MAP[${op_mode}_${name_type}]} ${item} ${BDEV_SIZE_MB} 4096"
+            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${name_type}]} ${item} ${BDEV_SIZE_MB} 4096"
         elif [[ ${name_type} == "disk" ]];then
             bdev_id=$(string_regex "${item}" "\d+")
-            echo_info "${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
-            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${BDEV_TYPE,,}]} -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
+            echo_info "${UCTRL_CMD_MAP[${op_mode}_${name_type}]} -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
+            eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${name_type}]} -i ${bdev_id} --size ${BDEV_SIZE_MB}MB --rsize 512"
         else
-            echo_erro "bdev_type { ${BDEV_TYPE,,} } don't be identified"
+            echo_erro "bdev_type { ${name_type} } don't be identified"
             exit 1
         fi
 
         if [ $? -ne 0 ];then
-            echo_erro "create ${BDEV_TYPE,,} bdev: ${item} fail"
+            echo_erro "create ${name_type} bdev: ${item} fail"
             exit 1
         fi
         do_success=true
