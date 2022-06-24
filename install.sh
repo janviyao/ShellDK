@@ -206,8 +206,10 @@ if [[ ${OP_MATCH} -eq 0 ]] || [[ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
     exit -1
 fi
 
-declare -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
-do_action "${mustDeps[*]}"
+if [[ ${NEED_OP} != "clean" ]];then
+    declare -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
+    do_action "${mustDeps[*]}"
+fi
 
 REMOTE_INST="${parasMap['-r']}"
 REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
@@ -324,6 +326,15 @@ function inst_env
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
     echo "source ${ROOT_DIR}/bashrc" >> ${MY_HOME}/.bashrc
     #echo "source ${ROOT_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
+    
+    if can_access "${MY_HOME}/.ssh";then
+        can_access "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
+        can_access "${MY_HOME}/.ssh/id_rsa.pub" && rm -f ${MY_HOME}/.ssh/id_rsa.pub
+    else
+        mkdir -p ${MY_HOME}/.ssh
+    fi
+    cp -f ${ROOT_DIR}/ssh_key/* ${MY_HOME}/.ssh
+    ${SUDO} "chmod 600 ${MY_HOME}/.ssh/id_rsa" 
 
     can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
     if ! can_access "${MY_HOME}/.rsync.exclude";then
