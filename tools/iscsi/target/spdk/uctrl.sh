@@ -1,7 +1,12 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
+source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
+if [ $? -ne 0 ];then
+    echo_erro "source { ${TEST_TARGET}/include/private.conf.sh } fail"
+    exit 1
+fi
 
 op_mode="$1"
 echo_info "uctrl: ${op_mode}"

@@ -7,8 +7,13 @@ if ! can_access "${g_testcase_file}"; then
     echo_erro "testcase not exist: $1"
     exit 1
 fi
+
 source ${g_testcase_file}
 source ${FIO_ROOT_DIR}/include/private.conf.sh
+if [ $? -ne 0 ];then
+    echo_erro "source { fio/include/private.conf.sh } fail"
+    exit 1
+fi
 
 g_sed_insert_pre="/;[ ]*[>]\+[ ]*/i\    "
 function run_fio_func

@@ -1,6 +1,10 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
+if [ $? -ne 0 ];then
+    echo_erro "source { ${TEST_TARGET}/include/private.conf.sh } fail"
+    exit 1
+fi
 
 ISTGT_ROOT_DIR=$(current_filedir)
 
@@ -23,7 +27,7 @@ do
     fi
 
     if ! array_has "${ISCSI_INITIATOR_IP_ARRAY[*]}" "${ini_ip}";then
-        echo_erro "target(${tgt_ip}) not configed in custom/private.conf"
+        echo_erro "target(${ini_ip}) not configed in custom/private.conf"
         exit 1
     fi
 

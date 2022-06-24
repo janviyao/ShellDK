@@ -30,6 +30,9 @@ fi
 
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do
+    map_val="${ISCSI_INFO_MAP[${map_key}]}"
+    unset ISCSI_INFO_MAP[${map_key}]
+
     if ! match_regex "${map_key}" "INI\d+-\d+";then
         echo_erro "ISCSI_INFO_MAP KEY{ ${map_key} } invalid"
         exit 1
@@ -40,19 +43,22 @@ do
 
     ini_ip=${ISCSI_INITIATOR_IP_ARRAY[${ini_idx}]}     
     if [ -z "${ini_ip}" ];then
-        echo_erro "ISCSI_INITIATOR_IP_ARRAY[${ini_idx}] invalid"
-        exit 1
+        continue
     fi
     new_key="${ini_ip}-${map_idx}"
     
-    map_val="${ISCSI_INFO_MAP[${map_key}]}"
     tgt_idx=$(echo "${map_val}" | awk '{ print $1 }' | grep -P "\d+" -o)
+
     tgt_ip=${ISCSI_TARGET_IP_ARRAY[${tgt_idx}]}     
     if [ -z "${tgt_ip}" ];then
-        echo_erro "ISCSI_TARGET_IP_ARRAY[${tgt_idx}] invalid"
-        exit 1
+        continue
     fi
     new_val="${tgt_ip} $(echo "${map_val}" | cut -d ' ' -f 2-)"
 
     ISCSI_INFO_MAP["${new_key}"]="${new_val}" 
 done
+
+if [ ${#ISCSI_INFO_MAP[*]} -eq 0 ];then
+    echo_erro "ISCSI_INFO_MAP empty"
+    exit 1
+fi
