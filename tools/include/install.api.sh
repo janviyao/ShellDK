@@ -34,10 +34,11 @@ function install_from_net
 
 function install_from_make
 {
-    local workdir="$1"
-    local currdir="$(pwd)"
+    local work_dir="$1"
+    local conf_para="${2:-"--prefix=/usr"}"
 
-    cd ${workdir} || { echo_erro "enter fail: ${workdir}"; return 1; }
+    local currdir="$(pwd)"
+    cd ${work_dir} || { echo_erro "enter fail: ${work_dir}"; return 1; }
 
     can_access "Makefile" || can_access "configure" 
     [ $? -ne 0 ] && can_access "unix/" && cd unix/
@@ -47,7 +48,7 @@ function install_from_make
         echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${workdir} fail"
+            echo_erro " Autogen: ${work_dir} fail"
             cd ${currdir}
             return 1
         fi
@@ -55,12 +56,12 @@ function install_from_make
 
     if can_access "configure"; then
         echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-        ./configure --prefix=/usr &>> build.log
+        ./configure ${conf_para} &>> build.log
         if [ $? -ne 0 ]; then
             mkdir -p build && cd build
-            ../configure --prefix=/usr &>> build.log
+            ../configure ${conf_para} &>> build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${workdir} fail"
+                echo_erro " Configure: ${work_dir} fail"
                 cd ${currdir}
                 return 1
             fi
@@ -75,12 +76,12 @@ function install_from_make
         make configure &>> build.log
         if [ $? -eq 0 ]; then
             echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-            ./configure --prefix=/usr &>> build.log
+            ./configure ${conf_para} &>> build.log
             if [ $? -ne 0 ]; then
                 mkdir -p build && cd build
-                ../configure --prefix=/usr &>> build.log
+                ../configure ${conf_para} &>> build.log
                 if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${workdir} fail"
+                    echo_erro " Configure: ${work_dir} fail"
                     cd ${currdir}
                     return 1
                 fi
@@ -96,7 +97,7 @@ function install_from_make
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
-        echo_erro " Make: ${workdir} fail"
+        echo_erro " Make: ${work_dir} fail"
         cd ${currdir}
         return 1
     fi
@@ -104,7 +105,7 @@ function install_from_make
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
     ${SUDO} "make install &>> build.log"
     if [ $? -ne 0 ]; then
-        echo_erro " Install: ${workdir} fail"
+        echo_erro " Install: ${work_dir} fail"
         cd ${currdir}
         return 1
     fi
@@ -144,6 +145,33 @@ function install_from_rpm
     return 0
 }
 
+function tar_decompress
+{
+    local -a tar_array=($@)
+    local -a dir_array
+
+    for file in ${tar_array[*]}    
+    do
+        if match_str_end "${file}" ".tar.gz";then
+            tar -xzf ${file}
+        elif match_str_end "${file}" ".tar.bz2";then
+            tar -xjf ${file}
+        elif match_str_end "${file}" ".tar";then
+            tar -xf ${file}
+        fi
+
+        local fprefix=$(string_regex "${file}" "^[0-9a-zA-Z]+")
+        local find_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        for dir in ${find_arr[*]}    
+        do
+            local real_dir=$(path2fname ${dir})
+            dir_array[${#dir_array[*]}]="${real_dir}" 
+        done
+    done
+
+    echo "${dir_array[*]}"
+}
+
 function install_from_tar
 {
     local fname_reg="$1"
@@ -152,20 +180,12 @@ function install_from_tar
     for tar_file in ${local_arr[*]}    
     do
         local full_name=$(path2fname ${tar_file})
-
         echo_info "$(printf "[%13s]: %-50s" "Will install" "${full_name}")"
-        if match_str_end "${full_name}" ".tar.gz";then
-            tar -xzf ${full_name}
-        elif match_str_end "${full_name}" ".tar";then
-            tar -xf ${full_name}
-        fi
 
-        local fprefix=$(string_regex "${full_name}" "^[0-9a-zA-Z]+")
-        local dir_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        local dir_arr=($(tar_decompress "${full_name}"))
         for tar_dir in ${dir_arr[*]}    
         do
-            local workdir=$(path2fname ${tar_dir})
-            install_from_make "${workdir}"
+            install_from_make "${tar_dir}"
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
                 return 1

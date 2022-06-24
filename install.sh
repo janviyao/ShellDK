@@ -87,6 +87,7 @@ FUNC_MAP["system"]="inst_system"
 FUNC_MAP["deps"]="inst_deps"
 FUNC_MAP["all"]="inst_deps inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
 FUNC_MAP["glibc2.18"]="inst_glibc"
+FUNC_MAP["gcc"]="inst_gcc"
 
 function do_action
 {     
@@ -164,6 +165,7 @@ function inst_usage
     echo "install.sh -o tig        @install tig package"
     echo "install.sh -o astyle     @install astyle package"
     echo "install.sh -o ack        @install ack package"
+    echo "install.sh -o gcc        @install gcc package"
     echo "install.sh -o glibc2.18  @install glibc2.18 package"
     echo "install.sh -o system     @configure run system: linux & windows"
     echo "install.sh -o deps       @install all rpm package being depended on"
@@ -248,7 +250,6 @@ commandMap["${CMD_PRE}sshlogin"]="${ROOT_DIR}/tools/sshlogin.sh"
 commandMap["${CMD_PRE}sshhosts"]="${ROOT_DIR}/tools/sshhosts.sh"
 commandMap["${CMD_PRE}gitloop"]="${ROOT_DIR}/tools/gitloop.sh"
 commandMap["${CMD_PRE}gitdiff"]="${ROOT_DIR}/tools/gitdiff.sh"
-commandMap["${CMD_PRE}syndir"]="${ROOT_DIR}/tools/sync_dir.sh"
 commandMap["${CMD_PRE}threads"]="${ROOT_DIR}/tools/threads.sh"
 commandMap["${CMD_PRE}paraparser"]="${ROOT_DIR}/tools/paraparser.sh"
 commandMap["${CMD_PRE}replace"]="${ROOT_DIR}/tools/replace.sh"
@@ -568,6 +569,43 @@ function inst_ack
     else
         do_action "ag"
     fi
+}
+
+function inst_gcc
+{
+    # install ack
+    if ! update_check "gcc" "gcc-.*\.tar\.gz";then
+        return 0     
+    fi
+
+    cd ${ROOT_DIR}/deps
+    wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz 
+
+    local tar_array=($(ls gcc-*.tar.gz))
+    if [ ${#tar_array[*]} -gt 1 ];then
+        echo_erro "multiple tar files exist: ${tar_array[*]}"
+        return 1
+    fi
+
+    local dir_array=($(tar_decompress "${tar_array[0]}"))
+    if [ ${#dir_array[*]} -gt 1 ];then
+        echo_erro "multiple tar dirs exist: ${dir_array[*]}"
+        return 1
+    fi
+    
+    eval "${dir_array[*]}/contrib/download_prerequisites"
+    ${SUDO} "yum install -y gcc-c++ glibc-static gcc"
+
+    install_from_make "${dir_array[*]}" "--prefix=/usr/local/gcc  --enable-bootstrap  --enable-checking=release --enable-languages=c,c++ --disable-multilib"
+    if [ $? -ne 0 ]; then
+        echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${tar_array[0]}")"
+        return 1
+    else
+        echo_info "$(printf "[%13s]: %-13s success" "Install" "${tar_array[0]}")"
+    fi
+    
+    ${SUDO} "echo 'export PATH=/usr/local/gcc/bin:\$PATH' > /etc/profile.d/gcc.sh"
+    source /etc/profile.d/gcc.sh
 }
 
 function inst_glibc
