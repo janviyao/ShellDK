@@ -58,18 +58,22 @@ function do_rsync
                         if ! test -d '${xfer_dir}';then\
                             sudo_it mkdir -p '${xfer_dir}';\
                             sudo_it chmod +w '${xfer_dir}';\
+                            sudo_it chown ${USR_NAME}:users '${xfer_dir}';\
                         else\
                             if ! test -w '${xfer_dir}';then\
                                 sudo_it chmod +w '${xfer_dir}';\
+                                sudo_it chown ${USR_NAME}:users '${xfer_dir}';\
                             fi;\
                         fi;\
                     else\
                         if ! test -d '${xfer_dir}';then\
                             echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}';\
                             echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}';\
+                            echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME}:users '${xfer_dir}';\
                         else\
                             if ! test -w '${xfer_dir}';then\
                                 echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}';\
+                                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME}:users '${xfer_dir}';\
                             fi;\
                         fi;\
                     fi\
@@ -86,7 +90,8 @@ function do_rsync
 
                     if ! can_access "${xfer_dir}";then
                         ${SUDO} "mkdir -p ${xfer_dir}"
-                        ${SUDO} "chmod -R 777 ${xfer_dir}"
+                        ${SUDO} "chmod +w ${xfer_dir}"
+                        ${SUDO} "chown ${USR_NAME}:users ${xfer_dir}"
                     fi
                 fi
             fi
