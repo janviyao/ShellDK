@@ -27,7 +27,7 @@ alias gpull='mygit pull'
 alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push; }; git_push'
 alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
 
-alias psgrep='ps -fauex | grep'
+alias psgrep='function ps_grep { ps -fauex | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
 
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
