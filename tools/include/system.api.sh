@@ -161,7 +161,7 @@ function sudo_it
     return $?
 }
 
-function linux_info
+function linux_sys
 {
     local value=""
     local width="15"
@@ -191,9 +191,7 @@ function linux_info
 
     value=$(getconf LONG_BIT)
 
-    local cpu_list=$(lscpu | grep "list" | awk -F: '{ print $2 }')
-    cpu_list=$(replace_regex "${cpu_list}" '^\s*' "")
-
+    local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
     local core_thread=$(lscpu | grep "Thread" | awk -F: '{ print $2 }')
     core_thread=$(replace_regex "${core_thread}" '^\s*' "")
 
@@ -202,25 +200,81 @@ function linux_info
 
     printf "[%${width}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
 
+    if can_access "iscsiadm";then
+        printf "[%${width}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
+    fi
+}
+
+function linux_net
+{
+    local value=""
+    local width="15"
+    local column="15"
+
     if can_access "ethtool";then
-        printf "[%${width}s]: \n" "Network card"
+        local tmp_file="$(temp_file)"
         local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
         for ndev in ${net_arr[*]}
         do
-            local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:")
-            speed=$(replace_regex "${speed}" '^\s*' "")
+            printf "[%${width}s]: \n" "${ndev}"
 
-            local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:")
-            nmode=$(replace_regex "${nmode}" '^\s*' "")
+            local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
+            local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
+
+            local ringbuffer_info=$(ethtool -g ${ndev} 2>/dev/null)
+            local ringbuffer_rx=($(echo "${ringbuffer_info}" | grep "RX:" | grep -P "\d+" -o))
+            local ringbuffer_tx=($(echo "${ringbuffer_info}" | grep "TX:" | grep -P "\d+" -o))
 
             if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
-                printf "  %${width}s: %s\n" "${ndev}" "${speed}  ${nmode}"
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Performence: " "Speed: ${speed}" "Duplex: ${nmode}"
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Ring Buffer: " "RX: ${ringbuffer_rx[0]}/${ringbuffer_rx[1]}" "TX: ${ringbuffer_tx[0]}/${ringbuffer_tx[1]}" 
             fi
-        done
-    fi
 
-    if can_access "iscsiadm";then
-        printf "[%${width}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
+            local discards_info=$(ethtool -S ${ndev} 2>/dev/null | grep "discards")
+            local rx_discards_phy=$(echo "${discards_info}" | grep "rx" | grep -P "\d+" -o)
+            local tx_discards_phy=$(echo "${discards_info}" | grep "tx" | grep -P "\d+" -o)
+
+            if [[ -n "${rx_discards_phy}" ]] || [[ -n "${tx_discards_phy}" ]];then
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Data Discard: " "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
+            fi
+
+            local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
+            local channel_num=($(echo "${channel_info}" | grep "Combined:" | grep -P "\d+" -o))
+            if [[ -n "${channel_num[*]}" ]];then
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Queue Channel: " "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
+            fi
+            
+            local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
+            local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
+            stt_idx=$((stt_idx + 1))
+            local end_idx=$(echo "${cpu_list}" | awk -F- '{ print $2 }')
+            end_idx=$((end_idx + 1))
+
+            cat /proc/interrupts | grep "${ndev}-" > ${tmp_file}
+            while read line
+            do
+                if [ -z "${line}" ];then
+                    continue
+                fi
+
+                local interrupt_no=$(echo "${line}" | awk '{ print $1 }' | awk -F: '{ print $1 }')
+                local channel_name=$(echo "${line}" | awk '{ print $NF }')
+                
+                local cpu_int_info=""
+                for((idx=${stt_idx}; idx <= ${end_idx}; idx++))
+                do
+                    local interrupt_cnt=$(echo "${line}" | awk "{ print \$${idx} }")
+                    if [ ${interrupt_cnt} -gt 0 ];then
+                        cpu_int_info="${cpu_int_info} CPU$((idx-1)): ${interrupt_cnt}"
+                        break
+                    fi
+                done
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Channel ${channel_name}: " "Interrupt No: ${interrupt_no}" "Count: ${cpu_int_info}" 
+            done < ${tmp_file}
+        done
+        rm -f ${tmp_file}
+    else
+        printf "%s\n" "not support ethtool"
     fi
 }
 
