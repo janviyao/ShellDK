@@ -218,7 +218,13 @@ function linux_net
         local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
         for ndev in ${net_arr[*]}
         do
-            printf "[%-${half_wd}s %s %${half_wd}s]: \n" "******" "${ndev}" "******"
+            printf "[%-${half_wd}s %5s %${half_wd}s]: \n" "******" "${ndev}" "******"
+ 
+            local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
+            local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
+            if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" "Performence:" "Speed: ${speed}" "Duplex: ${nmode}"
+            fi
 
             local local_mtu=$(ifconfig ${ndev} 2>/dev/null | grep "${ndev}:" | grep -P "mtu\s+\d+" -o | awk '{ print $2 }')
             local gateway_mtu=""
@@ -230,21 +236,14 @@ function linux_net
                     gateway_mtu="< ${local_mtu} exception"
                 fi
             fi
-            printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Max Transmission Unit:" "local: ${local_mtu}" "gateway: ${gateway_mtu}"
-
-            local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
-            local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
+            printf "%$((width + 4))s %-${column}s %-${column}s\n" "Max Transmission Unit:" "local: ${local_mtu}" "gateway: ${gateway_mtu}"
 
             local ringbuffer_info=$(ethtool -g ${ndev} 2>/dev/null)
             local ringbuffer_rx=($(echo "${ringbuffer_info}" | grep "RX:" | grep -P "\d+" -o))
             local ringbuffer_tx=($(echo "${ringbuffer_info}" | grep "TX:" | grep -P "\d+" -o))
-
-            if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Performence:" "Speed: ${speed}" "Duplex: ${nmode}"
-            fi
-
+ 
             if [[ -n "${ringbuffer_rx[*]}" ]] || [[ -n "${ringbuffer_tx[*]}" ]];then
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Ring Buffer:" "RX: ${ringbuffer_rx[0]}/${ringbuffer_rx[1]}" "TX: ${ringbuffer_tx[0]}/${ringbuffer_tx[1]}" 
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" "Ring Buffer:" "RX: ${ringbuffer_rx[0]}/${ringbuffer_rx[1]}" "TX: ${ringbuffer_tx[0]}/${ringbuffer_tx[1]}" 
             fi
 
             local discards_info=$(ethtool -S ${ndev} 2>/dev/null | grep "discards")
@@ -252,7 +251,7 @@ function linux_net
             local tx_discards_phy=$(echo "${discards_info}" | grep "tx" | grep -P "\d+" -o)
 
             if [[ -n "${rx_discards_phy}" ]] || [[ -n "${tx_discards_phy}" ]];then
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Data Discard:" "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" "Data Discard:" "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
             fi
 
             # 硬中断合并配置
@@ -264,8 +263,8 @@ function linux_net
             local tx_frame_info=($(echo "${coalesce_info}" | grep "tx-frames" | awk '{ print $2 }'))
             if [[ -n "${adapter_info}" ]];then
                 printf "%$((width + 4))s %-${column}s\n" "HW Interrput:" "Adaptive  ${adapter_info}" 
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" " " "RX:  time(us)=${rx_usecs_info[0]}  time(us)-irq=${rx_usecs_info[1]}" "frames=${rx_frame_info[0]} frames-irq=${rx_frame_info[1]}" 
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}" "frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" " " "RX:  time(us)=${rx_usecs_info[0]}  time(us)-irq=${rx_usecs_info[1]}" "frames=${rx_frame_info[0]} frames-irq=${rx_frame_info[1]}" 
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}" "frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
             fi
 
             # 软中断 budget
@@ -281,14 +280,14 @@ function linux_net
             local recv_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "receive-offload")
             local gro_state=$(echo "${recv_offload}" | grep "generic-" | awk '{ print $2 }')
             local lro_state=$(echo "${recv_offload}" | grep "large-" | awk '{ print $2 }')
-            printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Receive offload:" "GRO: ${gro_state}" "LRO: ${lro_state}" 
+            printf "%$((width + 4))s %-${column}s %-${column}s\n" "Receive offload:" "GRO: ${gro_state}" "LRO: ${lro_state}" 
             
             # 发送处理合并
             # 发送的数据大于 MTU 的话，会被分片，这个动作可以卸载到网卡, 需要网卡支持TSO
             local segment_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "segmentation-offload")
             local tso_state=$(echo "${segment_offload}" | grep "tcp-" | awk '{ print $2 }')
             local gso_state=$(echo "${segment_offload}" | grep "generic-" | awk '{ print $2 }')
-            printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Segmentation offload:" "TSO: ${tso_state}" "GSO: ${gso_state}" 
+            printf "%$((width + 4))s %-${column}s %-${column}s\n" "Segmentation offload:" "TSO: ${tso_state}" "GSO: ${gso_state}" 
 
             # 多队列网卡 XPS 调优
             # cat /sys/class/net/eth0/queues/tx-0/xps_cpus
@@ -297,7 +296,7 @@ function linux_net
             local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
             local channel_num=($(echo "${channel_info}" | grep "Combined:" | grep -P "\d+" -o))
             if [[ -n "${channel_num[*]}" ]];then
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "RSS Channel:" "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" "RSS Channel:" "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
             fi
             
             if contain_str " $@ " "rss";then
@@ -326,10 +325,10 @@ function linux_net
                             break
                         fi
                     done
-                    printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Queue ${channel_name}:" "Int-No: ${interrupt_no}" "${cpu_int_info}" 
+                    printf "%$((width + 4))s %-${column}s %-${column}s\n" "Queue ${channel_name}:" "Int-No: ${interrupt_no}" "${cpu_int_info}" 
                 done < ${tmp_file}
             else
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "RSS Interrput:" "Parameter [rss] for information { cpu and interrupt } per queue" 
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" "RSS Interrput:" "Parameter [rss] for information { cpu and interrupt } per queue" 
             fi
 
             echo
