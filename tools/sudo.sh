@@ -8,7 +8,7 @@ CMD_STR="$@"
 #    shift
 #done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
-#CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
+CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if can_access "${GBL_BASE_DIR}/.userc";then
         source ${GBL_BASE_DIR}/.userc 
@@ -104,4 +104,3 @@ mdata_get_var ${RET_VAR}
 mdata_kv_unset_key ${RET_VAR}
 
 eval "exit \$${RET_VAR}"
-

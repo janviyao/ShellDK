@@ -437,11 +437,13 @@ function inst_system
 {
     cd ${ROOT_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        ${SUDO} chmod 777 /etc/ld.so.conf
+        ${SUDO} chmod +w /etc/ld.so.conf
 
-        ${SUDO} "sed -i '#/usr/local/lib#d' /etc/ld.so.conf"
-        ${SUDO} "sed -i '#/home/.\+/.local/lib#d' /etc/ld.so.conf"
+        ${SUDO} "sed -i '\#/usr/lib64#d' /etc/ld.so.conf"
+        ${SUDO} "sed -i '\#/usr/local/lib#d' /etc/ld.so.conf"
+        ${SUDO} "sed -i '\#/home/.\+/.local/lib#d' /etc/ld.so.conf"
 
+        ${SUDO} "echo '/usr/lib64' >> /etc/ld.so.conf"
         ${SUDO} "echo '/usr/local/lib' >> /etc/ld.so.conf"
         ${SUDO} "echo '${MY_HOME}/.local/lib' >> /etc/ld.so.conf"
         ${SUDO} ldconfig

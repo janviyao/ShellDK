@@ -56,7 +56,7 @@ echo funcgraph-abstime > ${tracefs}/trace_options
 #echo nofuncgraph-tail > ${tracefs}/trace_options
 echo funcgraph-tail > ${tracefs}/trace_options
 
-$@ &
+$@ &> /dev/tty &
 TRACE_PID=$!
 
 echo ${TRACE_PID} > ${tracefs}/set_ftrace_pid

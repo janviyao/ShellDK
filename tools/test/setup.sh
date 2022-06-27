@@ -17,7 +17,7 @@ APPLY_SYSCTRL=true
 
 # TEST_TARGET=spdk
 if [[ "${LOCAL_IP}" == "172.24.15.170" ]];then
-    TEST_TARGET=spdk
+    TEST_TARGET=istgt
     declare -xa SERVER_IP_ARRAY=(172.24.15.170)
     declare -xa CLIENT_IP_ARRAY=(172.24.15.171)
 elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
