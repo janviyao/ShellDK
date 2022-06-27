@@ -241,39 +241,57 @@ function linux_net
                 printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Data Discard: " "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
             fi
 
+            # 硬中断合并配置
+            local coalesce_info=$(ethtool -c ${ndev} 2>/dev/null)
+            local adapter_info=$(echo "${coalesce_info}" | grep "Adaptive" | cut -d " " -f 2-)
+            local rx_usecs_info=($(echo "${coalesce_info}" | grep "rx-usecs" | awk '{ print $2 }'))
+            local rx_frame_info=($(echo "${coalesce_info}" | grep "rx-frames" | awk '{ print $2 }'))
+            local tx_usecs_info=($(echo "${coalesce_info}" | grep "tx-usecs" | awk '{ print $2 }'))
+            local tx_frame_info=($(echo "${coalesce_info}" | grep "tx-frames" | awk '{ print $2 }'))
+            if [[ -n "${adapter_info}" ]];then
+                printf "%$((width + 4))s %-${column}s\n" "HW Interrput: " "Adaptive  ${adapter_info}" 
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" " " "RX:  time(us)=${rx_usecs_info[0]}  time(us)-irq=${rx_usecs_info[1]}" "frames=${rx_frame_info[0]} frames-irq=${rx_frame_info[1]}" 
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}" "frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
+            fi
+
+            # 网卡多队列
             local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
             local channel_num=($(echo "${channel_info}" | grep "Combined:" | grep -P "\d+" -o))
             if [[ -n "${channel_num[*]}" ]];then
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Channel Info: " "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "RSS Channel: " "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
             fi
-            
-            local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
-            local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
-            stt_idx=$((stt_idx + 1))
-            local end_idx=$(echo "${cpu_list}" | awk -F- '{ print $2 }')
-            end_idx=$((end_idx + 1))
+             
+            if contain_str " $@ " "rss";then
+                local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
+                local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
+                stt_idx=$((stt_idx + 1))
+                local end_idx=$(echo "${cpu_list}" | awk -F- '{ print $2 }')
+                end_idx=$((end_idx + 1))
 
-            cat /proc/interrupts | grep "${ndev}-" > ${tmp_file}
-            while read line
-            do
-                if [ -z "${line}" ];then
-                    continue
-                fi
-
-                local interrupt_no=$(echo "${line}" | awk '{ print $1 }' | awk -F: '{ print $1 }')
-                local channel_name=$(echo "${line}" | awk '{ print $NF }')
-
-                local cpu_int_info=""
-                for((idx=${stt_idx}; idx <= ${end_idx}; idx++))
+                cat /proc/interrupts | grep "${ndev}-" > ${tmp_file}
+                while read line
                 do
-                    local interrupt_cnt=$(echo "${line}" | awk "{ print \$$((idx+1)) }")
-                    if [ ${interrupt_cnt} -gt 0 ];then
-                        cpu_int_info=$(printf "CPU-%02d: %d" "$((idx-1))" "${interrupt_cnt}")
-                        break
+                    if [ -z "${line}" ];then
+                        continue
                     fi
-                done
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Queue ${channel_name}: " "Int-No: ${interrupt_no}" "${cpu_int_info}" 
-            done < ${tmp_file}
+
+                    local interrupt_no=$(echo "${line}" | awk '{ print $1 }' | awk -F: '{ print $1 }')
+                    local channel_name=$(echo "${line}" | awk '{ print $NF }')
+
+                    local cpu_int_info=""
+                    for((idx=${stt_idx}; idx <= ${end_idx}; idx++))
+                    do
+                        local interrupt_cnt=$(echo "${line}" | awk "{ print \$$((idx+1)) }")
+                        if [ ${interrupt_cnt} -gt 0 ];then
+                            cpu_int_info=$(printf "CPU-%02d: %d" "$((idx-1))" "${interrupt_cnt}")
+                            break
+                        fi
+                    done
+                    printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Queue ${channel_name}: " "Int-No: ${interrupt_no}" "${cpu_int_info}" 
+                done < ${tmp_file}
+            else
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "RSS Interrput: " "Parameter [rss] for information { cpu and interrupt } per queue" 
+            fi
         done
         rm -f ${tmp_file}
     else
