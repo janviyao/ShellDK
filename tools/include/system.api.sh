@@ -250,7 +250,7 @@ function linux_net
             local end_idx=$(echo "${cpu_list}" | awk -F- '{ print $2 }')
             end_idx=$((end_idx + 1))
 
-            cat /proc/interrupts | grep "virtio0-" > ${tmp_file}
+            cat /proc/interrupts | grep "${ndev}-" > ${tmp_file}
             while read line
             do
                 if [ -z "${line}" ];then
