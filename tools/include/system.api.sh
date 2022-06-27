@@ -241,7 +241,7 @@ function linux_net
             local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
             local channel_num=($(echo "${channel_info}" | grep "Combined:" | grep -P "\d+" -o))
             if [[ -n "${channel_num[*]}" ]];then
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Queue Channel: " "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Channel Info: " "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
             fi
             
             local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
@@ -265,11 +265,11 @@ function linux_net
                 do
                     local interrupt_cnt=$(echo "${line}" | awk "{ print \$$((idx+1)) }")
                     if [ ${interrupt_cnt} -gt 0 ];then
-                        cpu_int_info="CPU-$((idx-1)): ${interrupt_cnt}"
+                        cpu_int_info=$(printf "CPU-%02d: %d" "$((idx-1))" "${interrupt_cnt}")
                         break
                     fi
                 done
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Channel ${channel_name}: " "Int-No: ${interrupt_no}" "${cpu_int_info}" 
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Queue ${channel_name}: " "Int-No: ${interrupt_no}" "${cpu_int_info}" 
             done < ${tmp_file}
         done
         rm -f ${tmp_file}
