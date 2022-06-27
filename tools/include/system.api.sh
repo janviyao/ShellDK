@@ -227,6 +227,9 @@ function linux_net
 
             if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
                 printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Performence: " "Speed: ${speed}" "Duplex: ${nmode}"
+            fi
+
+            if [[ -n "${ringbuffer_rx[*]}" ]] || [[ -n "${ringbuffer_tx[*]}" ]];then
                 printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Ring Buffer: " "RX: ${ringbuffer_rx[0]}/${ringbuffer_rx[1]}" "TX: ${ringbuffer_tx[0]}/${ringbuffer_tx[1]}" 
             fi
 
