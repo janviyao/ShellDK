@@ -208,7 +208,7 @@ function linux_sys
 function linux_net
 {
     local value=""
-    local width="15"
+    local width="22"
     local column="15"
 
     if can_access "ethtool";then
@@ -250,7 +250,7 @@ function linux_net
             local end_idx=$(echo "${cpu_list}" | awk -F- '{ print $2 }')
             end_idx=$((end_idx + 1))
 
-            cat /proc/interrupts | grep "${ndev}-" > ${tmp_file}
+            cat /proc/interrupts | grep "virtio0-" > ${tmp_file}
             while read line
             do
                 if [ -z "${line}" ];then
@@ -259,17 +259,17 @@ function linux_net
 
                 local interrupt_no=$(echo "${line}" | awk '{ print $1 }' | awk -F: '{ print $1 }')
                 local channel_name=$(echo "${line}" | awk '{ print $NF }')
-                
+
                 local cpu_int_info=""
                 for((idx=${stt_idx}; idx <= ${end_idx}; idx++))
                 do
-                    local interrupt_cnt=$(echo "${line}" | awk "{ print \$${idx} }")
+                    local interrupt_cnt=$(echo "${line}" | awk "{ print \$$((idx+1)) }")
                     if [ ${interrupt_cnt} -gt 0 ];then
-                        cpu_int_info="${cpu_int_info} CPU$((idx-1)): ${interrupt_cnt}"
+                        cpu_int_info="CPU-$((idx-1)): ${interrupt_cnt}"
                         break
                     fi
                 done
-                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Channel ${channel_name}: " "Interrupt No: ${interrupt_no}" "Count: ${cpu_int_info}" 
+                printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Channel ${channel_name}: " "Int-No: ${interrupt_no}" "${cpu_int_info}" 
             done < ${tmp_file}
         done
         rm -f ${tmp_file}
