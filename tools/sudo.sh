@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+#echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 CMD_STR="$@"
 #while [ -n "$1" ]
@@ -8,7 +8,7 @@ CMD_STR="$@"
 #    shift
 #done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
-CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
+#CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if can_access "${GBL_BASE_DIR}/.userc";then
         source ${GBL_BASE_DIR}/.userc 
