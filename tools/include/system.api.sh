@@ -212,11 +212,25 @@ function linux_net
     local column="15"
 
     if can_access "ethtool";then
+        local ip_array=($(get_hosts_ip))
+        local half_wd=$((width/2))
         local tmp_file="$(temp_file)"
         local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
         for ndev in ${net_arr[*]}
         do
-            printf "[%${width}s]: \n" "${ndev}"
+            printf "[%-${half_wd}s %s %${half_wd}s]: \n" "******" "${ndev}" "******"
+
+            local local_mtu=$(ifconfig ${ndev} 2>/dev/null | grep "${ndev}:" | grep -P "mtu\s+\d+" -o | awk '{ print $2 }')
+            local gateway_mtu=""
+            if [ ${#ip_array[*]} -gt 0 ];then
+                local pkg_size=$((local_mtu - 20 - 8))
+                if ping -s ${pkg_size} -M do ${ip_array[0]} -c 1 &> /dev/null;then
+                    gateway_mtu=">=${local_mtu}"
+                else
+                    gateway_mtu="< ${local_mtu} exception"
+                fi
+            fi
+            printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Max Transmission Unit:" "local: ${local_mtu}" "gateway: ${gateway_mtu}"
 
             local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
             local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
@@ -254,13 +268,38 @@ function linux_net
                 printf "%$((width + 4))s %-${column}s  %-${column}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}" "frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
             fi
 
+            # 软中断 budget
+            ${SUDO} sysctl -a | grep "net.core.netdev_budget" &> ${tmp_file}
+            local net_budget=($(cat ${tmp_file} | grep -P "\d+" -o))
+            if [ ${#net_budget[*]} -eq 1 ];then
+                printf "%$((width + 4))s %-${column}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}"
+            elif [ ${#net_budget[*]} -eq 2 ];then
+                printf "%$((width + 4))s %-${column}s %-${column}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}" "time(us)=${net_budget[1]}"
+            fi
+
+            # 接收处理合并
+            local recv_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "receive-offload")
+            local gro_state=$(echo "${recv_offload}" | grep "generic-" | awk '{ print $2 }')
+            local lro_state=$(echo "${recv_offload}" | grep "large-" | awk '{ print $2 }')
+            printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Receive offload: " "GRO: ${gro_state}" "LRO: ${lro_state}" 
+            
+            # 发送处理合并
+            # 发送的数据大于 MTU 的话，会被分片，这个动作可以卸载到网卡, 需要网卡支持TSO
+            local segment_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "segmentation-offload")
+            local tso_state=$(echo "${segment_offload}" | grep "tcp-" | awk '{ print $2 }')
+            local gso_state=$(echo "${segment_offload}" | grep "generic-" | awk '{ print $2 }')
+            printf "%$((width + 4))s %-${column}s  %-${column}s\n" "Segmentation offload: " "TSO: ${tso_state}" "GSO: ${gso_state}" 
+
+            # 多队列网卡 XPS 调优
+            # cat /sys/class/net/eth0/queues/tx-0/xps_cpus
+
             # 网卡多队列
             local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
             local channel_num=($(echo "${channel_info}" | grep "Combined:" | grep -P "\d+" -o))
             if [[ -n "${channel_num[*]}" ]];then
                 printf "%$((width + 4))s %-${column}s  %-${column}s\n" "RSS Channel: " "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
             fi
-             
+            
             if contain_str " $@ " "rss";then
                 local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
                 local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
@@ -292,6 +331,8 @@ function linux_net
             else
                 printf "%$((width + 4))s %-${column}s  %-${column}s\n" "RSS Interrput: " "Parameter [rss] for information { cpu and interrupt } per queue" 
             fi
+
+            echo
         done
         rm -f ${tmp_file}
     else
