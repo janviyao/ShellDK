@@ -164,30 +164,30 @@ function sudo_it
 function linux_sys
 {
     local value=""
-    local width="15"
+    local col_width1="15"
 
     if can_access "/etc/centos-release";then
         value=$(cat /etc/centos-release)
-        printf "[%${width}s]: %s\n" "System Vendor" "${value}"
+        printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     elif can_access "/etc/redhat-release";then
         value=$(cat /etc/redhat-release)
-        printf "[%${width}s]: %s\n" "System Vendor" "${value}"
+        printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     else
         value=$(cat /etc/issue | head -n 1)
-        printf "[%${width}s]: %s\n" "System Vendor" "${value}"
+        printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     fi
 
     value=$(cat /proc/version | awk '{ print $3 }')
-    printf "[%${width}s]: %s\n" "Linux Version" "${value}"
+    printf "[%${col_width1}s]: %s\n" "Linux Version" "${value}"
  
     value=$(gcc --version | grep -P "\d+(\.\d+)*" -o | head -n 1)
-    printf "[%${width}s]: %s\n" "GCC Version" "${value}"
+    printf "[%${col_width1}s]: %s\n" "GCC Version" "${value}"
 
     value=$(getconf GNU_LIBC_VERSION | grep -P "\d+(\.\d+)*" -o)
-    printf "[%${width}s]: %s\n" "GLIBC Version" "${value}"
+    printf "[%${col_width1}s]: %s\n" "GLIBC Version" "${value}"
 
     value=$(uname -i)
-    printf "[%${width}s]: %s\n" "HW Platform" "${value}"
+    printf "[%${col_width1}s]: %s\n" "HW Platform" "${value}"
 
     value=$(getconf LONG_BIT)
 
@@ -198,32 +198,32 @@ function linux_sys
     local socket_core=$(lscpu | grep "socket" | awk -F: '{ print $2 }')
     socket_core=$(replace_regex "${socket_core}" '^\s*' "")
 
-    printf "[%${width}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
+    printf "[%${col_width1}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
 
     if can_access "iscsiadm";then
-        printf "[%${width}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
+        printf "[%${col_width1}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
     fi
 }
 
 function linux_net
 {
     local value=""
-    local width="22"
-    local column="15"
+    local col_width1="28"
+    local col_width2="18"
 
     if can_access "ethtool";then
         local ip_array=($(get_hosts_ip))
-        local half_wd=$((width/2))
+        local half_wd=$((col_width1/2 - 3))
         local tmp_file="$(temp_file)"
         local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
         for ndev in ${net_arr[*]}
         do
-            printf "[%-${half_wd}s %5s %${half_wd}s]: \n" "******" "${ndev}" "******"
+            printf "[%-${half_wd}s %-5s %${half_wd}s]: \n" "*********" "${ndev}" "*********"
  
             local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
             local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
             if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" "Performence:" "Speed: ${speed}" "Duplex: ${nmode}"
+                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Performence:" "Speed: ${speed}" "Duplex: ${nmode}"
             fi
 
             local local_mtu=$(ifconfig ${ndev} 2>/dev/null | grep "${ndev}:" | grep -P "mtu\s+\d+" -o | awk '{ print $2 }')
@@ -236,14 +236,14 @@ function linux_net
                     gateway_mtu="< ${local_mtu} exception"
                 fi
             fi
-            printf "%$((width + 4))s %-${column}s %-${column}s\n" "Max Transmission Unit:" "local: ${local_mtu}" "gateway: ${gateway_mtu}"
+            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Max Transmission Unit:" "local: ${local_mtu}" "gateway: ${gateway_mtu}"
 
             local ringbuffer_info=$(ethtool -g ${ndev} 2>/dev/null)
             local ringbuffer_rx=($(echo "${ringbuffer_info}" | grep "RX:" | grep -P "\d+" -o))
             local ringbuffer_tx=($(echo "${ringbuffer_info}" | grep "TX:" | grep -P "\d+" -o))
  
             if [[ -n "${ringbuffer_rx[*]}" ]] || [[ -n "${ringbuffer_tx[*]}" ]];then
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" "Ring Buffer:" "RX: ${ringbuffer_rx[0]}/${ringbuffer_rx[1]}" "TX: ${ringbuffer_tx[0]}/${ringbuffer_tx[1]}" 
+                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Ring Buffer:" "RX: ${ringbuffer_rx[1]}/${ringbuffer_rx[0]}" "TX: ${ringbuffer_tx[1]}/${ringbuffer_tx[0]}" 
             fi
 
             local discards_info=$(ethtool -S ${ndev} 2>/dev/null | grep "discards")
@@ -251,7 +251,7 @@ function linux_net
             local tx_discards_phy=$(echo "${discards_info}" | grep "tx" | grep -P "\d+" -o)
 
             if [[ -n "${rx_discards_phy}" ]] || [[ -n "${tx_discards_phy}" ]];then
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" "Data Discard:" "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
+                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Data Discard:" "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
             fi
 
             # 硬中断合并配置
@@ -262,43 +262,46 @@ function linux_net
             local tx_usecs_info=($(echo "${coalesce_info}" | grep "tx-usecs" | awk '{ print $2 }'))
             local tx_frame_info=($(echo "${coalesce_info}" | grep "tx-frames" | awk '{ print $2 }'))
             if [[ -n "${adapter_info}" ]];then
-                printf "%$((width + 4))s %-${column}s\n" "HW Interrput:" "Adaptive  ${adapter_info}" 
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" " " "RX:  time(us)=${rx_usecs_info[0]}  time(us)-irq=${rx_usecs_info[1]}" "frames=${rx_frame_info[0]} frames-irq=${rx_frame_info[1]}" 
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}" "frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
+                printf "%$((col_width1 + 4))s %-${col_width2}s\n" "HW Interrput:" "Adaptive  ${adapter_info}" 
+                printf "%$((col_width1 + 4))s %-${col_width2}s\n" " " "RX:  time(us)=${rx_usecs_info[0]}  time(us)-irq=${rx_usecs_info[1]}  frames=${rx_frame_info[0]} frames-irq=${rx_frame_info[1]}" 
+                printf "%$((col_width1 + 4))s %-${col_width2}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}  frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
             fi
 
             # 软中断 budget
             ${SUDO} sysctl -a | grep "net.core.netdev_budget" &> ${tmp_file}
             local net_budget=($(cat ${tmp_file} | grep -P "\d+" -o))
             if [ ${#net_budget[*]} -eq 1 ];then
-                printf "%$((width + 4))s %-${column}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}"
+                printf "%$((col_width1 + 4))s %-${col_width2}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}"
             elif [ ${#net_budget[*]} -eq 2 ];then
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}" "time(us)=${net_budget[1]}"
+                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}" "time(us)=${net_budget[1]}"
             fi
 
             # 接收处理合并
             local recv_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "receive-offload")
             local gro_state=$(echo "${recv_offload}" | grep "generic-" | awk '{ print $2 }')
             local lro_state=$(echo "${recv_offload}" | grep "large-" | awk '{ print $2 }')
-            printf "%$((width + 4))s %-${column}s %-${column}s\n" "Receive offload:" "GRO: ${gro_state}" "LRO: ${lro_state}" 
+            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Receive offload:" "GRO: ${gro_state}" "LRO: ${lro_state}" 
             
             # 发送处理合并
             # 发送的数据大于 MTU 的话，会被分片，这个动作可以卸载到网卡, 需要网卡支持TSO
             local segment_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "segmentation-offload")
             local tso_state=$(echo "${segment_offload}" | grep "tcp-" | awk '{ print $2 }')
             local gso_state=$(echo "${segment_offload}" | grep "generic-" | awk '{ print $2 }')
-            printf "%$((width + 4))s %-${column}s %-${column}s\n" "Segmentation offload:" "TSO: ${tso_state}" "GSO: ${gso_state}" 
+            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Segmentation offload:" "TSO: ${tso_state}" "GSO: ${gso_state}" 
 
             # 多队列网卡 XPS 调优
             # cat /sys/class/net/eth0/queues/tx-0/xps_cpus
+            # /proc/irq/8/smp_affinity
 
             # 网卡多队列
             local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
-            local channel_num=($(echo "${channel_info}" | grep "Combined:" | grep -P "\d+" -o))
-            if [[ -n "${channel_num[*]}" ]];then
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" "RSS Channel:" "Cur: ${channel_num[0]}" "Max: ${channel_num[1]}" 
-            fi
-            
+            local channel_rx=($(echo "${channel_info}" | grep "RX:" | awk '{ print $2 }'))
+            local channel_tx=($(echo "${channel_info}" | grep "TX:" | awk '{ print $2 }'))
+            local channel_combine=($(echo "${channel_info}" | grep "Combined:" | awk '{ print $2 }'))
+            local channel_other=($(echo "${channel_info}" | grep "Other:" | awk '{ print $2 }'))
+            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s %-${col_width2}s %-${col_width2}s\n" "RSS Channel:" "RX: ${channel_rx[1]}/${channel_rx[0]}" "TX: ${channel_tx[1]}/${channel_tx[0]}" \
+                "Other: ${channel_other[1]}/${channel_other[0]}" "Combined: ${channel_combine[1]}/${channel_combine[0]}" 
+
             if contain_str " $@ " "rss";then
                 local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
                 local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
@@ -325,10 +328,10 @@ function linux_net
                             break
                         fi
                     done
-                    printf "%$((width + 4))s %-${column}s %-${column}s\n" "Queue ${channel_name}:" "Int-No: ${interrupt_no}" "${cpu_int_info}" 
+                    printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Queue ${channel_name}:" "Int-No: ${interrupt_no}" "${cpu_int_info}" 
                 done < ${tmp_file}
             else
-                printf "%$((width + 4))s %-${column}s %-${column}s\n" "RSS Interrput:" "Parameter [rss] for information { cpu and interrupt } per queue" 
+                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "RSS Interrput:" "parameter [rss] for { cpu and interrupt } per queue" 
             fi
 
             echo
