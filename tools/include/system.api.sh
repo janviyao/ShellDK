@@ -247,8 +247,8 @@ function linux_net
             fi
 
             local discards_info=$(ethtool -S ${ndev} 2>/dev/null | grep "discards")
-            local rx_discards_phy=$(echo "${discards_info}" | grep "rx" | grep -P "\d+" -o)
-            local tx_discards_phy=$(echo "${discards_info}" | grep "tx" | grep -P "\d+" -o)
+            local rx_discards_phy=$(echo "${discards_info}" | grep "rx_discards_" | grep -P "\d+" -o)
+            local tx_discards_phy=$(echo "${discards_info}" | grep "tx_discards_" | grep -P "\d+" -o)
 
             if [[ -n "${rx_discards_phy}" ]] || [[ -n "${tx_discards_phy}" ]];then
                 printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Data Discard:" "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
