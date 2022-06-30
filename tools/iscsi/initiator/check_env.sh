@@ -92,34 +92,6 @@ else
     fi
 fi
 
-KERNEL_MODULE="/sys/module/libiscsi"
-while ! can_access "${KERNEL_MODULE}"
-do
-    echo_info "wait ${KERNEL_MODULE} loading ..."
-    sleep 1
-done
-
-KERNEL_MODULE="/sys/module/iscsi_tcp"
-while ! can_access "${KERNEL_MODULE}"
-do
-    echo_info "wait ${KERNEL_MODULE} loading ..."
-    sleep 1
-done
-
-KERNEL_MODULE="/sys/module/libiscsi_tcp"
-while ! can_access "${KERNEL_MODULE}"
-do
-    echo_info "wait ${KERNEL_MODULE} loading ..."
-    sleep 1
-done
-
-KERNEL_MODULE="/sys/module/scsi_transport_iscsi"
-while ! can_access "${KERNEL_MODULE}"
-do
-    echo_info "wait ${KERNEL_MODULE} loading ..."
-    sleep 1
-done
-
 if can_access "/sys/module/dm_mod/parameters/use_blk_mq";then
     para_val=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
     if [[ "${para_val}" != "Y" ]];then
@@ -136,21 +108,21 @@ fi
 
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
-    ${SUDO} "echo 1 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
-    ${SUDO} "echo 1 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
-    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
-    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
-    ${SUDO} "echo 1 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
-    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
-    ${SUDO} "echo 1 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
+    write_value /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp 1
+    write_value /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp 1
+    write_value /sys/module/libiscsi/parameters/debug_libiscsi_conn 1
+    write_value /sys/module/libiscsi/parameters/debug_libiscsi_session 1
+    write_value /sys/module/libiscsi/parameters/debug_libiscsi_eh 1
+    write_value /sys/module/scsi_transport_iscsi/parameters/debug_session 1
+    write_value /sys/module/scsi_transport_iscsi/parameters/debug_conn 1
 else
-    ${SUDO} "echo 0 > /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp"
-    ${SUDO} "echo 0 > /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp"
-    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_conn"
-    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_session"
-    ${SUDO} "echo 0 > /sys/module/libiscsi/parameters/debug_libiscsi_eh"
-    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_session"
-    ${SUDO} "echo 0 > /sys/module/scsi_transport_iscsi/parameters/debug_conn"
+    write_value /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp 0
+    write_value /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp 0
+    write_value /sys/module/libiscsi/parameters/debug_libiscsi_conn 0
+    write_value /sys/module/libiscsi/parameters/debug_libiscsi_session 0
+    write_value /sys/module/libiscsi/parameters/debug_libiscsi_eh 0
+    write_value /sys/module/scsi_transport_iscsi/parameters/debug_session 0
+    write_value /sys/module/scsi_transport_iscsi/parameters/debug_conn 0
 fi
 
 exit 0

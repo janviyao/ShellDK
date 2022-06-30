@@ -48,7 +48,7 @@ else
     exit 1
 fi
 
-btt -I ${FNAME}.iostat -Q ${FNAME}.aqd -m ${FNAME}.seek -s ${FNAME}.seek -B ${FNAME}.bno -i ${FNAME}.bin -o ${FNAME}.btt
+btt -A -I ${FNAME}.iostat -Q ${FNAME}.aqd -m ${FNAME}.seek -s ${FNAME}.seek -B ${FNAME}.bno -i ${FNAME}.bin -o ${FNAME}.btt
 if [ $? -eq 0 ];then
     echo "${PREFIX} btt into ${FNAME}.btt"
 else

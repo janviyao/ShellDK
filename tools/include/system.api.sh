@@ -74,6 +74,31 @@ function sshto
     return 0
 }
 
+function write_value
+{
+    local file="$1"
+    shift
+    local value="$@"
+
+    if test -f '${file}';then
+        if test -w '${file}';then
+            echo "${value}" > ${file}
+        else
+            sudo_it "echo '${value}' > ${file}"
+        fi
+
+        if [ $? -ne 0 ];then
+            echo_erro "fail to write { \"${value}\" } to { ${file} }"
+            return 1
+        fi
+    else
+        echo_erro "file { ${file} } not exist"
+        return 1
+    fi
+
+    return 0
+}
+
 function system_encrypt
 {
     local content="$@"
