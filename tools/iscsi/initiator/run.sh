@@ -8,6 +8,11 @@ if bool_v "${KEEP_ENV_STATE}";then
 fi
 
 it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
+if [ ${it_array[*]} -eq 0 ];then
+    echo_erro "initiator target map empty"
+    exit 1
+fi
+
 for item in ${it_array[*]}
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
@@ -34,11 +39,13 @@ do
     sleep 1 
 done
 
-${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
-#${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}"
-if [ $? -ne 0 ];then
-    echo_erro "update node.conn[0].iscsi.HeaderDigest=${ISCSI_HEADER_DIGEST} fail"
-    exit 1
+if [[ "${ISCSI_HEADER_DIGEST}" != "None" ]];then
+    ${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.HeaderDigest -v ${ISCSI_HEADER_DIGEST}"
+    #${SUDO} "iscsiadm -m node -o update -n node.conn\[0\].iscsi.DataDigest -v ${ISCSI_DATA_DIGEST}"
+    if [ $? -ne 0 ];then
+        echo_erro "update node.conn[0].iscsi.HeaderDigest=${ISCSI_HEADER_DIGEST} fail"
+        exit 1
+    fi
 fi
 
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then

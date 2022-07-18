@@ -14,6 +14,9 @@ echo_info "uctrl: ${op_mode}"
 do_success=false
 
 create_target_node_array=($(echo))
+declare -A target_node_bl_map
+declare -A target_node_pi_map
+
 create_portal_group_array=($(echo))
 create_initiator_group_array=($(echo))
 create_bdev_array=($(echo))
@@ -90,26 +93,34 @@ do
             exit 1
         fi
 
-        bdev_name_id_pairs=($(echo))
+        bdev_lun_pair_array=($(echo))
         for seq in $(seq 4 ${map_num})
         do
             bdev_lun_map=$(echo "${map_value}" | awk "{ print \$${seq} }")
             bdev_name=$(echo "${bdev_lun_map}" | cut -d ":" -f 1)
 
-            arr_idx=${#bdev_name_id_pairs[*]}
-            bdev_name_id_pairs[${arr_idx}]="${bdev_lun_map}"
+            arr_idx=${#bdev_lun_pair_array[*]}
+            bdev_lun_pair_array[${arr_idx}]="${bdev_lun_map}"
         done
 
         tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
-        pg_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 1)
-        ig_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 2)
+        pg_ig_pair=$(echo "${map_value}" | awk '{ print $3 }')
 
-        combine_str="${ISCSI_NODE_BASE}:${tgt_name}${GBL_SPF1}${tgt_name}_alias${GBL_SPF1}\"${bdev_name_id_pairs[*]}\"${GBL_SPF1}${pg_id}:${ig_id}${GBL_SPF1}256${GBL_SPF1}-d"
-        combine_str=$(replace_regex "${combine_str}" "\s*" "${GBL_SPF2}")
-        if ! array_has "${create_target_node_array[*]}" "${combine_str}";then
+        if ! array_has "${create_target_node_array[*]}" "${tgt_name}";then
             arr_idx=${#create_target_node_array[*]}
-            create_target_node_array[${arr_idx}]="${combine_str}"
+            create_target_node_array[${arr_idx}]="${tgt_name}"
         fi
+
+        if ! array_has "${target_node_pi_map[${tgt_name}]}" "${pg_ig_pair}";then
+            target_node_pi_map[${tgt_name}]="${target_node_pi_map[${tgt_name}]} ${pg_ig_pair}"
+        fi
+
+        for bl_item in ${bdev_lun_pair_array[*]}
+        do
+            if ! array_has "${target_node_bl_map[${tgt_name}]}" "${bl_item}";then
+                target_node_bl_map[${tgt_name}]="${target_node_bl_map[${tgt_name}]} ${bl_item}"
+            fi
+        done 
     fi
 done
 
@@ -170,23 +181,22 @@ if [[ "${op_mode}" == "create_bdev" ]];then
 fi
 
 if [[ "${op_mode}" == "create_target_node" ]];then
-    for item in ${create_target_node_array[*]} 
+    for tgt_name in ${create_target_node_array[*]} 
     do
-        target_node=$(echo "${item}" | awk -F${GBL_SPF1} '{ print $1 }')
-        item=$(replace_str "${item}" "${GBL_SPF1}" " ")
-        item=$(replace_str "${item}" "${GBL_SPF2}" " ")
+        bdev_lun_pairs="${target_node_bl_map[${tgt_name}]}"
+        pg_ig_pairs="${target_node_pi_map[${tgt_name}]}"
 
-        echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
-        eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${item}"
+        echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${ISCSI_NODE_BASE}:${tgt_name} ${tgt_name}_alias '${bdev_lun_pairs}' '${pg_ig_pairs}' 256 -d"
+        eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${ISCSI_NODE_BASE}:${tgt_name} ${tgt_name}_alias '${bdev_lun_pairs}' '${pg_ig_pairs}' 256 -d"
         if [ $? -ne 0 ];then
-            echo_erro "create target: ${item} fail"
+            echo_erro "create target: ${ISCSI_NODE_BASE}:${tgt_name} fail"
             exit 1
         fi
 
         if [[ ${BDEV_TYPE,,} == "cstor" ]];then
-            #echo_info "iscsi_target_node_set_vcns ${target_node} -r 3 -c 2 -b 512 --lr-size 4096 --unit-vendor \"CloudByte\" --unit-product \"iSCSI\" --unit-revision \"0001\" --replicas \"6361:6361 6362:6362 6363:6363\""
-            echo_info "iscsi_target_node_set_vcns ${target_node}"
-            eval "${ISCSI_APP_UCTRL} iscsi_target_node_set_vcns ${target_node}"
+            #echo_info "iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name} -r 3 -c 2 -b 512 --lr-size 4096 --unit-vendor \"CloudByte\" --unit-product \"iSCSI\" --unit-revision \"0001\" --replicas \"6361:6361 6362:6362 6363:6363\""
+            echo_info "iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name}"
+            eval "${ISCSI_APP_UCTRL} iscsi_target_node_set_vcns ${ISCSI_NODE_BASE}:${tgt_name}"
             if [ $? -ne 0 ];then
                 echo_erro "set vcns target: ${ISCSI_NODE_BASE}:${tgt_name} fail"
                 exit 1
