@@ -93,7 +93,7 @@ do
             exit 1
         fi
 
-        bdev_lun_pair_array=($(echo))
+        declare -a bdev_lun_pair_array
         for seq in $(seq 4 ${map_num})
         do
             bdev_lun_map=$(echo "${map_value}" | awk "{ print \$${seq} }")
@@ -112,15 +112,23 @@ do
         fi
 
         if ! array_has "${target_node_pi_map[${tgt_name}]}" "${pg_ig_pair}";then
-            target_node_pi_map[${tgt_name}]="${target_node_pi_map[${tgt_name}]} ${pg_ig_pair}"
+            if [ -n "${target_node_pi_map[${tgt_name}]}" ];then
+                target_node_pi_map[${tgt_name}]="${target_node_pi_map[${tgt_name}]} ${pg_ig_pair}"
+            else
+                target_node_pi_map[${tgt_name}]="${pg_ig_pair}"
+            fi
         fi
 
         for bl_item in ${bdev_lun_pair_array[*]}
         do
             if ! array_has "${target_node_bl_map[${tgt_name}]}" "${bl_item}";then
-                target_node_bl_map[${tgt_name}]="${target_node_bl_map[${tgt_name}]} ${bl_item}"
+                if [ -n "${target_node_bl_map[${tgt_name}]}" ];then
+                    target_node_bl_map[${tgt_name}]="${target_node_bl_map[${tgt_name}]} ${bl_item}"
+                else
+                    target_node_bl_map[${tgt_name}]="${bl_item}"
+                fi
             fi
-        done 
+        done
     fi
 done
 
