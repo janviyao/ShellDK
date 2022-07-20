@@ -80,8 +80,8 @@ function write_value
     shift
     local value="$@"
 
-    if test -f '${file}';then
-        if test -w '${file}';then
+    if test -f "${file}";then
+        if test -w "${file}";then
             echo "${value}" > ${file}
         else
             sudo_it "echo '${value}' > ${file}"
@@ -161,7 +161,17 @@ function account_check
 
 function sudo_it
 {
-    local cmd="$@"
+    local cmd="$1"
+    shift
+    while [ -n "$1" ]
+    do
+        if [[ "$1" == "&" ]] && [[ $# -eq 1 ]];then
+            cmd="${cmd} $1"
+        else
+            cmd="${cmd} '$1'"
+        fi
+        shift
+    done
 
     if [ $UID -eq 0 ]; then
         echo_file "debug" "[ROOT] ${cmd}"

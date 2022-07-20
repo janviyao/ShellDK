@@ -1,12 +1,17 @@
 #!/bin/bash
 #echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+CMD_STR="$1"
+shift
+while [ -n "$1" ]
+do
+    if [[ "$1" == "&" ]] && [[ $# -eq 1 ]];then
+        CMD_STR="${CMD_STR} $1"
+    else
+        CMD_STR="${CMD_STR} '$1'"
+    fi
+    shift
+done
 
-CMD_STR="$@"
-#while [ -n "$1" ]
-#do
-#    CMD_STR="${CMD_STR} $1"
-#    shift
-#done
 #CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
 #CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
