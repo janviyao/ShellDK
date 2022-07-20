@@ -190,7 +190,7 @@ function sudo_it
         fi
 
         echo_file "debug" "[SUDO] ${cmd}"
-        eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' ${cmd}"
+        eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' bash -c '${cmd}'"
     fi
 
     return $?
