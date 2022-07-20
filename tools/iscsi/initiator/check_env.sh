@@ -108,6 +108,14 @@ fi
 
 if bool_v "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
+
+    # Block log
+    write_value /proc/sys/vm/block_dump 1
+    
+    # SCSI log
+    ${SUDO} scsi_logging_level --set --all 7
+
+    # iSCSI log
     write_value /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp 1
     write_value /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp 1
     write_value /sys/module/libiscsi/parameters/debug_libiscsi_conn 1
@@ -116,6 +124,13 @@ if bool_v "${KERNEL_DEBUG_ON}";then
     write_value /sys/module/scsi_transport_iscsi/parameters/debug_session 1
     write_value /sys/module/scsi_transport_iscsi/parameters/debug_conn 1
 else
+    # Block log
+    write_value /proc/sys/vm/block_dump 0
+
+    # SCSI log
+    ${SUDO} scsi_logging_level --set --all 0
+
+    # iSCSI log
     write_value /sys/module/iscsi_tcp/parameters/debug_iscsi_tcp 0
     write_value /sys/module/libiscsi_tcp/parameters/debug_libiscsi_tcp 0
     write_value /sys/module/libiscsi/parameters/debug_libiscsi_conn 0
