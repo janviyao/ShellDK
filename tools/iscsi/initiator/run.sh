@@ -8,7 +8,7 @@ if bool_v "${KEEP_ENV_STATE}";then
 fi
 
 it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
-if [ ${it_array[*]} -eq 0 ];then
+if [ ${#it_array[*]} -eq 0 ];then
     echo_erro "initiator target map empty"
     exit 1
 fi
