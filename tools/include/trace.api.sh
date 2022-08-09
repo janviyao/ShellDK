@@ -1,4 +1,8 @@
 #!/bin/bash
+: ${PREV_BASH_OPTS:=}
+: ${XTRACE_DISABLED:=}
+: ${XTRACE_NESTING_LEVEL:=}
+
 function print_backtrace
 {
     # if errexit is not enabled, don't print a backtrace

@@ -1,13 +1,24 @@
 #!/bin/bash
-#set -e # when error, then exit
-#set -u # variable not exist, then exit
+shopt -s expand_aliases
+#set -o errexit # when error, then exit
+#set -o nounset # variable not exist, then exit
+
+: ${REMOTE_IP:=}
+: ${USR_NAME:=}
+: ${USR_PASSWORD:=}
+: ${BASH_WORK_DIR:=}
+: ${GBL_MDAT_PIPE:=}
+: ${GBL_LOGR_PIPE:=}
+: ${GBL_NCAT_PIPE:=}
+: ${GBL_XFER_PIPE:=}
+: ${GBL_CTRL_PIPE:=}
+
 LOG_OPEN=0
 LOG_FLAG=".+"
 LOG_HEADER=true
 HEADER_TIME=false
 HEADER_FILE=false
 
-shopt -s expand_aliases
 source $MY_VIM_DIR/tools/include/system.api.sh
 source $MY_VIM_DIR/tools/include/trace.api.sh
 source $MY_VIM_DIR/tools/include/kvconf.api.sh
