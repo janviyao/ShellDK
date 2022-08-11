@@ -18,9 +18,8 @@ declare -A ISCSI_INFO_MAP
 if [[ "${BDEV_TYPE,,}" == "malloc" ]];then
     ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 0:0 Malloc0:0"
     ISCSI_INFO_MAP["INI1-0"]="TGT0 disk1 0:1 Malloc0:0"
-
-    ISCSI_INFO_MAP["INI0-1"]="TGT0 disk2 0:0 Malloc0:0"
-    ISCSI_INFO_MAP["INI1-1"]="TGT0 disk2 0:1 Malloc0:0"
+    #ISCSI_INFO_MAP["INI0-1"]="TGT0 disk2 0:0 Malloc0:0"
+    #ISCSI_INFO_MAP["INI1-1"]="TGT0 disk2 0:1 Malloc0:0"
 elif [[ "${BDEV_TYPE,,}" == "null" ]];then
     ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 0:0 Null0:0"
     ISCSI_INFO_MAP["INI0-1"]="TGT0 disk1 0:0 Null0:0"
