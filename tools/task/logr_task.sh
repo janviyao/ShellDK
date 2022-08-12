@@ -69,8 +69,14 @@ function _redirect_func
     local log_pipe="${BASH_WORK_DIR}/log.redirect.pipe.${self_pid}"
     local pipe_fd=0
 
+    if ! account_check;then
+        echo_erro "Username or Password check fail"
+        return 1
+    fi
+
     if ! test -w '${log_file}';then
         sudo_it chmod +w '${log_file}'
+        sudo_it chown ${USR_NAME} '${log_file}'
     fi
 
     mkfifo ${log_pipe}
