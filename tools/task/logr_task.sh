@@ -69,6 +69,10 @@ function _redirect_func
     local log_pipe="${BASH_WORK_DIR}/log.redirect.pipe.${self_pid}"
     local pipe_fd=0
 
+    if ! test -w '${log_file}';then
+        sudo_it chmod +w '${log_file}'
+    fi
+
     mkfifo ${log_pipe}
     exec {pipe_fd}<>${log_pipe}
 
