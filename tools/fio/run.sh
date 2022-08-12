@@ -22,6 +22,10 @@ done
 
 ${FIO_ROOT_DIR}/check_env.sh
 
+if contain_str "${TEST_WORKGUIDE}" "fio-log-clear";then
+    ${SUDO} "rm -fr ${FIO_OUTPUT_DIR}/*"
+fi
+
 if contain_str "${TESTCASE_SUITE}" "fill";then
     ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
     if [ $? -ne 0 ];then

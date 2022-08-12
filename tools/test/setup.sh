@@ -8,7 +8,7 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 TEST_LOG_DIR="/home/fastdisk/report_$(date '+%Y%m%d')/$(date '+%H%M%S')"
 
-TEST_WORKFLOW="env-check deploy fio-test env-clear"
+TEST_WORKGUIDE="env-check deploy fio-test env-clear app-log-clear fio-log-clear"
 #TESTCASE_SUITE="fill,custom,full"
 TESTCASE_SUITE="custom"
 KERNEL_DEBUG_ON=false
@@ -61,7 +61,7 @@ kvconf_set "${TEST_SUIT_ENV}" "DUMP_SAVE_ON"    "${DUMP_SAVE_ON}"
 
 kvconf_set "${TEST_SUIT_ENV}" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
 kvconf_set "${TEST_SUIT_ENV}" "TEST_TARGET"     "${TEST_TARGET}"
-kvconf_set "${TEST_SUIT_ENV}" "TEST_WORKFLOW"   "\"${TEST_WORKFLOW}\""
+kvconf_set "${TEST_SUIT_ENV}" "TEST_WORKGUIDE"  "\"${TEST_WORKGUIDE}\""
 kvconf_set "${TEST_SUIT_ENV}" "TESTCASE_SUITE"  "\"${TESTCASE_SUITE}\""
 
 kvconf_set "${TEST_SUIT_ENV}" "TEST_ROOT_DIR"   "${TEST_ROOT_DIR}"

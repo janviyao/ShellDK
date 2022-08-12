@@ -9,6 +9,7 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-if contain_str "${TEST_WORKFLOW}" "env-clear";then
+if contain_str "${TEST_WORKGUIDE}" "env-clear";then
     ${TEST_ROOT_DIR}/app_clear.sh
 fi
+
