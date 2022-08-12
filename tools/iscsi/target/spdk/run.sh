@@ -10,17 +10,24 @@ else
 fi
 
 if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
-    ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/build.sh
-    if [ $? -ne 0 ];then
+    if contain_str "${TEST_WORKFLOW}" "deploy";then
+        ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/build.sh
+        if [ $? -ne 0 ];then
+            echo_erro "build fail: ${ISCSI_APP_SRC}"
+            exit 1
+        fi
+    else
         echo_erro "build fail: ${ISCSI_APP_SRC}"
         exit 1
     fi
 fi
 
-${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
-if [ $? -ne 0 ];then
-    echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh"
-    exit 1
+if contain_str "${TEST_WORKFLOW}" "env-check";then
+    ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
+    if [ $? -ne 0 ];then
+        echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh"
+        exit 1
+    fi
 fi
 
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh

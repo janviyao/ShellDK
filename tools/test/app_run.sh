@@ -8,10 +8,12 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-${FIO_ROOT_DIR}/run.sh
-if [ $? -ne 0 ];then
-    echo_erro "fail: ${FIO_ROOT_DIR}/run.sh" 
-    exit 1
+if contain_str "${TEST_WORKFLOW}" "fio-test";then
+    ${FIO_ROOT_DIR}/run.sh
+    if [ $? -ne 0 ];then
+        echo_erro "fail: ${FIO_ROOT_DIR}/run.sh" 
+        exit 1
+    fi
 fi
 
 exit 0

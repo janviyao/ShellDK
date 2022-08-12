@@ -8,6 +8,7 @@ TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_filedir)
 TEST_LOG_DIR="/home/fastdisk/report_$(date '+%Y%m%d')/$(date '+%H%M%S')"
 
+TEST_WORKFLOW="env-check deploy fio-test env-clear"
 #TESTCASE_SUITE="fill,custom,full"
 TESTCASE_SUITE="custom"
 KERNEL_DEBUG_ON=false
@@ -23,7 +24,7 @@ if [[ "${LOCAL_IP}" == "172.24.15.170" ]];then
 elif [[ "${LOCAL_IP}" == "100.69.248.137" ]];then
     TEST_TARGET=custom
     declare -xa SERVER_IP_ARRAY=(100.69.248.137)
-    declare -xa CLIENT_IP_ARRAY=(100.69.248.139 100.69.248.141)
+    declare -xa CLIENT_IP_ARRAY=(100.69.248.139 11.158.227.241)
 else
     TEST_TARGET=spdk
     declare -a ip_array=($(get_hosts_ip))
@@ -60,6 +61,7 @@ kvconf_set "${TEST_SUIT_ENV}" "DUMP_SAVE_ON"    "${DUMP_SAVE_ON}"
 
 kvconf_set "${TEST_SUIT_ENV}" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
 kvconf_set "${TEST_SUIT_ENV}" "TEST_TARGET"     "${TEST_TARGET}"
+kvconf_set "${TEST_SUIT_ENV}" "TEST_WORKFLOW"   "\"${TEST_WORKFLOW}\""
 kvconf_set "${TEST_SUIT_ENV}" "TESTCASE_SUITE"  "\"${TESTCASE_SUITE}\""
 
 kvconf_set "${TEST_SUIT_ENV}" "TEST_ROOT_DIR"   "${TEST_ROOT_DIR}"
