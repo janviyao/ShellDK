@@ -16,7 +16,7 @@ function create_project
     [ -n "${root_dir}" ] && echo_debug "root-dir: ${root_dir}"
 
     cd ${root_dir}
-    local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|h\\|s\\|S\\|py\\|go"
+    local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|hh\\|h\\|s\\|S\\|py\\|go"
     local find_str="${default_type}"
 
     read -p "Input file type (separated with comma) to parse: " input_val
