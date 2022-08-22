@@ -709,10 +709,11 @@ else
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
-        if [ -n "${routeMap[${ipaddr}]}" ];then
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
-        fi
+        #if [ -n "${routeMap[${ipaddr}]}" ];then
+        #    ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        #fi
 
+        ${MY_VIM_DIR}/tools/scplogin.sh "/etc/hosts" "${ipaddr}:/etc/hosts"
         if bool_v "${COPY_PKG}"; then
             ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
             ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
