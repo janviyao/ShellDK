@@ -640,13 +640,6 @@ function inst_glibc
     fi
 }
 
-declare -A routeMap
-hostnm=$(grep -F "${LOCAL_IP}" /etc/hosts | awk '{ print $2 }')
-if [ -n "${hostnm}" ];then
-    routeMap[${LOCAL_IP}]="${hostnm}"
-    ${SUDO} hostnamectl set-hostname ${routeMap[${LOCAL_IP}]}
-fi
-
 if ! bool_v "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
     do
@@ -662,6 +655,13 @@ if ! bool_v "${REMOTE_INST}"; then
         fi
     done
 else
+    declare -A routeMap
+    hostnm=$(grep -F "${LOCAL_IP}" /etc/hosts | awk '{ print $2 }')
+    if [ -n "${hostnm}" ];then
+        routeMap[${LOCAL_IP}]="${hostnm}"
+        ${SUDO} hostnamectl set-hostname ${routeMap[${LOCAL_IP}]}
+    fi
+
     declare -a ip_array=($(echo "${other_paras[*]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
         declare -a ip_array=($(get_hosts_ip))
@@ -709,11 +709,10 @@ else
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
-        #if [ -n "${routeMap[${ipaddr}]}" ];then
-        #    ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
-        #fi
+        if [ -n "${routeMap[${ipaddr}]}" ];then
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        fi
 
-        ${MY_VIM_DIR}/tools/scplogin.sh "/etc/hosts" "${ipaddr}:/etc/hosts"
         if bool_v "${COPY_PKG}"; then
             ${MY_VIM_DIR}/tools/scplogin.sh "/tmp/vim.tar" "${ipaddr}:${MY_HOME}"
             ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"

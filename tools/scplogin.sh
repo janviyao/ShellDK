@@ -23,12 +23,12 @@ if [ -d "${SRC_DIR}" ];then
     fi
 fi
 
-IS_OK=`echo "${SRC_DIR}" | grep -P "^\s*\d+\.\d+\.\d+\.\d+\s*:" -o`
+IS_OK=$(echo "${SRC_DIR}" | grep -P "^\s*\d+\.\d+\.\d+\.\d+\s*:" -o)
 if [ -n "${IS_OK}" ];then
     SRC_DIR="${USR_NAME}@${SRC_DIR}"
 fi
 
-IS_OK=`echo "${DES_DIR}" | grep -P "^\s*\d+\.\d+\.\d+\.\d+\s*:" -o`
+IS_OK=$(echo "${DES_DIR}" | grep -P "^\s*\d+\.\d+\.\d+\.\d+\s*:" -o)
 if [ -n "${IS_OK}" ];then
     DES_DIR="${USR_NAME}@${DES_DIR}"
 fi
