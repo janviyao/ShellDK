@@ -810,7 +810,12 @@ function wait_value
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
     fi
+
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
+    while can_access "${ack_pipe}"
+    do
+        ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
+    done
 
     echo_debug "make ack: ${ack_pipe}"
     #can_access "${ack_pipe}" && rm -f ${ack_pipe}
