@@ -165,10 +165,10 @@ function sudo_it
     shift
     while [ -n "$1" ]
     do
-        if [[ "$1" == "&" ]] && [[ $# -eq 1 ]];then
-            cmd="${cmd} $1"
-        else
+        if [[ "$1" =~ ' ' ]];then
             cmd="${cmd} '$1'"
+        else
+            cmd="${cmd} $1"
         fi
         shift
     done
