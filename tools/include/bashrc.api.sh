@@ -49,39 +49,6 @@ GBL_SPF1="^"
 GBL_SPF2="%"
 GBL_SPF3="!"
 
-function var_exist
-{
-    if [[ -n $1 ]]; then
-        if [[ $1 =~ ^-?[0-9]+$ ]]; then
-            return 1
-        fi
-    else
-        return 1
-    fi
-
-    # "set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
-    # local check="\$(set -u ;: \$${var_name})"
-    # eval "$check" &> /dev/null
-    local arr="$(eval eval -- echo -n "\$$1")"
-    if [[ -n ${arr[*]} ]]; then
-        # variable exist and its value is not empty
-        return 0
-    fi
-
-    return 1
-}
-
-function INCLUDE
-{
-    local flag="$1"
-    local file="$2"
-    
-    #var_exist "${flag}" || source ${file} 
-    if ! var_exist "${flag}" && test -f ${file};then
-        source ${file} 
-    fi
-}
-
 function _bash_exit
 { 
     if [ -f ${HOME}/.bash_exit ];then
