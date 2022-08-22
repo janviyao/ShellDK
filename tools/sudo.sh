@@ -4,10 +4,10 @@ CMD_STR="$1"
 shift
 while [ -n "$1" ]
 do
-    if [[ "$1" == "&" ]] && [[ $# -eq 1 ]];then
-        CMD_STR="${CMD_STR} $1"
-    else
+    if [[ "$1" =~ ' ' ]];then
         CMD_STR="${CMD_STR} '$1'"
+    else
+        CMD_STR="${CMD_STR} $1"
     fi
     shift
 done
@@ -108,4 +108,10 @@ EOF
 mdata_get_var ${RET_VAR}
 mdata_kv_unset_key ${RET_VAR}
 
-eval "exit \$${RET_VAR}"
+eval "exit_code=\$${RET_VAR}"
+if is_integer "${exit_code}";then
+    exit ${exit_code}
+else
+    echo_erro "exit code no-integer: ${exit_code}"
+    exit -1
+fi
