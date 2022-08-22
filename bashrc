@@ -1,4 +1,4 @@
-if declare -F INCLUDE &>/dev/null;then
+if declare -F _bash_exit &>/dev/null;then
     echo_file "debug" "bashrc has loaded"
     return
 fi
