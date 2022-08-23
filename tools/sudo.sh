@@ -80,11 +80,12 @@ CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET}"
 
 # expect -d # debug expect
 expect << EOF
+    set timeout ${SSH_TIMEOUT}
+
     #exp_internal 1 #enable debug
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
 
-    #set time 30
     spawn -noecho sudo bash -c "${CMD_STR}"
     expect {
         "*username*:*" { send "${USR_NAME}\r" }
