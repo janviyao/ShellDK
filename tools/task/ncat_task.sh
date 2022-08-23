@@ -205,7 +205,13 @@ function ncat_recv_file
 
     local f_path=$(fname2path "${file_name}")
     if can_access "${f_path}";then
-        sudo_it rm -f ${file_name}
+        if can_access "${file_name}";then
+            if test -r ${f_path} && test -w ${f_path} && test -x ${f_path};then
+                rm -f ${file_name}
+            else
+                sudo_it rm -f ${file_name}
+            fi
+        fi
     else
         mkdir -p ${f_path}
     fi
