@@ -151,6 +151,75 @@ function ncat_recv_msg
     return 0
 }
 
+function ncat_send_file
+{
+    local ncat_addr="$1"
+    local ncat_port="$2"
+    local file_name="$3"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: ncat_addr\n\$2: ncat_port\n\$3: file_name"
+        return 1
+    fi
+
+    if ! can_access "${file_name}";then
+        echo_erro "file: ${file_name} not exist"
+        return 1
+    fi
+
+    echo_debug "ncat send: [$@]"
+    if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
+        if local_port_available "${ncat_port}";then
+            if ! can_access "${GBL_NCAT_PIPE}.run";then
+                echo_erro "ncat task donot run"
+                return 1
+            fi
+        fi
+    fi
+
+    if can_access "nc";then
+        local try_count=0
+        nc ${ncat_addr} ${ncat_port} < ${file_name} &> /dev/null
+        while test $? -ne 0
+        do
+            sleep 0.1
+            let try_count++
+            if [ ${try_count} -ge 300 ];then
+                echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
+                try_count=0
+            fi
+            nc ${ncat_addr} ${ncat_port} < ${file_name} &> /dev/null
+        done
+    else
+        echo_erro "ncat donot installed"
+        return 1
+    fi
+
+    return 0
+}
+
+function ncat_recv_file
+{
+    local ncat_port="$1"
+    local file_name="$2"
+
+    local f_path=$(fname2path "${file_name}")
+    if can_access "${f_path}";then
+        sudo_it rm -f ${file_name}
+    else
+        mkdir -p ${f_path}
+    fi
+
+    if can_access "nc";then
+        timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} > ${file_name}
+    else
+        echo_erro "ncat donot installed"
+        return 1
+    fi
+
+    return 0
+}
+
 function ncat_wait_resp
 {
     local ncat_body="$1"
@@ -219,6 +288,23 @@ function remote_set_var
     return $?
 }
 
+function remote_send_file
+{
+    local ncat_addr="$1"
+    local ncat_port="$2"
+    local file_name="$3"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: ncat_addr\n\$2: ncat_port\n\$3: file_name"
+        return 1
+    fi
+
+    echo_debug "remote send: [$@]"
+    ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SEND_FILE${GBL_SPF1}${ncat_port}${GBL_SPF2}${file_name}"
+    ncat_send_file "${ncat_addr}" "${ncat_port}" "${file_name}"
+    return $?
+}
+
 function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
@@ -272,6 +358,10 @@ function _ncat_thread_main
             local var_name=$(echo "${req_body}" | cut -d "=" -f 1)
             local var_valu=$(echo "${req_body}" | cut -d "=" -f 2)
             mdata_set_var "${var_name}=${var_valu}"
+        elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
+            local rport=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
+            local fname=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+            ncat_recv_file "${rport}" "${fname}"
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
