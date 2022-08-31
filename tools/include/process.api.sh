@@ -224,9 +224,13 @@ function process_name2pid
 function process_cmdline
 {
     local pid="$1"
-    is_integer "${pid}" || { echo "${pid}"; return 1; }
-    
-    echo "$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
+
+    local -a pid_array=($(process_name2pid "${pid}"))
+    for ppid in ${pid_array[*]}
+    do
+        echo "$(ps -eo pid,cmd | grep -P "^\s*${ppid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
+    done
+
     return 0
 }
 
