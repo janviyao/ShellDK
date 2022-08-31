@@ -74,9 +74,9 @@ function _redirect_func
         return 1
     fi
 
-    if ! test -w '${log_file}';then
-        sudo_it chmod +w '${log_file}'
-        sudo_it chown ${USR_NAME} '${log_file}'
+    if ! test -w "${log_file}";then
+        sudo_it chmod +w "${log_file}"
+        sudo_it chown ${USR_NAME} "${log_file}"
     fi
 
     mkfifo ${log_pipe}
