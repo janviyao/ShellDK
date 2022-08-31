@@ -172,7 +172,22 @@ function process_pid2name
     # ps -p 2133 -o args=
     # ps -p 2133 -o cmd=
     # cat /proc/${pid}/status
-    echo "$(ps -q ${pid} -o comm=)"
+    if can_access "/proc/${pid}/exe";then
+        local fname=$(path2fname "/proc/${pid}/exe")
+        if [ -n "${fname}" ];then
+            echo "${fname}"
+            return 0
+        fi
+    fi
+
+    local fname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+    if [[ "${fname}" =~ '/' ]];then
+        echo "$(path2fname "${fname}")"
+    else
+        echo "${fname}"
+    fi
+
+    #echo "$(ps -q ${pid} -o comm=)"
     return 0
 }
 
@@ -188,27 +203,30 @@ function process_name2pid
         return 0
     fi
 
+    pid_array=($(pidof ${pname}))
+    if [ ${#pid_array[*]} -gt 0 ];then
+        echo "${pid_array[*]}"
+        return 0
+    fi
+
     pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pname}$/) print \$1 }"))    
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
         return 0
     fi
     
-    pid_array=($(echo))
-    local tmp_file="$(temp_file)"
-
-    ps -eo pid,cmd | grep -w "${pname}" | grep -v grep > ${tmp_file}
-    while read line
-    do
-        local matchstr=$(echo "${line}" | awk '{ print $2 }' | grep -P "\s*${pname}\b\s*")    
-        if [ -n "${matchstr}" ];then
-            local pid=$(echo "${line}" | awk '{ print $1 }')    
-            pid_array=(${pid_array[*]} ${pid})
-        fi        
-    done < ${tmp_file}
-    rm -f ${tmp_file}
+    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${pname}\b\s*" | grep -v grep | awk '{ print $1 }'))
 
     echo "${pid_array[*]}"
+    return 0
+}
+
+function process_cmdline
+{
+    local pid="$1"
+    is_integer "${pid}" || { echo "${pid}"; return 1; }
+    
+    echo "$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
     return 0
 }
 
