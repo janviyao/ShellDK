@@ -390,14 +390,10 @@ function inst_env
 
     can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
     if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
+        new_password="$(system_encrypt "${USR_PASSWORD}")"
         echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/askpass.sh
-        echo "if [ -z \"\${USR_NAME}\" -o -z \"\${USR_PASSWORD}\" ];then"  >> ${GBL_BASE_DIR}/askpass.sh
-        echo "    if can_access '${GBL_BASE_DIR}/.userc';then"             >> ${GBL_BASE_DIR}/askpass.sh
-        echo "        source ${GBL_BASE_DIR}/.userc"                       >> ${GBL_BASE_DIR}/askpass.sh
-        echo "    fi"                                                      >> ${GBL_BASE_DIR}/askpass.sh
-        echo "    if ! account_check;then"                                 >> ${GBL_BASE_DIR}/askpass.sh
-        echo "        echo_erro 'Username or Password check fail'"         >> ${GBL_BASE_DIR}/askpass.sh
-        echo "    fi"                                                      >> ${GBL_BASE_DIR}/askpass.sh
+        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/askpass.sh
+        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
         echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
         echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
         ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
