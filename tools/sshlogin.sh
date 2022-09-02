@@ -47,16 +47,15 @@ fi
 
 TERM_ENV="export BTASK_LIST='mdat,ncat,xfer,logr';export REMOTE_IP=${LOCAL_IP};export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';"
 PASS_ENV="\
-if ls '${MY_VIM_DIR}' &> /dev/null;then \
+if test -d '$MY_VIM_DIR';then \
     export MY_VIM_DIR='$MY_VIM_DIR'; \
     source $MY_VIM_DIR/tools/include/common.api.sh; \
     if ! is_me ${USR_NAME};then \
-        if test -d $MY_VIM_DIR;then \
-            source $MY_VIM_DIR/bashrc; \
-        fi;\
+        source $MY_VIM_DIR/bashrc; \
     fi;\
 else \
-    export SUDO='echo \'${USR_PASSWORD}\' | sudo -S -u \'root\'';\
+    export SUDO_ASKPASS='echo \'${USR_PASSWORD}\';\
+    export SUDO='sudo -A;\
 fi\
 "
 
