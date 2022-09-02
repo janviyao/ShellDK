@@ -481,7 +481,7 @@ function echo_header
         if bool_v "${HEADER_TIME}";then
             header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@$(whoami)] [${LOCAL_IP}]"
         else
-            header="[${LOCAL_IP}]"
+            header="[${LOCAL_IP}@$(whoami)]"
         fi
 
         if bool_v "${HEADER_FILE}";then
