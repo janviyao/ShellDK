@@ -853,8 +853,8 @@ function wait_value
     echo_debug "make ack: ${ack_pipe}"
     #can_access "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
-    if [[ "${USR_NAME}" != "$(whoami)" ]];then
-        sudo_it chmod +w ${ack_pipe}
+    if is_root && [[ "${USR_NAME}" != "$(whoami)" ]];then
+        chmod +w ${ack_pipe}
     fi
     can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 
