@@ -188,7 +188,7 @@ function sudo_it
     else
         echo_file "debug" "[SUDO] ${cmd}"
         if can_access "${GBL_BASE_DIR}/askpass.sh";then
-            eval "sudo -A bash -c '${cmd}'"
+            sudo -A bash -c "${cmd}"
         else
             if [ -z "${USR_PASSWORD}" ]; then
                 local count=0
@@ -201,7 +201,7 @@ function sudo_it
                 done
                 export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
             fi
-            eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' bash -c '${cmd}'"
+            echo "${USR_PASSWORD}" | sudo -S -u "root" bash -c "${cmd}"
         fi
     fi
 
