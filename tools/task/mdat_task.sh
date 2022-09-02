@@ -1,7 +1,7 @@
 #!/bin/bash
 GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdat.pipe"
 
-if contain_str "${BTASK_LIST}" "mdat";then
+if string_contain "${BTASK_LIST}" "mdat";then
     GBL_MDAT_FD=${GBL_MDAT_FD:-7}
     mkfifo ${GBL_MDAT_PIPE}
     can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
@@ -75,7 +75,7 @@ function mdata_set_var
         return 1
     fi
 
-    if contain_str "${_xkey_}" "=";then
+    if string_contain "${_xkey_}" "=";then
         _xval_="${_xkey_#*=}"
         _xkey_="${_xkey_%%=*}"
         #eval "declare -g ${_xkey_}=\"${_xval_}\""
@@ -398,7 +398,7 @@ function _mdat_thread_main
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "KEY_HAS" ]];then
             local _xkey_=${req_body}
-            if contain_str "${!_global_map_[*]}" "${_xkey_}";then
+            if string_contain "${!_global_map_[*]}" "${_xkey_}";then
                 echo_debug "mdat key: [${_xkey_}] exist for [${ack_pipe}]"
                 echo "true" > ${ack_pipe}
             else
@@ -409,7 +409,7 @@ function _mdat_thread_main
         elif [[ "${req_ctrl}" == "VAL_HAS" ]];then
             local _xkey_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1)
             local _xval_=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2)
-            if contain_str "${_global_map_[${_xkey_}]}" "${_xval_}";then
+            if string_contain "${_global_map_[${_xkey_}]}" "${_xval_}";then
                 echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] exist for [${ack_pipe}]"
                 echo "true" > ${ack_pipe}
             else
@@ -510,6 +510,7 @@ function _mdat_thread
     exit 0
 }
 
-if contain_str "${BTASK_LIST}" "mdat";then
+if string_contain "${BTASK_LIST}" "mdat";then
     ( _mdat_thread & )
 fi
+

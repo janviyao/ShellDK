@@ -128,7 +128,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     do
         for dm_dev in $(ls /sys/block/${iscsi_dev}/holders)
         do
-            if ! contain_str "${dm_device_array[*]}" "${dm_dev}";then
+            if ! string_contain "${dm_device_array[*]}" "${dm_dev}";then
                 dm_device_array=(${dm_device_array[*]} ${dm_dev}) 
             fi
         done

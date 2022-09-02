@@ -10,7 +10,7 @@ else
 fi
 
 if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
-    if contain_str "${TEST_WORKGUIDE}" "deploy";then
+    if string_contain "${TEST_WORKGUIDE}" "deploy";then
         ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/build.sh
         if [ $? -ne 0 ];then
             echo_erro "build fail: ${ISCSI_APP_SRC}"
@@ -22,7 +22,7 @@ if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
     fi
 fi
 
-if contain_str "${TEST_WORKGUIDE}" "env-check";then
+if string_contain "${TEST_WORKGUIDE}" "env-check";then
     ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh
     if [ $? -ne 0 ];then
         echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/check_env.sh"
@@ -36,7 +36,7 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-if contain_str "${TEST_WORKGUIDE}" "app-log-clear";then
+if string_contain "${TEST_WORKGUIDE}" "app-log-clear";then
     if bool_v "${TARGET_DEBUG_ON}";then
         ${SUDO} "echo > ${ISCSI_APP_LOG}"
     fi

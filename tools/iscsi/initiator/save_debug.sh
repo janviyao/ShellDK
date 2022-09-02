@@ -11,7 +11,7 @@ fi
 
 if can_access "${ISCSI_INITIATOR_LOG}";then
     echo_info "Save: ${ISCSI_INITIATOR_LOG}"
-    if ! match_str_start "${ISCSI_INITIATOR_LOG}" "${INITIATOR_LOG_DIR}";then
+    if ! string_match_start "${ISCSI_INITIATOR_LOG}" "${INITIATOR_LOG_DIR}";then
         ${SUDO} mv -f ${ISCSI_INITIATOR_LOG}* ${INITIATOR_LOG_DIR}
     fi
 fi

@@ -5,7 +5,7 @@ echo "#!/bin/bash" > ${TEST_SUIT_ENV}
 
 WORK_ROOT_DIR=${GBL_BASE_DIR}/test
 TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
-TEST_ROOT_DIR=$(current_filedir)
+TEST_ROOT_DIR=$(current_dir)
 TEST_LOG_DIR="/home/fastdisk/report_$(date '+%Y%m%d')/$(date '+%H%M%S')"
 
 TEST_WORKGUIDE="env-check deploy fio-test env-clear app-log-clear fio-log-clear"

@@ -37,7 +37,7 @@ function kvconf_has_val
     fi 
 
     local old_val=$(kvconf_get "${kv_file}" "${key_str}")
-    if contain_str "${old_val}" "${val_str}";then
+    if string_contain "${old_val}" "${val_str}";then
         return 0
     else
         return 1

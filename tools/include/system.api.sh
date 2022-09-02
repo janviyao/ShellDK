@@ -38,7 +38,7 @@ function sshto
         local select_str=$(select_one ${select_array[*]})
         for key in ${!ip_map[*]}
         do
-            if contain_str "${select_str}" "${key}";then
+            if string_contain "${select_str}" "${key}";then
                 ssh ${key}
                 return 0
             fi
@@ -134,6 +134,7 @@ function system_decrypt
 
 function account_check
 {
+    local can_input=${1:-true}
     local input_val=""
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
@@ -148,17 +149,19 @@ function account_check
         #    # not interactive shell
         #    return 1
         #fi
-        USR_NAME=${MY_NAME}
-        read -p "Please input username(${USR_NAME}): " input_val
-        USR_NAME=${input_val:-${USR_NAME}}
-        export USR_NAME
+        if bool_v "${can_input}";then
+            USR_NAME=${MY_NAME}
+            read -p "Please input username(${USR_NAME}): " input_val
+            export USR_NAME=${input_val:-${USR_NAME}}
 
-        read -s -p "Please input password: " input_val
-        echo ""
-        USR_PASSWORD="$(system_encrypt "${input_val}")"
-        export USR_PASSWORD
+            read -s -p "Please input password: " input_val
+            echo ""
+            export USR_PASSWORD="$(system_encrypt "${input_val}")"
 
-        echo "$(system_encrypt ${USR_NAME}) $(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.userc 
+            echo "$(system_encrypt ${USR_NAME}) $(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.userc 
+        else
+            return 1
+        fi
     fi
 
     return 0
@@ -184,13 +187,19 @@ function sudo_it
     else
         echo_file "debug" "[SUDO] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
-            if ! account_check;then
+            if ! account_check false;then
                 echo_erro "Username or Password check fail"
                 return 1
             fi
-            export SUDO_ASKPASS="echo '${USR_PASSWORD}'"
+
+            if [ -n "${USR_PASSWORD}" ]; then
+                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
+            else
+                return 1
+            fi
+        else
+            sudo -A bash -c "${cmd}"
         fi
-        sudo -A bash -c "${cmd}"
     fi
 
     return $?
@@ -337,7 +346,7 @@ function linux_net
             printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s %-${col_width2}s %-${col_width2}s\n" "RSS Channel:" "RX: ${channel_rx[1]}/${channel_rx[0]}" "TX: ${channel_tx[1]}/${channel_tx[0]}" \
                 "Other: ${channel_other[1]}/${channel_other[0]}" "Combined: ${channel_combine[1]}/${channel_combine[0]}" 
 
-            if contain_str " $@ " "rss";then
+            if string_contain " $@ " "rss";then
                 local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
                 local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
                 stt_idx=$((stt_idx + 1))

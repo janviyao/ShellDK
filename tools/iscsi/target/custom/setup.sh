@@ -6,7 +6,7 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-SPDK_ROOT_DIR=$(current_filedir)
+SPDK_ROOT_DIR=$(current_dir)
 
 SPDK_APP_NAME=iscsi_tgt
 SPDK_CONF_DIR=${MY_HOME}/.local/etc/spdk

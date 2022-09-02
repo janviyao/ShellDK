@@ -105,7 +105,7 @@ function process_signal
     [ ${#para_arr[*]} -eq 0 ] && return 1
 
     if ! is_integer "${signal}";then
-        signal=$(trim_str_start "${signal^^}" "SIG")
+        signal=$(string_trim_start "${signal^^}" "SIG")
         if ! (trap -l | grep -P "SIG${signal}\s*" &> /dev/null);then
             echo_erro "signal: { $(trap -l | grep -P "SIG${signal}\s*" -o) } invalid: { ${signal} }"
             echo_debug "signal list:\n$(trap -l)"

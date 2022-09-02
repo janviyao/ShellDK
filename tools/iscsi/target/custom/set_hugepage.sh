@@ -31,7 +31,7 @@ if is_integer "${HP_SHM_ID}";then
         HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_${HP_SHM_ID}map_*"
     fi
 fi
-HP_FILE_PREFIX=$(trim_str_end "${HP_MAP_FILE}" "*")
+HP_FILE_PREFIX=$(string_trim_end "${HP_MAP_FILE}" "*")
 echo_info "HugePage file-prefix: ${HP_FILE_PREFIX}"
 
 can_access "${HP_MAP_FILE}" && exit 0
@@ -43,7 +43,7 @@ if can_access "/dev/hugepages/fusion_target_iscsi*";then
     for hugefile in /dev/hugepages/fusion_target_iscsi*
     do
         cur_size=$(file_size ${hugefile} | tail -n 1)
-        if ! match_str_start "${hugefile}" "${HP_FILE_PREFIX}";then
+        if ! string_match_start "${hugefile}" "${HP_FILE_PREFIX}";then
             let CAN_FREE_SIZE=CAN_FREE_SIZE+cur_size
             #echo_info "rm -f ${hugefile}"
             #${TOOL_ROOT_DIR}/log.sh rm -f ${hugefile} 
@@ -98,7 +98,7 @@ do
             if can_access "/dev/hugepages/fusion_target_iscsi*";then
                 for hugefile in /dev/hugepages/fusion_target_iscsi*
                 do
-                    if ! match_str_start "${hugefile}" "${HP_FILE_PREFIX}";then
+                    if ! string_match_start "${hugefile}" "${HP_FILE_PREFIX}";then
                         cur_size=$(file_size ${hugefile} | tail -n 1)
                         cur_size=$(( cur_size / 1024 / 1024 ))
 

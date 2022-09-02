@@ -16,6 +16,7 @@ shopt -s expand_aliases
 LOG_OPEN=0
 LOG_FLAG=".+"
 LOG_HEADER=true
+LOG_TO_FILE=false
 HEADER_TIME=false
 HEADER_FILE=false
 
@@ -82,8 +83,7 @@ function match_regex
 
     [ -z "${regstr}" ] && return 1 
 
-    echo "${string}" | grep -P "${regstr}" &> /dev/null
-    if [ $? -eq 0 ];then
+    if echo "${string}" | grep -P "${regstr}" &> /dev/null;then
         return 0
     else
         return 1
@@ -107,6 +107,23 @@ function string_start
     return 0
 }
 
+function string_end
+{
+    local string="$1"
+    local length="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
+        return 1
+    fi
+
+    is_integer "${length}" || { echo "${string}"; return 1; }
+
+    #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
+    echo "${string:0-${length}:${length}}"
+    return 0
+}
+
 function string_substr
 {
     local string="$1"
@@ -126,21 +143,38 @@ function string_substr
     return 0
 }
 
-function string_end
+function string_contain
 {
     local string="$1"
-    local length="$2"
+    local substr="$2"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
         return 1
     fi
 
-    is_integer "${length}" || { echo "${string}"; return 1; }
+    if [[ -z "${string}" ]] || [[ -z "${substr}" ]];then
+        return 1
+    fi
 
-    #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
-    echo "${string:0-${length}:${length}}"
-    return 0
+    if [[ "${string}" =~ "${substr}" ]];then
+        return 0
+    else
+        return 1
+    fi
+    #if [[ ${substr} == *\\* ]];then
+    #    substr="${substr//\\/\\\\}"
+    #fi
+
+    #if [[ ${substr} == *\** ]];then
+    #    substr="${substr//\*/\\*}"
+    #fi
+
+    #if [[ ${string} == *${substr}* ]];then
+    #    return 0
+    #else
+    #    return 1
+    #fi
 }
 
 function string_regex
@@ -159,7 +193,7 @@ function string_regex
     return 0
 }
 
-function match_str_start
+function string_match_start
 {
     local string="$1"
     local substr="$2"
@@ -186,7 +220,7 @@ function match_str_start
     fi
 }
 
-function match_str_end
+function string_match_end
 {
     local string="$1"
     local substr="$2"
@@ -213,7 +247,7 @@ function match_str_end
     fi
 }
 
-function trim_str_start
+function string_trim_start
 {
     local string="$1"
     local substr="$2"
@@ -223,7 +257,7 @@ function trim_str_start
         return 1
     fi
 
-    if match_str_start "${string}" "${substr}"; then
+    if string_match_start "${string}" "${substr}"; then
         #local sublen=${#substr}
         #let sublen++
 
@@ -238,7 +272,7 @@ function trim_str_start
     return 0
 }
 
-function trim_str_end
+function string_trim_end
 {
     local string="$1"
     local substr="$2"
@@ -248,7 +282,7 @@ function trim_str_end
         return 1
     fi
 
-    if match_str_end "${string}" "${substr}"; then
+    if string_match_end "${string}" "${substr}"; then
         #local total=${#string}
         #local sublen=${#substr}
 
@@ -264,31 +298,6 @@ function trim_str_end
     fi
 
     return 0
-}
-
-function contain_str
-{
-    local string="$1"
-    local substr="$2"
-
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
-        return 1
-    fi
-
-    if [[ ${substr} == *\\* ]];then
-        substr="${substr//\\/\\\\}"
-    fi
-
-    if [[ ${substr} == *\** ]];then
-        substr="${substr//\*/\\*}"
-    fi
-
-    if [[ ${string} == *${substr}* ]];then
-        return 0
-    else
-        return 1
-    fi
 }
 
 function replace_regex
@@ -444,32 +453,32 @@ FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_file
 {
-    xtrace_disable 
-    if var_exist "BASHLOG";then
-        local log_type="$1"
-        shift
-        #local para=$(replace_str "$@" "${MY_HOME}/" "")
-        local para="$@"
+    if bool_v "${LOG_TO_FILE}";then
+        if can_access "${BASHLOG}";then
+            local log_type="$1"
+            shift
+            #local para=$(replace_str "$@" "${MY_HOME}/" "")
+            local para="$@"
 
-        local headpart=$(printf "[%5s]" "${log_type}")
-        if bool_v "${LOG_HEADER}";then
-            headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
-        fi
+            local headpart=$(printf "[%5s]" "${log_type}")
+            if bool_v "${LOG_HEADER}";then
+                headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
+            fi
 
-        if [ -n "${REMOTE_IP}" ];then
-            #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASHLOG}
-            #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
-            echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
-        else
-            #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
-            echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
-        fi
+            if [ -n "${REMOTE_IP}" ];then
+                #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASHLOG}
+                #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+                echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
+            else
+                #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+                echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
+            fi
 
-        if [[ ${log_type} == "erro" ]];then
-            echo -e "$(print_backtrace)" >> ${BASHLOG}
+            if [[ ${log_type} == "erro" ]];then
+                echo -e "$(print_backtrace)" >> ${BASHLOG}
+            fi
         fi
     fi
-    xtrace_restore
 }
 
 function echo_header
@@ -500,7 +509,6 @@ function echo_header
 
 function echo_erro
 {
-    xtrace_disable
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ -n "${REMOTE_IP}" ];then
@@ -512,12 +520,10 @@ function echo_erro
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
     echo_file "erro" "$@"
-    xtrace_restore
 }
 
 function echo_info
 {
-    xtrace_disable
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ -n "${REMOTE_IP}" ];then
@@ -527,12 +533,10 @@ function echo_info
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
     echo_file "info" "$@"
-    xtrace_restore
 }
 
 function echo_warn
 {
-    xtrace_disable
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ -n "${REMOTE_IP}" ];then
@@ -542,18 +546,15 @@ function echo_warn
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
     echo_file "warn" "$@"
-    xtrace_restore
 }
 
 function echo_debug
 {
-    xtrace_disable
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
     if bool_v "${LOG_OPEN}"; then
         local fname=$(path2fname $0)
-        contain_str "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}" 
-        if [ $? -eq 0 ]; then
+        if string_contain "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}"; then
             if [ -n "${REMOTE_IP}" ];then
                 echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
                 # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
@@ -563,7 +564,6 @@ function echo_debug
         fi
     fi
     echo_file "debug" "$@"
-    xtrace_restore
 }
 
 function can_access
@@ -664,7 +664,7 @@ function path2fname
         return 1
     fi
 
-    if contain_str "${file_name}" "\\";then 
+    if string_contain "${file_name}" "\\";then 
         file_name=$(replace_regex "${file_name}" '\\' '')
     fi
 
@@ -691,11 +691,14 @@ function fname2path
     return 0
 }
 
-function current_filedir
+function current_dir
 {
-    local curdir=$(fname2path $0)
-    #curdir=$(trim_str_end "${curdir}" "/")
-    echo "${curdir}"
+    local curfile="$0"
+    if [ -f "${curfile}" ];then
+        echo $(fname2path "${curfile}")
+    else
+        echo $(pwd)
+    fi
 }
 
 function temp_file

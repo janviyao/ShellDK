@@ -10,7 +10,7 @@ if [ -b /dev/${DEV_NAME} ]; then
     
     if can_access "/sys/block/${DEV_NAME}/queue/scheduler";then
         supported=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
-        if contain_str "${supported}" "noop";then
+        if string_contain "${supported}" "noop";then
             ${SUDO} "echo noop > /sys/block/${DEV_NAME}/queue/scheduler"
             DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
             SHOW_INFO="${SHOW_INFO} sched:{ ${DEV_INFO}}"

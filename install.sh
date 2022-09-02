@@ -194,7 +194,7 @@ NEED_OP="${NEED_OP:-${parasMap['--op']}}"
 OP_MATCH=0
 for func in ${!FUNC_MAP[*]};
 do
-    if contain_str "${NEED_OP}" "${func}"; then
+    if string_contain "${NEED_OP}" "${func}"; then
         let OP_MATCH=OP_MATCH+1
     fi
 done
@@ -647,7 +647,7 @@ function inst_glibc
 if ! bool_v "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
     do
-        if contain_str "${NEED_OP}" "${key}"; then
+        if string_contain "${NEED_OP}" "${key}"; then
             echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
             echo_info "$(printf "[%13s]: %-6s" "Funcs" "${FUNC_MAP[${key}]}")"
             for func in ${FUNC_MAP[${key}]};
@@ -676,7 +676,7 @@ else
             hostnm=$(echo "${line}" | awk '{ print $2 }')
             
             echo_info "HostName: ${hostnm} IP: ${ipaddr}"
-            if ! contain_str "${!routeMap[*]}" "${ipaddr}";then
+            if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
                 routeMap[${ipaddr}]="${hostnm}"
             fi
         done

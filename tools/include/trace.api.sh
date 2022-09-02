@@ -125,14 +125,13 @@ function xtrace_restore()
 #set -o errtrace
 #trap "trap - ERR; print_backtrace >&2" ERR
 #PS4='\t -- ${BASH_SOURCE#${BASH_SOURCE%/*/*}/}@${LINENO} -- \$ '
-
-: ${SPDK_AUTOTEST_X:=false}
-if ${SPDK_AUTOTEST_X}; then
-    # explicitly enable xtraces, overriding any tracking information.
-    unset XTRACE_DISABLED
-    unset XTRACE_NESTING_LEVEL
-    xtrace_fd
-    xtrace_enable
-else
-    xtrace_restore
-fi
+# : ${XTRACE_AUTO:=false}
+# if ${XTRACE_AUTO}; then
+#     xtrace_restore
+# else
+#     # explicitly enable xtraces, overriding any tracking information.
+#     unset XTRACE_DISABLED
+#     unset XTRACE_NESTING_LEVEL
+#     xtrace_fd
+#     xtrace_disable
+# fi

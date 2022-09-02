@@ -8,7 +8,7 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-if contain_str "${TEST_WORKGUIDE}" "fio-test";then
+if string_contain "${TEST_WORKGUIDE}" "fio-test";then
     ${FIO_ROOT_DIR}/run.sh
     if [ $? -ne 0 ];then
         echo_erro "fail: ${FIO_ROOT_DIR}/run.sh" 

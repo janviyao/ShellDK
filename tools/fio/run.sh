@@ -22,11 +22,11 @@ done
 
 ${FIO_ROOT_DIR}/check_env.sh
 
-if contain_str "${TEST_WORKGUIDE}" "fio-log-clear";then
+if string_contain "${TEST_WORKGUIDE}" "fio-log-clear";then
     ${SUDO} "rm -fr ${FIO_OUTPUT_DIR}/*"
 fi
 
-if contain_str "${TESTCASE_SUITE}" "fill";then
+if string_contain "${TESTCASE_SUITE}" "fill";then
     ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/fill.sh"
     if [ $? -ne 0 ];then
         echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/fill.sh"
@@ -34,7 +34,7 @@ if contain_str "${TESTCASE_SUITE}" "fill";then
     fi
 fi
 
-if contain_str "${TESTCASE_SUITE}" "custom";then
+if string_contain "${TESTCASE_SUITE}" "custom";then
     ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/custom.sh"
     if [ $? -ne 0 ];then
         echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/custom.sh"
@@ -42,7 +42,7 @@ if contain_str "${TESTCASE_SUITE}" "custom";then
     fi
 fi
 
-if contain_str "${TESTCASE_SUITE}" "full";then
+if string_contain "${TESTCASE_SUITE}" "full";then
     ${FIO_ROOT_DIR}/fio.sh "${FIO_ROOT_DIR}/testcase/full.sh"
     if [ $? -ne 0 ];then
         echo_erro "fail: fio.sh ${FIO_ROOT_DIR}/testcase/full.sh"

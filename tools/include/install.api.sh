@@ -119,7 +119,7 @@ function install_from_rpm
     local fname_reg="$1"
     local rpm_file=""
 
-    local name_reg=$(trim_str_end "${fname_reg}" "\.rpm")
+    local name_reg=$(string_trim_end "${fname_reg}" "\.rpm")
     local installed_arr=($(rpm -qa | grep -P "^${name_reg}"))
 
     # rpm -qf /usr/bin/nc #query nc rpm package
@@ -128,10 +128,10 @@ function install_from_rpm
     for rpm_file in ${local_arr[*]}    
     do
         local full_name=$(path2fname ${rpm_file})
-        local rpm_name=$(trim_str_end "${full_name}" ".rpm")
+        local rpm_name=$(string_trim_end "${full_name}" ".rpm")
 
         echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${installed_arr[*]}")"
-        if ! contain_str "${installed_arr[*]}" "${rpm_name}";then
+        if ! string_contain "${installed_arr[*]}" "${rpm_name}";then
             ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
@@ -152,11 +152,11 @@ function tar_decompress
 
     for file in ${tar_array[*]}    
     do
-        if match_str_end "${file}" ".tar.gz";then
+        if string_match_end "${file}" ".tar.gz";then
             tar -xzf ${file}
-        elif match_str_end "${file}" ".tar.bz2";then
+        elif string_match_end "${file}" ".tar.bz2";then
             tar -xjf ${file}
-        elif match_str_end "${file}" ".tar";then
+        elif string_match_end "${file}" ".tar";then
             tar -xf ${file}
         fi
 

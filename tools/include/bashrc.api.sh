@@ -70,7 +70,7 @@ if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
 else
     can_access "${BASH_WORK_DIR}" && { echo_file "debug" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
 
-    if contain_str "${BTASK_LIST}" "master";then
+    if string_contain "${BTASK_LIST}" "master";then
         BASH_WORK_DIR="${GBL_BASE_DIR}/bash.master.${ROOT_PID}"
     else
         BASH_WORK_DIR="${GBL_BASE_DIR}/bash.slaver.${ROOT_PID}"

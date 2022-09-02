@@ -18,7 +18,7 @@ function local_port_available
     fi
 }
 
-if contain_str "${BTASK_LIST}" "ncat";then
+if string_contain "${BTASK_LIST}" "ncat";then
     mkdir -p ${GBL_NCAT_WORK_DIR}
 
     GBL_NCAT_FD=${GBL_NCAT_FD:-9}
@@ -314,7 +314,7 @@ function remote_send_file
 function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
-    if contain_str "${BTASK_LIST}" "ncat";then
+    if string_contain "${BTASK_LIST}" "ncat";then
         ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
     fi 
 }
@@ -407,6 +407,7 @@ function _ncat_thread
     exit 0
 }
 
-if contain_str "${BTASK_LIST}" "ncat";then
+if string_contain "${BTASK_LIST}" "ncat";then
     ( _ncat_thread & )
 fi
+

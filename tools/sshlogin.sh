@@ -50,13 +50,13 @@ if test -d '$MY_VIM_DIR';then \
         source $MY_VIM_DIR/bashrc; \
     fi;\
 else \
-    export SUDO_ASKPASS='echo \'${USR_PASSWORD}\';\
+    export SUDO_ASKPASS='${GBL_BASE_DIR}/askpass.sh';\
     export SUDO='sudo -A;\
 fi\
 "
 
-if match_str_start "${CMD_EXE}" "${SUDO} ";then
-    CMD_EXE="eval \\\$SUDO $(trim_str_start "${CMD_EXE}" "${SUDO} ")"
+if string_match_start "${CMD_EXE}" "${SUDO} ";then
+    CMD_EXE="eval \\\$SUDO $(string_trim_start "${CMD_EXE}" "${SUDO} ")"
 fi
 
 RET_VAR="sudo_ret$$"
