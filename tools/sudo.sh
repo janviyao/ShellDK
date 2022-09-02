@@ -50,9 +50,6 @@ if is_root; then
     EXPECT_EOF="expect eof"
 fi
 
-RET_VAR="sudo_ret$$"
-GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
-
 # trap - EXIT : prevent from removing global directory
 PASS_ENV="\
 export BTASK_LIST='master'; \
@@ -83,6 +80,8 @@ if declare -F sudo_it &>/dev/null;then
     exit $?
 fi
 
+RET_VAR="sudo_ret$$"
+GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
 CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET}"
 
 # expect -d # debug expect

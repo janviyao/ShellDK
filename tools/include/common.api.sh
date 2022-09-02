@@ -479,7 +479,7 @@ function echo_header
     if bool_v "${LOG_HEADER}";then
         local header=""
         if bool_v "${HEADER_TIME}";then
-            header="[$(date '+%Y-%m-%d %H:%M:%S:%N')] [${LOCAL_IP}]"
+            header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@$(whoami)] [${LOCAL_IP}]"
         else
             header="[${LOCAL_IP}]"
         fi
