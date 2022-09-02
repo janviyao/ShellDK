@@ -378,14 +378,7 @@ function inst_env
 
     can_access "${GBL_BASE_DIR}/.userc" && rm -f ${GBL_BASE_DIR}/.userc
     if ! can_access "${GBL_BASE_DIR}/.userc";then
-        new_password="$(system_encrypt "${USR_PASSWORD}")"
-        echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/.userc
-        echo "if [ -z \"\${USR_NAME}\" -o -z \"\${USR_PASSWORD}\" ];then"  >> ${GBL_BASE_DIR}/.userc
-        echo "    mdata_set_var 'USR_NAME=${USR_NAME}'"                    >> ${GBL_BASE_DIR}/.userc
-        echo "    mdata_set_var 'USR_PASSWORD=${new_password}'"            >> ${GBL_BASE_DIR}/.userc
-        echo "    account_check"                                           >> ${GBL_BASE_DIR}/.userc
-        echo "fi"                                                          >> ${GBL_BASE_DIR}/.userc
-        ${SUDO} chmod +x ${GBL_BASE_DIR}/.userc 
+        echo "$(system_encrypt ${USR_NAME}) $(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.userc 
     fi
 
     can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh

@@ -68,7 +68,7 @@ unset old_spec
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if can_access "${GBL_BASE_DIR}/.userc";then
-        source ${GBL_BASE_DIR}/.userc 
+        account_check
     fi
 fi
 

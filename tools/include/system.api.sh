@@ -137,11 +137,10 @@ function account_check
     local input_val=""
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-        mdata_get_var USR_NAME
-        if [ -n "${USR_NAME}" ];then
-            mdata_get_var USR_PASSWORD
-            export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
-            return 0
+        if can_access "${GBL_BASE_DIR}/.userc";then
+            export USR_NAME=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.userc | awk '{ print $1 }')")
+            export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.userc | awk '{ print $2 }')")
+            echo "name: ${USR_NAME} passwd: ${USR_PASSWORD}"
         fi
     fi
 
@@ -153,16 +152,14 @@ function account_check
         USR_NAME=${MY_NAME}
         read -p "Please input username(${USR_NAME}): " input_val
         USR_NAME=${input_val:-${USR_NAME}}
-        mdata_set_var USR_NAME
         export USR_NAME
 
         read -s -p "Please input password: " input_val
         echo ""
         USR_PASSWORD="$(system_encrypt "${input_val}")"
-        mdata_set_var USR_PASSWORD
-
-        USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
         export USR_PASSWORD
+
+        echo "$(system_encrypt ${USR_NAME}) $(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.userc 
     fi
 
     return 0
