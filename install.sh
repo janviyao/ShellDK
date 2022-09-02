@@ -660,9 +660,9 @@ if ! bool_v "${REMOTE_INST}"; then
     done
 else
     declare -A routeMap
-    hostnm=$(grep -F "${LOCAL_IP}" /etc/hosts | awk '{ print $2 }')
-    if [ -n "${hostnm}" ];then
-        routeMap[${LOCAL_IP}]="${hostnm}"
+    hostnm=($(grep -F "${LOCAL_IP}" /etc/hosts | awk '{ print $2 }'))
+    if [ -n "${hostnm[*]}" ];then
+        routeMap[${LOCAL_IP}]="${hostnm[0]}"
         ${SUDO} hostnamectl set-hostname ${routeMap[${LOCAL_IP}]}
     fi
 
@@ -671,21 +671,20 @@ else
         declare -a ip_array=($(get_hosts_ip))
         for ipaddr in ${ip_array[*]}
         do
-            line=$(grep -F "${ipaddr}" /etc/hosts)
-            ipaddr=$(echo "${line}" | awk '{ print $1 }')
-            hostnm=$(echo "${line}" | awk '{ print $2 }')
-            
-            echo_info "HostName: ${hostnm} IP: ${ipaddr}"
+            hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
+            echo_info "HostName: ${hostnm[0]} IP: ${ipaddr}"
             if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
-                routeMap[${ipaddr}]="${hostnm}"
+                routeMap[${ipaddr}]="${hostnm[0]}"
             fi
         done
     else
         for ipaddr in ${ip_array[*]}
         do
-            hostnm=$(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }')
-            echo_info "HostName: ${hostnm} IP: ${ipaddr}"
-            routeMap[${ipaddr}]="${hostnm}"
+            hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
+            echo_info "HostName: ${hostnm[0]} IP: ${ipaddr}"
+            if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
+                routeMap[${ipaddr}]="${hostnm[0]}"
+            fi
         done
     fi
     echo_info "Remote install into { ${ip_array[*]} }"
