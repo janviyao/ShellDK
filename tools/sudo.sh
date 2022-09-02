@@ -26,7 +26,7 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     fi
 fi
 
-if [ $UID -eq 0 ]; then
+if is_root; then
     sudo_it "${CMD_STR}"
     exit $?
 else 
@@ -46,7 +46,7 @@ else
 fi
 
 EXPECT_EOF=""
-if [ $UID -ne 0 ]; then
+if is_root; then
     EXPECT_EOF="expect eof"
 fi
 

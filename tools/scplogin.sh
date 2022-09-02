@@ -1,5 +1,20 @@
 #!/bin/bash
+function how_usage
+{
+    local script_name=$(path2fname $0)
+    echo "=================== Usage ==================="
+    printf "%-15s <src-dir> <des-dir>\n" "${script_name}"
+    printf "%-15s @%s\n" "<src-dir>" "source directory which is either local directory or address-directory"
+    printf "%-15s @%s\n" "<des-dir>" "destination directory which is either local directory or address-directory"
+    echo "============================================="
+}
+
+if [ $# -lt 2 ];then
+    how_usage
+    exit 1
+fi
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+
 SRC_DIR="$1"
 DES_DIR="$2"
 echo_debug "paras: { $@ }"
@@ -35,7 +50,7 @@ fi
 echo_info "Cp { ${SRC_DIR} } to { ${DES_DIR} }"
 
 EXPECT_EOF=""
-if [ $UID -ne 0 ]; then
+if is_root; then
     EXPECT_EOF="expect eof"
 fi
 

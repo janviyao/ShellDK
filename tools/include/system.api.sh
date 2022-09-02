@@ -1,4 +1,13 @@
 #!/bin/bash
+function is_root
+{
+    if [ $UID -eq 0 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function lock_run
 {
     (
@@ -173,24 +182,24 @@ function sudo_it
         shift
     done
 
-    if [ $UID -eq 0 ]; then
+    if is_root; then
         echo_file "debug" "[ROOT] ${cmd}"
         eval "${cmd}"
     else
-        if [ -z "${USR_PASSWORD}" ]; then
-            local count=0
-            while [ -z "${USR_PASSWORD}" ]
-            do
-                sleep 0.02
-                mdata_get_var USR_PASSWORD
-                let count++
-                [ ${count} -lt 1500 ] && return 1
-            done
-            export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
-        fi
-
+        #if [ -z "${USR_PASSWORD}" ]; then
+        #    local count=0
+        #    while [ -z "${USR_PASSWORD}" ]
+        #    do
+        #        sleep 0.02
+        #        mdata_get_var USR_PASSWORD
+        #        let count++
+        #        [ ${count} -lt 1500 ] && return 1
+        #    done
+        #    export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
+        #fi
         echo_file "debug" "[SUDO] ${cmd}"
-        eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' bash -c '${cmd}'"
+        #eval "echo '${USR_PASSWORD}' | sudo -S -u 'root' bash -c '${cmd}'"
+        eval "sudo -A bash -c '${cmd}'"
     fi
 
     return $?

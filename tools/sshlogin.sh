@@ -1,4 +1,18 @@
 #!/bin/bash
+function how_usage
+{
+    local script_name=$(path2fname $0)
+    echo "=================== Usage ==================="
+    printf "%-15s <ip-address> <command>\n" "${script_name}"
+    printf "%-15s @%s\n" "<ip-address>" "ip address where it will do the <command>"
+    printf "%-15s @%s\n" "<command>"    "shell command"
+    echo "============================================="
+}
+
+if [ $# -lt 2 ];then
+    how_usage
+    exit 1
+fi
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 HOST_IP="$1"
@@ -27,7 +41,7 @@ if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
 fi
 
 EXPECT_EOF=""
-if [ $UID -ne 0 ]; then
+if is_root; then
     EXPECT_EOF="expect eof"
 fi
 
