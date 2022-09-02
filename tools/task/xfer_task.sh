@@ -36,9 +36,6 @@ function do_rsync
         do
             if [[ ${ipaddr} != ${LOCAL_IP} ]];then
                 if [[ ${x_direct} == "TO" ]];then
-                    mdata_get_var USR_PASSWORD
-                    USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
-
                     local xfer_dir=${xfer_des}
                     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
                         xfer_dir=$(echo "${xfer_des}" | awk -F':' '{ print $2 }')
@@ -295,6 +292,11 @@ function _bash_xfer_exit
 
 function _xfer_thread_main
 {
+    if ! account_check;then
+        echo_erro "Username or Password check fail"
+        return 1
+    fi
+
     while read line
     do
         echo_debug "xfer task: [${line}]" 
@@ -337,9 +339,6 @@ function _xfer_thread_main
 
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-                mdata_get_var USR_PASSWORD
-                USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
- 
                 sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
             else
                 #can_access "${xfer_des}" || ${SUDO} "mkdir -p ${xfer_des}"

@@ -140,7 +140,6 @@ function account_check
         if can_access "${GBL_BASE_DIR}/.userc";then
             export USR_NAME=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.userc | awk '{ print $1 }')")
             export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.userc | awk '{ print $2 }')")
-            echo "name: ${USR_NAME} passwd: ${USR_PASSWORD}"
         fi
     fi
 
@@ -185,16 +184,9 @@ function sudo_it
     else
         echo_file "debug" "[SUDO] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
-            if [ -z "${USR_PASSWORD}" ]; then
-                local count=0
-                while [ -z "${USR_PASSWORD}" ]
-                do
-                    sleep 0.02
-                    mdata_get_var USR_PASSWORD
-                    let count++
-                    [ ${count} -lt 1500 ] && return 1
-                done
-                export USR_PASSWORD="$(system_decrypt "${USR_PASSWORD}")"
+            if ! account_check;then
+                echo_erro "Username or Password check fail"
+                return 1
             fi
             export SUDO_ASKPASS="echo '${USR_PASSWORD}'"
         fi
