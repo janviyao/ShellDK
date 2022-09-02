@@ -38,8 +38,7 @@ MY_HOME=${HOME}
 GBL_BASE_DIR="/tmp/gbl"
 mkdir -p ${GBL_BASE_DIR}
 BASHLOG="${GBL_BASE_DIR}/bash.log"
-#SUDO="$MY_VIM_DIR/tools/sudo.sh"
-SUDO="sudo_it"
+SUDO="$MY_VIM_DIR/tools/sudo.sh"
 SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
 
 OP_TRY_CNT=3

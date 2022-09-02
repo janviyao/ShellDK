@@ -63,8 +63,8 @@ export USR_NAME='${USR_NAME}'; \
 export USR_PASSWORD='${USR_PASSWORD}'; \
 export MY_VIM_DIR=$MY_VIM_DIR; \
 source $MY_VIM_DIR/tools/include/common.api.sh; \
-if ! is_me ${USR_NAME};then \
-    if test -d $MY_VIM_DIR;then \
+if ! is_me '${USR_NAME}';then \
+    if test -d '$MY_VIM_DIR';then \
         source $MY_VIM_DIR/bashrc; \
     else \
         sudo_it '${CMD_STR}'; \
@@ -75,6 +75,12 @@ else \
     exit \$?; \
 fi\
 "
+
+if declare -F sudo_it &>/dev/null;then
+    CMD_STR="${PASS_ENV}; (${CMD_STR});"
+    sudo_it "${CMD_STR}"
+    exit $?
+fi
 
 CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET}"
 
