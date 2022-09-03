@@ -122,7 +122,7 @@ function update_check
     local fname_reg="$2"
 
     if can_access "${local_cmd}";then
-        local tmp_file="$(temp_file)"
+        local tmp_file="$(file_temp)"
         ${local_cmd} --version &> ${tmp_file} 
         if [ $? -ne 0 ];then
             return 1
@@ -443,13 +443,14 @@ function inst_system
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         ${SUDO} chmod +w /etc/ld.so.conf
 
-        ${SUDO} "sed -i '\\\\#/usr/lib64#d' /etc/ld.so.conf"
-        ${SUDO} "sed -i '\\\\#/usr/local/lib#d' /etc/ld.so.conf"
-        ${SUDO} "sed -i '\\\\#/home/${MY_HOME}/.local/lib#d' /etc/ld.so.conf"
+        ${SUDO} "file_del /etc/ld.so.conf '/usr/lib64'"
+        ${SUDO} "file_del /etc/ld.so.conf '/usr/local/lib'"
+        ${SUDO} "file_del /etc/ld.so.conf '${MY_HOME}/.local/lib'"
 
-        ${SUDO} "echo '/usr/lib64' >> /etc/ld.so.conf"
-        ${SUDO} "echo '/usr/local/lib' >> /etc/ld.so.conf"
-        ${SUDO} "echo '/home/${MY_HOME}/.local/lib' >> /etc/ld.so.conf"
+        ${SUDO} "file_add /etc/ld.so.conf '/usr/lib64'"
+        ${SUDO} "file_add /etc/ld.so.conf '/usr/local/lib'"
+        ${SUDO} "file_add /etc/ld.so.conf '${MY_HOME}/.local/lib'"
+
         ${SUDO} ldconfig
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         # Install deno
@@ -668,25 +669,17 @@ else
 
     declare -a ip_array=($(echo "${other_paras[*]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
-        declare -a ip_array=($(get_hosts_ip))
-        for ipaddr in ${ip_array[*]}
-        do
-            hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
-            echo_info "HostName: ${hostnm[0]} IP: ${ipaddr}"
-            if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
-                routeMap[${ipaddr}]="${hostnm[0]}"
-            fi
-        done
-    else
-        for ipaddr in ${ip_array[*]}
-        do
-            hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
-            echo_info "HostName: ${hostnm[0]} IP: ${ipaddr}"
-            if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
-                routeMap[${ipaddr}]="${hostnm[0]}"
-            fi
-        done
+        ip_array=($(get_hosts_ip))
     fi
+
+    for ipaddr in ${ip_array[*]}
+    do
+        hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
+        echo_info "HostName: ${hostnm[0]} IP: ${ipaddr}"
+        if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
+            routeMap[${ipaddr}]="${hostnm[0]}"
+        fi
+    done
     echo_info "Remote install into { ${ip_array[*]} }"
 
     inst_paras=""

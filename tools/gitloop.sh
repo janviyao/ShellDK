@@ -12,7 +12,7 @@ cd ${RUN_DIR}
 RUN_DIR=`pwd`
 
 declare -r CMD_STR="$2"
-tmp_file="$(temp_file)"
+tmp_file="$(file_temp)"
 
 SELF_PID=$$
 if can_access "ppid";then

@@ -75,7 +75,7 @@ do
     sleep 2
 done
 
-tmp_file="$(temp_file)"
+tmp_file="$(file_temp)"
 iscsi_device_array=($(echo))
 for item in ${it_array[*]}
 do

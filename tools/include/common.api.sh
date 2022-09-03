@@ -27,6 +27,7 @@ source $MY_VIM_DIR/tools/include/section.api.sh
 source $MY_VIM_DIR/tools/include/process.api.sh
 source $MY_VIM_DIR/tools/include/install.api.sh
 source $MY_VIM_DIR/tools/include/math.api.sh
+source $MY_VIM_DIR/tools/include/file.api.sh
 
 function INCLUDE
 {
@@ -205,11 +206,11 @@ function string_match_start
 
     local sublen=${#substr}
 
-    if [[ ${substr} == *\\* ]];then
+    if [[ "${substr}" =~ '\' ]];then
         substr="${substr//\\/\\\\}"
     fi
 
-    if [[ ${substr} == *\** ]];then
+    if [[ "${substr}" =~ '*' ]];then
         substr="${substr//\*/\\*}"
     fi
 
@@ -232,11 +233,11 @@ function string_match_end
 
     local sublen=${#substr}
 
-    if [[ ${substr} == *\\* ]];then
+    if [[ "${substr}" =~ '\' ]];then
         substr="${substr//\\/\\\\}"
     fi
 
-    if [[ ${substr} == *\** ]];then
+    if [[ "${substr}" =~ '*' ]];then
         substr="${substr//\*/\\*}"
     fi
 
@@ -262,8 +263,13 @@ function string_trim_start
         #let sublen++
 
         #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
-        substr=$(replace_regex "${substr}" '\*' '\*')
-        substr=$(replace_regex "${substr}" '\\' '\\')
+        if [[ "${substr}" =~ '\*' ]];then
+            substr=$(replace_regex "${substr}" '\*' '\*')
+        fi
+
+        if [[ "${substr}" =~ '\\' ]];then
+            substr=$(replace_regex "${substr}" '\\' '\\')
+        fi
 
         echo "${string#${substr}}"
     else
@@ -287,10 +293,17 @@ function string_trim_end
         #local sublen=${#substr}
 
         #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
-        string=$(replace_regex "${string}" '\*' '\*')
+        if [[ "${string}" =~ '\*' ]];then
+            string=$(replace_regex "${string}" '\*' '\*')
+        fi
 
-        substr=$(replace_regex "${substr}" '\*' '\*')
-        substr=$(replace_regex "${substr}" '\\' '\\')
+        if [[ "${substr}" =~ '\*' ]];then
+            substr=$(replace_regex "${substr}" '\*' '\*')
+        fi
+
+        if [[ "${substr}" =~ '\\' ]];then
+            substr=$(replace_regex "${substr}" '\\' '\\')
+        fi
 
         echo "${string%${substr}}"
     else
@@ -317,21 +330,49 @@ function replace_regex
     local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
     [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
-    oldstr="${oldstr//\\/\\\\}"
-    oldstr="${oldstr//\//\\/}"
-    oldstr="${oldstr//\*/\\*}"
-    oldstr="${oldstr//\(/\(}"
+    if [[ "${oldstr}" =~ '\' ]];then
+        oldstr="${oldstr//\\/\\\\}"
+    fi
+
+    if [[ "${oldstr}" =~ '/' ]];then
+        oldstr="${oldstr//\//\\/}"
+    fi
+
+    if [[ "${oldstr}" =~ '*' ]];then
+        oldstr="${oldstr//\*/\\*}"
+    fi
+
+    if [[ "${oldstr}" =~ '(' ]];then
+        oldstr="${oldstr//\(/\(}"
+    fi
 
     if [[ $(string_start "${regstr}" 1) == '^' ]]; then
-        oldstr="${oldstr//./\.}"
-        newstr="${newstr//\\/\\\\}"
-        newstr="${newstr//\//\\/}"
-        echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
+        if [[ "${oldstr}" =~ '.' ]];then
+            oldstr="${oldstr//./\.}"
+        fi
 
+        if [[ "${newstr}" =~ '\' ]];then
+            newstr="${newstr//\\/\\\\}"
+        fi
+
+        if [[ "${newstr}" =~ '/' ]];then
+            newstr="${newstr//\//\\/}"
+        fi
+
+        echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
     elif [[ $(string_end "${regstr}" 1) == '$' ]]; then
-        oldstr="${oldstr//./\.}"
-        newstr="${newstr//\\/\\\\}"
-        newstr="${newstr//\//\\/}"
+        if [[ "${oldstr}" =~ '.' ]];then
+            oldstr="${oldstr//./\.}"
+        fi
+
+        if [[ "${newstr}" =~ '\' ]];then
+            newstr="${newstr//\\/\\\\}"
+        fi
+
+        if [[ "${newstr}" =~ '/' ]];then
+            newstr="${newstr//\//\\/}"
+        fi
+
         echo "$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")"
     else
         echo "${string//${oldstr}/${newstr}}"
@@ -354,10 +395,21 @@ function replace_str
     #donot use (), because it fork child shell
     [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
-    oldstr="${oldstr//\\/\\\\}"
-    oldstr="${oldstr//\//\\/}"
-    oldstr="${oldstr//\*/\*}"
-    oldstr="${oldstr//\(/\(}"
+    if [[ "${oldstr}" =~ '\' ]];then
+        oldstr="${oldstr//\\/\\\\}"
+    fi
+
+    if [[ "${oldstr}" =~ '/' ]];then
+        oldstr="${oldstr//\//\\/}"
+    fi
+
+    if [[ "${oldstr}" =~ '*' ]];then
+        oldstr="${oldstr//\*/\*}"
+    fi
+
+    if [[ "${oldstr}" =~ '(' ]];then
+        oldstr="${oldstr//\(/\(}"
+    fi
 
     echo "${string//${oldstr}/${newstr}}"
     return 0
@@ -564,234 +616,6 @@ function echo_debug
         fi
     fi
     echo_file "debug" "$@"
-}
-
-function can_access
-{
-    local fname="$1"
-
-    if [ -z "${fname}" ];then
-        return 1
-    fi
-
-    if match_regex "${fname}" "\*$";then
-        for file in ${fname}
-        do
-            if match_regex "${file}" "\*$";then
-                return 1
-            fi
-
-            if can_access "${file}"; then
-                return 0
-            fi
-        done
-    fi
-
-    if ls --color=never ${fname} &> /dev/null;then
-        return 0
-    fi
-
-    if which ${fname} &> /dev/null;then
-        return 0
-    fi
- 
-    if match_regex "${fname}" "^~";then
-        fname=$(replace_regex "${fname}" '^~' "${HOME}")
-    fi
-
-    if [ -d ${fname} ];then
-        return 0
-    elif [ -f ${fname} ];then
-        return 0
-    elif [ -b ${fname} ];then
-        return 0
-    elif [ -c ${fname} ];then
-        return 0
-    elif [ -h ${fname} ];then
-        return 0
-    elif [ -r ${fname} -o -w ${fname} -o -x ${fname} ];then
-        return 0
-    fi
-
-    return 1
-}
-
-function real_path
-{
-    local this_path="$1"
-
-    if [ -z "${this_path}" ];then
-        return 1
-    fi
-
-    local last_char=""
-    if [[ $(string_end "${this_path}" 1) == '/' ]]; then
-        last_char="/"
-    fi
-
-    if match_regex "${this_path}" "^-";then
-        this_path=$(replace_regex "${this_path}" "\-" "\-")
-    fi
-
-    if can_access "${this_path}";then
-        this_path=$(readlink -f ${this_path})
-        if [ $? -ne 0 ];then
-            echo_file "erro" "readlink fail: ${this_path}"
-            return 1
-        fi
-    fi
-    
-    if [ -n "${last_char}" ];then
-        echo "${this_path}${last_char}"
-    else
-        echo "${this_path}"
-    fi
-    return 0
-}
-
-function path2fname
-{
-    local file_name=""
-
-    local full_path=$(real_path "$1")
-    if [ -z "${full_path}" ];then
-        return 1
-    fi
-
-    file_name=$(basename ${full_path})
-    if [ $? -ne 0 ];then
-        echo_file "erro" "basename fail: ${full_path}"    
-        return 1
-    fi
-
-    if string_contain "${file_name}" "\\";then 
-        file_name=$(replace_regex "${file_name}" '\\' '')
-    fi
-
-    echo "${file_name}"
-    return 0
-}
-
-function fname2path
-{
-    local dir_name=""
-
-    local full_name=$(real_path "$1")
-    if [ -z "${full_name}" ];then
-        return 1
-    fi
-
-    dir_name=$(dirname ${full_name})
-    if [ $? -ne 0 ];then
-        echo_file "erro" "dirname fail: ${full_name}"
-        return 1
-    fi
-
-    echo "${dir_name}"
-    return 0
-}
-
-function current_dir
-{
-    local curfile="$0"
-    if [ -f "${curfile}" ];then
-        echo $(fname2path "${curfile}")
-    else
-        echo $(pwd)
-    fi
-}
-
-function temp_file
-{
-    local self_pid=$$
-    if can_access "ppid";then
-        local ppids=($(ppid))
-        local self_pid=${ppids[1]}
-    fi
-    echo > ${BASH_WORK_DIR}/tmp.${self_pid}
-    echo "${BASH_WORK_DIR}/tmp.${self_pid}"
-}
-
-function file_count
-{
-    local f_array=($@)
-    local readable=true
-
-    can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
-
-    local -i index=0
-    local -a c_array=($(echo ""))
-    for file in ${f_array[*]}
-    do
-        if ! test -r ${file};then
-            sudo_it "chmod +r ${file}"
-            if [ $? -ne 0 ];then
-                echo_file "debug" "sudo fail: chmod +r ${file}"
-                readable=false
-                break
-            fi
-            c_array[${index}]="${file}"
-            let index++
-        fi
-    done
-
-    if bool_v "${readable}";then
-        echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
-    else
-        local tmp_file="$(temp_file)"
-        sudo_it "fstat '${f_array[*]}' &> ${tmp_file}"
-        local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
-        rm -f ${tmp_file}
-        echo "${fcount}"
-    fi
-
-    for file in ${c_array[*]}
-    do
-        if test -r ${file};then
-            sudo_it "chmod -r ${file}"
-        fi
-    done
-}
-
-function file_size
-{
-    local f_array=($@)
-    local readable=true
-
-    can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
-
-    local -i index=0
-    local -a c_array=($(echo ""))
-    for file in ${f_array[*]}
-    do
-        if ! test -r ${file};then
-            sudo_it "chmod +r ${file}"
-            if [ $? -ne 0 ];then
-                echo_file "debug" "sudo fail: chmod +r ${file}"
-                readable=false
-                break
-            fi
-            c_array[${index}]="${file}"
-            let index++
-        fi
-    done
-
-    if bool_v "${readable}";then
-        echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
-    else
-        local tmp_file="$(temp_file)"
-        sudo_it "fstat '${f_array[*]}' &> ${tmp_file}"
-        local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
-        rm -f ${tmp_file}
-        echo "${fcount}"
-    fi
-
-    for file in ${c_array[*]}
-    do
-        if test -r ${file};then
-            sudo_it "chmod -r ${file}"
-        fi
-    done
 }
 
 function export_all

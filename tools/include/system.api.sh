@@ -258,7 +258,7 @@ function linux_net
     if can_access "ethtool";then
         local ip_array=($(get_hosts_ip))
         local half_wd=$((col_width1/2 - 3))
-        local tmp_file="$(temp_file)"
+        local tmp_file="$(file_temp)"
         local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
         for ndev in ${net_arr[*]}
         do

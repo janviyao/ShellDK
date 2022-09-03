@@ -231,7 +231,7 @@ function get_result
     local check_file="$1"
     local grep_param="$2"
 
-    local tmp_file="$(temp_file)"
+    local tmp_file="$(file_temp)"
     get_iops "${check_file}" "${grep_param}" "${tmp_file}"
     local iops=$(cat ${tmp_file})
 
