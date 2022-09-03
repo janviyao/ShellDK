@@ -2,25 +2,6 @@
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 . $MY_VIM_DIR/tools/paraparser.sh
 
-function replace_file
-{
-    local old_reg="$1"
-    local new_str="$2"
-    local repfile="$3"
-
-    local old_str=$(grep -P "${old_reg}" -o ${repfile} | head -n 1)
-    if [ -n "${old_str}" ];then
-        local old_str=$(replace_regex "${old_str}" '/' '\/')
-        local old_str=$(replace_regex "${old_str}" '\*' '\*')
-        local old_str=$(replace_regex "${old_str}" '\[' '\[')
-        local old_str=$(replace_regex "${old_str}" '\]' '\]')
-        local sed_str=$(replace_regex "${new_str}" '/' '\/')
-        sed -i "s/${old_str}/${sed_str}/g" ${repfile}
-
-        echo_info "replace: $(string_trim_start "${repfile}" "${rep_dir}/")"
-    fi
-}
-
 function do_replace
 {
     local old_reg="$1"
@@ -37,7 +18,7 @@ function do_replace
             cd ${des_dir}
             continue
         fi
-        replace_file "${old_reg}" "${new_str}" "${des_dir}/${thing}"
+        file_replace "${des_dir}/${thing}" "${old_reg}" "${new_str}" 
     done
 
     echo_debug "finish: $(string_trim_start "${des_dir}" "${rep_dir}/")"
@@ -66,7 +47,7 @@ do
         do_replace "${OLD_STR}" "${NEW_STR}" "${rep_dir}"
     else
         echo_debug "do_replace: [${OLD_STR} @ ${NEW_STR} @ ${rep_dir}]"
-        replace_file "${OLD_STR}" "${NEW_STR}" "${rep_dir}" 
+        file_replace "${rep_dir}" "${OLD_STR}" "${NEW_STR}" 
         echo_debug "finish: ${rep_dir}"
     fi
 

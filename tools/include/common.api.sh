@@ -16,7 +16,7 @@ shopt -s expand_aliases
 LOG_OPEN=0
 LOG_FLAG=".+"
 LOG_HEADER=true
-LOG_TO_FILE=false
+LOG_TO_FILE=true
 HEADER_TIME=false
 HEADER_FILE=false
 
@@ -680,8 +680,8 @@ function wait_value
     echo_debug "make ack: ${ack_pipe}"
     #can_access "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
-    if is_root && [[ "${USR_NAME}" != "$(whoami)" ]];then
-        chmod +w ${ack_pipe}
+    if is_root && [[ "${USR_NAME}" != "root" ]];then
+        chmod 777 ${ack_pipe}
     fi
     can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 

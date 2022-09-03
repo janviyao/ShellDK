@@ -56,7 +56,7 @@ function file_has
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: regex or string"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\$3: whether regex(bool)"
         return 1
     fi
 
@@ -84,7 +84,7 @@ function file_add
     local line_nr="${3:-$}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content\n\$3: line_nr"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number"
         return 1
     fi
      
@@ -117,10 +117,11 @@ function file_add
 function file_get
 {
     local xfile="$1"
-    local line_nr="${2:-1}"
+    local string="${2}"
+    local is_reg="${3:-false}"
 
-    if [ $# -ne 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line_nr"
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\$3: whether regex(bool)"
         return 1
     fi
 
@@ -128,19 +129,26 @@ function file_get
         return 1
     fi 
     
-    if is_integer "${line_nr}";then
-        local total_nr=$(sed -n '$=' ${xfile})
-        if [ ${line_nr} -le ${total_nr} ];then
-            echo $(sed -n "${line_nr}p" ${xfile})
-        else
-            echo ""
-        fi
+    if bool_v "${is_reg}";then
+        local line_nrs=($(file_linenr "${xfile}" "${string}" true))
+        for line_nr in ${line_nrs[*]}
+        do
+            echo $(sed -n "${line_nr}p" ${xfile} | sed "s/ /${GBL_COL_SPF}/g")
+        done
     else
-        if [[ "${line_nr}" == "$" ]];then
-            echo $(sed -n "${line_nr}p" ${xfile})
+        if is_integer "${string}";then
+            local total_nr=$(sed -n '$=' ${xfile})
+            if [ ${string} -le ${total_nr} ];then
+                echo $(sed -n "${string}p" ${xfile} | sed "s/ /${GBL_COL_SPF}/g")
+            else
+                echo ""
+            fi
         else
-            echo_erro "line_nr: ${line_nr} not integer"
-            return 1
+            if [[ "${string}" == "$" ]];then
+                echo $(sed -n "${string}p" ${xfile} | sed "s/ /${GBL_COL_SPF}/g")
+            else
+                return 1
+            fi
         fi
     fi
 }
@@ -148,10 +156,11 @@ function file_get
 function file_del
 {
     local xfile="$1"
-    local xctnt="$2"
+    local string="$2"
+    local is_reg="${3:-false}"
 
-    if [ $# -ne 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content or line_nr"
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\$3: whether regex(bool)"
         return 1
     fi
 
@@ -159,22 +168,31 @@ function file_del
         return 1
     fi 
     
-    if [ -z "${xctnt}" ];then
+    if [ -z "${string}" ];then
         return 1
     fi
 
-    if is_integer "${xctnt}";then
-        local total_nr=$(sed -n '$=' ${xfile})
-        if [ ${xctnt} -le ${total_nr} ];then
-            sed -i "${xctnt}d" ${xfile}
-        fi
-    else
-        local line_nrs=($(file_linenr "${xfile}" "${xctnt}"))
+    if bool_v "${is_reg}";then
+        local line_nrs=($(file_linenr "${xfile}" "${string}" true))
         while [ ${#line_nrs[*]} -gt 0 ]
         do
             file_del "${xfile}" "${line_nrs[0]}"
-            line_nrs=($(file_linenr "${xfile}" "${xctnt}"))
+            line_nrs=($(file_linenr "${xfile}" "${string}" true))
         done
+    else
+        if is_integer "${string}";then
+            local total_nr=$(sed -n '$=' ${xfile})
+            if [ ${string} -le ${total_nr} ];then
+                sed -i "${string}d" ${xfile}
+            fi
+        else
+            local line_nrs=($(file_linenr "${xfile}" "${string}" false))
+            while [ ${#line_nrs[*]} -gt 0 ]
+            do
+                file_del "${xfile}" "${line_nrs[0]}"
+                line_nrs=($(file_linenr "${xfile}" "${string}" false))
+            done
+        fi
     fi
 
     return 0 
@@ -187,7 +205,7 @@ function file_insert
     local line_nr="${3:-$}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content\n\$3: line_nr"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number"
         return 1
     fi
 
@@ -221,10 +239,11 @@ function file_insert
 function file_linenr
 {
     local xfile="$1"
-    local content="$2"
+    local string="$2"
+    local is_reg="${3:-false}"
 
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content"
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\$3: whether regex(bool)"
         return 1
     fi
 
@@ -232,19 +251,73 @@ function file_linenr
         return 1
     fi 
     
-    if [ -z "${content}" ];then
+    if [ -z "${string}" ];then
         echo $(sed -n '$=' ${xfile})
         return 0
     fi
 
-    if [[ "${content}" =~ '/' ]];then
-        content=$(replace_regex "${content}" "/" "\/")
+    if bool_v "${is_reg}";then
+        local line_nrs=($(grep -n -P "${string}" ${xfile} | awk -F ':' '{ print $1 }'))
+    else
+        if [[ "${string}" =~ '/' ]];then
+            string=$(replace_regex "${string}" "/" "\/")
+        fi
+        #local line_nrs=($(sed -n "/^\s*${string}/{=;q;}" ${xfile}))
+        local line_nrs=($(sed -n "/^\s*${string}\s*$/{=;}" ${xfile}))
     fi
 
-    #local line_nrs=($(sed -n "/^\s*${content}/{=;q;}" ${xfile}))
-    local line_nrs=($(sed -n "/^\s*${content}\s*$/{=;}" ${xfile}))
     echo "${line_nrs[*]}"
     return 0
+}
+
+function file_replace
+{
+    local xfile="$1"
+    local reg_str="$2"
+    local new_str="$3"
+
+    if [ $# -ne 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: regex\$3: content-string"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        return 1
+    fi 
+
+    if [[ "${new_str}" =~ '/' ]];then
+        new_str=$(replace_regex "${new_str}" '/' '\/')
+    fi
+
+    local line_nrs=($(file_linenr "${xfile}" "${reg_str}" true))
+    for line_nr in ${line_nrs[*]}
+    do
+        local old_str=$(file_get "${xfile}" "${line_nr}")
+        if [[ "${old_str}" =~ "${GBL_COL_SPF}" ]];then
+            old_str=$(echo "${old_str}" | sed "s/${GBL_COL_SPF}/ /g")
+        fi
+
+        old_str=$(echo "${old_str}" | grep -P "${reg_str}" -o)
+        if [ -n "${old_str}" ];then
+            if [[ "${old_str}" =~ '/' ]];then
+                old_str=$(replace_regex "${old_str}" '/' '\/')
+            fi
+
+            if [[ "${old_str}" =~ '*' ]];then
+                old_str=$(replace_regex "${old_str}" '\*' '\*')
+            fi
+
+            if [[ "${old_str}" =~ '[' ]];then
+                old_str=$(replace_regex "${old_str}" '\[' '\[')
+            fi
+
+            if [[ "${old_str}" =~ ']' ]];then
+                old_str=$(replace_regex "${old_str}" '\]' '\]')
+            fi
+
+            sed -i "${line_nr} s/${old_str}/${new_str}/g" ${xfile}
+        fi
+    done
 }
 
 function file_count

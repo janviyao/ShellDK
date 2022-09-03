@@ -274,9 +274,9 @@ function clean_env
         fi
     done
 
-    can_access "${MY_HOME}/.bashrc" && sed -i "/source.\+\/bashrc/d" ${MY_HOME}/.bashrc
-    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+MY_VIM_DIR.\+/d" ${MY_HOME}/.bashrc
-    can_access "${MY_HOME}/.bashrc" && sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${MY_HOME}/.bashrc
+    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
+    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
     #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 }
 
@@ -317,9 +317,9 @@ function inst_env
     can_access "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
     #can_access "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
-    sed -i "/export.\+MY_VIM_DIR.\+/d" ${MY_HOME}/.bashrc
-    sed -i "/export.\+TEST_SUIT_ENV.\+/d" ${MY_HOME}/.bashrc
-    sed -i "/source.\+\/bashrc/d" ${MY_HOME}/.bashrc
+    file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
+    file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
+    file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
     echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${MY_HOME}/.bashrc
@@ -361,7 +361,7 @@ function inst_env
     fi
 
     if can_access "${TIMER_RUNDIR}/timer.conf";then
-        sed -i "/.\+MY_HOME.\+/d" ${TIMER_RUNDIR}/timerc
+        file_del "${TIMER_RUNDIR}/timerc" "export\s+MY_HOME.+" true
         echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
     else
         echo "#!/bin/bash"                > ${TIMER_RUNDIR}/timerc
@@ -369,7 +369,7 @@ function inst_env
     fi
 
     if can_access "/var/spool/cron/$(whoami)";then
-        sed -i "/.\+timer\.sh/d" /var/spool/cron/$(whoami)
+        ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
         echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
     else
         ${SUDO} "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
