@@ -27,7 +27,7 @@ function do_rsync
 
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        if ! account_check;then
+        if ! account_check ${MY_NAME};then
             echo_erro "Username or Password check fail"
             return 1
         fi
@@ -292,7 +292,7 @@ function _bash_xfer_exit
 
 function _xfer_thread_main
 {
-    if ! account_check;then
+    if ! account_check ${MY_NAME};then
         echo_erro "Username or Password check fail"
         return 1
     fi

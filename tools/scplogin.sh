@@ -20,7 +20,7 @@ DES_DIR="$2"
 echo_debug "paras: { $@ }"
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    if ! account_check;then
+    if ! account_check ${MY_NAME};then
         echo_erro "Username or Password check fail"
         exit 1
     fi

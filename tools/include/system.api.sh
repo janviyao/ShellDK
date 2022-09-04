@@ -111,8 +111,9 @@ function write_value
 function system_encrypt
 {
     local content="$@"
+
     # 251421 is secret key
-    local convert=$(echo "${content}" | openssl aes-128-cbc -k 251421 -base64 2>/dev/null)
+    local convert=$(echo "${content}" | openssl enc -e -aes-128-cbc -K c28540d871bd8ea669098540be58fef5 -iv 857d3a5fca54219a068a5c4dd9615afb -base64 2>/dev/null)
     if [ -n "${convert}" ];then
         echo "${convert}"
     else
@@ -123,8 +124,9 @@ function system_encrypt
 function system_decrypt
 {
     local content="$@"
+
     # 251421 is secret key
-    local convert=$(echo "${content}" | openssl aes-128-cbc -d -k 251421 -base64 2>/dev/null)
+    local convert=$(echo "${content}" | openssl aes-128-cbc -d -K c28540d871bd8ea669098540be58fef5 -iv 857d3a5fca54219a068a5c4dd9615afb -base64 2>/dev/null)
     if [ -n "${convert}" ];then
         echo "${convert}"
     else
@@ -134,13 +136,14 @@ function system_decrypt
 
 function account_check
 {
-    local can_input=${1:-true}
+    local usr_name="$1"
+    local can_input=${2:-true}
     local input_val=""
 
-    if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-        if can_access "${GBL_BASE_DIR}/.userc";then
-            export USR_NAME=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.userc | awk '{ print $1 }')")
-            export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.userc | awk '{ print $2 }')")
+    if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
+        if can_access "${GBL_BASE_DIR}/.${usr_name}";then
+            export USR_NAME=${usr_name}
+            export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.${usr_name})")
         fi
     fi
 
@@ -156,9 +159,9 @@ function account_check
 
             read -s -p "Please input password: " input_val
             echo ""
-            export USR_PASSWORD="$(system_encrypt "${input_val}")"
+            export USR_PASSWORD="${input_val}"
 
-            echo "$(system_encrypt ${USR_NAME}) $(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.userc 
+            echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
         else
             return 1
         fi
@@ -187,7 +190,7 @@ function sudo_it
     else
         echo_file "debug" "[SUDO] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
-            if ! account_check false;then
+            if ! account_check ${MY_NAME} false;then
                 echo_erro "Username or Password check fail"
                 return 1
             fi

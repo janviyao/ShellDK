@@ -182,7 +182,7 @@ function inst_usage
 
 source $MY_VIM_DIR/bashrc
 . ${ROOT_DIR}/tools/paraparser.sh
-if ! account_check;then
+if ! account_check ${MY_NAME};then
     echo_erro "Username or Password check fail"
     exit 1
 fi
@@ -360,25 +360,33 @@ function inst_env
         ${SUDO} chmod 777 ${TIMER_RUNDIR}
     fi
 
-    if can_access "${TIMER_RUNDIR}/timer.conf";then
-        file_del "${TIMER_RUNDIR}/timerc" "export\s+MY_HOME.+" true
-        echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
-    else
+    can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
+    if ! can_access "${TIMER_RUNDIR}/timerc";then
         echo "#!/bin/bash"                > ${TIMER_RUNDIR}/timerc
+        echo "export MY_NAME=${MY_NAME}" >> ${TIMER_RUNDIR}/timerc
         echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
+    fi
+
+    if ! can_access "${MY_HOME}/.timerc";then
+        echo "#!/bin/bash"                           >  ${MY_HOME}/.timerc
+        echo "export USR_NAME=${USR_NAME}"           >> ${MY_HOME}/.timerc
+        ${SUDO} chmod +x ${MY_HOME}/.timerc 
     fi
 
     if can_access "/var/spool/cron/$(whoami)";then
         ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
         echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
+        ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
     else
         ${SUDO} "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
     fi
     ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
+    ${SUDO} systemctl restart crond
+    ${SUDO} systemctl status crond
 
-    can_access "${GBL_BASE_DIR}/.userc" && rm -f ${GBL_BASE_DIR}/.userc
-    if ! can_access "${GBL_BASE_DIR}/.userc";then
-        echo "$(system_encrypt ${USR_NAME}) $(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.userc 
+    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
+    if ! can_access "${GBL_BASE_DIR}/.${USR_NAME}";then
+        echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
     fi
 
     can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
@@ -391,16 +399,6 @@ function inst_env
         echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
         ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
     fi
-
-    if ! can_access "${MY_HOME}/.timerc";then
-        echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
-        echo "source ${GBL_BASE_DIR}/.userc"   >> ${MY_HOME}/.timerc
-        ${SUDO} chmod +x ${MY_HOME}/.timerc 
-    fi
-
-    ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
-    ${SUDO} systemctl restart crond
-    ${SUDO} systemctl status crond
 }
 
 function inst_update

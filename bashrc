@@ -20,6 +20,13 @@ fi
 # NOTE: if variables use declare define, allexport will have no effect to them
 set -o allexport
 
+if [ -z "${MY_NAME}" ];then
+    MY_NAME=$(whoami)
+fi
+if [ -z "${MY_HOME}" ];then
+    MY_HOME=${HOME}
+fi
+
 source $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/include/bashrc.api.sh
 echo_file "debug" "envir: ${PRIVATE_VAR}"

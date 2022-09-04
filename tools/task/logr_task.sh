@@ -69,7 +69,7 @@ function _redirect_func
     local log_pipe="${BASH_WORK_DIR}/log.redirect.pipe.${self_pid}"
     local pipe_fd=0
 
-    if ! account_check;then
+    if ! account_check ${MY_NAME};then
         echo_erro "Username or Password check fail"
         return 1
     fi
