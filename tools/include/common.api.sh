@@ -658,6 +658,7 @@ function wait_value
 {
     local send_body="$1"
     local send_pipe="$2"
+    local timeout_s="${3:-10}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe"
@@ -690,7 +691,7 @@ function wait_value
 
     echo_debug "wait ack: ${ack_pipe}"
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
-    run_timeout 10 read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
+    run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
 
     if can_access "${ack_pipe}.result";then
         export ack_value=$(cat ${ack_pipe}.result)

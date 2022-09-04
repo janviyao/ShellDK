@@ -23,7 +23,7 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
 fi
 
 if is_root; then
-    sudo_it "${CMD_STR}"
+    eval "${CMD_STR}"
     exit $?
 else 
     if ! which sudo &> /dev/null; then
@@ -39,6 +39,8 @@ else
     fi
 
     echo_debug "[sudo.sh] ${CMD_STR}"
+    sudo_it "${CMD_STR}"
+    exit $?
 fi
 
 EXPECT_EOF=""

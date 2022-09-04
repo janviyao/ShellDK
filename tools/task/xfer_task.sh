@@ -277,7 +277,7 @@ function xfer_task_ctrl_sync
     fi
 
     echo_debug "xfer wait for ${one_pipe}"
-    wait_value "${xfer_body}" "${one_pipe}"
+    wait_value "${xfer_body}" "${one_pipe}" "${SSH_TIMEOUT}"
 }
 
 function _bash_xfer_exit
