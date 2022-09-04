@@ -80,6 +80,7 @@ RET_VAR="sudo_ret$$"
 GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
 CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET}"
 
+trap "exit 1" SIGINT SIGTERM SIGKILL
 # expect -d # debug expect
 expect << EOF
     set timeout ${SSH_TIMEOUT}

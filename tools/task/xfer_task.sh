@@ -299,7 +299,7 @@ function _xfer_thread_main
 
     while read line
     do
-        echo_debug "xfer task: [${line}]" 
+        echo_debug "xfer recv: [${line}]"
         local ack_xfer=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
         local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
         local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
@@ -318,8 +318,9 @@ function _xfer_thread_main
         if [[ "${req_xfer}" == "EXIT" ]];then
             if [[ "${ack_xfer}" == "NEED_ACK" ]];then
                 echo_debug "ack to [${ack_pipe}]"
-                echo "ACK" > ${ack_pipe}
+                run_timeout 2 echo "ACK" \> ${ack_pipe}
             fi
+            sleep 1
             return 
         elif [[ "${req_xfer}" == "RSYNC" ]];then
             local xfer_act=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
@@ -348,7 +349,7 @@ function _xfer_thread_main
 
         if [[ "${ack_xfer}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            echo "ACK" > ${ack_pipe}
+            run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
 
         echo_debug "xfer wait: [${GBL_XFER_PIPE}]"
@@ -382,4 +383,3 @@ function _xfer_thread
 if string_contain "${BTASK_LIST}" "xfer";then
     ( _xfer_thread & )
 fi
-

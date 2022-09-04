@@ -8,11 +8,49 @@ function is_root
     fi
 }
 
-function lock_run
+function run_timeout
 {
+    local time_s="${1:-60}"
+    shift
+
+    local cmd="$1"
+    shift
+    while [ -n "$1" ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            cmd="${cmd} '$1'"
+        else
+            cmd="${cmd} $1"
+        fi
+        shift
+    done
+
+    if [ -n "${cmd}" ];then
+        echo_debug "timeout(${time_s}s): ${cmd}"
+        timeout ${time_s} bash -c "${cmd}"
+        return $?
+    fi
+
+    return 1
+}
+
+function run_lock
+{
+    local cmd="$1"
+    shift
+    while [ -n "$1" ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            cmd="${cmd} '$1'"
+        else
+            cmd="${cmd} $1"
+        fi
+        shift
+    done
+
     (
         flock -x 8  #flock文件锁，-x表示独享锁
-        exec "$@"
+        bash -c "${cmd}"
     ) 8<>${GBL_BASE_DIR}/base.lock
 }
 

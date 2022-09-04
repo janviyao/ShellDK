@@ -69,7 +69,7 @@ function _ctrl_thread_main
 {
     while read line
     do
-        echo_debug "ctrl task: [${line}]" 
+        echo_debug "ctrl recv: [${line}]"
         local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
         local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
         local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
@@ -87,14 +87,15 @@ function _ctrl_thread_main
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "ack to [${ack_pipe}]"
-                echo "ACK" > ${ack_pipe}
+                run_timeout 2 echo "ACK" \> ${ack_pipe}
             fi
+            sleep 1
             return 
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            echo "ACK" > ${ack_pipe}
+            run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
 
         echo_debug "ctrl wait: [${GBL_CTRL_PIPE}]"
@@ -128,4 +129,3 @@ function _ctrl_thread
 if string_contain "${BTASK_LIST}" "ctrl";then
     ( _ctrl_thread & )
 fi
-

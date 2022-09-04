@@ -16,7 +16,7 @@ shopt -s expand_aliases
 LOG_OPEN=0
 LOG_FLAG=".+"
 LOG_HEADER=true
-LOG_TO_FILE=true
+LOG_TO_FILE=false
 HEADER_TIME=false
 HEADER_FILE=false
 
@@ -690,11 +690,17 @@ function wait_value
 
     echo_debug "wait ack: ${ack_pipe}"
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
-    read ack_value < ${ack_pipe}
-    export ack_value
+    run_timeout 10 read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
+
+    if can_access "${ack_pipe}.result";then
+        export ack_value=$(cat ${ack_pipe}.result)
+    else
+        export ack_value=""
+    fi
+    echo_debug "read [${ack_value}] from ${ack_pipe}"
 
     eval "exec ${ack_fhno}>&-"
-    rm -f ${ack_pipe}
+    rm -f ${ack_pipe}*
     return 0
 }
 

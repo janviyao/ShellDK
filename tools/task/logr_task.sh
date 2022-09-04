@@ -119,8 +119,9 @@ function _logr_thread_main
             if [[ "${logr_body}" == "EXIT" ]];then
                 if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                     echo_debug "ack to [${ack_pipe}]"
-                    echo "ACK" > ${ack_pipe}
+                    run_timeout 2 echo "ACK" \> ${ack_pipe}
                 fi
+                sleep 1
                 return
             fi
         elif [[ "${logr_ctrl}" == "REDIRECT" ]];then
@@ -159,7 +160,7 @@ function _logr_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            echo "ACK" > ${ack_pipe}
+            run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
         
         #echo_debug "logr wait: [${GBL_LOGR_PIPE}]"
@@ -193,4 +194,3 @@ function _logr_thread
 if string_contain "${BTASK_LIST}" "logr";then
     ( _logr_thread & )
 fi
-

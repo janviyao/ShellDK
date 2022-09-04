@@ -252,11 +252,17 @@ function ncat_wait_resp
     local retcode=$?
     if [ ${retcode} -eq 0 ];then
         read ack_value < ${ack_pipe}
-        export ack_value
+        run_timeout 10 read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
+        if can_access "${ack_pipe}.result";then
+            export ack_value=$(cat ${ack_pipe}.result)
+        else
+            export ack_value=""
+        fi
+        echo_debug "read [${ack_value}] from ${ack_pipe}"
     fi
 
     eval "exec ${ack_fhno}>&-"
-    rm -f ${ack_pipe}
+    rm -f ${ack_pipe}*
     return ${retcode}
 }
 
@@ -354,9 +360,10 @@ function _ncat_thread_main
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "ack to [${ack_pipe}]"
-                echo "ACK" > ${ack_pipe}
+                run_timeout 2 echo "ACK" \> ${ack_pipe}
             fi
             #mdata_set_var "master_work=false"
+            sleep 1
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
@@ -372,7 +379,7 @@ function _ncat_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "ack to [${ack_pipe}]"
-            echo "ACK" > ${ack_pipe}
+            run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
 
         mdata_get_var "master_work"
@@ -410,4 +417,3 @@ function _ncat_thread
 if string_contain "${BTASK_LIST}" "ncat";then
     ( _ncat_thread & )
 fi
-

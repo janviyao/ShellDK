@@ -50,6 +50,7 @@ if is_root; then
     EXPECT_EOF="expect eof"
 fi
 
+trap "exit 1" SIGINT SIGTERM SIGKILL
 expect << EOF
     set timeout ${SSH_TIMEOUT}
 
