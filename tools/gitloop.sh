@@ -2,17 +2,28 @@
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 RUN_DIR="$1"
+shift
 if [ ! -d ${RUN_DIR} ]; then
     echo_erro "Dir: ${RUN_DIR} not exist"
     exit -1
 fi
 
-CUR_DIR=`pwd`
-cd ${RUN_DIR}
-RUN_DIR=`pwd`
+CMD_STR="$1"
+shift
+while [ $# -gt 0 ]
+do
+    if [[ "$1" =~ ' ' ]];then
+        CMD_STR="${CMD_STR} '$1'"
+    else
+        CMD_STR="${CMD_STR} $1"
+    fi
+    shift
+done
 
-declare -r CMD_STR="$2"
-tmp_file="$(file_temp)"
+CUR_DIR=$(pwd)
+cd ${RUN_DIR}
+RUN_DIR=$(pwd)
+tmp_file=$(file_temp)
 
 SELF_PID=$$
 if can_access "ppid";then
@@ -69,7 +80,7 @@ mdata_get_var x_pos
 let x_pos--
 y_pos=0
 
-for gitdir in `ls -d */`
+for gitdir in $(ls -d */)
 do
     if mdata_kv_bool "gitloop-quit";then
         break
@@ -108,8 +119,7 @@ do
         logr_task_ctrl "CURSOR_MOVE" "${x_pos}${GBL_SPF2}${y_pos}"
         logr_task_ctrl "ERASE_LINE" 
         logr_task_ctrl_sync "PRINT_FROM_FILE" "${tmp_file}"
-        logr_task_ctrl "NEWLINE"
-
+        logr_task_ctrl_sync "NEWLINE"
         let x_pos++
     else
         echo_debug "not git repo @ ${gitdir}"

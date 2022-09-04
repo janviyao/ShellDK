@@ -2,7 +2,7 @@
 #echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 CMD_STR="$1"
 shift
-while [ -n "$1" ]
+while [ $# -gt 0 ]
 do
     if [[ "$1" =~ ' ' ]];then
         CMD_STR="${CMD_STR} '$1'"

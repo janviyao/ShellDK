@@ -14,7 +14,7 @@ function logr_task_ctrl
     local logr_body="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: logr_body"
         return 1
     fi
 
@@ -33,8 +33,8 @@ function logr_task_ctrl_sync
     local logr_ctrl="$1"
     local logr_body="$2"
 
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: logr_body"
         return 1
     fi
 
@@ -153,8 +153,12 @@ function _logr_thread_main
         elif [[ "${logr_ctrl}" == "PRINT" ]];then
             printf "%s" "${logr_body}" 
         elif [[ "${logr_ctrl}" == "PRINT_FROM_FILE" ]];then
-            local file_log=$(cat ${logr_body}) 
-            printf "%s" "${file_log}" 
+            if can_access "${logr_body}";then
+                local file_log=$(cat ${logr_body}) 
+                printf "%s" "${file_log}" 
+            else
+                printf "%s" "print fails: ${logr_body} not exist" 
+            fi
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then

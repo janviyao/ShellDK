@@ -111,12 +111,16 @@ do
         {
             ppids=($(ppid))
             self_pid=${ppids[1]}
-            echo_debug "thread[${self_pid}]-${index}: ${thread_task}"
+            echo_debug "thread[${self_pid}]-${index}: ${thread_task} from $(process_pid2name "${SELF_PID}")(${SELF_PID})"
 
             eval "${thread_task}"             
-            echo $? >> ${THREAD_RET}
-            echo "" >&${THREAD_FD}
+            if can_access "${THREAD_RET}";then
+                echo $? >> ${THREAD_RET}
+            else
+                echo_erro "file lost: ${THREAD_RET}"
+            fi
 
+            echo "" >&${THREAD_FD}
             mdata_kv_unset_val "${SELF_PID}" "${self_pid}"
             exit 0
         } &
@@ -136,4 +140,3 @@ else
     is_integer "${thread_state}" && exit ${thread_state}
     exit 0
 fi
-

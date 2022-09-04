@@ -15,7 +15,7 @@ function run_timeout
 
     local cmd="$1"
     shift
-    while [ -n "$1" ]
+    while [ $# -gt 0 ]
     do
         if [[ "$1" =~ ' ' ]];then
             cmd="${cmd} '$1'"
@@ -38,7 +38,7 @@ function run_lock
 {
     local cmd="$1"
     shift
-    while [ -n "$1" ]
+    while [ $# -gt 0 ]
     do
         if [[ "$1" =~ ' ' ]];then
             cmd="${cmd} '$1'"
@@ -212,7 +212,7 @@ function sudo_it
 {
     local cmd="$1"
     shift
-    while [ -n "$1" ]
+    while [ $# -gt 0 ]
     do
         if [[ "$1" =~ ' ' ]];then
             cmd="${cmd} '$1'"
