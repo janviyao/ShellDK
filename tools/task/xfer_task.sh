@@ -320,7 +320,6 @@ function _xfer_thread_main
                 echo_debug "ack to [${ack_pipe}]"
                 run_timeout 2 echo "ACK" \> ${ack_pipe}
             fi
-            sleep 1
             return 
         elif [[ "${req_xfer}" == "RSYNC" ]];then
             local xfer_act=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 

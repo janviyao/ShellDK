@@ -121,7 +121,6 @@ function _logr_thread_main
                     echo_debug "ack to [${ack_pipe}]"
                     run_timeout 2 echo "ACK" \> ${ack_pipe}
                 fi
-                sleep 1
                 return
             fi
         elif [[ "${logr_ctrl}" == "REDIRECT" ]];then
