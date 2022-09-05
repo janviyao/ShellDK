@@ -227,13 +227,13 @@ function sudo_it
     done
 
     if is_root; then
-        echo_file "debug" "[ROOT] ${cmd}"
+        echo_file "${LOG_DEBUG}" "[ROOT] ${cmd}"
         eval "${cmd}"
     else
-        echo_file "debug" "[SUDO] ${cmd}"
+        echo_file "${LOG_DEBUG}" "[SUDO] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
             if ! account_check "${MY_NAME}" false;then
-                echo_file "erro" "Username or Password check fail"
+                echo_file "${LOG_ERRO}" "Username or Password check fail"
                 return 1
             fi
 

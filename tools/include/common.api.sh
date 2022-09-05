@@ -13,10 +13,14 @@ shopt -s expand_aliases
 : ${GBL_XFER_PIPE:=}
 : ${GBL_CTRL_PIPE:=}
 
-LOG_OPEN=0
-LOG_FLAG=".+"
+declare -r LOG_ERRO=1
+declare -r LOG_WARN=2
+declare -r LOG_INFO=3
+declare -r LOG_DEBUG=4
+LOG_SHOW_LEVEL=3
+LOG_FILE_LEVEL=3
+
 LOG_HEADER=true
-LOG_TO_FILE=false
 HEADER_TIME=false
 HEADER_FILE=false
 
@@ -505,31 +509,41 @@ FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_file
 {
-    if bool_v "${LOG_TO_FILE}";then
-        if can_access "${BASHLOG}";then
-            local log_type="$1"
-            shift
-            #local para=$(replace_str "$@" "${MY_HOME}/" "")
-            local para="$@"
+    local echo_level="$1"
+    shift
+    local para="$@"
 
-            local headpart=$(printf "[%5s]" "${log_type}")
-            if bool_v "${LOG_HEADER}";then
-                headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
-            fi
+    if [ ${LOG_FILE_LEVEL} -lt ${echo_level} ];then
+        return
+    fi
+ 
+    local log_type="null"
+    if [ ${echo_level} -eq ${LOG_ERRO} ];then
+        log_type="erro"
+    elif [ ${echo_level} -eq ${LOG_WARN} ];then
+        log_type="warn"
+    elif [ ${echo_level} -eq ${LOG_INFO} ];then
+        log_type="info"
+    elif [ ${echo_level} -eq ${LOG_DEBUG} ];then
+        log_type="debug"
+    fi
 
-            if [ -n "${REMOTE_IP}" ];then
-                #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASHLOG}
-                #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
-                echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
-            else
-                #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
-                echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
-            fi
+    local headpart=$(printf "[%5s]" "${log_type}")
+    if bool_v "${LOG_HEADER}";then
+        headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
+    fi
 
-            if [[ ${log_type} == "erro" ]];then
-                echo -e "$(print_backtrace)" >> ${BASHLOG}
-            fi
-        fi
+    if [ -n "${REMOTE_IP}" ];then
+        #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASHLOG}
+        #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+        echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
+    else
+        #printf "%s %s\n" "${headpart}" "${para}" >> ${BASHLOG}
+        echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASHLOG}
+    fi
+
+    if [ ${echo_level} -le ${LOG_ERRO} ];then
+        echo -e "$(print_backtrace)" >> ${BASHLOG}
     fi
 }
 
@@ -562,6 +576,11 @@ function echo_header
 function echo_erro
 {
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
+    if [ ${LOG_SHOW_LEVEL} -lt ${LOG_ERRO} ];then
+        echo_file "${LOG_ERRO}" "$@"
+        return
+    fi
+
     local para="$@"
     if [ -n "${REMOTE_IP}" ];then
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
@@ -571,11 +590,16 @@ function echo_erro
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
-    echo_file "erro" "$@"
+    echo_file "${LOG_ERRO}" "$@"
 }
 
 function echo_info
 {
+    if [ ${LOG_SHOW_LEVEL} -lt ${LOG_INFO} ];then
+        echo_file "${LOG_INFO}" "$@"
+        return
+    fi
+
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ -n "${REMOTE_IP}" ];then
@@ -584,11 +608,16 @@ function echo_info
     else
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
-    echo_file "info" "$@"
+    echo_file "${LOG_INFO}" "$@"
 }
 
 function echo_warn
 {
+    if [ ${LOG_SHOW_LEVEL} -lt ${LOG_WARN} ];then
+        echo_file "${LOG_WARN}" "$@"
+        return
+    fi
+
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ -n "${REMOTE_IP}" ];then
@@ -597,25 +626,25 @@ function echo_warn
     else
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
-    echo_file "warn" "$@"
+    echo_file "${LOG_WARN}" "$@"
 }
 
 function echo_debug
 {
+    if [ ${LOG_SHOW_LEVEL} -lt ${LOG_DEBUG} ];then
+        echo_file "${LOG_DEBUG}" "$@"
+        return
+    fi
+
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
-    if bool_v "${LOG_OPEN}"; then
-        local fname=$(path2fname $0)
-        if string_contain "${LOG_FLAG}" "${fname}" || match_regex "${fname}" "${LOG_FLAG}"; then
-            if [ -n "${REMOTE_IP}" ];then
-                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-                # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
-            else
-                echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
-            fi
-        fi
+    if [ -n "${REMOTE_IP}" ];then
+        echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+    else
+        echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
     fi
-    echo_file "debug" "$@"
+    echo_file "${LOG_DEBUG}" "$@"
 }
 
 function export_all

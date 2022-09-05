@@ -1,5 +1,5 @@
 if declare -F _bash_exit &>/dev/null;then
-    echo_file "debug" "bashrc has loaded"
+    echo_file "${LOG_WARN}" "bashrc has loaded"
     return
 fi
 
@@ -21,16 +21,16 @@ fi
 set -o allexport
 
 if [ -z "${MY_NAME}" ];then
-    MY_NAME=$(whoami)
+    declare -r MY_NAME=$(whoami)
 fi
 if [ -z "${MY_HOME}" ];then
-    MY_HOME=${HOME}
+    declare -r MY_HOME=${HOME}
 fi
 
 source $MY_VIM_DIR/tools/include/common.api.sh
 source $MY_VIM_DIR/tools/include/bashrc.api.sh
-echo_file "debug" "envir: ${PRIVATE_VAR}"
-echo_file "debug" "tasks: ${BTASK_LIST}"
+echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
+echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
 INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
 INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh

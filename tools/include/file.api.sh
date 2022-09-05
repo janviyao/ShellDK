@@ -334,7 +334,7 @@ function file_count
         if ! test -r ${file};then
             sudo_it "chmod +r ${file}"
             if [ $? -ne 0 ];then
-                echo_file "debug" "sudo fail: chmod +r ${file}"
+                echo_file "${LOG_WARN}" "sudo fail: chmod +r ${file}"
                 readable=false
                 break
             fi
@@ -375,7 +375,7 @@ function file_size
         if ! test -r ${file};then
             sudo_it "chmod +r ${file}"
             if [ $? -ne 0 ];then
-                echo_file "debug" "sudo fail: chmod +r ${file}"
+                echo_file "${LOG_WARN}" "sudo fail: chmod +r ${file}"
                 readable=false
                 break
             fi
@@ -445,7 +445,7 @@ function real_path
     if can_access "${this_path}";then
         this_path=$(readlink -f ${this_path})
         if [ $? -ne 0 ];then
-            echo_file "erro" "readlink fail: ${this_path}"
+            echo_file "${LOG_ERRO}" "readlink fail: ${this_path}"
             return 1
         fi
     fi
@@ -469,7 +469,7 @@ function path2fname
 
     file_name=$(basename ${full_path})
     if [ $? -ne 0 ];then
-        echo_file "erro" "basename fail: ${full_path}"    
+        echo_file "${LOG_ERRO}" "basename fail: ${full_path}"    
         return 1
     fi
 
@@ -492,7 +492,7 @@ function fname2path
 
     dir_name=$(dirname ${full_name})
     if [ $? -ne 0 ];then
-        echo_file "erro" "dirname fail: ${full_name}"
+        echo_file "${LOG_ERRO}" "dirname fail: ${full_name}"
         return 1
     fi
 

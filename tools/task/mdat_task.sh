@@ -59,7 +59,7 @@ function mdata_task_ctrl_sync
         return 1
     fi
     
-    echo_file "debug" "mdat wait for ${_pipe_}"
+    echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "${_body_}" "${_pipe_}"
     return 0
 }
@@ -119,7 +119,7 @@ function mdata_kv_has_key
         return 1
     fi
 
-    echo_file "debug" "mdat check key: [$@]"
+    echo_file "${LOG_DEBUG}" "mdat check key: [$@]"
     
     if [ -z "${_pipe_}" ];then
         _pipe_="${GBL_MDAT_PIPE}"
@@ -130,7 +130,7 @@ function mdata_kv_has_key
         return 1
     fi
     
-    echo_file "debug" "mdat wait for ${_pipe_}"
+    echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
 
     if bool_v "${ack_value}";then
@@ -151,7 +151,7 @@ function mdata_kv_has_val
         return 1
     fi
 
-    echo_file "debug" "mdat check val: [$@]"
+    echo_file "${LOG_DEBUG}" "mdat check val: [$@]"
     
     if [ -z "${_pipe_}" ];then
         _pipe_="${GBL_MDAT_PIPE}"
@@ -162,7 +162,7 @@ function mdata_kv_has_val
         return 1
     fi
     
-    echo_file "debug" "mdat wait for ${_pipe_}"
+    echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
 
     if bool_v "${ack_value}";then
@@ -184,7 +184,7 @@ function mdata_kv_bool
         return 1
     fi
 
-    echo_file "debug" "mdat bool: [$@]"
+    echo_file "${LOG_DEBUG}" "mdat bool: [$@]"
      
     _xval_=$(mdata_kv_get "${_xkey_}" "${_pipe_}")
     if bool_v "${_xval_}";then
@@ -213,7 +213,7 @@ function mdata_kv_unset_key
         return 1
     fi
 
-    echo_file "debug" "mdat unset-key: [${_xkey_}]"
+    echo_file "${LOG_DEBUG}" "mdat unset-key: [${_xkey_}]"
     mdata_task_ctrl "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
     return $?
 }
@@ -238,7 +238,7 @@ function mdata_kv_unset_val
         return 1
     fi
 
-    echo_file "debug" "mdat unset-val: [${_xkey_} = \"${_xval_}\"]"
+    echo_file "${LOG_DEBUG}" "mdat unset-val: [${_xkey_} = \"${_xval_}\"]"
     mdata_task_ctrl "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return $?
 }
@@ -263,7 +263,7 @@ function mdata_kv_append
         return 1
     fi
     
-    echo_file "debug" "mdat append: [${_xkey_} = \"${_xval_}\"]"
+    echo_file "${LOG_DEBUG}" "mdat append: [${_xkey_} = \"${_xval_}\"]"
     mdata_task_ctrl "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
@@ -288,7 +288,7 @@ function mdata_kv_set
         return 1
     fi
     
-    echo_file "debug" "mdat set: [${_xkey_} = \"${_xval_}\"]"
+    echo_file "${LOG_DEBUG}" "mdat set: [${_xkey_} = \"${_xval_}\"]"
     mdata_task_ctrl "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
@@ -304,7 +304,7 @@ function mdata_kv_get
         return 1
     fi
 
-    echo_file "debug" "mdat get: [$*]"
+    echo_file "${LOG_DEBUG}" "mdat get: [$*]"
 
     if [ -z "${_pipe_}" ];then
         _pipe_="${GBL_MDAT_PIPE}"
@@ -315,9 +315,9 @@ function mdata_kv_get
         return 1
     fi
 
-    echo_file "debug" "mdat wait for ${_pipe_}"
+    echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
-    echo_file "debug" "mdat get: [${_xkey_} = \"${ack_value}\"]"
+    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${ack_value}\"]"
 
     echo "${ack_value}"
     return 0
