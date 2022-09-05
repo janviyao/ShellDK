@@ -35,14 +35,16 @@ if [ $? -ne 0 ];then
     echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/set_hugepage.sh"
     exit 1
 fi
+ 
+if bool_v "${TARGET_DEBUG_ON}";then
+    if ! can_access "${ISCSI_APP_LOG}";then
+        ${SUDO} "touch ${ISCSI_APP_LOG}"
+    fi
 
-if string_contain "${TEST_WORKGUIDE}" "app-log-clear";then
-    if bool_v "${TARGET_DEBUG_ON}";then
+    if string_contain "${TEST_WORKGUIDE}" "app-log-clear";then
         ${SUDO} "echo > ${ISCSI_APP_LOG}"
     fi
-fi
-
-if bool_v "${TARGET_DEBUG_ON}";then
+ 
     REDIRECT_LOG_FILE=$(mdata_kv_get "${ISCSI_APP_LOG}")
     if  can_access "${REDIRECT_LOG_FILE}";then
         echo "EXIT" > ${REDIRECT_LOG_FILE}
@@ -69,6 +71,10 @@ if bool_v "${TARGET_DEBUG_ON}";then
     ${SUDO} "echo > ${REDIRECT_LOG_FILE}"
     ${SUDO} "nohup bash -c 'export externalIP=${LOCAL_IP}; ${ISCSI_APP_RUNTIME} &> ${REDIRECT_LOG_FILE}' &"
 
+    if can_access "${ISCSI_APP_LOG}";then
+        ${SUDO} "chmod 777 ${ISCSI_APP_LOG}"
+    fi
+
     sleep 1
     while ! (cat ${ISCSI_APP_LOG} | grep "spdk_app_start" &> /dev/null)
     do
@@ -77,10 +83,6 @@ if bool_v "${TARGET_DEBUG_ON}";then
 else
     ${SUDO} "nohup bash -c 'export externalIP=${LOCAL_IP}; ${ISCSI_APP_RUNTIME} &> /dev/null' &"
     sleep 30
-fi
-
-if can_access "${ISCSI_APP_LOG}";then
-    ${SUDO} "chmod 777 ${ISCSI_APP_LOG}"
 fi
 
 if ! process_exist "${ISCSI_APP_NAME}";then

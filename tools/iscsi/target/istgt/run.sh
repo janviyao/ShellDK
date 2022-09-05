@@ -36,20 +36,22 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-if string_contain "${TEST_WORKGUIDE}" "app-log-clear";then
-    if bool_v "${TARGET_DEBUG_ON}";then
+if bool_v "${TARGET_DEBUG_ON}";then
+    if ! can_access "${ISCSI_APP_LOG}";then
+        ${SUDO} "touch ${ISCSI_APP_LOG}"
+    fi
+
+    if string_contain "${TEST_WORKGUIDE}" "app-log-clear";then
         ${SUDO} "echo > ${ISCSI_APP_LOG}"
     fi
-fi
 
-if bool_v "${TARGET_DEBUG_ON}";then
     ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG} &"
+
+    if can_access "${ISCSI_APP_LOG}";then
+        ${SUDO} "chmod 777 ${ISCSI_APP_LOG}"
+    fi
 else
     ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &"
-fi
-
-if can_access "${ISCSI_APP_LOG}";then
-    ${SUDO} "chmod 777 ${ISCSI_APP_LOG}"
 fi
 
 if ! process_exist "${ISCSI_APP_NAME}";then
