@@ -215,7 +215,7 @@ function process_name2pid
         return 0
     fi
     
-    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${pname}\b\s*" | grep -v grep | awk '{ print $1 }'))
+    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${pname}\b\s+" | grep -v grep | awk '{ print $1 }'))
 
     echo "${pid_array[*]}"
     return 0
