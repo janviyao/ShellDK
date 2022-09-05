@@ -232,7 +232,7 @@ function sudo_it
     else
         echo_file "debug" "[SUDO] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
-            if ! account_check ${MY_NAME} false;then
+            if ! account_check "${MY_NAME}" false;then
                 echo_erro "Username or Password check fail"
                 return 1
             fi
