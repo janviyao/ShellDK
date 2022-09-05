@@ -39,8 +39,6 @@ else
     fi
 
     echo_debug "[sudo.sh] ${CMD_STR}"
-    sudo_it "${CMD_STR}"
-    exit $?
 fi
 
 EXPECT_EOF=""
@@ -73,9 +71,10 @@ fi\
 "
 
 if declare -F sudo_it &>/dev/null;then
-    CMD_STR="${PASS_ENV}; (${CMD_STR});"
-    sudo_it "${CMD_STR}"
-    exit $?
+    sudo_cmd="${PASS_ENV}; (${CMD_STR});"
+    if sudo_it "${sudo_cmd}";then
+        exit 0
+    fi
 fi
 
 RET_VAR="sudo_ret$$"
