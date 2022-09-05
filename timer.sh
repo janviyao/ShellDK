@@ -52,7 +52,7 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
         if process_exist "${bash_pid}";then
             continue
         fi
-        rm -fr ${bash_dir}
+        rm -fr ${GBL_BASE_DIR}/${bash_dir}
     done
 
     #process_kill timer.sh
