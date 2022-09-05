@@ -46,6 +46,15 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
         fi
     fi
 
+    for bash_dir in $(cd ${GBL_BASE_DIR};ls -d */)
+    do
+        bash_pid=$(string_regex "${bash_dir}" "\d+")
+        if process_exist "${bash_pid}";then
+            continue
+        fi
+        rm -fr ${bash_dir}
+    done
+
     #process_kill timer.sh
     echo_debug "timer finish"
 else

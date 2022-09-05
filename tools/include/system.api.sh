@@ -197,9 +197,13 @@ function account_check
 
             read -s -p "Please input password: " input_val
             echo ""
-            export USR_PASSWORD="${input_val}"
 
-            echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
+            if [ -n "${input_val}" ];then
+                export USR_PASSWORD="${input_val}"
+                echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
+            else
+                return 1
+            fi
         else
             return 1
         fi
