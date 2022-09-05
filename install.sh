@@ -43,6 +43,7 @@ INST_GUIDE["ss"]="${CMD1};install_from_rpm 'iproute-.+\.rpm'"
 INST_GUIDE["rsync"]="${CMD1};install_from_rpm 'rsync-.+\.rpm'"
 INST_GUIDE["nc"]="${CMD1};install_from_rpm 'nmap-ncat-.+\.rpm'"
 INST_GUIDE["m4"]="${CMD1};install_from_rpm 'm4-.+\.rpm'"
+INST_GUIDE["sar"]="${CMD1};install_from_rpm 'sysstat-.+\.rpm'"
 INST_GUIDE["autoconf"]="${CMD1};install_from_rpm 'autoconf-.+\.rpm'"
 INST_GUIDE["automake"]="${CMD1};install_from_rpm 'automake-.+\.rpm'"
 
