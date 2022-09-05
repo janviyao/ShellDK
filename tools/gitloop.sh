@@ -69,7 +69,7 @@ function gitloop_signal
 trap "gitloop_signal" SIGINT SIGTERM SIGKILL
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    if ! account_check ${MY_NAME};then
+    if ! account_check "${MY_NAME}";then
         echo_erro "Username or Password check fail"
         exit 1
     fi
@@ -124,6 +124,5 @@ do
     else
         echo_debug "not git repo @ ${gitdir}"
     fi
-
     cd ${RUN_DIR}
 done

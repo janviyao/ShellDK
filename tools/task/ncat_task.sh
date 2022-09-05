@@ -229,6 +229,7 @@ function ncat_recv_file
 function ncat_wait_resp
 {
     local ncat_body="$1"
+    local timeout_s="${2:-10}"
 
     # the first pid is shell where ppid run
     local self_pid=$$
@@ -249,16 +250,15 @@ function ncat_wait_resp
     echo_debug "wait ncat's response: ${ack_pipe}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
 
+    run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
     local retcode=$?
-    if [ ${retcode} -eq 0 ];then
-        run_timeout 10 read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
-        if can_access "${ack_pipe}.result";then
-            export ack_value=$(cat ${ack_pipe}.result)
-        else
-            export ack_value=""
-        fi
-        echo_debug "read [${ack_value}] from ${ack_pipe}"
+
+    if can_access "${ack_pipe}.result";then
+        export resp_ack=$(cat ${ack_pipe}.result)
+    else
+        export resp_ack=""
     fi
+    echo_debug "read [${resp_ack}] from ${ack_pipe}"
 
     eval "exec ${ack_fhno}>&-"
     rm -f ${ack_pipe}*
@@ -276,6 +276,30 @@ function ncat_task_ctrl_sync
 {
     local ncat_body="$1"
     ncat_wait_resp "${ncat_body}"
+}
+
+function wait_event
+{
+    local event_uid="$1"
+    local event_msg="$2"
+
+    local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
+    ncat_wait_resp "${event_body}" "1800"
+
+    if [[ "${event_msg}" == "${resp_ack}" ]];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function notify_event
+{
+    local event_uid="$1"
+    local event_msg="$2"
+
+    local event_body="NOTIFY_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
+    ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
 }
 
 function remote_set_var
@@ -373,6 +397,30 @@ function _ncat_thread_main
             local rport=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
             local fname=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
             ncat_recv_file "${rport}" "${fname}"
+        elif [[ "${req_ctrl}" == "WAIT_EVENT" ]];then
+            local event_uid=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
+            local event_msg=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+
+            if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
+                mdata_kv_set "${event_uid}.pipe" "${ack_pipe}"
+                ack_ctrl="donot need ack"
+            fi
+            {
+                if ! mdata_kv_has_key "${event_uid}.pipe";then
+                    return 0
+                fi
+                sleep 1
+                local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
+                ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
+            }&
+        elif [[ "${req_ctrl}" == "NOTIFY_EVENT" ]];then
+            local event_uid=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
+            local event_msg=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+
+            local ack_pipe=$(mdata_kv_get "${event_uid}.pipe")
+            mdata_kv_unset_key "${event_uid}.pipe"
+            echo_debug "notify to [${ack_pipe}]"
+            run_timeout 2 echo "${event_msg}" \> ${ack_pipe}
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
