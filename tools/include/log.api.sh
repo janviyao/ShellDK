@@ -1,4 +1,8 @@
 #!/bin/bash
+if var_exist "LOG_SHOW_LEVEL";then
+    return 0
+fi
+
 declare -r LOG_ERRO=1
 declare -r LOG_WARN=2
 declare -r LOG_INFO=3
@@ -11,14 +15,14 @@ LOG_HEADER=true
 HEADER_TIME=false
 HEADER_FILE=false
 
-COLOR_HEADER='\033[40;35m' #黑底紫字
-COLOR_ERROR='\033[41;30m'  #红底黑字
-COLOR_DEBUG='\033[43;30m'  #黄底黑字
-COLOR_INFO='\033[42;37m'   #绿底白字
-COLOR_WARN='\033[42;31m'   #蓝底红字
-COLOR_CLOSE='\033[0m'      #关闭颜色
-FONT_BOLD='\033[1m'        #字体变粗
-FONT_BLINK='\033[5m'       #字体闪烁
+declare -r COLOR_HEADER='\033[40;35m' #黑底紫字
+declare -r COLOR_ERROR='\033[41;30m'  #红底黑字
+declare -r COLOR_DEBUG='\033[43;30m'  #黄底黑字
+declare -r COLOR_INFO='\033[42;37m'   #绿底白字
+declare -r COLOR_WARN='\033[42;31m'   #蓝底红字
+declare -r COLOR_CLOSE='\033[0m'      #关闭颜色
+declare -r FONT_BOLD='\033[1m'        #字体变粗
+declare -r FONT_BLINK='\033[5m'       #字体闪烁
 
 function echo_file
 {

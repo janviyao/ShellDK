@@ -13,17 +13,6 @@ shopt -s expand_aliases
 : ${GBL_XFER_PIPE:=}
 : ${GBL_CTRL_PIPE:=}
 
-source $MY_VIM_DIR/tools/include/log.api.sh
-source $MY_VIM_DIR/tools/include/string.api.sh
-source $MY_VIM_DIR/tools/include/system.api.sh
-source $MY_VIM_DIR/tools/include/trace.api.sh
-source $MY_VIM_DIR/tools/include/kvconf.api.sh
-source $MY_VIM_DIR/tools/include/section.api.sh
-source $MY_VIM_DIR/tools/include/process.api.sh
-source $MY_VIM_DIR/tools/include/install.api.sh
-source $MY_VIM_DIR/tools/include/math.api.sh
-source $MY_VIM_DIR/tools/include/file.api.sh
-
 function INCLUDE
 {
     local flag="$1"
@@ -269,3 +258,14 @@ function select_one
     echo "${array[${selected}]}"
     return 0
 }
+
+source $MY_VIM_DIR/tools/include/log.api.sh
+source $MY_VIM_DIR/tools/include/string.api.sh
+source $MY_VIM_DIR/tools/include/system.api.sh
+source $MY_VIM_DIR/tools/include/trace.api.sh
+source $MY_VIM_DIR/tools/include/kvconf.api.sh
+source $MY_VIM_DIR/tools/include/section.api.sh
+source $MY_VIM_DIR/tools/include/process.api.sh
+source $MY_VIM_DIR/tools/include/install.api.sh
+source $MY_VIM_DIR/tools/include/math.api.sh
+source $MY_VIM_DIR/tools/include/file.api.sh
