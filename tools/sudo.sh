@@ -56,8 +56,7 @@ export NCAT_MASTER_PORT='${NCAT_MASTER_PORT}'; \
 export USR_NAME='${USR_NAME}'; \
 export USR_PASSWORD='${USR_PASSWORD}'; \
 export MY_VIM_DIR=$MY_VIM_DIR; \
-source $MY_VIM_DIR/tools/include/common.api.sh; \
-if ! is_me '${USR_NAME}';then \
+if [[ \$(whoami) != '${USR_NAME}' ]];then \
     if test -d '$MY_VIM_DIR';then \
         source $MY_VIM_DIR/bashrc; \
     else \
