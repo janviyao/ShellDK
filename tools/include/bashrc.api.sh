@@ -32,10 +32,10 @@ alias psgrep='function ps_grep { ps -fauex | { head -1; grep $@ | grep -v grep; 
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
-declare -r ROOT_PID=$$
-declare -r GBL_BASE_DIR="/tmp/gbl"
-declare -r SUDO="$MY_VIM_DIR/tools/sudo.sh"
-declare -r SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
+readonly ROOT_PID=$$
+readonly GBL_BASE_DIR="/tmp/gbl"
+readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
+readonly SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
 
 mkdir -p ${GBL_BASE_DIR}
 BASH_LOG="${GBL_BASE_DIR}/bash.log"
@@ -45,11 +45,11 @@ OP_TIMEOUT=60
 SSH_TIMEOUT=600
 MAX_TIMEOUT=1800
 
-declare -r GBL_COL_SPF=","
-declare -r GBL_ACK_SPF="#!"
-declare -r GBL_SPF1="#^"
-declare -r GBL_SPF2="#$"
-declare -r GBL_SPF3="#@"
+readonly GBL_COL_SPF=","
+readonly GBL_ACK_SPF="#!"
+readonly GBL_SPF1="#^"
+readonly GBL_SPF2="#$"
+readonly GBL_SPF3="#@"
 
 function _bash_exit
 { 

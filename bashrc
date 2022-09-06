@@ -21,10 +21,10 @@ fi
 set -o allexport
 
 if [ -z "${MY_NAME}" ];then
-    declare -r MY_NAME=$(whoami)
+    readonly MY_NAME=$(whoami)
 fi
 if [ -z "${MY_HOME}" ];then
-    declare -r MY_HOME=${HOME}
+    readonly MY_HOME=${HOME}
 fi
 
 source $MY_VIM_DIR/tools/include/common.api.sh

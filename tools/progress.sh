@@ -1,5 +1,5 @@
 #!/bin/bash
-declare -r PRG_FIN="${GBL_BASE_DIR}/progresss.fin"
+readonly PRG_FIN="${GBL_BASE_DIR}/progresss.fin"
 if can_access "${PRG_FIN}";then
     rm -f ${PRG_FIN}
 fi
@@ -134,10 +134,10 @@ function progress3
     #logr_task_ctrl "CURSOR_SHOW"
 }
 
-declare -r PRG_CURR="$1"
-declare -r PRG_LAST="$2"
-declare -r POS_ROWS="$3"
-declare -r POS_COLS="$4"
+readonly PRG_CURR="$1"
+readonly PRG_LAST="$2"
+readonly POS_ROWS="$3"
+readonly POS_COLS="$4"
 
 progress3 "${PRG_CURR}" "${PRG_LAST}" "${POS_ROWS}" "${POS_COLS}"
 echo_debug "**********progress exit"

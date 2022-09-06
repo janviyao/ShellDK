@@ -12,28 +12,28 @@ fi
 
 mdata_kv_append "${LAST_PID}" "${SELF_PID}"
 
-declare -r all_num="$1"
-declare -r concurrent_num="$2"
-declare -r include_api="$3"
+readonly all_num="$1"
+readonly concurrent_num="$2"
+readonly include_api="$3"
 
 if [ -f "$MY_VIM_DIR/tools/include/${include_api}" ];then
     . $MY_VIM_DIR/tools/include/${include_api}
 fi
 
 # get the last para
-declare -r thread_task=$(eval echo \$$#)
+readonly thread_task=$(eval echo \$$#)
 
 # mkfifo
-declare -r THREAD_BASE_DIR="/tmp/thread"
-declare -r THREAD_DIR="${THREAD_BASE_DIR}/pid.$$"
+readonly THREAD_BASE_DIR="/tmp/thread"
+readonly THREAD_DIR="${THREAD_BASE_DIR}/pid.$$"
 rm -fr ${THREAD_DIR}
 mkdir -p ${THREAD_DIR}
 
-declare -r THREAD_PIPE="${THREAD_DIR}/msg"
+readonly THREAD_PIPE="${THREAD_DIR}/msg"
 mkfifo ${THREAD_PIPE}
 
 # clear file, and if not exist, create it
-declare -r THREAD_RET="${THREAD_DIR}/retcode"
+readonly THREAD_RET="${THREAD_DIR}/retcode"
 :> ${THREAD_RET}
 
 declare -i THREAD_FD=${THREAD_FD:-6}
