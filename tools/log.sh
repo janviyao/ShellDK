@@ -1,24 +1,28 @@
 #!/bin/bash
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
-IFS_BACKUP=$IFS
-#IFS=$(echo -en "\n\b")
-IFS=$(echo -en "\n\r")
+echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if bool_v "${LOG_OPEN}";then
-    echo "$@"
-    eval "$@"
-else
-    if var_exist "BASH_LOG";then
-        eval "$@" >> ${BASH_LOG} 2>&1
+CMD_STR="$1"
+shift
+while [ $# -gt 0 ]
+do
+    if [[ "$1" =~ ' ' ]];then
+        CMD_STR="${CMD_STR} '$1'"
     else
-        eval "$@" >> log 2>&1
+        CMD_STR="${CMD_STR} $1"
     fi
-fi
+    shift
+done
+
+#IFS_BACKUP=$IFS
+#IFS=$(echo -en "\n\b")
+#IFS=$(echo -en "\n\r")
+
+echo_debug "${CMD_STR}"
+bash -c "${CMD_STR}"
 errcode=$?
 
-IFS=$IFS_BACKUP
+#IFS=$IFS_BACKUP
 if [ ${errcode} -ne 0 ];then
-    echo_erro "errno(${errcode}): $@"
+    echo_erro "errno(${errcode}): ${CMD_STR}"
 fi
-
 exit ${errcode}
