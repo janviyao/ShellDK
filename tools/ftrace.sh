@@ -1,6 +1,37 @@
 #!/bin/bash
-SAVE_DIR=$(pwd)
+function how_usage
+{
+    local script_name=$(path2fname $0)
+    echo "=================== Usage ==================="
+    printf "%-15s <app-name> | <app-pid>\n" "${script_name}"
+    printf "%-15s @%s\n" "<app-name>" "name of running-app which it will be ftraced"
+    printf "%-15s @%s\n" "or <app-pid>"  "pid of running-app which it will be ftraced"
+    echo "============================================="
+}
+
+if [ $# -lt 1 ];then
+    how_usage
+    exit 1
+fi
+
+SAVE_DIR=$(pwd)/ftrace
+try_cnt=0
+tmp_dir=${SAVE_DIR}
+while can_access "${tmp_dir}"
+do
+    let try_cnt++
+    tmp_dir=${SAVE_DIR}${try_cnt}
+done
+SAVE_DIR=${tmp_dir}
+mkdir -p ${SAVE_DIR}
+
 TRACE_DIR=$(sed -ne 's/^tracefs \(.*\) tracefs.*/\1/p' /proc/mounts)
+
+running_traces=($(sudo_it lsof +D ${TRACE_DIR} | awk '{ if(NR != 1) { print $1 }}' | uniq))
+for app in ${running_traces[*]}
+do
+    process_kill ${app}
+done
 
 $SUDO "echo 0 > ${TRACE_DIR}/tracing_on"
 $SUDO "echo nop > ${TRACE_DIR}/current_tracer"
@@ -76,18 +107,19 @@ fi
 $SUDO "echo ${TRACE_PID} > ${TRACE_DIR}/set_ftrace_pid"
 $SUDO "echo 1 > ${TRACE_DIR}/tracing_on"
 
-echo_info "Wait {$(process_pid2name "${TRACE_PID}")[${TRACE_PID}]} exit ..."
+echo_info "Wait { $(process_pid2name "${TRACE_PID}")[${TRACE_PID}] } exit ..."
 while process_exist "${TRACE_PID}"
 do
     sleep 1
 done
+echo_info "$(process_pid2name "${TRACE_PID}")[${TRACE_PID}] has exited"
 
 $SUDO "cat ${TRACE_DIR}/trace > ${SAVE_DIR}/ftrace.log"
 $SUDO "echo 0 > ${TRACE_DIR}/tracing_on"
 $SUDO "echo nop > ${TRACE_DIR}/current_tracer"
 
 ${SUDO} "chown ${MY_NAME} ${SAVE_DIR}/ftrace.log"
-echo_info "Ftrace Output: ${SAVE_DIR}/ftrace.log"
+echo_info "ftrace output: ${SAVE_DIR}/ftrace.log"
 
 # + means that the function exceeded 10 usecs.
 # ! means that the function exceeded 100 usecs.
