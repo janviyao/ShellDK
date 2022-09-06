@@ -114,12 +114,11 @@ do
 done
 echo_info "$(process_pid2name "${TRACE_PID}")[${TRACE_PID}] has exited"
 
+echo_info "reading trace into { ${SAVE_DIR}/ftrace.log }"
 $SUDO "cat ${TRACE_DIR}/trace > ${SAVE_DIR}/ftrace.log"
 $SUDO "echo 0 > ${TRACE_DIR}/tracing_on"
 $SUDO "echo nop > ${TRACE_DIR}/current_tracer"
-
-${SUDO} "chown ${MY_NAME} ${SAVE_DIR}/ftrace.log"
-echo_info "ftrace output: ${SAVE_DIR}/ftrace.log"
+$SUDO "chown ${MY_NAME} ${SAVE_DIR}/ftrace.log"
 
 # + means that the function exceeded 10 usecs.
 # ! means that the function exceeded 100 usecs.
@@ -128,20 +127,23 @@ echo_info "ftrace output: ${SAVE_DIR}/ftrace.log"
 # @ means that the function exceeded 100 msecs.
 # $ means that the function exceeded 1 sec.
 echo ""
-echo_info "the function exceeded 100 usecs into { ${SAVE_DIR}/ftrace.100us.log }"
+echo_info "exceed 10 usecs into { ${SAVE_DIR}/ftrace.10us.log }"
+cat ${SAVE_DIR}/ftrace.log | grep "| \+" > ${SAVE_DIR}/ftrace.100us.log
+
+echo_info "exceed 100 usecs into { ${SAVE_DIR}/ftrace.100us.log }"
 cat ${SAVE_DIR}/ftrace.log | grep "| \!" > ${SAVE_DIR}/ftrace.100us.log
 
-echo_info "the function exceeded 1000 usecs into { ${SAVE_DIR}/ftrace.1000us.log }"
+echo_info "exceed 1000 usecs into { ${SAVE_DIR}/ftrace.1000us.log }"
 cat ${SAVE_DIR}/ftrace.log | grep "| \#" > ${SAVE_DIR}/ftrace.1000us.log
 
-echo_info "the function exceeded 10 msecs into { ${SAVE_DIR}/ftrace.10ms.log }"
+echo_info "exceed 10 msecs into { ${SAVE_DIR}/ftrace.10ms.log }"
 cat ${SAVE_DIR}/ftrace.log | grep "| \*" > ${SAVE_DIR}/ftrace.10ms.log 
 
-echo_info "the function exceeded 100 msecs into { ${SAVE_DIR}/ftrace.100ms.log }"
+echo_info "exceed 100 msecs into { ${SAVE_DIR}/ftrace.100ms.log }"
 cat ${SAVE_DIR}/ftrace.log | grep "| \@" > ${SAVE_DIR}/ftrace.100ms.log
 
-echo_info "the function exceeded 1 sec into { ${SAVE_DIR}/ftrace.1s.log }"
+echo_info "exceed 1 sec into { ${SAVE_DIR}/ftrace.1s.log }"
 cat ${SAVE_DIR}/ftrace.log | grep "| \$" > ${SAVE_DIR}/ftrace.1s.log
 
-echo_info "exceeded 100 sec all into { ${SAVE_DIR}/ftrace.max.log }"
-cat ${SAVE_DIR}/ftrace.log | grep -E "\| \$|\| \@|\| \*|\| #|\| !" > ${SAVE_DIR}/ftrace.max.log
+echo_info "all exceed 10 usec into { ${SAVE_DIR}/ftrace.max.log }"
+cat ${SAVE_DIR}/ftrace.log | grep -E "\| \$|\| \@|\| \*|\| \#|\| \!|\| \+" > ${SAVE_DIR}/ftrace.max.log
