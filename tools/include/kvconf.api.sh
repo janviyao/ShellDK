@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_KVCONF:=1}
+
 KV_FS="="
 function kvconf_has_key
 {

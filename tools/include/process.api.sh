@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_PROCESS:=1}
+
 function process_pptree
 {
     local pinfo="$1"

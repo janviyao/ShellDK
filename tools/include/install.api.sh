@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_INSTALL:=1}
+
 function install_from_net
 {
     local inst_name="$1"

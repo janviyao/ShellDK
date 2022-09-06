@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_MATH:=1}
+
 function is_integer
 {
     # is argument an integer?

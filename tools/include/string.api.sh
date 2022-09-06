@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_STRING:=1}
+
 function string_sub
 {
     local string="$1"

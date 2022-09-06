@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_FILE:=1}
+
 function can_access
 {
     local fname="$1"

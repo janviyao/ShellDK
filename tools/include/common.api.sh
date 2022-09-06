@@ -1,4 +1,6 @@
 #!/bin/bash
+: ${INCLUDE_COMMON:=1}
+
 shopt -s expand_aliases
 #set -o errexit # when error, then exit
 #set -o nounset # variable not exist, then exit
@@ -259,13 +261,13 @@ function select_one
     return 0
 }
 
-source $MY_VIM_DIR/tools/include/log.api.sh
-source $MY_VIM_DIR/tools/include/string.api.sh
-source $MY_VIM_DIR/tools/include/system.api.sh
-source $MY_VIM_DIR/tools/include/trace.api.sh
-source $MY_VIM_DIR/tools/include/kvconf.api.sh
-source $MY_VIM_DIR/tools/include/section.api.sh
-source $MY_VIM_DIR/tools/include/process.api.sh
-source $MY_VIM_DIR/tools/include/install.api.sh
-source $MY_VIM_DIR/tools/include/math.api.sh
-source $MY_VIM_DIR/tools/include/file.api.sh
+INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/tools/include/log.api.sh
+INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/tools/include/string.api.sh
+INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/tools/include/system.api.sh
+INCLUDE "INCLUDE_TRACE"   $MY_VIM_DIR/tools/include/trace.api.sh
+INCLUDE "INCLUDE_KVCONF"  $MY_VIM_DIR/tools/include/kvconf.api.sh
+INCLUDE "INCLUDE_SECTION" $MY_VIM_DIR/tools/include/section.api.sh
+INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/tools/include/process.api.sh
+INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/tools/include/install.api.sh
+INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/tools/include/math.api.sh
+INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/tools/include/file.api.sh
