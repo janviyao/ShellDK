@@ -38,17 +38,18 @@ declare -r SUDO="$MY_VIM_DIR/tools/sudo.sh"
 declare -r SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
 
 mkdir -p ${GBL_BASE_DIR}
-BASHLOG="${GBL_BASE_DIR}/bash.log"
+BASH_LOG="${GBL_BASE_DIR}/bash.log"
 
 OP_TRY_CNT=3
 OP_TIMEOUT=60
 SSH_TIMEOUT=600
+MAX_TIMEOUT=1800
 
-declare -r GBL_COL_SPF="^"
-declare -r GBL_ACK_SPF="#"
-declare -r GBL_SPF1="\`"
-declare -r GBL_SPF2="%"
-declare -r GBL_SPF3="!"
+declare -r GBL_COL_SPF=","
+declare -r GBL_ACK_SPF="#!"
+declare -r GBL_SPF1="#^"
+declare -r GBL_SPF2="#$"
+declare -r GBL_SPF3="#@"
 
 function _bash_exit
 { 

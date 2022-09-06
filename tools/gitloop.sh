@@ -94,7 +94,7 @@ do
 
         logr_task_ctrl "PRINT" "${prefix}"
 
-        prg_time=$((OP_TIMEOUT*10*OP_TRY_CNT + 2*10))
+        prg_time=$((OP_TIMEOUT * 10 * OP_TRY_CNT + 2 * 10))
         $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos} &
         prg_pid=$!
         sleep 2

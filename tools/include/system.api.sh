@@ -570,8 +570,8 @@ function cursor_pos
 
     # save the position
     #echo "current position: $pos"
-    local x_pos=$(echo "${pos}" | cut -d ';' -f 1)
-    local y_pos=$(echo "${pos}" | cut -d ';' -f 2)
+    local x_pos=$(string_sub "${pos}" ';' 1)
+    local y_pos=$(string_sub "${pos}" ';' 2)
 
     mdata_set_var x_pos
     mdata_set_var y_pos

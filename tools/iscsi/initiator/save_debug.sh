@@ -16,9 +16,9 @@ if can_access "${ISCSI_INITIATOR_LOG}";then
     fi
 fi
 
-if can_access "${BASHLOG}";then
-    echo_info "Save: ${BASHLOG}"
-    ${SUDO} cp -f ${BASHLOG} ${INITIATOR_LOG_DIR}
+if can_access "${BASH_LOG}";then
+    echo_info "Save: ${BASH_LOG}"
+    ${SUDO} cp -f ${BASH_LOG} ${INITIATOR_LOG_DIR}
 fi
 
 if can_access "${TEST_SUIT_ENV}";then

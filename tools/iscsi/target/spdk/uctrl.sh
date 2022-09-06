@@ -167,7 +167,7 @@ fi
 if [[ "${op_mode}" == "create_target_node" ]];then
     for item in ${create_target_node_array[*]} 
     do
-        target_node=$(echo "${item}" | awk -F${GBL_SPF1} '{ print $1 }')
+        target_node=$(string_sub "${item}" "${GBL_SPF1}" 1)
         item=$(replace_str "${item}" "${GBL_SPF1}" " ")
         item=$(replace_str "${item}" "${GBL_SPF2}" " ")
 

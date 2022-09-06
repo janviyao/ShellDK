@@ -277,7 +277,7 @@ function xfer_task_ctrl_sync
     fi
 
     echo_debug "xfer wait for ${one_pipe}"
-    wait_value "${xfer_body}" "${one_pipe}" "${SSH_TIMEOUT}"
+    wait_value "${xfer_body}" "${one_pipe}" "${MAX_TIMEOUT}"
 }
 
 function _bash_xfer_exit
@@ -300,9 +300,9 @@ function _xfer_thread_main
     while read line
     do
         echo_debug "xfer recv: [${line}]"
-        local ack_xfer=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
-        local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
-        local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
+        local ack_xfer=$(string_sub "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_sub "${line}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_sub "${line}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_xfer}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -311,9 +311,9 @@ function _xfer_thread_main
             fi
         fi
         
-        local req_xfer=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
-        local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
-        local req_foot=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 3)
+        local req_xfer=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
+        local req_foot=$(string_sub "${ack_body}" "${GBL_SPF1}" 3)
 
         if [[ "${req_xfer}" == "EXIT" ]];then
             if [[ "${ack_xfer}" == "NEED_ACK" ]];then
@@ -322,10 +322,10 @@ function _xfer_thread_main
             fi
             return 
         elif [[ "${req_xfer}" == "RSYNC" ]];then
-            local xfer_act=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
-            local xfer_cmd=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
-            local xfer_src=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 3) 
-            local xfer_des=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 4) 
+            local xfer_act=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
+            local xfer_cmd=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            local xfer_src=$(string_sub "${req_body}" "${GBL_SPF2}" 3) 
+            local xfer_des=$(string_sub "${req_body}" "${GBL_SPF2}" 4) 
 
             local action=""
             if [[ "${xfer_act}" == "UPDATE" ]];then

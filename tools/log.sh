@@ -8,8 +8,8 @@ if bool_v "${LOG_OPEN}";then
     echo "$@"
     eval "$@"
 else
-    if var_exist "BASHLOG";then
-        eval "$@" >> ${BASHLOG} 2>&1
+    if var_exist "BASH_LOG";then
+        eval "$@" >> ${BASH_LOG} 2>&1
     else
         eval "$@" >> log 2>&1
     fi

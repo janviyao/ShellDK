@@ -101,9 +101,9 @@ function _logr_thread_main
     while read line
     do
         #echo_debug "logr task: [${line}]" 
-        local ack_ctrl=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 1)
-        local ack_pipe=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 2)
-        local ack_body=$(echo "${line}" | cut -d "${GBL_ACK_SPF}" -f 3)
+        local ack_ctrl=$(string_sub "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_sub "${line}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_sub "${line}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -112,8 +112,8 @@ function _logr_thread_main
             fi
         fi
 
-        local logr_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
-        local logr_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
+        local logr_ctrl=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
+        local logr_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
 
         if [[ "${logr_ctrl}" == "CTRL" ]];then
             if [[ "${logr_body}" == "EXIT" ]];then
@@ -127,8 +127,8 @@ function _logr_thread_main
             local log_file="${logr_body}"
             ( _redirect_func "${log_file}" & )
         elif [[ "${logr_ctrl}" == "CURSOR_MOVE" ]];then
-            local x_val=$(echo "${logr_body}" | cut -d "${GBL_SPF2}" -f 1)
-            local y_val=$(echo "${logr_body}" | cut -d "${GBL_SPF2}" -f 2)
+            local x_val=$(string_sub "${logr_body}" "${GBL_SPF2}" 1)
+            local y_val=$(string_sub "${logr_body}" "${GBL_SPF2}" 2)
             tput cup ${x_val} ${y_val}
         elif [[ "${logr_ctrl}" == "CURSOR_HIDE" ]];then
             tput civis

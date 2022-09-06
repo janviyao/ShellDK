@@ -52,9 +52,9 @@ if bool_v "${DUMP_SAVE_ON}";then
     fi
 fi
 
-if can_access "${BASHLOG}";then
-    echo_info "Save: ${BASHLOG}"
-    ${SUDO} cp -f ${BASHLOG} ${ISCSI_LOG_DIR}
+if can_access "${BASH_LOG}";then
+    echo_info "Save: ${BASH_LOG}"
+    ${SUDO} cp -f ${BASH_LOG} ${ISCSI_LOG_DIR}
 fi
 
 if can_access "${TEST_SUIT_ENV}";then

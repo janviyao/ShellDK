@@ -32,8 +32,8 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
         fi
     fi
 
-    if can_access "${BASHLOG}";then
-        logsize=$(file_size "${BASHLOG}")
+    if can_access "${BASH_LOG}";then
+        logsize=$(file_size "${BASH_LOG}")
         if [ -z "${logsize}" ];then
             logsize=0
         fi
@@ -41,8 +41,8 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
         maxsize=$((300*1024*1024))
         if (( logsize > maxsize ));then
             date_time=$(date '+%Y%m%d-%H%M%S')
-            cp -f ${BASHLOG} ${BASHLOG}.${date_time}
-            cat /dev/null > ${BASHLOG}
+            cp -f ${BASH_LOG} ${BASH_LOG}.${date_time}
+            cat /dev/null > ${BASH_LOG}
         fi
     fi
 

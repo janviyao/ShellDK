@@ -137,8 +137,8 @@ function ncat_recv_msg
     local ncat_port="$1"
 
     if can_access "nc";then
-        #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASHLOG} | while read ncat_body
-        nc -l -4 ${ncat_port} 2>>${BASHLOG} | while read ncat_body
+        #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
+        nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         do
             echo "${ncat_body}"
             return 0
@@ -162,8 +162,8 @@ function ncat_send_file
         return 1
     fi
 
-    if ! can_access "${file_name}";then
-        echo_erro "file: ${file_name} not exist"
+    if ! test -f "${file_name}";then
+        echo_erro "none file: ${file_name}"
         return 1
     fi
 
@@ -203,6 +203,11 @@ function ncat_recv_file
     local ncat_port="$1"
     local file_name="$2"
 
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: ncat_port\n\$2: file_name"
+        return 1
+    fi
+
     local f_path=$(fname2path "${file_name}")
     if can_access "${f_path}";then
         if can_access "${file_name}";then
@@ -217,7 +222,7 @@ function ncat_recv_file
     fi
 
     if can_access "nc";then
-        timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} > ${file_name}
+        timeout ${MAX_TIMEOUT} nc -l -4 ${ncat_port} > ${file_name}
     else
         echo_erro "ncat donot installed"
         return 1
@@ -283,8 +288,13 @@ function wait_event
     local event_uid="$1"
     local event_msg="$2"
 
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: event_uid\n\$2: event_msg"
+        return 1
+    fi
+
     local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
-    ncat_wait_resp "${event_body}" "1800"
+    ncat_wait_resp "${event_body}" "${MAX_TIMEOUT}"
 
     if [[ "${event_msg}" == "${resp_ack}" ]];then
         return 0
@@ -298,6 +308,11 @@ function notify_event
     local event_uid="$1"
     local event_msg="$2"
 
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: event_uid\n\$2: event_msg"
+        return 1
+    fi
+
     local event_body="NOTIFY_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
 }
@@ -310,7 +325,7 @@ function remote_set_var
     local var_valu="$4"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ncat_addr\n\$2: ncat_port\n\$3: var_name\n\$4: var_valu"
+        echo_erro "\nUsage: [$@]\n\$1: ncat_addr\n\$2: ncat_port\n\$3: var_name\n\$4: var_value"
         return 1
     fi
 
@@ -363,9 +378,9 @@ function _ncat_thread_main
         fi
         echo_debug "ncat recv: [${ncat_body}]" 
 
-        local ack_ctrl=$(echo "${ncat_body}" | cut -d "${GBL_ACK_SPF}" -f 1)
-        local ack_pipe=$(echo "${ncat_body}" | cut -d "${GBL_ACK_SPF}" -f 2)
-        local ack_body=$(echo "${ncat_body}" | cut -d "${GBL_ACK_SPF}" -f 3)
+        local ack_ctrl=$(string_sub "${ncat_body}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_sub "${ncat_body}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_sub "${ncat_body}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -375,9 +390,9 @@ function _ncat_thread_main
             fi
         fi
 
-        local req_ctrl=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 1)
-        local req_body=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 2)
-        local req_foot=$(echo "${ack_body}" | cut -d "${GBL_SPF1}" -f 3)
+        local req_ctrl=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
+        local req_foot=$(string_sub "${ack_body}" "${GBL_SPF1}" 3)
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
@@ -390,16 +405,16 @@ function _ncat_thread_main
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
-            local var_name=$(echo "${req_body}" | cut -d "=" -f 1)
-            local var_valu=$(echo "${req_body}" | cut -d "=" -f 2)
+            local var_name=$(string_sub "${req_body}" "=" 1)
+            local var_valu=$(string_sub "${req_body}" "=" 2)
             mdata_set_var "${var_name}=${var_valu}"
         elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
-            local rport=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
-            local fname=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+            local rport=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
+            local fname=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
             ncat_recv_file "${rport}" "${fname}"
         elif [[ "${req_ctrl}" == "WAIT_EVENT" ]];then
-            local event_uid=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
-            local event_msg=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+            local event_uid=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
+            local event_msg=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 mdata_kv_set "${event_uid}.pipe" "${ack_pipe}"
@@ -414,8 +429,8 @@ function _ncat_thread_main
                 ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
             }&
         elif [[ "${req_ctrl}" == "NOTIFY_EVENT" ]];then
-            local event_uid=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 1) 
-            local event_msg=$(echo "${req_body}" | cut -d "${GBL_SPF2}" -f 2) 
+            local event_uid=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
+            local event_msg=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
 
             local ack_pipe=$(mdata_kv_get "${event_uid}.pipe")
             mdata_kv_unset_key "${event_uid}.pipe"
