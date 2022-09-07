@@ -373,7 +373,6 @@ function inst_env
 
     if ! can_access "${MY_HOME}/.timerc";then
         echo "#!/bin/bash"                           >  ${MY_HOME}/.timerc
-        echo "export USR_NAME=${USR_NAME}"           >> ${MY_HOME}/.timerc
         ${SUDO} chmod +x ${MY_HOME}/.timerc 
     fi
 

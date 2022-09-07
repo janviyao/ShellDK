@@ -55,7 +55,7 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
         rm -fr ${GBL_BASE_DIR}/${bash_dir}
     done
 
-    #process_kill timer.sh
+    process_kill timer.sh
     echo_debug "timer finish"
 else
     echo_debug "lost: ${TIMER_RUNDIR}/timerc"
