@@ -706,6 +706,8 @@ else
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
         if [ -n "${routeMap[${ipaddr}]}" ];then
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} sed -i '/${ipaddr}/d' /etc/hosts"
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} sed -i '$ a${ipaddr}   ${routeMap[${ipaddr}]}' /etc/hosts"
             ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
         fi
 

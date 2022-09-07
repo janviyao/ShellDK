@@ -310,9 +310,10 @@ function _bash_xfer_exit
 
 function _xfer_thread_main
 {
+    local account_success=true
     if ! account_check ${MY_NAME};then
-        echo_erro "Username or Password check fail"
-        return 1
+        echo_file "${LOG_ERRO}" "Username or Password check fail"
+        account_success=false
     fi
 
     while read line
@@ -373,6 +374,13 @@ function _xfer_thread_main
 
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
+                if ! bool_v "${account_success}";then
+                    if account_check ${MY_NAME};then
+                        account_success=true
+                    else
+                        echo_erro "Username or Password check fail"
+                    fi
+                fi
                 sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
             else
                 #can_access "${xfer_des}" || ${SUDO} "mkdir -p ${xfer_des}"

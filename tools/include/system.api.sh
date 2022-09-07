@@ -188,10 +188,6 @@ function account_check
     fi
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-        #if [[ $- != *i* ]];then
-        #    # not interactive shell
-        #    return 1
-        #fi
         if bool_v "${can_input}";then
             USR_NAME=${MY_NAME}
             read -p "Please input username(${USR_NAME}): " input_val
@@ -202,7 +198,14 @@ function account_check
 
             if [ -n "${input_val}" ];then
                 export USR_PASSWORD="${input_val}"
-                echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
+                new_password=$(system_encrypt "${USR_PASSWORD}")
+                echo "${new_password}"                                             >  ${GBL_BASE_DIR}/.${USR_NAME} 
+                echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/askpass.sh
+                echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/askpass.sh
+                echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
+                echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
+                echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
+                chmod +x ${GBL_BASE_DIR}/askpass.sh 
             else
                 return 1
             fi
@@ -236,13 +239,19 @@ function sudo_it
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
             if ! account_check "${MY_NAME}" false;then
                 echo_file "${LOG_ERRO}" "Username or Password check fail"
-                return 1
+                bash -c "${cmd}"
+                return $?
             fi
 
-            if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
+            if can_access "${GBL_BASE_DIR}/askpass.sh";then
+                sudo -A bash -c "${cmd}"
             else
-                return 1
+                if [ -n "${USR_PASSWORD}" ]; then
+                    echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
+                else
+                    bash -c "${cmd}"
+                    return $?
+                fi
             fi
         else
             sudo -A bash -c "${cmd}"

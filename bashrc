@@ -74,7 +74,7 @@ old_spec=$(replace_regex "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'"
 unset old_spec
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    if can_access "${GBL_BASE_DIR}/.userc";then
+    if can_access "${GBL_BASE_DIR}/.${MY_NAME}";then
         account_check "${MY_NAME}" false
     fi
 fi
