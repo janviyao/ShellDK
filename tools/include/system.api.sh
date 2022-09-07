@@ -641,9 +641,9 @@ function get_iscsi_device
 
 function get_hosts_ip
 {
-    local ret_type="$1"
-    local -A ip_map
+    local ret_guide="$@"
 
+    local -A hostip_map
     while read line
     do
         ipaddr=$(echo "${line}" | awk '{ print $1 }')
@@ -653,22 +653,25 @@ function get_hosts_ip
         match_regex "${ipaddr}" "^\s*\d+\.\d+\.\d+\.\d+" || continue 
 
         if ip addr | grep -F "${ipaddr}" &> /dev/null;then
-            continue
+            if ! string_contain "${ret_guide}" "local";then
+                continue
+            fi
         fi
 
-        if ! array_has "${!ip_map[*]}" "${ipaddr}";then
-            ip_map[${ipaddr}]="${hostnm}"
+        if ! array_has "${!hostip_map[*]}" "${ipaddr}";then
+            hostip_map[${ipaddr}]="${hostnm}"
         fi
     done < /etc/hosts
     
-    if [[ "${ret_type,,}" == "map" ]];then
-        local map_str=$(declare -p ip_map)
+    if string_contain "${ret_guide}" "map";then
+        local map_str=$(declare -p hostip_map)
         map_str=$(string_regex "${map_str}" '\(.+\)')
         map_str=$(string_regex "${map_str}" '[^()]+')
         echo "${map_str}" 
     else
-        echo "${!ip_map[*]}" 
+        echo "${!hostip_map[*]}" 
     fi
+
     return 0
 }
 

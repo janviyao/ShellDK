@@ -404,6 +404,18 @@ function _ncat_thread_main
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
+        elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
+            local log_lvel=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
+            local log_body=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            if [ ${log_lvel} -eq ${LOG_DEBUG} ];then
+                echo_debug "${log_body}"
+            elif [ ${log_lvel} -eq ${LOG_INFO} ];then
+                echo_info "${log_body}"
+            elif [ ${log_lvel} -eq ${LOG_WARN} ];then
+                echo_warn "${log_body}"
+            elif [ ${log_lvel} -eq ${LOG_ERRO} ];then
+                echo_erro "${log_body}"
+            fi
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
             local var_name=$(string_sub "${req_body}" "=" 1)
             local var_valu=$(string_sub "${req_body}" "=" 2)

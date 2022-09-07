@@ -1,6 +1,24 @@
 #!/bin/bash
 : ${INCLUDE_FILE:=1}
 
+function is_owner
+{
+    local fname="$1"
+    local fuser="$2"
+
+    if [ $# -ne 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: path of file or directory\n\$2: user name"
+        return 1
+    fi
+    
+    local nuser=$(ls -l -d ${fname} | awk '{ print $3 }')
+    if [[ "${nuser}" == "${fuser}" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function can_access
 {
     local fname="$1"
@@ -58,7 +76,7 @@ function file_has
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: whether regex(bool)"
         return 1
     fi
 
@@ -123,7 +141,7 @@ function file_get
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: whether regex(bool)"
         return 1
     fi
 
@@ -162,7 +180,7 @@ function file_del
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: whether regex(bool)"
         return 1
     fi
 
@@ -245,7 +263,7 @@ function file_linenr
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: whether regex(bool)"
         return 1
     fi
 
@@ -279,7 +297,7 @@ function file_replace
     local new_str="$3"
 
     if [ $# -ne 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: regex\$3: content-string"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: regex\n\$3: content-string"
         return 1
     fi
 

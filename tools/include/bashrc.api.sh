@@ -46,10 +46,10 @@ SSH_TIMEOUT=600
 MAX_TIMEOUT=1800
 
 readonly GBL_COL_SPF=","
-readonly GBL_ACK_SPF="#!"
-readonly GBL_SPF1="#^"
-readonly GBL_SPF2="#$"
-readonly GBL_SPF3="#@"
+readonly GBL_ACK_SPF="#@"
+readonly GBL_SPF1="#;"
+readonly GBL_SPF2="#."
+readonly GBL_SPF3="#,"
 
 function _bash_exit
 { 

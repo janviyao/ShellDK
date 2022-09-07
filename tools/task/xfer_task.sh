@@ -48,36 +48,54 @@ function do_rsync
                     fi
 
                     sync_cmd="\
+                    export BTASK_LIST='';\
+                    export REMOTE_IP=${LOCAL_IP};\
+                    export USR_NAME='${USR_NAME}';\
                     export USR_PASSWORD='${USR_PASSWORD}';\
-                    if ls '${MY_VIM_DIR}' &> /dev/null;then\
+                    if test -d '$MY_VIM_DIR';then \
                         export MY_VIM_DIR='${MY_VIM_DIR}';\
                         source $MY_VIM_DIR/tools/include/common.api.sh;\
+                        if ! is_me ${USR_NAME};then \
+                            source $MY_VIM_DIR/bashrc; \
+                        fi;\
                         if ! test -d '${xfer_dir}';then\
                             sudo_it mkdir -p '${xfer_dir}';\
                             sudo_it chmod +w '${xfer_dir}';\
-                            if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then\
+                            if ! is_owner '${xfer_dir}' '${USR_NAME}';then\
                                 sudo_it chown ${USR_NAME} '${xfer_dir}';\
                             fi;\
                         else\
                             if ! test -w '${xfer_dir}';then\
                                 sudo_it chmod +w '${xfer_dir}';\
-                                if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then\
+                                if ! is_owner '${xfer_dir}' '${USR_NAME}';then\
                                     sudo_it chown ${USR_NAME} '${xfer_dir}';\
                                 fi;\
                             fi;\
                         fi;\
                     else\
-                        if ! test -d '${xfer_dir}';then\
-                            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}';\
-                            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}';\
-                            if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then\
-                                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '${xfer_dir}';\
+                        if ! which rsync &> /dev/null;then \
+                            if which nc &> /dev/null;then \
+                                (echo '^0^0REMOTE_PRINT^1${LOG_ERRO}^2[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT}) &> /dev/null;\
+                                exit 1;\
+                            else\
+                                if which sshpass &> /dev/null;then \
+                                    (sshpass -p '${USR_PASSWORD}' ssh ${USR_NAME}@${LOCAL_IP} \"echo '^0^0REMOTE_PRINT^1${LOG_ERRO}^2[ssh msg]: rsync command not install' > ${GBL_LOGR_PIPE}\") &> /dev/null;\
+                                    exit 1;\
+                                fi;\
+                            fi;\
+                            exit 1;\
+                        fi;\
+                        if ! test -d '${xfer_dir}';then \
+                            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}' &> /dev/null;\
+                            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}' &> /dev/null;\
+                            if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
+                                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '${xfer_dir}' &> /dev/null;\
                             fi;\
                         else\
-                            if ! test -w '${xfer_dir}';then\
-                                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}';\
-                                if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then\
-                                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '${xfer_dir}';\
+                            if ! test -w '${xfer_dir}';then \
+                                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}' &> /dev/null;\
+                                if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
+                                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '${xfer_dir}' &> /dev/null;\
                                 fi;\
                             fi;\
                         fi;\
@@ -334,6 +352,22 @@ function _xfer_thread_main
                 action="--delete"
             fi
             
+            if [[ "${xfer_cmd}" =~ '^0' ]];then
+                xfer_cmd=$(replace_str "${xfer_cmd}" "^0" "${GBL_ACK_SPF}")
+            fi
+
+            if [[ "${xfer_cmd}" =~ '^1' ]];then
+                xfer_cmd=$(replace_str "${xfer_cmd}" "^1" "${GBL_SPF1}")
+            fi
+
+            if [[ "${xfer_cmd}" =~ '^2' ]];then
+                xfer_cmd=$(replace_str "${xfer_cmd}" "^2" "${GBL_SPF2}")
+            fi
+
+            if [[ "${xfer_cmd}" =~ '^3' ]];then
+                xfer_cmd=$(replace_str "${xfer_cmd}" "^3" "${GBL_SPF3}")
+            fi
+
             echo_debug "xfer_cmd: [${xfer_cmd}]"
             echo_debug "xfer_act: [${xfer_act}] xfer_src: [${xfer_src}] xfer_des: [${xfer_des}]"
 
