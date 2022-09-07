@@ -424,15 +424,16 @@ function file_size
 
 function file_temp
 {
-    local self_pid=$$
+    local base_dir="${1:-${BASH_WORK_DIR}}"
 
+    local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
     fi
 
-    echo > ${BASH_WORK_DIR}/tmp.${self_pid}
-    echo "${BASH_WORK_DIR}/tmp.${self_pid}"
+    echo > ${base_dir}/tmp.${self_pid}
+    echo "${base_dir}/tmp.${self_pid}"
 }
 
 function current_dir
