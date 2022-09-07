@@ -67,7 +67,7 @@ function sshto
 {
     local des_key="$1"
 
-    eval "declare -A ip_map=($(get_hosts_ip map))"
+    eval "local -A ip_map=($(get_hosts_ip map))"
     if [ -z "${des_key}" ];then
         local -a select_array
         for key in ${!ip_map[*]}

@@ -155,18 +155,23 @@ function string_regex
     return 0
 }
 
-function string_match_start
+function string_match
 {
     local string="$1"
     local substr="$2"
+    local posstr="${3:-0}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: match position(0: start&end 1:start 2:end)"
+        return 1
+    fi
+
+    if ! is_integer "${posstr}";then
+        echo_erro "match position { ${posstr} } invalid"
         return 1
     fi
 
     local sublen=${#substr}
-
     if [[ "${substr}" =~ '\' ]];then
         substr="${substr//\\/\\\\}"
     fi
@@ -175,102 +180,86 @@ function string_match_start
         substr="${substr//\*/\\*}"
     fi
 
-    if [[ $(string_start "${string}" ${sublen}) == ${substr} ]]; then
-        return 0
-    else
-        return 1
+    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then
+        if [[ $(string_start "${string}" ${sublen}) == ${substr} ]]; then
+            return 0
+        fi
     fi
+
+    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 2 ]];then
+        if [[ $(string_end "${string}" ${sublen}) == ${substr} ]]; then
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
-function string_match_end
+function string_trim
 {
     local string="$1"
     local substr="$2"
+    local posstr="${3:-0}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: start&end 1:start 2:end)"
         return 1
     fi
 
-    local sublen=${#substr}
-
-    if [[ "${substr}" =~ '\' ]];then
-        substr="${substr//\\/\\\\}"
-    fi
-
-    if [[ "${substr}" =~ '*' ]];then
-        substr="${substr//\*/\\*}"
-    fi
-
-    if [[ $(string_end "${string}" ${sublen}) == ${substr} ]]; then
-        return 0
-    else
+    if ! is_integer "${posstr}";then
+        echo_erro "trim position { ${posstr} } invalid"
         return 1
     fi
-}
+    
+    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then
+        while true
+        do
+            if string_match "${string}" "${substr}" 1; then
+                #local sublen=${#substr}
+                #let sublen++
+                #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
+                if [[ "${substr}" =~ '\*' ]];then
+                    substr=$(replace_regex "${substr}" '\*' '\*')
+                fi
 
-function string_trim_start
-{
-    local string="$1"
-    local substr="$2"
+                if [[ "${substr}" =~ '\\' ]];then
+                    substr=$(replace_regex "${substr}" '\\' '\\')
+                fi
 
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
-        return 1
+                string="${string##${substr}}"
+            else
+                break
+            fi
+        done
     fi
 
-    if string_match_start "${string}" "${substr}"; then
-        #local sublen=${#substr}
-        #let sublen++
+    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 2 ]];then
+        while true
+        do
+            if string_match "${string}" "${substr}" 2; then
+                #local total=${#string}
+                #local sublen=${#substr}
+                #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
+                if [[ "${string}" =~ '\*' ]];then
+                    string=$(replace_regex "${string}" '\*' '\*')
+                fi
 
-        #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
-        if [[ "${substr}" =~ '\*' ]];then
-            substr=$(replace_regex "${substr}" '\*' '\*')
-        fi
+                if [[ "${substr}" =~ '\*' ]];then
+                    substr=$(replace_regex "${substr}" '\*' '\*')
+                fi
 
-        if [[ "${substr}" =~ '\\' ]];then
-            substr=$(replace_regex "${substr}" '\\' '\\')
-        fi
+                if [[ "${substr}" =~ '\\' ]];then
+                    substr=$(replace_regex "${substr}" '\\' '\\')
+                fi
 
-        echo "${string#${substr}}"
-    else
-        echo "${string}"
-    fi
-    return 0
-}
-
-function string_trim_end
-{
-    local string="$1"
-    local substr="$2"
-
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
-        return 1
+                string="${string%%${substr}}"
+            else
+                break
+            fi
+        done
     fi
 
-    if string_match_end "${string}" "${substr}"; then
-        #local total=${#string}
-        #local sublen=${#substr}
-
-        #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
-        if [[ "${string}" =~ '\*' ]];then
-            string=$(replace_regex "${string}" '\*' '\*')
-        fi
-
-        if [[ "${substr}" =~ '\*' ]];then
-            substr=$(replace_regex "${substr}" '\*' '\*')
-        fi
-
-        if [[ "${substr}" =~ '\\' ]];then
-            substr=$(replace_regex "${substr}" '\\' '\\')
-        fi
-
-        echo "${string%${substr}}"
-    else
-        echo "${string}"
-    fi
-
+    echo "${string}"
     return 0
 }
 

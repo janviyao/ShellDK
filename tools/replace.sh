@@ -8,7 +8,7 @@ function do_replace
     local new_str="$2"
     local des_dir="$3"
 
-    echo_debug "do_replace: [${old_reg} @ ${new_str} @ $(string_trim_start "${des_dir}" "${rep_dir}/")]"
+    echo_debug "do_replace: [${old_reg} @ ${new_str} @ $(string_trim "${des_dir}" "${rep_dir}/" 1)]"
 
     cd ${des_dir}
     for thing in `ls` 
@@ -21,7 +21,7 @@ function do_replace
         file_replace "${des_dir}/${thing}" "${old_reg}" "${new_str}" 
     done
 
-    echo_debug "finish: $(string_trim_start "${des_dir}" "${rep_dir}/")"
+    echo_debug "finish: $(string_trim "${des_dir}" "${rep_dir}/" 1)"
 }
 
 OLD_STR="${other_paras[0]}"
@@ -40,7 +40,7 @@ do
     
     if [ -d "${rep_dir}" ];then
         rep_dir=$(cd ${rep_dir};pwd)
-        rep_dir=$(string_trim_end "${rep_dir}" "/")
+        rep_dir=$(string_trim "${rep_dir}" "/" 2)
     fi
 
     if [ -d "${rep_dir}" ];then

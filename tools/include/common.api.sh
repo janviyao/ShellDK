@@ -226,8 +226,17 @@ function wait_value
 
 function select_one
 {
-    local array=($@)
-    
+    local -a array
+    while [ $# -gt 0 ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            array[${#array[*]}]="${1// /${GBL_COL_SPF}}" 
+        else
+            array[${#array[*]}]="$1" 
+        fi
+        shift
+    done
+   
     if [ ${#array[*]} -eq 0 ];then
         return 1
     fi
@@ -235,7 +244,11 @@ function select_one
     local index=1
     for item in ${array[*]}
     do
-        printf "%2d) %s\n" "${index}" "${item}" &> /dev/tty
+        if [[ "${item}" =~ "${GBL_COL_SPF}" ]];then
+            printf "%2d) %s\n" "${index}" "${item//${GBL_COL_SPF}/ }" &> /dev/tty
+        else
+            printf "%2d) %s\n" "${index}" "${item}" &> /dev/tty
+        fi
         let index++
     done
     
@@ -257,7 +270,12 @@ function select_one
 
     selected=${input_val:-${selected}}
     selected=$((selected - 1))
-    echo "${array[${selected}]}"
+    local item="${array[${selected}]}"
+    if [[ "${item}" =~ "${GBL_COL_SPF}" ]];then
+        echo "${item//${GBL_COL_SPF}/ }"
+    else
+        echo "${item}"
+    fi
     return 0
 }
 

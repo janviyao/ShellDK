@@ -12,7 +12,7 @@ function create_project
     local root_dir="${parasMap['-d']}"
     root_dir="${root_dir:-${parasMap['--root-dir']}}"
     root_dir="${root_dir:-.}"
-    root_dir=$(string_trim_end "${root_dir}" "/")
+    root_dir=$(string_trim "${root_dir}" "/" 2)
     [ -n "${root_dir}" ] && echo_debug "root-dir: ${root_dir}"
 
     cd ${root_dir}
