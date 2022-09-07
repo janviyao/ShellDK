@@ -27,6 +27,38 @@ mkdir -p ${SAVE_DIR}
 
 TRACE_DIR=$(sed -ne 's/^tracefs \(.*\) tracefs.*/\1/p' /proc/mounts)
 
+if [ $# -eq 1 ];then
+    if is_integer "$1";then
+        TRACE_PID=$1
+        if process_exist "${TRACE_PID}";then
+            echo_erro "$(process_pid2name "${TRACE_PID}")[${TRACE_PID}] process donot running"
+            exit 1
+        fi
+    else
+        pids=($(process_name2pid $1))
+        if [ ${#pids[*]} -eq 1 ];then
+            TRACE_PID=${pids[0]}
+        else
+            if [ ${#pids[*]} -eq 0 ];then
+                while true 
+                do
+                    sleep 1
+                    pids=($(process_name2pid $1))
+                    if [ ${#pids[*]} -eq 0 ];then
+                        echo_info "wait { $1 } running ..."
+                    else
+                        break
+                    fi
+                done
+                TRACE_PID=${pids[0]}
+            fi
+        fi
+    fi
+else
+    $@ &> /dev/tty &
+    TRACE_PID=$!
+fi
+
 running_traces=($(sudo_it lsof +D ${TRACE_DIR} | awk '{ if(NR != 1) { print $1 }}' | uniq))
 for app in ${running_traces[*]}
 do
@@ -87,34 +119,17 @@ $SUDO "echo funcgraph-abstime > ${TRACE_DIR}/trace_options"
 #echo nofuncgraph-tail > ${TRACE_DIR}/trace_options
 $SUDO "echo funcgraph-tail > ${TRACE_DIR}/trace_options"
 
-if [ $# -eq 1 ];then
-    if is_integer "$1";then
-        TRACE_PID=$1
-    else
-        pids=($(process_name2pid $1))
-        if [ ${#pids[*]} -eq 1 ];then
-            TRACE_PID=${pids[0]}
-        else
-            $@ &> /dev/tty &
-            TRACE_PID=$!
-        fi
-    fi
-else
-    $@ &> /dev/tty &
-    TRACE_PID=$!
-fi
-
 $SUDO "echo ${TRACE_PID} > ${TRACE_DIR}/set_ftrace_pid"
 $SUDO "echo 1 > ${TRACE_DIR}/tracing_on"
 
-echo_info "Wait { $(process_pid2name "${TRACE_PID}")[${TRACE_PID}] } exit ..."
+echo_info "wait { $(process_pid2name "${TRACE_PID}")[${TRACE_PID}] } exit ..."
 while process_exist "${TRACE_PID}"
 do
     sleep 1
 done
 echo_info "$(process_pid2name "${TRACE_PID}")[${TRACE_PID}] has exited"
 
-echo_info "reading trace into { ${SAVE_DIR}/ftrace.log }"
+echo_info "reading trace data into { ${SAVE_DIR}/ftrace.log } ..."
 $SUDO "cat ${TRACE_DIR}/trace > ${SAVE_DIR}/ftrace.log"
 $SUDO "echo 0 > ${TRACE_DIR}/tracing_on"
 $SUDO "echo nop > ${TRACE_DIR}/current_tracer"
