@@ -79,7 +79,11 @@ function sshto
         for key in ${!ip_map[*]}
         do
             if string_contain "${select_str}" "${key}";then
-                ssh ${key}
+                if [ -z "${USR_PASSWORD}" ]; then
+                    ssh ${key}
+                else
+                    sshpass -p "${USR_PASSWORD}" ssh ${key} 
+                fi
                 return 0
             fi
         done
@@ -88,13 +92,25 @@ function sshto
     if is_integer "${des_key}";then
         local ip_array=($(echo ${!ip_map[*]} | grep -P "(\.?\d+\.?)*${des_key}(\.?\d+\.?)*" -o))
         if [ ${#ip_array[*]} -eq 1 ];then
-            ssh "${ip_array[0]}" 
+            if [ -z "${USR_PASSWORD}" ]; then
+                ssh ${ip_array[0]}
+            else
+                sshpass -p "${USR_PASSWORD}" ssh ${ip_array[0]} 
+            fi
         elif [ ${#ip_array[*]} -gt 1 ];then
             local ipaddr=$(select_one ${ip_array[*]})
-            ssh ${ipaddr}
+            if [ -z "${USR_PASSWORD}" ]; then
+                ssh ${ipaddr}
+            else
+                sshpass -p "${USR_PASSWORD}" ssh ${ipaddr} 
+            fi
         else
             local ipaddr=$(select_one ${!ip_map[*]})
-            ssh ${ipaddr}
+            if [ -z "${USR_PASSWORD}" ]; then
+                ssh ${ipaddr}
+            else
+                sshpass -p "${USR_PASSWORD}" ssh ${ipaddr} 
+            fi
         fi
     else
         local hn_array=($(echo ${ip_map[*]} | grep -P "[^ ]*${des_key}[^ ]*" -o))
@@ -102,7 +118,11 @@ function sshto
             for key in ${!ip_map[*]}
             do
                 if [[ ${ip_map[${key}]} == ${hn_array[0]} ]];then
-                    ssh "${key}" 
+                    if [ -z "${USR_PASSWORD}" ]; then
+                        ssh ${key}
+                    else
+                        sshpass -p "${USR_PASSWORD}" ssh ${key} 
+                    fi
                     break
                 fi
             done
@@ -111,13 +131,21 @@ function sshto
             for key in ${!ip_map[*]}
             do
                 if [[ ${ip_map[${key}]} == ${hname} ]];then
-                    ssh "${key}" 
+                    if [ -z "${USR_PASSWORD}" ]; then
+                        ssh ${key}
+                    else
+                        sshpass -p "${USR_PASSWORD}" ssh ${key} 
+                    fi
                     break
                 fi
             done
         else
             local ipaddr=$(select_one ${!ip_map[*]})
-            ssh ${ipaddr}
+            if [ -z "${USR_PASSWORD}" ]; then
+                ssh ${ipaddr}
+            else
+                sshpass -p "${USR_PASSWORD}" ssh ${ipaddr} 
+            fi
         fi
     fi
     return 0
