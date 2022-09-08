@@ -70,9 +70,9 @@ function _ctrl_thread_main
     while read line
     do
         echo_debug "ctrl recv: [${line}]"
-        local ack_ctrl=$(string_sub "${line}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_sub "${line}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_sub "${line}" "${GBL_ACK_SPF}" 3)
+        local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -81,8 +81,8 @@ function _ctrl_thread_main
             fi
         fi
         
-        local req_ctrl=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
+        local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then

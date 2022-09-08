@@ -101,9 +101,9 @@ function _logr_thread_main
     while read line
     do
         echo_debug "logr recv: [${line}]" 
-        local ack_ctrl=$(string_sub "${line}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_sub "${line}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_sub "${line}" "${GBL_ACK_SPF}" 3)
+        local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -112,8 +112,8 @@ function _logr_thread_main
             fi
         fi
 
-        local req_ctrl=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
+        local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
 
         if [[ "${req_ctrl}" == "CTRL" ]];then
             if [[ "${req_body}" == "EXIT" ]];then
@@ -124,8 +124,8 @@ function _logr_thread_main
                 return
             fi
         elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
-            local log_lvel=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
-            local log_body=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            local log_lvel=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
+            local log_body=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
             if [ ${log_lvel} -eq ${LOG_DEBUG} ];then
                 echo_debug "${log_body}"
             elif [ ${log_lvel} -eq ${LOG_INFO} ];then
@@ -139,8 +139,8 @@ function _logr_thread_main
             local log_file="${req_body}"
             ( _redirect_func "${log_file}" & )
         elif [[ "${req_ctrl}" == "CURSOR_MOVE" ]];then
-            local x_val=$(string_sub "${req_body}" "${GBL_SPF2}" 1)
-            local y_val=$(string_sub "${req_body}" "${GBL_SPF2}" 2)
+            local x_val=$(string_split "${req_body}" "${GBL_SPF2}" 1)
+            local y_val=$(string_split "${req_body}" "${GBL_SPF2}" 2)
             tput cup ${x_val} ${y_val}
         elif [[ "${req_ctrl}" == "CURSOR_HIDE" ]];then
             tput civis

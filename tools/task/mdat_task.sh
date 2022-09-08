@@ -357,9 +357,9 @@ function _mdat_thread_main
     while read line
     do
         echo_debug "mdat recv: [${line}]"
-        local ack_ctrl=$(string_sub "${line}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_sub "${line}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_sub "${line}" "${GBL_ACK_SPF}" 3)
+        local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -368,8 +368,8 @@ function _mdat_thread_main
             fi
         fi
         
-        local req_ctrl=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
+        local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
@@ -378,13 +378,13 @@ function _mdat_thread_main
             fi
             return 
         elif [[ "${req_ctrl}" == "KV_SET" ]];then
-            local _xkey_=$(string_sub "${req_body}" "${GBL_SPF2}" 1)
-            local _xval_=$(string_sub "${req_body}" "${GBL_SPF2}" 2)
+            local _xkey_=$(string_split "${req_body}" "${GBL_SPF2}" 1)
+            local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
 
             _global_map_["${_xkey_}"]="${_xval_}"
         elif [[ "${req_ctrl}" == "KV_APPEND" ]];then
-            local _xkey_=$(string_sub "${req_body}" "${GBL_SPF2}" 1)
-            local _xval_=$(string_sub "${req_body}" "${GBL_SPF2}" 2)
+            local _xkey_=$(string_split "${req_body}" "${GBL_SPF2}" 1)
+            local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
             
             if [ -n "${_global_map_[${_xkey_}]}" ];then
                 _global_map_["${_xkey_}"]="${_global_map_[${_xkey_}]} ${_xval_}"
@@ -407,8 +407,8 @@ function _mdat_thread_main
             fi
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "VAL_HAS" ]];then
-            local _xkey_=$(string_sub "${req_body}" "${GBL_SPF2}" 1)
-            local _xval_=$(string_sub "${req_body}" "${GBL_SPF2}" 2)
+            local _xkey_=$(string_split "${req_body}" "${GBL_SPF2}" 1)
+            local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
             if string_contain "${_global_map_[${_xkey_}]}" "${_xval_}";then
                 echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] exist for [${ack_pipe}]"
                 run_timeout 2 echo "true" \> ${ack_pipe}
@@ -421,8 +421,8 @@ function _mdat_thread_main
             local _xkey_=${req_body}
             unset _global_map_["${_xkey_}"]
         elif [[ "${req_ctrl}" == "KV_UNSET_VAL" ]];then
-            local _xkey_=$(string_sub "${req_body}" "${GBL_SPF2}" 1)
-            local _xval_=$(string_sub "${req_body}" "${GBL_SPF2}" 2)
+            local _xkey_=$(string_split "${req_body}" "${GBL_SPF2}" 1)
+            local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
 
             local _val_arr_=(${_global_map_["${_xkey_}"]})
             local _index_=$(array_index "${_val_arr_[*]}" "${_xval_}") 

@@ -67,7 +67,7 @@ perf_func=$(select_one \
             "  kmem: Tool to trace/measure kernel memory properties" \
             " sched: Tool to trace/measure scheduler properties (latencies)" \
             "report: Read perf.data (created by perf record) and display the profile")
-perf_func=$(string_sub "${perf_func}" ":" 1)
+perf_func=$(string_split "${perf_func}" ":" 1)
 perf_func=$(string_trim "${perf_func}" " ")
 case ${perf_func} in
     "record")
@@ -85,7 +85,7 @@ case ${perf_func} in
             "report: reports statistical data" \
             "script: shows raw lock events" \
             "  info: shows metadata like threads or addresses of lock instances")
-        secd_func=$(string_sub "${secd_func}" ":" 1)
+        secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         perf_para="${secd_func} -v" 
     ;;
@@ -96,7 +96,7 @@ case ${perf_func} in
         secd_func=$(select_one \
             "record: records <command> lock events" \
             "  stat: report kernel memory statistics")
-        secd_func=$(string_sub "${secd_func}" ":" 1)
+        secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         perf_para="${secd_func} -v --caller --alloc --slab --page --live" 
     ;;
@@ -108,7 +108,7 @@ case ${perf_func} in
             "  replay: simulate the workload that was recorded via perf sched record" \
             "     map: print a textual context-switching outline of workload captured via perf sched record" \
             "timehist: provides an analysis of scheduling events")
-        secd_func=$(string_sub "${secd_func}" ":" 1)
+        secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         perf_para="${secd_func} -v" 
     ;;

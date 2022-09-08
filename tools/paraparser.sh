@@ -21,8 +21,8 @@ do
     
     b_single=false
     if string_contain "${option}" "=";then
-        value=$(string_sub "${option}" '=' 2)
-        option=$(string_sub "${option}" '=' 1)
+        value=$(string_split "${option}" '=' 2)
+        option=$(string_split "${option}" '=' 1)
         b_single=true
     fi
 

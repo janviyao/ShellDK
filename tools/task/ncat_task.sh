@@ -378,9 +378,9 @@ function _ncat_thread_main
         fi
         echo_debug "ncat recv: [${ncat_body}]" 
 
-        local ack_ctrl=$(string_sub "${ncat_body}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_sub "${ncat_body}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_sub "${ncat_body}" "${GBL_ACK_SPF}" 3)
+        local ack_ctrl=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -390,9 +390,9 @@ function _ncat_thread_main
             fi
         fi
 
-        local req_ctrl=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
-        local req_foot=$(string_sub "${ack_body}" "${GBL_SPF1}" 3)
+        local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
+        local req_foot=$(string_split "${ack_body}" "${GBL_SPF1}" 3)
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
@@ -405,8 +405,8 @@ function _ncat_thread_main
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
         elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
-            local log_lvel=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
-            local log_body=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            local log_lvel=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
+            local log_body=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
             if [ ${log_lvel} -eq ${LOG_DEBUG} ];then
                 echo_debug "${log_body}"
             elif [ ${log_lvel} -eq ${LOG_INFO} ];then
@@ -417,16 +417,16 @@ function _ncat_thread_main
                 echo_erro "${log_body}"
             fi
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
-            local var_name=$(string_sub "${req_body}" "=" 1)
-            local var_valu=$(string_sub "${req_body}" "=" 2)
+            local var_name=$(string_split "${req_body}" "=" 1)
+            local var_valu=$(string_split "${req_body}" "=" 2)
             mdata_set_var "${var_name}=${var_valu}"
         elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
-            local rport=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
-            local fname=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            local rport=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
+            local fname=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
             ncat_recv_file "${rport}" "${fname}"
         elif [[ "${req_ctrl}" == "WAIT_EVENT" ]];then
-            local event_uid=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
-            local event_msg=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
+            local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 mdata_kv_set "${event_uid}.pipe" "${ack_pipe}"
@@ -441,8 +441,8 @@ function _ncat_thread_main
                 ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
             }&
         elif [[ "${req_ctrl}" == "NOTIFY_EVENT" ]];then
-            local event_uid=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
-            local event_msg=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
+            local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
+            local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
 
             local ack_pipe=$(mdata_kv_get "${event_uid}.pipe")
             mdata_kv_unset_key "${event_uid}.pipe"

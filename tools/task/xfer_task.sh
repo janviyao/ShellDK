@@ -319,9 +319,9 @@ function _xfer_thread_main
     while read line
     do
         echo_debug "xfer recv: [${line}]"
-        local ack_xfer=$(string_sub "${line}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_sub "${line}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_sub "${line}" "${GBL_ACK_SPF}" 3)
+        local ack_xfer=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
+        local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
         if [[ "${ack_xfer}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
@@ -330,9 +330,9 @@ function _xfer_thread_main
             fi
         fi
         
-        local req_xfer=$(string_sub "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_sub "${ack_body}" "${GBL_SPF1}" 2)
-        local req_foot=$(string_sub "${ack_body}" "${GBL_SPF1}" 3)
+        local req_xfer=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
+        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
+        local req_foot=$(string_split "${ack_body}" "${GBL_SPF1}" 3)
 
         if [[ "${req_xfer}" == "EXIT" ]];then
             if [[ "${ack_xfer}" == "NEED_ACK" ]];then
@@ -341,10 +341,10 @@ function _xfer_thread_main
             fi
             return 
         elif [[ "${req_xfer}" == "RSYNC" ]];then
-            local xfer_act=$(string_sub "${req_body}" "${GBL_SPF2}" 1) 
-            local xfer_cmd=$(string_sub "${req_body}" "${GBL_SPF2}" 2) 
-            local xfer_src=$(string_sub "${req_body}" "${GBL_SPF2}" 3) 
-            local xfer_des=$(string_sub "${req_body}" "${GBL_SPF2}" 4) 
+            local xfer_act=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
+            local xfer_cmd=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
+            local xfer_src=$(string_split "${req_body}" "${GBL_SPF2}" 3) 
+            local xfer_des=$(string_split "${req_body}" "${GBL_SPF2}" 4) 
 
             local action=""
             if [[ "${xfer_act}" == "UPDATE" ]];then

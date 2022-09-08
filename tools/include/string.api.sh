@@ -1,7 +1,56 @@
 #!/bin/bash
 : ${INCLUDE_STRING:=1}
 
-function string_sub
+function regex_2str
+{
+    local regex=$1
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: regex string"
+        return 1
+    fi
+
+    local result="${regex}"
+    local reg_chars=('\/' '\\' '\*' '\+' '\.' '\[' '\]' '\{' '\}' '\(' '\)')
+    for char in ${reg_chars[*]}
+    do
+        if [[ ${regex} =~ ${char} ]];then
+            #eval "result=${result//${char}/\\${char}}"
+            if [[ ${char} == '\{' ]];then
+                result=$(echo "${result}" | sed "s/{/\\\\${char}/g" )
+            elif [[ ${char} == '\(' ]];then
+                result=$(echo "${result}" | sed "s/(/\\\\${char}/g" )
+            elif [[ ${char} == '\)' ]];then
+                result=$(echo "${result}" | sed "s/)/\\\\${char}/g" )
+            else
+                result=$(echo "${result}" | sed "s/${char}/\\\\${char}/g" )
+            fi
+            #regex=$(replace_str "${regex}" "${char}" "\\${char}")
+        fi
+    done
+    echo "${result}" 
+}
+
+function match_regex
+{
+    local string="$1"
+    local regstr="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr"
+        return 1
+    fi
+
+    [ -z "${regstr}" ] && return 1 
+
+    if echo "${string}" | grep -P "${regstr}" &> /dev/null;then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function string_split
 {
     local string="$1"
     local separator="$2"
@@ -31,25 +80,6 @@ function string_sub
     #echo_file "${LOG_DEBUG}" "SUB [${substr}] [$@]"
     echo "${substr}"
     return 0
-}
-
-function match_regex
-{
-    local string="$1"
-    local regstr="$2"
-
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr"
-        return 1
-    fi
-
-    [ -z "${regstr}" ] && return 1 
-
-    if echo "${string}" | grep -P "${regstr}" &> /dev/null;then
-        return 0
-    else
-        return 1
-    fi
 }
 
 function string_start
@@ -86,7 +116,7 @@ function string_end
     return 0
 }
 
-function string_substr
+function string_sub
 {
     local string="$1"
     local start="$2"
@@ -210,53 +240,32 @@ function string_trim
         echo_erro "trim position { ${posstr} } invalid"
         return 1
     fi
-    
-    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then
-        while true
-        do
-            if string_match "${string}" "${substr}" 1; then
-                #local sublen=${#substr}
-                #let sublen++
-                #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
-                if [[ "${substr}" =~ '\*' ]];then
-                    substr=$(replace_regex "${substr}" '\*' '\*')
-                fi
 
-                if [[ "${substr}" =~ '\\' ]];then
-                    substr=$(replace_regex "${substr}" '\\' '\\')
-                fi
-
-                string="${string##${substr}}"
-            else
-                break
-            fi
-        done
+    substr=$(regex_2str "${substr}")
+    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then 
+        local newsub=$(string_regex "${string}" "^(${substr})+")
+        if [ -n "${newsub}" ]; then
+            #local sublen=${#substr}
+            #let sublen++
+            #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
+            newsub=$(regex_2str "${newsub}")
+            string="${string#${newsub}}"
+        fi
     fi
 
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 2 ]];then
-        while true
-        do
-            if string_match "${string}" "${substr}" 2; then
-                #local total=${#string}
-                #local sublen=${#substr}
-                #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
-                if [[ "${string}" =~ '\*' ]];then
-                    string=$(replace_regex "${string}" '\*' '\*')
-                fi
-
-                if [[ "${substr}" =~ '\*' ]];then
-                    substr=$(replace_regex "${substr}" '\*' '\*')
-                fi
-
-                if [[ "${substr}" =~ '\\' ]];then
-                    substr=$(replace_regex "${substr}" '\\' '\\')
-                fi
-
-                string="${string%%${substr}}"
-            else
-                break
+        local newsub=$(string_regex "${string}" "(${substr})+$")
+        if [ -n "${newsub}" ]; then
+            #local total=${#string}
+            #local sublen=${#substr}
+            #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
+            if [[ "${string}" =~ '\*' ]];then
+                string=$(replace_regex "${string}" '\*' '\*')
             fi
-        done
+
+            newsub=$(regex_2str "${newsub}")
+            string="${string%${newsub}}"
+        fi
     fi
 
     echo "${string}"
@@ -280,27 +289,8 @@ function replace_regex
     local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
     [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
-    if [[ "${oldstr}" =~ '\' ]];then
-        oldstr="${oldstr//\\/\\\\}"
-    fi
-
-    if [[ "${oldstr}" =~ '/' ]];then
-        oldstr="${oldstr//\//\\/}"
-    fi
-
-    if [[ "${oldstr}" =~ '*' ]];then
-        oldstr="${oldstr//\*/\\*}"
-    fi
-
-    if [[ "${oldstr}" =~ '(' ]];then
-        oldstr="${oldstr//\(/\(}"
-    fi
-
+    oldstr=$(regex_2str "${oldstr}")
     if [[ $(string_start "${regstr}" 1) == '^' ]]; then
-        if [[ "${oldstr}" =~ '.' ]];then
-            oldstr="${oldstr//./\.}"
-        fi
-
         if [[ "${newstr}" =~ '\' ]];then
             newstr="${newstr//\\/\\\\}"
         fi
@@ -311,10 +301,6 @@ function replace_regex
 
         echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
     elif [[ $(string_end "${regstr}" 1) == '$' ]]; then
-        if [[ "${oldstr}" =~ '.' ]];then
-            oldstr="${oldstr//./\.}"
-        fi
-
         if [[ "${newstr}" =~ '\' ]];then
             newstr="${newstr//\\/\\\\}"
         fi
@@ -325,7 +311,7 @@ function replace_regex
 
         echo "$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")"
     else
-        echo "${string//${oldstr}/${newstr}}"
+        echo "$(echo "${string}" | sed "s/${oldstr}/${newstr}/g")"
     fi
 
     return 0
@@ -333,9 +319,9 @@ function replace_regex
 
 function replace_str
 {
-    local string="$1"
-    local oldstr="$2"
-    local newstr="$3"
+    local string=$1
+    local oldstr=$2
+    local newstr=$3
 
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: oldstr\n\$3: newstr"
@@ -345,22 +331,7 @@ function replace_str
     #donot use (), because it fork child shell
     [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
-    if [[ "${oldstr}" =~ '\' ]];then
-        oldstr="${oldstr//\\/\\\\}"
-    fi
-
-    if [[ "${oldstr}" =~ '/' ]];then
-        oldstr="${oldstr//\//\\/}"
-    fi
-
-    if [[ "${oldstr}" =~ '*' ]];then
-        oldstr="${oldstr//\*/\*}"
-    fi
-
-    if [[ "${oldstr}" =~ '(' ]];then
-        oldstr="${oldstr//\(/\(}"
-    fi
-
+    oldstr=$(regex_2str "${oldstr}") 
     echo "${string//${oldstr}/${newstr}}"
     return 0
 }
