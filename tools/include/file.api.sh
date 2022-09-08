@@ -203,19 +203,34 @@ function file_get
         local line_nrs=($(file_linenr "${xfile}" "${string}" true))
         for line_nr in ${line_nrs[*]}
         do
-            echo $(sed -n "${line_nr}p" ${xfile} | sed "s/ /${GBL_COL_SPF}/g")
+            local content=$(sed -n "${line_nr}p" ${xfile})
+            if [[ "${content}" =~ ' ' ]];then
+                echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+            else
+                echo "${content}"
+            fi
         done
     else
         if is_integer "${string}";then
             local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
-                echo $(sed -n "${string}p" ${xfile} | sed "s/ /${GBL_COL_SPF}/g")
+                local content=$(sed -n "${string}p" ${xfile})
+                if [[ "${content}" =~ ' ' ]];then
+                    echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+                else
+                    echo "${content}"
+                fi
             else
                 echo ""
             fi
         else
             if [[ "${string}" == "$" ]];then
-                echo $(sed -n "${string}p" ${xfile} | sed "s/ /${GBL_COL_SPF}/g")
+                local content=$(sed -n "${string}p" ${xfile})
+                if [[ "${content}" =~ ' ' ]];then
+                    echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+                else
+                    echo "${content}"
+                fi
             else
                 return 1
             fi
@@ -475,8 +490,8 @@ function file_range
         return 1
     fi 
 
-    local line_nrs1=$(file_linenr "${xfile}" "${string1}" "${is_reg}")
-    local line_nrs2=$(file_linenr "${xfile}" "${string2}" "${is_reg}")
+    local line_nrs1=($(file_linenr "${xfile}" "${string1}" "${is_reg}"))
+    local line_nrs2=($(file_linenr "${xfile}" "${string2}" "${is_reg}"))
     
     local -a range_array
     for line_nr1 in ${line_nrs1[*]}

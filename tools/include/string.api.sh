@@ -61,21 +61,34 @@ function string_contain
 {
     local string="$1"
     local substr="$2"
+    local separator="$3"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: separator"
         return 1
     fi
 
     if [[ -z "${string}" ]] || [[ -z "${substr}" ]];then
         return 1
     fi
-
-    if [[ "${string}" =~ "${substr}" ]];then
-        return 0
+    
+    if [ -n "${separator}" ];then
+        local column_nr=$(echo "${string}" | awk -F "${separator}" "{ print NF }")
+        local index=1
+        for ((; index<=column_nr; index++))
+        do
+            local col_cnt=$(string_split "${string}" "${separator}" "${index}")
+            if [[ "${col_cnt}" == "${substr}" ]];then
+                return 0
+            fi
+        done
     else
-        return 1
+        if [[ "${string}" =~ "${substr}" ]];then
+            return 0
+        fi
     fi
+
+    return 1
     #if [[ ${substr} == *\\* ]];then
     #    substr="${substr//\\/\\\\}"
     #fi
@@ -101,46 +114,15 @@ function string_split
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index"
         return 1
     fi
-    
-    local index_s=0
-    local index_e=0
-    if [[ "${sub_index}" =~ '-' ]];then
-        index_s=$(echo "${sub_index}" | awk -F '-' '{ print $1 }')
-        is_integer "${index_s}" || { echo "${string}"; return 1; }
-        index_e=$(echo "${sub_index}" | awk -F '-' '{ print $2 }')
-    else
-        is_integer "${sub_index}" || { echo "${string}"; return 1; }
-        if [ ${sub_index} -eq 0 ];then
-            echo $(replace_str "${string}" "${separator}" " ")
-            return 0
-        fi
-    fi
-     
-    if [[ "${separator}" =~ '^' ]];then
-        separator="${separator//^/\\\\^}"
-    fi
-
-    if [[ "${separator}" =~ '$' ]];then
-        separator="${separator//$/\\\\$}"
-    fi
 
     local substr=""
-    if [[ "${sub_index}" =~ '-' ]];then
-        local -a sub_array
-        if is_integer "${index_e}";then
-            local index=0
-            for ((index=index_s; index<=index_e; index++))
-            do
-                substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index}}")
-                if [[ "${substr}" =~ ' ' ]];then
-                    substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
-                fi
-                sub_array[${#sub_array[*]}]="${substr}"
-            done
-        else
+    if is_integer "${sub_index}";then
+        if [ ${sub_index} -eq 0 ];then
+            local index=1
+            local -a sub_array
             while true
             do
-                substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index_s}}")
+                substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index}}")
                 if [ -z "${substr}" ];then
                     break
                 fi
@@ -148,15 +130,56 @@ function string_split
                 if [[ "${substr}" =~ ' ' ]];then
                     substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
                 fi
-                sub_array[${#sub_array[*]}]="${substr}"
-                let index_s++
-            done
-        fi
-        substr="${sub_array[*]}"
-    else
-        substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${sub_index}}")
-    fi
 
+                sub_array[${#sub_array[*]}]="${substr}"
+                let index++
+            done
+            substr="${sub_array[*]}"
+        else
+            substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${sub_index}}")
+        fi
+    else
+        if [[ "${sub_index}" =~ '-' ]];then
+            local index_s=$(echo "${sub_index}" | awk -F '-' '{ print $1 }')
+            if ! is_integer "${index_s}";then
+                echo "${string}"
+                return 1
+            fi
+            local index_e=$(echo "${sub_index}" | awk -F '-' '{ print $2 }')
+
+            local -a sub_array
+            if is_integer "${index_e}";then
+                local index=0
+                for ((index=index_s; index<=index_e; index++))
+                do
+                    substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index}}")
+                    if [[ "${substr}" =~ ' ' ]];then
+                        substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
+                    fi
+                    sub_array[${#sub_array[*]}]="${substr}"
+                done
+            else
+                while true
+                do
+                    substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index_s}}")
+                    if [ -z "${substr}" ];then
+                        break
+                    fi
+
+                    if [[ "${substr}" =~ ' ' ]];then
+                        substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
+                    fi
+                    sub_array[${#sub_array[*]}]="${substr}"
+                    let index_s++
+                done
+            fi
+            substr="${sub_array[*]}"
+        else
+            echo "${string}"
+            return 1
+        fi
+    fi
+    
     #echo_file "${LOG_DEBUG}" "SUB [${substr}] [$@]"
     echo "${substr}"
     return 0
@@ -351,6 +374,7 @@ function replace_regex
             echo_file "${LOG_ERRO}" "replace_regex { $@ }"
             return 1
         fi
+
         echo "${res_str}"
     elif [[ $(string_end "${regstr}" 1) == '$' ]]; then
         if [[ "${newstr}" =~ '\' ]];then
@@ -366,6 +390,7 @@ function replace_regex
             echo_file "${LOG_ERRO}" "replace_regex { $@ }"
             return 1
         fi
+
         echo "${res_str}"
     else
         echo "${string//${oldstr}/${newstr}}"

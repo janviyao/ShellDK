@@ -2,6 +2,8 @@
 : ${INCLUDE_KVCONF:=1}
 
 KV_FS="="
+KVAL_FS=","
+
 function kvconf_has_key
 {
     local kv_file="$1"
@@ -16,7 +18,7 @@ function kvconf_has_key
         return 1
     fi 
     
-    if grep -P "^\s*${key_str}\s*${KV_FS}" ${kv_file} &>/dev/null;then
+    if file_has ${kv_file} "^\s*${key_str}\s*${KV_FS}" true;then
         return 0
     else
         return 1
@@ -38,12 +40,35 @@ function kvconf_has_val
         return 1
     fi 
 
-    local old_val=$(kvconf_get "${kv_file}" "${key_str}")
-    if string_contain "${old_val}" "${val_str}";then
-        return 0
-    else
+    local line_cnts=($(file_get ${kv_file} "^\s*${key_str}\s*${KV_FS}" true))
+    if [ ${#line_cnts[*]} -eq 0 ];then
         return 1
     fi
+
+    for old_val in ${line_cnts[*]}
+    do
+        if [[ "${old_val}" =~ "${GBL_COL_SPF}" ]];then
+            old_val=$(replace_str "${old_val}" "${GBL_COL_SPF}" " ")
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
+                return 1
+            fi
+        fi
+
+        if [ -n "${old_val}" ];then
+            old_val=$(replace_regex "${old_val}" "^\s*${key_str}\s*${KV_FS}" "")
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
+                return 1
+            fi
+
+            if string_contain "${old_val}" "${val_str}" "${KVAL_FS}";then
+                return 0
+            fi
+        fi
+    done
+
+    return 1
 }
 
 function kvconf_set
@@ -61,12 +86,17 @@ function kvconf_set
         echo > ${kv_file}
     fi 
     
-    if kvconf_has_key "${kv_file}" "${key_str}";then
-        file_replace "${kv_file}" "${key_str}\s*${KV_FS}.+" "${key_str}${KV_FS}${val_str}" true
-        if [ $? -ne 0 ];then
-            echo_erro "kvconf_set { $@ }"
-            return 1
-        fi
+    local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
+    if [ ${#line_nrs[*]} -gt 0 ];then
+        echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
+        for line_nr in ${line_nrs[*]}
+        do
+            file_change "${kv_file}" "${key_str}${KV_FS}${val_str}" "${line_nr}"
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_set { $@ }"
+                return 1
+            fi
+        done
     else
         file_add "${kv_file}" "${key_str}${KV_FS}${val_str}"
         if [ $? -ne 0 ];then
@@ -92,13 +122,32 @@ function kvconf_get
         return 1
     fi 
     
-    local val_str=$(grep -P "^\s*${key_str}\s*${KV_FS}" ${kv_file})
-    if [ -n "${val_str}" ];then
-        local val_array=($(replace_regex "${val_str}" "^\s*${key_str}\s*${KV_FS}" ""))
-        echo "${val_array[*]}"
-    else
-        echo ""
+    local line_cnts=($(file_get ${kv_file} "^\s*${key_str}\s*${KV_FS}" true))
+    if [ ${#line_cnts[*]} -eq 0 ];then
+        return 1
     fi
+
+    for line_cnt in ${line_cnts[*]}
+    do
+        if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
+            line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
+                return 1
+            fi
+        fi
+
+        if [ -n "${line_cnt}" ];then
+            line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "")
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
+                return 1
+            fi
+            echo "${line_cnt}"
+        fi
+    done
+
+    return 0
 }
 
 function kvconf_append
@@ -115,24 +164,54 @@ function kvconf_append
     if ! can_access "${kv_file}";then
         echo > ${kv_file}
     fi 
-   
-    local old_val=$(kvconf_get "${kv_file}" "${key_str}")
-    if [ -n "${old_val}" ];then
-        val_str="${old_val},${val_str}"
+    
+    local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
+    if [ ${#line_nrs[*]} -gt 0 ];then
+        echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
+        local line_cnt=""
+        for line_nr in ${line_nrs[*]}
+        do
+            line_cnt=$(file_get "${kv_file}" "${line_nr}" false)
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_append { $@ }"
+                return 1
+            fi
 
-        file_replace "${kv_file}" "${key_str}\s*${KV_FS}.+" "${key_str}${KV_FS}${val_str}" true
-        if [ $? -ne 0 ];then
-            echo_erro "kvconf_append { $@ }"
-            return 1
-        fi
+            if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
+                line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+                if [ $? -ne 0 ];then
+                    echo_erro "kvconf_append { $@ }"
+                    return 1
+                fi
+            fi
+
+            if [ -n "${line_cnt}" ];then
+                line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "")
+                if [ $? -ne 0 ];then
+                    echo_erro "kvconf_append { $@ }"
+                    return 1
+                fi
+            fi
+
+            local new_val="${val_str}"
+            if [ -n "${line_cnt}" ];then
+                new_val="${line_cnt}${KVAL_FS}${val_str}"
+            fi
+
+            file_change "${kv_file}" "${key_str}${KV_FS}${new_val}" "${line_nr}"
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_set { $@ }"
+                return 1
+            fi
+        done
     else
         file_add "${kv_file}" "${key_str}${KV_FS}${val_str}"
         if [ $? -ne 0 ];then
-            echo_erro "kvconf_append { $@ }"
+            echo_erro "kvconf_set { $@ }"
             return 1
         fi
     fi
-
+    
     return 0
 }
 
@@ -222,7 +301,7 @@ function kvconf_line_nr
     fi 
     
     local -a line_nrs
-    line_nrs=($(file_linenr "${kv_file}" "^\s*${key_str}\s*${KV_FS}" false))
+    line_nrs=($(file_linenr "${kv_file}" "^\s*${key_str}\s*${KV_FS}" true))
     if [ $? -ne 0 ];then
         echo_file "${LOG_ERRO}" "kvconf_line_nr { $@ }"
         return 1

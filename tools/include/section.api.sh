@@ -2,6 +2,8 @@
 : ${INCLUDE_SESSION:=1}
 
 HEADER_SPACE="  "
+SKVAL_FS=" "
+
 function section_line_range
 {
     local sec_file="$1"
@@ -113,7 +115,7 @@ function section_val_has
             local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
             local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
 
-            if file_range_has "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s+(\w+\s+)*${val_str}(\w+\s+)*" true;then
+            if file_range_has "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s+(\w+${SKVAL_FS}+)*${val_str}(\w+${SKVAL_FS}+)*" true;then
                 return 0 
             fi
         done
@@ -272,19 +274,52 @@ function section_append
         return 1
     fi
 
-    local line_nr=$(section_line_nr "${sec_file}" "${sec_name}" "${key_str}")
-    if [ -n "${line_nr}" ];then
-        local line_ctx=$(sed -n "${line_nr}p" ${sec_file})
+    local line_nrs=($(section_line_nr "${sec_file}" "${sec_name}" "${key_str}"))
+    if [ ${#line_nrs[*]} -gt 1 ];then
+        echo_erro "section_append { $@ }: section has multiple duplicate key"
+        return 1
+    fi
 
-        file_change "${sec_file}" "${HEADER_SPACE}${line_ctx} ${val_str}" "${line_nr}"
+    local line_cnt=""
+    if [ -n "${line_nrs[*]}" ];then
+        line_cnt=$(file_get ${sec_file} "${line_nrs[0]}" false)
+        if [ $? -ne 0 ];then
+            echo_erro "section_append { $@ }"
+            return 1
+        fi
+
+        line_cnt="$(string_split "${line_cnt}" " " "2-")"
+        if [ $? -ne 0 ];then
+            echo_erro "section_append { $@ }"
+            return 1
+        fi
+
+        if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
+            line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+            if [ $? -ne 0 ];then
+                echo_erro "section_append { $@ }"
+                return 1
+            fi
+        fi
+
+        local new_val="${val_str}"
+        if [ -n "${line_cnt}" ];then
+            new_val="${line_cnt}${SKVAL_FS}${val_str}"
+        fi
+
+        file_change "${sec_file}" "${HEADER_SPACE}${key_str} ${new_val}" "${line_nrs[0]}"
         if [ $? -ne 0 ];then
             echo_erro "section_append { $@ }"
             return 1
         fi
     else
         section_set "${sec_file}" "${sec_name}" "${key_str}" "${val_str}"
+        if [ $? -ne 0 ];then
+            echo_erro "section_append { $@ }"
+            return 1
+        fi
     fi
-    
+ 
     return 0
 }
 
