@@ -181,7 +181,7 @@ function string_regex
 
     [ -z "${regstr}" ] && { echo "${string}"; return 1; } 
 
-    echo $(echo "${string}" | grep -P "${regstr}" -o)
+    echo "$(echo "${string}" | grep -P "${regstr}" -o)"
     return 0
 }
 

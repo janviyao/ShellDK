@@ -23,7 +23,6 @@ do
     tmp_dir=${save_dir}${try_cnt}
 done
 save_dir=${tmp_dir}
-mkdir -p ${save_dir}
 
 if [ $# -eq 1 ];then
     if is_integer "$1";then
@@ -36,48 +35,64 @@ if [ $# -eq 1 ];then
         pids=($(process_name2pid $1))
         if [ ${#pids[*]} -eq 1 ];then
             perf_pid=${pids[0]}
-        else
-            if [ ${#pids[*]} -eq 0 ];then
-                while true 
-                do
-                    sleep 1
-                    pids=($(process_name2pid $1))
-                    if [ ${#pids[*]} -eq 0 ];then
-                        echo_info "wait { $1 } running ..."
-                    else
-                        break
-                    fi
-                done
-                perf_pid=${pids[0]}
-            fi
         fi
     fi
-else
-    $@ &> /dev/tty &
-    perf_pid=$!
 fi
+perf_run="$@"
 
 perf_para=""
 perf_func=$(select_one \
             "record: Run a command and record its profile into perf.data" \
+            "report: Read perf.data (created by perf record) and display the profile" \
             "   top: System profiling tool" \
             "  stat: Run a command and gather performance counter statistics" \
             "  lock: Analyze lock events" \
             "   mem: Profile memory accesses" \
             "  kmem: Tool to trace/measure kernel memory properties" \
-            " sched: Tool to trace/measure scheduler properties (latencies)" \
-            "report: Read perf.data (created by perf record) and display the profile")
+            " sched: Tool to trace/measure scheduler properties (latencies)")
 perf_func=$(string_split "${perf_func}" ":" 1)
 perf_func=$(string_trim "${perf_func}" " ")
+echo_info "chose { ${perf_func} }"
+
 case ${perf_func} in
     "record")
-        perf_para="-a -g -p ${perf_pid}" 
+        if [ -n "${perf_pid}" ];then
+            perf_para="-a -g -o ${save_dir}/perf.record.data -p ${perf_pid}" 
+        else
+            perf_para="-a -g -o ${save_dir}/perf.record.data -- ${perf_run}" 
+        fi
+        mkdir -p ${save_dir}
+    ;;
+    "report")
+        read -p "Please input file(default $(pwd)/perf.data): " report_file
+        if [ -n "${report_file}" ];then
+            while ! can_access "${report_file}"
+            do
+                read -p "Please input file(default $(pwd)/perf.data): " report_file
+                if can_access "${report_file}";then
+                    break
+                fi
+            done
+        else
+            report_file="$(pwd)/perf.data"
+        fi
+        #perf_para="--threads -i ${report_file}"
+        perf_para="-i ${report_file}"
     ;;
     "top")
-        perf_para="-a -g -p ${perf_pid}" 
+        if [ -n "${perf_pid}" ];then
+            perf_para="-a -g" 
+        else
+            perf_para="-a -g" 
+        fi
     ;;
     "stat")
-        perf_para="-a -g -v -d -d -d -p ${perf_pid}" 
+        if [ -n "${perf_pid}" ];then
+            perf_para="-a -d -o ${save_dir}/perf.stat.data -p ${perf_pid}" 
+        else
+            perf_para="-a -d -o ${save_dir}/perf.stat.data -- ${perf_run}" 
+        fi
+        mkdir -p ${save_dir}
     ;;
     "lock")
         secd_func=$(select_one \
@@ -87,10 +102,51 @@ case ${perf_func} in
             "  info: shows metadata like threads or addresses of lock instances")
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
-        perf_para="${secd_func} -v" 
+        if [[ "${secd_func}" == "record" ]];then
+            perf_para="-v ${secd_func} ${perf_run}" 
+        elif [[ "${secd_func}" == "report" ]];then
+            read -p "Please input file(default $(pwd)/perf.data): " report_file
+            if [ -n "${report_file}" ];then
+                while ! can_access "${report_file}"
+                do
+                    read -p "Please input file(default $(pwd)/perf.data): " report_file
+                    if can_access "${report_file}";then
+                        break
+                    fi
+                done
+            else
+                report_file="$(pwd)/perf.data"
+            fi
+            perf_para="-v ${secd_func} -i ${report_file}"
+        else
+            perf_para="-v ${secd_func} ${perf_run}" 
+        fi
     ;;
     "mem")
-        perf_para="-v -K -U" 
+        secd_func=$(select_one \
+            "record: runs a command and gathers memory operation data from it" \
+            "report: displays the result")
+        secd_func=$(string_split "${secd_func}" ":" 1)
+        secd_func=$(string_trim "${secd_func}" " ")
+        if [[ "${secd_func}" == "record" ]];then
+            perf_para="-v ${secd_func} ${perf_run}" 
+        elif [[ "${secd_func}" == "report" ]];then
+            read -p "Please input file(default $(pwd)/perf.data): " report_file
+            if [ -n "${report_file}" ];then
+                while ! can_access "${report_file}"
+                do
+                    read -p "Please input file(default $(pwd)/perf.data): " report_file
+                    if can_access "${report_file}";then
+                        break
+                    fi
+                done
+            else
+                report_file="$(pwd)/perf.data"
+            fi
+            perf_para="-v ${secd_func} -i ${report_file}"
+        else
+            perf_para="-v ${secd_func} ${perf_run}" 
+        fi
     ;;
     "kmem")
         secd_func=$(select_one \
@@ -98,7 +154,25 @@ case ${perf_func} in
             "  stat: report kernel memory statistics")
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
-        perf_para="${secd_func} -v --caller --alloc --slab --page --live" 
+        if [[ "${secd_func}" == "record" ]];then
+            perf_para="${secd_func} -v --caller --alloc --slab --page --live ${perf_run}" 
+        elif [[ "${secd_func}" == "stat" ]];then
+            read -p "Please input file(default $(pwd)/perf.data): " report_file
+            if [ -n "${report_file}" ];then
+                while ! can_access "${report_file}"
+                do
+                    read -p "Please input file(default $(pwd)/perf.data): " report_file
+                    if can_access "${report_file}";then
+                        break
+                    fi
+                done
+            else
+                report_file="$(pwd)/perf.data"
+            fi
+            perf_para="${secd_func} -v --caller --alloc --slab --page --live -i ${report_file}" 
+        else
+            perf_para="${secd_func} -v --caller --alloc --slab --page --live" 
+        fi
     ;;
     "sched")
         secd_func=$(select_one \
@@ -110,10 +184,25 @@ case ${perf_func} in
             "timehist: provides an analysis of scheduling events")
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
-        perf_para="${secd_func} -v" 
-    ;;
-    "report")
-        perf_para="--threads -i perf.data" 
+        if [[ "${secd_func}" == "record" ]];then
+            perf_para="-v ${secd_func} ${perf_run}" 
+        elif [[ "${secd_func}" == "report" ]];then
+            read -p "Please input file(default $(pwd)/perf.data): " report_file
+            if [ -n "${report_file}" ];then
+                while ! can_access "${report_file}"
+                do
+                    read -p "Please input file(default $(pwd)/perf.data): " report_file
+                    if can_access "${report_file}";then
+                        break
+                    fi
+                done
+            else
+                report_file="$(pwd)/perf.data"
+            fi
+            perf_para="-v ${secd_func} -i ${report_file}"
+        else
+            perf_para="-v ${secd_func} ${perf_run}" 
+        fi
     ;;
     "*")
         echo_erro "perf function { ${perf_func} } invalid"
@@ -121,4 +210,5 @@ case ${perf_func} in
     ;;
 esac
 
+echo_info "perf ${perf_func} ${perf_para}"
 $SUDO "perf ${perf_func} ${perf_para}"
