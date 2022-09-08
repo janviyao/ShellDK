@@ -16,27 +16,26 @@ function section_line_range
         return 1
     fi 
 
-    local sec_linenr_array=($(grep -n "\[${sec_name}\]" ${sec_file} | awk -F: '{ print $1 }'))
-    local array_size=${#sec_linenr_array[*]}
-    if [ ${array_size} -ge 1 ];then
-        local nr_start=${sec_linenr_array[$((${array_size} - 1))]}
-        local nr_end="$"
-
-        local all_linenr_array=($(grep -n -P "^\s*\[.*\]\s*$" ${sec_file} | awk -F: '{ print $1 }'))
-        for item in ${all_linenr_array[*]}
+    local -a range_array
+    local sec_linenr_array=($(file_range "${sec_file}" "\[${sec_name}\]" "\[\w+\]" true))
+    if [ ${#sec_linenr_array[*]} -ge 1 ];then
+        for range in ${sec_linenr_array[*]}
         do
-            if [ ${item} -gt ${nr_start} ];then
-                nr_end=$((item - 1))
-                break
+            local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
+            local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
+            if is_integer "${nr_end}";then
+                nr_end=$((nr_end - 1))
             fi
+            range_array[${#range_array[*]}]="${nr_start}${GBL_COL_SPF}${nr_end}"
         done
-
-        echo "${nr_start} ${nr_end}"
-        return 0
-    else
-        echo ""
-        return 1
     fi
+
+    if [ ${#range_array[*]} -gt 0 ];then
+        echo "${range_array[*]}"
+        return 0
+    fi
+
+    return 1
 }
 
 function section_has
@@ -76,18 +75,19 @@ function section_key_has
     fi 
     
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
-    if [ ${#line_array[*]} -eq 2 ];then
-        local nr_start=${line_array[0]}
-        local nr_end=${line_array[1]}
+    if [ ${#line_array[*]} -gt 0 ];then
+        for range in ${line_array[*]}
+        do
+            local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
+            local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
 
-        if sed -n "${nr_start},${nr_end}p" ${sec_file} | grep -P "^\s*${key_str}\s*" &> /dev/null;then
-            return 0 
-        else
-            return 1
-        fi
-    else
-        return 1
+            if file_range_has "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s+" true;then
+                return 0 
+            fi
+        done
     fi
+
+    return 1
 }
 
 function section_val_has
@@ -107,23 +107,19 @@ function section_val_has
     fi 
     
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
-    if [ ${#line_array[*]} -eq 2 ];then
-        local nr_start=${line_array[0]}
-        local nr_end=${line_array[1]}
+    if [ ${#line_array[*]} -gt 0 ];then
+        for range in ${line_array[*]}
+        do
+            local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
+            local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
 
-        local line_ctx=$(sed -n "${nr_start},${nr_end}p" ${sec_file} | grep -P "^\s*${key_str}\s*" | tail -n 1)
-        if [ -n "${line_ctx}" ];then
-            if echo "${line_ctx}" | grep -w -F "${val_str}" &> /dev/null;then
+            if file_range_has "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s+(\w+\s+)*${val_str}(\w+\s+)*" true;then
                 return 0 
-            else
-                return 1
             fi
-        else
-            return 1
-        fi
-    else
-        return 1
+        done
     fi
+
+    return 1
 }
 
 function section_line_nr
@@ -141,23 +137,36 @@ function section_line_nr
         return 1
     fi 
 
+    local -a line_nrs
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
-    if [ ${#line_array[*]} -eq 2 ];then
-        local nr_start=${line_array[0]}
-        local nr_end=${line_array[1]}
+    if [ ${#line_array[*]} -gt 0 ];then
+        for range in ${line_array[*]}
+        do
+            local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
+            local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
+            
+            local -a nr_array
+            nr_array=($(file_range_linenr "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s+" true))
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "section_line_nr { $@ }"
+                return 1
+            fi
 
-        local line_nr=$(sed = ${sec_file} | sed 'N;s/\n/:/' | sed -n "${nr_start},${nr_end}p" | grep -P "^\d+:\s*${key_str}\s*" | awk -F: '{ print $1 }' | tail -n 1)
-        if [ -n "${line_nr}" ];then
-            echo "${line_nr}"
-            return 0
-        else
-            echo ""
-            return 1
-        fi
-    else
-        echo ""
-        return 1
+            if [ ${#nr_array[*]} -gt 0 ];then
+                for line_nr in ${nr_array[*]}
+                do
+                    line_nrs[${#line_nrs[*]}]="${line_nr}"
+                done
+            fi
+        done
     fi
+
+    if [ ${#line_nrs[*]} -gt 0 ];then
+        echo "${line_nrs[*]}"
+        return 0
+    fi
+
+    return 1
 }
 
 function section_set
@@ -176,22 +185,37 @@ function section_set
         return 1
     fi
 
-    local line_nr=$(section_line_nr "${sec_file}" "${sec_name}" "${key_str}")
-    if [ -n "${line_nr}" ];then
-        sed -i "${line_nr}c\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
+    local line_nrs=($(section_line_nr "${sec_file}" "${sec_name}" "${key_str}"))
+    if [ ${#line_nrs[*]} -gt 1 ];then
+        echo_erro "section_set { $@ }: section has multiple duplicate key"
+        return 1
+    fi
+
+    if [ -n "${line_nrs[*]}" ];then
+        file_change "${sec_file}" "${HEADER_SPACE}${key_str} ${val_str}" "${line_nrs[0]}"
         if [ $? -ne 0 ];then
             echo_erro "section_set { $@ }"
             return 1
         fi
     else
         local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
-        if [ ${#line_array[*]} -eq 2 ];then
-            local nr_end=${line_array[1]}
-            sed -i "${nr_end}a\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
-            if [ $? -ne 0 ];then
-                echo_erro "section_set { $@ }"
-                return 1
-            fi
+        if [ ${#line_array[*]} -gt 1 ];then
+            echo_erro "section_set { $@ }: section has multiple duplicate section"
+            return 1
+        fi
+
+        if [ ${#line_array[*]} -eq 1 ];then
+            for range in ${line_array[*]}
+            do
+                local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
+                local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
+
+                file_insert "${sec_file}" "${HEADER_SPACE}${key_str} ${val_str}" "${nr_end}"
+                if [ $? -ne 0 ];then
+                    echo_erro "section_set { $@ }"
+                    return 1
+                fi
+            done
         else
             echo "" >> ${sec_file}
             echo "[${sec_name}]" >> ${sec_file}
@@ -217,16 +241,19 @@ function section_get
         return 1
     fi 
 
-    local line_nr=$(section_line_nr "${sec_file}" "${sec_name}" "${key_str}")
-    if [ -n "${line_nr}" ];then
-        local line_ctx=$(sed -n "${line_nr}p" ${sec_file})
-        local jump_len=$((${#HEADER_SPACE} + 2))
-        echo $(echo "${line_ctx}" | cut -d ' ' -f ${jump_len}-)
-        return 0
-    else
-        echo ""
+    local line_nrs=($(section_line_nr "${sec_file}" "${sec_name}" "${key_str}"))
+    if [ ${#line_nrs[*]} -gt 1 ];then
+        echo_file "${LOG_ERRO}" "section_get { $@ }: section has multiple duplicate key"
         return 1
     fi
+
+    if [ -n "${line_nrs[*]}" ];then
+        local line_ctx=$(file_get ${sec_file} "${line_nrs[0]}" false)
+        echo "$(string_split "${line_ctx}" " " "2-")"
+        return 0
+    fi
+
+    return 1
 }
 
 function section_append
@@ -248,7 +275,8 @@ function section_append
     local line_nr=$(section_line_nr "${sec_file}" "${sec_name}" "${key_str}")
     if [ -n "${line_nr}" ];then
         local line_ctx=$(sed -n "${line_nr}p" ${sec_file})
-        sed -i "${line_nr}c\\${HEADER_SPACE}${line_ctx} ${val_str}" ${sec_file}
+
+        file_change "${sec_file}" "${HEADER_SPACE}${line_ctx} ${val_str}" "${line_nr}"
         if [ $? -ne 0 ];then
             echo_erro "section_append { $@ }"
             return 1
@@ -275,19 +303,18 @@ function section_del
     fi 
     
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
-    if [ ${#line_array[*]} -eq 2 ];then
-        local nr_start=${line_array[0]}
-        local nr_end=${line_array[1]}
-        sed -i "${nr_start},${nr_end}d" ${sec_file}
-        if [ $? -ne 0 ];then
-            echo_erro "section_del { $@ }"
-            return 1
-        fi
-
-        return 0
-    else
-        return 1
+    if [ ${#line_array[*]} -gt 0 ];then
+        for range in ${line_array[*]}
+        do
+            local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
+            local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
+            if file_del "${sec_file}" "${nr_start}-${nr_end}" false;then
+                return 0 
+            fi
+        done
     fi
+
+    return 1
 }
 
 function section_insert
@@ -307,7 +334,7 @@ function section_insert
         return 1
     fi 
     
-    sed -i "${line_nr}i\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
+    file_insert "${sec_file}" "${HEADER_SPACE}${key_str} ${val_str}" "${line_nr}"
     if [ $? -ne 0 ];then
         echo_erro "section_insert { $@ }"
         return 1
@@ -330,7 +357,7 @@ function section_del_line
         return 1
     fi 
     
-    sed -i "${line_nr}d" ${sec_file}
+    file_del "${sec_file}" "${line_nr}" false
     if [ $? -ne 0 ];then
         echo_erro "section_del_line { $@ }"
         return 1

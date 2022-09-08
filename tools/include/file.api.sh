@@ -76,7 +76,7 @@ function file_has
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
         return 1
     fi
 
@@ -90,6 +90,36 @@ function file_has
         fi
     else
         if grep -F "${string}" ${xfile} &>/dev/null;then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+function file_range_has
+{
+    local xfile="$1"
+    local line_s="$2"
+    local line_e="$3"
+    local string="$4"
+    local is_reg="${5:-false}"
+
+    if [ $# -lt 4 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(bool)"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        return 1
+    fi 
+
+    if bool_v "${is_reg}";then
+        if sed -n "${line_s},${line_e}p" | grep -P "${string}" &>/dev/null;then
+            return 0
+        fi
+    else
+        if sed -n "${line_s},${line_e}p" | grep -F "${string}" &>/dev/null;then
             return 0
         fi
     fi
@@ -161,7 +191,7 @@ function file_get
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(bool)"
         return 1
     fi
 
@@ -193,6 +223,39 @@ function file_get
     fi
 }
 
+function file_range_get
+{
+    local xfile="$1"
+    local line_s="$2"
+    local line_e="$3"
+    local string="$4"
+    local is_reg="${5:-false}"
+
+    if [ $# -lt 4 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(bool)"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        return 1
+    fi 
+
+    local content=""
+    if bool_v "${is_reg}";then
+        content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}")
+    else
+        content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}")
+    fi
+
+    if [ $? -ne 0 ];then
+        echo_file "${LOG_ERRO}" "file_range_get { $@ }"
+        return 1
+    fi
+
+    echo "${content}"
+    return 0
+}
+
 function file_del
 {
     local xfile="$1"
@@ -200,7 +263,7 @@ function file_del
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string or line-range\n\$3: \$2 whether regex(bool)"
         return 1
     fi
 
@@ -236,17 +299,40 @@ function file_del
                 fi
             fi
         else
-            local line_nrs=($(file_linenr "${xfile}" "${string}" false))
-            while [ ${#line_nrs[*]} -gt 0 ]
-            do
-                file_del "${xfile}" "${line_nrs[0]}"
+            if [[ "${string}" =~ '-' ]];then
+                local index_s=$(string_split "${string}" "-" 1)
+                local index_e=$(string_split "${string}" "-" 2)
+
+                if ! is_integer "${index_s}";then
+                    echo_erro "file_del { $@ }: para \$2 invalid"
+                    return 1
+                fi
+
+                if ! is_integer "${index_e}";then
+                    if [[ "${index_e}" != "$" ]];then
+                        echo_erro "file_del { $@ }: para \$2 invalid"
+                        return 1
+                    fi
+                fi
+
+                sed -i "${index_s},${index_e}d" ${xfile}
                 if [ $? -ne 0 ];then
                     echo_erro "file_del { $@ }"
                     return 1
                 fi
+            else
+                local line_nrs=($(file_linenr "${xfile}" "${string}" false))
+                while [ ${#line_nrs[*]} -gt 0 ]
+                do
+                    file_del "${xfile}" "${line_nrs[0]}"
+                    if [ $? -ne 0 ];then
+                        echo_erro "file_del { $@ }"
+                        return 1
+                    fi
 
-                line_nrs=($(file_linenr "${xfile}" "${string}" false))
-            done
+                    line_nrs=($(file_linenr "${xfile}" "${string}" false))
+                done
+            fi
         fi
     fi
 
@@ -307,7 +393,7 @@ function file_linenr
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_file "${LOG_ERRO}" "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: whether regex(bool)"
+        echo_file "${LOG_ERRO}" "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
         return 1
     fi
 
@@ -322,21 +408,137 @@ function file_linenr
 
     local -a line_nrs
     if bool_v "${is_reg}";then
+        #line_nrs=($(sed = ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${string}" | awk -F ':' '{ print $1 }'))
         line_nrs=($(grep -n -P "${string}" ${xfile} | awk -F ':' '{ print $1 }'))
     else
-        if [[ "${string}" =~ '/' ]];then
-            string=$(replace_str "${string}" "/" "\/")
-        fi
-
+        #if [[ "${string}" =~ '/' ]];then
+        #    string=$(replace_str "${string}" "/" "\/")
+        #fi
         #line_nrs=($(sed -n "/^\s*${string}/{=;q;}" ${xfile}))
         #line_nrs=($(sed -n "/^\s*${string}\s*$/{=;}" ${xfile}))
-        line_nrs=($(sed -n "/${string}/{=;}" ${xfile}))
+        line_nrs=($(grep -n -F "${string}" ${xfile} | awk -F: '{ print $1 }'))
+        #line_nrs=($(sed -n "/${string}/{=;}" ${xfile}))
         if [ $? -ne 0 ];then
             echo_file "${LOG_ERRO}" "file_linenr { $@ }"
         fi
     fi
 
     echo "${line_nrs[*]}"
+    return 0
+}
+
+function file_range_linenr
+{
+    local xfile="$1"
+    local line_s="$2"
+    local line_e="$3"
+    local string="$4"
+    local is_reg="${5:-false}"
+
+    if [ $# -lt 4 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(bool)"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        return 1
+    fi 
+
+    local -a line_nrs
+    if bool_v "${is_reg}";then
+        line_nrs=($(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}" | awk -F ':' '{ print $1 }'))
+    else
+        line_nrs=($(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}" | awk -F ':' '{ print $1 }'))
+    fi
+
+    if [ ${#line_nrs[*]} -gt 0 ];then
+        echo "${line_nrs[*]}"
+        return 0
+    fi
+
+    return 1
+}
+
+function file_range
+{
+    local xfile="$1"
+    local string1="$2"
+    local string2="$3"
+    local is_reg="${4:-false}"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: string\n\$4: \$2 and \$3 whether regex(bool)"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        return 1
+    fi 
+
+    local line_nrs1=$(file_linenr "${xfile}" "${string1}" "${is_reg}")
+    local line_nrs2=$(file_linenr "${xfile}" "${string2}" "${is_reg}")
+    
+    local -a range_array
+    for line_nr1 in ${line_nrs1[*]}
+    do
+        for line_nr2 in ${line_nrs2[*]}
+        do
+            if [ ${line_nr1} -lt ${line_nr2} ];then
+                range_array[${#range_array[*]}]="${line_nr1}${GBL_COL_SPF}${line_nr2}"
+            fi
+        done
+    done
+    
+    if [ ${#range_array[*]} -gt 0 ];then
+        echo "${range_array[*]}"
+        return 0
+    else
+        if [ ${#line_nrs1[*]} -gt 0 ];then
+            echo "${line_nrs1[0]}${GBL_COL_SPF}$"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+function file_change
+{
+    local xfile="$1"
+    local content="$2"
+    local line_nr="${3:-$}"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        echo > ${xfile}
+    fi 
+
+    if is_integer "${line_nr}";then
+        local total_nr=$(sed -n '$=' ${xfile})
+        if [ ${line_nr} -le ${total_nr} ];then
+            sed -i "${line_nr} c\\${content}" ${xfile}
+            if [ $? -ne 0 ];then
+                echo_erro "file_insert { $@ }"
+                return 1
+            fi
+        fi
+    else
+        if [[ "${line_nr}" == "$" ]];then
+            sed -i "${line_nr} c\\${content}" ${xfile}
+            if [ $? -ne 0 ];then
+                echo_erro "file_insert { $@ }"
+                return 1
+            fi
+        else
+            echo_erro "line_nr: ${line_nr} not integer"
+            return 1
+        fi
+    fi
+
     return 0
 }
 
@@ -348,7 +550,7 @@ function file_replace
     local is_reg="${4:-false}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: is \$2 regex"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(bool)"
         return 1
     fi
 
@@ -402,6 +604,7 @@ function file_replace
             fi
         fi
     done
+
     return 0
 }
 
