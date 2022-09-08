@@ -64,20 +64,9 @@ case ${perf_func} in
         mkdir -p ${save_dir}
     ;;
     "report")
-        read -p "Please input file(default $(pwd)/perf.data): " report_file
-        if [ -n "${report_file}" ];then
-            while ! can_access "${report_file}"
-            do
-                read -p "Please input file(default $(pwd)/perf.data): " report_file
-                if can_access "${report_file}";then
-                    break
-                fi
-            done
-        else
-            report_file="$(pwd)/perf.data"
-        fi
+        report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
         #perf_para="--threads -i ${report_file}"
-        perf_para="-i ${report_file}"
+        perf_para="-f -i ${report_file}"
     ;;
     "top")
         if [ -n "${perf_pid}" ];then
@@ -105,18 +94,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="-v ${secd_func} ${perf_run}" 
         elif [[ "${secd_func}" == "report" ]];then
-            read -p "Please input file(default $(pwd)/perf.data): " report_file
-            if [ -n "${report_file}" ];then
-                while ! can_access "${report_file}"
-                do
-                    read -p "Please input file(default $(pwd)/perf.data): " report_file
-                    if can_access "${report_file}";then
-                        break
-                    fi
-                done
-            else
-                report_file="$(pwd)/perf.data"
-            fi
+            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
             perf_para="-v ${secd_func} ${perf_run}" 
@@ -131,18 +109,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="-v ${secd_func} ${perf_run}" 
         elif [[ "${secd_func}" == "report" ]];then
-            read -p "Please input file(default $(pwd)/perf.data): " report_file
-            if [ -n "${report_file}" ];then
-                while ! can_access "${report_file}"
-                do
-                    read -p "Please input file(default $(pwd)/perf.data): " report_file
-                    if can_access "${report_file}";then
-                        break
-                    fi
-                done
-            else
-                report_file="$(pwd)/perf.data"
-            fi
+            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
             perf_para="-v ${secd_func} ${perf_run}" 
@@ -157,18 +124,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="${secd_func} -v --caller --alloc --slab --page --live ${perf_run}" 
         elif [[ "${secd_func}" == "stat" ]];then
-            read -p "Please input file(default $(pwd)/perf.data): " report_file
-            if [ -n "${report_file}" ];then
-                while ! can_access "${report_file}"
-                do
-                    read -p "Please input file(default $(pwd)/perf.data): " report_file
-                    if can_access "${report_file}";then
-                        break
-                    fi
-                done
-            else
-                report_file="$(pwd)/perf.data"
-            fi
+            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
             perf_para="${secd_func} -v --caller --alloc --slab --page --live -i ${report_file}" 
         else
             perf_para="${secd_func} -v --caller --alloc --slab --page --live" 
@@ -187,18 +143,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="-v ${secd_func} ${perf_run}" 
         elif [[ "${secd_func}" == "report" ]];then
-            read -p "Please input file(default $(pwd)/perf.data): " report_file
-            if [ -n "${report_file}" ];then
-                while ! can_access "${report_file}"
-                do
-                    read -p "Please input file(default $(pwd)/perf.data): " report_file
-                    if can_access "${report_file}";then
-                        break
-                    fi
-                done
-            else
-                report_file="$(pwd)/perf.data"
-            fi
+            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
             perf_para="-v ${secd_func} ${perf_run}" 

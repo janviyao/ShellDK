@@ -19,37 +19,44 @@ function create_project
     local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|hh\\|h\\|s\\|S\\|py\\|go"
     local find_str="${default_type}"
 
-    read -p "Input file type (separated with comma) to parse: " input_val
+    local input_val=$(input_prompt "" "input file type (separated with comma) to parse" "")
     if [ -n "${input_val}" ];then
         find_str=$(replace_str "${input_val}" ',' '\\|')
     fi
     find . -type f -regex ".+\\.\\(${find_str}\\)" > cscope.files 
 
-    read -p "Input search directory: " input_val
+    input_val=$(input_prompt "" "input search directory" "")
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
             find ${input_val} -type f -regex ".+\\.\\(${find_str}\\)" >> cscope.files 
         fi
-        read -p "Input search directory: " input_val
+        input_val=$(input_prompt "" "input search directory" "")
     done
 
     sort -u cscope.files > cscope.files.tmp
     mv cscope.files.tmp cscope.files 
 
-    read -p "Input wipe directory: " input_val
+    input_val=$(input_prompt "" "input wipe directory" "")
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
             input_val=$(replace_str "${input_val}" "$HOME/" "")
             input_val=$(replace_str "${input_val}" '/' '\/')
-            sed -i "/${input_val}/d" cscope.files 
+            file_del cscope.files "${input_val}" false
+            if [ $? -ne 0 ];then
+                echo_erro "file_del { ${input_val}} fail"
+                return 1
+            fi
         fi
-
-        read -p "Input wipe directory: " input_val
+        input_val=$(input_prompt "" "input wipe directory" "")
     done
 
-    sed -i "s/\.\///g" cscope.files
+    file_replace cscope.files "./" "" false
+    if [ $? -ne 0 ];then
+        echo_erro "file_replace { ./ } into { } fail"
+        return 1
+    fi
 
     if can_access ".gitignore"; then
         while read line
@@ -99,11 +106,15 @@ function create_project
             fi
 
             echo_debug "delete: ${line}"
-            sed -i "/${line}/d" cscope.files
+            file_del cscope.files "${line}" true
+            if [ $? -ne 0 ];then
+                echo_erro "file_del { ${line}} fail"
+                return 1
+            fi
         done < .gitignore
     fi
     
-    local line_nr=$(sed -n '$=' cscope.files)
+    local line_nr=$(file_linenr cscope.files "")
     if [ -n "${line_nr}" ] && [ ${line_nr} -le 1 ];then
         echo_erro "cscope.files empty"
         return 1
@@ -119,6 +130,7 @@ function create_project
     else
         ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
     fi
+
     if ! can_access "tags";then
         echo_erro "tags create fail"
         return 1

@@ -25,10 +25,17 @@ function regex_2str
             else
                 result=$(echo "${result}" | sed "s/${char}/\\\\${char}/g" )
             fi
+
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "regex_2str { $@ }"
+                return 1
+            fi
             #regex=$(replace_str "${regex}" "${char}" "\\${char}")
         fi
     done
+
     echo "${result}" 
+    return 0
 }
 
 function match_regex
@@ -289,6 +296,7 @@ function replace_regex
     local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
     [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
 
+    local res_str=""
     oldstr=$(regex_2str "${oldstr}")
     if [[ $(string_start "${regstr}" 1) == '^' ]]; then
         if [[ "${newstr}" =~ '\' ]];then
@@ -299,7 +307,12 @@ function replace_regex
             newstr="${newstr//\//\\/}"
         fi
 
-        echo "$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")"
+        res_str=$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")
+        if [ $? -ne 0 ];then
+            echo_file "${LOG_ERRO}" "replace_regex { $@ }"
+            return 1
+        fi
+        echo "${res_str}"
     elif [[ $(string_end "${regstr}" 1) == '$' ]]; then
         if [[ "${newstr}" =~ '\' ]];then
             newstr="${newstr//\\/\\\\}"
@@ -309,9 +322,14 @@ function replace_regex
             newstr="${newstr//\//\\/}"
         fi
 
-        echo "$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")"
+        res_str=$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")
+        if [ $? -ne 0 ];then
+            echo_file "${LOG_ERRO}" "replace_regex { $@ }"
+            return 1
+        fi
+        echo "${res_str}"
     else
-        echo "$(echo "${string}" | sed "s/${oldstr}/${newstr}/g")"
+        echo "${string//${oldstr}/${newstr}}"
     fi
 
     return 0

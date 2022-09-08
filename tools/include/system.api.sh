@@ -190,10 +190,11 @@ function account_check
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
         if bool_v "${can_input}";then
             USR_NAME=${MY_NAME}
-            read -p "Please input username(${USR_NAME}): " input_val
+
+            local input_val=$(input_prompt "" "input username" "${USR_NAME}")
             export USR_NAME=${input_val:-${USR_NAME}}
 
-            read -s -p "Please input password: " input_val
+            local input_val=$(input_prompt "" "input password" "")
             echo ""
 
             if [ -n "${input_val}" ];then

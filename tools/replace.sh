@@ -18,7 +18,7 @@ function do_replace
             cd ${des_dir}
             continue
         fi
-        file_replace "${des_dir}/${thing}" "${old_reg}" "${new_str}" 
+        file_replace "${des_dir}/${thing}" "${old_reg}" "${new_str}" true
     done
 
     echo_debug "finish: $(string_trim "${des_dir}" "${rep_dir}/" 1)"
@@ -47,7 +47,7 @@ do
         do_replace "${OLD_STR}" "${NEW_STR}" "${rep_dir}"
     else
         echo_debug "do_replace: [${OLD_STR} @ ${NEW_STR} @ ${rep_dir}]"
-        file_replace "${rep_dir}" "${OLD_STR}" "${NEW_STR}" 
+        file_replace "${rep_dir}" "${OLD_STR}" "${NEW_STR}" true
         echo_debug "finish: ${rep_dir}"
     fi
 

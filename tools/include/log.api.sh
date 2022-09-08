@@ -29,6 +29,9 @@ function echo_file
     local para="$@"
 
     if [ ${LOG_FILE_LEVEL} -lt ${echo_level} ];then
+        if [ ${echo_level} -le ${LOG_ERRO} ];then
+            echo -e "$(print_backtrace)" >> ${BASH_LOG}
+        fi
         return
     fi
  

@@ -224,6 +224,62 @@ function wait_value
     return 0
 }
 
+function input_prompt
+{
+    local check_func="$1"
+    local prompt_ctn="$2"
+    local dflt_value="$3"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: check function\n\$2: prompt string\n\$3: default value"
+        return 1
+    fi
+
+    local input_val="";
+    if [ -n "${dflt_value}" ];then
+        read -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val
+    else
+        read -p "Please ${prompt_ctn}: " input_val
+    fi
+    
+    if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
+        input_val="${dflt_value}"
+    fi
+    
+    if [ -n "${check_func}" ];then
+        while ! eval "${check_func} ${input_val}"
+        do
+            if [ -n "${dflt_value}" ];then
+                read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val
+            else
+                read -p "check fail, Please ${prompt_ctn}: " input_val
+            fi
+
+            if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
+                input_val="${dflt_value}"
+            fi
+        done
+    else
+        if [ -n "${dflt_value}" ];then
+            while [ -z "${input_val}" ]
+            do
+                if [ -n "${dflt_value}" ];then
+                    read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val
+                else
+                    read -p "check fail, Please ${prompt_ctn}: " input_val
+                fi
+
+                if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
+                    input_val="${dflt_value}"
+                fi
+            done
+        fi
+    fi
+
+    echo "${input_val}"
+    return 0
+}
+
 function select_one
 {
     local -a array
@@ -257,19 +313,10 @@ function select_one
     fi
 
     local selected=1
-    read -p "Please select one(default 1): " input_val
-    if [ -n "${input_val}" ];then
-        while ! is_integer "${input_val}"
-        do
-            read -p "Please input number(1-${index}): " input_val
-            if [ -z "${input_val}" ];then
-                break
-            fi
-        done
-    fi
-
+    local input_val=$(input_prompt "is_integer" "select one" "1")
     selected=${input_val:-${selected}}
     selected=$((selected - 1))
+
     local item="${array[${selected}]}"
     if [[ "${item}" =~ "${GBL_COL_SPF}" ]];then
         echo "${item//${GBL_COL_SPF}/ }"
