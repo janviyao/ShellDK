@@ -50,6 +50,40 @@ function match_regex
     fi
 }
 
+function string_contain
+{
+    local string="$1"
+    local substr="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
+        return 1
+    fi
+
+    if [[ -z "${string}" ]] || [[ -z "${substr}" ]];then
+        return 1
+    fi
+
+    if [[ "${string}" =~ "${substr}" ]];then
+        return 0
+    else
+        return 1
+    fi
+    #if [[ ${substr} == *\\* ]];then
+    #    substr="${substr//\\/\\\\}"
+    #fi
+
+    #if [[ ${substr} == *\** ]];then
+    #    substr="${substr//\*/\\*}"
+    #fi
+
+    #if [[ ${string} == *${substr}* ]];then
+    #    return 0
+    #else
+    #    return 1
+    #fi
+}
+
 function string_split
 {
     local string="$1"
@@ -133,40 +167,6 @@ function string_sub
     #local chars="`echo "${string}" | cut -c 1-${length}`"
     echo "${string:${start}:${length}}"
     return 0
-}
-
-function string_contain
-{
-    local string="$1"
-    local substr="$2"
-
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr"
-        return 1
-    fi
-
-    if [[ -z "${string}" ]] || [[ -z "${substr}" ]];then
-        return 1
-    fi
-
-    if [[ "${string}" =~ "${substr}" ]];then
-        return 0
-    else
-        return 1
-    fi
-    #if [[ ${substr} == *\\* ]];then
-    #    substr="${substr//\\/\\\\}"
-    #fi
-
-    #if [[ ${substr} == *\** ]];then
-    #    substr="${substr//\*/\\*}"
-    #fi
-
-    #if [[ ${string} == *${substr}* ]];then
-    #    return 0
-    #else
-    #    return 1
-    #fi
 }
 
 function string_regex
