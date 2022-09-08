@@ -64,33 +64,52 @@ function kvconf_set
     
     if kvconf_has_key "${kv_file}" "${key_str}";then
         if [[ "${key_str}" =~ '/' ]];then
-            key_str=$(replace_regex "${key_str}" "/" "\/")
+            key_str=$(replace_str "${key_str}" "/" "\/")
         fi
 
         if [[ "${val_str}" =~ '/' ]];then
-            val_str=$(replace_regex "${val_str}" "/" "\/")
+            val_str=$(replace_str "${val_str}" "/" "\/")
         fi
 
         if is_integer "${line_nr}";then
             local total_nr=$(sed -n '$=' ${kv_file})
             if [ ${line_nr} -le ${total_nr} ];then
                 sed -i "${line_nr} s/${key_str}\s*${KV_FS}.\+/${key_str}${KV_FS}${val_str}/g" ${kv_file}
+                if [ $? -ne 0 ];then
+                    echo_erro "kvconf_set { $@ }"
+                    return 1
+                fi
             else
                 sed -i "s/${key_str}\s*${KV_FS}.\+/${key_str}${KV_FS}${val_str}/g" ${kv_file}
+                if [ $? -ne 0 ];then
+                    echo_erro "kvconf_set { $@ }"
+                    return 1
+                fi
             fi
         else
             sed -i "s/${key_str}\s*${KV_FS}.\+/${key_str}${KV_FS}${val_str}/g" ${kv_file}
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_set { $@ }"
+                return 1
+            fi
         fi
     else
         if is_integer "${line_nr}";then
             kvconf_insert "${kv_file}" "${key_str}" "${val_str}" "${line_nr}"
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_set { $@ }"
+                return 1
+            fi
         else
             sed -i "$ a\\${key_str}${KV_FS}${val_str}" ${kv_file}
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_set { $@ }"
+                return 1
+            fi
         fi
     fi
 
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function kvconf_get
@@ -143,12 +162,19 @@ function kvconf_append
 
         val_str="${old_val},${val_str}"
         sed -i "s/${key_str}\s*${KV_FS}.\+/${key_str}${KV_FS}${val_str}/g" ${kv_file}
+        if [ $? -ne 0 ];then
+            echo_erro "kvconf_append { $@ }"
+            return 1
+        fi
     else
         sed -i "\$a\\${key_str}${KV_FS}${val_str}" ${kv_file}
+        if [ $? -ne 0 ];then
+            echo_erro "kvconf_append { $@ }"
+            return 1
+        fi
     fi
 
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function kvconf_insert
@@ -177,18 +203,26 @@ function kvconf_insert
                 let cur_line++
             done
         fi
+
         sed -i "${line_nr} i\\${key_str}${KV_FS}${val_str}" ${kv_file}
+        if [ $? -ne 0 ];then
+            echo_erro "kvconf_insert { $@ }"
+            return 1
+        fi
     else
         if [[ "${line_nr}" == "$" ]];then
             sed -i "${line_nr} i\\${key_str}${KV_FS}${val_str}" ${kv_file}
+            if [ $? -ne 0 ];then
+                echo_erro "kvconf_insert { $@ }"
+                return 1
+            fi
         else
             echo_erro "line_nr: ${line_nr} not integer"
             return 1
         fi
     fi
     
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function kvconf_del
@@ -211,10 +245,13 @@ function kvconf_del
         fi
 
         sed -i "/${key_str}\s*${KV_FS}.\+$/d" ${kv_file}
+        if [ $? -ne 0 ];then
+            echo_erro "kvconf_del { $@ }"
+            return 1
+        fi
     fi
 
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function kvconf_del_line
@@ -232,9 +269,12 @@ function kvconf_del_line
     fi 
     
     sed -i "${line_nr}d" ${kv_file}
+    if [ $? -ne 0 ];then
+        echo_erro "kvconf_del_line { $@ }"
+        return 1
+    fi
 
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function kvconf_line_nr
@@ -260,8 +300,14 @@ function kvconf_line_nr
         key_str=$(replace_regex "${key_str}" "/" "\/")
     fi
 
+    local -a line_nrs
     #local line_nrs=($(sed -n "/^\s*${key_str}\s*${KV_FS}/{=;q;}" ${kv_file}))
-    local line_nrs=($(sed -n "/^\s*${key_str}\s*${KV_FS}/{=;}" ${kv_file}))
+    line_nrs=($(sed -n "/^\s*${key_str}\s*${KV_FS}/{=;}" ${kv_file}))
+    if [ $? -ne 0 ];then
+        echo_file "${LOG_ERRO}" "kvconf_line_nr { $@ }"
+        return 1
+    fi
+
     echo "${line_nrs[*]}"
     return 0
 }

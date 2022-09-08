@@ -179,11 +179,19 @@ function section_set
     local line_nr=$(section_line_nr "${sec_file}" "${sec_name}" "${key_str}")
     if [ -n "${line_nr}" ];then
         sed -i "${line_nr}c\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
+        if [ $? -ne 0 ];then
+            echo_erro "section_set { $@ }"
+            return 1
+        fi
     else
         local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
         if [ ${#line_array[*]} -eq 2 ];then
             local nr_end=${line_array[1]}
             sed -i "${nr_end}a\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
+            if [ $? -ne 0 ];then
+                echo_erro "section_set { $@ }"
+                return 1
+            fi
         else
             echo "" >> ${sec_file}
             echo "[${sec_name}]" >> ${sec_file}
@@ -191,8 +199,7 @@ function section_set
         fi
     fi
     
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function section_get
@@ -242,12 +249,15 @@ function section_append
     if [ -n "${line_nr}" ];then
         local line_ctx=$(sed -n "${line_nr}p" ${sec_file})
         sed -i "${line_nr}c\\${HEADER_SPACE}${line_ctx} ${val_str}" ${sec_file}
+        if [ $? -ne 0 ];then
+            echo_erro "section_append { $@ }"
+            return 1
+        fi
     else
         section_set "${sec_file}" "${sec_name}" "${key_str}" "${val_str}"
     fi
     
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
 
 function section_del
@@ -269,9 +279,12 @@ function section_del
         local nr_start=${line_array[0]}
         local nr_end=${line_array[1]}
         sed -i "${nr_start},${nr_end}d" ${sec_file}
+        if [ $? -ne 0 ];then
+            echo_erro "section_del { $@ }"
+            return 1
+        fi
 
-        local retcode=$?
-        return ${retcode}
+        return 0
     else
         return 1
     fi
@@ -295,12 +308,12 @@ function section_insert
     fi 
     
     sed -i "${line_nr}i\\${HEADER_SPACE}${key_str} ${val_str}" ${sec_file}
-    if [ $? -eq 0 ];then
-        return 0
-    else
-        echo_erro "insert fail { \"${sec_file}\" \"${key_str}\" \"${val_str}\" \"${nr_end}\" }" 
+    if [ $? -ne 0 ];then
+        echo_erro "section_insert { $@ }"
         return 1
     fi
+
+    return 0 
 }
 
 function section_del_line
@@ -318,7 +331,10 @@ function section_del_line
     fi 
     
     sed -i "${line_nr}d" ${sec_file}
+    if [ $? -ne 0 ];then
+        echo_erro "section_del_line { $@ }"
+        return 1
+    fi
 
-    local retcode=$?
-    return ${retcode}
+    return 0
 }
