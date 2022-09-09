@@ -1,5 +1,5 @@
 #!/bin/bash
-function how_usage
+function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
@@ -10,7 +10,7 @@ function how_usage
 }
 
 if [ $# -lt 2 ];then
-    how_usage
+    how_use
     exit 1
 fi
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"

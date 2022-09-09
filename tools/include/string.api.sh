@@ -225,7 +225,7 @@ function string_sub
     local start="$2"
     local length="$3"
 
-    if [ $# -lt 3 ];then
+    if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: start\n\$3: length"
         return 1
     fi

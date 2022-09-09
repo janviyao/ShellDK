@@ -81,11 +81,7 @@ function kvconf_set
         echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str"
         return 1
     fi
-     
-    if ! can_access "${kv_file}";then
-        echo > ${kv_file}
-    fi 
-    
+ 
     local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
     if [ ${#line_nrs[*]} -gt 0 ];then
         echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
@@ -160,10 +156,6 @@ function kvconf_append
         echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str"
         return 1
     fi
-
-    if ! can_access "${kv_file}";then
-        echo > ${kv_file}
-    fi 
     
     local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
     if [ ${#line_nrs[*]} -gt 0 ];then
@@ -226,10 +218,6 @@ function kvconf_insert
         echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: line_nr(default: $)"
         return 1
     fi
-
-    if ! can_access "${kv_file}";then
-        echo > ${kv_file}
-    fi 
     
     file_insert "${kv_file}" "${key_str}${KV_FS}${val_str}" "${line_nr}"
     if [ $? -ne 0 ];then
@@ -307,6 +295,13 @@ function kvconf_line_nr
         return 1
     fi
 
-    echo "${line_nrs[*]}"
-    return 0
+    if [ ${#line_nrs[*]} -gt 0 ];then
+        for line_nr in ${line_nrs[*]}
+        do
+            echo "${line_nr}"
+        done
+        return 0
+    fi
+
+    return 1
 }

@@ -1,5 +1,5 @@
 #!/bin/bash
-function how_usage
+function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
@@ -10,7 +10,7 @@ function how_usage
 }
 
 if [ $# -lt 1 ];then
-    how_usage
+    how_use
     exit 1
 fi
 
@@ -52,7 +52,46 @@ perf_func=$(select_one \
             " sched: Tool to trace/measure scheduler properties (latencies)")
 perf_func=$(string_split "${perf_func}" ":" 1)
 perf_func=$(string_trim "${perf_func}" " ")
-echo_info "chose { ${perf_func} }"
+#echo_info "chose { ${perf_func} }"
+
+function update_perfrc
+{
+    local data_file="$1"
+
+    local key_array=($(section_get_keys "${MY_HOME}/.perfrc" "PERF-DATA"))
+    if [ ${#key_array[*]} -gt 0 ];then
+        local max_index=$(string_split "${key_array[$((${#key_array[*]} - 1))]}" "-" 2) 
+        section_set "${MY_HOME}/.perfrc" "PERF-DATA" "data-$((max_index+1))" "${data_file}"
+    else
+        section_set "${MY_HOME}/.perfrc" "PERF-DATA" "data-1" "${data_file}"
+    fi
+}
+
+function lru_per_data
+{
+    local index=0
+    local val_str=""
+
+    local key_array=($(section_get_keys "${MY_HOME}/.perfrc" "PERF-DATA"))
+    if [ ${#key_array[*]} -gt 0 ];then
+        for ((index=$((${#key_array[*]} - 1)); index>=0; index--))
+        do
+            val_str=($(section_get_val "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"))
+            if can_access "${val_str}";then
+                break
+            else
+                echo_file "${LOG_DEBUG}" "file invalid: ${val_str}"
+                section_del_key "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"
+            fi
+        done
+    fi
+
+    if [ -z "${val_str}" ];then
+        val_str="$(pwd)/perf.data"
+    fi
+    
+    echo "${val_str}"
+}
 
 case ${perf_func} in
     "record")
@@ -61,10 +100,12 @@ case ${perf_func} in
         else
             perf_para="-a -g -o ${save_dir}/perf.record.data -- ${perf_run}" 
         fi
+
         mkdir -p ${save_dir}
+        update_perfrc "${save_dir}/perf.record.data"
     ;;
     "report")
-        report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
+        report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
         #perf_para="--threads -i ${report_file}"
         perf_para="-f -i ${report_file}"
     ;;
@@ -81,7 +122,9 @@ case ${perf_func} in
         else
             perf_para="-a -d -o ${save_dir}/perf.stat.data -- ${perf_run}" 
         fi
+
         mkdir -p ${save_dir}
+        update_perfrc "${save_dir}/perf.record.data"
     ;;
     "lock")
         secd_func=$(select_one \
@@ -94,7 +137,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="-v ${secd_func} ${perf_run}" 
         elif [[ "${secd_func}" == "report" ]];then
-            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
+            report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
             perf_para="-v ${secd_func} ${perf_run}" 
@@ -109,7 +152,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="-v ${secd_func} ${perf_run}" 
         elif [[ "${secd_func}" == "report" ]];then
-            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
+            report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
             perf_para="-v ${secd_func} ${perf_run}" 
@@ -124,7 +167,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="${secd_func} -v --caller --alloc --slab --page --live ${perf_run}" 
         elif [[ "${secd_func}" == "stat" ]];then
-            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
+            report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="${secd_func} -v --caller --alloc --slab --page --live -i ${report_file}" 
         else
             perf_para="${secd_func} -v --caller --alloc --slab --page --live" 
@@ -143,7 +186,7 @@ case ${perf_func} in
         if [[ "${secd_func}" == "record" ]];then
             perf_para="-v ${secd_func} ${perf_run}" 
         elif [[ "${secd_func}" == "report" ]];then
-            report_file=$(input_prompt "can_access" "input file" "$(pwd)/perf.data")
+            report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
             perf_para="-v ${secd_func} ${perf_run}" 

@@ -141,46 +141,41 @@ function file_add
     if ! can_access "${xfile}";then
         echo > ${xfile}
     fi 
-    
-    if file_has "${xfile}" "${content}" false;then
-        if is_integer "${line_nr}";then
-            local total_nr=$(sed -n '$=' ${xfile})
-            if [ ${line_nr} -le ${total_nr} ];then
-                sed -i "${line_nr} i\\${content}" ${xfile}
-                if [ $? -ne 0 ];then
-                    echo_erro "file_add { $@ }"
-                    return 1
-                fi
-            else
-                file_insert "${xfile}" "${content}" "${line_nr}"
-                if [ $? -ne 0 ];then
-                    echo_erro "file_add { $@ }"
-                    return 1
-                fi
+
+    if is_integer "${line_nr}";then
+        local total_nr=$(sed -n '$=' ${xfile})
+        if [ ${line_nr} -le ${total_nr} ];then
+            sed -i "${line_nr} i\\${content}" ${xfile}
+            if [ $? -ne 0 ];then
+                echo_erro "file_add { $@ }"
+                return 1
             fi
         else
-            sed -i "$ a\\${content}" ${xfile}
+            file_insert "${xfile}" "${content}" "${line_nr}"
             if [ $? -ne 0 ];then
                 echo_erro "file_add { $@ }"
                 return 1
             fi
         fi
     else
-        if is_integer "${line_nr}";then
-            file_insert "${xfile}" "${content}" "${line_nr}"
-            if [ $? -ne 0 ];then
-                echo_erro "file_add { $@ }"
-                return 1
-            fi
+        if [[ "${line_nr}" != "$" ]];then
+            echo_erro "file_add { $@ }: line_nr invalid"
+            return 1
+        fi
+
+        local line_cnt=$(sed -n '$p' ${xfile})
+        if [ -z "${line_cnt}" ];then
+            sed -i "$ c\\${content}" ${xfile}
         else
             sed -i "$ a\\${content}" ${xfile}
-            if [ $? -ne 0 ];then
-                echo_erro "file_add { $@ }"
-                return 1
-            fi
+        fi
+
+        if [ $? -ne 0 ];then
+            echo_erro "file_add { $@ }"
+            return 1
         fi
     fi
-
+    
     return 0
 }
 
@@ -221,7 +216,7 @@ function file_get
                     echo "${content}"
                 fi
             else
-                echo ""
+                return 1
             fi
         else
             if [[ "${string}" == "$" ]];then
@@ -236,6 +231,8 @@ function file_get
             fi
         fi
     fi
+
+    return 0
 }
 
 function file_range_get
@@ -255,19 +252,32 @@ function file_range_get
         return 1
     fi 
 
+    if [[ "${line_e}" == "$" ]];then
+        line_e=$(file_linenr "${xfile}" "" false)
+    fi
+
     local content=""
-    if bool_v "${is_reg}";then
-        content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}")
-    else
-        content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}")
-    fi
+    while [ ${line_s} -le ${${line_e}} ]
+    do
+        if bool_v "${is_reg}";then
+            content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}")
+        else
+            content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}")
+        fi
 
-    if [ $? -ne 0 ];then
-        echo_file "${LOG_ERRO}" "file_range_get { $@ }"
-        return 1
-    fi
+        if [ $? -ne 0 ];then
+            echo_file "${LOG_ERRO}" "file_range_get { $@ }"
+            return 1
+        fi
 
-    echo "${content}"
+        if [[ "${content}" =~ ' ' ]];then
+            echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+        else
+            echo "${content}"
+        fi
+        let line_s++
+    done
+
     return 0
 }
 
@@ -380,14 +390,26 @@ function file_insert
             done
         fi
 
-        sed -i "${line_nr} i\\${content}" ${xfile}
+        local line_cnt=$(sed -n "${line_nr}p" ${xfile})
+        if [ -z "${line_cnt}" ];then
+            sed -i "${line_nr} c\\${content}" ${xfile}
+        else
+            sed -i "${line_nr} i\\${content}" ${xfile}
+        fi
+
         if [ $? -ne 0 ];then
             echo_erro "file_insert { $@ }"
             return 1
         fi
     else
         if [[ "${line_nr}" == "$" ]];then
-            sed -i "${line_nr} i\\${content}" ${xfile}
+            local line_cnt=$(sed -n "${line_nr}p" ${xfile})
+            if [ -z "${line_cnt}" ];then
+                sed -i "${line_nr} c\\${content}" ${xfile}
+            else
+                sed -i "${line_nr} i\\${content}" ${xfile}
+            fi
+
             if [ $? -ne 0 ];then
                 echo_erro "file_insert { $@ }"
                 return 1
@@ -438,8 +460,15 @@ function file_linenr
         fi
     fi
 
-    echo "${line_nrs[*]}"
-    return 0
+    if [ ${#line_nrs[*]} -gt 0 ];then
+        for line_nr in ${line_nrs[*]}
+        do
+            echo "${line_nr}"
+        done
+        return 0
+    fi
+
+    return 1
 }
 
 function file_range_linenr
@@ -458,19 +487,27 @@ function file_range_linenr
     if ! can_access "${xfile}";then
         return 1
     fi 
-
+     
     local -a line_nrs
     if bool_v "${is_reg}";then
-        line_nrs=($(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}" | awk -F ':' '{ print $1 }'))
+        if [[ $(string_start "${string}" 1) == '^' ]]; then
+            local tmp_reg=$(string_sub "${string}" 1)
+            line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${tmp_reg}" | awk -F ':' '{ print $1 }'))
+        else
+            line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${string}" | awk -F ':' '{ print $1 }'))
+        fi
     else
-        line_nrs=($(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}" | awk -F ':' '{ print $1 }'))
+        line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -F "${string}" | awk -F ':' '{ print $1 }'))
     fi
 
     if [ ${#line_nrs[*]} -gt 0 ];then
-        echo "${line_nrs[*]}"
+        for line_nr in ${line_nrs[*]}
+        do
+            echo "${line_nr}"
+        done
         return 0
     fi
-
+    
     return 1
 }
 
@@ -505,7 +542,10 @@ function file_range
     done
     
     if [ ${#range_array[*]} -gt 0 ];then
-        echo "${range_array[*]}"
+        for range in ${range_array[*]}
+        do
+            echo "${range}"
+        done
         return 0
     else
         if [ ${#line_nrs1[*]} -gt 0 ];then
