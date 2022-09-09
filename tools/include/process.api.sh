@@ -1,52 +1,6 @@
 #!/bin/bash
 : ${INCLUDE_PROCESS:=1}
 
-function process_pptree
-{
-    local pinfo="$1"
-    if [ -z "${pinfo}" ];then
-        pinfo="$$"
-    fi
-
-    if is_integer "${pinfo}";then
-        local pid_array=($(ppid ${pinfo}))
-        local pid_num=${#pid_array[*]}
-        for ((idx=0; idx < pid_num; idx++))
-        do
-            local pid=${pid_array[${idx}]}
-            if process_exist "${pid}"; then
-                local pname=$(process_pid2name "${pid}")
-                if (((idx + 1) == pid_num));then
-                    printf "%s[%d]" "${pname}" "${pid}" 
-                else
-                    printf "%s[%d] --> " "${pname}" "${pid}" 
-                fi
-            fi
-        done
-        printf "\n"
-    else
-        local -a some_array=($(process_name2pid "${pinfo}"))
-        for one_pid in ${some_array[*]}
-        do
-            local pid_array=($(ppid ${one_pid}))
-            local pid_num=${#pid_array[*]}
-            for ((idx=0; idx < pid_num; idx++))
-            do
-                local pid=${pid_array[${idx}]}
-                if process_exist "${pid}"; then
-                    local pname=$(process_pid2name "${pid}")
-                    if (((idx + 1) == pid_num));then
-                        printf "%s[%d]" "${pname}" "${pid}" 
-                    else
-                        printf "%s[%d] --> " "${pname}" "${pid}" 
-                    fi
-                fi
-            done
-            printf "\n"
-        done 
-    fi
-}
-
 function process_wait
 {
     local pinfo="$1"
@@ -275,20 +229,20 @@ function process_subthread
 
 function thread_info
 {
-    local ppid="$1"
-    local shead=${2:-true}
-
+    local process="$1"
+    local show_header=${2:-true}
+    
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ppid\n\$2: shead(default: true)"
+        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print header(bool)"
         return 1
     fi
 
-    local -a show_header=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
-    local -A index_map={}
-    index_map["PID"]="%-5s %-5d 0"
+    local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
+    local -A index_map
+    index_map["PID"]="%-10s %-10d 0"
     index_map["COMMAND"]="%-20s %-20s 1"
     index_map["STATE"]="%-5s %-5s 2"
-    index_map["PPID"]="%-4s %-4d 3"
+    index_map["PPID"]="%-10s %-10d 3"
     index_map["FLAGS"]="%-10s %-10d 8"
     index_map["MINFL"]="%-7s %-7d 9"
     index_map["MAJFL"]="%-5s %-5d 11"
@@ -306,8 +260,8 @@ function thread_info
     index_map["CPU"]="%-3s %-3d 38"
     index_map["CPU-U"]="%-5s %4.1f x"
 
-    if bool_v "${shead}"; then
-        for header in ${show_header[*]}
+    if bool_v "${show_header}"; then
+        for header in ${header_array[*]}
         do
             local -a values=(${index_map[${header}]})
             printf "${values[0]} " "${header}"
@@ -316,15 +270,15 @@ function thread_info
     fi
 
     #top -b -n 1 -H -p ${pid}  | sed -n "7,$ p"
-    local -a pid_array=($(process_name2pid "${ppid}"))
-    for ppid in ${pid_array[*]}
+    local -a pid_array=($(process_name2pid "${process}"))
+    for process in ${pid_array[*]}
     do
-        local -a tid_array=($(process_subthread ${ppid}))
+        local -a tid_array=($(process_subthread ${process}))
         for tid in ${tid_array[*]}
         do
-            local -a pinfo=($(cat /proc/${ppid}/stat))
+            local -a pinfo=($(cat /proc/${process}/stat))
             
-            local tinfo_str=$(cat /proc/${ppid}/task/${tid}/stat)
+            local tinfo_str=$(cat /proc/${process}/task/${tid}/stat)
             if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
                 local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
                 local new_str=$(replace_regex "${old_str}" "\s+" "-")
@@ -332,7 +286,7 @@ function thread_info
             fi
 
             local -a tinfo=(${tinfo_str})
-            for header in ${show_header[*]}
+            for header in ${header_array[*]}
             do
                 local -a values=(${index_map[${header}]})
                 printf "${values[1]} " "${tinfo[${values[2]}]}"
@@ -367,59 +321,111 @@ function thread_info
                 printf "\n"
             fi
         done
-
-        local -a sub_array=($(process_subprocess "${ppid}"))    
-        for subpid in ${sub_array[*]}
-        do
-            thread_info "${subpid}" "false"
-        done
     done
     return 0
 }
 
 function process_info
 {
-    local pid="$1"
-    local shead=${2:-true}
+    local process="$1"
+    local show_thread=${2:-true}
+    local show_header=${3:-true}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: shead(default: true)"
+        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)"
         return 1
     fi
-
     local ps_header="comm,ppid,pid,lwp=TID,nlwp=TD-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,%cpu,maj_flt,min_flt,flags=FLAG,sz,vsz,%mem,wchan:15,stackp,etime,cmd"
 
-    local show_head=${shead}
-    local -a pids_array=($(echo ""))
-
-    local -a pid_array=($(process_name2pid "${pid}"))    
-    for pid in ${pid_array[*]}
+    local -a pid_array=($(process_name2pid "${process}"))    
+    for process in ${pid_array[*]}
     do
-        if bool_v "${show_head}"; then
-            show_head=false
-            ps -p ${pid} -o ${ps_header}
+        if bool_v "${show_header}"; then
+            ps -p ${process} -o ${ps_header}
         else
-            ps -p ${pid} -o ${ps_header} --no-headers
+            ps -p ${process} -o ${ps_header} --no-headers
+        fi
+    done
+    
+    if bool_v "${show_thread}"; then
+        local -a tid_array=($(process_subthread ${process}))
+        if [ ${#tid_array[*]} -gt 0 ];then
+            #printf "\n%-22s **********************************************************************\n" "$(process_pid2name ${process})[${process}]"
+            printf "************************************ Threads ************************************\n"
+            thread_info "${process}" "true"
+            printf "*********************************************************************************\n"
+        fi
+    fi
+
+    if bool_v "${show_header}" || bool_v "${show_thread}"; then
+        printf "\n"
+    fi
+
+    return 0
+}
+
+function process_ptree
+{
+    local process="$1"
+    local show_thread=${2:-false}
+    local show_header=${3:-true}
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)"
+        return 1
+    fi
+    
+    local -a pid_array=($(process_name2pid "${process}"))    
+    for process in ${pid_array[*]}
+    do
+        process_info "${process}" "${show_thread}" "${show_header}"
+        if bool_v "${show_header}"; then
+            show_header=false
         fi
 
-        pids_array=(${pids_array[*]} ${pid})
-        local -a sub_array=($(process_subprocess "${pid}"))    
-        for subpid in ${sub_array[*]}
+        local -a sub_array=($(process_subprocess "${process}"))    
+        for process in ${sub_array[*]}
         do
-            pids_array=(${pids_array[*]} ${subpid}) 
-            process_info "${subpid}" "false"
+            process_ptree "${process}" "${show_thread}" "${show_header}"
         done
     done
  
-    if bool_v "${shead}"; then
-        for pid in ${pids_array[*]}
-        do
-            local -a tid_array=($(process_subthread ${pid}))
-            if [ ${#tid_array[*]} -gt 0 ];then
-                printf "\n%-22s **********************************************************************\n" "$(process_pid2name ${pid})[${pid}]"
-                thread_info "${pid}"
-            fi
-        done
+    return 0
+}
+
+function process_pptree
+{
+    local process="$1"
+    local show_thread=${2:-false}
+    local show_header=${3:-true}
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)"
+        return 1
     fi
+
+    if [ -z "${process}" ];then
+        process="$$"
+    fi
+    
+    local -a pid_array=($(process_name2pid "${process}"))    
+    for process in ${pid_array[*]}
+    do
+        process_info "${process}" "${show_thread}" "${show_header}"
+        if bool_v "${show_header}"; then
+            show_header=false
+        fi
+        
+        local ppid_array=($(ppid ${process}))
+        if [ ${#ppid_array[*]} -gt 0 ];then
+            unset ppid_array[0]
+        fi
+
+        for process in ${ppid_array[*]}
+        do
+            process_info "${process}" "${show_thread}" "${show_header}"
+        done
+    done
+
     return 0
 }
