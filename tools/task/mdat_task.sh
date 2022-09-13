@@ -491,18 +491,18 @@ function _mdat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "mdat_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "mdat_bg_thread [${ppinfos[*]}]"
     else
-        echo_debug "mdat_bg_thread [$(process_pid2name $$)[$$]]"
+        echo_file "${LOG_DEBUG}" "mdat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
     ( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_MDAT_PIPE}.run
-    echo_debug "mdat_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "mdat_bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}"
     _mdat_thread_main
-    echo_debug "mdat_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "mdat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run
 
     eval "exec ${GBL_MDAT_FD}>&-"

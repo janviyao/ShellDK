@@ -96,13 +96,13 @@ function lru_per_data
 case ${perf_func} in
     "record")
         if [ -n "${perf_pid}" ];then
-            perf_para="-a -g -o ${save_dir}/perf.record.data -p ${perf_pid}" 
+            perf_para="-a -g -o ${save_dir}/perf.${perf_func}.data -p ${perf_pid}" 
         else
-            perf_para="-a -g -o ${save_dir}/perf.record.data -- ${perf_run}" 
+            perf_para="-a -g -o ${save_dir}/perf.${perf_func}.data -- ${perf_run}" 
         fi
 
         mkdir -p ${save_dir}
-        update_perfrc "${save_dir}/perf.record.data"
+        update_perfrc "${save_dir}/perf.${perf_func}.data"
     ;;
     "report")
         report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
@@ -111,20 +111,36 @@ case ${perf_func} in
     ;;
     "top")
         if [ -n "${perf_pid}" ];then
-            perf_para="-a -g" 
+            perf_para="-a -g -p ${perf_pid}" 
         else
-            perf_para="-a -g" 
+            eval "${perf_run}" &
+            perf_pid=$!
+            perf_para="-a -g -p ${perf_pid}" 
         fi
     ;;
     "stat")
-        if [ -n "${perf_pid}" ];then
-            perf_para="-a -d -o ${save_dir}/perf.stat.data -p ${perf_pid}" 
-        else
-            perf_para="-a -d -o ${save_dir}/perf.stat.data -- ${perf_run}" 
-        fi
+        secd_func=$(select_one \
+            "  none: Directly run a command and show performance counter statistics" \
+            "record: records lock events" \
+            "report: reports statistical data")
+        secd_func=$(string_split "${secd_func}" ":" 1)
+        secd_func=$(string_trim "${secd_func}" " ")
+        
+        if [[ "${secd_func}" == "none" ]];then
+            perf_para="-a -d -- ${perf_run}" 
+        elif [[ "${secd_func}" == "record" ]];then
+            if [ -n "${perf_pid}" ];then
+                perf_para="-a -d -o ${save_dir}/perf.${perf_func}.data record -p ${perf_pid}" 
+            else
+                perf_para="-a -d -o ${save_dir}/perf.${perf_func}.data record -- ${perf_run}" 
+            fi
 
-        mkdir -p ${save_dir}
-        update_perfrc "${save_dir}/perf.record.data"
+            mkdir -p ${save_dir}
+            update_perfrc "${save_dir}/perf.${perf_func}.data"
+        elif [[ "${secd_func}" == "report" ]];then
+            report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
+            perf_para="report  -i ${report_file}"
+        fi
     ;;
     "lock")
         secd_func=$(select_one \
@@ -150,12 +166,14 @@ case ${perf_func} in
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         if [[ "${secd_func}" == "record" ]];then
-            perf_para="-v ${secd_func} ${perf_run}" 
+            perf_para="${secd_func} -o ${save_dir}/perf.${perf_func}.data ${perf_run}" 
+            mkdir -p ${save_dir}
+            update_perfrc "${save_dir}/perf.${perf_func}.data"
         elif [[ "${secd_func}" == "report" ]];then
             report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
-            perf_para="-v ${secd_func} -i ${report_file}"
+            perf_para="${secd_func} -i ${report_file}"
         else
-            perf_para="-v ${secd_func} ${perf_run}" 
+            perf_para="${secd_func} ${perf_run}" 
         fi
     ;;
     "kmem")
@@ -165,12 +183,12 @@ case ${perf_func} in
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         if [[ "${secd_func}" == "record" ]];then
-            perf_para="${secd_func} -v --caller --alloc --slab --page --live ${perf_run}" 
+            perf_para="${secd_func} --kernel-callchains --slab --page --live ${perf_run}" 
         elif [[ "${secd_func}" == "stat" ]];then
             report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
-            perf_para="${secd_func} -v --caller --alloc --slab --page --live -i ${report_file}" 
+            perf_para="${secd_func} --kernel-callchains --slab --page --live -i ${report_file}" 
         else
-            perf_para="${secd_func} -v --caller --alloc --slab --page --live" 
+            perf_para="${secd_func} --kernel-callchains --slab --page --live" 
         fi
     ;;
     "sched")

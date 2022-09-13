@@ -191,14 +191,14 @@ function _logr_thread
         local ppids=($(ppid))
         local self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "logr_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "logr_bg_thread [${ppinfos[*]}]"
     fi
 
     touch ${GBL_LOGR_PIPE}.run
-    echo_debug "logr_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "logr_bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}"
     _logr_thread_main
-    echo_debug "logr_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "logr_bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run
 
     eval "exec ${GBL_LOGR_FD}>&-"

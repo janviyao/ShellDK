@@ -468,18 +468,18 @@ function _ncat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_debug "ncat_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "ncat_bg_thread [${ppinfos[*]}]"
     else
-        echo_debug "ncat_bg_thread [$(process_pid2name $$)[$$]]"
+        echo_file "${LOG_DEBUG}" "ncat_bg_thread [$(process_pid2name $$)[$$]]"
     fi
 
     ( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_NCAT_PIPE}.run
-    echo_debug "ncat_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "ncat_bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}"
     _ncat_thread_main
-    echo_debug "ncat_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "ncat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_NCAT_PIPE}.run
 
     eval "exec ${GBL_NCAT_FD}>&-"
