@@ -66,7 +66,7 @@ function _redirect_func
     fi
     ${SUDO} "renice -n -1 -p ${self_pid} &> /dev/null"
 
-    local log_pipe="${BASH_WORK_DIR}/log.redirect.pipe.${self_pid}"
+    local log_pipe="${log_file}.redirect.pipe.${self_pid}"
     local pipe_fd=0
 
     if ! account_check ${MY_NAME};then
