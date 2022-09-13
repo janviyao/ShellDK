@@ -477,7 +477,7 @@ function _ncat_thread
 
     touch ${GBL_NCAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "ncat_bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ncat_thread_main
     echo_file "${LOG_DEBUG}" "ncat_bg_thread[${self_pid}] exit"
     rm -f ${GBL_NCAT_PIPE}.run

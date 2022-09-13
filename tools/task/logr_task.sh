@@ -196,7 +196,7 @@ function _logr_thread
 
     touch ${GBL_LOGR_PIPE}.run
     echo_file "${LOG_DEBUG}" "logr_bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _logr_thread_main
     echo_file "${LOG_DEBUG}" "logr_bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run

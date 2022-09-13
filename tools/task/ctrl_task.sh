@@ -115,7 +115,7 @@ function _ctrl_thread
 
     touch ${GBL_CTRL_PIPE}.run
     echo_file "${LOG_DEBUG}" "ctrl_bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}"
+    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ctrl_thread_main
     echo_file "${LOG_DEBUG}" "ctrl_bg_thread[${self_pid}] exit"
     rm -f ${GBL_CTRL_PIPE}.run
