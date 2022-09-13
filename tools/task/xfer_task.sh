@@ -146,7 +146,10 @@ function rsync_to
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(fname2path "${xfer_src}")/
+            xfer_des=$(fname2path "${xfer_src}")
+            if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
+                xfer_des="${xfer_des}/"
+            fi
         fi
     fi
 
@@ -181,7 +184,10 @@ function rsync_from
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(fname2path "${xfer_src}")/
+            xfer_des=$(fname2path "${xfer_src}")
+            if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
+                xfer_des="${xfer_des}/"
+            fi
         fi
     fi
     local xfer_ips=($@)
@@ -207,7 +213,10 @@ function rsync_p2p_to
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(fname2path "${xfer_src}")/
+            xfer_des=$(fname2path "${xfer_src}")
+            if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
+                xfer_des="${xfer_des}/"
+            fi
         fi
     fi
 
@@ -242,7 +251,10 @@ function rsync_p2p_from
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(fname2path "${xfer_src}")/
+            xfer_des=$(fname2path "${xfer_src}")
+            if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
+                xfer_des="${xfer_des}/"
+            fi
         fi
     fi
     local xfer_ips=($@)
