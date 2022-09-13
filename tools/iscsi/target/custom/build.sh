@@ -6,11 +6,11 @@ if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
     rsync_p2p_from ${ISCSI_APP_SRC}/build ${CONTROL_IP}
 fi
 
-if ! can_access "${ISCSI_APP_UCTRL}";then
+if ! can_access "${ISCSI_APP_SRC}/scripts/rpc.py";then
     rsync_p2p_from ${ISCSI_APP_SRC}/scripts ${CONTROL_IP}
 fi
 
-if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}" || ! can_access "${ISCSI_APP_UCTRL}";then
+if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}" || ! can_access "${ISCSI_APP_SRC}/scripts/rpc.py";then
     if check_net;then
         ${SUDO} mkdir -p ${ISCSI_APP_SRC}
         ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
