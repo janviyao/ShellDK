@@ -32,7 +32,7 @@ if string_contain "${BTASK_LIST}" "ncat";then
     do
         NCAT_MASTER_PORT=$(($RANDOM + 32767))
     done 
-    echo_debug "ncat [${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT}] available"
+    echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT}] available"
 fi
 
 function remote_ncat_alive
@@ -370,13 +370,13 @@ function _ncat_thread_main
  
     while bool_v "${master_work}" 
     do
-        echo_debug "ncat listening into port[${NCAT_MASTER_PORT}] ..."
+        echo_file "${LOG_DEBUG}" "ncat listening into port[${NCAT_MASTER_PORT}] ..."
         local ncat_body=$(ncat_recv_msg "${NCAT_MASTER_PORT}")
         if [ -z "${ncat_body}" ];then
             mdata_get_var "master_work"
             continue
         fi
-        echo_debug "ncat recv: [${ncat_body}]" 
+        echo_file "${LOG_DEBUG}" "ncat recv: [${ncat_body}]" 
 
         local ack_ctrl=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 2)

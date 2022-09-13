@@ -69,7 +69,7 @@ function _ctrl_thread_main
 {
     while read line
     do
-        echo_debug "ctrl recv: [${line}]"
+        echo_file "${LOG_DEBUG}" "ctrl recv: [${line}]"
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
@@ -97,7 +97,7 @@ function _ctrl_thread_main
             run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
 
-        echo_debug "ctrl wait: [${GBL_CTRL_PIPE}]"
+        echo_file "${LOG_DEBUG}" "ctrl wait: [${GBL_CTRL_PIPE}]"
     done < ${GBL_CTRL_PIPE}
 }
 

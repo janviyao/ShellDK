@@ -318,7 +318,7 @@ function _xfer_thread_main
 
     while read line
     do
-        echo_debug "xfer recv: [${line}]"
+        echo_file "${LOG_DEBUG}" "xfer recv: [${line}]"
         local ack_xfer=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
@@ -393,7 +393,7 @@ function _xfer_thread_main
             run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
 
-        echo_debug "xfer wait: [${GBL_XFER_PIPE}]"
+        echo_file "${LOG_DEBUG}" "xfer wait: [${GBL_XFER_PIPE}]"
     done < ${GBL_XFER_PIPE}
 }
 
