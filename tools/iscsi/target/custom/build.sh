@@ -10,20 +10,6 @@ if ! can_access "${ISCSI_APP_SRC}/scripts/rpc.py";then
     rsync_p2p_from ${ISCSI_APP_SRC}/scripts ${CONTROL_IP}
 fi
 
-if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}" || ! can_access "${ISCSI_APP_SRC}/scripts/rpc.py";then
-    if check_net;then
-        ${SUDO} mkdir -p ${ISCSI_APP_SRC}
-        ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
-        myloop git clone git@gitlab.alibaba-inc.com:FusionTarget/FusionTarget.git ${ISCSI_APP_SRC} 
-        cd ${ISCSI_APP_SRC}
-        myloop git checkout k8s_cstor
-        myloop git submodule update --init
-    else
-        echo_erro "network fail: ${ISCSI_APP_SRC}"
-        exit 1
-    fi
-fi
-
 can_access "mesh"                              || install_from_net "meson" 
 can_access "/usr/bin/numactl"                  || install_from_net "numactl" 
 can_access "/usr/include/numa.h"               || install_from_net "numactl-devel" 
@@ -40,19 +26,37 @@ can_access "/usr/include/CUnit/Basic.h"        || install_from_net "CUnit-devel"
 can_access "/usr/lib64/libjson-c.so*"          || install_from_net "json-c" 
 can_access "/usr/include/json/json_object.h"   || install_from_net "json-c-devel" 
 
-cd ${ISCSI_APP_SRC}
-can_access "${ISCSI_APP_SRC}/build" && make clean
+if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}" || ! can_access "${ISCSI_APP_SRC}/scripts/rpc.py";then
+    if can_access "${ISCSI_APP_SRC}";then
+        ${SUDO} rm -fr ${ISCSI_APP_SRC}
+    fi
 
-./configure --enable-replication
-if [ $? -ne 0 ];then
-    echo_erro "configure fail: ${ISCSI_APP_SRC}"
-    exit 1
-fi
+    if check_net;then
+        ${SUDO} mkdir -p ${ISCSI_APP_SRC}
+        ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
+        myloop git clone git@gitlab.alibaba-inc.com:FusionTarget/FusionTarget.git ${ISCSI_APP_SRC} 
+        cd ${ISCSI_APP_SRC}
+        myloop git checkout k8s_cstor
+        myloop git submodule update --init
+    else
+        echo_erro "network fail: ${ISCSI_APP_SRC}"
+        exit 1
+    fi
 
-make -j 32
-if [ $? -ne 0 ];then
-    echo_erro "make fail: ${ISCSI_APP_SRC}"
-    exit 1
+    cd ${ISCSI_APP_SRC}
+    can_access "${ISCSI_APP_SRC}/build" && make clean
+
+    ./configure --enable-replication
+    if [ $? -ne 0 ];then
+        echo_erro "configure fail: ${ISCSI_APP_SRC}"
+        exit 1
+    fi
+
+    make -j 32
+    if [ $? -ne 0 ];then
+        echo_erro "make fail: ${ISCSI_APP_SRC}"
+        exit 1
+    fi
 fi
 
 exit 0
