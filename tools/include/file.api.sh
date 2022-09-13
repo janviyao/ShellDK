@@ -794,11 +794,16 @@ function real_path
         fi
     fi
     
-    if [ -n "${last_char}" ];then
-        echo "${this_path}${last_char}"
+    if [[ "${last_char}" == '/' ]];then
+        if [[ $(string_end "${this_path}" 1) == '/' ]]; then
+            echo "${this_path}"
+        else
+            echo "${this_path}/"
+        fi
     else
         echo "${this_path}"
     fi
+
     return 0
 }
 
