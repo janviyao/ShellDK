@@ -55,20 +55,20 @@ if [ -b /dev/${DEV_NAME} ]; then
         fi
 
         if [ -n "${chose_sched}" ];then
-            ${SUDO} "echo ${chose_sched} > /sys/block/${DEV_NAME}/queue/scheduler"
+            write_value /sys/block/${DEV_NAME}/queue/scheduler ${chose_sched}
             DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
             SHOW_INFO="${SHOW_INFO} sched:{ ${DEV_INFO}}"
         fi
     fi
 
     if can_access "/sys/block/${DEV_NAME}/queue/nomerges";then
-        ${SUDO} "echo '2' > /sys/block/${DEV_NAME}/queue/nomerges"
+        write_value /sys/block/${DEV_NAME}/queue/nomerges 2 
         DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/nomerges)
         SHOW_INFO="${SHOW_INFO} nomerg:{ ${DEV_INFO} }"
     fi
 
     if can_access "/sys/block/${DEV_NAME}/queue/nr_requests";then
-        ${SUDO} "echo '${DEV_QD}' > /sys/block/${DEV_NAME}/queue/nr_requests"
+        write_value /sys/block/${DEV_NAME}/queue/nr_requests ${DEV_QD} 
         DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/nr_requests)
         SHOW_INFO="${SHOW_INFO} queue:{ ${DEV_INFO} }"
     fi

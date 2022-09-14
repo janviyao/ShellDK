@@ -165,7 +165,7 @@ function write_value
         fi
 
         if [ $? -ne 0 ];then
-            echo_erro "fail to write { \"${value}\" } to { ${file} }"
+            echo_erro "failed to write { \"${value}\" } to { ${file} }"
             return 1
         fi
     else
