@@ -149,29 +149,36 @@ function process_pid2name
 
 function process_name2pid
 {
-    local pname="$1"
+    local process_x="$1"
 
-    is_integer "${pname}" && { echo "${pname}"; return 0; }
+    if [ -z "${process_x}" ];then
+        return 1
+    fi
 
-    local -a pid_array=($(ps -C ${pname} -o pid=))
+    if is_integer "${process_x}";then
+        echo "${process_x}"
+        return 0
+    fi
+
+    local -a pid_array=($(ps -C ${process_x} -o pid=))
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
         return 0
     fi
 
-    pid_array=($(pidof ${pname}))
+    pid_array=($(pidof ${process_x}))
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
         return 0
     fi
 
-    pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${pname}$/) print \$1 }"))    
+    pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${process_x}$/) print \$1 }"))    
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
         return 0
     fi
     
-    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${pname}\b\s+" | grep -v grep | awk '{ print $1 }'))
+    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${process_x}\b\s+" | grep -v grep | awk '{ print $1 }'))
 
     echo "${pid_array[*]}"
     return 0

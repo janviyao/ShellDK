@@ -1,18 +1,15 @@
 #!/bin/bash
-function how_use
-{
-    local script_name=$(path2fname $0)
-    echo "=================== Usage ==================="
-    printf "%-15s <app-name> | <app-pid>\n" "${script_name}"
-    printf "%-15s @%s\n" "<app-name>"    "name of running-app which it will be ftraced"
-    printf "%-15s @%s\n" "or <app-pid>"  "pid of running-app which it will be ftraced"
-    echo "============================================="
-}
-
-if [ $# -lt 1 ];then
-    how_use
-    exit 1
-fi
+perf_aim="$1"
+shift
+while [ $# -gt 0 ]
+do
+    if [[ "$1" =~ ' ' ]];then
+        perf_aim="${perf_aim} '$1'"
+    else
+        perf_aim="${perf_aim} $1"
+    fi
+    shift
+done
 
 save_dir=$(pwd)/perf
 try_cnt=0
@@ -24,28 +21,12 @@ do
 done
 save_dir=${tmp_dir}
 
-if [ $# -eq 1 ];then
-    if is_integer "$1";then
-        perf_pid=$1
-        if process_exist "${perf_pid}";then
-            echo_erro "$(process_pid2name "${perf_pid}")[${perf_pid}] process donot running"
-            exit 1
-        fi
-    else
-        pids=($(process_name2pid $1))
-        if [ ${#pids[*]} -eq 1 ];then
-            perf_pid=${pids[0]}
-        fi
-    fi
-fi
-perf_run="$@"
-
-perf_para=""
 perf_func=$(select_one \
             "record: Run a command and record its profile into perf.data" \
             "report: Read perf.data (created by perf record) and display the profile" \
             "   top: System profiling tool" \
             "  stat: Run a command and gather performance counter statistics" \
+            " probe: Define new dynamic tracepoints" \
             "  lock: Analyze lock events" \
             "   mem: Profile memory accesses" \
             "  kmem: Tool to trace/measure kernel memory properties" \
@@ -93,12 +74,61 @@ function lru_per_data
     echo "${val_str}"
 }
 
+function specify_process
+{
+    local para_cnt=$#
+    local para_str="$1"
+
+    shift
+    while [ $# -gt 0 ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            para_str="${para_str} '$1'"
+        else
+            para_str="${para_str} $1"
+        fi
+        shift
+    done
+    echo_file "${LOG_DEBUG}" "paras: ${para_str}"
+
+    if [ ${para_cnt} -eq 0 ];then
+        local process_x=$(input_prompt "" "specify process-name or pid" "")
+        local process_pids=($(process_name2pid "${process_x}"))
+        if [ ${#process_pids[*]} -gt 0 ];then
+            echo "${process_pids[0]}"
+            return 0
+        fi
+    else
+        if [ ${para_cnt} -eq 1 ];then
+            if is_integer "${para_str}";then
+                if process_exist "${para_str}";then
+                    echo "${para_str}"
+                    return 0
+                fi
+            else
+                local process_pids=($(process_name2pid "${para_str}"))
+                if [ ${#process_pids[*]} -gt 0 ];then
+                    echo "${process_pids[0]}"
+                    return 0
+                fi
+            fi
+        fi
+    fi
+
+    return 1
+}
+
 case ${perf_func} in
     "record")
-        if [ -n "${perf_pid}" ];then
+        perf_pid=$(specify_process ${perf_aim})
+        if is_integer "${perf_pid}";then
             perf_para="-a -g -o ${save_dir}/perf.${perf_func}.data -p ${perf_pid}" 
         else
-            perf_para="-a -g -o ${save_dir}/perf.${perf_func}.data -- ${perf_run}" 
+            if [ -n "${perf_aim}" ];then
+                perf_para="-a -g -o ${save_dir}/perf.${perf_func}.data -- ${perf_aim}" 
+            else
+                perf_para="-a -g -o ${save_dir}/perf.${perf_func}.data" 
+            fi
         fi
 
         mkdir -p ${save_dir}
@@ -110,29 +140,37 @@ case ${perf_func} in
         perf_para="-f -i ${report_file}"
     ;;
     "top")
-        if [ -n "${perf_pid}" ];then
-            perf_para="-a -g -p ${perf_pid}" 
+        perf_pid=$(specify_process ${perf_aim})
+        if is_integer "${perf_pid}";then
+            perf_para="-a -g --sort cpu --all-cgroups --namespaces -p ${perf_pid}" 
         else
-            eval "${perf_run}" &
-            perf_pid=$!
-            perf_para="-a -g -p ${perf_pid}" 
+            if [ -n "${perf_aim}" ];then
+                perf_para="-a -g --sort cpu --all-cgroups --namespaces -- ${perf_aim}" 
+            else
+                perf_para="-a -g --sort cpu --all-cgroups --namespaces" 
+            fi
         fi
     ;;
     "stat")
         secd_func=$(select_one \
-            "  none: Directly run a command and show performance counter statistics" \
+            "  none: directly run a command and show performance counter statistics" \
             "record: records lock events" \
             "report: reports statistical data")
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         
         if [[ "${secd_func}" == "none" ]];then
-            perf_para="-a -d -- ${perf_run}" 
+            perf_para="-a -A -d -- ${perf_aim}" 
         elif [[ "${secd_func}" == "record" ]];then
-            if [ -n "${perf_pid}" ];then
-                perf_para="-a -d -o ${save_dir}/perf.${perf_func}.data record -p ${perf_pid}" 
+            perf_pid=$(specify_process ${perf_aim})
+            if is_integer "${perf_pid}";then
+                perf_para="-a -A -d -o ${save_dir}/perf.${perf_func}.data record -p ${perf_pid}" 
             else
-                perf_para="-a -d -o ${save_dir}/perf.${perf_func}.data record -- ${perf_run}" 
+                if [ -n "${perf_aim}" ];then
+                    perf_para="-a -A -d -o ${save_dir}/perf.${perf_func}.data record -- ${perf_aim}" 
+                else
+                    perf_para="-a -A -d -o ${save_dir}/perf.${perf_func}.data record" 
+                fi
             fi
 
             mkdir -p ${save_dir}
@@ -151,12 +189,12 @@ case ${perf_func} in
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         if [[ "${secd_func}" == "record" ]];then
-            perf_para="-v ${secd_func} ${perf_run}" 
+            perf_para="-v ${secd_func} ${perf_aim}" 
         elif [[ "${secd_func}" == "report" ]];then
             report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
-            perf_para="-v ${secd_func} ${perf_run}" 
+            perf_para="-v ${secd_func} ${perf_aim}" 
         fi
     ;;
     "mem")
@@ -166,14 +204,14 @@ case ${perf_func} in
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         if [[ "${secd_func}" == "record" ]];then
-            perf_para="${secd_func} -o ${save_dir}/perf.${perf_func}.data ${perf_run}" 
+            perf_para="${secd_func} -o ${save_dir}/perf.${perf_func}.data ${perf_aim}" 
             mkdir -p ${save_dir}
             update_perfrc "${save_dir}/perf.${perf_func}.data"
         elif [[ "${secd_func}" == "report" ]];then
             report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="${secd_func} -i ${report_file}"
         else
-            perf_para="${secd_func} ${perf_run}" 
+            perf_para="${secd_func} ${perf_aim}" 
         fi
     ;;
     "kmem")
@@ -183,7 +221,7 @@ case ${perf_func} in
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         if [[ "${secd_func}" == "record" ]];then
-            perf_para="${secd_func} --kernel-callchains --slab --page --live ${perf_run}" 
+            perf_para="${secd_func} --kernel-callchains --slab --page --live ${perf_aim}" 
         elif [[ "${secd_func}" == "stat" ]];then
             report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="${secd_func} --kernel-callchains --slab --page --live -i ${report_file}" 
@@ -202,12 +240,12 @@ case ${perf_func} in
         secd_func=$(string_split "${secd_func}" ":" 1)
         secd_func=$(string_trim "${secd_func}" " ")
         if [[ "${secd_func}" == "record" ]];then
-            perf_para="-v ${secd_func} ${perf_run}" 
+            perf_para="-v ${secd_func} ${perf_aim}" 
         elif [[ "${secd_func}" == "report" ]];then
             report_file=$(input_prompt "can_access" "input file" "$(lru_per_data)")
             perf_para="-v ${secd_func} -i ${report_file}"
         else
-            perf_para="-v ${secd_func} ${perf_run}" 
+            perf_para="-v ${secd_func} ${perf_aim}" 
         fi
     ;;
     "*")
@@ -216,5 +254,10 @@ case ${perf_func} in
     ;;
 esac
 
-echo_info "perf ${perf_func} ${perf_para}"
+if is_integer "${perf_pid}";then
+    echo_info "perf ${perf_func} ${perf_para} for [$(process_pid2name "${perf_pid}")]"
+else
+    echo_info "perf ${perf_func} ${perf_para}"
+fi
+
 $SUDO "perf ${perf_func} ${perf_para}"

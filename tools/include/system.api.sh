@@ -696,6 +696,10 @@ function get_hosts_ip
             fi
         fi
 
+        if [[ "${ipaddr}" == "127.0.0.1" ]];then
+            continue
+        fi
+
         if ! array_has "${!hostip_map[*]}" "${ipaddr}";then
             hostip_map[${ipaddr}]="${hostnm}"
         fi

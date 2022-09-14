@@ -9,9 +9,53 @@ if [ -b /dev/${DEV_NAME} ]; then
     SHOW_INFO="/dev/${DEV_NAME}"
     
     if can_access "/sys/block/${DEV_NAME}/queue/scheduler";then
-        supported=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
-        if string_contain "${supported}" "noop";then
-            ${SUDO} "echo noop > /sys/block/${DEV_NAME}/queue/scheduler"
+        sched_str=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
+        sched_str=$(replace_str "${sched_str}" "[" "")
+        sched_str=$(replace_str "${sched_str}" "]" "")
+        all_sched=(${sched_str})
+        
+        chose_sched=""
+        hdd_type=$(cat /sys/block/${DEV_NAME}/queue/rotational)
+        if bool_v "${hdd_type}";then
+            if string_contain "${all_sched[*]}" "deadline";then
+                for sched in ${all_sched[*]}
+                do
+                    if [[ "${sched}" =~ "deadline" ]];then
+                        chose_sched="${sched}"
+                        break
+                    fi
+                done
+            elif string_contain "${all_sched[*]}" "cfs";then
+                for sched in ${all_sched[*]}
+                do
+                    if [[ "${sched}" =~ "cfs" ]];then
+                        chose_sched="${sched}"
+                        break
+                    fi
+                done
+            fi
+        else
+            if string_contain "${all_sched[*]}" "none";then
+                for sched in ${all_sched[*]}
+                do
+                    if [[ "${sched}" =~ "none" ]];then
+                        chose_sched="${sched}"
+                        break
+                    fi
+                done
+            elif string_contain "${all_sched[*]}" "noop";then
+                for sched in ${all_sched[*]}
+                do
+                    if [[ "${sched}" =~ "noop" ]];then
+                        chose_sched="${sched}"
+                        break
+                    fi
+                done
+            fi
+        fi
+
+        if [ -n "${chose_sched}" ];then
+            ${SUDO} "echo ${chose_sched} > /sys/block/${DEV_NAME}/queue/scheduler"
             DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
             SHOW_INFO="${SHOW_INFO} sched:{ ${DEV_INFO}}"
         fi
