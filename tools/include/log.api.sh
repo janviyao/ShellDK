@@ -26,7 +26,6 @@ function echo_file
 {
     local echo_level="$1"
     shift
-    local para="$@"
 
     if [ ${LOG_FILE_LEVEL} -lt ${echo_level} ];then
         if [ ${echo_level} -le ${LOG_ERRO} ];then
@@ -34,7 +33,14 @@ function echo_file
         fi
         return
     fi
- 
+
+    local para="$@"
+    if [ $# -gt 1 ];then
+        if [[ "${para}" =~ '%' ]];then
+            para=$(printf "$@")
+        fi
+    fi
+
     local log_type="null"
     if [ ${echo_level} -eq ${LOG_ERRO} ];then
         log_type="erro"
@@ -100,6 +106,12 @@ function echo_erro
     fi
 
     local para="$@"
+    if [ $# -gt 1 ];then
+        if [[ "${para}" =~ '%' ]];then
+            para=$(printf "$@")
+        fi
+    fi
+
     if [ -n "${REMOTE_IP}" ];then
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
@@ -120,6 +132,12 @@ function echo_info
 
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
+    if [ $# -gt 1 ];then
+        if [[ "${para}" =~ '%' ]];then
+            para=$(printf "$@")
+        fi
+    fi
+
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         # echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
@@ -138,6 +156,12 @@ function echo_warn
 
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
+    if [ $# -gt 1 ];then
+        if [[ "${para}" =~ '%' ]];then
+            para=$(printf "$@")
+        fi
+    fi
+
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         # echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
@@ -156,6 +180,12 @@ function echo_debug
 
     #local para=$(replace_str "$@" "${MY_HOME}/" "")
     local para="$@"
+    if [ $# -gt 1 ];then
+        if [[ "${para}" =~ '%' ]];then
+            para=$(printf "$@")
+        fi
+    fi
+
     if [ -n "${REMOTE_IP}" ];then
         echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
