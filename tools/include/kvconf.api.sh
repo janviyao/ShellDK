@@ -84,7 +84,10 @@ function kvconf_set
  
     local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
     if [ ${#line_nrs[*]} -gt 0 ];then
-        echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
+        if [ ${#line_nrs[*]} -gt 1 ];then
+            echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
+        fi
+
         for line_nr in ${line_nrs[*]}
         do
             file_change "${kv_file}" "${key_str}${KV_FS}${val_str}" "${line_nr}"
