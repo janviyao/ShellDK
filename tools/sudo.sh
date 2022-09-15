@@ -12,8 +12,6 @@ do
     shift
 done
 
-#CMD_STR="$(echo "${CMD_STR}" | sed 's/\\/\\\\\\\\/g')"
-#CMD_STR=$(replace_regex "${CMD_STR}" '\\' '\\')
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if ! account_check ${MY_NAME};then
         echo_erro "Username or Password check fail"
@@ -71,11 +69,13 @@ if declare -F sudo_it &>/dev/null;then
     exit $?
 fi
 
-RET_VAR="sudo_ret$$"
-GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
-CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET}"
+#RET_VAR="sudo_ret$$"
+#GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
+GET_RET="export BASH_EXIT=\$?; exit \\\$BASH_EXIT"
+CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET};"
 
 trap "exit 1" SIGINT SIGTERM SIGKILL
+
 # expect -d # debug expect
 expect << EOF
     set timeout ${SSH_TIMEOUT}
@@ -93,24 +93,29 @@ expect << EOF
         "\r\n" { exp_continue }
         "\r" { }
         "\n" { }
-        eof { exit 0 }
-        timeout { exit 1 }
+        #eof { exit 0 }
+        eof
+        timeout { exit 11 }
     }
+    catch wait result
 
     set pid [exp_pid]
     #puts "PID: $pid"
     if { "$pid" == "" } {
         expect eof
     }
+
+    exit [lindex \$result 3]
 EOF
 
-mdata_get_var ${RET_VAR}
-mdata_kv_unset_key ${RET_VAR}
-
-eval "exit_code=\$${RET_VAR}"
-if is_integer "${exit_code}";then
-    exit ${exit_code}
-else
-    echo_erro "exit code no-integer: ${exit_code}"
-    exit -1
-fi
+exit $?
+#mdata_get_var ${RET_VAR}
+#mdata_kv_unset_key ${RET_VAR}
+#
+#eval "exit_code=\$${RET_VAR}"
+#if is_integer "${exit_code}";then
+#    exit ${exit_code}
+#else
+#    echo_erro "exit code no-integer: ${exit_code}"
+#    exit -1
+#fi
