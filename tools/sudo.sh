@@ -58,7 +58,7 @@ export USR_PASSWORD='${USR_PASSWORD}'; \
 export MY_VIM_DIR=$MY_VIM_DIR; \
 if test -d '$MY_VIM_DIR';then \
     source $MY_VIM_DIR/bashrc; \
-    if [[ \$(whoami) == '${USR_NAME}' ]];then \
+    if is_me '${USR_NAME}';then \
         sudo_it '${CMD_STR}'; \
         exit \$?; \
     fi;\
@@ -66,10 +66,9 @@ fi\
 "
 
 if declare -F sudo_it &>/dev/null;then
-    sudo_cmd="${PASS_ENV}; (${CMD_STR});"
-    if sudo_it "${sudo_cmd}";then
-        exit 0
-    fi
+    sudo_cmd="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?;"
+    sudo_it "${sudo_cmd}"
+    exit $?
 fi
 
 RET_VAR="sudo_ret$$"

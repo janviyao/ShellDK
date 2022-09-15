@@ -263,6 +263,7 @@ function sudo_it
     if is_root; then
         echo_file "${LOG_DEBUG}" "[ROOT] ${cmd}"
         eval "${cmd}"
+        return $?
     else
         echo_file "${LOG_DEBUG}" "[SUDO] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
@@ -274,9 +275,11 @@ function sudo_it
 
             if can_access "${GBL_BASE_DIR}/askpass.sh";then
                 sudo -A bash -c "${cmd}"
+                return $?
             else
                 if [ -n "${USR_PASSWORD}" ]; then
                     echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
+                    return $?
                 else
                     bash -c "${cmd}"
                     return $?
@@ -284,10 +287,11 @@ function sudo_it
             fi
         else
             sudo -A bash -c "${cmd}"
+            return $?
         fi
     fi
 
-    return $?
+    return 250
 }
 
 function linux_sys
