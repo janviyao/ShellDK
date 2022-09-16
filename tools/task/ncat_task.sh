@@ -334,7 +334,7 @@ function remote_set_var
     fi
 
     echo_debug "remote set: [$@]" 
-    ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
+    ncat_send_msg "${ncat_addr}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
     return $?
 }
 
@@ -350,7 +350,7 @@ function remote_send_file
     fi
 
     echo_debug "remote send: [$@]"
-    ncat_send_msg "${ncat_addr}" "${ncat_port}" "REMOTE_SEND_FILE${GBL_SPF1}${ncat_port}${GBL_SPF2}${file_name}"
+    ncat_send_msg "${ncat_addr}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SEND_FILE${GBL_SPF1}${ncat_port}${GBL_SPF2}${file_name}"
     ncat_send_file "${ncat_addr}" "${ncat_port}" "${file_name}"
     return $?
 }
