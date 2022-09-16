@@ -76,13 +76,19 @@ function kvconf_set
     local kv_file="$1"
     local key_str="$2"
     local val_str="$3"
+    local line_nr="$4"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: line_nr(default: $)"
         return 1
     fi
  
-    local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
+    if [ -n "${line_nr}" ];then
+        local line_nrs=(${line_nr})
+    else
+        local line_nrs=($(file_linenr "${kv_file}" "${key_str}\s*${KV_FS}.+" true))
+    fi
+
     if [ ${#line_nrs[*]} -gt 0 ];then
         if [ ${#line_nrs[*]} -gt 1 ];then
             echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
@@ -210,6 +216,27 @@ function kvconf_append
         fi
     fi
     
+    return 0
+}
+
+function kvconf_update
+{
+    local kv_file="$1"
+    local key_str="$2"
+    local val_str="$3"
+    local line_nr="${4:-$}"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: line_nr(default: $)"
+        return 1
+    fi
+
+    file_change "${kv_file}" "${key_str}${KV_FS}${val_str}" "${line_nr}"
+    if [ $? -ne 0 ];then
+        echo_erro "kvconf_update { $@ }"
+        return 1
+    fi
+
     return 0
 }
 
