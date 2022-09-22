@@ -478,7 +478,12 @@ function linux_net
 function du_find
 {
     local dpath="$1"
-    local limit="${2:-1MB}"
+    local limit="${2:-10MB}"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: directory finded\n\$2: file-size filter"
+        return 1
+    fi
 
     if ! can_access "${dpath}";then
         echo_erro "path invalid: ${dpath}"

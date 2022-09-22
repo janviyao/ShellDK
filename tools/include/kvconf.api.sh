@@ -79,7 +79,7 @@ function kvconf_set
     local line_nr="$4"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: line_nr(default: $)"
+        echo_erro "\nUsage: [$@]\n\$1: kv_file\n\$2: key_str\n\$3: val_str\n\$4: line_nr(default: null)"
         return 1
     fi
  

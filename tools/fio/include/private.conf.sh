@@ -1,3 +1,3 @@
 #!/bin/bash
-declare -a FIO_SIP_ARRAY=($(echo))
-declare -a DEVICES_ARRAY=($(echo))
+declare -a FIO_SIP_ARRAY
+declare -a DEVICES_ARRAY

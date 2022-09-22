@@ -13,13 +13,13 @@ echo_info "uctrl: ${op_mode}"
 
 do_success=false
 
-create_target_node_array=($(echo))
 declare -A target_node_bl_map
 declare -A target_node_pi_map
 
-create_portal_group_array=($(echo))
-create_initiator_group_array=($(echo))
-create_bdev_array=($(echo))
+declare -a create_target_node_array
+declare -a create_portal_group_array
+declare -a create_initiator_group_array
+declare -a create_bdev_array
 
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do

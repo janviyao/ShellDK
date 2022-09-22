@@ -8,6 +8,7 @@ if ! can_access "${ISCSI_APP_SRC}";then
         ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
         myloop git clone https://github.com/spdk/spdk.git ${ISCSI_APP_SRC} 
         cd ${ISCSI_APP_SRC}
+        myloop git checkout v20.10.x
         myloop git submodule update --init
     else
         echo_erro "network fail: ${ISCSI_APP_SRC}"

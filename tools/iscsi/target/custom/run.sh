@@ -92,6 +92,12 @@ else
     echo_info "${ISCSI_APP_NAME} launch success."
 fi
 
+iscsi_pids=($(process_name2pid "${ISCSI_APP_NAME}"))
+for pid in ${iscsi_pids[*]}
+do
+    sudo_it "echo 0x7b > /proc/${pid}/coredump_filter"
+done
+
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh
 if [ $? -ne 0 ];then
     echo_erro "fail: ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/configure.sh"

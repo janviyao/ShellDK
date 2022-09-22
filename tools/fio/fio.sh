@@ -199,10 +199,10 @@ function start_test_func
 
             if bool_v "${FIO_VERIFY_ON}"; then
                 sed -i "${g_sed_insert_pre}verify=md5" ${output_dir}/${remote_conf}
-                sed -i "${g_sed_insert_pre}verify_pattern=0x0ABCDEF0" ${output_dir}/${remote_conf}
                 sed -i "${g_sed_insert_pre}do_verify=1" ${output_dir}/${remote_conf}
-                sed -i "${g_sed_insert_pre}verify_fatal=1" ${output_dir}/${remote_conf}
                 sed -i "${g_sed_insert_pre}verify_dump=1" ${output_dir}/${remote_conf}
+                sed -i "${g_sed_insert_pre}verify_fatal=1" ${output_dir}/${remote_conf}
+                sed -i "${g_sed_insert_pre}verify_pattern=0x0ABCDEF0" ${output_dir}/${remote_conf}
                 sed -i "${g_sed_insert_pre}verify_backlog=4096" ${output_dir}/${remote_conf}
 
                 sed -i "/[ ]*norandommap[ ]*/d" ${output_dir}/${remote_conf}

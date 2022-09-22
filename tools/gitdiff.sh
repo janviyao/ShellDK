@@ -10,7 +10,7 @@ fi
 
 BAK_ROOT="${other_paras[1]}"
 if [ -z "${BAK_ROOT}" ];then
-    suffix=`date '+%Y%m%d-%H%M%S'`
+    suffix=$(date '+%Y%m%d-%H%M%S')
     BAK_ROOT=~/${suffix}
 
     if [ ${#paras_list[*]} -ge 2 ];then

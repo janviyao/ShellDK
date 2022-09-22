@@ -134,7 +134,7 @@ function file_add
     local line_nr="${3:-$}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
         return 1
     fi
      
@@ -371,7 +371,7 @@ function file_insert
     local line_nr="${3:-$}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
         return 1
     fi
 
@@ -564,7 +564,7 @@ function file_change
     local line_nr="${3:-$}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
         return 1
     fi
 
@@ -657,6 +657,9 @@ function file_replace
                 echo_erro "file_replace { $@ }"
                 return 1
             fi
+        else
+            echo_erro "file_replace { $@ }: replaced line=${line_nr} empty"
+            return 1
         fi
     done
 
@@ -771,17 +774,18 @@ function current_dir
 
 function real_path
 {
-    local this_path="$1"
+    local orig_path="$1"
 
-    if [ -z "${this_path}" ];then
+    if [ -z "${orig_path}" ];then
         return 1
     fi
 
     local last_char=""
-    if [[ $(string_end "${this_path}" 1) == '/' ]]; then
+    if [[ $(string_end "${orig_path}" 1) == '/' ]]; then
         last_char="/"
     fi
 
+    local this_path="${orig_path}"
     if match_regex "${this_path}" "^-";then
         this_path=$(replace_regex "${this_path}" "\-" "\-")
     fi
@@ -791,6 +795,16 @@ function real_path
         if [ $? -ne 0 ];then
             echo_file "${LOG_ERRO}" "readlink fail: ${this_path}"
             return 1
+        fi 
+
+        if ! can_access "${this_path}";then
+            if ! string_contain "${orig_path}" '/';then
+                local path_bk="${this_path}"
+                this_path=$(which --skip-alias ${orig_path} 2>/dev/null)
+                if ! can_access "${this_path}";then
+                    this_path="${path_bk}"
+                fi
+            fi
         fi
     fi
     

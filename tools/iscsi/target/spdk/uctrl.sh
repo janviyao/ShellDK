@@ -13,10 +13,11 @@ echo_info "uctrl: ${op_mode}"
 
 do_success=false
 
-create_target_node_array=($(echo))
-create_portal_group_array=($(echo))
-create_initiator_group_array=($(echo))
-create_bdev_array=($(echo))
+declare -a create_target_node_array
+declare -a create_portal_group_array
+declare -a create_initiator_group_array
+declare -a create_bdev_array
+
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do
     ini_ip=$(string_regex "${map_key}" "\d+\.\d+\.\d+\.\d+")
