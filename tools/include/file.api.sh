@@ -429,7 +429,7 @@ function file_linenr
     local string="$2"
     local is_reg="${3:-false}"
 
-    if [ $# -lt 2 ];then
+    if [ $# -lt 1 ];then
         echo_file "${LOG_ERRO}" "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
         return 1
     fi
@@ -613,49 +613,122 @@ function file_replace
         echo_erro "file lost: ${xfile}"
         return 1
     fi 
+    new_str=$(regex_2str "${new_str}")
 
-    if [[ "${new_str}" =~ '/' ]];then
-        new_str=$(replace_str "${new_str}" '/' '\/')
-    fi
-    
+    local last_cnt
+    local last_lnr
+    local linenr_s
+
     local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
     for line_nr in ${line_nrs[*]}
-    do
-        local old_str=$(file_get "${xfile}" "${line_nr}")
-        if [[ "${old_str}" =~ "${GBL_COL_SPF}" ]];then
-            old_str=$(echo "${old_str}" | sed "s/${GBL_COL_SPF}/ /g")
-        fi
-        
+    do        
+        local old_str
         if bool_v "${is_reg}";then
+            old_str=$(file_get "${xfile}" "${line_nr}")
+            if [[ "${old_str}" =~ "${GBL_COL_SPF}" ]];then
+                old_str=$(echo "${old_str}" | sed "s/${GBL_COL_SPF}/ /g")
+            fi
+
             old_str=$(string_regex "${old_str}" "${string}")
         else
             old_str="${string}"
         fi
 
-        if [ -n "${old_str}" ];then
-            old_str=$(regex_2str "${old_str}")
+        if [ -z "${linenr_s}" ];then
+            linenr_s=${line_nr}
+        fi
+
+        if [[ -n "${last_lnr}" ]] && [[ -n "${last_cnt}" ]];then
+            if [[ ${last_lnr} -eq $((line_nr - 1)) ]] && [[ "${last_cnt}" == "${old_str}" ]];then
+                last_lnr=${line_nr}
+                last_cnt=${old_str}
+                if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -ne ${line_nr} ]];then
+                    continue
+                fi
+            fi
+        else
+            last_lnr=${line_nr}
+            last_cnt=${old_str}
+            if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -ne ${line_nr} ]];then
+                continue
+            fi
+        fi
+
+        if [ -n "${last_cnt}" ];then
+            last_cnt=$(regex_2str "${last_cnt}")
             if bool_v "${is_reg}";then
                 if [[ $(string_start "${string}" 1) == '^' ]]; then
-                    sed -i "${line_nr} s/^${old_str}/${new_str}/g" ${xfile}
+                    sed -i "${linenr_s},${last_lnr} s/^${last_cnt}/${new_str}/g" ${xfile}
                     if [ $? -ne 0 ];then
                         echo_erro "file_replace { $@ }"
                         return 1
                     fi
+                    echo_debug "file_replace { $@ }: ${linenr_s},${last_lnr} s/^${last_cnt}/${new_str}/g"
+
+                    linenr_s=""
+                    last_lnr=""
+                    last_cnt=""
+
+                    if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -eq ${line_nr} ]] && [[ ${line_nr} -ne ${last_lnr} ]];then
+                        if [ -n "${old_str}" ];then
+                            old_str=$(regex_2str "${old_str}")
+                            sed -i "${line_nr} s/^${old_str}/${new_str}/g" ${xfile}
+                            if [ $? -ne 0 ];then
+                                echo_erro "file_replace { $@ }"
+                                return 1
+                            fi
+                            echo_debug "file_replace { $@ }: ${line_nr} s/^${old_str}/${new_str}/g"
+                        fi
+                    fi
                     continue
                 elif [[ $(string_end "${string}" 1) == '$' ]]; then
-                    sed -i "${line_nr} s/${old_str}$/${new_str}/g" ${xfile}
+                    sed -i "${linenr_s},${last_lnr} s/${last_cnt}$/${new_str}/g" ${xfile}
                     if [ $? -ne 0 ];then
                         echo_erro "file_replace { $@ }"
                         return 1
+                    fi
+                    echo_debug "file_replace { $@ }: ${linenr_s},${last_lnr} s/${last_cnt}$/${new_str}/g"
+
+                    linenr_s=""
+                    last_lnr=""
+                    last_cnt=""
+
+                    if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -eq ${line_nr} ]] && [[ ${line_nr} -ne ${last_lnr} ]];then
+                        if [ -n "${old_str}" ];then
+                            old_str=$(regex_2str "${old_str}")
+                            sed -i "${line_nr} s/${old_str}$/${new_str}/g" ${xfile}
+                            if [ $? -ne 0 ];then
+                                echo_erro "file_replace { $@ }"
+                                return 1
+                            fi
+                            echo_debug "file_replace { $@ }: ${line_nr} s/${old_str}$/${new_str}/g"
+                        fi
                     fi
                     continue
                 fi
             fi
 
-            sed -i "${line_nr} s/${old_str}/${new_str}/g" ${xfile}
+            sed -i "${linenr_s},${last_lnr} s/${last_cnt}/${new_str}/g" ${xfile}
             if [ $? -ne 0 ];then
                 echo_erro "file_replace { $@ }"
                 return 1
+            fi
+            echo_debug "file_replace { $@ }: ${linenr_s},${last_lnr} s/${last_cnt}/${new_str}/g"
+
+            linenr_s=""
+            last_lnr=""
+            last_cnt=""
+
+            if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -eq ${line_nr} ]] && [[ ${line_nr} -ne ${last_lnr} ]];then
+                if [ -n "${old_str}" ];then
+                    old_str=$(regex_2str "${old_str}")
+                    sed -i "${line_nr} s/${old_str}/${new_str}/g" ${xfile}
+                    if [ $? -ne 0 ];then
+                        echo_erro "file_replace { $@ }"
+                        return 1
+                    fi
+                    echo_debug "file_replace { $@ }: ${line_nr} s/${old_str}/${new_str}/g"
+                fi
             fi
         else
             echo_erro "file_replace { $@ }: replaced line=${line_nr} empty"

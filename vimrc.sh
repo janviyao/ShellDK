@@ -36,6 +36,7 @@ function create_project
 
     sort -u cscope.files > cscope.files.tmp
     mv cscope.files.tmp cscope.files 
+    echo_debug "orig cscope.files lines=$(file_linenr cscope.files)"
 
     input_val=$(input_prompt "" "input wipe directory" "")
     while [ -n "${input_val}" ]
@@ -51,18 +52,20 @@ function create_project
         fi
         input_val=$(input_prompt "" "input wipe directory" "")
     done
+    echo_debug "wipe cscope.files lines=$(file_linenr cscope.files)"
 
-    file_replace cscope.files "./" "" false
+    file_replace cscope.files "^\./" "" true
     if [ $? -ne 0 ];then
         echo_erro "file_replace { ./ } into { } fail"
         return 1
     fi
 
     if can_access ".gitignore"; then
+        echo_debug "lines=$(file_linenr cscope.files) before gitignore"
         while read line
         do
             [ -z "${line}" ] && continue
-            echo_debug "gitignore: ${line}"
+            echo_debug "orig regex: ${line}"
 
             if match_regex "${line}" "^#";then
                 continue
@@ -74,12 +77,10 @@ function create_project
 
             if match_regex "${line}" "^/";then
                 line="^${line}"
-                echo_debug "new1: ${line}"
             fi
 
             if match_regex "${line}" "/$";then
                 line="^${line}"
-                echo_debug "new2: ${line}"
             fi
 
             if string_contain "${line}" ".";then
@@ -87,34 +88,31 @@ function create_project
                     line="^${line}"
                 fi
                 line=$(replace_str "${line}" '.' '\.')
-                echo_debug "new3: ${line}"
             fi
 
             if string_contain "${line}" "*";then
                 line=$(replace_str "${line}" '*' '.*')
-                echo_debug "new4: ${line}"
             fi
 
             if string_contain "${line}" "?";then
                 line=$(replace_str "${line}" '?' '.')
-                echo_debug "new5: ${line}"
             fi
  
             if string_contain "${line}" "/";then
                 line=$(replace_str "${line}" '/' '\/')
-                echo_debug "new6: ${line}"
             fi
 
-            echo_debug "delete: ${line}"
+            echo_debug "new regex: ${line}"
             file_del cscope.files "${line}" true
             if [ $? -ne 0 ];then
                 echo_erro "file_del { ${line}} fail"
                 return 1
             fi
         done < .gitignore
+        echo_debug "lines=$(file_linenr cscope.files) after gitignore"
     fi
     
-    local line_nr=$(file_linenr cscope.files "")
+    local line_nr=$(file_linenr cscope.files)
     if [ -n "${line_nr}" ] && [ ${line_nr} -le 1 ];then
         echo_erro "cscope.files empty"
         return 1
@@ -124,6 +122,7 @@ function create_project
     rm -f cscope.*out
     rm -f ncscope.*
     
+    echo_debug "build ctags ..."
     local extra_opt=$(ctags --help | grep '\-\-extra\=') 
     if [ -n "${extra_opt}" ]; then
         ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files
@@ -136,6 +135,7 @@ function create_project
         return 1
     fi
 
+    echo_debug "build cscope ..."
     cscope -ckbq -i cscope.files
     if ! can_access "cscope.*";then
         echo_erro "cscope.out create fail"
