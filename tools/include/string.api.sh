@@ -3,7 +3,7 @@
 
 function regex_2str
 {
-    local regex=$1
+    local regex="$@"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
@@ -34,6 +34,41 @@ function regex_2str
         fi
     done
 
+    echo "${result}" 
+    return 0
+}
+
+function regex_perl2posix
+{
+    local regex="$@"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: regex string"
+        return 1
+    fi
+
+    local result="${regex}"
+    local reg_chars=('\+' '\?' '\{' '\}' '\(' '\)' '|')
+    for char in ${reg_chars[*]}
+    do
+        if [[ ${regex} =~ ${char} ]];then
+            if [[ ${char} == '\{' ]];then
+                result=$(echo "${result}" | sed "s/{/\\\\${char}/g" )
+            elif [[ ${char} == '\(' ]];then
+                result=$(echo "${result}" | sed "s/(/\\\\${char}/g" )
+            elif [[ ${char} == '\)' ]];then
+                result=$(echo "${result}" | sed "s/)/\\\\${char}/g" )
+            else
+                result=$(echo "${result}" | sed "s/${char}/\\\\${char}/g" )
+            fi
+
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "regex_perl2posix { $@ }"
+                return 1
+            fi
+        fi
+    done
+    
     echo "${result}" 
     return 0
 }
