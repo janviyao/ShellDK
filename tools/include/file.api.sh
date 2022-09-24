@@ -665,10 +665,6 @@ function file_replace
                     fi
                     echo_debug "file_replace { $@ }: ${linenr_s},${last_lnr} s/^${last_cnt}/${new_str}/g"
 
-                    linenr_s=""
-                    last_lnr=""
-                    last_cnt=""
-
                     if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -eq ${line_nr} ]] && [[ ${line_nr} -ne ${last_lnr} ]];then
                         if [ -n "${old_str}" ];then
                             old_str=$(regex_2str "${old_str}")
@@ -680,6 +676,10 @@ function file_replace
                             echo_debug "file_replace { $@ }: ${line_nr} s/^${old_str}/${new_str}/g"
                         fi
                     fi
+
+                    linenr_s=""
+                    last_lnr=""
+                    last_cnt=""
                     continue
                 elif [[ $(string_end "${string}" 1) == '$' ]]; then
                     sed -i "${linenr_s},${last_lnr} s/${last_cnt}$/${new_str}/g" ${xfile}
@@ -688,10 +688,6 @@ function file_replace
                         return 1
                     fi
                     echo_debug "file_replace { $@ }: ${linenr_s},${last_lnr} s/${last_cnt}$/${new_str}/g"
-
-                    linenr_s=""
-                    last_lnr=""
-                    last_cnt=""
 
                     if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -eq ${line_nr} ]] && [[ ${line_nr} -ne ${last_lnr} ]];then
                         if [ -n "${old_str}" ];then
@@ -704,6 +700,10 @@ function file_replace
                             echo_debug "file_replace { $@ }: ${line_nr} s/${old_str}$/${new_str}/g"
                         fi
                     fi
+
+                    linenr_s=""
+                    last_lnr=""
+                    last_cnt=""
                     continue
                 fi
             fi
@@ -714,10 +714,6 @@ function file_replace
                 return 1
             fi
             echo_debug "file_replace { $@ }: ${linenr_s},${last_lnr} s/${last_cnt}/${new_str}/g"
-
-            linenr_s=""
-            last_lnr=""
-            last_cnt=""
 
             if [[ ${line_nrs[$((${#line_nrs[*]} - 1))]} -eq ${line_nr} ]] && [[ ${line_nr} -ne ${last_lnr} ]];then
                 if [ -n "${old_str}" ];then
@@ -730,6 +726,10 @@ function file_replace
                     echo_debug "file_replace { $@ }: ${line_nr} s/${old_str}/${new_str}/g"
                 fi
             fi
+
+            linenr_s=""
+            last_lnr=""
+            last_cnt=""
         else
             echo_erro "file_replace { $@ }: replaced line=${line_nr} empty"
             return 1

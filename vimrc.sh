@@ -102,7 +102,7 @@ function create_project
                 line=$(replace_str "${line}" '/' '\/')
             fi
 
-            echo_debug "new regex: ${line}"
+            echo_debug "new  regex: ${line}"
             file_del cscope.files "${line}" true
             if [ $? -ne 0 ];then
                 echo_erro "file_del { ${line}} fail"
