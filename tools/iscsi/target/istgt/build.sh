@@ -6,7 +6,7 @@ if ! can_access "${ISCSI_APP_SRC}";then
     if check_net;then
         ${SUDO} mkdir -p ${ISCSI_APP_SRC}
         ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
-        myloop git clone https://github.com/elastocloud/istgt.git ${ISCSI_APP_SRC} 
+        loop_2success git clone https://github.com/elastocloud/istgt.git ${ISCSI_APP_SRC} 
     else
         echo_erro "network fail: ${ISCSI_APP_SRC}"
         exit 1

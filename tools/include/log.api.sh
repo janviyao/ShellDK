@@ -194,3 +194,28 @@ function echo_debug
     fi
     echo_file "${LOG_DEBUG}" "$@"
 }
+
+function echo_iferror
+{
+    local cmd="$1"
+    shift
+    while [ $# -gt 0 ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            cmd="${cmd} '$1'"
+        else
+            cmd="${cmd} $1"
+        fi
+        shift
+    done
+
+    echo_debug "${cmd}"
+    bash -c "${cmd}"
+
+    local retcode=$?
+    if [ ${retcode} -ne 0 ];then
+        echo_erro "errno(${retcode}): ${cmd}"
+    fi
+
+    return ${retcode}
+}

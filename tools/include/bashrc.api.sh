@@ -22,10 +22,10 @@ alias mylsblk='lsblk -o NAME,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,TRAN,WWN,MIN-IO,OPT-IO
 alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
-alias mygit='myloop git'
+alias mygit='loop_2success git'
 alias gpull='mygit pull'
-alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push; }; git_push'
-alias gcommit='function git_commit { git add -A ./*; git commit -m "$1"; }; git_commit'
+alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); }; git_push'
+alias gcommit='function git_commit { git add -A; git commit -s -m "$@"; }; git_commit'
 
 alias psgrep='function ps_grep { ps -fauex | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
 

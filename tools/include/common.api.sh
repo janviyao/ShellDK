@@ -326,6 +326,60 @@ function select_one
     return 0
 }
 
+function loop_2success
+{
+    local cmd="$1"
+    shift
+    while [ $# -gt 0 ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            cmd="${cmd} '$1'"
+        else
+            cmd="${cmd} $1"
+        fi
+        shift
+    done
+    echo_debug "${cmd}"
+
+    while true
+    do
+        bash -c "${cmd}"
+        if [ $? -eq 0]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+function loop_2fail
+{
+    local cmd="$1"
+    shift
+    while [ $# -gt 0 ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            cmd="${cmd} '$1'"
+        else
+            cmd="${cmd} $1"
+        fi
+        shift
+    done
+    echo_debug "${cmd}"
+
+    while true
+    do
+        bash -c "${cmd}"
+
+        local retcode=$?
+        if [ ${retcode} -ne 0]; then
+            return ${retcode}
+        fi
+    done
+
+    return 0
+}
+
 INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/tools/include/log.api.sh
 INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/tools/include/string.api.sh
 INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/tools/include/system.api.sh

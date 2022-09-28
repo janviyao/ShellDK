@@ -11,7 +11,7 @@ ${SUDO} "cat /dev/null > /var/log/kern; rm -f /var/log/kern-*"
 
 if bool_v "${APPLY_SYSCTRL}";then
     can_access "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
-    ${SUDO} ${TOOL_ROOT_DIR}/log.sh sysctl -p
+    ${SUDO} echo_iferror sysctl -p
 fi
 
 #if process_exist "iscsid";then

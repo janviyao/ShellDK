@@ -247,8 +247,6 @@ fi
 CMD_PRE="my"
 declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
-commandMap["${CMD_PRE}log"]="${ROOT_DIR}/tools/log.sh"
-commandMap["${CMD_PRE}loop"]="${ROOT_DIR}/tools/loop.sh"
 commandMap["${CMD_PRE}ftrace"]="${ROOT_DIR}/tools/ftrace.sh"
 commandMap["${CMD_PRE}collect"]="${ROOT_DIR}/tools/collect.sh"
 commandMap["${CMD_PRE}scplogin"]="${ROOT_DIR}/tools/scplogin.sh"

@@ -145,12 +145,15 @@ function perf_top
 
     local perf_para=""
     if is_integer "${perf_pid}";then
-        perf_para="-a -g --sort cpu --all-cgroups --namespaces -p ${perf_pid}" 
+        #perf_para="-a -g --sort cpu --all-cgroups --namespaces -p ${perf_pid}" 
+        perf_para="-a -g -p ${perf_pid}" 
     else
         if [ -n "${process_x}" ];then
-            perf_para="-a -g --sort cpu --all-cgroups --namespaces -- ${process_x}" 
+            #perf_para="-a -g --sort cpu --all-cgroups --namespaces -- ${process_x}" 
+            perf_para="-a -g -- ${process_x}" 
         else
-            perf_para="-a -g --sort cpu --all-cgroups --namespaces" 
+            #perf_para="-a -g --sort cpu --all-cgroups --namespaces" 
+            perf_para="-a -g" 
         fi
     fi
     
@@ -161,7 +164,8 @@ function perf_top
 
 function perf_stat
 {
-    local perf_save="$1"
+    local process_x="$1"
+    local perf_save="$2"
 
     local item1="  none: directly run a command and show performance counter statistics"
     local item2="record: records lock events"
@@ -173,6 +177,9 @@ function perf_stat
     
     local perf_para=""
     if [[ "${select_x}" == "none" ]];then
+        if [ -z "${process_x}" ];then
+            process_x=$(input_prompt "" "specify one command-str that can directly run" "")
+        fi
         perf_para="-a -A -d -- ${process_x}" 
     elif [[ "${select_x}" == "record" ]];then
         local perf_pid=$(construct_pid ${process_x})
@@ -412,7 +419,7 @@ case ${perf_func} in
         perf_top "${perf_obj}"
         ;;
     "stat")
-        perf_stat "${save_dir}"
+        perf_stat "${perf_obj}" "${save_dir}"
         ;;
     "probe")
         perf_probe    
