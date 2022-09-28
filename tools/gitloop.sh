@@ -8,18 +8,7 @@ if [ ! -d ${RUN_DIR} ]; then
     exit -1
 fi
 
-CMD_STR="$1"
-shift
-while [ $# -gt 0 ]
-do
-    if [[ "$1" =~ ' ' ]];then
-        CMD_STR="${CMD_STR} '$1'"
-    else
-        CMD_STR="${CMD_STR} $1"
-    fi
-    shift
-done
-
+CMD_STR=$(para_pack "$@")
 CUR_DIR=$(pwd)
 cd ${RUN_DIR}
 RUN_DIR=$(pwd)

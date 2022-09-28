@@ -1,16 +1,6 @@
 #!/bin/bash
 #echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
-CMD_STR="$1"
-shift
-while [ $# -gt 0 ]
-do
-    if [[ "$1" =~ ' ' ]];then
-        CMD_STR="${CMD_STR} '$1'"
-    else
-        CMD_STR="${CMD_STR} $1"
-    fi
-    shift
-done
+CMD_STR=$(para_pack "$@")
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if ! account_check ${MY_NAME};then

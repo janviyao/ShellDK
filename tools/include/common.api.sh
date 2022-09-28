@@ -326,9 +326,10 @@ function select_one
     return 0
 }
 
-function loop_2success
+function para_pack
 {
     local cmd="$1"
+
     shift
     while [ $# -gt 0 ]
     do
@@ -339,12 +340,19 @@ function loop_2success
         fi
         shift
     done
+
+    echo "${cmd}"
+}
+
+function loop_2success
+{
+    local cmd=$(para_pack "$@")
     echo_debug "${cmd}"
 
     while true
     do
         bash -c "${cmd}"
-        if [ $? -eq 0]; then
+        if [ $? -eq 0 ]; then
             return 0
         fi
     done
@@ -354,17 +362,7 @@ function loop_2success
 
 function loop_2fail
 {
-    local cmd="$1"
-    shift
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            cmd="${cmd} $1"
-        fi
-        shift
-    done
+    local cmd=$(para_pack "$@")
     echo_debug "${cmd}"
 
     while true
@@ -372,7 +370,7 @@ function loop_2fail
         bash -c "${cmd}"
 
         local retcode=$?
-        if [ ${retcode} -ne 0]; then
+        if [ ${retcode} -ne 0 ]; then
             return ${retcode}
         fi
     done

@@ -14,18 +14,7 @@ function run_timeout
 {
     local time_s="${1:-60}"
     shift
-
-    local cmd="$1"
-    shift
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            cmd="${cmd} $1"
-        fi
-        shift
-    done
+    local cmd=$(para_pack "$@")
 
     if [ -n "${cmd}" ];then
         echo_debug "timeout(${time_s}s): ${cmd}"
@@ -38,18 +27,7 @@ function run_timeout
 
 function run_lock
 {
-    local cmd="$1"
-    shift
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            cmd="${cmd} $1"
-        fi
-        shift
-    done
-
+    local cmd=$(para_pack "$@")
     (
         flock -x 8  #flock文件锁，-x表示独享锁
         bash -c "${cmd}"
@@ -248,17 +226,7 @@ function account_check
 
 function sudo_it
 {
-    local cmd="$1"
-    shift
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            cmd="${cmd} $1"
-        fi
-        shift
-    done
+    local cmd=$(para_pack "$@")
 
     if is_root; then
         echo_file "${LOG_DEBUG}" "[ROOT] ${cmd}"

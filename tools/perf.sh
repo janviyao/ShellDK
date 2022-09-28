@@ -1,15 +1,5 @@
 #!/bin/bash
-perf_obj="$1"
-shift
-while [ $# -gt 0 ]
-do
-    if [[ "$1" =~ ' ' ]];then
-        perf_obj="${perf_obj} '$1'"
-    else
-        perf_obj="${perf_obj} $1"
-    fi
-    shift
-done
+perf_obj=$(para_pack "$@")
 
 save_dir=$(pwd)/perf
 try_cnt=0
@@ -63,18 +53,7 @@ function acquire_result
 function construct_pid
 {
     local para_cnt=$#
-    local para_str="$1"
-
-    shift
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            para_str="${para_str} '$1'"
-        else
-            para_str="${para_str} $1"
-        fi
-        shift
-    done
+    local para_str=$(para_pack "$@")
     echo_file "${LOG_DEBUG}" "construct_pid: ${para_str}"
 
     if [ ${para_cnt} -eq 0 ];then
