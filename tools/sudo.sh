@@ -78,16 +78,15 @@ expect << EOF
 
     spawn -noecho sudo bash -c "${CMD_STR}"
     expect {
-        "*username*:*" { send "${USR_NAME}\r" }
-        "*password*:*" { send "${USR_PASSWORD}\r" }
-        "*\u5bc6\u7801\uff1a*" { send "${USR_PASSWORD}\r" }
+        "*username*:*" { send "${USR_NAME}\r"; exp_continue }
+        "*password*:*" { send "${USR_PASSWORD}\r"; exp_continue }
+        "*\u5bc6\u7801\uff1a*" { send "${USR_PASSWORD}\r"; exp_continue }
         #solve: expect: spawn id exp4 not open
         "\r\n" { exp_continue }
-        "\r" { }
-        "\n" { }
-        #eof { exit 0 }
-        eof
-        timeout { exit 11 }
+        "\r" { exp_continue }
+        "\n" { exp_continue }
+        eof { exit 0 }
+        timeout { exit 110 }
     }
     catch wait result
 
