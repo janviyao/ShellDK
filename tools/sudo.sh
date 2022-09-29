@@ -15,13 +15,13 @@ if is_root; then
     exit $?
 else 
     if ! which sudo &> /dev/null; then
-        echo_erro "sudo not supported"
+        echo_debug "sudo not supported"
         eval "${CMD_STR}"
         exit $?
     fi
 
     if ! which expect &> /dev/null; then
-        echo_erro "expect not supported"
+        echo_debug "expect not supported"
         sudo_it "${CMD_STR}"
         exit $?
     fi
@@ -56,7 +56,9 @@ fi\
 if declare -F sudo_it &>/dev/null;then
     sudo_cmd="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?;"
     sudo_it "${sudo_cmd}"
-    exit $?
+    if [ $? -eq 0 ];then
+        exit 0
+    fi
 fi
 
 #RET_VAR="sudo_ret$$"
