@@ -705,9 +705,9 @@ else
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
         if [ -n "${routeMap[${ipaddr}]}" ];then
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} sed -i '/${ipaddr}/d' /etc/hosts"
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} sed -i '$ a${ipaddr}   ${routeMap[${ipaddr}]}' /etc/hosts"
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${SUDO} hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '/${ipaddr}/d' /etc/hosts"
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '$ a${ipaddr}   ${routeMap[${ipaddr}]}' /etc/hosts"
+            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo hostnamectl set-hostname ${routeMap[${ipaddr}]}"
         fi
 
         if bool_v "${COPY_PKG}"; then
