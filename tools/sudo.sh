@@ -56,9 +56,7 @@ fi\
 if declare -F sudo_it &>/dev/null;then
     sudo_cmd="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?;"
     sudo_it "${sudo_cmd}"
-    if [ $? -eq 0 ];then
-        exit 0
-    fi
+    exit $?
 fi
 
 #RET_VAR="sudo_ret$$"
@@ -85,10 +83,10 @@ expect << EOF
         "\r\n" { exp_continue }
         "\r" { exp_continue }
         "\n" { exp_continue }
-        eof { exit 0 }
+        eof { catch wait result; exit [lindex \$result 3]; }
         timeout { exit 110 }
     }
-    catch wait result
+    #catch wait result
 
     set pid [exp_pid]
     #puts "PID: $pid"
@@ -96,7 +94,7 @@ expect << EOF
         expect eof
     }
 
-    exit [lindex \$result 3]
+    #exit [lindex \$result 3]
 EOF
 
 exit $?
