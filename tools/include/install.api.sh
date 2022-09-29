@@ -5,6 +5,11 @@ function install_from_net
 {
     local inst_name="$1"
 
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify package name"
+        return 1
+    fi
+
     echo_info "$(printf "[%13s]: %-50s" "Will install" "${inst_name}")"
     if can_access "yum";then
         ${SUDO} yum install ${inst_name} -y
@@ -38,6 +43,11 @@ function install_from_make
 {
     local work_dir="$1"
     local conf_para="${2:-"--prefix=/usr"}"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify compile directory"
+        return 1
+    fi
 
     local currdir="$(pwd)"
     cd ${work_dir} || { echo_erro "enter fail: ${work_dir}"; return 1; }
@@ -97,12 +107,15 @@ function install_from_make
     fi
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
+    local cflags_bk="${CFLAGS}"
+    export CFLAGS="-fcommon"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${work_dir} fail"
         cd ${currdir}
         return 1
     fi
+    export CFLAGS="${cflags_bk}"
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
     ${SUDO} "make install &>> build.log"
@@ -120,6 +133,11 @@ function install_from_rpm
 {
     local fname_reg="$1"
     local rpm_file=""
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify rpm-regex name"
+        return 1
+    fi
 
     local name_reg=$(string_trim "${fname_reg}" "\.rpm" 2)
     local installed_arr=($(rpm -qa | grep -P "^${name_reg}"))
@@ -177,6 +195,11 @@ function tar_decompress
 function install_from_tar
 {
     local fname_reg="$1"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify tar-regex name"
+        return 1
+    fi
 
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
     for tar_file in ${local_arr[*]}    

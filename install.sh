@@ -38,6 +38,7 @@ INST_GUIDE["tclsh8.6"]="${CMD1};install_from_tar 'tcl.+\.tar\.gz';rm -fr tcl*/"
 INST_GUIDE["expect"]="${CMD1};install_from_tar 'tcl.+\.tar\.gz';${CMD1};install_from_tar 'expect.+\.tar\.gz';rm -fr expect*/;rm -fr tcl*/"
 INST_GUIDE["unzip"]="${CMD1};install_from_rpm 'unzip-.+\.rpm'"
 
+INST_GUIDE["netperf"]="${CMD1};install_from_tar 'netperf-.+\.tar\.gz';rm -fr netperf-*/"
 INST_GUIDE["perf"]="install_from_net perf"
 INST_GUIDE["atop"]="${CMD1};install_from_rpm 'atop-.+\.rpm'"
 INST_GUIDE["iperf3"]="${CMD1};install_from_rpm 'iperf3-.+\.rpm'"
