@@ -46,6 +46,25 @@ function sshto
     local des_key="$1"
 
     eval "local -A ip_map=($(get_hosts_ip map))"
+    if [ ${#ip_map[*]} -eq 0 ];then
+        local ip_addr="${des_key}"
+        if ! match_regex "${ip_addr}" "\d+\.\d+\.\d+\.\d+";then
+            ip_addr=$(input_prompt "" "input ip address" "")
+        fi
+
+        if [ -n "${ip_addr}" ];then
+            if [ -z "${USR_PASSWORD}" ]; then
+                ssh ${ip_addr}
+            else
+                sshpass -p "${USR_PASSWORD}" ssh ${ip_addr} 
+            fi
+            return 0
+        else
+            echo_erro "ip address invalid"
+            return 1
+        fi
+    fi
+
     if [ -z "${des_key}" ];then
         local -a select_array
         for key in ${!ip_map[*]}
