@@ -333,11 +333,12 @@ function para_pack
     shift
     while [ $# -gt 0 ]
     do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            cmd="${cmd} $1"
-        fi
+        cmd="${cmd} '$1'"
+        #if [[ "$1" =~ ' ' ]];then
+        #cmd="${cmd} '$1'"
+        #else
+        #    cmd="${cmd} $1"
+        #fi
         shift
     done
 
