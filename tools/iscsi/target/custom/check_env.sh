@@ -10,7 +10,13 @@ can_access "/usr/lib64/libjson-c.so.*"           || { cd ${MY_VIM_DIR}/deps; ins
 can_access "/usr/include/json/json_c_version.h"  || { cd ${MY_VIM_DIR}/deps; install_from_rpm "json-c-devel.+\.rpm"; }
 
 # configure core-dump path
-${SUDO} ulimit -c unlimited
+$SUDO file_del /etc/security/limits.conf '^.*\*\s+soft\s+core\s+.+' true
+$SUDO file_add /etc/security/limits.conf '* soft core unlimited'
+
+$SUDO file_del /etc/security/limits.conf '^.*\*\s+hard\s+core\s+.+' true
+$SUDO file_add /etc/security/limits.conf '* hard core unlimited'
+
+#${SUDO} ulimit -c unlimited
 ${SUDO} "echo '/core-%e-%s-%u-%g-%p-%t' > /proc/sys/kernel/core_pattern"
 
 ${SUDO} "echo > /var/log/messages; rm -f /var/log/messages-*"
