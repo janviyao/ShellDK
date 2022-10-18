@@ -10,7 +10,7 @@ if ! can_access "${ISCSI_APP_SRC}/scripts/rpc.py";then
     rsync_p2p_from ${ISCSI_APP_SRC}/scripts/* ${CONTROL_IP}
 fi
 
-can_access "mesh"                              || install_from_net "meson" 
+can_access "meson"                             || install_from_net "meson" 
 can_access "/usr/bin/numactl"                  || install_from_net "numactl" 
 can_access "/usr/include/numa.h"               || install_from_net "numactl-devel" 
 can_access "/usr/lib64/libnuma.so.*"           || install_from_net "numactl-libs" 
