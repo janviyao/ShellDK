@@ -55,14 +55,35 @@ function conf_sched
         return 1
     fi
 
-    write_value ${sys_path}/queue/scheduler ${chose_sched}
-    sys_scheds=$(cat ${sys_path}/queue/scheduler)
-    echo_info "%s %12s %s" "${dev_name}" "scheduler:" "{ ${sys_scheds} }"
+    if can_access "${sys_path}/queue/scheduler";then
+        write_value ${sys_path}/queue/scheduler ${chose_sched}
+        sys_scheds=$(cat ${sys_path}/queue/scheduler)
+        echo_info "%s %12s %s" "${dev_name}" "scheduler:" "{ ${sys_scheds} }"
+    fi
 
     return 0
 }
 
 function conf_merge
+{
+    local dev_name="$1"
+
+    local sys_path="/sys/block/${dev_name}"
+    if ! can_access "${sys_path}";then
+        echo_erro "invalid: ${sys_path}"
+        return 1
+    fi
+
+    if can_access "${sys_path}/queue/nomerges";then
+        write_value ${sys_path}/queue/nomerges 2 
+        local now_val=$(cat ${sys_path}/queue/nomerges)
+        echo_info "%s %12s %s" "${dev_name}" "nomerges:" "{ ${now_val} }"
+    fi
+    
+    return 0
+}
+
+function conf_qdeep
 {
     local dev_name="$1"
     local bdq_deep="$2"
@@ -73,13 +94,19 @@ function conf_merge
         return 1
     fi
 
-    write_value ${sys_path}/queue/nomerges 2 
-    local now_val=$(cat ${sys_path}/queue/nomerges)
-    echo_info "%s %12s %s" "${dev_name}" "nomerges:" "{ ${now_val} }"
+    if can_access "${sys_path}/queue/nr_requests";then
+        write_value ${sys_path}/queue/nr_requests ${bdq_deep} 
+        now_val=$(cat ${sys_path}/queue/nr_requests)
+        echo_info "%s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
+    fi
 
-    write_value ${sys_path}/queue/nr_requests ${bdq_deep} 
-    now_val=$(cat ${sys_path}/queue/nr_requests)
-    echo_info "%s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
+    if can_access "${sys_path}/device/queue_depth";then
+        write_value ${sys_path}/device/queue_depth ${bdq_deep} 
+        now_val=$(cat ${sys_path}/device/queue_depth)
+        echo_info "%s %12s %s" "${dev_name}" "queue_depth:" "{ ${now_val} }"
+    fi
+
+    return 0
 }
 
 dev_name="$1"
@@ -87,7 +114,8 @@ bdq_deep="$2"
 
 if string_match "${dev_name}" "dm" 1;then
     conf_sched ${dev_name}
-    conf_merge ${dev_name} ${bdq_deep}
+    conf_merge ${dev_name}
+    conf_qdeep ${dev_name} ${bdq_deep}
 
     slaves=($(ls /sys/block/${dev_name}/slaves 2>/dev/null))
     if [ ${#slaves[*]} -gt 0 ];then
@@ -97,11 +125,13 @@ if string_match "${dev_name}" "dm" 1;then
     for dev in ${slaves[*]}
     do
         conf_sched ${dev}
-        conf_merge ${dev} ${bdq_deep}
+        conf_merge ${dev}
+        conf_qdeep ${dev} ${bdq_deep}
     done
 else
     conf_sched ${dev_name}
-    conf_merge ${dev_name} ${bdq_deep}
+    conf_merge ${dev_name}
+    conf_qdeep ${dev_name} ${bdq_deep}
 fi
 
 exit 0
