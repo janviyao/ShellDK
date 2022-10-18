@@ -12,60 +12,42 @@ function conf_sched
     fi
 
     # scheduler rank
-    local ssd_mq_sheds=(none mq-deadline bfq kyber)
-    local ssd_sq_sheds=(noop deadline cfq)
-    local hdd_mq_sheds=(mq-deadline bfq kyber none)
-    local hdd_sq_sheds=(deadline cfq noop)
+    local ssd_sheds=(none noop mq-deadline deadline bfq cfq kyber)
+    local hdd_sheds=(mq-deadline deadline bfq cfq kyber none noop)
 
     local use_blk_mq="N"
-    if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
-        use_blk_mq=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
+    if can_access "/sys/module/dm_mod/parameters/use_blk_mq";then
+        use_blk_mq=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
+    fi
+
+    if ! bool_v "${use_blk_mq}";then
+        if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
+            use_blk_mq=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
+        fi
     fi
 
     local disk_type=$(cat ${sys_path}/queue/rotational)
     local sys_scheds=$(cat ${sys_path}/queue/scheduler)
-    sys_scheds=$(replace_str "${sys_scheds}" "[" "")
-    sys_scheds=$(replace_str "${sys_scheds}" "]" "")
 
     local chose_sched=""
     if bool_v "${disk_type}";then
         # HDD device
-        if bool_v "${use_blk_mq}";then
-            for sched in ${hdd_mq_sheds[*]}
-            do
-                if string_contain "${sys_scheds}" "${sched}";then
-                    chose_sched="${sched}"
-                    break
-                fi
-            done
-        else
-            for sched in ${hdd_sq_sheds[*]}
-            do
-                if string_contain "${sys_scheds}" "${sched}";then
-                    chose_sched="${sched}"
-                    break
-                fi
-            done
-        fi
+        for sched in ${hdd_sheds[*]}
+        do
+            if string_contain "${sys_scheds}" "${sched}";then
+                chose_sched="${sched}"
+                break
+            fi
+        done
     else
         # SSD device
-        if bool_v "${use_blk_mq}";then
-            for sched in ${ssd_mq_sheds[*]}
-            do
-                if string_contain "${sys_scheds}" "${sched}";then
-                    chose_sched="${sched}"
-                    break
-                fi
-            done
-        else
-            for sched in ${ssd_sq_sheds[*]}
-            do
-                if string_contain "${sys_scheds}" "${sched}";then
-                    chose_sched="${sched}"
-                    break
-                fi
-            done
-        fi
+        for sched in ${ssd_sheds[*]}
+        do
+            if string_contain "${sys_scheds}" "${sched}";then
+                chose_sched="${sched}"
+                break
+            fi
+        done
     fi
 
     if [ -z "${chose_sched}" ];then
