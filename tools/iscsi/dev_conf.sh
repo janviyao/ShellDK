@@ -94,18 +94,24 @@ function conf_qdeep
         return 1
     fi
 
-    if can_access "${sys_path}/queue/nr_requests";then
-        write_value ${sys_path}/queue/nr_requests ${bdq_deep} 
-        now_val=$(cat ${sys_path}/queue/nr_requests)
-        echo_info "%s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
-    fi
-
     if can_access "${sys_path}/device/queue_depth";then
         write_value ${sys_path}/device/queue_depth ${bdq_deep} 
-        now_val=$(cat ${sys_path}/device/queue_depth)
+        local now_val=$(cat ${sys_path}/device/queue_depth)
         echo_info "%s %12s %s" "${dev_name}" "queue_depth:" "{ ${now_val} }"
     fi
 
+    if can_access "${sys_path}/queue/nr_requests";then
+        local new_num=${bdq_deep}
+        if can_access "${sys_path}/device/queue_depth";then
+            local now_val=$(cat ${sys_path}/device/queue_depth)
+            new_num=$((now_val * 2))
+        fi
+
+        write_value ${sys_path}/queue/nr_requests ${new_num} 2>/dev/null
+        local now_val=$(cat ${sys_path}/queue/nr_requests)
+        echo_info "%s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
+    fi
+ 
     return 0
 }
 
