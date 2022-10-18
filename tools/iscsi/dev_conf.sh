@@ -58,7 +58,7 @@ function conf_sched
     if can_access "${sys_path}/queue/scheduler";then
         write_value ${sys_path}/queue/scheduler ${chose_sched}
         sys_scheds=$(cat ${sys_path}/queue/scheduler)
-        echo_info "%s %12s %s" "${dev_name}" "scheduler:" "{ ${sys_scheds} }"
+        echo_info "%-4s %12s %s" "${dev_name}" "scheduler:" "{ ${sys_scheds} }"
     fi
 
     return 0
@@ -77,7 +77,7 @@ function conf_merge
     if can_access "${sys_path}/queue/nomerges";then
         write_value ${sys_path}/queue/nomerges 2 
         local now_val=$(cat ${sys_path}/queue/nomerges)
-        echo_info "%s %12s %s" "${dev_name}" "nomerges:" "{ ${now_val} }"
+        echo_info "%-4s %12s %s" "${dev_name}" "nomerges:" "{ ${now_val} }"
     fi
     
     return 0
@@ -97,7 +97,7 @@ function conf_qdeep
     if can_access "${sys_path}/device/queue_depth";then
         write_value ${sys_path}/device/queue_depth ${bdq_deep} 
         local now_val=$(cat ${sys_path}/device/queue_depth)
-        echo_info "%s %12s %s" "${dev_name}" "queue_depth:" "{ ${now_val} }"
+        echo_info "%-4s %12s %s" "${dev_name}" "queue_depth:" "{ ${now_val} }"
     fi
 
     if can_access "${sys_path}/queue/nr_requests";then
@@ -109,7 +109,7 @@ function conf_qdeep
 
         write_value ${sys_path}/queue/nr_requests ${new_num} 2>/dev/null
         local now_val=$(cat ${sys_path}/queue/nr_requests)
-        echo_info "%s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
+        echo_info "%-4s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
     fi
  
     return 0
