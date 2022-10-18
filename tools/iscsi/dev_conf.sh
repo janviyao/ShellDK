@@ -2,78 +2,124 @@
 source ${TEST_SUIT_ENV}
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-DEV_NAME=$1
-DEV_QD=$2
+function conf_sched
+{
+    local dev_name="$1"
+    local sys_path="/sys/block/${dev_name}"
+    if ! can_access "${sys_path}";then
+        echo_erro "invalid: ${sys_path}"
+        return 1
+    fi
 
-if [ -b /dev/${DEV_NAME} ]; then
-    SHOW_INFO="/dev/${DEV_NAME}"
-    
-    if can_access "/sys/block/${DEV_NAME}/queue/scheduler";then
-        sched_str=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
-        sched_str=$(replace_str "${sched_str}" "[" "")
-        sched_str=$(replace_str "${sched_str}" "]" "")
-        all_sched=(${sched_str})
-        
-        chose_sched=""
-        hdd_type=$(cat /sys/block/${DEV_NAME}/queue/rotational)
-        if bool_v "${hdd_type}";then
-            if string_contain "${all_sched[*]}" "deadline";then
-                for sched in ${all_sched[*]}
-                do
-                    if [[ "${sched}" =~ "deadline" ]];then
-                        chose_sched="${sched}"
-                        break
-                    fi
-                done
-            elif string_contain "${all_sched[*]}" "cfs";then
-                for sched in ${all_sched[*]}
-                do
-                    if [[ "${sched}" =~ "cfs" ]];then
-                        chose_sched="${sched}"
-                        break
-                    fi
-                done
-            fi
+    # scheduler rank
+    local ssd_mq_sheds=(none mq-deadline bfq kyber)
+    local ssd_sq_sheds=(noop deadline cfq)
+    local hdd_mq_sheds=(mq-deadline bfq kyber none)
+    local hdd_sq_sheds=(deadline cfq noop)
+
+    local use_blk_mq="N"
+    if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
+        use_blk_mq=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
+    fi
+
+    local disk_type=$(cat ${sys_path}/queue/rotational)
+    local sys_scheds=$(cat ${sys_path}/queue/scheduler)
+    sys_scheds=$(replace_str "${sys_scheds}" "[" "")
+    sys_scheds=$(replace_str "${sys_scheds}" "]" "")
+
+    local chose_sched=""
+    if bool_v "${disk_type}";then
+        # HDD device
+        if bool_v "${use_blk_mq}";then
+            for sched in ${hdd_mq_sheds[*]}
+            do
+                if string_contain "${sys_scheds}" "${sched}";then
+                    chose_sched="${sched}"
+                    break
+                fi
+            done
         else
-            if string_contain "${all_sched[*]}" "none";then
-                for sched in ${all_sched[*]}
-                do
-                    if [[ "${sched}" =~ "none" ]];then
-                        chose_sched="${sched}"
-                        break
-                    fi
-                done
-            elif string_contain "${all_sched[*]}" "noop";then
-                for sched in ${all_sched[*]}
-                do
-                    if [[ "${sched}" =~ "noop" ]];then
-                        chose_sched="${sched}"
-                        break
-                    fi
-                done
-            fi
+            for sched in ${hdd_sq_sheds[*]}
+            do
+                if string_contain "${sys_scheds}" "${sched}";then
+                    chose_sched="${sched}"
+                    break
+                fi
+            done
         fi
-
-        if [ -n "${chose_sched}" ];then
-            write_value /sys/block/${DEV_NAME}/queue/scheduler ${chose_sched}
-            DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/scheduler)
-            SHOW_INFO="${SHOW_INFO} sched:{ ${DEV_INFO}}"
+    else
+        # SSD device
+        if bool_v "${use_blk_mq}";then
+            for sched in ${ssd_mq_sheds[*]}
+            do
+                if string_contain "${sys_scheds}" "${sched}";then
+                    chose_sched="${sched}"
+                    break
+                fi
+            done
+        else
+            for sched in ${ssd_sq_sheds[*]}
+            do
+                if string_contain "${sys_scheds}" "${sched}";then
+                    chose_sched="${sched}"
+                    break
+                fi
+            done
         fi
     fi
 
-    if can_access "/sys/block/${DEV_NAME}/queue/nomerges";then
-        write_value /sys/block/${DEV_NAME}/queue/nomerges 2 
-        DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/nomerges)
-        SHOW_INFO="${SHOW_INFO} nomerg:{ ${DEV_INFO} }"
+    if [ -z "${chose_sched}" ];then
+        echo_erro "scheduler chose fail. raotaional=${disk_type} use_blk_mq=${use_blk_mq}"
+        return 1
     fi
 
-    if can_access "/sys/block/${DEV_NAME}/queue/nr_requests";then
-        write_value /sys/block/${DEV_NAME}/queue/nr_requests ${DEV_QD} 
-        DEV_INFO=$(cat /sys/block/${DEV_NAME}/queue/nr_requests)
-        SHOW_INFO="${SHOW_INFO} queue:{ ${DEV_INFO} }"
+    write_value ${sys_path}/queue/scheduler ${chose_sched}
+    sys_scheds=$(cat ${sys_path}/queue/scheduler)
+    echo_info "%s %12s %s" "${dev_name}" "scheduler:" "{ ${sys_scheds} }"
+
+    return 0
+}
+
+function conf_merge
+{
+    local dev_name="$1"
+    local bdq_deep="$2"
+
+    local sys_path="/sys/block/${dev_name}"
+    if ! can_access "${sys_path}";then
+        echo_erro "invalid: ${sys_path}"
+        return 1
     fi
 
-    echo_info "${SHOW_INFO}"
+    write_value ${sys_path}/queue/nomerges 2 
+    local now_val=$(cat ${sys_path}/queue/nomerges)
+    echo_info "%s %12s %s" "${dev_name}" "nomerges:" "{ ${now_val} }"
+
+    write_value ${sys_path}/queue/nr_requests ${bdq_deep} 
+    now_val=$(cat ${sys_path}/queue/nr_requests)
+    echo_info "%s %12s %s" "${dev_name}" "nr_requests:" "{ ${now_val} }"
+}
+
+dev_name="$1"
+bdq_deep="$2"
+
+if string_match "${dev_name}" "dm" 1;then
+    conf_sched ${dev_name}
+    conf_merge ${dev_name} ${bdq_deep}
+
+    slaves=($(ls /sys/block/${dev_name}/slaves 2>/dev/null))
+    if [ ${#slaves[*]} -gt 0 ];then
+        bdq_deep=$(FLOAT "${bdq_deep}/${#slaves[*]}" 0)
+    fi
+
+    for dev in ${slaves[*]}
+    do
+        conf_sched ${dev}
+        conf_merge ${dev} ${bdq_deep}
+    done
 else
-    echo_erro "/dev/${DEV_NAME} not present"
+    conf_sched ${dev_name}
+    conf_merge ${dev_name} ${bdq_deep}
 fi
+
+exit 0

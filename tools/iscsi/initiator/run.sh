@@ -122,7 +122,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     done
 fi
 
-dm_device_array=($(echo))
+declare -a dm_device_array
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     for iscsi_dev in ${iscsi_device_array[*]}
     do
@@ -135,15 +135,15 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     done
 fi
 
-for iscsi_dev in ${iscsi_device_array[*]}
-do
-    ${ISCSI_ROOT_DIR}/dev_conf.sh ${iscsi_dev} ${ISCSI_DEV_QD}
-done
-
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     for mdev in ${dm_device_array[*]}
     do
         ${ISCSI_ROOT_DIR}/dev_conf.sh ${mdev} $((ISCSI_DEV_QD * ISCSI_SESSION_NR))
+    done
+else
+    for iscsi_dev in ${iscsi_device_array[*]}
+    do
+        ${ISCSI_ROOT_DIR}/dev_conf.sh ${iscsi_dev} ${ISCSI_DEV_QD}
     done
 fi
 
