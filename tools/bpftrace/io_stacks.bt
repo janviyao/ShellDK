@@ -1,0 +1,109 @@
+#!/usr/bin/env bpftrace
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+	printf("Tracing %s(%lu) stacks. Wait for 10s or Hit Ctrl-C to end.\n", @tpname, @tpid);
+}
+
+kprobe:iscsi_queuecommand
+{
+	@iscsi_queuecommand[kstack] = count();
+}
+
+kprobe:blk_account_io_start
+{
+	@blk_account_io_start[kstack] = count();
+}
+
+kprobe:blk_account_io_done
+{
+	@blk_account_io_done[kstack] = count();
+}
+
+kprobe:blk_mq_trigger_softirq
+{
+	@blk_mq_trigger_softirq[kstack] = count();
+}
+
+kprobe:aio_complete
+{
+	@aio_complete[kstack] = count();
+}
+
+kprobe:dm_softirq_done
+{
+	@dm_softirq_done[kstack] = count();
+}
+
+kprobe:scsi_softirq_done
+{
+	@scsi_softirq_done[kstack] = count();
+}
+
+kprobe:end_clone_request
+{
+	@end_clone_request[kstack] = count();
+}
+
+interval:s:10
+{ 
+    exit(); 
+}
+
+END
+{
+	printf("end.\n");
+}
+
+/*
+kprobe:scsi_mq_done
+{
+	@scsi_mq_done[kstack] = count();
+}
+
+kprobe:blk_mq_complete_request
+{
+	@blk_mq_complete_request[kstack] = count();
+}
+
+kprobe:blk_mq_complete_request_remote
+{
+	@blk_mq_complete_request_remote[kstack] = count();
+}
+
+kprobe:scsi_end_request
+{
+	@scsi_end_request[kstack] = count();
+}
+
+kprobe:end_clone_request
+{
+	@end_clone_request[kstack] = count();
+}
+
+kprobe:blk_account_io_done
+{
+	@blk_account_io_done[kstack] = count();
+}
+
+kprobe:dm_done
+{
+	@dm_done[kstack] = count();
+}
+
+kprobe:bio_free
+{
+	@bio_free[kstack] = count();
+}
+
+kprobe:blk_mq_free_request
+{
+	@blk_mq_complete_request_remote[kstack] = count();
+}
+
+kprobe:iscsi_sw_tcp_xmit
+{
+	@iscsi_sw_tcp_xmit[kstack] = count();
+}
+*/

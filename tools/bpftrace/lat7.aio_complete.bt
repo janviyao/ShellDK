@@ -1,0 +1,287 @@
+#!/usr/bin/env bpftrace
+#include <unistd.h>
+#include <asm/posix_types.h>
+#include <asm-generic/types.h>
+#include <linux/types.h>
+#include <linux/kthread.h>
+#include <linux/workqueue.h>
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/wait.h>
+#include <linux/aio.h>
+#include <linux/aio_abi.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
+#include <linux/device-mapper.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/libiscsi.h>
+
+struct fsync_iocb {
+    struct file             *file;
+    struct work_struct      work;
+    bool                    datasync;
+    struct cred             *creds;
+};
+
+struct poll_iocb {
+    struct file             *file;
+    struct wait_queue_head  *head;
+    __poll_t                events;
+    bool                    done;
+    bool                    cancelled;
+    struct wait_queue_entry wait;
+    struct work_struct      work;
+};
+
+struct aio_kiocb {
+    union {
+        struct file         *ki_filp;
+        struct kiocb        rw;
+        struct fsync_iocb   fsync;
+        struct poll_iocb    poll;
+    };
+    struct kioctx           *ki_ctx;
+    kiocb_cancel_fn         *ki_cancel;
+    struct io_event         ki_res;
+};
+
+struct blkdev_dio {
+    union {
+        struct kiocb        *iocb;
+        struct task_struct  *waiter;
+    };
+    size_t          size;
+    atomic_t        ref;
+    bool            multi_bio : 1;
+    bool            should_dirty : 1;
+    bool            is_sync : 1;
+    struct bio      bio;
+};
+
+struct dm_stats_aux {
+    bool merged;
+    unsigned long long duration_ns;
+};
+
+struct dm_rq_target_io {
+    struct mapped_device *md;
+    struct dm_target *ti;
+    struct request *orig, *clone;
+    struct kthread_work work;
+    blk_status_t error;
+    union map_info info;
+    struct dm_stats_aux stats_aux;
+    unsigned long duration_jiffies;
+    unsigned n_sectors;
+    unsigned completed;
+};
+
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+    @shash = str($2);
+	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
+}
+
+kprobe:bio_clone_fast
+/pid == @tpid/
+{
+    // arg0: struct bio *bio
+    $bio = (struct bio *)arg0;
+
+    @bio_map[tid] = $bio;
+    //printf("%lu %s(%x) %p\n", nsecs, func, tid, $bio);
+}
+
+kretprobe:bio_clone_fast
+{
+    $bio = (struct bio *)retval;
+
+    if (@bio_map[tid] != 0)
+    {
+        @bio_map[(uint64)$bio] = @bio_map[tid];
+        delete(@bio_map[tid]);
+        //printf("%lu bio_clone_fast(%x) orig %p %p clone %p %p\n", nsecs, tid, @bio_map[(uint64)$bio], ((struct bio *)@bio_map[(uint64)$bio])->bi_disk, $bio, $bio->bi_disk);
+    }
+}
+
+kprobe:scsi_end_request
+{
+    //arg0: struct request *req
+    $request = (struct request *)arg0;
+    
+    $bio_orig = $request->bio;
+    if ($bio_orig == 0)
+    {
+        return;
+    }
+    $bi_disk = $bio_orig->bi_disk;
+
+    $bio = $bio_orig;
+    if (@bio_map[(uint64)$bio_orig] != 0)
+    {
+        $bio = (struct bio *)@bio_map[(uint64)$bio];
+        delete(@bio_map[(uint64)$bio]);
+    }
+
+    $blkdev_dio = (struct blkdev_dio *)$bio->bi_private;
+    $kiocb = (struct kiocb *)$blkdev_dio->iocb;
+    $aio_kiocb = (struct aio_kiocb *)$kiocb;
+    
+    if ($aio_kiocb != 0)
+    {
+        @lat[(uint64)$aio_kiocb] = nsecs;
+    }
+    //printf("%lu %s(%x) orig %p clone %p %p %p\n", nsecs, func, tid, $bio, $bio_orig, $request, $aio_kiocb);
+
+    $count = 1;
+    $bi_next = $bio_orig->bi_next; 
+    while ($bi_next != 0)
+    {
+        if($bi_next->bi_disk != $bi_disk)
+        {
+            printf("%lu %s(%x) %p %p != %p\n", nsecs, func, tid, $bi_next, $bi_next->bi_disk, $bi_disk);
+            break;
+        }
+
+        $blkdev_dio = (struct blkdev_dio *)$bi_next->bi_private;
+        $kiocb = (struct kiocb *)$blkdev_dio->iocb;
+        $aio_kiocb = (struct aio_kiocb *)$kiocb;
+
+        if ($aio_kiocb != 0)
+        {
+            @lat[(uint64)$aio_kiocb] = nsecs;
+        }
+        //printf("%lu %s(%x)10 %p %p %p %p %d\n", nsecs, func, tid, $bio, $request, $aio_kiocb, $bi_next, $count);
+
+        $bi_next = $bi_next->bi_next;
+        $count++;
+        if ($count >= 50)
+        {
+            break;
+        }
+    }
+    
+    if ($bio != $bio_orig)
+    {
+        $count = 1;
+        $bi_next = $bio->bi_next; 
+        while ($bi_next != 0)
+        {
+            if($bi_next->bi_disk != $bi_disk)
+            {
+                printf("%lu %s(%x) %p %p != %p\n", nsecs, func, tid, $bi_next, $bi_next->bi_disk, $bi_disk);
+                break;
+            }
+
+            $blkdev_dio = (struct blkdev_dio *)$bi_next->bi_private;
+            $kiocb = (struct kiocb *)$blkdev_dio->iocb;
+            $aio_kiocb = (struct aio_kiocb *)$kiocb;
+
+            if ($aio_kiocb != 0)
+            {
+                @lat[(uint64)$aio_kiocb] = nsecs;
+            }
+            //printf("%lu %s(%x)11 %p %p %p %p %d\n", nsecs, func, tid, $bio, $request, $aio_kiocb, $bi_next, $count);
+
+            $bi_next = $bi_next->bi_next;
+            $count++;
+            if ($count >= 50)
+            {
+                break;
+            }
+        }
+    }
+}
+
+kprobe:aio_complete
+{
+    //arg0: struct aio_kiocb *iocb
+    $aio_kiocb = (struct aio_kiocb *)arg0;
+
+    if (@lat[(uint64)$aio_kiocb] != 0) 
+    {
+        //$lat_us = (nsecs - @lat[(uint64)$aio_kiocb])/1000;
+        $lat_us = nsecs - @lat[(uint64)$aio_kiocb];
+
+        if (@shash == "cpu")
+        {
+            @stats[cpu] = stats($lat_us);
+        }
+        else if (@shash == "tid")
+        {
+            @stats[tid] = stats($lat_us);
+        }
+        @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+
+        delete(@lat[(uint64)$aio_kiocb]);
+    }
+    //printf("%lu %s(%x) %p\n", nsecs, func, tid, $aio_kiocb);
+}
+
+END
+{
+	clear(@lat);
+	clear(@tpid);
+	clear(@tpname);
+	clear(@shash);
+	clear(@bio_map);
+}
+
+/*
+kprobe:submit_bio
+/pid == @tpid/
+{
+    //arg0: struct bio *bio
+    $bio = (struct bio *)arg0;
+
+    $blkdev_dio = (struct blkdev_dio *)$bio->bi_private;
+    $kiocb = (struct kiocb *)$blkdev_dio->iocb;
+    $aio_kiocb = (struct aio_kiocb *)$kiocb;
+    
+    printf("%lu %s(%x) %p %p %p\n", nsecs, func, tid, $bio->bi_disk, $bio, $kiocb);
+}
+
+kprobe:__io_submit_one.constprop.0
+/pid == @tpid/
+{
+    // arg2: struct aio_kiocb *req
+    $aio_kiocb = (struct aio_kiocb *)arg2;
+    printf("%lu %s(%x) %p\n", nsecs, func, tid, $aio_kiocb);
+}
+
+kprobe:bio_alloc_bioset
+{
+    $bio_set = (struct bio *)arg2;
+    printf("%lu %s(%x) %ld\n", nsecs, func, tid, $bio_set);
+
+	@bio_alloc_bioset[(uint64)$bio_set] = kstack();
+}
+
+kprobe:bio_free
+{
+    // arg0: struct bio *bio
+    $bio = (struct bio *)arg0;
+    printf("%lu %s(%x) %p %p\n", nsecs, func, tid, $bio->bi_disk, $bio);
+}
+
+kprobe:bio_clone_fast
+{
+    // arg0: struct bio *bio
+    $bio = (struct bio *)arg0;
+    printf("%lu %s(%x) %p %p\n", nsecs, func, tid, $bio->bi_disk, $bio);
+}
+
+kretprobe:bio_clone_fast
+{
+    $bio = (struct bio *)retval;
+    printf("%lu bio_clone_fast(%x) return %p %p\n", nsecs, tid, $bio->bi_disk, $bio);
+}
+
+kretprobe:bio_alloc_bioset
+{
+    $bio = (struct bio *)retval;
+    printf("%lu bio_alloc_bioset(%x) return %p %p from %ld\n", nsecs, tid, $bio->bi_disk, $bio, $bio->bi_pool);
+}
+*/

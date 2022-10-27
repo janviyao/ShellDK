@@ -1,0 +1,165 @@
+#!/usr/bin/env bpftrace
+#include <unistd.h>
+#include <asm/posix_types.h>
+#include <asm-generic/types.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/wait.h>
+#include <linux/aio.h>
+#include <linux/aio_abi.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/libiscsi.h>
+
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+    @shash = str($2);
+	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
+}
+
+/*
+由于存在bio的拆分合并操作，所以实际上对应有多次io_start，但最终一次io_start的request与iscsi_queuecommand匹配
+*/
+
+kprobe:blk_account_io_start
+/pid == @tpid/
+{
+    // arg0: struct request *rq
+    $request = (struct request *)arg0;
+    $bio = $request->bio;
+
+    @lat[(uint64)$request] = nsecs;
+    //printf("%s(%x) %p %p %p\n", func, tid, $bio, $request, $bio->bi_private);
+
+    /*
+    $count = 1;
+    $bi_next = $bio->bi_next; 
+    while ($bi_next != 0)
+    {
+        printf("%s(%x) next %p %p %d\n", func, tid, $bi_next, $request, $count);
+        $bi_next = $bi_next->bi_next;
+
+        $count++;
+        if ($count >= 1000)
+        {
+            break;
+        }
+    }
+    */
+}
+
+kprobe:iscsi_queuecommand
+/pid == @tpid/
+{
+    // arg1: struct scsi_cmnd *sc
+    $scsi_cmnd = (struct scsi_cmnd *)arg1;
+    $request = (struct request *)$scsi_cmnd - 1;
+    $bio = $request->bio;
+
+    if (@lat[(uint64)$request] != 0) 
+    {
+        //$lat_us = (nsecs - @lat[(uint64)$request])/1000;
+        $lat_us = nsecs - @lat[(uint64)$request];
+
+        if (@shash == "cpu")
+        {
+            @stats[cpu] = stats($lat_us);
+        }
+        else if (@shash == "tid")
+        {
+            @stats[tid] = stats($lat_us);
+        }
+        @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+
+        delete(@lat[(uint64)$bio]);
+    }
+    //printf("%s(%x) %p %p %p %p\n", func, tid, $bio, $request, $bio->bi_private, $scsi_cmnd);
+
+    /*
+    $count = 1;
+    $bi_next = $bio->bi_next; 
+    while ($bi_next != 0)
+    {
+        if (@lat[(uint64)$bi_next] != 0) 
+        {
+            //$lat_us = (nsecs - @lat[(uint64)$bi_next])/1000;
+            $lat_us = nsecs - @lat[(uint64)$bi_next];
+
+            if (@shash == "cpu")
+            {
+                @stats[cpu] = stats($lat_us);
+            }
+            else if (@shash == "tid")
+            {
+                @stats[tid] = stats($lat_us);
+            }
+            @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+
+            delete(@lat[(uint64)$bi_next]);
+        }
+        //printf("%s(%x)2 %p %p %p %d\n", func, tid, $bi_next, $request, $scsi_cmnd, $count);
+
+        if ($bi_next == $request->biotail)
+        {
+            break;
+        }
+        $bi_next = $bi_next->bi_next;
+
+        $count++;
+        if ($count >= 1000)
+        {
+            break;
+        }
+    }
+    */
+}
+
+END
+{
+	clear(@lat);
+	clear(@tpid);
+	clear(@tpname);
+	clear(@shash);
+}
+
+/*
+kprobe:bio_alloc_bioset
+/pid == @tpid/
+{
+	@bio_alloc_bioset[kstack] = count();
+}
+
+kretprobe:bio_alloc_bioset
+/pid == @tpid/
+{
+    $bio = (struct bio *)retval;
+    printf("bio_alloc_bioset(%x) %p\n", tid, $bio);
+}
+
+kprobe:blk_mq_alloc_request
+/pid == @tpid/
+{
+	@blk_mq_alloc_request[kstack] = count();
+}
+
+kretprobe:blk_mq_alloc_request
+/pid == @tpid/
+{
+    $request = (struct request *)retval;
+    printf("blk_mq_alloc_request(%x) %p\n", tid, $request);
+}
+
+kprobe:blk_insert_cloned_request
+/pid == @tpid/
+{
+    $request = (struct request *)arg1;
+    printf("%s(%x) %p\n", func, tid, $request);
+
+	@blk_insert_cloned_request[kstack] = count();
+}
+*/

@@ -30,7 +30,7 @@ function FLOAT
     local expre="$1"
     local scale="${2:-2}"
     
-    echo $(echo "scale=${scale};${expre}" | bc -l | awk "{ printf \"%.${scale}f\", \$0 }")
+    echo $(echo "scale=${scale};(${expre})/1.0" | bc -l | awk "{ printf \"%.${scale}f\", \$0 }")
     return 0
 }
 

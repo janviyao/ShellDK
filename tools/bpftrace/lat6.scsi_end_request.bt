@@ -1,0 +1,68 @@
+#!/usr/bin/env bpftrace
+#include <unistd.h>
+#include <asm/posix_types.h>
+#include <asm-generic/types.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/wait.h>
+#include <linux/aio.h>
+#include <linux/aio_abi.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/libiscsi.h>
+
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+    @shash = str($2);
+	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
+}
+
+kprobe:iscsi_complete_task
+{
+    // arg0: struct iscsi_task *task
+    $iscsi_task = (struct iscsi_task *)arg0;
+    $scsi_cmnd = $iscsi_task->sc;
+    $request = (struct request *)$scsi_cmnd->request;
+
+    @lat[(uint64)$request] = nsecs;
+    //printf("%s(%x) %p %p %p\n", func, tid, $iscsi_task, $scsi_cmnd, $request);
+}
+
+kprobe:scsi_end_request
+{
+    //arg0: struct request *req
+    $request = (struct request *)arg0;
+
+    if (@lat[(uint64)$request] != 0) 
+    {
+        //$lat_us = (nsecs - @lat[(uint64)$request])/1000;
+        $lat_us = nsecs - @lat[(uint64)$request];
+
+        if (@shash == "cpu")
+        {
+            @stats[cpu] = stats($lat_us);
+        }
+        else if (@shash == "tid")
+        {
+            @stats[tid] = stats($lat_us);
+        }
+        @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+
+        delete(@lat[(uint64)$request]);
+    }
+
+    //printf("%s(%x) %p\n", func, tid, $request);
+}
+
+END
+{
+	clear(@lat);
+	clear(@tpid);
+	clear(@tpname);
+	clear(@shash);
+}

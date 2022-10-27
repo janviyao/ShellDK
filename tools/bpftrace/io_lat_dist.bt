@@ -1,0 +1,336 @@
+#!/usr/bin/env bpftrace
+#include <unistd.h>
+#include <asm/posix_types.h>
+#include <asm-generic/types.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/wait.h>
+#include <linux/aio.h>
+#include <linux/aio_abi.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/libiscsi.h>
+
+struct fsync_iocb {
+    struct file             *file;
+    struct work_struct      work;
+    bool                    datasync;
+    struct cred             *creds;
+};
+
+struct poll_iocb {
+    struct file             *file;
+    struct wait_queue_head  *head;
+    __poll_t                events;
+    bool                    done;
+    bool                    cancelled;
+    struct wait_queue_entry wait;
+    struct work_struct      work;
+};
+
+struct aio_kiocb {
+    union {
+        struct file         *ki_filp;
+        struct kiocb        rw;
+        struct fsync_iocb   fsync;
+        struct poll_iocb    poll;
+    };
+    struct kioctx           *ki_ctx;
+    kiocb_cancel_fn         *ki_cancel;
+    struct io_event         ki_res;
+};
+
+struct blkdev_dio {
+    union {
+        struct kiocb        *iocb;
+        struct task_struct  *waiter;
+    };
+    size_t          size;
+    atomic_t        ref;
+    bool            multi_bio : 1;
+    bool            should_dirty : 1;
+    bool            is_sync : 1;
+    struct bio      bio;
+};
+
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+	printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
+}
+
+uprobe:/home/cangxuan.yzw/.shelldk/tools/app/fio:io_u_submit,
+uprobe:/usr/bin/fio:io_u_submit,
+uprobe:libaio:io_submit
+/pid == @tpid/
+{
+	@lat[tid] = nsecs;
+}
+
+kprobe:io_submit_one
+/pid == @tpid/
+{
+    // arg1: struct iocb __user *user_iocb
+    // struct aio_kiocb *req->ki_res.obj = (u64)(unsigned long)user_iocb
+    $user_iocb = (uint64)arg1;
+
+    if (@lat[tid] != 0)
+    {
+        $lat_us = (nsecs - @lat[tid])/1000;
+        @io_submit_one_1[tid] = stats($lat_us);
+        @io_submit_one_2["us"] = lhist($lat_us, 1, 100, 5);
+        delete(@lat[tid]);
+    }
+
+    @lat[(uint64)$user_iocb] = nsecs;
+    //printf("%s(%x) %p\n", func, tid, $user_iocb);
+}
+
+kprobe:__io_submit_one.constprop.0
+/pid == @tpid/
+{
+    // arg2: struct aio_kiocb *req
+    $aio_kiocb = (struct aio_kiocb *)arg2;
+
+    @lat[(uint64)$aio_kiocb] = nsecs;
+    printf("%s(%x) %p\n", func, tid, $aio_kiocb);
+}
+
+kprobe:aio_write
+/pid == @tpid/
+{
+    // arg0: struct kiocb *req
+    $kiocb = (struct kiocb *)arg0;
+
+    $aio_kiocb = (struct aio_kiocb *)$kiocb;
+    $user_iocb = (uint64)($aio_kiocb->ki_res.obj);
+
+    if (@lat[(uint64)$user_iocb] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$user_iocb])/1000;
+        @aio_write_1[tid] = stats($lat_us);
+        @aio_write_2["us"] = lhist($lat_us, 1, 100, 5);
+        delete(@lat[(uint64)$user_iocb]);
+    }
+
+    @lat[(uint64)$kiocb] = nsecs;
+    if (@lat[(uint64)$aio_kiocb] == 0) 
+    {
+        @lat[(uint64)$aio_kiocb] = nsecs;
+        //printf("%s(%x) %p %p %p\n", func, tid, $kiocb, $aio_kiocb, $user_iocb);
+    }
+
+    //printf("%s(%x) %p %p %p\n", func, tid, $kiocb, $aio_kiocb, $user_iocb);
+}
+
+kprobe:blk_account_io_start
+/pid == @tpid/
+{
+    // arg0: struct request *rq
+    $request = (struct request *)arg0;
+    $bio = $request->bio;
+
+    // struct blkdev_dio *dio
+    $size1 = sizeof(struct blkdev_dio);
+    $size2 = sizeof(struct bio);
+    $dio = (struct blkdev_dio *)((struct blkdev_dio *)((uint64)$bio - ($size1 - $size2)));
+
+    $kiocb = (struct kiocb *)$dio->iocb;
+    if (@lat[(uint64)$kiocb] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$kiocb])/1000;
+        @blk_account_io_start_1[tid] = stats($lat_us);
+        @blk_account_io_start_2["us"] = lhist($lat_us, 1, 100, 5);
+        delete(@lat[(uint64)$kiocb]);
+    }
+
+    @lat[(uint64)$bio] = nsecs;
+    printf("%s(%x) %p %p %p %p %ld %ld %d\n", func, tid, $bio, $request, $dio, $kiocb, $size1, $size2, $dio->is_sync);
+}
+
+kprobe:iscsi_queuecommand
+/pid == @tpid/
+{
+    // arg1: struct scsi_cmnd *sc
+    $scsi_cmnd = (struct scsi_cmnd *)arg1;
+    $request = (struct request *)((struct request *)$scsi_cmnd - 1);
+    $bio = $request->bio;
+
+    if (@lat[(uint64)$bio] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$bio])/1000;
+        @iscsi_queuecommand_1[tid] = stats($lat_us);
+        @iscsi_queuecommand_2["us"] = lhist($lat_us, 1, 100, 5);
+        delete(@lat[(uint64)$bio]);
+    }
+
+    @lat[(uint64)$scsi_cmnd] = nsecs;
+    printf("%s(%x)1 %p %p %p\n", func, tid, $bio, $request, $scsi_cmnd);
+
+    $count = 0;
+    $bi_next = $bio->bi_next; 
+    while ($bi_next != 0)
+    {
+        if (@lat[(uint64)$bi_next] != 0) 
+        {
+            $lat_us = (nsecs - @lat[(uint64)$bi_next])/1000;
+            @iscsi_queuecommand_1[tid] = stats($lat_us);
+            @iscsi_queuecommand_2["us"] = lhist($lat_us, 1, 100, 5);
+            delete(@lat[(uint64)$bi_next]);
+        }
+        printf("%s(%x)2 %p %p %p\n", func, tid, $bi_next, $request, $scsi_cmnd);
+
+        if ($bi_next == $request->biotail)
+        {
+            break;
+        }
+        $bi_next = $bi_next->bi_next;
+
+        $count++;
+        if ($count >= 1000)
+        {
+            break;
+        }
+    }
+}
+
+//kprobe:scsi_mq_done
+kprobe:scsi_finish_command
+{
+    // arg0: struct scsi_cmnd *cmd
+    $scsi_cmnd = (struct scsi_cmnd *)arg0;
+
+    if (@lat[(uint64)$scsi_cmnd] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$scsi_cmnd])/1000;
+        @scsi_finish_command_1[tid] = stats($lat_us);
+        @scsi_finish_command_2["us"] = lhist($lat_us, 1, 1000000, 1000);
+        delete(@lat[(uint64)$scsi_cmnd]);
+    }
+    //printf("%s(%x) %p %p %p\n", func, tid, $bio, $request, $scsi_cmnd);
+}
+
+kprobe:aio_complete
+{
+    //arg0: struct aio_kiocb *iocb
+    $aio_kiocb = (struct aio_kiocb *)arg0;
+    if (@lat[(uint64)$aio_kiocb] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$aio_kiocb])/1000;
+        @aio_complete_1[tid] = stats($lat_us);
+        @aio_complete_2["us"] = lhist($lat_us, 1, 1000000, 1000);
+        delete(@lat[(uint64)$aio_kiocb]);
+    }
+
+    //printf("%s(%x) %p\n", func, tid, $aio_kiocb);
+}
+
+interval:s:60
+{ 
+    exit(); 
+}
+
+END
+{
+	clear(@lat);
+	//clear(@net_lat);
+	clear(@tpid);
+	clear(@tpname);
+}
+
+/*
+kprobe:blk_mq_submit_bio
+/pid == @tpid/
+{
+    // arg0: struct bio *bio
+    $bio = (struct bio *)arg0;
+
+    // struct blkdev_dio *dio
+    $size1 = sizeof(struct blkdev_dio);
+    $size2 = sizeof(struct bio);
+    $dio = (struct blkdev_dio *)((struct blkdev_dio *)((uint64)$bio - ($size1 - $size2)));
+
+    $kiocb = (struct kiocb *)$dio->iocb;
+    if (@lat[(uint64)$kiocb] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$kiocb])/1000;
+        @blk_mq_submit_bio_1[tid] = stats($lat_us);
+        @blk_mq_submit_bio_2["us"] = lhist($lat_us, 1, 100, 5);
+        delete(@lat[(uint64)$kiocb]);
+    }
+
+    @lat[(uint64)$bio] = nsecs;
+    printf("%s(%x) %p %p %p %ld %ld %d\n", func, tid, $bio, $dio, $kiocb, $size1, $size2, $dio->is_sync);
+}
+
+kprobe:scsi_queue_rq
+/pid == @tpid/
+{
+    // arg1: struct blk_mq_queue_data *bd
+    $blk_mq_queue_data = (struct blk_mq_queue_data *)arg1;
+    $request = $blk_mq_queue_data->rq;
+    $bio = $request->bio;
+    $scsi_cmnd = (struct scsi_cmnd *)($request + 1);
+
+    @lat[(uint64)$bio] = nsecs;
+    printf("%s(%x) %p %p %p\n", func, tid, $bio, $request, $scsi_cmnd);
+}
+
+kprobe:iscsi_sw_tcp_pdu_xmit
+{
+    // arg0: struct iscsi_task *task
+    $iscsi_task = (struct iscsi_task *)arg0;
+    $scsi_cmnd = $iscsi_task->sc;
+
+    if (@lat[(uint64)$scsi_cmnd] != 0) 
+    {
+        $lat_us = (nsecs - @lat[(uint64)$scsi_cmnd])/1000;
+        @stat["iscsi_sw_tcp_pdu_xmit(us)"] = lhist($lat_us, 1, 100000, 500);
+        delete(@lat[(uint64)$scsi_cmnd]);
+    }
+
+	@net_lat[tid] = nsecs;
+    //printf("%s(%x) %p %p\n", func, tid, $iscsi_task, $scsi_cmnd);
+}
+
+kretprobe:iscsi_sw_tcp_pdu_xmit
+{
+    if (@net_lat[tid] != 0) 
+    {
+        $lat_us = (nsecs - @net_lat[tid])/1000;
+        @stat["iscsi-net(us)"] = lhist($lat_us, 1, 100000, 500);
+        delete(@net_lat[tid]);
+    }
+}
+
+kprobe:blk_account_io_start
+{
+	@reqstack[arg0] = kstack;
+	@reqts[arg0] = nsecs;
+}
+
+kprobe:blk_start_request,
+kprobe:blk_mq_start_request
+/@reqts[arg0] && pid == 120324/
+{
+	@usecs[@reqstack[arg0]] = hist(nsecs - @reqts[arg0]);
+	delete(@reqstack[arg0]);
+	delete(@reqts[arg0]);
+}
+
+kprobe:iscsi_queuecommand
+{
+	@reqstack[arg0] = kstack;
+	@reqts[arg0] = nsecs;
+}
+
+profile:hz:99 
+{ 
+    @[kstack] = count(); 
+}
+
+*/

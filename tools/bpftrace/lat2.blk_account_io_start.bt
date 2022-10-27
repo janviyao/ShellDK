@@ -1,0 +1,87 @@
+#!/usr/bin/env bpftrace
+#include <unistd.h>
+#include <asm/posix_types.h>
+#include <asm-generic/types.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/wait.h>
+#include <linux/aio.h>
+#include <linux/aio_abi.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/libiscsi.h>
+
+struct blkdev_dio {
+    union {
+        struct kiocb        *iocb;
+        struct task_struct  *waiter;
+    };
+    size_t          size;
+    atomic_t        ref;
+    bool            multi_bio : 1;
+    bool            should_dirty : 1;
+    bool            is_sync : 1;
+    struct bio      bio;
+};
+
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+    @shash = str($2);
+	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
+}
+
+kprobe:aio_write
+/pid == @tpid/
+{
+    // arg0: struct kiocb *req
+    $kiocb = (struct kiocb *)arg0;
+
+    @lat[(uint64)$kiocb] = nsecs;
+    //printf("%s(%x) %p\n", func, tid, $kiocb);
+}
+
+kprobe:blk_account_io_start
+/pid == @tpid/
+{
+    // arg0: struct request *rq
+    $request = (struct request *)arg0;
+    $bio = $request->bio;
+
+    // struct blkdev_dio *dio
+    $size1 = sizeof(struct blkdev_dio);
+    $size2 = sizeof(struct bio);
+    $blkdev_dio = (struct blkdev_dio *)((uint64)$bio - ($size1 - $size2));
+
+    $kiocb = (struct kiocb *)$blkdev_dio->iocb;
+    if (@lat[(uint64)$kiocb] != 0) 
+    {
+        //$lat_us = (nsecs - @lat[(uint64)$kiocb])/1000;
+        $lat_us = nsecs - @lat[(uint64)$kiocb];
+
+        if (@shash == "cpu")
+        {
+            @stats[cpu] = stats($lat_us);
+        }
+        else if (@shash == "tid")
+        {
+            @stats[tid] = stats($lat_us);
+        }
+        @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+
+        delete(@lat[(uint64)$kiocb]);
+    }
+    //printf("%s(%x) %p %p %p %p %ld %ld\n", func, tid, $bio, $request, $blkdev_dio, $kiocb, $size1, $size2);
+}
+
+END
+{
+	clear(@lat);
+	clear(@tpid);
+	clear(@tpname);
+	clear(@shash);
+}

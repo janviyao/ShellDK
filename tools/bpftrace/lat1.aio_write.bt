@@ -1,0 +1,100 @@
+#!/usr/bin/env bpftrace
+#include <unistd.h>
+#include <asm/posix_types.h>
+#include <asm-generic/types.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <linux/fs.h>
+#include <linux/cred.h>
+#include <linux/wait.h>
+#include <linux/aio.h>
+#include <linux/aio_abi.h>
+#include <linux/blk_types.h>
+#include <linux/blkdev.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/libiscsi.h>
+
+struct fsync_iocb {
+    struct file             *file;
+    struct work_struct      work;
+    bool                    datasync;
+    struct cred             *creds;
+};
+
+struct poll_iocb {
+    struct file             *file;
+    struct wait_queue_head  *head;
+    __poll_t                events;
+    bool                    done;
+    bool                    cancelled;
+    struct wait_queue_entry wait;
+    struct work_struct      work;
+};
+
+struct aio_kiocb {
+    union {
+        struct file         *ki_filp;
+        struct kiocb        rw;
+        struct fsync_iocb   fsync;
+        struct poll_iocb    poll;
+    };
+    struct kioctx           *ki_ctx;
+    kiocb_cancel_fn         *ki_cancel;
+    struct io_event         ki_res;
+};
+
+BEGIN
+{
+    @tpid = (uint64)$1;
+    @tpname = "fio";
+    @shash = str($2);
+	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
+}
+
+kprobe:io_submit_one
+/pid == @tpid/
+{
+    // arg1: struct iocb __user *user_iocb
+    // struct aio_kiocb *req->ki_res.obj = (u64)(unsigned long)user_iocb
+    $user_iocb = (uint64)arg1;
+
+    @lat[(uint64)$user_iocb] = nsecs;
+    //printf("%s(%x) %p\n", func, tid, $user_iocb);
+}
+
+kprobe:aio_write
+/pid == @tpid/
+{
+    // arg0: struct kiocb *req
+    $kiocb = (struct kiocb *)arg0;
+
+    $aio_kiocb = (struct aio_kiocb *)$kiocb;
+    $user_iocb = (uint64)($aio_kiocb->ki_res.obj);
+
+    if (@lat[(uint64)$user_iocb] != 0) 
+    {
+        //$lat_us = (nsecs - @lat[(uint64)$user_iocb])/1000;
+        $lat_us = nsecs - @lat[(uint64)$user_iocb];
+
+        if (@shash == "cpu")
+        {
+            @stats[cpu] = stats($lat_us);
+        }
+        else if (@shash == "tid")
+        {
+            @stats[tid] = stats($lat_us);
+        }
+        @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+
+        delete(@lat[(uint64)$user_iocb]);
+    }
+    //printf("%s(%x) %p %p %p\n", func, tid, $kiocb, $aio_kiocb, $user_iocb);
+}
+
+END
+{
+	clear(@lat);
+	clear(@tpid);
+	clear(@tpname);
+	clear(@shash);
+}
