@@ -95,7 +95,7 @@ kprobe:queue_work_on
         {
             @stats[tid] = stats($lat_us);
         }
-        @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
+        @lhist["us"] = lhist($lat_us, 0, 1000000, 1000);
 
         delete(@lat[(uint64)$work_struct]);
     }

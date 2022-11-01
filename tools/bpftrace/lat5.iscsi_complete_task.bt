@@ -22,21 +22,37 @@ BEGIN
 	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
 }
 
-kprobe:iscsi_sw_tcp_pdu_xmit
+kprobe:iscsi_xmitworker
 {
-    // arg0: struct iscsi_task *task
-    $iscsi_task = (struct iscsi_task *)arg0;
-    $scsi_cmnd = $iscsi_task->sc;
-    
-    @lat[(uint64)$iscsi_task] = nsecs;
-    //printf("%s(%x) %p %p\n", func, tid, $iscsi_task, $scsi_cmnd);
+    // arg0: struct work_struct *work
+    $work_struct = (struct work_struct *)arg0;
+
+    $iscsi_conn = (struct iscsi_conn *)((uint64)$work_struct - 216);
+    if ($iscsi_conn != 0)
+    {
+        @lat[(uint64)$iscsi_conn] = nsecs;
+    }
+    //printf("%s(%x) %p %p %lu\n", func, tid, $iscsi_conn, $work_struct);
+}
+
+kprobe:iscsi_xmit_task
+{
+    // arg0: struct iscsi_conn *conn
+    $iscsi_conn = (struct iscsi_conn *)arg0;
+
+    $iscsi_task = (struct iscsi_task *)$iscsi_conn->task;
+    if (@lat[(uint64)$iscsi_conn] != 0 && $iscsi_task != 0)
+    {
+        @lat[(uint64)$iscsi_task] = @lat[(uint64)$iscsi_conn];
+        delete(@lat[(uint64)$iscsi_conn]);
+    }
+    //printf("%s(%x) %p %p\n", func, tid, $iscsi_conn, $iscsi_task);
 }
 
 kprobe:iscsi_complete_task
 {
     // arg0: struct iscsi_task *task
     $iscsi_task = (struct iscsi_task *)arg0;
-    $scsi_cmnd = $iscsi_task->sc;
 
     if (@lat[(uint64)$iscsi_task] != 0) 
     {
@@ -55,7 +71,7 @@ kprobe:iscsi_complete_task
 
         delete(@lat[(uint64)$iscsi_task]);
     }
-    //printf("%s(%x) %p %p\n", func, tid, $iscsi_task, $scsi_cmnd);
+    //printf("%s(%x) %p %p %p\n", func, tid, $iscsi_task->conn, (struct work_struct *)((uint64)$iscsi_task->conn + 216), $iscsi_task);
 }
 
 END

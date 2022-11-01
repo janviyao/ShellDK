@@ -30,8 +30,8 @@ done
 g_save_dir=${tmp_dir}
 mkdir -p ${g_save_dir}
 
-declare -a scripts=(lat0.io_submit.bt lat1.aio_write.bt lat2.blk_account_io_start.bt lat3.iscsi_queuecommand.bt lat4.iscsi_sw_tcp_pdu_xmit.bt lat5.iscsi_complete_task.bt lat6.scsi_end_request.bt lat7.aio_complete.bt)
-#declare -a scripts=(lat7.aio_complete.bt)
+declare -a scripts=(lat0.io_submit.bt lat1.aio_write.bt lat2.blk_account_io_start.bt lat3.iscsi_queuecommand.bt lat4.iscsi_xmitworker.bt lat5.iscsi_complete_task.bt lat6.scsi_end_request.bt lat7.aio_complete.bt)
+#declare -a scripts=(lat3.iscsi_queuecommand.bt lat4.iscsi_xmitworker.bt lat5.iscsi_complete_task.bt)
 
 for script in ${scripts[*]}
 do
@@ -75,11 +75,11 @@ do
 
         if [[ "${line}" =~ "average" ]];then
             if [ ${#values[*]} -ne 4 ];then
-                #echo_erro "lost: ${line}"
-                continue
+                echo_erro "line exception: ${line} values: ${values[*]}" 
+                exit 1
             fi
             #echo_info "values: ${values[*]}" 
-
+            
             stats_count=$((stats_count + ${values[1]}))
             tmp_val=$((${values[1]} * ${values[2]}))
             stats_total=$((stats_total + tmp_val))
@@ -91,10 +91,13 @@ do
                         #echo_erro "values before reset: ${values[*]}" 
                         values=(${values[0]} $((${values[0]} + ${LHIST_STEP})) ${values[1]})            
                         #echo_erro "values after  reset: ${values[*]}" 
+                    else
+                        echo_erro "line exception: ${line} values: ${values[*]}" 
+                        exit 1
                     fi
                 else
-                    #echo_erro "lost: ${line}"
-                    continue
+                    echo_erro "line exception: ${line} values: ${values[*]}" 
+                    exit 1
                 fi
             fi
             
@@ -110,11 +113,15 @@ do
                     values=(${values[0]} $((${values[0]} + ${LHIST_STEP})) ${values[2]})            
                     #echo_erro "values after  reset: ${values[*]}" 
                 else
-                    echo_erro "line exception: ${line}"
+                    echo_erro "line exception: ${line} values: ${values[*]}" 
                     exit 1
                 fi
             fi
-            #echo_info "values: ${values[*]}" 
+
+            if [ ${#values[*]} -ne 3 ];then
+                echo_erro "line exception: ${line} values: ${values[*]}" 
+                exit 1
+            fi
 
             lhist_count=$((lhist_count + ${values[2]}))
             tmp_val=$(FLOAT "${values[2]} * (${values[1]} + (${values[1]} - ${values[0]})/2)" 0)
@@ -122,7 +129,7 @@ do
         fi
     done < ${g_save_dir}/${script}.log
 
-    if [ ${lhist_count} -eq 0  -o ${stats_count} -eq 0 ];then
+    if [ ${lhist_count} -eq 0 -o ${stats_count} -eq 0 ];then
         echo_erro "empty: ${g_save_dir}/${script}.log"
         cat ${g_save_dir}/${script}.log
         continue
