@@ -37,7 +37,7 @@ kprobe:blk_account_io_start
     $request = (struct request *)arg0;
 
     @lat[(uint64)$request] = nsecs;
-    printf("%s(%x) %p\n", func, tid, $request);
+    //printf("%s(%x) %p\n", func, tid, $request);
 }
 
 kprobe:iscsi_queuecommand
@@ -45,17 +45,16 @@ kprobe:iscsi_queuecommand
 {
     // arg0: struct Scsi_Host *host
     // arg1: struct scsi_cmnd *sc
-    $Scsi_Host = (struct Scsi_Host *)arg0;
+    //$Scsi_Host = (struct Scsi_Host *)arg0;
     $scsi_cmnd = (struct scsi_cmnd *)arg1;
-    $scsi_device = (struct scsi_device *)$scsi_cmnd->device;
 
     $request = (struct request *)$scsi_cmnd - 1;
     if (@lat[(uint64)$request] != 0) 
     {
         @lat[tid] = @lat[(uint64)$request];
         delete(@lat[(uint64)$request]);
+        //printf("%s(%x) %p %p\n", func, tid, $request, $scsi_cmnd);
     }
-    printf("%s(%x) %p\n", func, tid, $request);
 }
 
 kprobe:iscsi_session_chkready
@@ -71,8 +70,8 @@ kprobe:iscsi_session_chkready
     {
         @lat[(uint64)$work_struct] = @lat[tid];
         delete(@lat[tid]);
+        //printf("%s(%x) %p\n", func, tid, $work_struct);
     }
-    printf("%s(%x) %p %p\n", func, tid, $request, $work_struct);
 }
 
 kprobe:queue_work_on
@@ -98,8 +97,8 @@ kprobe:queue_work_on
         @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
 
         delete(@lat[(uint64)$work_struct]);
+        //printf("%s(%x) %p\n", func, tid, $work_struct);
     }
-    printf("%s(%x) %p\n", func, tid, $work_struct);
 }
 
 END

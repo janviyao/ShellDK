@@ -71,6 +71,11 @@ do
         if [ -z "${line}" ];then
             continue
         fi
+
+        if [[ "${line}" =~ "Attaching" ]] || [[ "${line}" =~ "@lhist[" ]];then
+            continue
+        fi
+
         declare -a values=($(string_regex "${line}" "\d+"))
 
         if [[ "${line}" =~ "average" ]];then
@@ -91,12 +96,17 @@ do
                         #echo_erro "values before reset: ${values[*]}" 
                         values=(${values[0]} $((${values[0]} + ${LHIST_STEP})) ${values[1]})            
                         #echo_erro "values after  reset: ${values[*]}" 
+                    elif match_regex "${line}" "^\(\.\.\.,\s+\d+\)\s+\d+";then
+                        #echo_erro "line(...): ${line}"
+                        #echo_erro "values before reset: ${values[*]}" 
+                        values=(${values[0]} ${values[0]} ${values[1]})            
+                        #echo_erro "values after  reset: ${values[*]}" 
                     else
-                        echo_erro "line exception: ${line} values: ${values[*]}" 
-                        exit 1
+                        echo_erro "line exception(donot match ...): ${line} values: ${values[*]}" 
+                        continue
                     fi
                 else
-                    echo_erro "line exception: ${line} values: ${values[*]}" 
+                    echo_erro "line exception(values -ne 2): ${line} values: ${values[*]}" 
                     exit 1
                 fi
             fi
@@ -113,13 +123,13 @@ do
                     values=(${values[0]} $((${values[0]} + ${LHIST_STEP})) ${values[2]})            
                     #echo_erro "values after  reset: ${values[*]}" 
                 else
-                    echo_erro "line exception: ${line} values: ${values[*]}" 
+                    echo_erro "line exception(donot match K): ${line} values: ${values[*]}" 
                     exit 1
                 fi
             fi
 
             if [ ${#values[*]} -ne 3 ];then
-                echo_erro "line exception: ${line} values: ${values[*]}" 
+                echo_erro "line exception(values -ne 3): ${line} values: ${values[*]}" 
                 exit 1
             fi
 

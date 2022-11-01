@@ -22,26 +22,30 @@ BEGIN
 	//printf("Tracing %s I/O. Wait for 10s or Hit Ctrl-C to end.\n", @tpname);
 }
 
-kprobe:iscsi_queuecommand
+kprobe:queue_work_on
 /pid == @tpid/
 {
-    // arg1: struct scsi_cmnd *sc
-    $scsi_cmnd = (struct scsi_cmnd *)arg1;
-    
-    @lat[(uint64)$scsi_cmnd] = nsecs;
-    //printf("%s(%x) %p\n", func, tid, $scsi_cmnd);
+    // arg2: struct work_struct *work
+    $work_struct = (struct work_struct *)arg2;
+
+    @lat[(uint64)$work_struct] = nsecs;
+    //printf("%s(%x) %p\n", func, tid, $work_struct);
 }
 
-kprobe:iscsi_sw_tcp_pdu_xmit
+kprobe:iscsi_xmitworker
 {
-    // arg0: struct iscsi_task *task
-    $iscsi_task = (struct iscsi_task *)arg0;
-    $scsi_cmnd = $iscsi_task->sc;
+    // arg0: struct work_struct *work
+    $work_struct = (struct work_struct *)arg0;
 
-    if (@lat[(uint64)$scsi_cmnd] != 0) 
+    if (@lat[(uint64)$work_struct] != 0) 
     {
-        //$lat_us = (nsecs - @lat[(uint64)$scsi_cmnd])/1000;
-        $lat_us = nsecs - @lat[(uint64)$scsi_cmnd];
+        //$lat_us = (nsecs - @lat[(uint64)$work_struct])/1000;
+        $lat_us = nsecs - @lat[(uint64)$work_struct];
+        if ($lat_us <= 0)
+        {
+            printf("%s(%x) %p %lu < %lu\n", func, tid, $work_struct, nsecs, @lat[(uint64)$work_struct]);
+            return;
+        }
 
         if (@shash == "cpu")
         {
@@ -53,9 +57,9 @@ kprobe:iscsi_sw_tcp_pdu_xmit
         }
         @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
 
-        delete(@lat[(uint64)$scsi_cmnd]);
+        delete(@lat[(uint64)$work_struct]);
     }
-    //printf("%s(%x) %p %p\n", func, tid, $iscsi_task, $scsi_cmnd);
+    //printf("%s(%x) %p\n", func, tid, $work_struct);
 }
 
 END
