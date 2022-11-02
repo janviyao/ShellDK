@@ -250,6 +250,7 @@ declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
 commandMap["${CMD_PRE}ftrace"]="${ROOT_DIR}/tools/ftrace.sh"
 commandMap["${CMD_PRE}bpftrace"]="${ROOT_DIR}/tools/bpftrace/bpftrace.sh"
+commandMap["${CMD_PRE}output"]="${ROOT_DIR}/tools/cmd_output.sh"
 commandMap["${CMD_PRE}collect"]="${ROOT_DIR}/tools/collect.sh"
 commandMap["${CMD_PRE}scplogin"]="${ROOT_DIR}/tools/scplogin.sh"
 commandMap["${CMD_PRE}scphosts"]="${ROOT_DIR}/tools/scphosts.sh"

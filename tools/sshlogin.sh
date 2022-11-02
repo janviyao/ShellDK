@@ -16,8 +16,8 @@ fi
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 HOST_IP="$1"
-CMD_EXE="$2"
-echo_debug "paras: { $@ }"
+shift
+CMD_EXE="$@"
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if ! account_check ${MY_NAME};then
@@ -26,14 +26,23 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     fi
 fi
 
+echo_debug "paras: { ${HOST_IP} ${CMD_EXE} }"
 echo_info "Push { ${CMD_EXE} } to { ${HOST_IP} }"
+
 if [ -z "${CMD_EXE}" ];then
     exit 0
 fi
 
-if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
-    eval "${CMD_EXE}"
-    exit $?
+if match_regex "${HOST_IP}" "\d+\.\d+\.\d+\.\d+";then
+    if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
+        eval "${CMD_EXE}"
+        exit $?
+    fi
+else
+    if [[ ${HOST_IP} == $(hostname) ]];then
+        eval "${CMD_EXE}"
+        exit $?
+    fi
 fi
 
 EXPECT_EOF=""
