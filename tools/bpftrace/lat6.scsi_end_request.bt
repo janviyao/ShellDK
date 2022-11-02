@@ -55,7 +55,6 @@ kprobe:scsi_end_request
 
         delete(@lat[(uint64)$request]);
     }
-
     //printf("%s(%x) %p\n", func, tid, $request);
 }
 

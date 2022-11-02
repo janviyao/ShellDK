@@ -49,12 +49,8 @@ kprobe:iscsi_queuecommand
     $scsi_cmnd = (struct scsi_cmnd *)arg1;
 
     $request = (struct request *)$scsi_cmnd - 1;
-    if (@lat[(uint64)$request] != 0) 
-    {
-        @lat[tid] = @lat[(uint64)$request];
-        delete(@lat[(uint64)$request]);
-        //printf("%s(%x) %p %p\n", func, tid, $request, $scsi_cmnd);
-    }
+    @mapinfo[tid] = $request;
+    //printf("%s(%x) %p %p\n", func, tid, $request, $scsi_cmnd);
 }
 
 kprobe:iscsi_session_chkready
@@ -66,12 +62,14 @@ kprobe:iscsi_session_chkready
     $iscsi_conn = (struct iscsi_conn *)$iscsi_session->leadconn;
     $work_struct = (struct work_struct *)((uint64)$iscsi_conn + 216);
 
-    if (@lat[tid] != 0) 
+    if (@mapinfo[tid] != 0) 
     {
-        @lat[(uint64)$work_struct] = @lat[tid];
-        delete(@lat[tid]);
-        //printf("%s(%x) %p\n", func, tid, $work_struct);
+        $request = (struct request *)@mapinfo[tid];
+        @lat[(uint64)$work_struct] = @lat[(uint64)$request];
+        delete(@lat[(uint64)$request]);
+        delete(@mapinfo[tid]);
     }
+    //printf("%s(%x) %p\n", func, tid, $work_struct);
 }
 
 kprobe:queue_work_on
@@ -97,8 +95,8 @@ kprobe:queue_work_on
         @lhist["us"] = lhist($lat_us, [lhist_min], [lhist_max], [lhist_step]);
 
         delete(@lat[(uint64)$work_struct]);
-        //printf("%s(%x) %p\n", func, tid, $work_struct);
     }
+    //printf("%s(%x) %p\n", func, tid, $work_struct);
 }
 
 END
@@ -107,6 +105,7 @@ END
 	clear(@tpid);
 	clear(@tpname);
 	clear(@shash);
+	clear(@mapinfo);
 }
 
 /*

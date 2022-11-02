@@ -90,20 +90,20 @@ kprobe:bio_clone_fast
     // arg0: struct bio *bio
     $bio = (struct bio *)arg0;
 
-    @bio_map[tid] = $bio;
+    @mapinfo[tid] = $bio;
     //printf("%lu %s(%x) %p\n", nsecs, func, tid, $bio);
 }
 
 kretprobe:bio_clone_fast
 {
-    $bio = (struct bio *)retval;
+    $bio_clone = (struct bio *)retval;
 
-    if (@bio_map[tid] != 0)
+    if (@mapinfo[tid] != 0)
     {
-        @bio_map[(uint64)$bio] = @bio_map[tid];
-        delete(@bio_map[tid]);
-        //printf("%lu bio_clone_fast(%x) orig %p %p clone %p %p\n", nsecs, tid, @bio_map[(uint64)$bio], ((struct bio *)@bio_map[(uint64)$bio])->bi_disk, $bio, $bio->bi_disk);
+        @mapinfo[(uint64)$bio_clone] = @mapinfo[tid];
+        delete(@mapinfo[tid]);
     }
+    //printf("%lu bio_clone_fast(%x) orig %p %p clone %p %p\n", nsecs, tid, @mapinfo[(uint64)$bio], ((struct bio *)@mapinfo[(uint64)$bio])->bi_disk, $bio, $bio->bi_disk);
 }
 
 kprobe:scsi_end_request
@@ -111,18 +111,18 @@ kprobe:scsi_end_request
     //arg0: struct request *req
     $request = (struct request *)arg0;
     
-    $bio_orig = $request->bio;
-    if ($bio_orig == 0)
+    $bio_clone = $request->bio;
+    if ($bio_clone == 0)
     {
         return;
     }
-    $bi_disk = $bio_orig->bi_disk;
+    $bi_disk = $bio_clone->bi_disk;
 
-    $bio = $bio_orig;
-    if (@bio_map[(uint64)$bio_orig] != 0)
+    $bio = $bio_clone;
+    if (@mapinfo[(uint64)$bio_clone] != 0)
     {
-        $bio = (struct bio *)@bio_map[(uint64)$bio];
-        delete(@bio_map[(uint64)$bio]);
+        $bio = (struct bio *)@mapinfo[(uint64)$bio_clone];
+        delete(@mapinfo[(uint64)$bio_clone]);
     }
 
     $blkdev_dio = (struct blkdev_dio *)$bio->bi_private;
@@ -133,10 +133,10 @@ kprobe:scsi_end_request
     {
         @lat[(uint64)$aio_kiocb] = nsecs;
     }
-    //printf("%lu %s(%x) orig %p clone %p %p %p\n", nsecs, func, tid, $bio, $bio_orig, $request, $aio_kiocb);
+    //printf("%lu %s(%x) orig %p clone %p %p %p\n", nsecs, func, tid, $bio, $bio_clone, $request, $aio_kiocb);
 
     $count = 1;
-    $bi_next = $bio_orig->bi_next; 
+    $bi_next = $bio_clone->bi_next; 
     while ($bi_next != 0)
     {
         if($bi_next->bi_disk != $bi_disk)
@@ -163,7 +163,7 @@ kprobe:scsi_end_request
         }
     }
     
-    if ($bio != $bio_orig)
+    if ($bio != $bio_clone)
     {
         $count = 1;
         $bi_next = $bio->bi_next; 
@@ -226,7 +226,7 @@ END
 	clear(@tpid);
 	clear(@tpname);
 	clear(@shash);
-	clear(@bio_map);
+	clear(@mapinfo);
 }
 
 /*
