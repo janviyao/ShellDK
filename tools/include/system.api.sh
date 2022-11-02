@@ -582,15 +582,19 @@ function du_find
 
 function check_net
 {   
+    local address="${1:-https://www.baidu.com}"
     local timeout=5 
-    local target="https://www.baidu.com"
-
-    local ret_code=$(curl -I -s --connect-timeout $timeout $target -w %{http_code} | tail -n1)   
-    if [ "x$ret_code" = "x200" ]; then   
+    
+    if sudo_it ping -c 1 -W ${timeout} ${address} &> /dev/null;then
         return 0
-    else   
-        return 1
-    fi 
+    else
+        local ret_code=$(curl -I -s --connect-timeout ${timeout} ${address} -w %{http_code} | tail -n1)   
+        if [ "x$ret_code" = "x200" ]; then   
+            return 0
+        else   
+            return 1
+        fi 
+    fi
 }
 
 function cursor_pos

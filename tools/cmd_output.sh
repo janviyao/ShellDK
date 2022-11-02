@@ -32,10 +32,16 @@ if match_regex "${HOST_IP}" "\d+\.\d+\.\d+\.\d+";then
     if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
         eval "${CMD_EXE}"
         exit $?
+    elif ! check_net ${HOST_IP};then
+        echo_erro "address { ${HOST_IP} } not arrived"
+        exit 1
     fi
 else
     if [[ ${HOST_IP} == $(hostname) ]];then
         eval "${CMD_EXE}"
+        exit $?
+    elif ! check_net ${HOST_IP};then
+        eval "${HOST_IP} $@"
         exit $?
     fi
 fi
