@@ -131,10 +131,9 @@ function file_add
 {
     local xfile="$1"
     local content="$2"
-    local line_nr="${3:-$}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string"
         return 1
     fi
      
@@ -142,40 +141,18 @@ function file_add
         echo > ${xfile}
     fi 
 
-    if is_integer "${line_nr}";then
-        local total_nr=$(sed -n '$=' ${xfile})
-        if [ ${line_nr} -le ${total_nr} ];then
-            sed -i "${line_nr} i\\${content}" ${xfile}
-            if [ $? -ne 0 ];then
-                echo_erro "file_add { $@ }"
-                return 1
-            fi
-        else
-            file_insert "${xfile}" "${content}" "${line_nr}"
-            if [ $? -ne 0 ];then
-                echo_erro "file_add { $@ }"
-                return 1
-            fi
-        fi
+    local line_cnt=$(sed -n '$p' ${xfile})
+    if [ -z "${line_cnt}" ];then
+        sed -i "$ c\\${content}" ${xfile}
     else
-        if [[ "${line_nr}" != "$" ]];then
-            echo_erro "file_add { $@ }: line_nr invalid"
-            return 1
-        fi
-
-        local line_cnt=$(sed -n '$p' ${xfile})
-        if [ -z "${line_cnt}" ];then
-            sed -i "$ c\\${content}" ${xfile}
-        else
-            sed -i "$ a\\${content}" ${xfile}
-        fi
-
-        if [ $? -ne 0 ];then
-            echo_erro "file_add { $@ }"
-            return 1
-        fi
+        sed -i "$ a\\${content}" ${xfile}
     fi
-    
+
+    if [ $? -ne 0 ];then
+        echo_erro "file_add { $@ }"
+        return 1
+    fi
+ 
     return 0
 }
 
@@ -580,6 +557,9 @@ function file_change
                 echo_erro "file_insert { $@ }"
                 return 1
             fi
+        else
+            echo_erro "file(total: ${total_nr}) line=${line_nr} not exist"
+            return 1
         fi
     else
         if [[ "${line_nr}" == "$" ]];then
