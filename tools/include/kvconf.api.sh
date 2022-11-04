@@ -155,7 +155,7 @@ function kvconf_get
     return 0
 }
 
-function kvconf_append
+function kvconf_val_append
 {
     local kv_file="$1"
     local key_str="$2"
@@ -177,14 +177,14 @@ function kvconf_append
         do
             line_cnt=$(file_get "${kv_file}" "${line_nr}" false)
             if [ $? -ne 0 ];then
-                echo_erro "kvconf_append { $@ }"
+                echo_erro "kvconf_val_append { $@ }"
                 return 1
             fi
 
             if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
                 line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
                 if [ $? -ne 0 ];then
-                    echo_erro "kvconf_append { $@ }"
+                    echo_erro "kvconf_val_append { $@ }"
                     return 1
                 fi
             fi
@@ -192,7 +192,7 @@ function kvconf_append
             if [ -n "${line_cnt}" ];then
                 line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "")
                 if [ $? -ne 0 ];then
-                    echo_erro "kvconf_append { $@ }"
+                    echo_erro "kvconf_val_append { $@ }"
                     return 1
                 fi
             fi
