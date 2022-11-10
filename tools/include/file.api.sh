@@ -407,7 +407,7 @@ function file_linenr
     local is_reg="${3:-false}"
 
     if [ $# -lt 1 ];then
-        echo_file "${LOG_ERRO}" "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
         return 1
     fi
 
