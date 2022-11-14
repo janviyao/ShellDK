@@ -13,6 +13,25 @@ else
     echo_info "clean devce from ${LOCAL_IP}"
 fi
 
+mounts_array=($(cat /proc/mounts | awk '{ print $1 }' | grep -F "/dev/"))
+for ((idx = 0; idx < ${#mounts_array[*]}; idx ++))
+do
+    mounts_array[${idx}]=$(real_path "${mounts_array[${idx}]}")
+done
+
+device_array=($(cat ${WORK_ROOT_DIR}/disk.${LOCAL_IP}))
+for device in ${device_array[*]}
+do
+    for dev_path in ${mounts_array[*]}
+    do
+        if string_match "${dev_path}" "${device}" 2;then
+            echo_info "umount ${dev_path}"
+            sudo_it umount ${dev_path}
+            break
+        fi
+    done
+done
+
 if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
     echo_info "remove mpath device"
     ${SUDO} "multipath -F"
