@@ -1,6 +1,36 @@
 #!/bin/bash
 : ${INCLUDE_INSTALL:=1}
 
+function version_gt
+{ 
+    array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    if [ $? -eq 1 ];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function version_lt
+{ 
+    array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    if [ $? -eq 255 ];then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function version_eq
+{ 
+    array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    if [ $? -eq 0 ];then
+        return 0 
+    else
+        return 1
+    fi
+}
+
 function install_from_net
 {
     local inst_name="$1"
