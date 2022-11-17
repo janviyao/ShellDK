@@ -87,9 +87,9 @@ function sshto
     else
         if match_regex "${des_key}" "\d+\.\d+\.\d+\.\d+";then
             if [ -z "${USR_PASSWORD}" ]; then
-                ssh ${ip_addr}
+                ssh ${des_key}
             else
-                sshpass -p "${USR_PASSWORD}" ssh ${ip_addr} 
+                sshpass -p "${USR_PASSWORD}" ssh ${des_key} 
             fi
             return 0
         fi
