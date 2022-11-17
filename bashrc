@@ -19,6 +19,9 @@ fi
 # only variable exported: export var=val
 # NOTE: if variables use declare define, allexport will have no effect to them
 set -o allexport
+shopt -s expand_aliases
+#set -o errexit # when error, then exit
+#set -o nounset # variable not exist, then exit
 
 if [ -z "${MY_NAME}" ];then
     readonly MY_NAME=$(whoami)

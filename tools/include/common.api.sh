@@ -1,10 +1,6 @@
 #!/bin/bash
 : ${INCLUDE_COMMON:=1}
 
-shopt -s expand_aliases
-#set -o errexit # when error, then exit
-#set -o nounset # variable not exist, then exit
-
 : ${REMOTE_IP:=}
 : ${USR_NAME:=}
 : ${USR_PASSWORD:=}

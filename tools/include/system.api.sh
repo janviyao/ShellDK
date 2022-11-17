@@ -84,6 +84,15 @@ function sshto
                 return 0
             fi
         done
+    else
+        if match_regex "${des_key}" "\d+\.\d+\.\d+\.\d+";then
+            if [ -z "${USR_PASSWORD}" ]; then
+                ssh ${ip_addr}
+            else
+                sshpass -p "${USR_PASSWORD}" ssh ${ip_addr} 
+            fi
+            return 0
+        fi
     fi
 
     if is_integer "${des_key}";then
