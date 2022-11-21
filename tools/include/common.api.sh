@@ -388,3 +388,4 @@ INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/tools/include/process.api.sh
 INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/tools/include/install.api.sh
 INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/tools/include/math.api.sh
 INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/tools/include/file.api.sh
+INCLUDE "INCLUDE_K8S"    $MY_VIM_DIR/tools/include/k8s.api.sh
