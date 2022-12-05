@@ -81,7 +81,7 @@ do
         if [[ "${line}" =~ "average" ]];then
             if [ ${#values[*]} -ne 4 ];then
                 echo_erro "line exception: ${line} values: ${values[*]}" 
-                exit 1
+                continue
             fi
             #echo_info "values: ${values[*]}" 
             
@@ -107,7 +107,7 @@ do
                     fi
                 else
                     echo_erro "line exception(values -ne 2): ${line} values: ${values[*]}" 
-                    exit 1
+                    continue
                 fi
             fi
             
@@ -124,13 +124,13 @@ do
                     #echo_erro "values after  reset: ${values[*]}" 
                 else
                     echo_erro "line exception(donot match K): ${line} values: ${values[*]}" 
-                    exit 1
+                    continue
                 fi
             fi
 
             if [ ${#values[*]} -ne 3 ];then
                 echo_erro "line exception(values -ne 3): ${line} values: ${values[*]}" 
-                exit 1
+                continue
             fi
 
             lhist_count=$((lhist_count + ${values[2]}))

@@ -43,7 +43,7 @@ kprobe:iscsi_xmitworker
         $lat_us = nsecs - @lat[(uint64)$work_struct];
         if ($lat_us <= 0)
         {
-            printf("%s(%x) %p %lu < %lu\n", func, tid, $work_struct, nsecs, @lat[(uint64)$work_struct]);
+            //printf("%s(%x) %p %lu < %lu\n", func, tid, $work_struct, nsecs, @lat[(uint64)$work_struct]);
             return;
         }
 
