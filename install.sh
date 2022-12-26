@@ -92,6 +92,7 @@ FUNC_MAP["deps"]="inst_deps"
 FUNC_MAP["all"]="inst_deps inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
 FUNC_MAP["glibc2.18"]="inst_glibc"
 FUNC_MAP["gcc"]="inst_gcc"
+FUNC_MAP["hostname"]="inst_hostname"
 
 function do_action
 {     
@@ -170,6 +171,7 @@ function inst_usage
     echo "install.sh -o system     @configure run system: linux & windows"
     echo "install.sh -o deps       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
+    echo "install.sh -o hostname   @set hostname"
     echo "install.sh -j num        @install with thread-num"
 
     echo ""
@@ -644,20 +646,17 @@ function inst_glibc
     fi
 }
 
-declare -A routeMap
-declare -a hostip_array=($(get_hosts_ip local))
-for ipaddr in ${hostip_array[*]}
-do
-    hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
-    echo_info "HostName: ${hostnm[0]} IP: ${ipaddr}"
-    if ! string_contain "${!routeMap[*]}" "${ipaddr}";then
-        routeMap[${ipaddr}]="${hostnm[0]}"
+function inst_hostname
+{
+    # set hostname
+    local local_ip=$(get_local_ip)
+    local hostnm=($(grep -F "${local_ip}" /etc/hosts | awk '{ print $2 }'))
+    if [ -n "${hostnm}" ];then
+        if [[ "$(hostname)" != "${hostnm}" ]];then
+            ${SUDO} hostnamectl set-hostname ${hostnm}
+        fi
     fi
-done
-
-if [[ "$(hostname)" != "${routeMap[${LOCAL_IP}]}" ]];then
-    ${SUDO} hostnamectl set-hostname ${routeMap[${LOCAL_IP}]}
-fi
+}
 
 if ! bool_v "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
@@ -703,10 +702,12 @@ else
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
-        if [ -n "${routeMap[${ipaddr}]}" ];then
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '/${ipaddr}/d' /etc/hosts"
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '$ a${ipaddr}   ${routeMap[${ipaddr}]}' /etc/hosts"
-            ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo hostnamectl set-hostname ${routeMap[${ipaddr}]}"
+        if can_access "${parasMap['--hostname']}";then
+            hostnm=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
+            if [ -n "${hostnm}" ];then
+                ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '/${ipaddr}/d' /etc/hosts"
+                ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '$ a${ipaddr}   ${hostnm}' /etc/hosts"
+            fi
         fi
 
         if bool_v "${COPY_PKG}"; then
