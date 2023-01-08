@@ -1,5 +1,6 @@
-export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+#export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\H\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 #export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+export PS1='\n\e[1;37m[\e[m\e[1;32m\u\e[m\e[1;33m@\e[m\e[1;35m\H\e[m \e[4m`pwd`\e[m\e[1;37m]\e[m\e[1;36m\e[m\n\$'
 
 export GOPATH=${HOME}/.local
 export GOROOT=${GOPATH}/go
@@ -27,7 +28,7 @@ alias gpull='mygit pull'
 alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); }; git_push'
 alias gcommit='function git_commit { git add -A; git commit -s -m "$@"; }; git_commit'
 
-alias psgrep='function ps_grep { ps -fauex | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
+alias psgrep='function ps_grep { ps -fauex -ww | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
 
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true

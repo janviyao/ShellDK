@@ -1,5 +1,6 @@
 # astyle config
---style=ansi 
+#--style=ansi 
+--style=linux
 --indent=spaces=4 
 -p -U -S 
 --suffix=none 
