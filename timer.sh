@@ -1,5 +1,7 @@
 #!/bin/bash
-GBL_BASE_DIR="/tmp/gbl"
+export LOCAL_IP="127.0.0.1"
+export GBL_BASE_DIR="/tmp/gbl"
+
 TIMER_RUNDIR=${GBL_BASE_DIR}/timer
 if [ -f ${TIMER_RUNDIR}/timerc ];then
     source ${TIMER_RUNDIR}/timerc
