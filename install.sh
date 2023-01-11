@@ -279,6 +279,7 @@ function clean_env
     done
 
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
     #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
@@ -321,11 +322,13 @@ function inst_env
     can_access "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
     #can_access "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
+    file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
     file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
     file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
     file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
+    echo "export LOCAL_IP=\"${LOCAL_IP}\"" >> ${MY_HOME}/.bashrc
     echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${MY_HOME}/.bashrc
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
     echo "source ${ROOT_DIR}/bashrc" >> ${MY_HOME}/.bashrc

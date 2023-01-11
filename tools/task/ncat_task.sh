@@ -101,6 +101,9 @@ function ncat_send_msg
                 return 1
             fi
         fi
+
+        echo_file "${LOG_DEBUG}" "change IP from { ${ncat_addr} } to { {127.0.0.1 } }"
+        ncat_addr="127.0.0.1"
     fi
 
     if can_access "nc";then

@@ -728,9 +728,15 @@ function get_hosts_ip
 
 function get_local_ip
 {
+    local ipaddr=""
+
+    if [ -n "${LOCAL_IP}" ];then
+        echo "${LOCAL_IP}"
+        return
+    fi
+
     local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
     local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
-
     for ipaddr in ${ssh_con}
     do
         if [[ ${ssh_cli} == ${ipaddr} ]];then
@@ -742,7 +748,7 @@ function get_local_ip
             return
         fi
     done
-
+    
     local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     for ipaddr in ${local_iparray[*]}
     do
@@ -762,4 +768,5 @@ function get_local_ip
 
     echo "127.0.0.1"
 }
+
 LOCAL_IP="$(get_local_ip)"
