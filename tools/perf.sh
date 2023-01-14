@@ -159,7 +159,13 @@ function perf_stat
         if [ -z "${process_x}" ];then
             process_x=$(input_prompt "" "specify one command-str that can directly run" "")
         fi
-        perf_para="-a -A -d -- ${process_x}" 
+
+        local aggregate=$(input_prompt "" "aggregate counts across all monitored CPUs ? (yes/no)" "yes")
+        if bool_v "${aggregate}";then
+            perf_para="-a -d -d -d -- ${process_x}" 
+        else
+            perf_para="-a -A -d -d -d -- ${process_x}" 
+        fi
     elif [[ "${select_x}" == "record" ]];then
         local perf_pid=$(construct_pid ${process_x})
         if is_integer "${perf_pid}";then
