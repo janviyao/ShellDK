@@ -29,6 +29,7 @@ alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push ori
 alias gcommit='function git_commit { git add -A; git commit -s -m "$@"; }; git_commit'
 
 alias psgrep='function ps_grep { ps -fauex -ww | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
+alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
