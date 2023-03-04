@@ -24,9 +24,11 @@ alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
 alias mygit='loop_2success git'
+alias gadd='git add -A'
 alias gpull='mygit pull'
-alias gpush='function git_push { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); }; git_push'
-alias gcommit='function git_commit { git add -A; git commit -s -m "$@"; }; git_commit'
+alias gpush='function git_push { git push origin $(git symbolic-ref --short -q HEAD); }; git_push'
+alias gcommit='function git_commit { git commit -s -m "$@"; }; git_commit'
+alias gamend='function git_amend { git commit --amend -s -m "$@"; }; git_amend'
 
 alias psgrep='function ps_grep { ps -fauex -ww | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
