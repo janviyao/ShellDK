@@ -308,7 +308,7 @@ vnoremap <silent> <C-k> 6k
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR>
 
 "搜索光标下单词
-nnoremap <silent> <Leader>rg :call GrepFind()<CR>
+nnoremap <silent> <Leader>rg :call qfix#GrepFind()<CR>
 
 "替换字符串
 nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
@@ -353,14 +353,14 @@ set csprg=/usr/bin/cscope                                  "制定cscope命令
 set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
 set cst                                                    "同时搜索tag文件和cscope数据库
 
-nmap <silent> <Leader>fs :call CSFind('fs')<CR>           "查找符号
-nmap <silent> <Leader>fg :call CSFind('fg')<CR>           "查找定义
-nmap <silent> <Leader>fc :call CSFind('fc')<CR>           "查找调用这个函数的函数
-nmap <silent> <Leader>fd :call CSFind('fd')<CR>           "查找被这个函数调用的函数
-nmap <silent> <Leader>ft :call CSFind('ft')<CR>           "查找这个字符串
-nmap <silent> <Leader>fe :call CSFind('fe')<CR>           "查找这个egrep匹配模式
-nmap <silent> <Leader>ff :call CSFind('ff')<CR>           "查找同名文件
-nmap <silent> <Leader>fi :call CSFind('fi')<CR>           "查找包含这个文件的文件
+nmap <silent> <Leader>fs :call qfix#CSFind('fs')<CR>       "查找符号
+nmap <silent> <Leader>fg :call qfix#CSFind('fg')<CR>       "查找定义
+nmap <silent> <Leader>fc :call qfix#CSFind('fc')<CR>       "查找调用这个函数的函数
+nmap <silent> <Leader>fd :call qfix#CSFind('fd')<CR>       "查找被这个函数调用的函数
+nmap <silent> <Leader>ft :call qfix#CSFind('ft')<CR>       "查找这个字符串
+nmap <silent> <Leader>fe :call qfix#CSFind('fe')<CR>       "查找这个egrep匹配模式
+nmap <silent> <Leader>ff :call qfix#CSFind('ff')<CR>       "查找同名文件
+nmap <silent> <Leader>fi :call qfix#CSFind('fi')<CR>       "查找包含这个文件的文件
 nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
