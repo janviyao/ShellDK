@@ -26,7 +26,7 @@ function create_project
     find . -type f -regex ".+\\.\\(${find_str}\\)" > cscope.files 
     
     if [ -d /usr/include ];then
-        find ${input_val} -type f -regex ".+\\.\\(/usr/include\\)" >> cscope.files 
+        find /usr/include -type f -regex ".+\\.\\(${find_str}\\)" >> cscope.files 
     fi
 
     input_val=$(input_prompt "" "input search directory" "")
