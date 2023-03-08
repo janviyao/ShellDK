@@ -69,6 +69,29 @@ function can_access
     return 1
 }
 
+function file_expire
+{
+    local xfile="$1"
+    local xtime="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: file path\n\$2: second number"
+        return 0
+    fi
+
+    if ! can_access "${xfile}";then
+        return 0
+    fi     
+
+    local expire_time=$(date -d "-${xtime} second" "+%Y-%m-%d %H:%M:%S")
+    local file_time=$(date -r ${xfile} "+%Y-%m-%d %H:%M:%S")
+    if [[ "${expire_time}" > "${file_time}" ]];then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function file_has
 {
     local xfile="$1"

@@ -5,14 +5,27 @@ GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
 function local_port_available
 {
     local port="$1"
+    local ss_file="${GBL_NCAT_WORK_DIR}/ss.res"
+    local ns_file="${GBL_NCAT_WORK_DIR}/netstat.res"
 
     #if netstat -at  2>/dev/null | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
-    if ss -tln | awk '{ print $4 }' | grep -F ":${port}" &> /dev/null;then
+    if file_expire "${ss_file}" 30;then
+        ss -tln | awk '{ print $4 }' &> ${ss_file}
+    fi
+
+    if grep -F ":${port}" ${ss_file} &> /dev/null;then
+        echo_file "${LOG_DEBUG}" "port[$1] used"
         return 1
     else
-        if netstat -nap 2>/dev/null | awk '{ print $4 }' | grep -F ":${port}" &> /dev/null;then
+        if file_expire "${ns_file}" 30;then
+            netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
+        fi
+
+        if grep -F ":${port}" ${ns_file} &> /dev/null;then
+            echo_file "${LOG_DEBUG}" "port[$1] used"
             return 1
         else
+            echo_file "${LOG_DEBUG}" "port[$1] avalible"
             return 0
         fi
     fi
