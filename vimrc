@@ -353,14 +353,14 @@ set csprg=/usr/bin/cscope                                  "制定cscope命令
 set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
 set cst                                                    "同时搜索tag文件和cscope数据库
 
-nmap <silent> <Leader>fs :call qfix#CSFind('fs')<CR>       "查找符号
-nmap <silent> <Leader>fg :call qfix#CSFind('fg')<CR>       "查找定义
-nmap <silent> <Leader>fc :call qfix#CSFind('fc')<CR>       "查找调用这个函数的函数
-nmap <silent> <Leader>fd :call qfix#CSFind('fd')<CR>       "查找被这个函数调用的函数
-nmap <silent> <Leader>ft :call qfix#CSFind('ft')<CR>       "查找这个字符串
-nmap <silent> <Leader>fe :call qfix#CSFind('fe')<CR>       "查找这个egrep匹配模式
-nmap <silent> <Leader>ff :call qfix#CSFind('ff')<CR>       "查找同名文件
-nmap <silent> <Leader>fi :call qfix#CSFind('fi')<CR>       "查找包含这个文件的文件
+nmap <silent> <Leader>fs :call qfix#csfind('fs')<CR>       "查找符号
+nmap <silent> <Leader>fg :call qfix#csfind('fg')<CR>       "查找定义
+nmap <silent> <Leader>fc :call qfix#csfind('fc')<CR>       "查找调用这个函数的函数
+nmap <silent> <Leader>fd :call qfix#csfind('fd')<CR>       "查找被这个函数调用的函数
+nmap <silent> <Leader>ft :call qfix#csfind('ft')<CR>       "查找这个字符串
+nmap <silent> <Leader>fe :call qfix#csfind('fe')<CR>       "查找这个egrep匹配模式
+nmap <silent> <Leader>ff :call qfix#csfind('ff')<CR>       "查找同名文件
+nmap <silent> <Leader>fi :call qfix#csfind('fi')<CR>       "查找包含这个文件的文件
 nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -837,7 +837,7 @@ function! RestoreLoad()
             let g:quickfix_module = "csfind"
         endif
 
-        call qfix#QuickCtrl(g:quickfix_module, "load")
+        call qfix#ctrl_main(g:quickfix_module, "load")
     endif
 endfunction
 
@@ -854,13 +854,13 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        call qfix#QuickCtrl("all", "close") 
+        call qfix#ctrl_main("all", "close") 
         call CloseBufExp()
         
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        call qfix#QuickCtrl("all", "close") 
+        call qfix#ctrl_main("all", "close") 
         call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
@@ -872,7 +872,7 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call qfix#QuickCtrl("all", "close") 
+        call qfix#ctrl_main("all", "close") 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
@@ -880,13 +880,13 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         call CloseBufExp()
         
-        call qfix#QuickCtrl("all", "toggle")
+        call qfix#ctrl_main("all", "toggle")
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'SrcExplClose'
         silent! execute 'CtrlSFClose'
-        call qfix#QuickCtrl("all", "close") 
+        call qfix#ctrl_main("all", "close") 
         call CloseBufExp()
     endif
 endfunction
@@ -947,7 +947,7 @@ function! LeaveHandler()
         endif
 
         call ToggleWindow("allclose")
-        call qfix#QuickCtrl(g:quickfix_module, "save")
+        call qfix#ctrl_main(g:quickfix_module, "save")
         
         if g:isDeleteSave == 0
             silent! execute "mks! ".GetVimDir(1,"sessions")."/session.vim"
