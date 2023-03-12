@@ -4,8 +4,8 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 0
-let g:quickfix_dump_enable = 0
+let g:print_log_enable = 1
+let g:quickfix_dump_enable = 1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
@@ -38,6 +38,42 @@ function! PrintMsg(type, msg)
     else
         echomsg "!!!!: ".a:msg
     endif
+endfunction
+
+function! PrintArgs(type, func, ...)
+    call PrintMsg(a:type, "function: ".a:func)
+    if a:0 > 0
+        let index = 1
+        let args_str = "{\n"
+        for arg in a:000
+            let args_str .= "  arg[".index."]: ".string(arg)."\n"
+            let index += 1
+        endfor
+        let args_str .= "}\n"
+        call PrintMsg(a:type, args_str)
+    endif
+endfunction
+
+function! PrintDict(type, explain, dict)
+    call PrintMsg(a:type, a:explain.": ")
+    let args_str = "{\n"
+    for [key, value] in items(a:dict)
+        let args_str .= "  [".key."]: ".string(value)."\n"
+    endfor
+    let args_str .= "}\n"
+    call PrintMsg(a:type, args_str)
+endfunction
+
+function! PrintList(type, explain, list)
+    let index = 0
+    call PrintMsg(a:type, a:explain.": ")
+    let args_str = "{\n"
+    for value in a:list
+        let args_str .= "  [".index."]: ".string(value)."\n"
+        let index += 1
+    endfor
+    let args_str .= "}\n"
+    call PrintMsg(a:type, args_str)
 endfunction
 
 function! GetResultIndex(cmd, substr)
@@ -233,7 +269,7 @@ autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | silent! e
 
 "自动保存和加载VimSeesion和VimInfo
 autocmd VimEnter * call EnterHandler()
-autocmd VimLeave * call LeaveHandler() 
+"autocmd VimLeave * call LeaveHandler() 
 
 "恢复命令栏默认高度
 autocmd CursorMoved * if exists("g:show_func") 
@@ -277,7 +313,7 @@ nnoremap <silent> <Leader>wc <C-w>c                        "关闭当前窗口
 nnoremap <silent> <Leader>wd :bd<CR>                       "删除当前缓存窗口
 nnoremap <silent> <Leader>ws :b#<CR>                       "切换上次缓存窗口
 nnoremap <silent> <Leader>wq :q<CR>                        "退出
-nnoremap <silent> <Leader>qq :qa<CR>                       "退出VIM
+nnoremap <silent> <Leader>qq :call LeaveHandler()<CR>      "退出VIM
 
 "控制窗口
 nnoremap <silent> <Leader>h <C-w>h                         "光标移到左面窗口
@@ -308,7 +344,7 @@ vnoremap <silent> <C-k> 6k
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR>
 
 "搜索光标下单词
-nnoremap <silent> <Leader>rg :call qfix#GrepFind()<CR>
+nnoremap <silent> <Leader>rg :call Quickfix_grep()<CR>
 
 "替换字符串
 nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
@@ -353,14 +389,14 @@ set csprg=/usr/bin/cscope                                  "制定cscope命令
 set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
 set cst                                                    "同时搜索tag文件和cscope数据库
 
-nmap <silent> <Leader>fs :call qfix#csfind('fs')<CR>       "查找符号
-nmap <silent> <Leader>fg :call qfix#csfind('fg')<CR>       "查找定义
-nmap <silent> <Leader>fc :call qfix#csfind('fc')<CR>       "查找调用这个函数的函数
-nmap <silent> <Leader>fd :call qfix#csfind('fd')<CR>       "查找被这个函数调用的函数
-nmap <silent> <Leader>ft :call qfix#csfind('ft')<CR>       "查找这个字符串
-nmap <silent> <Leader>fe :call qfix#csfind('fe')<CR>       "查找这个egrep匹配模式
-nmap <silent> <Leader>ff :call qfix#csfind('ff')<CR>       "查找同名文件
-nmap <silent> <Leader>fi :call qfix#csfind('fi')<CR>       "查找包含这个文件的文件
+nmap <silent> <Leader>fs :call Quickfix_csfind('fs')<CR>      "查找符号
+nmap <silent> <Leader>fg :call Quickfix_csfind('fg')<CR>      "查找定义
+nmap <silent> <Leader>fc :call Quickfix_csfind('fc')<CR>      "查找调用这个函数的函数
+nmap <silent> <Leader>fd :call Quickfix_csfind('fd')<CR>      "查找被这个函数调用的函数
+nmap <silent> <Leader>ft :call Quickfix_csfind('ft')<CR>      "查找这个字符串
+nmap <silent> <Leader>fe :call Quickfix_csfind('fe')<CR>      "查找这个egrep匹配模式
+nmap <silent> <Leader>ff :call Quickfix_csfind('ff')<CR>      "查找同名文件
+nmap <silent> <Leader>fi :call Quickfix_csfind('fi')<CR>      "查找包含这个文件的文件
 nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -837,7 +873,7 @@ function! RestoreLoad()
             let g:quickfix_module = "csfind"
         endif
 
-        call qfix#ctrl_main(g:quickfix_module, "load")
+        call Quickfix_ctrl(g:quickfix_module, "load")
     endif
 endfunction
 
@@ -854,13 +890,13 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        call qfix#ctrl_main("all", "close") 
+        call Quickfix_ctrl("all", "close") 
         call CloseBufExp()
         
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        call qfix#ctrl_main("all", "close") 
+        call Quickfix_ctrl("all", "close") 
         call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
@@ -872,7 +908,7 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call qfix#ctrl_main("all", "close") 
+        call Quickfix_ctrl("all", "close") 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
@@ -880,19 +916,19 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         call CloseBufExp()
         
-        call qfix#ctrl_main("all", "toggle")
+        call Quickfix_ctrl("all", "toggle")
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'SrcExplClose'
         silent! execute 'CtrlSFClose'
-        call qfix#ctrl_main("all", "close") 
+        call Quickfix_ctrl("all", "close") 
         call CloseBufExp()
     endif
 endfunction
 
 "自定义变量
-let g:isDeleteSave = 0
+let s:isDeleteSave = 0
 
 "工程控制
 function! LoadProject(opmode) 
@@ -902,8 +938,8 @@ function! LoadProject(opmode)
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -d \"".getcwd()."\" -m create"
         silent! execute "qa"
     elseif a:opmode == "delete" 
-        let g:isDeleteSave = 1
-        silent! execute "qa"
+        let s:isDeleteSave = 1
+        call LeaveHandler()
     elseif a:opmode == "load" 
         if filereadable("tags")
             set tags=tags;  "结尾分号能够向父目录查找tags文件
@@ -947,9 +983,9 @@ function! LeaveHandler()
         endif
 
         call ToggleWindow("allclose")
-        call qfix#ctrl_main(g:quickfix_module, "save")
+        call Quickfix_ctrl(g:quickfix_module, "save")
         
-        if g:isDeleteSave == 0
+        if s:isDeleteSave == 0
             silent! execute "mks! ".GetVimDir(1,"sessions")."/session.vim"
             silent! execute "wviminfo! ".GetVimDir(1,"sessions")."/session.viminfo"
 
@@ -965,6 +1001,8 @@ function! LeaveHandler()
             silent! execute "!rm -f ".g:log_file
         endif 
     endif
+    call Quickfix_leave()
+    silent! execute "qa"
 endfunction
 
 "显示标签名

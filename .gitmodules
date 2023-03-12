@@ -1,3 +1,4 @@
 [submodule "plugins/quickfix"]
 	path = plugins/quickfix
 	url = git@github.com:janviyao/quickfix.git
+	branch = master
