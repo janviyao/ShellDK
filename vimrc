@@ -4,8 +4,8 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 1
-let g:quickfix_dump_enable = 1
+let g:print_log_enable = 0
+let g:quickfix_dump_enable = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
@@ -1305,6 +1305,7 @@ let g:gundo_close_on_revert = 1                            "恢复之后自动�
 if has('patch-8.2.0662') || has('nvim-0.5')
     Bundle 'Shougo/ddc.vim'
     Bundle 'vim-denops/denops.vim'
+    let g:denops_disable_version_check = 1                 "denops与vim版本不兼容时不报错
 
     " Install your sources
     Bundle 'Shougo/ddc-around'
