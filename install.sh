@@ -21,7 +21,7 @@ INST_GUIDE["deno"]="${CMD1};unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno $
 INST_GUIDE["make"]="install_from_net make"
 INST_GUIDE["g++"]="install_from_net gcc-c++"
 
-INST_GUIDE["ctags"]="${CMD1};install_from_tar 'ctags-.+\.tar\.gz';rm -fr ctags-*/"
+INST_GUIDE["ctags"]="${CMD1};install_from_tar 'universal-ctags-.+\.tar\.gz';rm -fr universal-ctags-*/"
 INST_GUIDE["cscope"]="${CMD1};install_from_tar 'cscope-.+\.tar\.gz';rm -fr cscope-*/"
 INST_GUIDE["tig"]="${CMD1};install_from_tar 'tig-.+\.tar\.gz';rm -fr tig-*/"
 #INST_GUIDE["ag"]="${CMD1};install_from_tar 'the_silver_searcher-.+\.tar\.gz';rm -fr the_silver_searcher-*/"
@@ -122,6 +122,10 @@ function update_check
     local local_cmd="$1"
     local fname_reg="$2"
 
+    if bool_v "${FORCE_DO}"; then
+        return 0
+    fi
+
     if can_access "${local_cmd}";then
         local tmp_file="$(file_temp)"
         ${local_cmd} --version &> ${tmp_file} 
@@ -138,9 +142,8 @@ function update_check
         for full_nm in ${file_list}    
         do
             local file_name=$(path2fname ${full_nm})
-            echo_debug "local version: ${version_cur}  install version: ${file_name}"
-
             local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
+            echo_info "$(printf "[%13s]: %-13s" "Version" "local: { ${version_cur} }  install: { ${version_new} }")"
             if version_lt ${version_cur} ${version_new}; then
                 cd ${local_dir}
                 return 0
@@ -160,6 +163,7 @@ function inst_usage
     echo "install.sh -n true       @all installation packages from net"
     echo "install.sh -r true       @install packages into other host in '/etc/hosts'"
     echo "install.sh -c true       @copy packages into other host in '/etc/hosts' limited by '-r' option"
+    echo "install.sh -f true       @force to do it"
     echo "install.sh -o clean      @clean vim environment"
     echo "install.sh -o env        @deploy vim's usage environment"
     echo "install.sh -o vim        @install vim package"
@@ -227,11 +231,16 @@ NEED_NET="${parasMap['-n']}"
 NEED_NET="${NEED_NET:-${parasMap['--net']}}"
 NEED_NET="${NEED_NET:-0}"
 
+FORCE_DO="${parasMap['-f']}"
+FORCE_DO="${FORCE_DO:-${parasMap['--force']}}"
+FORCE_DO="${FORCE_DO:-0}"
+
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
 echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
 echo_info "$(printf "[%13s]: %-6s" "Need Netwrk" "${NEED_NET}")"
 echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
+echo_info "$(printf "[%13s]: %-6s" "Will force"  "${FORCE_DO}")"
 
 if bool_v "${NEED_NET}"; then
     if check_net; then

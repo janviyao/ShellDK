@@ -127,12 +127,13 @@ function create_project
     rm -f ncscope.*
     
     echo_debug "build ctags ..."
-    local extra_opt=$(ctags --help | grep '\-\-extra\=') 
-    if [ -n "${extra_opt}" ]; then
-        ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files
-    else
-        ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
-    fi
+    #local extra_opt=$(ctags --help | grep '\-\-extra\=') 
+    #if [ -n "${extra_opt}" ]; then
+    #    ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files
+    #else
+    #    ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
+    #fi
+    ctags -L cscope.files
 
     if ! can_access "tags";then
         echo_erro "tags create fail"
