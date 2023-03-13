@@ -21,7 +21,7 @@ INST_GUIDE["deno"]="${CMD1};unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno $
 INST_GUIDE["make"]="install_from_net make"
 INST_GUIDE["g++"]="install_from_net gcc-c++"
 
-INST_GUIDE["ctags"]="${CMD1};install_from_tar 'ctags-.+\.tar\.gz';rm -fr ctags-*/"
+INST_GUIDE["ctags"]="${CMD1};install_from_tar 'universal-ctags-.+\.tar\.gz';rm -fr universal-ctags-*/"
 INST_GUIDE["cscope"]="${CMD1};install_from_tar 'cscope-.+\.tar\.gz';rm -fr cscope-*/"
 INST_GUIDE["tig"]="${CMD1};install_from_tar 'tig-.+\.tar\.gz';rm -fr tig-*/"
 #INST_GUIDE["ag"]="${CMD1};install_from_tar 'the_silver_searcher-.+\.tar\.gz';rm -fr the_silver_searcher-*/"

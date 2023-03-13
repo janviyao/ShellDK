@@ -928,13 +928,14 @@ function! ToggleWindow(ccmd)
 endfunction
 
 "自定义变量
-let s:isDeleteSave = 0
+let s:vim_exit_act = 0
 
 "工程控制
 function! LoadProject(opmode) 
     call PrintMsg("file", "LoadProject ".a:opmode)
 
     if a:opmode == "create"
+        let s:vim_exit_act = 2
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -d \"".getcwd()."\" -m create"
 
         silent! execute "!mv -f tags ".GetVimDir(1, "sessions")."/tags"
@@ -942,13 +943,14 @@ function! LoadProject(opmode)
         silent! execute "!mv -f cscope.out ".GetVimDir(1, "sessions")."/cscope.out"
         silent! execute "!mv -f cscope.po.out ".GetVimDir(1, "sessions")."/cscope.po.out"
 
-        silent! execute "qa"
+        call LeaveHandler()
     elseif a:opmode == "delete" 
-        let s:isDeleteSave = 1
+        let s:vim_exit_act = 1
         call LeaveHandler()
     elseif a:opmode == "load" 
         if filereadable(".tags")
             set tags=.tags;                                 "结尾分号能够向父目录查找tags文件
+            set autochdir                                   "自动切换工作目录
         endif
 
         set nocsverb
@@ -998,7 +1000,7 @@ function! LeaveHandler()
         call ToggleWindow("allclose")
         call Quickfix_ctrl(g:quickfix_module, "save")
         
-        if s:isDeleteSave == 0
+        if s:vim_exit_act == 0
             silent! execute "mks! ".GetVimDir(1, "sessions")."/session.vim"
             silent! execute "wviminfo! ".GetVimDir(1, "sessions")."/session.viminfo"
 
@@ -1006,7 +1008,7 @@ function! LeaveHandler()
             silent! execute "!mv -f .cscope.in.out ".GetVimDir(1, "sessions")."/cscope.in.out"
             silent! execute "!mv -f .cscope.out ".GetVimDir(1, "sessions")."/cscope.out"
             silent! execute "!mv -f .cscope.po.out ".GetVimDir(1, "sessions")."/cscope.po.out"
-        else
+        elseif s:vim_exit_act == 1
             silent! execute "!rm -fr ".GetVimDir(1, "sessions") 
             silent! execute "!rm -fr ".GetVimDir(1, "ctrlpcache") 
             silent! execute "!rm -fr ".GetVimDir(1, "bookmark") 
@@ -1014,8 +1016,11 @@ function! LeaveHandler()
 
             silent! execute "!rm -f .cscope.* ncscope.* .tags"
             silent! execute "!rm -f ".g:log_file
+        elseif s:vim_exit_act == 2
+            silent! execute "!rm -f .cscope.* ncscope.* .tags"
         endif 
     endif
+
     call Quickfix_leave()
     silent! execute "qa"
 endfunction
