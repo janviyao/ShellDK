@@ -231,7 +231,7 @@ set smartcase                                              "有一个或以上�
 "set ignorecase                                            "搜索时候忽略大小写
 
 "搜索时要忽略的文件和目录
-set wildignore=*.o,*~,*.pyc,*/.repo/*,*/.git/*,*/.svn/*,*.git*,*.svn*,tags,cscope.*
+set wildignore=*.o,*~,*.pyc,*/.repo/*,*/.git/*,*/.svn/*,*.git*,*.svn*,.tags,.cscope.*
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 代码折叠
@@ -864,9 +864,9 @@ function! RestoreLoad()
         let autocommands_loaded = 1
 
         "创建文件修改回退目录
-        let dirStr=GetVimDir(0,"undodir")
+        let dirStr=GetVimDir(0, "undodir")
 
-        let moduleFile = GetVimDir(1,"quickfix").'/module'
+        let moduleFile = GetVimDir(1, "quickfix").'/module'
         if filereadable(moduleFile)
             let g:quickfix_module = get(readfile(moduleFile, 'b', 1), 0, '')
         else
@@ -936,17 +936,24 @@ function! LoadProject(opmode)
 
     if a:opmode == "create"
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -d \"".getcwd()."\" -m create"
+
+        silent! execute "!mv -f tags ".GetVimDir(1, "sessions")."/tags"
+        silent! execute "!mv -f cscope.in.out ".GetVimDir(1, "sessions")."/cscope.in.out"
+        silent! execute "!mv -f cscope.out ".GetVimDir(1, "sessions")."/cscope.out"
+        silent! execute "!mv -f cscope.po.out ".GetVimDir(1, "sessions")."/cscope.po.out"
+
         silent! execute "qa"
     elseif a:opmode == "delete" 
         let s:isDeleteSave = 1
         call LeaveHandler()
     elseif a:opmode == "load" 
-        if filereadable("tags")
-            set tags=tags;  "结尾分号能够向父目录查找tags文件
+        if filereadable(".tags")
+            set tags=.tags;                                 "结尾分号能够向父目录查找tags文件
         endif
+
         set nocsverb
-        if filereadable("cscope.out")
-            silent! execute "cs add cscope.out ./"
+        if filereadable(".cscope.out")
+            silent! execute "cs add .cscope.out ./"
         endif
         set csverb       
     endif
@@ -954,19 +961,25 @@ endfunction
 
 "VIM进入事件
 function! EnterHandler()
-    if filereadable(GetVimDir(1,"sessions")."/tags") && filereadable(GetVimDir(1,"sessions")."/cscope.out")
-        silent! execute "!mv ".GetVimDir(1,"sessions")."/tags ".getcwd()
-        silent! execute "!mv ".GetVimDir(1,"sessions")."/cscope.* ".getcwd()
+    if filereadable(GetVimDir(1, "sessions")."/tags")
+        silent! execute "!mv -f ".GetVimDir(1, "sessions")."/tags ".getcwd()."/.tags"
     endif
 
-    if filereadable("tags") && filereadable("cscope.out")
+    if filereadable(GetVimDir(1, "sessions")."/cscope.out")
+        silent! execute "!mv -f ".GetVimDir(1, "sessions")."/cscope.in.out ".getcwd()."/.cscope.in.out"
+        silent! execute "!mv -f ".GetVimDir(1, "sessions")."/cscope.out ".getcwd()."/.cscope.out"
+        silent! execute "!mv -f ".GetVimDir(1, "sessions")."/cscope.po.out ".getcwd()."/.cscope.po.out"
+    endif
+
+    if filereadable(".tags") && filereadable(".cscope.out")
         call LoadProject("load")
 
-        if filereadable(GetVimDir(1,"sessions")."/session.vim")
-            silent! execute "source ".GetVimDir(1,"sessions")."/session.vim"
+        if filereadable(GetVimDir(1, "sessions")."/session.vim")
+            silent! execute "source ".GetVimDir(1, "sessions")."/session.vim"
         endif
-        if filereadable(GetVimDir(1,"sessions")."/session.vim")
-            silent! execute "rviminfo ".GetVimDir(1,"sessions")."/session.viminfo"
+
+        if filereadable(GetVimDir(1, "sessions")."/session.vim")
+            silent! execute "rviminfo ".GetVimDir(1, "sessions")."/session.viminfo"
         endif
 
         call RestoreLoad()
@@ -976,9 +989,9 @@ endfunction
 
 "VIM退出事件
 function! LeaveHandler()
-    if filereadable("tags") && filereadable("cscope.out")
+    if filereadable(".tags") && filereadable(".cscope.out")
         if !empty(g:quickfix_module)
-            let moduleFile = GetVimDir(1,"quickfix").'/module'
+            let moduleFile = GetVimDir(1, "quickfix").'/module'
             call writefile([g:quickfix_module], moduleFile, 'b')
         endif
 
@@ -986,18 +999,20 @@ function! LeaveHandler()
         call Quickfix_ctrl(g:quickfix_module, "save")
         
         if s:isDeleteSave == 0
-            silent! execute "mks! ".GetVimDir(1,"sessions")."/session.vim"
-            silent! execute "wviminfo! ".GetVimDir(1,"sessions")."/session.viminfo"
+            silent! execute "mks! ".GetVimDir(1, "sessions")."/session.vim"
+            silent! execute "wviminfo! ".GetVimDir(1, "sessions")."/session.viminfo"
 
-            silent! execute "!mv tags ".GetVimDir(1,"sessions")
-            silent! execute "!mv cscope.* ".GetVimDir(1,"sessions")
+            silent! execute "!mv -f .tags ".GetVimDir(1, "sessions")."/tags"
+            silent! execute "!mv -f .cscope.in.out ".GetVimDir(1, "sessions")."/cscope.in.out"
+            silent! execute "!mv -f .cscope.out ".GetVimDir(1, "sessions")."/cscope.out"
+            silent! execute "!mv -f .cscope.po.out ".GetVimDir(1, "sessions")."/cscope.po.out"
         else
-            silent! execute "!rm -fr ".GetVimDir(1,"sessions") 
-            silent! execute "!rm -fr ".GetVimDir(1,"ctrlpcache") 
-            silent! execute "!rm -fr ".GetVimDir(1,"bookmark") 
-            silent! execute "!rm -fr ".GetVimDir(1,"quickfix") 
+            silent! execute "!rm -fr ".GetVimDir(1, "sessions") 
+            silent! execute "!rm -fr ".GetVimDir(1, "ctrlpcache") 
+            silent! execute "!rm -fr ".GetVimDir(1, "bookmark") 
+            silent! execute "!rm -fr ".GetVimDir(1, "quickfix") 
 
-            silent! execute "!rm -f cscope.* ncscope.* tags"
+            silent! execute "!rm -f .cscope.* ncscope.* .tags"
             silent! execute "!rm -f ".g:log_file
         endif 
     endif
@@ -1117,7 +1132,7 @@ let g:bufExplorerShowRelativePath = 1                      "显示目录相对�
 Bundle "name5566/vim-bookmark"
 
 "关闭后保存书签，目录路径要存在，否则失败
-let g:vbookmark_bookmarkSaveFile = GetVimDir(1,"bookmark")."/save.vbm" 
+let g:vbookmark_bookmarkSaveFile = GetVimDir(1, "bookmark")."/save.vbm" 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 关键字搜索 插件
@@ -1126,7 +1141,7 @@ Bundle "yegappan/grep"
 
 let Grep_Default_Filelist = '*.*'                                         "查找文件类型
 let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
-let Grep_Skip_Files = '*.o *.d *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
+let Grep_Skip_Files = '*.o *.d *.bak *~ .git* .tags .cscope.* vim.debug'    "不匹配指定文件
 let Grep_OpenQuickfixWindow = 0                                           "默认不自动打开quickfix, 完成格式化打开
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -1153,7 +1168,7 @@ let NERDChristmasTree = 1                                  "以圣诞树样式�
 let NERDTreeAutoCenter = 1                                 "光标居中显示
 let NERDTreeShowHidden = 0                                 "不显示隐藏文件
 "忽略指定文件
-let NERDTreeIgnore = ['\.vim$', '\~$', 'cscope\.*', 'tags[[file]]', '\.git*', '\.repo$[[dir]]'] 
+let NERDTreeIgnore = ['\.vim$', '\~$', '.cscope\.*', '.tags[[file]]', '\.git*', '\.repo$[[dir]]'] 
 
 "在NERDTree上显示Git状态
 Bundle "Xuyuanp/nerdtree-git-plugin"
@@ -1175,8 +1190,8 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "kien/ctrlp.vim"
 
-let g:ctrlp_cache_dir = GetVimDir(1,"ctrlpcache")          "设置存储缓存文件的目录
-let g:ctrlp_root_markers = ['tags', 'cscope.out']          "设置自定义的根目录标记作为默认标记
+let g:ctrlp_cache_dir = GetVimDir(1, "ctrlpcache")         "设置存储缓存文件的目录
+let g:ctrlp_root_markers = ['.tags', '.cscope.out']          "设置自定义的根目录标记作为默认标记
 let g:ctrlp_use_caching = 1                                "启用/禁用每个会话的缓存
 let g:ctrlp_clear_cache_on_exit = 0                        "通过退出Vim时不删除缓存文件来启用跨回话的缓存
 let g:ctrlp_max_files = 0                                  "扫描文件的最大数量，设置为0时不进行限制
@@ -1190,7 +1205,7 @@ let g:ctrlp_open_multiple_files = 'i'                      "<c-o>以隐藏方式
 let g:ctrlp_open_new_file = 't'                            "<c-y>新建文件时在新的标签页打开
 let g:ctrlp_map = '<C-p>'
 let g:ctrlp_cmd = 'CtrlPMixed'
-let g:ctrlp_custom_ignore = {'dir': '\v[\/]\.(git|repo|svn)$', 'file': '\v(\.exe|\.out|tags)$'}
+let g:ctrlp_custom_ignore = {'dir': '\v[\/]\.(git|repo|svn)$', 'file': '\v(\.exe|\.out|\.tags)$'}
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 TAG列表显示 插件
