@@ -381,14 +381,6 @@ nnoremap <silent> <Leader>nt :call ToggleWindow("nt")<CR>  "切换NERDTree
 "扩展跳转功能
 nnoremap <Leader>tj  :tj <C-R>=expand("<cword>")<CR>
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
-" 设置CSCOPE
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set cscopequickfix=s-,c-,d-,i-,t-,e-                       "设定是否使用quickfix窗口显示cscope结果
-set csprg=/usr/bin/cscope                                  "制定cscope命令
-set csto=0                                                 "ctags查找顺序，0表示先cscope数据库再标签文件
-set cst                                                    "同时搜索tag文件和cscope数据库
-
 nmap <silent> <Leader>fs :call Quickfix_csfind('fs')<CR>      "查找符号
 nmap <silent> <Leader>fg :call Quickfix_csfind('fg')<CR>      "查找定义
 nmap <silent> <Leader>fc :call Quickfix_csfind('fc')<CR>      "查找调用这个函数的函数
@@ -948,16 +940,28 @@ function! LoadProject(opmode)
         let s:vim_exit_act = 1
         call LeaveHandler()
     elseif a:opmode == "load" 
-        if filereadable(".tags")
-            set tags=.tags;                                 "结尾分号能够向父目录查找tags文件
-            set autochdir                                   "自动切换工作目录
+        if has("ctags")
+            if filereadable(".tags")
+                set tags=.tags;                            "结尾分号能够向父目录查找tags文件
+                set autochdir                              "自动切换工作目录
+            endif
         endif
 
-        set nocsverb
-        if filereadable(".cscope.out")
-            silent! execute "cs add .cscope.out ./"
+        if has("cscope")
+            set cscopetag                                  "use both cscope and ctag for 'ctrl-]', ':ta', and 'vim -t'
+            set cscopeverbose                              "show msg when any other cscope db added
+
+            set cscopequickfix=s-,c-,d-,i-,t-,e-           "设定是否使用quickfix窗口显示cscope结果
+            set csprg=/usr/bin/cscope                      "制定cscope命令
+            set csto=0                                     "ctags查找顺序，1表示先cscope.*数据库再tags
+            set cst                                        "同时搜索tag文件和cscope数据库
+
+            set nocsverb
+            if filereadable(".cscope.out")
+                silent! execute "cs add .cscope.out ./"
+            endif
+            set csverb       
         endif
-        set csverb       
     endif
 endfunction
 
