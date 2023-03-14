@@ -4,7 +4,7 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 0
+let g:print_log_enable = 1
 let g:quickfix_dump_enable = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -379,7 +379,7 @@ nnoremap <silent> <Leader>be :call ToggleWindow("be")<CR>  "切换BufExplorer
 nnoremap <silent> <Leader>nt :call ToggleWindow("nt")<CR>  "切换NERDTree
 
 "扩展跳转功能
-nnoremap <Leader>tj  :tj <C-R>=expand("<cword>")<CR>
+nnoremap <Leader>tj  :cstag <C-R>=expand("<cword>")<CR>
 
 nmap <silent> <Leader>fs :call Quickfix_csfind('fs')<CR>      "查找符号
 nmap <silent> <Leader>fg :call Quickfix_csfind('fg')<CR>      "查找定义
@@ -948,13 +948,13 @@ function! LoadProject(opmode)
         endif
 
         if has("cscope")
-            set cscopetag                                  "use both cscope and ctag for 'ctrl-]', ':ta', and 'vim -t'
             set cscopeverbose                              "show msg when any other cscope db added
-
             set cscopequickfix=s-,c-,d-,i-,t-,e-           "设定是否使用quickfix窗口显示cscope结果
             set csprg=/usr/bin/cscope                      "制定cscope命令
-            set csto=0                                     "ctags查找顺序，1表示先cscope.*数据库再tags
-            set cst                                        "同时搜索tag文件和cscope数据库
+            ":tj, :ts, only search tags 
+            "effect <C-L>, :cstag, :tag, g], search both cscope.* and tags 
+            set cscopetag                                  "use both cscope and ctag for 'ctrl-]', ':ta', and 'vim -t'
+            set cscopetagorder=0                           "cscope database(s) are searched first, followed by tag file(s) if cscope did not return any matches
 
             set nocsverb
             if filereadable(".cscope.out")
