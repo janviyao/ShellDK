@@ -4,7 +4,7 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
-let g:print_log_enable = 1
+let g:print_log_enable = 0
 let g:quickfix_dump_enable = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -14,7 +14,7 @@ function! PrintMsg(type, msg)
     if a:type == "error"
         call PrintMsg("file", a:type.": ".a:msg)
         echohl ErrorMsg
-        echoerr a:type.": ".a:msg
+        echoerr "[".a:type."]: ".a:msg
         echohl None
         return
     endif 
@@ -25,11 +25,11 @@ function! PrintMsg(type, msg)
 
     if a:type == "warn" 
         echohl WarningMsg
-        echomsg a:type.": ".a:msg
+        echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "info"
         echohl ModeMsg
-        echomsg a:type.": ".a:msg
+        echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "file" 
         redir! >> vim.debug 
