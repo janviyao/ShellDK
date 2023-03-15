@@ -5,17 +5,31 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 OP_MODE="${parasMap['-m']}"
 OP_MODE="${OP_MODE:-${parasMap['--mode']}}"
-[ -n "${OP_MODE}" ] && echo_debug "mode: ${OP_MODE}"
+if [ -n "${OP_MODE}" ];then
+    echo_debug "work-mode: ${OP_MODE}"
+fi
+
+PRJ_DIR="${parasMap['-p']}"
+PRJ_DIR="${PRJ_DIR:-${parasMap['--project-dir']}}"
+PRJ_DIR="${PRJ_DIR:-.}"
+PRJ_DIR=$(string_trim "${PRJ_DIR}" "/" 2)
+if [ -n "${PRJ_DIR}" ];then
+    echo_debug "project-dir: ${PRJ_DIR}"
+fi
+
+OUT_DIR="${parasMap['-o']}"
+OUT_DIR="${OUT_DIR:-${parasMap['--output-dir']}}"
+OUT_DIR=$(string_trim "${OUT_DIR}" "/" 2)
+if [ -n "${OUT_DIR}" ];then
+    echo_debug "output-dir: ${OUT_DIR}"
+else
+    echo_erro "output-dir not specified"
+    exit 1
+fi
 
 function create_project
 {
-    local root_dir="${parasMap['-d']}"
-    root_dir="${root_dir:-${parasMap['--root-dir']}}"
-    root_dir="${root_dir:-.}"
-    root_dir=$(string_trim "${root_dir}" "/" 2)
-    [ -n "${root_dir}" ] && echo_debug "root-dir: ${root_dir}"
-
-    cd ${root_dir}
+    cd ${PRJ_DIR}
     local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|hh\\|h\\|s\\|S\\|py\\|go"
     local find_str="${default_type}"
 
@@ -23,24 +37,24 @@ function create_project
     if [ -n "${input_val}" ];then
         find_str=$(replace_str "${input_val}" ',' '\\|')
     fi
-    find . -type f -regex ".+\\.\\(${find_str}\\)" > cscope.files 
+    find . -type f -regex ".+\\.\\(${find_str}\\)" > ${OUT_DIR}/cscope.files 
     
     if [ -d /usr/include ];then
-        find /usr/include -type f -regex ".+\\.\\(${find_str}\\)" >> cscope.files 
+        find /usr/include -type f -regex ".+\\.\\(${find_str}\\)" >> ${OUT_DIR}/cscope.files 
     fi
 
     input_val=$(input_prompt "" "input search directory" "")
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
-            find ${input_val} -type f -regex ".+\\.\\(${find_str}\\)" >> cscope.files 
+            find ${input_val} -type f -regex ".+\\.\\(${find_str}\\)" >> ${OUT_DIR}/cscope.files 
         fi
         input_val=$(input_prompt "" "input search directory" "")
     done
 
-    sort -u cscope.files > cscope.files.tmp
-    mv cscope.files.tmp cscope.files 
-    echo_debug "orig cscope.files lines=$(file_linenr cscope.files)"
+    sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
+    mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
+    echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
 
     input_val=$(input_prompt "" "input wipe directory" "")
     while [ -n "${input_val}" ]
@@ -48,7 +62,7 @@ function create_project
         if [ -d "${input_val}" ];then
             input_val=$(replace_str "${input_val}" "$HOME/" "")
             input_val=$(replace_str "${input_val}" '/' '\/')
-            file_del cscope.files "${input_val}" false
+            file_del ${OUT_DIR}/cscope.files "${input_val}" false
             if [ $? -ne 0 ];then
                 echo_erro "file_del { ${input_val}} fail"
                 return 1
@@ -56,16 +70,16 @@ function create_project
         fi
         input_val=$(input_prompt "" "input wipe directory" "")
     done
-    echo_debug "wipe cscope.files lines=$(file_linenr cscope.files)"
+    echo_debug "wipe cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
 
-    file_replace cscope.files "^\./" "" true
+    file_replace ${OUT_DIR}/cscope.files "^\./" "" true
     if [ $? -ne 0 ];then
         echo_erro "file_replace { ./ } into { } fail"
         return 1
     fi
 
     if can_access ".gitignore"; then
-        echo_debug "lines=$(file_linenr cscope.files) before gitignore"
+        echo_debug "lines=$(file_linenr ${OUT_DIR}/cscope.files) before gitignore"
         while read line
         do
             [ -z "${line}" ] && continue
@@ -107,24 +121,24 @@ function create_project
             fi
 
             echo_debug "new  regex: ${line}"
-            file_del cscope.files "${line}" true
+            file_del ${OUT_DIR}/cscope.files "${line}" true
             if [ $? -ne 0 ];then
                 echo_erro "file_del { ${line}} fail"
                 return 1
             fi
         done < .gitignore
-        echo_debug "lines=$(file_linenr cscope.files) after gitignore"
+        echo_debug "lines=$(file_linenr ${OUT_DIR}/cscope.files) after gitignore"
     fi
     
-    local line_nr=$(file_linenr cscope.files)
+    local line_nr=$(file_linenr ${OUT_DIR}/cscope.files)
     if [ -n "${line_nr}" ] && [ ${line_nr} -le 1 ];then
         echo_erro "cscope.files empty"
         return 1
     fi
 
-    rm -f tags
-    rm -f cscope.*out
-    rm -f ncscope.*
+    rm -f ${OUT_DIR}/tags
+    rm -f ${OUT_DIR}/cscope.out*
+    rm -f ${OUT_DIR}/ncscope.*
     
     echo_debug "build ctags ..."
     #local extra_opt=$(ctags --help | grep '\-\-extra\=') 
@@ -133,22 +147,20 @@ function create_project
     #else
     #    ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
     #fi
-    ctags -L cscope.files
+    ctags -L ${OUT_DIR}/cscope.files -o ${OUT_DIR}/tags
 
-    if ! can_access "tags";then
+    if ! can_access "${OUT_DIR}/tags";then
         echo_erro "tags create fail"
         return 1
     fi
 
     echo_debug "build cscope ..."
-    cscope -ckbq -i cscope.files
-    if ! can_access "cscope.*";then
+    cscope -ckbq -i ${OUT_DIR}/cscope.files -f ${OUT_DIR}/cscope.out
+    if ! can_access "${OUT_DIR}/cscope.*";then
         echo_erro "cscope.out create fail"
         return 1
     fi
 
-    rm -f ncscope.*
-    rm -f cscope.files
     return 0
 }
 
