@@ -92,6 +92,18 @@ function match_regex
     fi
 }
 
+function string_length
+{
+    local string="$1"
+    if [[ -z "${string}" ]];then
+        echo "0"
+        return 1
+    fi
+
+    echo ${#string}
+    return 0
+}
+
 function string_contain
 {
     local string="$1"
@@ -329,6 +341,64 @@ function string_match
     return 1
 }
 
+function string_same
+{
+    local string="$1"
+    local substr="$2"
+    local posstr="${3:-0}"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: start&end 1:start 2:end)"
+        return 1
+    fi
+
+    if ! is_integer "${posstr}";then
+        echo_file "${LOG_ERRO}" "trim position { ${posstr} } invalid"
+        return 1
+    fi
+
+    if [[ ${posstr} -eq 1 ]];then 
+        local index=1
+        local sublen=${#substr}
+        while EXPR_IF "${index} <= ${sublen}"
+        do
+            if [[ $(string_start "${string}" ${index}) != $(string_start "${substr}" ${index}) ]]; then
+                break
+            fi
+            let index++
+        done
+
+        let index--
+        if [ ${index} -gt 0 ];then
+            local same=$(string_sub "${string}" 0 ${index})
+            echo "${same}"
+            return 0
+        fi
+    fi
+
+    if [[ ${posstr} -eq 2 ]];then
+        local index=1
+        local sublen=${#substr}
+        while EXPR_IF "${index} <= ${sublen}"
+        do
+            if [[ $(string_end "${string}" ${index}) != $(string_end "${substr}" ${index}) ]]; then
+                break
+            fi
+            let index++
+        done
+        let index--
+
+        if [ ${index} -gt 0 ];then
+            let index=${#string}-${index} 
+            local same=$(string_sub "${string}" ${index} ${#string})
+            echo "${same}"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 function string_trim
 {
     local string="$1"
@@ -341,7 +411,7 @@ function string_trim
     fi
 
     if ! is_integer "${posstr}";then
-        echo_erro "trim position { ${posstr} } invalid"
+        echo_file "${LOG_ERRO}" "trim position { ${posstr} } invalid"
         return 1
     fi
 
