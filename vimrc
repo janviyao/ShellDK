@@ -5,25 +5,19 @@ let g:my_vim_dir = expand('$MY_VIM_DIR')
 
 let g:log_file = "vim.debug"
 let g:print_log_enable = 0
-let g:quickfix_dump_enable = 0
+let g:quickfix_dump_enable = 1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 function! PrintMsg(type, msg)
     if a:type == "error"
-        call PrintMsg("file", a:type.": ".a:msg)
         echohl ErrorMsg
         echoerr "[".a:type."]: ".a:msg
         echohl None
-        return
-    endif 
 
-    if !exists("g:print_log_enable") || g:print_log_enable == 0
-        return
-    endif
-
-    if a:type == "warn" 
+        call PrintMsg("file", "[".a:type."]: ".a:msg)
+    elseif a:type == "warn" 
         echohl WarningMsg
         echomsg "[".a:type."]: ".a:msg
         echohl None
@@ -40,8 +34,21 @@ function! PrintMsg(type, msg)
     endif
 endfunction
 
+function! PrintLog(type, msg)
+    if a:type == "error"
+        call PrintMsg(a:type, a:msg)
+        return
+    endif 
+
+    if !exists("g:print_log_enable") || g:print_log_enable == 0
+        return
+    endif
+
+    call PrintMsg(a:type, a:msg)
+endfunction
+
 function! PrintArgs(type, func, ...)
-    call PrintMsg(a:type, "function: ".a:func)
+    call PrintLog(a:type, "function: ".a:func)
     if a:0 > 0
         let index = 1
         let args_str = "{\n"
@@ -50,30 +57,30 @@ function! PrintArgs(type, func, ...)
             let index += 1
         endfor
         let args_str .= "}\n"
-        call PrintMsg(a:type, args_str)
+        call PrintLog(a:type, args_str)
     endif
 endfunction
 
 function! PrintDict(type, explain, dict)
-    call PrintMsg(a:type, a:explain.": ")
+    call PrintLog(a:type, a:explain.": ")
     let args_str = "{\n"
     for [key, value] in items(a:dict)
         let args_str .= "  [".key."]: ".string(value)."\n"
     endfor
     let args_str .= "}\n"
-    call PrintMsg(a:type, args_str)
+    call PrintLog(a:type, args_str)
 endfunction
 
 function! PrintList(type, explain, list)
     let index = 0
-    call PrintMsg(a:type, a:explain.": ")
+    call PrintLog(a:type, a:explain.": ")
     let args_str = "{\n"
     for value in a:list
         let args_str .= "  [".index."]: ".string(value)."\n"
         let index += 1
     endfor
     let args_str .= "}\n"
-    call PrintMsg(a:type, args_str)
+    call PrintLog(a:type, args_str)
 endfunction
 
 function! GetResultIndex(cmd, substr)
@@ -447,20 +454,20 @@ function! JumpFuncStart()
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
-    "call PrintMsg("file", "func_return: ".func_return)
-    "call PrintMsg("file", "func_name: ".func_name)
-    "call PrintMsg("file", "func_fptr: ".func_fptr)
-    "call PrintMsg("file", "com_arg: ".com_arg)
-    "call PrintMsg("file", "one_arg: ".one_arg)
-    "call PrintMsg("file", "func_args: ".func_args)
-    "call PrintMsg("file", "func_restrict: ".func_restrict)
-    "call PrintMsg("file", "func_reg: ".func_reg)
+    "call PrintLog("file", "func_return: ".func_return)
+    "call PrintLog("file", "func_name: ".func_name)
+    "call PrintLog("file", "func_fptr: ".func_fptr)
+    "call PrintLog("file", "com_arg: ".com_arg)
+    "call PrintLog("file", "one_arg: ".one_arg)
+    "call PrintLog("file", "func_args: ".func_args)
+    "call PrintLog("file", "func_restrict: ".func_restrict)
+    "call PrintLog("file", "func_reg: ".func_reg)
 
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
     let find_line=search(func_reg, 'bW')
     if find_line == 0
-        "call PrintMsg("error", "search fail: ".func_reg)
+        "call PrintLog("error", "search fail: ".func_reg)
         return 1
     endif
 
@@ -512,11 +519,11 @@ function! JumpBracket(aim, flags)
 
     while 1
         let cursor = getcurpos()
-        "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
+        "call PrintLog("info", a:aim." ".a:flags." Row: ".string(cursor))
         if forword == 0
             let startLine = search(a:aim, a:flags)
             let cursor = getcurpos()
-            "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
+            "call PrintLog("info", a:aim." ".a:flags." Row: ".string(cursor))
 
             if startLine > 0
                 silent! execute 'normal! ^'
@@ -530,7 +537,7 @@ function! JumpBracket(aim, flags)
         elseif forword == 1
             let endLine = search(a:aim, a:flags)
             let cursor = getcurpos()
-            "call PrintMsg("info", a:aim." ".a:flags." Row: ".string(cursor))
+            "call PrintLog("info", a:aim." ".a:flags." Row: ".string(cursor))
             
             if endLine > 0 
                 silent! execute 'normal! ^'
@@ -543,7 +550,7 @@ function! JumpBracket(aim, flags)
             endif
         endif
 
-        "call PrintMsg("info", a:aim." ".a:flags." Start: ".startLine." End: ".endLine." Pos: ".rowNum)
+        "call PrintLog("info", a:aim." ".a:flags." Start: ".startLine." End: ".endLine." Pos: ".rowNum)
         if rowNum >= startLine && rowNum <= endLine
             if forword == 0
                 return startLine
@@ -662,7 +669,7 @@ function! FormatSelect()
     endif
     call cursor(rowNum, colNum)
 
-    "call PrintMsg("info", "Start: ".startLine." End: ".endLine." Pos: ".rowNum)
+    "call PrintLog("info", "Start: ".startLine." End: ".endLine." Pos: ".rowNum)
     silent! execute 'normal! '.startLine.'G'
     silent! execute 'normal! V'
     silent! execute 'normal! '.endLine.'G'
@@ -924,7 +931,7 @@ let s:vim_exit_act = 0
 
 "工程控制
 function! LoadProject(opmode) 
-    call PrintMsg("file", "LoadProject ".a:opmode)
+    call PrintLog("file", "LoadProject ".a:opmode)
 
     if a:opmode == "create"
         let s:vim_exit_act = 2
