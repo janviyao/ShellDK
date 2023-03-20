@@ -2,7 +2,7 @@
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:my_vim_dir = expand('$MY_VIM_DIR')
-let g:log_file   = "/var/log/vim.debug"
+let g:log_file   = '/tmp/vim.debug'
 let g:log_enable = 1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -24,9 +24,13 @@ function! PrintMsg(type, msg)
         echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "file" 
-        redir! >> g:log_file 
+        let worker_op = worker#get_ops()
+        let work_index = worker_op.alloc_index(g:log_file)    
+        call worker_op.fill_work(work_index, "log", "a", "list", g:log_file, -1, 0, [a:msg])
+    elseif a:type == "loger"
+        execute 'redir! >> '.g:log_file
         silent! echo a:msg
-        redir end
+        execute 'redir end'
     else
         echomsg "!!!!: ".a:msg
     endif
