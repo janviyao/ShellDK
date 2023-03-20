@@ -3,6 +3,7 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 let g:log_file   = '/tmp/vim.debug'
+let g:log_msize  = 698351616
 let g:log_enable = 1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -26,8 +27,8 @@ function! PrintMsg(type, msg)
     elseif a:type == "file" 
         let worker_op = worker#get_ops()
         let work_index = worker_op.alloc_index(g:log_file)    
-        call worker_op.fill_work(work_index, "log", "a", "list", g:log_file, -1, 0, [a:msg])
-    elseif a:type == "loger"
+        call worker_op.fill_work(work_index, "loger", "a", "list", g:log_file, -1, 0, [a:msg])
+    elseif a:type == "local"
         execute 'redir! >> '.g:log_file
         silent! echo a:msg
         execute 'redir end'
@@ -1003,7 +1004,6 @@ function! LeaveHandler()
         
         if s:vim_exit_act < 2
             silent! execute "!rm -f cscope.* tags"
-            silent! execute "!rm -f ".g:log_file
         endif
 
         if s:vim_exit_act == 0
@@ -1019,6 +1019,10 @@ function! LeaveHandler()
     endif
 
     call Quickfix_leave()
+    if getfsize(g:log_file) > g:log_msize 
+        call delete(g:log_file)
+    endif
+
     silent! execute "qa"
 endfunction
 
