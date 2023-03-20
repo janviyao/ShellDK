@@ -15,7 +15,7 @@ function! PrintMsg(type, msg)
         echoerr "[".a:type."]: ".a:msg
         echohl None
 
-        call PrintMsg("file", "[".a:type."]: ".a:msg)
+        call PrintMsg("async", "[".a:type."]: ".a:msg)
     elseif a:type == "warn" 
         echohl WarningMsg
         echomsg "[".a:type."]: ".a:msg
@@ -24,11 +24,11 @@ function! PrintMsg(type, msg)
         echohl ModeMsg
         echomsg "[".a:type."]: ".a:msg
         echohl None
-    elseif a:type == "file" 
+    elseif a:type == "async" 
         let worker_op = worker#get_ops()
         let work_index = worker_op.alloc_index(g:log_file)    
         call worker_op.fill_work(work_index, "loger", "a", "list", g:log_file, -1, 0, [a:msg])
-    elseif a:type == "local"
+    elseif a:type == "sync"
         execute 'redir! >> '.g:log_file
         silent! echo a:msg
         execute 'redir end'
@@ -451,14 +451,14 @@ function! JumpFuncStart()
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
-    "call PrintLog("file", "func_return: ".func_return)
-    "call PrintLog("file", "func_name: ".func_name)
-    "call PrintLog("file", "func_fptr: ".func_fptr)
-    "call PrintLog("file", "com_arg: ".com_arg)
-    "call PrintLog("file", "one_arg: ".one_arg)
-    "call PrintLog("file", "func_args: ".func_args)
-    "call PrintLog("file", "func_restrict: ".func_restrict)
-    "call PrintLog("file", "func_reg: ".func_reg)
+    "call PrintLog("async", "func_return: ".func_return)
+    "call PrintLog("async", "func_name: ".func_name)
+    "call PrintLog("async", "func_fptr: ".func_fptr)
+    "call PrintLog("async", "com_arg: ".com_arg)
+    "call PrintLog("async", "one_arg: ".one_arg)
+    "call PrintLog("async", "func_args: ".func_args)
+    "call PrintLog("async", "func_restrict: ".func_restrict)
+    "call PrintLog("async", "func_reg: ".func_reg)
 
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
@@ -928,7 +928,7 @@ let s:vim_exit_act = 0
 
 "工程控制
 function! LoadProject(opmode) 
-    call PrintLog("file", "LoadProject ".a:opmode)
+    call PrintLog("async", "LoadProject ".a:opmode)
 
     if a:opmode == "create"
         let s:vim_exit_act = 2
