@@ -2,10 +2,8 @@
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:my_vim_dir = expand('$MY_VIM_DIR')
-
-let g:log_file = "vim.debug"
-let g:print_log_enable = 0
-let g:quickfix_dump_enable = 1
+let g:log_file   = "/var/log/vim.debug"
+let g:log_enable = 1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
@@ -26,7 +24,7 @@ function! PrintMsg(type, msg)
         echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "file" 
-        redir! >> vim.debug 
+        redir! >> g:log_file 
         silent! echo a:msg
         redir end
     else
@@ -40,7 +38,7 @@ function! PrintLog(type, msg)
         return
     endif 
 
-    if !exists("g:print_log_enable") || g:print_log_enable == 0
+    if !exists("g:log_enable") || g:log_enable == 0
         return
     endif
 
@@ -81,12 +79,6 @@ function! PrintList(type, explain, list)
     endfor
     let args_str .= "}\n"
     call PrintLog(a:type, args_str)
-endfunction
-
-function! GetResultIndex(cmd, substr)
-    let resStr = system(a:cmd)
-    let idx = match(resStr, a:substr)
-    return idx
 endfunction
 
 "获取VIM工作目录
