@@ -52,28 +52,26 @@ function! s:log_print(worker_id)
     call s:LogLock()
     while !empty(s:log_list)
         let log_dic = remove(s:log_list, 0) 
-        if !empty(log_dic)
-            call s:LogUnlock()
-            call PrintMsg(log_dic.type, log_dic.msg)
-            call s:LogLock()
-        endif
+        call s:LogUnlock()
+        call LogPrint(log_dic.type, log_dic.msg)
+        call s:LogLock()
     endwhile
     call s:LogUnlock()
 endfunction
 
 function! LogAppend(type, msg)
-    call s:LogLock()
-    call add(s:log_list, {"type": a:type, "msg": a:msg})
-    call s:LogUnlock()
+    if g:log_enable
+        call s:LogLock()
+        call add(s:log_list, {"type": a:type, "msg": a:msg})
+        call s:LogUnlock()
+    endif
 endfunction
 
-function! PrintMsg(type, msg)
+function! LogPrint(type, msg)
     if a:type == "error"
         echohl ErrorMsg
         echoerr "[".a:type."]: ".a:msg
         echohl None
-
-        call LogAppend(a:type, a:msg)
     elseif a:type == "warn" 
         echohl WarningMsg
         echomsg "[".a:type."]: ".a:msg
@@ -82,24 +80,15 @@ function! PrintMsg(type, msg)
         echohl ModeMsg
         echomsg "[".a:type."]: ".a:msg
         echohl None
-    elseif a:type == "async" 
+    elseif a:type == "2file" 
         call writefile(split(a:msg, "\n", 1), g:log_file, 'a')
     else
-        echomsg "!!!!: ".a:msg
-    endif
-endfunction
-
-function! PrintLog(type, msg)
-    if a:type == "error"
-        call PrintMsg(a:type, a:msg)
-        return
-    endif 
-
-    if !exists("g:log_enable") || g:log_enable == 0
-        return
+        echomsg "[!!!]: ".a:msg
     endif
 
-    call LogAppend(a:type, a:msg)
+    if a:type != "2file" 
+        call LogAppend("2file", a:msg)
+    endif
 endfunction
 
 function! PrintArgs(type, func, ...)
@@ -113,7 +102,7 @@ function! PrintArgs(type, func, ...)
         endfor
         let args_str .= "}\n"
     endif
-    call PrintLog(a:type, args_str)
+    call LogPrint(a:type, args_str)
 endfunction
 
 function! PrintDict(type, explain, dict)
@@ -123,7 +112,7 @@ function! PrintDict(type, explain, dict)
         let args_str .= "  [".key."]: ".string(value)."\n"
     endfor
     let args_str .= "}\n"
-    call PrintLog(a:type, args_str)
+    call LogPrint(a:type, args_str)
 endfunction
 
 function! PrintList(type, explain, list)
@@ -135,7 +124,7 @@ function! PrintList(type, explain, list)
         let index += 1
     endfor
     let args_str .= "}\n"
-    call PrintLog(a:type, args_str)
+    call LogPrint(a:type, args_str)
 endfunction
 
 "获取VIM工作目录
@@ -503,20 +492,20 @@ function! JumpFuncStart()
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
 
-    "call PrintLog("async", "func_return: ".func_return)
-    "call PrintLog("async", "func_name: ".func_name)
-    "call PrintLog("async", "func_fptr: ".func_fptr)
-    "call PrintLog("async", "com_arg: ".com_arg)
-    "call PrintLog("async", "one_arg: ".one_arg)
-    "call PrintLog("async", "func_args: ".func_args)
-    "call PrintLog("async", "func_restrict: ".func_restrict)
-    "call PrintLog("async", "func_reg: ".func_reg)
+    "call LogPrint("2file", "func_return: ".func_return)
+    "call LogPrint("2file", "func_name: ".func_name)
+    "call LogPrint("2file", "func_fptr: ".func_fptr)
+    "call LogPrint("2file", "com_arg: ".com_arg)
+    "call LogPrint("2file", "one_arg: ".one_arg)
+    "call LogPrint("2file", "func_args: ".func_args)
+    "call LogPrint("2file", "func_restrict: ".func_restrict)
+    "call LogPrint("2file", "func_reg: ".func_reg)
 
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
     let find_line=search(func_reg, 'bW')
     if find_line == 0
-        "call PrintLog("error", "search fail: ".func_reg)
+        "call LogPrint("error", "search fail: ".func_reg)
         return 1
     endif
 
@@ -568,11 +557,11 @@ function! JumpBracket(aim, flags)
 
     while 1
         let cursor = getcurpos()
-        "call PrintLog("info", a:aim." ".a:flags." Row: ".string(cursor))
+        "call LogPrint("info", a:aim." ".a:flags." Row: ".string(cursor))
         if forword == 0
             let startLine = search(a:aim, a:flags)
             let cursor = getcurpos()
-            "call PrintLog("info", a:aim." ".a:flags." Row: ".string(cursor))
+            "call LogPrint("info", a:aim." ".a:flags." Row: ".string(cursor))
 
             if startLine > 0
                 silent! execute 'normal! ^'
@@ -586,7 +575,7 @@ function! JumpBracket(aim, flags)
         elseif forword == 1
             let endLine = search(a:aim, a:flags)
             let cursor = getcurpos()
-            "call PrintLog("info", a:aim." ".a:flags." Row: ".string(cursor))
+            "call LogPrint("info", a:aim." ".a:flags." Row: ".string(cursor))
             
             if endLine > 0 
                 silent! execute 'normal! ^'
@@ -599,7 +588,7 @@ function! JumpBracket(aim, flags)
             endif
         endif
 
-        "call PrintLog("info", a:aim." ".a:flags." Start: ".startLine." End: ".endLine." Pos: ".rowNum)
+        "call LogPrint("info", a:aim." ".a:flags." Start: ".startLine." End: ".endLine." Pos: ".rowNum)
         if rowNum >= startLine && rowNum <= endLine
             if forword == 0
                 return startLine
@@ -718,7 +707,7 @@ function! FormatSelect()
     endif
     call cursor(rowNum, colNum)
 
-    "call PrintLog("info", "Start: ".startLine." End: ".endLine." Pos: ".rowNum)
+    "call LogPrint("info", "Start: ".startLine." End: ".endLine." Pos: ".rowNum)
     silent! execute 'normal! '.startLine.'G'
     silent! execute 'normal! V'
     silent! execute 'normal! '.endLine.'G'
@@ -980,7 +969,7 @@ let s:vim_exit_act = 0
 
 "工程控制
 function! LoadProject(opmode) 
-    call PrintLog("async", "LoadProject ".a:opmode)
+    call LogPrint("2file", "LoadProject ".a:opmode)
 
     if a:opmode == "create"
         let s:vim_exit_act = 2
