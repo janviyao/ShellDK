@@ -49,17 +49,16 @@ EOF
 endfunction
 
 function! s:log_print(worker_id)
-    let log_dic = {}
-
     call s:LogLock()
-    if !empty(s:log_list)
+    while !empty(s:log_list)
         let log_dic = remove(s:log_list, 0) 
-    endif
+        if !empty(log_dic)
+            call s:LogUnlock()
+            call PrintMsg(log_dic.type, log_dic.msg)
+            call s:LogLock()
+        endif
+    endwhile
     call s:LogUnlock()
-
-    if !empty(log_dic)
-        call PrintMsg(log_dic.type, log_dic.msg)
-    endif
 endfunction
 
 function! LogAppend(type, msg)
@@ -1019,7 +1018,7 @@ endfunction
 "VIM进入事件
 function! EnterHandler()
     if g:log_enable
-        let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
+        let s:log_timer = timer_start(100, "s:log_print", {'repeat': -1})
     endif
 
     if filereadable(getcwd()."/tags")
@@ -1034,8 +1033,8 @@ function! EnterHandler()
         call delete(getcwd()."/cscope.out")
     endif
 
-    if filereadable(getcwd()."/cscope.out.out")
-        call delete(getcwd()."/cscope.out.out")
+    if filereadable(getcwd()."/cscope.out.po")
+        call delete(getcwd()."/cscope.out.po")
     endif
 
     if filereadable(GetVimDir(1, "sessions")."/tags")
