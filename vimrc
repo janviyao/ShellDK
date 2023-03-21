@@ -1022,10 +1022,26 @@ function! EnterHandler()
         let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
     endif
 
+    if filereadable(getcwd()."/tags")
+        call delete(getcwd()."/tags")
+    endif
+
+    if filereadable(getcwd()."/cscope.out.in")
+        call delete(getcwd()."/cscope.out.in")
+    endif
+
+    if filereadable(getcwd()."/cscope.out")
+        call delete(getcwd()."/cscope.out")
+    endif
+
+    if filereadable(getcwd()."/cscope.out.out")
+        call delete(getcwd()."/cscope.out.out")
+    endif
+
     if filereadable(GetVimDir(1, "sessions")."/tags")
         silent! execute "!ln -s ".GetVimDir(1, "sessions")."/tags ".getcwd()."/tags"
     endif
-
+ 
     if filereadable(GetVimDir(1, "sessions")."/cscope.out")
         silent! execute "!ln -s ".GetVimDir(1, "sessions")."/cscope.out.in ".getcwd()."/cscope.out.in"
         silent! execute "!ln -s ".GetVimDir(1, "sessions")."/cscope.out ".getcwd()."/cscope.out"
