@@ -6,16 +6,75 @@ let g:log_file   = '/tmp/vim.debug'
 let g:log_msize  = 698351616
 let g:log_enable = 1
 
+let s:vim_start  = reltime()
+let s:log_list   = []
+let s:log_timer  = -1 
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+function! GetElapsedTime()
+    let time = reltime(s:vim_start)
+    if len(time) == 2
+        return str2float(time[0].".". time[1])
+    endif
+    return 0
+endfunction
+
+python << EOF
+import threading
+log_lock = threading.Lock()
+def LogLock():
+    log_lock.acquire()
+def LogUnlock():
+    log_lock.release()
+EOF
+
+function! s:LogLock()
+python << EOF
+try:
+    LogLock()
+except Exception, e:
+    print e
+EOF
+endfunction
+
+function! s:LogUnlock()
+python << EOF
+try:
+    LogUnlock()
+except Exception, e:
+    print e
+EOF
+endfunction
+
+function! s:log_print(worker_id)
+    let log_dic = {}
+
+    call s:LogLock()
+    if !empty(s:log_list)
+        let log_dic = remove(s:log_list, 0) 
+    endif
+    call s:LogUnlock()
+
+    if !empty(log_dic)
+        call PrintMsg(log_dic.type, log_dic.msg)
+    endif
+endfunction
+
+function! LogAppend(type, msg)
+    call s:LogLock()
+    call add(s:log_list, {"type": a:type, "msg": a:msg})
+    call s:LogUnlock()
+endfunction
+
 function! PrintMsg(type, msg)
     if a:type == "error"
         echohl ErrorMsg
         echoerr "[".a:type."]: ".a:msg
         echohl None
 
-        call PrintMsg("async", "[".a:type."]: ".a:msg)
+        call LogAppend(a:type, a:msg)
     elseif a:type == "warn" 
         echohl WarningMsg
         echomsg "[".a:type."]: ".a:msg
@@ -25,13 +84,7 @@ function! PrintMsg(type, msg)
         echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "async" 
-        let worker_op = worker#get_ops()
-        let work_index = worker_op.alloc_index(g:log_file)    
-        call worker_op.fill_work(work_index, "loger", "a", "list", g:log_file, -1, 0, [a:msg])
-    elseif a:type == "sync"
-        execute 'redir! >> '.g:log_file
-        silent! echo a:msg
-        execute 'redir end'
+        call writefile(split(a:msg, "\n", 1), g:log_file, 'a')
     else
         echomsg "!!!!: ".a:msg
     endif
@@ -47,26 +100,26 @@ function! PrintLog(type, msg)
         return
     endif
 
-    call PrintMsg(a:type, a:msg)
+    call LogAppend(a:type, a:msg)
 endfunction
 
 function! PrintArgs(type, func, ...)
-    call PrintLog(a:type, "function: ".a:func)
+    let args_str = "function: ".a:func."\n"
     if a:0 > 0
         let index = 1
-        let args_str = "{\n"
+        let args_str .= "{\n"
         for arg in a:000
             let args_str .= "  arg[".index."]: ".string(arg)."\n"
             let index += 1
         endfor
         let args_str .= "}\n"
-        call PrintLog(a:type, args_str)
     endif
+    call PrintLog(a:type, args_str)
 endfunction
 
 function! PrintDict(type, explain, dict)
-    call PrintLog(a:type, a:explain.": ")
-    let args_str = "{\n"
+    let args_str = a:explain.": \n"
+    let args_str .= "{\n"
     for [key, value] in items(a:dict)
         let args_str .= "  [".key."]: ".string(value)."\n"
     endfor
@@ -76,8 +129,8 @@ endfunction
 
 function! PrintList(type, explain, list)
     let index = 0
-    call PrintLog(a:type, a:explain.": ")
-    let args_str = "{\n"
+    let args_str = a:explain.": \n"
+    let args_str .= "{\n"
     for value in a:list
         let args_str .= "  [".index."]: ".string(value)."\n"
         let index += 1
@@ -965,6 +1018,10 @@ endfunction
 
 "VIM进入事件
 function! EnterHandler()
+    if g:log_enable
+        let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
+    endif
+
     if filereadable(GetVimDir(1, "sessions")."/tags")
         silent! execute "!ln -s ".GetVimDir(1, "sessions")."/tags ".getcwd()."/tags"
     endif
@@ -1021,6 +1078,10 @@ function! LeaveHandler()
     call Quickfix_leave()
     if getfsize(g:log_file) > g:log_msize 
         call delete(g:log_file)
+    endif
+    
+    if s:log_timer > 0
+        call timer_stop(s:log_timer)
     endif
 
     silent! execute "qa"
