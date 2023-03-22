@@ -4,7 +4,7 @@
 let g:my_vim_dir = expand('$MY_VIM_DIR')
 let g:log_file   = '/tmp/vim.debug'
 let g:log_msize  = 698351616
-let g:log_enable = 1
+let g:log_enable = 0
 
 let s:vim_start  = reltime()
 let s:log_list   = []
@@ -81,13 +81,11 @@ function! LogPrint(type, msg)
         echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "2file" 
+        call LogAppend("save", a:msg)
+    elseif a:type == "save" 
         call writefile(split(a:msg, "\n", 1), g:log_file, 'a')
     else
         echomsg "[!!!]: ".a:msg
-    endif
-
-    if a:type != "2file" 
-        call LogAppend("2file", a:msg)
     endif
 endfunction
 
