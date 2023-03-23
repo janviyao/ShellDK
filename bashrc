@@ -3,6 +3,10 @@ if declare -F _bash_exit &>/dev/null;then
     return
 fi
 
+if ! declare -p MY_VIM_DIR &>/dev/null;then
+    export MY_VIM_DIR=$(cd $(dirname ${BASH_SOURCE[0]});pwd)
+fi
+
 PRIVATE_VAR=${TERM%:*}
 #echo "$$===${PRIVATE_VAR}"
 if [[ ${PRIVATE_VAR} != ${TERM} ]];then

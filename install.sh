@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
-ROOT_DIR=$(cd `dirname $0`;pwd)
+ROOT_DIR=$(cd $(dirname $0);pwd)
 BIN_DIR="${HOME}/.local/bin"
 mkdir -p ${BIN_DIR}
 
