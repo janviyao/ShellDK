@@ -2,9 +2,14 @@
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:my_vim_dir = expand('$MY_VIM_DIR')
-let g:log_file   = '/tmp/vim.debug'
-let g:log_msize  = 698351616
-let g:log_enable = 0
+
+let g:log_dump_dict = 1
+let g:log_dump_list = 0
+
+let s:log_enable    = 0
+let s:log_file_path = '/tmp/vim.debug'
+let s:log_file_max  = 698351616
+let s:log_line_max  = 500
 
 let s:vim_start  = reltime()
 let s:log_list   = []
@@ -59,8 +64,23 @@ function! s:log_print(worker_id)
     call s:LogUnlock()
 endfunction
 
+function! LogEnable()
+    let s:log_enable = 1
+    if s:log_timer < 0
+        let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
+    endif
+endfunction
+
+function! LogDisable()
+    let s:log_enable = 0
+    if s:log_timer > 0
+        call timer_stop(s:log_timer)
+        let s:log_timer  = -1 
+    endif
+endfunction
+
 function! LogAppend(type, msg)
-    if g:log_enable
+    if s:log_enable
         call s:LogLock()
         call add(s:log_list, {"type": a:type, "msg": a:msg})
         call s:LogUnlock()
@@ -81,48 +101,159 @@ function! LogPrint(type, msg)
         echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "2file" 
-        call LogAppend("save", a:msg)
+        let time_str = printf("%.6f", GetElapsedTime())
+        call LogAppend("save", "[".time_str."] ".a:msg)
+        "call LogAppend("save", a:msg)
     elseif a:type == "save" 
-        call writefile(split(a:msg, "\n", 1), g:log_file, 'a')
+        call writefile(split(a:msg, "\n", 1), s:log_file_path, 'a')
     else
         echomsg "[!!!]: ".a:msg
     endif
 endfunction
 
 function! PrintArgs(type, func, ...)
-    let args_str = "function: ".a:func."\n"
-    if a:0 > 0
-        let index = 1
-        let args_str .= "{\n"
-        for arg in a:000
-            let args_str .= "  arg[".index."]: ".string(arg)."\n"
-            let index += 1
-        endfor
-        let args_str .= "}\n"
+    if s:log_enable
+        let args_str = "function: ".a:func
+        call LogPrint(a:type, args_str)
+        let args_str = "{"
+        call LogPrint(a:type, args_str)
+
+        if a:0 > 0
+            let index = 1
+            for arg in a:000
+                if type(arg) == v:t_dict
+                    let args_str = "  arg[".index."]: dict-size=".len(arg)
+                    call LogPrint(a:type, args_str)
+                    if !empty(arg)
+                        call PrintDict(a:type, "", arg, "  ")
+                    endif
+                elseif type(arg) == v:t_list
+                    let args_str = "  arg[".index."]:"
+                    call LogPrint(a:type, args_str)
+                    if !empty(arg)
+                        call PrintList(a:type, "", arg, "  ")
+                    endif
+                else
+                    if strlen(string(arg)) > s:log_line_max 
+                        let args_str = "  arg[".index."]: ".strpart(string(arg), 0, s:log_line_max)."......"
+                    else
+                        let args_str = "  arg[".index."]: ".string(arg)
+                    endif
+                    call LogPrint(a:type, args_str)
+                endif
+                let index += 1
+            endfor
+        endif
+
+        let args_str = "}\n"
+        call LogPrint(a:type, args_str)
     endif
-    call LogPrint(a:type, args_str)
 endfunction
 
-function! PrintDict(type, explain, dict)
-    let args_str = a:explain.": \n"
-    let args_str .= "{\n"
-    for [key, value] in items(a:dict)
-        let args_str .= "  [".key."]: ".string(value)."\n"
-    endfor
-    let args_str .= "}\n"
-    call LogPrint(a:type, args_str)
+function! PrintDict(type, explain, dict, prefix="")
+    if s:log_enable
+        if strlen(a:explain) > 0
+            let args_str = a:prefix.a:explain
+            call LogPrint(a:type, args_str)
+        endif
+        let args_str = a:prefix."{"
+        call LogPrint(a:type, args_str)
+
+        if g:log_dump_dict
+            for [key, value] in items(a:dict)
+                if type(value) == v:t_dict
+                    if empty(value)
+                        let args_str = a:prefix."  [".key."]: {}"
+                        call LogPrint(a:type, args_str)
+                    else
+                        let args_str = a:prefix."  [".key."]:"
+                        call LogPrint(a:type, args_str)
+                        call PrintDict(a:type, "", value, a:prefix."  ")
+                    endif
+                elseif type(value) == v:t_list
+                    if empty(value)
+                        let args_str = a:prefix."  [".key."]: []"
+                        call LogPrint(a:type, args_str)
+                    else
+                        let args_str = a:prefix."  [".key."]:"
+                        call LogPrint(a:type, args_str)
+                        call PrintList(a:type, "", value, a:prefix."  ")
+                    endif
+                else
+                    if strlen(string(value)) > s:log_line_max 
+                        let args_str = a:prefix."  [".key."]: ".strpart(string(value), 0, s:log_line_max)."......"
+                    else
+                        let args_str = a:prefix."  [".key."]: ".string(value)
+                    endif
+                    call LogPrint(a:type, args_str)
+                endif
+            endfor
+        else
+            let args_str = a:prefix."  dict-size: ".len(a:dict)
+            call LogPrint(a:type, args_str)
+        endif
+
+        if strlen(a:prefix) > 0
+            let args_str = a:prefix."}"
+        else
+            let args_str = a:prefix."}\n"
+        endif
+        call LogPrint(a:type, args_str)
+    endif
 endfunction
 
-function! PrintList(type, explain, list)
-    let index = 0
-    let args_str = a:explain.": \n"
-    let args_str .= "{\n"
-    for value in a:list
-        let args_str .= "  [".index."]: ".string(value)."\n"
-        let index += 1
-    endfor
-    let args_str .= "}\n"
-    call LogPrint(a:type, args_str)
+function! PrintList(type, explain, list, prefix="")
+    if s:log_enable
+        if strlen(a:explain) > 0
+            let args_str = a:prefix.a:explain
+            call LogPrint(a:type, args_str)
+        endif
+        let args_str = a:prefix."{"
+        call LogPrint(a:type, args_str)
+
+        if g:log_dump_list
+            let index = 0
+            for value in a:list
+                if type(value) == v:t_dict
+                    if empty(value)
+                        let args_str = a:prefix."  [".index."]: {}"
+                        call LogPrint(a:type, args_str)
+                    else
+                        let args_str = a:prefix."  [".index."]:"
+                        call LogPrint(a:type, args_str)
+                        call PrintDict(a:type, "", value, a:prefix."  ")
+                    endif
+                elseif type(value) == v:t_list
+                    if empty(value)
+                        let args_str = a:prefix."  [".index."]: []"
+                        call LogPrint(a:type, args_str)
+                    else
+                        let args_str = a:prefix."  [".index."]:"
+                        call LogPrint(a:type, args_str)
+                        call PrintList(a:type, "", value, a:prefix."  ")
+                    endif
+                else
+                    if strlen(string(value)) > s:log_line_max
+                        let args_str = a:prefix."  [".index."]: ".strpart(string(value), 0, s:log_line_max)."......"
+                    else
+                        let args_str = a:prefix."  [".index."]: ".string(value)
+                    endif
+                    call LogPrint(a:type, args_str)
+                endif
+                let index += 1
+            endfor 
+        else
+            let args_str = a:prefix."  list-size: ".len(a:list)
+            call LogPrint(a:type, args_str)
+        endif
+
+        if strlen(a:prefix) > 0
+            let args_str = a:prefix."}"
+        else
+            let args_str = a:prefix."}\n"
+        endif
+        call LogPrint(a:type, args_str)
+    endif
 endfunction
 
 "获取VIM工作目录
@@ -1004,8 +1135,8 @@ endfunction
 
 "VIM进入事件
 function! EnterHandler()
-    if g:log_enable
-        let s:log_timer = timer_start(100, "s:log_print", {'repeat': -1})
+    if s:log_enable
+        let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
     endif
 
     if filereadable(getcwd()."/tags")
@@ -1078,14 +1209,11 @@ function! LeaveHandler()
     endif
 
     call Quickfix_leave()
-    if getfsize(g:log_file) > g:log_msize 
-        call delete(g:log_file)
+    if getfsize(s:log_file_path) > s:log_file_max 
+        call delete(s:log_file_path)
     endif
     
-    if s:log_timer > 0
-        call timer_stop(s:log_timer)
-    endif
-
+    call LogDisable()
     silent! execute "qa"
 endfunction
 
