@@ -67,7 +67,7 @@ endfunction
 function! LogEnable()
     let s:log_enable = 1
     if s:log_timer < 0
-        let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
+        let s:log_timer = timer_start(500, "s:log_print", {'repeat': -1})
     endif
 endfunction
 
@@ -1056,13 +1056,13 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        call Quickfix_ctrl("all", "close") 
+        call Quickfix_ctrl(g:quickfix_module, "close") 
         call CloseBufExp()
         
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        call Quickfix_ctrl("all", "close") 
+        call Quickfix_ctrl(g:quickfix_module, "close") 
         call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
@@ -1074,7 +1074,7 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call Quickfix_ctrl("all", "close") 
+        call Quickfix_ctrl(g:quickfix_module, "close") 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
@@ -1082,13 +1082,13 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         call CloseBufExp()
         
-        call Quickfix_ctrl("all", "toggle")
+        call Quickfix_ctrl(g:quickfix_module, "toggle")
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'SrcExplClose'
         silent! execute 'CtrlSFClose'
-        call Quickfix_ctrl("all", "close") 
+        call Quickfix_ctrl(g:quickfix_module, "close") 
         call CloseBufExp()
     endif
 endfunction
