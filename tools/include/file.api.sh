@@ -763,9 +763,10 @@ function real_path
     fi
 
     if can_access "${this_path}";then
+        local old_path="${this_path}"
         this_path=$(readlink -f ${this_path})
         if [ $? -ne 0 ];then
-            echo_file "${LOG_ERRO}" "readlink fail: ${this_path}"
+            echo_file "${LOG_ERRO}" "readlink fail: ${old_path}"
             return 1
         fi 
 

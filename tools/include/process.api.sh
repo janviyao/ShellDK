@@ -136,11 +136,19 @@ function process_pid2name
         fi
     fi
 
-    local fname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
-    if [[ "${fname}" =~ '/' ]];then
-        echo "$(path2fname "${fname}")"
+    local pname=$(ps -eo pid,comm | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+    if [ -z "${pname}" ];then
+        local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+    fi
+
+    if [[ "${pname}" =~ '/' ]];then
+        if can_access "${pname}";then
+            echo "$(path2fname "${pname}")"
+        else
+            echo "${pname}"
+        fi
     else
-        echo "${fname}"
+        echo "${pname}"
     fi
 
     #echo "$(ps -q ${pid} -o comm=)"
@@ -172,13 +180,20 @@ function process_name2pid
         return 0
     fi
 
-    pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${process_x}$/) print \$1 }"))    
+    local none_regex=$(regex_2str "${process_x}")
+    pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
     if [ ${#pid_array[*]} -gt 0 ];then
         echo "${pid_array[*]}"
         return 0
     fi
-    
-    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${process_x}\b\s+" | grep -v grep | awk '{ print $1 }'))
+
+    pid_array=($(ps -eo pid,cmd | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
+    if [ ${#pid_array[*]} -gt 0 ];then
+        echo "${pid_array[*]}"
+        return 0
+    fi
+
+    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s+" | grep -v grep | awk '{ print $1 }'))
 
     echo "${pid_array[*]}"
     return 0
@@ -434,5 +449,59 @@ function process_pptree
         done
     done
 
+    return 0
+}
+
+function cpu2process
+{
+    local cpu_list=($@)
+
+    if [ ${#cpu_list[*]} -eq 0 ];then
+        echo_erro "please input cpu-id parameters"
+        return 1
+    fi
+    
+    printf "%-8s %s\n" "PID" "Process"
+    for cpu in ${cpu_list[*]}
+    do
+        if ! is_integer "${cpu}";then
+            echo_erro "cpu-id: { ${cpu} } invalid"
+            continue
+        fi
+        
+        local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$2 == ${cpu}) print \$1 }")
+        for pid in ${pid_list[*]}
+        do
+            printf "%-8d %s\n" "${pid}" "$(process_pid2name "${pid}")"
+        done
+    done
+ 
+    return 0
+}
+
+function process2cpu
+{
+    local proc_list=($@)
+
+    if [ ${#proc_list[*]} -eq 0 ];then
+        echo_erro "please input [pid/process-name] parameters"
+        return 1
+    fi
+    
+    for proc in ${proc_list[*]}
+    do
+        local pid_list=($(process_name2pid "${proc}"))
+        if [ ${#pid_list[*]} -eq 0 ];then
+            echo_erro "process: { ${proc} } invalid"
+            return 1
+        fi
+
+        for pid in ${pid_list[*]}
+        do
+            local cpu_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$1 == ${pid}) print \$2 }")
+            echo ${cpu_list[*]}
+        done
+    done
+ 
     return 0
 }
