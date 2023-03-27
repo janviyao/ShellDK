@@ -1031,15 +1031,9 @@ function! RestoreLoad()
 
         "创建文件修改回退目录
         let dirStr=GetVimDir(0, "undodir")
-
-        let moduleFile = GetVimDir(1, "quickfix").'/module'
-        if filereadable(moduleFile)
-            let g:quickfix_module = get(readfile(moduleFile, 'b', 1), 0, '')
-        else
-            let g:quickfix_module = "csfind"
-        endif
-
-        call Quickfix_ctrl(g:quickfix_module, "load")
+ 
+        call Quickfix_ctrl("load")
+        silent! execute 'e'
     endif
 endfunction
 
@@ -1056,13 +1050,13 @@ endfunction
 function! ToggleWindow(ccmd)
     if a:ccmd == "nt"
         silent! execute 'TagbarClose'
-        call Quickfix_ctrl(g:quickfix_module, "close") 
+        call Quickfix_ctrl("close") 
         call CloseBufExp()
         
         silent! execute 'NERDTreeToggle' 
     elseif a:ccmd == "tl"
         silent! execute 'NERDTreeClose'
-        call Quickfix_ctrl(g:quickfix_module, "close") 
+        call Quickfix_ctrl("close") 
         call CloseBufExp()
 
         let benr = bufnr("[BufExplorer]")
@@ -1074,7 +1068,7 @@ function! ToggleWindow(ccmd)
     elseif a:ccmd == "be"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
-        call Quickfix_ctrl(g:quickfix_module, "close") 
+        call Quickfix_ctrl("close") 
 
         silent! execute "BufExplorer"
     elseif a:ccmd == "qo"
@@ -1082,13 +1076,13 @@ function! ToggleWindow(ccmd)
         silent! execute 'NERDTreeClose'
         call CloseBufExp()
         
-        call Quickfix_ctrl(g:quickfix_module, "toggle")
+        call Quickfix_ctrl("toggle")
     elseif a:ccmd == "allclose"
         silent! execute 'TagbarClose'
         silent! execute 'NERDTreeClose'
         silent! execute 'SrcExplClose'
         silent! execute 'CtrlSFClose'
-        call Quickfix_ctrl(g:quickfix_module, "close") 
+        call Quickfix_ctrl("close") 
         call CloseBufExp()
     endif
 endfunction
@@ -1183,14 +1177,9 @@ endfunction
 
 "VIM退出事件
 function! LeaveHandler()
-    if filereadable("tags") && filereadable("cscope.out")
-        if !empty(g:quickfix_module)
-            let moduleFile = GetVimDir(1, "quickfix").'/module'
-            call writefile([g:quickfix_module], moduleFile, 'b')
-        endif
-
+    if filereadable("tags") && filereadable("cscope.out") 
         call ToggleWindow("allclose")
-        call Quickfix_ctrl(g:quickfix_module, "save")
+        call Quickfix_ctrl("save")
         
         if s:vim_exit_act < 2
             silent! execute "!rm -f cscope.* tags"
