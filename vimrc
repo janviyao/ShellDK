@@ -1130,7 +1130,7 @@ endfunction
 "VIM进入事件
 function! EnterHandler()
     if s:log_enable
-        let s:log_timer = timer_start(10, "s:log_print", {'repeat': -1})
+        let s:log_timer = timer_start(500, "s:log_print", {'repeat': -1})
     endif
 
     if filereadable(getcwd()."/tags")
