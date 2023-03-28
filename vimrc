@@ -13,7 +13,6 @@ let s:log_line_max  = 500
 
 let s:vim_start  = reltime()
 let s:log_list   = []
-let s:log_timer  = -1 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
@@ -53,34 +52,45 @@ except Exception, e:
 EOF
 endfunction
 
-function! s:log_print(worker_id)
-    call s:LogLock()
-    while !empty(s:log_list)
-        let log_dic = remove(s:log_list, 0) 
-        call s:LogUnlock()
-        call LogPrint(log_dic.type, log_dic.msg)
-        call s:LogLock()
-    endwhile
-    call s:LogUnlock()
-endfunction
-
 function! LogEnable()
     let s:log_enable = 1
-    if s:log_timer < 0
-        let s:log_timer = timer_start(500, "s:log_print", {'repeat': -1})
+    if s:worker_op.is_stoped("loger")
+        call s:worker_op.start("loger", function("s:loger_run"))
+    endif
+
+    if s:worker_op.is_paused("loger")
+        call s:worker_op.exit_idle("loger")
     endif
 endfunction
 
 function! LogDisable()
     let s:log_enable = 0
-    if s:log_timer > 0
-        call timer_stop(s:log_timer)
-        let s:log_timer  = -1 
+    call s:worker_op.stop("loger")
+endfunction
+
+function! s:loger_run(worker_id)
+    call s:LogLock()
+    if empty(s:log_list)
+        call s:LogUnlock()
+        call s:worker_op.enter_idle("loger")
+    else 
+        let log_dic = remove(s:log_list, 0) 
+        call s:LogUnlock()
+        call LogPrint(log_dic.type, log_dic.msg)
     endif
 endfunction
 
 function! LogAppend(type, msg)
     if s:log_enable
+        if s:worker_op.is_stoped("loger")
+            call LogPrint("save", "loger stoped")
+            return
+        endif
+
+        if s:worker_op.is_paused("loger")
+            call s:worker_op.exit_idle("loger")
+        endif
+
         call s:LogLock()
         call add(s:log_list, {"type": a:type, "msg": a:msg})
         call s:LogUnlock()
@@ -103,7 +113,6 @@ function! LogPrint(type, msg)
     elseif a:type == "2file" 
         let time_str = printf("%.6f", GetElapsedTime())
         call LogAppend("save", "[".time_str."] ".a:msg)
-        "call LogAppend("save", a:msg)
     elseif a:type == "save" 
         call writefile(split(a:msg, "\n", 1), s:log_file_path, 'a')
     else
@@ -1129,8 +1138,9 @@ endfunction
 
 "VIM进入事件
 function! EnterHandler()
+    let s:worker_op = Worker_get_ops()
     if s:log_enable
-        let s:log_timer = timer_start(500, "s:log_print", {'repeat': -1})
+        call s:worker_op.start("loger", function("s:loger_run"))
     endif
 
     if filereadable(getcwd()."/tags")
@@ -1262,7 +1272,9 @@ endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let load_light=$VIM_LIGHT
 filetype off
-set rtp+=~/.vim/bundle/vundle/
+set runtimepath+=~/.vim/bundle/vundle
+silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/global"
+silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/quickfix"
 call vundle#rc()
 Bundle "gmarik/vundle"                                     
 
@@ -1775,11 +1787,6 @@ Bundle "godlygeek/tabular"
 " 绑定 :XtermColorTable颜色表 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "guns/xterm-color-table.vim"
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
-" 绑定 :XtermColorTable颜色表 插件
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Bundle "janviayo/quickfix"
 
 "开启插件
 filetype plugin indent on
