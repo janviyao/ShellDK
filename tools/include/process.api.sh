@@ -122,78 +122,100 @@ function process_kill
 
 function process_pid2name
 {
+    local pid_list=($@)
+    if [ ${#pid_list[*]} -eq 0 ];then
+        echo_file "${LOG_ERRO}" "please input [pid/process-name] parameters"
+        return 1
+    fi
+
     local pid="$1"
-    is_integer "${pid}" || { echo "${pid}"; return 1; }
-
-    # ps -p 2133 -o args=
-    # ps -p 2133 -o cmd=
-    # cat /proc/${pid}/status
-    if can_access "/proc/${pid}/exe";then
-        local fname=$(path2fname "/proc/${pid}/exe")
-        if [ -n "${fname}" ];then
-            echo "${fname}"
-            return 0
+    local -a proc_list
+    for pid in ${pid_list[*]}
+    do
+        if ! is_integer "${pid}";then
+            proc_list=(${proc_list[*]} ${pid})
+            continue
         fi
-    fi
+        # ps -p 2133 -o args=
+        # ps -p 2133 -o cmd=
+        # cat /proc/${pid}/status
+        if can_access "/proc/${pid}/exe";then
+            local fname=$(path2fname "/proc/${pid}/exe")
+            if [ -n "${fname}" ];then
+                proc_list=(${proc_list[*]} ${fname})
+                continue
+            fi
+        fi
 
-    local pname=$(ps -eo pid,comm | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
-    if [ -z "${pname}" ];then
-        local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
-    fi
+        local pname=$(ps -eo pid,comm | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+        if [ -z "${pname}" ];then
+            local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+        fi
 
-    if [[ "${pname}" =~ '/' ]];then
-        if can_access "${pname}";then
-            echo "$(path2fname "${pname}")"
+        if [[ "${pname}" =~ '/' ]];then
+            if can_access "${pname}";then
+                proc_list=(${proc_list[*]} $(path2fname "${pname}"))
+            else
+                proc_list=(${proc_list[*]} ${pname})
+            fi
         else
-            echo "${pname}"
+            proc_list=(${proc_list[*]} ${pname})
         fi
-    else
-        echo "${pname}"
-    fi
+    done
 
+    echo "${proc_list[*]}"
     #echo "$(ps -q ${pid} -o comm=)"
     return 0
 }
 
 function process_name2pid
 {
-    local process_x="$1"
-
-    if [ -z "${process_x}" ];then
+    local proc_list=($@)
+    if [ ${#proc_list[*]} -eq 0 ];then
+        echo_file "${LOG_ERRO}" "please input [pid/process-name] parameters"
         return 1
     fi
 
-    if is_integer "${process_x}";then
-        echo "${process_x}"
-        return 0
-    fi
+    local proc=""
+    local -a pid_array
+    for proc in ${proc_list[*]}
+    do
+        if is_integer "${proc}";then
+            pid_array=(${pid_array[*]} ${proc})
+            continue
+        fi
 
-    local -a pid_array=($(ps -C ${process_x} -o pid=))
-    if [ ${#pid_array[*]} -gt 0 ];then
-        echo "${pid_array[*]}"
-        return 0
-    fi
+        local -a res_array=($(ps -C ${proc} -o pid=))
+        if [ ${#res_array[*]} -gt 0 ];then
+            pid_array=(${pid_array[*]} ${res_array[*]})
+            continue
+        fi
 
-    pid_array=($(pidof ${process_x}))
-    if [ ${#pid_array[*]} -gt 0 ];then
-        echo "${pid_array[*]}"
-        return 0
-    fi
+        res_array=($(pidof ${proc}))
+        if [ ${#res_array[*]} -gt 0 ];then
+            pid_array=(${pid_array[*]} ${res_array[*]})
+            continue
+        fi
 
-    local none_regex=$(regex_2str "${process_x}")
-    pid_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
-    if [ ${#pid_array[*]} -gt 0 ];then
-        echo "${pid_array[*]}"
-        return 0
-    fi
+        local none_regex=$(regex_2str "${proc}")
+        res_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
+        if [ ${#res_array[*]} -gt 0 ];then
+            pid_array=(${pid_array[*]} ${res_array[*]})
+            continue
+        fi
 
-    pid_array=($(ps -eo pid,cmd | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
-    if [ ${#pid_array[*]} -gt 0 ];then
-        echo "${pid_array[*]}"
-        return 0
-    fi
+        res_array=($(ps -eo pid,cmd | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
+        if [ ${#res_array[*]} -gt 0 ];then
+            pid_array=(${pid_array[*]} ${res_array[*]})
+            continue
+        fi
 
-    pid_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s+" | grep -v grep | awk '{ print $1 }'))
+        res_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s+" | grep -v grep | awk '{ print $1 }'))
+        if [ ${#res_array[*]} -gt 0 ];then
+            pid_array=(${pid_array[*]} ${res_array[*]})
+            continue
+        fi
+    done
 
     echo "${pid_array[*]}"
     return 0
@@ -452,7 +474,7 @@ function process_pptree
     return 0
 }
 
-function cpu2process
+function process_cpu2
 {
     local cpu_list=($@)
 
@@ -465,7 +487,7 @@ function cpu2process
     for cpu in ${cpu_list[*]}
     do
         if ! is_integer "${cpu}";then
-            echo_erro "cpu-id: { ${cpu} } invalid"
+            echo_erro "cpu-id: { ${cpu} } invalid number"
             continue
         fi
         
@@ -479,7 +501,7 @@ function cpu2process
     return 0
 }
 
-function process2cpu
+function process_2cpu
 {
     local proc_list=($@)
 
@@ -493,7 +515,7 @@ function process2cpu
         local pid_list=($(process_name2pid "${proc}"))
         if [ ${#pid_list[*]} -eq 0 ];then
             echo_erro "process: { ${proc} } invalid"
-            return 1
+            continue
         fi
 
         for pid in ${pid_list[*]}

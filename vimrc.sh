@@ -33,42 +33,63 @@ function create_project
     local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|hh\\|h\\|s\\|S\\|py\\|go"
     local find_str="${default_type}"
 
+    local -a type_list=(${find_str})
     local input_val=$(input_prompt "" "input file type (separated with comma) to parse" "")
     if [ -n "${input_val}" ];then
         find_str=$(replace_str "${input_val}" ',' '\\|')
+        type_list=(${find_str})
     fi
-    find . -type f -regex ".+\\.\\(${find_str}\\)" > ${OUT_DIR}/cscope.files 
     
+    local -a search_list=($(pwd))
     if [ -d /usr/include ];then
-        find /usr/include -type f -regex ".+\\.\\(${find_str}\\)" >> ${OUT_DIR}/cscope.files 
+        search_list=(${search_list[*]} '/usr/include')
     fi
 
     input_val=$(input_prompt "" "input search directory" "")
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
-            find ${input_val} -type f -regex ".+\\.\\(${find_str}\\)" >> ${OUT_DIR}/cscope.files 
+            search_list=(${search_list[*]} ${input_val})
+        else
+            echo_erro "dir { ${input_val}} invalid"
         fi
         input_val=$(input_prompt "" "input search directory" "")
     done
 
-    sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
-    mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
-    echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
-
+    local -a wipe_list
     input_val=$(input_prompt "" "input wipe directory" "")
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
             input_val=$(replace_str "${input_val}" "$HOME/" "")
             input_val=$(replace_str "${input_val}" '/' '\/')
-            file_del ${OUT_DIR}/cscope.files "${input_val}" false
-            if [ $? -ne 0 ];then
-                echo_erro "file_del { ${input_val}} fail"
-                return 1
-            fi
+            wipe_list=(${wipe_list[*]} ${input_val})
+        else
+            echo_erro "dir { ${input_val}} invalid"
         fi
         input_val=$(input_prompt "" "input wipe directory" "")
+    done
+
+    echo > ${OUT_DIR}/cscope.files
+    for type_str in ${type_list[*]}
+    do
+        for dir_str in ${search_list[*]}
+        do
+            find ${dir_str} -type f -regex ".+\\.\\(${type_str}\\)" >> ${OUT_DIR}/cscope.files 
+        done
+    done
+
+    sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
+    mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
+    echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
+
+    for wipe_str in ${wipe_list[*]}
+    do
+        file_del ${OUT_DIR}/cscope.files "${wipe_str}" false
+        if [ $? -ne 0 ];then
+            echo_erro "file_del { ${wipe_str}} fail"
+            return 1
+        fi
     done
     echo_debug "wipe cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
 
