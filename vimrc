@@ -1229,7 +1229,7 @@ endfunction
 let load_light=$VIM_LIGHT
 filetype off
 set runtimepath+=~/.vim/bundle/vundle
-silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/global"
+silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/common"
 silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/quickfix"
 call vundle#rc()
 Bundle "gmarik/vundle"                                     

@@ -518,8 +518,8 @@ function inst_vim
     ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset \
         --enable-largefile \
         --enable-pythoninterp=yes \
-        --enable-python3interp=yes \
         --disable-gui --disable-netbeans &>> build.log
+        #--enable-python3interp=yes \
         #--enable-luainterp=yes \
     if [ $? -ne 0 ]; then
         echo_erro "Configure: vim fail"
