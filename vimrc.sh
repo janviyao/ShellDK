@@ -40,7 +40,7 @@ function create_project
         type_list=(${find_str})
     fi
     
-    local -a search_list=($(pwd))
+    local -a search_list=('.')
     if [ -d /usr/include ];then
         search_list=(${search_list[*]} '/usr/include')
     fi

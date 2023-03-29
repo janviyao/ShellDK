@@ -25,41 +25,15 @@ function! GetElapsedTime()
     return 0
 endfunction
 
-python << EOF
-import threading
-log_lock = threading.Lock()
-def LogLock():
-    log_lock.acquire()
-def LogUnlock():
-    log_lock.release()
-EOF
-
-function! s:LogLock()
-python << EOF
-try:
-    LogLock()
-except Exception, e:
-    print e
-EOF
-endfunction
-
-function! s:LogUnlock()
-python << EOF
-try:
-    LogUnlock()
-except Exception, e:
-    print e
-EOF
-endfunction
-
 function! LogEnable()
     let s:log_enable = 1
     if s:worker_op.is_stoped("loger")
-        call s:worker_op.start("loger", function("s:loger_run"))
+        call s:worker_op.start("loger", function("s:loger_worker"))
+        call s:worker_op.set_log("loger", v:false)
     endif
 
     if s:worker_op.is_paused("loger")
-        call s:worker_op.exit_idle("loger")
+        call s:worker_op.pause("loger", 0)
     endif
 endfunction
 
@@ -68,33 +42,8 @@ function! LogDisable()
     call s:worker_op.stop("loger")
 endfunction
 
-function! s:loger_run(worker_id)
-    call s:LogLock()
-    if empty(s:log_list)
-        call s:LogUnlock()
-        call s:worker_op.enter_idle("loger")
-    else 
-        let log_dic = remove(s:log_list, 0) 
-        call s:LogUnlock()
-        call LogPrint(log_dic.type, log_dic.msg)
-    endif
-endfunction
-
-function! LogAppend(type, msg)
-    if s:log_enable
-        if s:worker_op.is_stoped("loger")
-            call LogPrint("save", "loger stoped")
-            return
-        endif
-
-        if s:worker_op.is_paused("loger")
-            call s:worker_op.exit_idle("loger")
-        endif
-
-        call s:LogLock()
-        call add(s:log_list, {"type": a:type, "msg": a:msg})
-        call s:LogUnlock()
-    endif
+function! s:loger_worker(request)
+        call LogPrint(a:request.type, a:request.msg)
 endfunction
 
 function! LogPrint(type, msg)
@@ -111,8 +60,14 @@ function! LogPrint(type, msg)
         echomsg "[".a:type."]: ".a:msg
         echohl None
     elseif a:type == "2file" 
-        let time_str = printf("%.6f", GetElapsedTime())
-        call LogAppend("save", "[".time_str."] ".a:msg)
+        if s:log_enable
+            let time_str = printf("%.6f", GetElapsedTime())
+            let request = {} 
+            let request["type"] = "save"
+            let request["msg"]  = "[".time_str."] ".a:msg
+            let work_index = s:worker_op.work_alloc("loger")    
+            call s:worker_op.fill_req("loger", work_index, request)
+        endif
     elseif a:type == "save" 
         call writefile(split(a:msg, "\n", 1), s:log_file_path, 'a')
     else
@@ -1140,7 +1095,8 @@ endfunction
 function! EnterHandler()
     let s:worker_op = Worker_get_ops()
     if s:log_enable
-        call s:worker_op.start("loger", function("s:loger_run"))
+        call s:worker_op.start("loger", function("s:loger_worker"))
+        call s:worker_op.set_log("loger", v:false)
     endif
 
     if filereadable(getcwd()."/tags")
