@@ -69,28 +69,6 @@ except Exception, e:
 EOF
 endfunction
 
-function! s:get_oldest(filepath) abort
-    "call PrintArgs("2file", "get_oldest", a:filepath)
-    let time_oldest = GetElapsedTime()
-    let res_index = -1
-
-    let length = len(s:file_table)
-    let index =0
-    while index < length
-        let item = get(s:file_table, index)
-        if item["filepath"] == a:filepath 
-            if item["cmd_time"] < time_oldest 
-                let time_oldest = item["cmd_time"]
-                let res_index = index
-            endif
-        endif
-        let index += 1
-    endwhile
-
-    "call LogPrint("2file", "get_oldest: ".res_index) 
-    return res_index 
-endfunction
-
 function! s:alloc_index(filepath) abort
     "call PrintArgs("2file", "alloc_index", "filepath=".a:filepath)
     call s:file_lock()
@@ -116,8 +94,30 @@ function! s:alloc_index(filepath) abort
     return index
 endfunction
 
-function! s:cache_index(filepath) abort
-    "call PrintArgs("2file", "cache_index", a:filepath)
+function! s:get_oldest(filepath) abort
+    "call PrintArgs("2file", "get_oldest", a:filepath)
+    let time_oldest = GetElapsedTime()
+    let res_index = -1
+
+    let length = len(s:file_table)
+    let index =0
+    while index < length
+        let item = get(s:file_table, index)
+        if item["filepath"] == a:filepath 
+            if item["cmd_time"] < time_oldest 
+                let time_oldest = item["cmd_time"]
+                let res_index = index
+            endif
+        endif
+        let index += 1
+    endwhile
+
+    "call LogPrint("2file", "get_oldest: ".res_index) 
+    return res_index 
+endfunction
+
+function! s:get_index(filepath) abort
+    "call PrintArgs("2file", "get_index", a:filepath)
     let time_newest = 0
     let res_index = -1
 
@@ -134,7 +134,7 @@ function! s:cache_index(filepath) abort
         let index += 1
     endwhile
 
-    call LogPrint("2file", "cache_index: ".res_index) 
+    call LogPrint("2file", "get_index: ".res_index) 
     return res_index 
 endfunction
 
@@ -146,12 +146,12 @@ function! s:get_data(request) abort
     endif
 endfunction
 
-function! s:cache_data(cache_index) abort
+function! s:get_cache(cache_index) abort
     let info_dic = s:file_table[a:cache_index]
     return s:get_data(info_dic) 
 endfunction
 
-function! s:have_data(file_index) abort
+function! s:has_data(file_index) abort
     if len(s:file_table) <= a:file_index
         call LogPrint("2file", "no data, index(".a:file_index.") over max-length(".len(s:file_table).")") 
         return 0
@@ -269,12 +269,12 @@ let s:file_ops = {
             \   'process_req' : function("s:process_req"),
             \   'make_req'    : function("s:make_req"),
             \   'get_data'    : function("s:get_data"),
-            \   'cache_index' : function("s:cache_index"),
-            \   'cache_data'  : function("s:cache_data"),
-            \   'have_data'   : function("s:have_data"),
+            \   'get_index'   : function("s:get_index"),
+            \   'get_cache'   : function("s:get_cache"),
+            \   'has_data'    : function("s:has_data"),
             \ }
 
-function! file#get_ops() abort
+function! File_get_ops() abort
     return s:file_ops
 endfunction
 

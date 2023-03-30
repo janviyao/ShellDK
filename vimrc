@@ -10,9 +10,7 @@ let s:log_enable    = 0
 let s:log_file_path = '/tmp/vim.debug'
 let s:log_file_max  = 698351616
 let s:log_line_max  = 500
-
-let s:vim_start  = reltime()
-let s:log_list   = []
+let s:vim_start     = reltime()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 公共函数列表 
