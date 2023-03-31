@@ -1064,6 +1064,7 @@ function! LoadProject(opmode)
         let s:vim_exit_act = 1
         call LeaveHandler()
     elseif a:opmode == "load" 
+        let s:vim_exit_act = 0
         if has("ctags")
             if filereadable("tags")
                 set tags=tags;                             "结尾分号能够向父目录查找tags文件
@@ -1145,28 +1146,25 @@ function! LeaveHandler()
         call ToggleWindow("allclose")
         call Quickfix_ctrl("save")
         
-        if s:vim_exit_act < 2
-            silent! execute "!rm -f cscope.* tags"
-        endif
-
-        if s:vim_exit_act == 0
-            silent! execute "mks! ".GetVimDir(1, "sessions")."/session.vim"
-            silent! execute "wviminfo! ".GetVimDir(1, "sessions")."/session.viminfo"
-        elseif s:vim_exit_act == 1
-            " exit after delete-project
-            silent! execute "!rm -fr ".GetVimDir(1, "sessions") 
-            silent! execute "!rm -fr ".GetVimDir(1, "ctrlpcache") 
-            silent! execute "!rm -fr ".GetVimDir(1, "bookmark") 
-            silent! execute "!rm -fr ".GetVimDir(1, "quickfix") 
-        endif 
+        silent! execute "mks! ".GetVimDir(1, "sessions")."/session.vim"
+        silent! execute "wviminfo! ".GetVimDir(1, "sessions")."/session.viminfo"
+        silent! execute "!rm -f cscope.* tags"
     endif
 
     call Quickfix_leave()
+    if s:vim_exit_act == 1
+        " exit after delete-project
+        silent! execute "!rm -fr ".GetVimDir(1, "sessions") 
+        silent! execute "!rm -fr ".GetVimDir(1, "ctrlpcache") 
+        silent! execute "!rm -fr ".GetVimDir(1, "bookmark") 
+        silent! execute "!rm -fr ".GetVimDir(1, "quickfix") 
+    endif 
+
+    call LogDisable()
     if getfsize(s:log_file_path) > s:log_file_max 
         call delete(s:log_file_path)
     endif
     
-    call LogDisable()
     silent! execute "qa"
 endfunction
 
