@@ -208,7 +208,7 @@ function! s:make_req(cmd_type, cmd_mode, dat_type, filepath, line_nr, status, da
 endfunction
 
 function! s:process_req(request) abort
-    call PrintDict("2file", "process_req", a:request)
+    call PrintArgs("2file", "process_req", a:request)
     let cmd_type = a:request['cmd_type'] 
     let cmd_mode = a:request['cmd_mode'] 
     let dat_type = a:request['dat_type'] 

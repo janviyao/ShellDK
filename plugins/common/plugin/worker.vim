@@ -94,6 +94,8 @@ function! s:worker_run(timer_id)
 
         let work_dic['status'] = s:STATE_HANDLING
         call worker_dic.func(request)
+        " free work resource
+        let work_dic["request"] = {}
         let work_dic['status'] = s:STATE_COMPLETE
     else
         call s:enter_idle(name)
