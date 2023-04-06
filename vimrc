@@ -574,35 +574,35 @@ function! JumpFuncStart()
     let fptr_return='\s*%('.code_word.'\s*)+\s*'
     let fptr_name='\s*\(\s*\*\s*'.code_word.'\s*\)\s*'
     let fptr_args='\s*\(%('.not_in_bracket.'+,?)*\)\s*'
-    let func_fptr=fptr_return.fptr_name.fptr_args.",?"
-    let com_arg='%('.code_word.'\s+)+%([\*\&]{0,2}\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
+    let func_ptr=fptr_return.fptr_name.fptr_args.",?"
 
-    let one_arg='\s*%(%('.com_arg.')|%('.func_fptr.'))\s*'
-    let func_args='\s*\(%(%(\s*void\s*)|%(%('.one_arg.line_end.')*))\)\s*'
+    let comm_arg='%('.code_word.'\s*)+%(%(%(\*{1,2})|%(\&))?\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
+    let func_arg='\s*%(%('.comm_arg.')|%('.func_ptr.'))\s*'
 
+    let func_arglist='\s*\(%(%(\s*void\s*)|%(%('.func_arg.line_end.')*))\)\s*'
     let func_restrict='\s*%(\s*const\s*)?'.line_end
-    let func_reg='\v'.func_return.func_name.func_args.func_restrict.'\{'
+    let func_regex='\v'.func_return.func_name.func_arglist.func_restrict.'\{'
 
     "call LogPrint("2file", "func_return: ".func_return)
     "call LogPrint("2file", "func_name: ".func_name)
-    "call LogPrint("2file", "func_fptr: ".func_fptr)
-    "call LogPrint("2file", "com_arg: ".com_arg)
-    "call LogPrint("2file", "one_arg: ".one_arg)
-    "call LogPrint("2file", "func_args: ".func_args)
+    "call LogPrint("2file", "func_ptr: ".func_ptr)
+    "call LogPrint("2file", "comm_arg: ".comm_arg)
+    "call LogPrint("2file", "func_arg: ".func_arg)
+    "call LogPrint("2file", "func_arglist: ".func_arglist)
     "call LogPrint("2file", "func_restrict: ".func_restrict)
-    "call LogPrint("2file", "func_reg: ".func_reg)
+    "call LogPrint("2file", "func_regex: ".func_regex)
 
     let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
 
-    let find_line=search(func_reg, 'bW')
+    let find_line=search(func_regex, 'bW')
     if find_line == 0
-        "call LogPrint("error", "search fail: ".func_reg)
+        "call LogPrint("error", "search fail: ".func_regex)
         return 1
     endif
 
     let find_str=getline(find_line)
     while find_str == ""
-        let find_line=search(func_reg, 'bW')
+        let find_line=search(func_regex, 'bW')
         if find_line <= 1
             break
         endif
@@ -611,14 +611,14 @@ function! JumpFuncStart()
     endwhile
 
     while matchstr(find_str, exclude_reg) != ""
-        let find_line=search(func_reg, 'bW')
+        let find_line=search(func_regex, 'bW')
         if find_line <= 1
             break
         endif
 
         let find_str=getline(find_line)
         while find_str == ""
-            let find_line=search(func_reg, 'bW')
+            let find_line=search(func_regex, 'bW')
             if find_line <= 1
                 break
             endif
