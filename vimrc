@@ -582,6 +582,8 @@ function! JumpFuncStart()
     let func_arglist='\s*\(%(%(\s*void\s*)|%(%('.func_arg.line_end.')*))\)\s*'
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_regex='\v'.func_return.func_name.func_arglist.func_restrict.'\{'
+    "let excl_regex='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
+    let excl_regex='\v%(%(\}?\s*%(\belse\b)?\s*%(\bif\b))|%(\bfor\b)|%(\bwhile\b)|%(\bswitch\b)|%(\bcatch\b))\s*(\(.*\))?'.line_end.'\{?'
 
     "call LogPrint("2file", "func_return: ".func_return)
     "call LogPrint("2file", "func_name: ".func_name)
@@ -591,46 +593,56 @@ function! JumpFuncStart()
     "call LogPrint("2file", "func_arglist: ".func_arglist)
     "call LogPrint("2file", "func_restrict: ".func_restrict)
     "call LogPrint("2file", "func_regex: ".func_regex)
+    "call LogPrint("2file", "excl_regex: ".excl_regex)
 
-    let exclude_reg='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
-
-    let find_line=search(func_regex, 'bW')
+    let find_line = search(func_regex, 'bW')
     if find_line == 0
         "call LogPrint("error", "search fail: ".func_regex)
         return 1
     endif
 
-    let find_str=getline(find_line)
+    "call LogPrint("2file", "find0 line: ".find_line)
+    let find_str = getline(find_line)
     while find_str == ""
-        let find_line=search(func_regex, 'bW')
+        let find_line = search(func_regex, 'bW')
         if find_line <= 1
             break
         endif
 
-        let find_str=getline(find_line)
+        "call LogPrint("2file", "find1 line: ".find_line)
+        let find_str = getline(find_line)
     endwhile
 
-    while matchstr(find_str, exclude_reg) != ""
-        let find_line=search(func_regex, 'bW')
+    let match_str = matchstr(find_str, excl_regex)
+    "call LogPrint("2file", "match: ".match_str)
+    while match_str != ""
+        let find_line = search(func_regex, 'bW')
         if find_line <= 1
             break
         endif
 
-        let find_str=getline(find_line)
+        "call LogPrint("2file", "find2 line: ".find_line)
+        let find_str = getline(find_line)
         while find_str == ""
-            let find_line=search(func_regex, 'bW')
+            let find_line = search(func_regex, 'bW')
             if find_line <= 1
                 break
             endif
 
-            let find_str=getline(find_line)
+            "call LogPrint("2file", "find3 line: ".find_line)
+            let find_str = getline(find_line)
         endwhile
+
+        let match_str = matchstr(find_str, excl_regex)
+        "call LogPrint("2file", "match: ".match_str)
     endwhile
 
     let rowNum = line(".")
     let colNum = col(".")
 
     let find_line=search('\v'.func_return, 'bW')
+    "call LogPrint("2file", "return line: ".find_line)
+
     if getline(find_line) != ""
         return find_line
     endif
