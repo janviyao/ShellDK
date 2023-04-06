@@ -582,8 +582,7 @@ function! JumpFuncStart()
     let func_arglist='\s*\(%(%(\s*void\s*)|%(%('.func_arg.line_end.')*))\)\s*'
     let func_restrict='\s*%(\s*const\s*)?'.line_end
     let func_regex='\v'.func_return.func_name.func_arglist.func_restrict.'\{'
-    "let excl_regex='\v\}?\s*(else)?\s*(if|for|while|switch|catch)\s*(\(.*\))?'.line_end.'\{?'
-    let excl_regex='\v%(%(\}?\s*%(\belse\b)?\s*%(\bif\b))|%(\bfor\b)|%(\bwhile\b)|%(\bswitch\b)|%(\bcatch\b))\s*(\(.*\))?'.line_end.'\{?'
+    let excl_regex='\v%(%(if)|%(for)|%(while)|%(switch)|%(catch))\s*\(.*\)'.line_end.'\{?'
 
     "call LogPrint("2file", "func_return: ".func_return)
     "call LogPrint("2file", "func_name: ".func_name)
@@ -614,7 +613,7 @@ function! JumpFuncStart()
     endwhile
 
     let match_str = matchstr(find_str, excl_regex)
-    "call LogPrint("2file", "match: ".match_str)
+    "call LogPrint("2file", "find: \'".find_str."\' match: \'".match_str."\'")
     while match_str != ""
         let find_line = search(func_regex, 'bW')
         if find_line <= 1
@@ -634,7 +633,7 @@ function! JumpFuncStart()
         endwhile
 
         let match_str = matchstr(find_str, excl_regex)
-        "call LogPrint("2file", "match: ".match_str)
+        "call LogPrint("2file", "find: \'".find_str."\' match: \'".match_str."\'")
     endwhile
 
     let rowNum = line(".")
