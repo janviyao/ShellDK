@@ -575,7 +575,7 @@ function! JumpFuncStart()
     let fptr_name='\s*\(\s*\*\s*'.code_word.'\s*\)\s*'
     let fptr_args='\s*\(%('.not_in_bracket.'+,?)*\)\s*'
     let func_fptr=fptr_return.fptr_name.fptr_args.",?"
-    let com_arg='%('.code_word.'\s+)+%([\*\&]?\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
+    let com_arg='%('.code_word.'\s+)+%([\*\&]{0,2}\s*'.code_word.')\s*%(\[\s*\d*\s*\])?\s*%(\s+'.gcc_attrs.')?,?'
 
     let one_arg='\s*%(%('.com_arg.')|%('.func_fptr.'))\s*'
     let func_args='\s*\(%(%(\s*void\s*)|%(%('.one_arg.line_end.')*))\)\s*'
