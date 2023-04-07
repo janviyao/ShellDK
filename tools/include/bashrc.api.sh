@@ -31,7 +31,7 @@ alias gcommit='function git_commit { git commit -s -m "$@"; }; git_commit'
 alias gamend='function git_amend { git commit --amend -s -m "$@"; }; git_amend'
 alias gall='function git_all { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); }; git_all'
 
-alias psgrep='function ps_grep { ps -fauex -ww | { head -1; grep $@ | grep -v grep; }; }; ps_grep'
+alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "pid,nlwp=TID-CNT,psr=RUN-CPU,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
 unalias cp &> /dev/null || true

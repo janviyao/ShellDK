@@ -281,7 +281,8 @@ function thread_info
         return 1
     fi
 
-    local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
+    #local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
+    local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "VSZ" "RSS" "CPU")
     local -A index_map
     index_map["PID"]="%-10s %-10d 0"
     index_map["COMMAND"]="%-20s %-20s 1"
@@ -371,38 +372,59 @@ function thread_info
 
 function process_info
 {
-    local process="$1"
+    local x_list=($1)
     local show_thread=${2:-true}
     local show_header=${3:-true}
+    local out_headers=${4}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: pid array\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)\n\$4: output headers(string)"
         return 1
     fi
-    local ps_header="comm,ppid,pid,lwp=TID,nlwp=TD-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,%cpu,maj_flt,min_flt,flags=FLAG,sz,vsz,%mem,wchan:15,stackp,etime,cmd"
-
-    local -a pid_array=($(process_name2pid "${process}"))    
-    for process in ${pid_array[*]}
-    do
-        if bool_v "${show_header}"; then
-            ps -p ${process} -o ${ps_header}
-        else
-            ps -p ${process} -o ${ps_header} --no-headers
-        fi
-    done
     
-    if bool_v "${show_thread}"; then
-        local -a tid_array=($(process_subthread ${process}))
-        if [ ${#tid_array[*]} -gt 0 ];then
-            #printf "\n%-22s **********************************************************************\n" "$(process_pid2name ${process})[${process}]"
-            printf "************************************ Threads ************************************\n"
-            thread_info "${process}" "true"
-            printf "*********************************************************************************\n"
-        fi
+    if [ -n "${out_headers}" ];then
+        local ps_header="${out_headers}"
+    else
+        #local ps_header="ppid,pid,lwp=TID,nlwp=TID-CNT,psr=RUN-CPU,nice,pri,policy,stat,pcpu,maj_flt,min_flt,flags,sz,vsz,pmem,wchan:15,stackp,eip,esp,cmd"
+        local ps_header="ppid,pid,lwp=TID,nlwp=TID-CNT,psr=RUN-CPU,nice,pri,policy,stat,pcpu,maj_flt:9,min_flt:9,flags,sz,vsz,pmem,wchan:15,cmd"
     fi
 
-    if bool_v "${show_header}" || bool_v "${show_thread}"; then
-        printf "\n"
+    local is_header=${show_header}
+    local -a all_pids
+    for x_proc in ${x_list[*]}
+    do
+        local -a pid_array=($(process_name2pid ${x_proc}))    
+        for pid in ${pid_array[*]}
+        do
+            if bool_v "${is_header}"; then
+                ps -p ${pid} -o ${ps_header}
+                local is_header=false
+            else
+                ps -p ${pid} -o ${ps_header} --no-headers
+            fi
+        done 
+        local -a all_pids=(${all_pids[*]} ${pid_array[*]})
+    done
+
+    if bool_v "${show_thread}"; then
+        if [ ${#all_pids[*]} -gt 0 ]; then
+            printf "\n"
+        fi
+
+        for pid in ${all_pids[*]}
+        do
+            local -a tid_array=($(process_subthread ${pid}))
+            if [ ${#tid_array[*]} -gt 0 ];then
+                local info="$(process_pid2name ${pid})[${pid}]"
+                printf "************************************ %s { %s } ************************************\n" "Threads" "${info}"
+                thread_info "${pid}" true
+                #printf "*********************************************************************************\n"
+            fi
+
+            if bool_v "${show_header}" || bool_v "${show_thread}"; then
+                printf "\n"
+            fi
+        done 
     fi
 
     return 0
