@@ -16,6 +16,7 @@ CMD1="cd ${ROOT_DIR}/deps"
 CMD2="cd ${ROOT_DIR}/tools/app"
 INST_GUIDE["ppid"]="${CMD2};gcc ppid.c -g -o ppid;mv -f ppid ${BIN_DIR}"
 INST_GUIDE["fstat"]="${CMD2};gcc fstat.c -g -o fstat;mv -f fstat ${BIN_DIR}"
+INST_GUIDE["chk_passwd"]="${CMD2};gcc chk_passwd.c -g -lcrypt -o chk_passwd;mv -f chk_passwd ${BIN_DIR}"
 INST_GUIDE["deno"]="${CMD1};unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${BIN_DIR}"
 
 INST_GUIDE["make"]="install_from_net make"
@@ -213,7 +214,7 @@ if [[ ${OP_MATCH} -eq 0 ]] || [[ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
 fi
 
 if [[ ${NEED_OP} != "clean" ]];then
-    declare -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
+    declare -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect")
     do_action "${mustDeps[*]}"
 fi
 

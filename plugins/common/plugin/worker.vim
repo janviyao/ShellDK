@@ -11,7 +11,7 @@ set cpo&vim
 let s:STATE_INIT     = 0
 let s:STATE_HANDLING = 1
 let s:STATE_COMPLETE = 2
-let s:worker_time    = 2
+let s:worker_time    = 1
 let s:worker_table   = {
            \   'quickfix' :
            \   {

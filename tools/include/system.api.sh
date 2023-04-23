@@ -10,6 +10,18 @@ function is_root
     fi
 }
 
+function check_passwd
+{
+    local usrnam="$1"
+    local passwd="$2"
+
+    if echo "${passwd}" | chk_passwd "${usrnam}"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function run_timeout
 {
     local time_s="${1:-60}"
@@ -218,6 +230,9 @@ function account_check
         if can_access "${GBL_BASE_DIR}/.${usr_name}";then
             export USR_NAME=${usr_name}
             export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.${usr_name})")
+            if ! check_passwd "${USR_NAME}" "${USR_PASSWORD}";then
+                export USR_PASSWORD=""
+            fi
         fi
     fi
 
