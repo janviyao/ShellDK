@@ -301,6 +301,10 @@ function clean_env
 
 function inst_env
 { 
+    if test -r /etc/shadow;then
+        ${SUDO} chmod +r /etc/shadow 
+    fi
+
     for linkf in ${!commandMap[*]};
     do
         local link_file=${commandMap["${linkf}"]}

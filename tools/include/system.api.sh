@@ -15,8 +15,12 @@ function check_passwd
     local usrnam="$1"
     local passwd="$2"
 
-    if echo "${passwd}" | chk_passwd "${usrnam}"; then
-        return 0
+    if test -r /etc/shadow;then
+        if echo "${passwd}" | chk_passwd "${usrnam}"; then
+            return 0
+        else
+            return 1
+        fi
     else
         return 1
     fi
