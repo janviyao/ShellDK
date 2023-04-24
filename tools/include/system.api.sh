@@ -22,6 +22,7 @@ function check_passwd
             return 1
         fi
     else
+        echo_file "${LOG_WARN}" "not readable [/etc/shadow]"
         return 1
     fi
 }

@@ -301,7 +301,7 @@ function clean_env
 
 function inst_env
 { 
-    if test -r /etc/shadow;then
+    if ! test -r /etc/shadow;then
         ${SUDO} chmod +r /etc/shadow 
     fi
 
