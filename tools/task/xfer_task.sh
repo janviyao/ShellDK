@@ -46,6 +46,7 @@ function do_rsync
                     if [[ $(string_end "${xfer_dir}" 1) != '/' ]]; then
                         xfer_dir=$(fname2path "${xfer_dir}")
                     fi
+                    local ncat_port=$(ncat_port_get)
 
                     sync_cmd="\
                     export BTASK_LIST='';\
@@ -75,7 +76,7 @@ function do_rsync
                     else\
                         if ! which rsync &> /dev/null;then \
                             if which nc &> /dev/null;then \
-                                (echo '^0^0REMOTE_PRINT^1${LOG_ERRO}^2[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT}) &> /dev/null;\
+                                (echo '^0^0REMOTE_PRINT^1${LOG_ERRO}^2[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} ${ncat_port}) &> /dev/null;\
                                 exit 1;\
                             else\
                                 if which sshpass &> /dev/null;then \

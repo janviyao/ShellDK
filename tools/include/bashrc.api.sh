@@ -10,14 +10,14 @@ export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${HO
 export VIM_LIGHT=0
 
 # more aliases
-alias ls='ls --color'
-alias la='ls --color -Alh'
-alias lat='ls --color -Alht'
-alias ll='ls --color -lh'
-alias llt='ls --color -lht'
+alias ls='ls --color=auto'
+alias la='ls --color=auto -Alh'
+alias lat='ls --color=auto -Alht'
+alias ll='ls --color=auto -lh'
+alias llt='ls --color=auto -lht'
 
-alias LS='ls --color'
-alias LL='ls --color -lh'
+alias LS='ls --color=auto'
+alias LL='ls --color=auto -lh'
 
 alias mylsblk='lsblk -o NAME,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,TRAN,WWN,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,SCHED,RQ-SIZE,RA,RO,RM,MODEL,SERIAL'
 alias mylspci='lspci -vvv -nn'

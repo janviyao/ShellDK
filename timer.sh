@@ -59,6 +59,4 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
 
     process_kill timer.sh
     echo_debug "timer finish"
-else
-    echo_debug "lost: ${TIMER_RUNDIR}/timerc"
 fi

@@ -31,6 +31,30 @@ function local_port_available
     fi
 }
 
+function ncat_port_gen
+{
+    local port_file="${GBL_NCAT_WORK_DIR}/port"
+    
+    local port_val=$(($$%32767 + 32767))
+    while ! local_port_available "${port_val}"
+    do
+        port_val=$(($RANDOM + 32767))
+    done 
+    echo "${port_val}" > ${port_file}
+    echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] available"
+}
+
+function ncat_port_get
+{
+    local port_file="${GBL_NCAT_WORK_DIR}/port"
+    if ! can_access "${port_file}";then
+        ncat_port_gen
+    fi
+
+    local port_val=$(cat ${port_file})
+    echo "${port_val}"
+}
+
 if string_contain "${BTASK_LIST}" "ncat";then
     mkdir -p ${GBL_NCAT_WORK_DIR}
 
@@ -40,12 +64,7 @@ if string_contain "${BTASK_LIST}" "ncat";then
     exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
     NCAT_MASTER_ADDR=$(get_local_ip)
-    NCAT_MASTER_PORT=$(($$%32767 + 32767))
-    while ! local_port_available "${NCAT_MASTER_PORT}"
-    do
-        NCAT_MASTER_PORT=$(($RANDOM + 32767))
-    done 
-    echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${NCAT_MASTER_PORT}] available"
+    ncat_port_gen
 fi
 
 function remote_ncat_alive
@@ -153,8 +172,8 @@ function ncat_recv_msg
     local ncat_port="$1"
 
     if can_access "nc";then
-        #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
-        nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
+        timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
+        #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         do
             echo "${ncat_body}"
             return 0
@@ -268,8 +287,9 @@ function ncat_wait_resp
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
 
+    local ncat_port=$(ncat_port_get)
     echo_debug "wait ncat's response: ${ack_pipe}"
-    ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
+    ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
 
     run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
     local retcode=$?
@@ -289,7 +309,8 @@ function ncat_wait_resp
 function ncat_task_ctrl
 {
     local ncat_body="$1"
-    ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${ncat_body}" 
+    local ncat_port=$(ncat_port_get)
+    ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${ncat_body}" 
     return $?
 }
 
@@ -329,8 +350,9 @@ function notify_event
         return 1
     fi
 
+    local ncat_port=$(ncat_port_get)
     local event_body="NOTIFY_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
-    ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
+    ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
 }
 
 function remote_set_var
@@ -386,10 +408,17 @@ function _ncat_thread_main
  
     while bool_v "${master_work}" 
     do
-        echo_file "${LOG_DEBUG}" "ncat listening into port[${NCAT_MASTER_PORT}] ..."
-        local ncat_body=$(ncat_recv_msg "${NCAT_MASTER_PORT}")
+        local ncat_port=$(ncat_port_get)
+
+        echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
+        local ncat_body=$(ncat_recv_msg "${ncat_port}")
         if [ -z "${ncat_body}" ];then
             mdata_get_var "master_work"
+            if ! local_port_available "${ncat_port}";then
+                if ps -ef | grep "nc -l" | grep -v grep | awk '{ print $11 }' | grep 52642 &> /dev/null;then
+                    ncat_port_gen
+                fi
+            fi
             continue
         fi
         echo_file "${LOG_DEBUG}" "ncat recv: [${ncat_body}]" 
@@ -453,8 +482,10 @@ function _ncat_thread_main
                     return 0
                 fi
                 sleep 1
+
+                local ncat_port=$(ncat_port_get)
                 local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
-                ncat_send_msg "${NCAT_MASTER_ADDR}" "${NCAT_MASTER_PORT}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
+                ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
             }&
         elif [[ "${req_ctrl}" == "NOTIFY_EVENT" ]];then
             local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
