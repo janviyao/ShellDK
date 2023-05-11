@@ -7,7 +7,7 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
     source ${TIMER_RUNDIR}/timerc
 
     export BTASK_LIST="master,mdat,ncat,xfer"
-    source ${MY_HOME}/.bashrc
+    source ${MY_VIM_DIR}/bashrc
 
     if can_access "${MY_HOME}/.timerc";then
         source ${MY_HOME}/.timerc
@@ -51,12 +51,19 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
     for bash_dir in $(cd ${GBL_BASE_DIR};ls -d */)
     do
         bash_pid=$(string_regex "${bash_dir}" "\d+")
-        if process_exist "${bash_pid}";then
-            continue
+        if [ -n "${bash_pid}" ];then
+            if process_exist "${bash_pid}";then
+                continue
+            fi
+            rm -fr ${GBL_BASE_DIR}/${bash_dir}
         fi
-        rm -fr ${GBL_BASE_DIR}/${bash_dir}
     done
 
-    process_kill timer.sh
+    pid_list=($(process_name2pid timer.sh))
+    self_index=$(array_index "${pid_list[*]}" $$)
+    if [ ${self_index} -ge 0 ];then
+        unset pid_list[${self_index}]
+        process_kill ${pid_list[*]}
+    fi
     echo_debug "timer finish"
 fi

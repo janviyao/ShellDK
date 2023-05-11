@@ -387,9 +387,10 @@ function inst_env
 
     can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
     if ! can_access "${TIMER_RUNDIR}/timerc";then
-        echo "#!/bin/bash"                > ${TIMER_RUNDIR}/timerc
-        echo "export MY_NAME=${MY_NAME}" >> ${TIMER_RUNDIR}/timerc
-        echo "export MY_HOME=${MY_HOME}" >> ${TIMER_RUNDIR}/timerc
+        echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/timerc
+        echo "export MY_NAME=${MY_NAME}"       >> ${TIMER_RUNDIR}/timerc
+        echo "export MY_HOME=${MY_HOME}"       >> ${TIMER_RUNDIR}/timerc
+        echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/timerc
     fi
 
     if ! can_access "${MY_HOME}/.timerc";then
