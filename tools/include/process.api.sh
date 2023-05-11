@@ -34,7 +34,12 @@ function process_exist
 
     [ -z "${pinfo}" ] && return 1
 
-    local -a pid_array=($(process_name2pid "${pinfo}"))
+    if is_integer "${pinfo}";then
+        local -a pid_array=(${pinfo})
+    else
+        local -a pid_array=($(process_name2pid "${pinfo}"))
+    fi
+
     for pid in ${pid_array[*]}
     do
         #${SUDO} "kill -s 0 ${pid} &> /dev/null"
@@ -198,19 +203,20 @@ function process_name2pid
         fi
 
         local none_regex=$(regex_2str "${proc}")
-        res_array=($(ps -eo pid,comm | awk "{ if(\$2 ~ /^${none_regex}$/) print \$1 }"))    
+
+        res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]*${none_regex}[ ]*/) print \$1 }"))    
         if [ ${#res_array[*]} -gt 0 ];then
             pid_array=(${pid_array[*]} ${res_array[*]})
             continue
         fi
 
-        res_array=($(ps -eo pid,cmd | awk "{ if(\$0 ~ /[ ]*${none_regex}[ ]*/) print \$1 }"))    
+        res_array=($(ps -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]*${none_regex}[ ]*/) print \$1 }"))    
         if [ ${#res_array[*]} -gt 0 ];then
             pid_array=(${pid_array[*]} ${res_array[*]})
             continue
         fi
 
-        res_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | awk '{ print $1 }'))
+        res_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
         if [ ${#res_array[*]} -gt 0 ];then
             pid_array=(${pid_array[*]} ${res_array[*]})
             continue

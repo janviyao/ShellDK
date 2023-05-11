@@ -52,10 +52,9 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
     do
         bash_pid=$(string_regex "${bash_dir}" "\d+")
         if [ -n "${bash_pid}" ];then
-            if process_exist "${bash_pid}";then
-                continue
+            if ! process_exist "${bash_pid}";then
+                rm -fr ${GBL_BASE_DIR}/${bash_dir}
             fi
-            rm -fr ${GBL_BASE_DIR}/${bash_dir}
         fi
     done
 
