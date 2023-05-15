@@ -397,6 +397,10 @@ function! s:quick_load(module, index)
             call LogPrint("error", a:module." info file lost: ".info_file)
             return -1
         endif
+        if type(info_dic) != v:t_dict
+            let info_dic = eval(info_dic)
+        endif
+
         call PrintDict("2file", a:module." load key", info_dic)
 
         call filter(s:qfix_main_info, 0)
