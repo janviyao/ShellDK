@@ -15,6 +15,10 @@ PRJ_DIR="${PRJ_DIR:-.}"
 PRJ_DIR=$(string_trim "${PRJ_DIR}" "/" 2)
 if [ -n "${PRJ_DIR}" ];then
     echo_debug "project-dir: ${PRJ_DIR}"
+    if ! can_access "${PRJ_DIR}"; then
+        echo_erro "Invalid Dir: ${PRJ_DIR}"
+        exit 1
+    fi
 fi
 
 OUT_DIR="${parasMap['-o']}"
@@ -22,6 +26,10 @@ OUT_DIR="${OUT_DIR:-${parasMap['--output-dir']}}"
 OUT_DIR=$(string_trim "${OUT_DIR}" "/" 2)
 if [ -n "${OUT_DIR}" ];then
     echo_debug "output-dir: ${OUT_DIR}"
+    if ! can_access "${OUT_DIR}"; then
+        echo_erro "Invalid Dir: ${OUT_DIR}"
+        exit 1
+    fi
 else
     echo_erro "output-dir not specified"
     exit 1

@@ -234,6 +234,12 @@ function! GetVimDir(work, dir)
         endif
     endif
 
+    let gbranch = trim(system("git symbolic-ref --short -q HEAD 2>/dev/null"))
+    if strlen(gbranch) > 0
+        let gbranch = substitute(gbranch, '[:\/]', '@', 'g')
+        let makdir = makdir."/".gbranch
+    endif
+
     if !isdirectory(makdir) 
         call mkdir(makdir, "p")
     endif
