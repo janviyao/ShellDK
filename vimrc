@@ -49,14 +49,17 @@ function! LogPrint(type, msg)
         echohl ErrorMsg
         echoerr "[".a:type."]: ".a:msg
         echohl None
+        call LogPrint("2file", a:msg)
     elseif a:type == "warn" 
         echohl WarningMsg
         echomsg "[".a:type."]: ".a:msg
         echohl None
+        call LogPrint("2file", a:msg)
     elseif a:type == "info"
         echohl ModeMsg
         echomsg "[".a:type."]: ".a:msg
         echohl None
+        call LogPrint("2file", a:msg)
     elseif a:type == "2file" 
         if s:log_enable
             let time_str = printf("%.6f", GetElapsedTime())

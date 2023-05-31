@@ -189,7 +189,7 @@ function! s:get_index_all(module, index_list, start = 0, end = 0)
         let root_list = s:get_index_root(a:module)
         call extend(a:index_list, root_list)
     endif
-    "call LogPrint("2file", a:module." list: ".string(a:index_list)." start: ".a:start." end: ".a:end)
+    call LogPrint("2file", a:module." list: ".string(a:index_list)." start: ".a:start." end: ".a:end)
 
     let cur_list = deepcopy(a:index_list)
     if a:start < a:end && a:end > 0
@@ -202,6 +202,7 @@ function! s:get_index_all(module, index_list, start = 0, end = 0)
             call LogPrint("error", a:module." index ".cur_idx." over range: ".string(a:index_list))
             return -1
         endif
+        call LogPrint("2file", a:module." cur_idx: ".cur_idx." next_idx: ".next_idx)
 
         let next_list = s:get_index_next(a:module, next_idx)
         if len(next_list) > 0

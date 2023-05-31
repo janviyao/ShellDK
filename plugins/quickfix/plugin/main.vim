@@ -49,7 +49,8 @@ endfunction
 
 function! Quickfix_leave()
     while s:worker_op.has_work("quickfix")
-        call LogPrint("2file", "quickfix leave, wait worker stop: 10ms")
+        let works = s:worker_op.get_works("quickfix")
+        call LogPrint("2file", "quickfix leave, wait worker [".string(works)."] stop: 10ms")
         silent! execute 'sleep 10m'
     endwhile
 

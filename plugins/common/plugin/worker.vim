@@ -265,6 +265,8 @@ function! s:work_alloc(name) abort
     if index >= len(work_table)
         call insert(work_table, {}, index)
     endif
+    let work_dic = work_table[index]
+    let work_dic['wk_time'] = GetElapsedTime() 
     call s:worker_unlock()
 
     if worker_dic.log_en
@@ -289,6 +291,26 @@ function! s:has_work(name) abort
         let index += 1
     endwhile
     return v:false
+endfunction
+
+function! s:get_works(name) abort
+    let worker_dic = s:worker_table[a:name]
+    let work_table = worker_dic["works"]
+
+    let works = []
+    let length = len(work_table)
+    let index = 0
+    while index < length
+        let item = get(work_table, index)
+        if has_key(item, "status")
+            if item["status"] == s:STATE_INIT
+                call add(works, index)
+            endif
+        endif
+        let index += 1
+    endwhile
+
+    return works
 endfunction
 
 function! s:work_next(name) abort
@@ -322,7 +344,6 @@ function! s:fill_req(name, work_index, request) abort
 
     let work_table = worker_dic["works"]
     let work_dic = work_table[a:work_index]
-    let work_dic['wk_time'] = GetElapsedTime() 
 
     if !has_key(work_dic, "request")
         let work_dic["request"] = {}
@@ -351,6 +372,7 @@ let s:worker_ops = {
             \   'work_alloc'  : function("s:work_alloc"),
             \   'work_cpl'    : function("s:work_cpl"),
             \   'has_work'    : function("s:has_work"),
+            \   'get_works'   : function("s:get_works"),
             \   'set_log'     : function("s:set_log"),
             \   'is_stoped'   : function("s:is_stoped"),
             \   'is_paused'   : function("s:is_paused")
