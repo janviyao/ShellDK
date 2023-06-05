@@ -8,7 +8,6 @@ let g:quickfix_worker_loaded = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:RING_SIZE      = 100
 let s:STATE_INIT     = 0
 let s:STATE_HANDLING = 1
 let s:STATE_COMPLETE = 2
@@ -18,6 +17,8 @@ let s:worker_table   = {
            \   {
            \     'timer'  : -1,
            \     'func'   : function("tr"),
+           \     'ring_size' : 0,
+           \     'run_once'  : 0,
            \     'work_head' : 0,
            \     'work_tail' : 0,
            \     'log_en' : v:true,
@@ -80,9 +81,11 @@ endfunction
 
 function! s:worker_run(timer_id)
     let name = s:get_name(a:timer_id)
+    let worker_dic = s:worker_table[name]
+
+    let run_max = worker_dic.run_once
     let work_index = s:work_next(name)
-    if work_index >= 0
-        let worker_dic = s:worker_table[name]
+    while work_index >= 0
         "if worker_dic.log_en
         "    call PrintArgs("2file", "worker_run", work_index)
         "endif
@@ -99,12 +102,21 @@ function! s:worker_run(timer_id)
         " free work resource
         let work_dic["request"] = {}
         let work_dic['status'] = s:STATE_COMPLETE
-    else
+
+        let run_max -= 1
+        if run_max == 0
+            break
+        endif
+
+        let work_index = s:work_next(name)
+    endwhile
+
+    if work_index < 0
         call s:enter_idle(name)
     endif
 endfunction
 
-function! s:start(name, func) abort
+function! s:start(name, func, ring_size=500, run_once=50) abort
     if has_key(s:worker_table, a:name)
         let worker_dic = s:worker_table[a:name]
         if worker_dic.timer > 0
@@ -116,6 +128,8 @@ function! s:start(name, func) abort
     let worker_dic = {} 
     let worker_dic["timer"]  = timer
     let worker_dic["func"]   = a:func
+    let worker_dic["ring_size"] = a:ring_size
+    let worker_dic["run_once"]  = a:run_once
     let worker_dic["work_head"] = 0
     let worker_dic["work_tail"] = 0
     let worker_dic["idle"]   = 0.0
@@ -253,26 +267,26 @@ function! s:work_alloc(name) abort
     call s:worker_lock()
     let index = worker_dic.work_tail
     let worker_dic.work_tail += 1
-    if worker_dic.work_tail > s:RING_SIZE
+    if worker_dic.work_tail > worker_dic.ring_size
         let worker_dic.work_tail = 0
     endif
 
     if worker_dic.work_tail == worker_dic.work_head
         if worker_dic.work_tail == 0
-            let worker_dic.work_tail = s:RING_SIZE
+            let worker_dic.work_tail = worker_dic.ring_size
         else
             let worker_dic.work_tail -= 1
         endif
 
         if worker_dic.log_en
-            call LogPrint("error", name." ring full, head=".worker_dic.work_head." tail=".worker_dic.work_tail)
+            call LogPrint("error", a:name." ring full, head=".worker_dic.work_head." tail=".worker_dic.work_tail)
         endif
 
         call s:worker_unlock()
         return -1
-    endif
+    endif 
     call s:worker_unlock()
-
+    
     let work_table = worker_dic["works"]
     if index >= len(work_table)
         call insert(work_table, {}, index)
@@ -281,7 +295,7 @@ function! s:work_alloc(name) abort
     let work_dic['wk_time'] = GetElapsedTime() 
 
     if worker_dic.log_en
-        call LogPrint("2file", "new work_alloc: ".index.", head: ".worker_dic.work_head." tail: ".worker_dic.work_tail)
+        call LogPrint("2file", "new work_alloc: ".index." head: ".worker_dic.work_head." tail: ".worker_dic.work_tail)
     endif
     return index
 endfunction
@@ -333,7 +347,7 @@ function! s:work_next(name) abort
 
     let index = worker_dic.work_head
     let worker_dic.work_head += 1
-    if worker_dic.work_head > s:RING_SIZE
+    if worker_dic.work_head > worker_dic.ring_size
         let worker_dic.work_head = 0
     endif
 
@@ -357,6 +371,13 @@ function! s:fill_req(name, work_index, request) abort
     let worker_dic = s:worker_table[a:name]
     if worker_dic.log_en
         call PrintArgs("2file", "fill_req", "index=".a:work_index, a:request)
+    endif
+    
+    if a:work_index < 0
+        if worker_dic.log_en
+            call LogPrint("error", a:name." work_index invalid")
+        endif
+        return
     endif
 
     let work_table = worker_dic["works"]

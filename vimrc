@@ -26,7 +26,7 @@ endfunction
 function! LogEnable()
     let s:log_enable = 1
     if s:worker_op.is_stoped("loger")
-        call s:worker_op.start("loger", function("s:loger_worker"))
+        call s:worker_op.start("loger", function("s:loger_worker"), 1000, 100)
         call s:worker_op.set_log("loger", v:false)
     endif
 
@@ -1114,7 +1114,7 @@ endfunction
 function! EnterHandler()
     let s:worker_op = Worker_get_ops()
     if s:log_enable
-        call s:worker_op.start("loger", function("s:loger_worker"))
+        call s:worker_op.start("loger", function("s:loger_worker"), 1000, 100)
         call s:worker_op.set_log("loger", v:false)
     endif
 
