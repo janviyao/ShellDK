@@ -354,7 +354,6 @@ function! s:quick_rebuild(module)
         let index_init = str2nr(get(data, 0, ''))
     endif
 
-    let info_inval = v:false
     let info_list = systemlist("ls ".GetVimDir(1, "quickfix")."/info.".a:module.".*")
     for info_file in info_list
         if filereadable(info_file)
@@ -363,7 +362,6 @@ function! s:quick_rebuild(module)
 
             let info_dic = s:read_dict(a:module, info_file, 'b', 1)
             if empty(info_dic)
-                let info_inval = v:true
                 call LogPrint("error", "skip empty file: ".info_file)
                 call s:quick_delete(a:module, index_val) 
                 continue
@@ -389,25 +387,24 @@ function! s:quick_rebuild(module)
         endif
     endfor
 
-    if info_inval
-        let tag_list = s:map_op.get_tag_root(a:module)
-        while len(tag_list) > 0
-            let tag = remove(tag_list, 0)
-            let tag_next = s:map_op.get_tag_next(a:module, tag)
-            for ntag in tag_next
-                let index = s:map_op.tag2index(a:module, ntag)
-                if index < 0
-                    let Callback = function("s:quick_unset_callback", [a:module])
-                    call s:map_op.unset_map(a:module, ntag, Callback) 
-                    break
-                endif
-            endfor
-
-            if !empty(tag_next)
-                call extend(tag_list, tag_next)
+    let tag_list = s:map_op.get_tag_root(a:module)
+    while len(tag_list) > 0
+        let tag = remove(tag_list, 0)
+        let tag_next = s:map_op.get_tag_next(a:module, tag)
+        for ntag in tag_next
+            let index = s:map_op.tag2index(a:module, ntag)
+            if index < 0
+                call LogPrint("error", "destroyed info [ ".ntag." ] ")
+                let Callback = function("s:quick_unset_callback", [a:module])
+                call s:map_op.unset_map(a:module, ntag, Callback) 
             endif
-        endwhile
-    endif
+        endfor
+
+        if !empty(tag_next)
+            call extend(tag_list, tag_next)
+        endif
+    endwhile
+
     return index_init
 endfunction
 

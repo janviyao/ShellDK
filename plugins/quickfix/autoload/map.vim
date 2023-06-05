@@ -227,8 +227,15 @@ function! s:get_index_root(module) abort
     let length = len(info_list)
     while index < length
         let item = get(info_list, index)
-        if strlen(item["tag"]) > 0 && strlen(item["prev"]) == 0
-            call add(res_list, index)
+        if strlen(item["tag"]) > 0
+            if strlen(item["prev"]) == 0
+                call add(res_list, index)
+            else
+                let prev_index = s:tag2index(a:module, item["prev"])
+                if prev_index < 0
+                    call add(res_list, index)
+                endif
+            endif
         endif
         let index += 1
     endwhile
@@ -305,8 +312,15 @@ function! s:get_tag_root(module) abort
     let length = len(info_list)
     while index < length
         let item = get(info_list, index)
-        if strlen(item["tag"]) > 0 && strlen(item["prev"]) == 0
-            call add(res_list, item["tag"])
+        if strlen(item["tag"]) > 0
+            if strlen(item["prev"]) == 0
+                call add(res_list, item["tag"])
+            else
+                let prev_index = s:tag2index(a:module, item["prev"])
+                if prev_index < 0
+                    call add(res_list, item["tag"])
+                endif
+            endif
         endif
         let index += 1
     endwhile
