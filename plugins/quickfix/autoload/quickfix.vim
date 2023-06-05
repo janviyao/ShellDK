@@ -96,10 +96,10 @@ function! s:read_dict(module, file, mode, line_num) abort
         if s:file_op.has_data(cache_index) > 0
             let data = s:file_op.get_cache(cache_index)
             if type(data) != v:t_dict
-                call LogPrint("save", "read [".file."] mode [".mode."] invalid dict: \n".string(data))
+                call LogPrint("save", "read [".a:file."] mode [".mode."] invalid dict: \n".string(data))
                 let data = eval(string(data))
                 if type(data) != v:t_dict
-                    call LogPrint("error", "file [".file."] mode [".mode."] invalid dict")
+                    call LogPrint("error", "file [".a:file."] mode [".mode."] invalid dict")
                     return {}
                 endif
             endif
@@ -119,10 +119,10 @@ function! s:read_dict(module, file, mode, line_num) abort
 
     let data = s:file_op.get_data(request)
     if type(data) != v:t_dict
-        call LogPrint("save", "read [".file."] mode [".mode."] invalid dict: \n".string(data))
+        call LogPrint("save", "read [".a:file."] mode [".mode."] invalid dict: \n".string(data))
         let data = eval(string(data))
         if type(data) != v:t_dict
-            call LogPrint("error", "file [".file."] mode [".mode."] invalid dict")
+            call LogPrint("error", "file [".a:file."] mode [".mode."] invalid dict")
             return {}
         endif
     endif
@@ -142,10 +142,10 @@ function! s:read_list(module, file, mode, line_num) abort
         if s:file_op.has_data(cache_index) > 0
             let data = s:file_op.get_cache(cache_index)
             if type(data) != v:t_list
-                call LogPrint("save", "read [".file."] mode [".mode."] invalid list: \n".string(data))
+                call LogPrint("save", "read [".a:file."] mode [".mode."] invalid list: \n".string(data))
                 let data = eval(string(data))
                 if type(data) != v:t_list
-                    call LogPrint("error", "file [".file."] mode [".mode."] invalid list")
+                    call LogPrint("error", "file [".a:file."] mode [".mode."] invalid list")
                     return []
                 endif
             endif
@@ -165,10 +165,10 @@ function! s:read_list(module, file, mode, line_num) abort
 
     let data = s:file_op.get_data(request)
     if type(data) != v:t_list
-        call LogPrint("save", "read [".file."] mode [".mode."] invalid list: \n".string(data))
+        call LogPrint("save", "read [".a:file."] mode [".mode."] invalid list: \n".string(data))
         let data = eval(string(data))
         if type(data) != v:t_list
-            call LogPrint("error", "file [".file."] mode [".mode."] invalid list")
+            call LogPrint("error", "file [".a:file."] mode [".mode."] invalid list")
             return []
         endif
     endif
