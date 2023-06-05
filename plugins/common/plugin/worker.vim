@@ -8,6 +8,7 @@ let g:quickfix_worker_loaded = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
+let s:RING_SIZE      = 100
 let s:STATE_INIT     = 0
 let s:STATE_HANDLING = 1
 let s:STATE_COMPLETE = 2
@@ -17,7 +18,8 @@ let s:worker_table   = {
            \   {
            \     'timer'  : -1,
            \     'func'   : function("tr"),
-           \     'cursor' : 0,
+           \     'work_head' : 0,
+           \     'work_tail' : 0,
            \     'log_en' : v:true,
            \     'idle'   : 0.0,
            \     'works'  : [
@@ -114,7 +116,8 @@ function! s:start(name, func) abort
     let worker_dic = {} 
     let worker_dic["timer"]  = timer
     let worker_dic["func"]   = a:func
-    let worker_dic["cursor"] = 0
+    let worker_dic["work_head"] = 0
+    let worker_dic["work_tail"] = 0
     let worker_dic["idle"]   = 0.0
     let worker_dic["log_en"] = v:true
     let worker_dic["works"]  = []
@@ -245,21 +248,30 @@ function! s:get_oldest(name, status) abort
 endfunction
 
 function! s:work_alloc(name) abort
-    call s:worker_lock()
     let worker_dic = s:worker_table[a:name]
-    "let oldest_index = s:get_oldest(a:name, s:STATE_COMPLETE)
-    "if oldest_index >= 0
-    "    call s:worker_unlock()
-    "    if worker_dic.log_en
-    "        call LogPrint("2file", "old work_alloc: ".oldest_index)
-    "    endif
-    "    return oldest_index
-    "endif
-    let index = worker_dic.cursor
-    let worker_dic.cursor += 1
-    if worker_dic.cursor > 5000
-        let worker_dic.cursor = 0
+
+    call s:worker_lock()
+    let index = worker_dic.work_tail
+    let worker_dic.work_tail += 1
+    if worker_dic.work_tail > s:RING_SIZE
+        let worker_dic.work_tail = 0
     endif
+
+    if worker_dic.work_tail == worker_dic.work_head
+        if worker_dic.work_tail == 0
+            let worker_dic.work_tail = s:RING_SIZE
+        else
+            let worker_dic.work_tail -= 1
+        endif
+
+        if worker_dic.log_en
+            call LogPrint("error", name." ring full, head=".worker_dic.work_head." tail=".worker_dic.work_tail)
+        endif
+
+        call s:worker_unlock()
+        return -1
+    endif
+    call s:worker_unlock()
 
     let work_table = worker_dic["works"]
     if index >= len(work_table)
@@ -267,10 +279,9 @@ function! s:work_alloc(name) abort
     endif
     let work_dic = work_table[index]
     let work_dic['wk_time'] = GetElapsedTime() 
-    call s:worker_unlock()
 
     if worker_dic.log_en
-        call LogPrint("2file", "new work_alloc: ".index)
+        call LogPrint("2file", "new work_alloc: ".index.", head: ".worker_dic.work_head." tail: ".worker_dic.work_tail)
     endif
     return index
 endfunction
@@ -314,13 +325,19 @@ function! s:get_works(name) abort
 endfunction
 
 function! s:work_next(name) abort
-    let res_index = s:get_oldest(a:name, s:STATE_INIT)
-    "if res_index >= 0
-    "    if worker_dic.log_en
-    "        call LogPrint("2file", "work_next: ".res_index) 
-    "    endif
-    "endif
-    return res_index 
+    let worker_dic = s:worker_table[a:name]
+
+    if worker_dic.work_head == worker_dic.work_tail
+        return -1
+    endif
+
+    let index = worker_dic.work_head
+    let worker_dic.work_head += 1
+    if worker_dic.work_head > s:RING_SIZE
+        let worker_dic.work_head = 0
+    endif
+
+    return index 
 endfunction
 
 function! s:get_req(name, work_index) abort
