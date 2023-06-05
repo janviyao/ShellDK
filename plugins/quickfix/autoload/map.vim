@@ -197,23 +197,23 @@ function! s:get_index_all(module, index_list, start = 0, end = 0)
     endif
 
     for cur_idx in cur_list
-        let next_idx = index(a:index_list, cur_idx) 
-        if next_idx < 0
+        let next_pos = index(a:index_list, cur_idx) 
+        if next_pos < 0
             call LogPrint("error", a:module." index ".cur_idx." over range: ".string(a:index_list))
             return -1
         endif
-        call LogPrint("2file", a:module." cur_idx: ".cur_idx." next_idx: ".next_idx)
+        call LogPrint("2file", a:module." cur_idx: ".cur_idx." next_pos: ".next_pos)
 
-        let next_list = s:get_index_next(a:module, next_idx)
+        let next_list = s:get_index_next(a:module, cur_idx)
         if len(next_list) > 0
             "call LogPrint("2file", a:module." next: ".string(next_list))
-            let insert_pos = next_idx + 1
+            let insert_pos = next_pos + 1
             for idx in next_list
                 call insert(a:index_list, idx, insert_pos)
                 let insert_pos += 1
             endfor
 
-            call s:get_index_all(a:module, a:index_list, next_idx + 1, insert_pos)
+            call s:get_index_all(a:module, a:index_list, next_pos + 1, insert_pos)
         endif
     endfor
 endfunction
@@ -228,13 +228,9 @@ function! s:get_index_root(module) abort
     while index < length
         let item = get(info_list, index)
         if strlen(item["tag"]) > 0
-            if strlen(item["prev"]) == 0
+            let prev_index = s:tag2index(a:module, item["prev"])
+            if prev_index < 0
                 call add(res_list, index)
-            else
-                let prev_index = s:tag2index(a:module, item["prev"])
-                if prev_index < 0
-                    call add(res_list, index)
-                endif
             endif
         endif
         let index += 1
@@ -313,13 +309,9 @@ function! s:get_tag_root(module) abort
     while index < length
         let item = get(info_list, index)
         if strlen(item["tag"]) > 0
-            if strlen(item["prev"]) == 0
+            let prev_index = s:tag2index(a:module, item["prev"])
+            if prev_index < 0
                 call add(res_list, item["tag"])
-            else
-                let prev_index = s:tag2index(a:module, item["prev"])
-                if prev_index < 0
-                    call add(res_list, item["tag"])
-                endif
             endif
         endif
         let index += 1
