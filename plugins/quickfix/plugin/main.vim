@@ -67,7 +67,7 @@ nnoremap <silent> <Leader>qrc :call quickfix#ctrl_main("recover")<CR>
 nnoremap <silent> <Leader>qrf :call quickfix#ctrl_main("recover-next")<CR>
 nnoremap <silent> <Leader>qrb :call quickfix#ctrl_main("recover-prev")<CR>
 
-call s:worker_op.start("quickfix", s:file_op.process_req, 100, 10)
+call s:worker_op.start("quickfix", s:file_op.process_req, 20, 3)
 
 " restore 'cpo'
 let &cpo = s:cpo_save
