@@ -150,6 +150,20 @@ function create_project
             fi
 
             echo_debug "new  regex: ${line}"
+
+            local conflict=false
+            for dir_str in ${search_list[*]}
+            do
+                if match_regex "${dir_str}" "${line}";then
+                    conflict=true
+                    break
+                fi
+            done
+
+            if bool_v "${conflict}"; then
+                continue
+            fi
+
             file_del ${OUT_DIR}/cscope.files "${line}" true
             if [ $? -ne 0 ];then
                 echo_erro "file_del { ${line}} fail"
