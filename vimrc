@@ -1107,6 +1107,13 @@ function! LoadProject(opmode)
             endif
             set csverb       
         endif
+
+        let cus_ignore = GetVimDir(1, "sessions")."/gitignore"
+        if filereadable(cus_ignore)
+            let cur_ignore = getcwd()."/.gitignore"
+            silent! execute "!cp -f ".cur_ignore." ".cus_ignore.".bk"
+            silent! execute "!cp -f ".cus_ignore." ".cur_ignore
+        endif
     endif
 endfunction
 
@@ -1169,6 +1176,12 @@ function! LeaveHandler()
         silent! execute "mks! ".GetVimDir(1, "sessions")."/session.vim"
         silent! execute "wviminfo! ".GetVimDir(1, "sessions")."/session.viminfo"
         silent! execute "!rm -f cscope.* tags"
+
+        let cus_ignore = GetVimDir(1, "sessions")."/gitignore"
+        if filereadable(cus_ignore)
+            let cur_ignore = getcwd()."/.gitignore"
+            silent! execute "!cp -f ".cus_ignore.".bk ".cur_ignore
+        endif
     endif
 
     call Quickfix_leave()
