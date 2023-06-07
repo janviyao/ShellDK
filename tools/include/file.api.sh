@@ -166,9 +166,9 @@ function file_add
 
     local line_cnt=$(sed -n '$p' ${xfile})
     if [ -z "${line_cnt}" ];then
-        sed -i "$ c\\${content}" ${xfile}
+        eval "sed -i '$ c\\${content}' ${xfile}"
     else
-        sed -i "$ a\\${content}" ${xfile}
+        eval "sed -i '$ a\\${content}' ${xfile}"
     fi
 
     if [ $? -ne 0 ];then
@@ -303,11 +303,11 @@ function file_del
 
     if bool_v "${is_reg}";then
         local posix_reg=$(regex_perl2posix "${string}")
-        if [[ "${posix_reg}" =~ '/' ]];then
-            posix_reg=$(replace_str "${posix_reg}" '/' '\/')
+        if [[ "${posix_reg}" =~ '#' ]];then
+            posix_reg=$(replace_str "${posix_reg}" '#' '\#')
         fi
 
-        sed -i "\#${posix_reg}#d" ${xfile}
+        eval "sed -i '\#${posix_reg}#d' ${xfile}"
         if [ $? -ne 0 ];then
             echo_erro "file_del { $@ } posix_reg { ${posix_reg} }"
             return 1
@@ -327,7 +327,7 @@ function file_del
         if is_integer "${string}";then
             local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
-                sed -i "${string}d" ${xfile}
+                eval "sed -i '${string}d' ${xfile}"
                 if [ $? -ne 0 ];then
                     echo_erro "file_del { $@ }"
                     return 1
@@ -350,7 +350,7 @@ function file_del
                     fi
                 fi
 
-                sed -i "${index_s},${index_e}d" ${xfile}
+                eval "sed -i '${index_s},${index_e}d' ${xfile}"
                 if [ $? -ne 0 ];then
                     echo_erro "file_del { $@ }"
                     return 1
@@ -402,9 +402,9 @@ function file_insert
 
         local line_cnt=$(sed -n "${line_nr}p" ${xfile})
         if [ -z "${line_cnt}" ];then
-            sed -i "${line_nr} c\\${content}" ${xfile}
+            eval "sed -i '${line_nr} c\\${content}' ${xfile}"
         else
-            sed -i "${line_nr} i\\${content}" ${xfile}
+            eval "sed -i '${line_nr} i\\${content}' ${xfile}"
         fi
 
         if [ $? -ne 0 ];then
@@ -415,9 +415,9 @@ function file_insert
         if [[ "${line_nr}" == "$" ]];then
             local line_cnt=$(sed -n "${line_nr}p" ${xfile})
             if [ -z "${line_cnt}" ];then
-                sed -i "${line_nr} c\\${content}" ${xfile}
+                eval "sed -i '${line_nr} c\\${content}' ${xfile}"
             else
-                sed -i "${line_nr} i\\${content}" ${xfile}
+                eval "sed -i '${line_nr} i\\${content}' ${xfile}"
             fi
 
             if [ $? -ne 0 ];then
@@ -585,7 +585,7 @@ function file_change
     if is_integer "${line_nr}";then
         local total_nr=$(sed -n '$=' ${xfile})
         if [ ${line_nr} -le ${total_nr} ];then
-            sed -i "${line_nr} c\\${content}" ${xfile}
+            eval "sed -i '${line_nr} c\\${content}' ${xfile}"
             if [ $? -ne 0 ];then
                 echo_erro "file_insert { $@ }"
                 return 1
@@ -596,7 +596,7 @@ function file_change
         fi
     else
         if [[ "${line_nr}" == "$" ]];then
-            sed -i "${line_nr} c\\${content}" ${xfile}
+            eval "sed -i '${line_nr} c\\${content}' ${xfile}"
             if [ $? -ne 0 ];then
                 echo_erro "file_insert { $@ }"
                 return 1
@@ -639,7 +639,7 @@ function file_replace
         new_str=$(replace_str "${new_str}" '/' '\/')
     fi
 
-    sed -i "1,$ s/${string}/${new_str}/g" ${xfile}
+    eval "sed -i '1,$ s/${string}/${new_str}/g' ${xfile}"
     if [ $? -ne 0 ];then
         echo_erro "file_replace { $@ }"
         return 1
