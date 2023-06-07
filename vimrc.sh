@@ -166,7 +166,7 @@ function create_project
 
             file_del ${OUT_DIR}/cscope.files "${line}" true
             if [ $? -ne 0 ];then
-                echo_erro "file_del { ${line}} fail"
+                echo_erro "file_del { ${line} } fail"
                 return 1
             fi
         done < .gitignore

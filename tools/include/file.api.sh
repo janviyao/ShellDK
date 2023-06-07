@@ -302,17 +302,27 @@ function file_del
     fi
 
     if bool_v "${is_reg}";then
-        local line_nrs=($(file_linenr "${xfile}" "${string}" true))
-        while [ ${#line_nrs[*]} -gt 0 ]
-        do
-            file_del "${xfile}" "${line_nrs[0]}"
-            if [ $? -ne 0 ];then
-                echo_erro "file_del { $@ }"
-                return 1
-            fi
+        local posix_reg=$(regex_perl2posix "${string}")
+        if [[ "${posix_reg}" =~ '/' ]];then
+            posix_reg=$(replace_str "${posix_reg}" '/' '\/')
+        fi
 
-            line_nrs=($(file_linenr "${xfile}" "${string}" true))
-        done
+        sed -i "\#${posix_reg}#d" ${xfile}
+        if [ $? -ne 0 ];then
+            echo_erro "file_del { $@ } posix_reg { ${posix_reg} }"
+            return 1
+        fi
+        #local line_nrs=($(file_linenr "${xfile}" "${string}" true))
+        #while [ ${#line_nrs[*]} -gt 0 ]
+        #do
+        #    file_del "${xfile}" "${line_nrs[0]}"
+        #    if [ $? -ne 0 ];then
+        #        echo_erro "file_del { $@ }"
+        #        return 1
+        #    fi
+
+        #    line_nrs=($(file_linenr "${xfile}" "${string}" true))
+        #done
     else
         if is_integer "${string}";then
             local total_nr=$(sed -n '$=' ${xfile})
