@@ -86,10 +86,18 @@ function create_project
             find ${dir_str} -type f -regex ".+\\.\\(${type_str}\\)" >> ${OUT_DIR}/cscope.files 
         done
     done
+    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.orig
+
+    file_replace ${OUT_DIR}/cscope.files "^\./" "" true
+    if [ $? -ne 0 ];then
+        echo_erro "file_replace { ./ } into { } fail"
+        return 1
+    fi
 
     sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
     mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
     echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
+    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.sort
 
     for wipe_str in ${wipe_list[*]}
     do
@@ -100,12 +108,7 @@ function create_project
         fi
     done
     echo_debug "wipe cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
-
-    file_replace ${OUT_DIR}/cscope.files "^\./" "" true
-    if [ $? -ne 0 ];then
-        echo_erro "file_replace { ./ } into { } fail"
-        return 1
-    fi
+    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.wipe
 
     if can_access ".gitignore"; then
         local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
@@ -185,13 +188,13 @@ function create_project
     rm -f ${OUT_DIR}/cscope.out*
     rm -f ${OUT_DIR}/ncscope.*
     
-    echo_debug "build ctags ..."
     #local extra_opt=$(ctags --help | grep '\-\-extra\=') 
     #if [ -n "${extra_opt}" ]; then
     #    ctags --c++-kinds=+p --fields=+iaS --extra=+q -L cscope.files
     #else
     #    ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
     #fi
+    echo_debug "build ctags ..."
     ctags -L ${OUT_DIR}/cscope.files -o ${OUT_DIR}/tags
 
     if ! can_access "${OUT_DIR}/tags";then
@@ -201,6 +204,7 @@ function create_project
 
     echo_debug "build cscope ..."
     cscope -ckbq -i ${OUT_DIR}/cscope.files -f ${OUT_DIR}/cscope.out
+
     if ! can_access "${OUT_DIR}/cscope.*";then
         echo_erro "cscope.out create fail"
         return 1
