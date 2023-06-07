@@ -109,7 +109,6 @@ function create_project
 
     if can_access ".gitignore"; then
         local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
-        echo_debug "lines=${prev_lines} before gitignore"
         while read line
         do
             [ -z "${line}" ] && continue
@@ -149,7 +148,6 @@ function create_project
             if string_contain "${line}" "/";then
                 line=$(replace_str "${line}" '/' '\/')
             fi
-
             echo_debug "new  regex: ${line}"
 
             local conflict=false
@@ -173,9 +171,8 @@ function create_project
 
             local curr_lines=$(file_linenr ${OUT_DIR}/cscope.files)
             echo_debug "file_del { ${line} } lines=$((${prev_lines} - ${curr_lines}))"
-            prev_lines=curr_lines
+            prev_lines=${curr_lines}
         done < .gitignore
-        echo_debug "lines=${prev_lines} after gitignore"
     fi
     
     local line_nr=$(file_linenr ${OUT_DIR}/cscope.files)
@@ -196,6 +193,7 @@ function create_project
     #    ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
     #fi
     ctags -L ${OUT_DIR}/cscope.files -o ${OUT_DIR}/tags
+
     if ! can_access "${OUT_DIR}/tags";then
         echo_erro "tags create fail"
         return 1
