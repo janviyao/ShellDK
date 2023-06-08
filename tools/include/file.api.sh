@@ -356,17 +356,26 @@ function file_del
                     return 1
                 fi
             else
-                local line_nrs=($(file_linenr "${xfile}" "${string}" false))
-                while [ ${#line_nrs[*]} -gt 0 ]
-                do
-                    file_del "${xfile}" "${line_nrs[0]}"
-                    if [ $? -ne 0 ];then
-                        echo_erro "file_del { $@ }"
-                        return 1
-                    fi
+                if [[ "${string}" =~ '#' ]];then
+                    string=$(replace_str "${string}" '#' '\#')
+                fi
 
-                    line_nrs=($(file_linenr "${xfile}" "${string}" false))
-                done
+                eval "sed -i '\#${string}#d' ${xfile}"
+                if [ $? -ne 0 ];then
+                    echo_erro "file_del { $@ } delete-str { ${string} }"
+                    return 1
+                fi
+                #local line_nrs=($(file_linenr "${xfile}" "${string}" false))
+                #while [ ${#line_nrs[*]} -gt 0 ]
+                #do
+                #    file_del "${xfile}" "${line_nrs[0]}"
+                #    if [ $? -ne 0 ];then
+                #        echo_erro "file_del { $@ }"
+                #        return 1
+                #    fi
+
+                #    line_nrs=($(file_linenr "${xfile}" "${string}" false))
+                #done
             fi
         fi
     fi
