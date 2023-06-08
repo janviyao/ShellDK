@@ -107,17 +107,7 @@ function! s:set_value(module, tag, index, prev, next) abort
     let info_list = s:map_table[a:module]
     let length = len(info_list)
     if a:index >= length
-        let fill_cnt = a:index - length
-        while fill_cnt >= 0
-            let info_dic = {}
-            let info_dic["tag"]   = ""
-            let info_dic["time"]  = 0.0 
-            let info_dic["index"] = -1
-            let info_dic["prev"]  = ""
-            let info_dic["next"]  = []
-            call add(info_list, info_dic)
-            let fill_cnt -= 1
-        endwhile
+        call s:insert_at(a:module, a:index)
     endif
 
     let length = len(info_list)
@@ -140,10 +130,10 @@ function! s:set_value(module, tag, index, prev, next) abort
                 call insert(info_list, info_dic, a:index)
             endif
         else
-            call insert(info_list, info_dic, a:index)
+            call s:insert_at(a:module, a:index, info_dic)
         endif
     else
-        call insert(info_list, info_dic, a:index)
+        call s:insert_at(a:module, a:index, info_dic)
     endif
      
     let info_dic = get(info_list, a:index)
@@ -166,21 +156,63 @@ function! s:set_value(module, tag, index, prev, next) abort
     return a:index
 endfunction
 
-function! s:remove(module, index) abort
-    call PrintArgs("2file", "remove", a:module, a:index)
+function! s:insert_at(module, index, item = {}) abort
+    call PrintArgs("2file", "insert_at", a:module, a:index, a:item)
+    let info_list = s:map_table[a:module]
+
+    let length = len(info_list)
+    if a:index < 0
+        call LogPrint("error", "module: ".a:module." insert_at index=".a:index." invalid")
+        return -1
+    endif
+
+    if a:index >= length
+        let fill_cnt = a:index - length
+        while fill_cnt >= 0
+            let info_dic = {}
+            let info_dic["tag"]   = ""
+            let info_dic["time"]  = 0.0 
+            let info_dic["index"] = len(info_list)
+            let info_dic["prev"]  = ""
+            let info_dic["next"]  = []
+            call add(info_list, info_dic)
+            let fill_cnt -= 1
+        endwhile
+    endif
+
+    if !empty(a:item)
+        let length = len(info_list)
+        let next_index = a:index + 1
+        while next_index < length
+            let next_item = get(info_list, next_index)
+            if has_key(next_item, "index")
+                let next_item["index"] = next_index + 1
+            endif
+            let next_index += 1
+        endwhile
+
+        call insert(info_list, a:item, a:index)
+        call PrintDict("2file", "insert_at [".a:index."]", a:item)
+    endif
+
+    return a:index
+endfunction
+
+function! s:remove_at(module, index) abort
+    call PrintArgs("2file", "remove_at", a:module, a:index)
     let info_list = s:map_table[a:module]
 
     let length = len(info_list)
     if length <= a:index || a:index < 0
-        call LogPrint("error", "module: ".a:module." remove index=".a:index." invalid")
+        call LogPrint("error", "module: ".a:module." remove_at index=".a:index." invalid")
         return -1
     endif
 
     let next_index = a:index + 1
     while next_index < length
-        let item = get(info_list, next_index)
-        if has_key(item, "index")
-            let item["index"] = next_index - 1
+        let next_item = get(info_list, next_index)
+        if has_key(next_item, "index")
+            let next_item["index"] = next_index - 1
         endif
         let next_index += 1
     endwhile
@@ -229,7 +261,7 @@ function! s:unset_map(module, tag, callback) abort
     endfor
 
     if tag_index >= 0
-        call s:remove(a:module, tag_index)
+        call s:remove_at(a:module, tag_index)
     endif
 endfunction
 
@@ -451,6 +483,8 @@ function! s:copy(module, des_index, src_index) abort
         let des_item = get(info_list, a:des_index)
         let src_item = get(info_list, a:src_index)
         call extend(des_item, src_item)
+
+        let des_item["index"] = a:des_index 
     else
         call LogPrint("error", "module: ".a:module." copy length=".length." but des_index=".a:des_index." src_index=".a:src_index)
         return 1
@@ -517,7 +551,8 @@ let s:map_ops = {
             \   'alloc_index'      : function("s:alloc_index"),
             \   'set_value'        : function("s:set_value"),
             \   'unset_map'        : function("s:unset_map"),
-            \   'remove'           : function("s:remove"),
+            \   'insert_at'        : function("s:insert_at"),
+            \   'remove_at'        : function("s:remove_at"),
             \   'copy'             : function("s:copy"),
             \   'tag2index'        : function("s:tag2index"),
             \   'get_size'         : function("s:get_size"),

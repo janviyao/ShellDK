@@ -352,6 +352,7 @@ function! s:quick_rebuild(module)
     if filereadable(index_file)
         let data = s:read_list(a:module, index_file, 'b', 1)
         let index_init = str2nr(get(data, 0, ''))
+        call LogPrint("2file", "quick_rebuild main_index=".index_init)
     endif
 
     let info_list = systemlist("ls ".GetVimDir(1, "quickfix")."/info.".a:module.".*")
@@ -404,12 +405,13 @@ function! s:quick_rebuild(module)
                 endif
 
                 if index_init == map_next
+                    call LogPrint("2file", "quick_rebuild main_index change from ".index_init." to ".map_index)
                     let index_init = map_index
                     call s:write_list(a:module, index_file, 'b', [index_init])
                 endif
 
                 call s:map_op.copy(a:module, map_index, map_next)
-                call s:map_op.remove(a:module, map_next)
+                call s:map_op.remove_at(a:module, map_next)
                 let map_size = s:map_op.get_size(a:module)
             endif
         endif
