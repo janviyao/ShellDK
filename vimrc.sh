@@ -71,9 +71,10 @@ function create_project
         if [ -d "${input_val}" ];then
             input_val=$(replace_str "${input_val}" "$HOME/" "")
             input_val=$(replace_str "${input_val}" '/' '\/')
+            input_val=$(replace_regex "${input_val}" '^\.?\/' '')
             wipe_list=(${wipe_list[*]} ${input_val})
         else
-            echo_erro "dir { ${input_val}} invalid"
+            echo_erro "dir { ${input_val} } invalid"
         fi
         input_val=$(input_prompt "" "input wipe directory" "")
     done
@@ -94,11 +95,6 @@ function create_project
         return 1
     fi
 
-    sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
-    mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
-    echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
-    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.sort
-
     for wipe_str in ${wipe_list[*]}
     do
         file_del ${OUT_DIR}/cscope.files "${wipe_str}" false
@@ -109,6 +105,11 @@ function create_project
     done
     echo_debug "wipe cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
     cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.wipe
+
+    sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
+    mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
+    echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
+    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.sort
 
     if can_access ".gitignore"; then
         local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
