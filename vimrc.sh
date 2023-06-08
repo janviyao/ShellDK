@@ -70,7 +70,6 @@ function create_project
     do
         if [ -d "${input_val}" ];then
             input_val=$(replace_str "${input_val}" "$HOME/" "")
-            input_val=$(replace_str "${input_val}" '/' '\/')
             input_val=$(replace_regex "${input_val}" '^\.?\/' '')
             wipe_list=(${wipe_list[*]} ${input_val})
         else
