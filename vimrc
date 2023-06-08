@@ -50,6 +50,8 @@ function! LogPrint(type, msg)
         echoerr "[".a:type."]: ".a:msg
         echohl None
         call LogPrint("2file", a:msg)
+        silent! execute "sleep 2s"
+        silent! execute "qa"
     elseif a:type == "warn" 
         echohl WarningMsg
         echomsg "[".a:type."]: ".a:msg

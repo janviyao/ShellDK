@@ -14,6 +14,7 @@ let s:map_table = {
             \   {
             \     'tag'   : '',
             \     'time'  : 0.0,
+            \     'index' : -1,
             \     'prev'  : '',
             \     'next'  : []
             \   }
@@ -22,6 +23,7 @@ let s:map_table = {
             \   {
             \     'tag'   : '',
             \     'time'  : 0.0,
+            \     'index' : -1,
             \     'prev'  : '',
             \     'next'  : []
             \   }
@@ -54,7 +56,7 @@ endfunction
 function! s:alloc_index(module, tag) abort
     let info_list = s:map_table[a:module]
     let length = len(info_list)
-    call PrintArgs("2file", "alloc_index", a:module, a:tag, "length=".length)
+    call PrintArgs("2file", "map alloc_index", a:module, a:tag, "length=".length)
 
     let index = 0
     while index < length
@@ -104,27 +106,47 @@ function! s:set_value(module, tag, index, prev, next) abort
 
     let info_list = s:map_table[a:module]
     let length = len(info_list)
-    let update = 0
-    while update < length
-        let item = get(info_list, update)
-        if item["tag"] == a:tag
-            call LogPrint("2file", "set [".a:tag."] find index: ".update)
-            break
-        endif
-        let update += 1
-    endwhile
+    if a:index >= length
+        let fill_cnt = a:index - length
+        while fill_cnt >= 0
+            let info_dic = {}
+            let info_dic["tag"]   = ""
+            let info_dic["time"]  = 0.0 
+            let info_dic["index"] = -1
+            let info_dic["prev"]  = ""
+            let info_dic["next"]  = []
+            call add(info_list, info_dic)
+            let fill_cnt -= 1
+        endwhile
+    endif
 
-    let info_dic = {}
-    if update < length
-        let info_dic = get(info_list, update)
-        if update != a:index
-            call remove(info_list, update)
+    let length = len(info_list)
+    if length > 0
+        let update = 0
+        while update < length
+            let item = get(info_list, update)
+            if item["tag"] == a:tag
+                call LogPrint("2file", "set [".a:tag."] find index: ".update)
+                break
+            endif
+            let update += 1
+        endwhile
+
+        let info_dic = {}
+        if update < length
+            let info_dic = get(info_list, update)
+            if update != a:index
+                call remove(info_list, update)
+                call insert(info_list, info_dic, a:index)
+            endif
+        else
             call insert(info_list, info_dic, a:index)
         endif
     else
         call insert(info_list, info_dic, a:index)
     endif
-
+     
+    let info_dic = get(info_list, a:index)
     let info_dic["time"]  = GetElapsedTime()
     let info_dic["tag"]   = a:tag
     let info_dic["index"] = a:index
@@ -144,6 +166,29 @@ function! s:set_value(module, tag, index, prev, next) abort
     return a:index
 endfunction
 
+function! s:remove(module, index) abort
+    call PrintArgs("2file", "remove", a:module, a:index)
+    let info_list = s:map_table[a:module]
+
+    let length = len(info_list)
+    if length <= a:index || a:index < 0
+        call LogPrint("error", "module: ".a:module." remove index=".a:index." invalid")
+        return -1
+    endif
+
+    let next_index = a:index + 1
+    while next_index < length
+        let item = get(info_list, next_index)
+        if has_key(item, "index")
+            let item["index"] = next_index - 1
+        endif
+        let next_index += 1
+    endwhile
+    call remove(info_list, a:index)
+
+    return a:index
+endfunction
+
 function! s:unset_map(module, tag, callback) abort
     call PrintArgs("2file", "unset_map", a:module, a:tag)
     if strlen(a:tag) == 0
@@ -154,9 +199,9 @@ function! s:unset_map(module, tag, callback) abort
     let info_list = s:map_table[a:module]
 
     let unset_item = {}
-    let index = s:tag2index(a:module, a:tag)
-    if index >= 0
-        let unset_item = info_list[index]
+    let tag_index = s:tag2index(a:module, a:tag)
+    if tag_index >= 0
+        let unset_item = info_list[tag_index]
         let unset_item["tag"] = ""
     endif
 
@@ -172,16 +217,20 @@ function! s:unset_map(module, tag, callback) abort
             call a:callback(item["tag"])
         endif
 
-        let index = index(item["next"], a:tag)
-        if index >= 0
+        let next_index = index(item["next"], a:tag)
+        if next_index >= 0
             call LogPrint("2file", "delete [".item["tag"]."] from ".string(item["next"]))
-            call remove(item["next"], index)
+            call remove(item["next"], next_index)
             if !empty(unset_item)
                 call add(item["next"], unset_item["next"])
             endif
             call a:callback(item["tag"])
         endif
     endfor
+
+    if tag_index >= 0
+        call s:remove(a:module, tag_index)
+    endif
 endfunction
 
 function! s:get_index_all(module, index_list, start = 0, end = 0)
@@ -394,6 +443,20 @@ function! s:get_index_oldest(module) abort
     return old_index
 endfunction
 
+function! s:copy(module, des_index, src_index) abort
+    let info_list = s:map_table[a:module]
+
+    let length = len(info_list)
+    if a:des_index < length && a:src_index < length
+        let des_item = get(info_list, a:des_index)
+        let src_item = get(info_list, a:src_index)
+        call extend(des_item, src_item)
+    else
+        call LogPrint("error", "module: ".a:module." copy length=".length." but des_index=".a:des_index." src_index=".a:src_index)
+        return 1
+    endif
+endfunction
+
 function! s:map_empty(module) abort
     let info_list = s:map_table[a:module]
 
@@ -408,6 +471,15 @@ function! s:map_empty(module) abort
         let index += 1
     endwhile
     return 1
+endfunction
+
+function! s:get_size(module) abort
+    call PrintArgs("2file", "get_size", a:module)
+    let info_list = s:map_table[a:module]
+    let size = len(info_list) 
+
+    call LogPrint("2file", "get_size return: ".size)
+    return size
 endfunction
 
 function! s:get_tag(module, index) abort
@@ -445,7 +517,10 @@ let s:map_ops = {
             \   'alloc_index'      : function("s:alloc_index"),
             \   'set_value'        : function("s:set_value"),
             \   'unset_map'        : function("s:unset_map"),
+            \   'remove'           : function("s:remove"),
+            \   'copy'             : function("s:copy"),
             \   'tag2index'        : function("s:tag2index"),
+            \   'get_size'         : function("s:get_size"),
             \   'get_tag'          : function("s:get_tag"),
             \   'get_time'         : function("s:get_time"),
             \   'get_index_all'    : function("s:get_index_all"),

@@ -96,10 +96,10 @@ function! s:read_dict(module, file, mode, line_num) abort
         if s:file_op.has_data(cache_index) > 0
             let data = s:file_op.get_cache(cache_index)
             if type(data) != v:t_dict
-                call LogPrint("save", "read [".a:file."] mode [".a:mode."] invalid dict: \n".string(data))
+                call LogPrint("warn", "read [".a:file."] mode [".a:mode."] invalid dict: \n".string(data))
                 let data = eval(string(data))
                 if type(data) != v:t_dict
-                    call LogPrint("error", "file [".a:file."] mode [".a:mode."] invalid dict")
+                    call LogPrint("error", "mode [".a:mode."] invalid dict from file [".a:file."]")
                     return {}
                 endif
             endif
@@ -119,10 +119,10 @@ function! s:read_dict(module, file, mode, line_num) abort
 
     let data = s:file_op.get_data(request)
     if type(data) != v:t_dict
-        call LogPrint("save", "read [".a:file."] mode [".a:mode."] invalid dict: \n".string(data))
+        call LogPrint("warn", "read [".a:file."] mode [".a:mode."] invalid dict: \n".string(data))
         let data = eval(string(data))
         if type(data) != v:t_dict
-            call LogPrint("error", "file [".a:file."] mode [".a:mode."] invalid dict")
+            call LogPrint("error", "mode [".a:mode."] invalid dict from file [".a:file."]")
             return {}
         endif
     endif
@@ -142,10 +142,10 @@ function! s:read_list(module, file, mode, line_num) abort
         if s:file_op.has_data(cache_index) > 0
             let data = s:file_op.get_cache(cache_index)
             if type(data) != v:t_list
-                call LogPrint("save", "read [".a:file."] mode [".a:mode."] invalid list: \n".string(data))
+                call LogPrint("warn", "read [".a:file."] mode [".a:mode."] invalid list: \n".string(data))
                 let data = eval(string(data))
                 if type(data) != v:t_list
-                    call LogPrint("error", "file [".a:file."] mode [".a:mode."] invalid list")
+                    call LogPrint("error", "mode [".a:mode."] invalid list from file [".a:file."]")
                     return []
                 endif
             endif
@@ -165,10 +165,10 @@ function! s:read_list(module, file, mode, line_num) abort
 
     let data = s:file_op.get_data(request)
     if type(data) != v:t_list
-        call LogPrint("save", "read [".a:file."] mode [".a:mode."] invalid list: \n".string(data))
+        call LogPrint("warn", "read [".a:file."] mode [".a:mode."] invalid list: \n".string(data))
         let data = eval(string(data))
         if type(data) != v:t_list
-            call LogPrint("error", "file [".a:file."] mode [".a:mode."] invalid list")
+            call LogPrint("error", "mode [".a:mode."] invalid list from file [".a:file."]")
             return []
         endif
     endif
@@ -362,30 +362,59 @@ function! s:quick_rebuild(module)
 
             let info_dic = s:read_dict(a:module, info_file, 'b', 1)
             if empty(info_dic)
-                call LogPrint("error", "skip empty file: ".info_file)
+                call LogPrint("warn", "skip empty file: ".info_file)
                 call s:quick_delete(a:module, index_val) 
                 continue
             endif
-
-            let alloc_index = s:map_op.alloc_index(a:module, info_dic["title"])
-            call s:map_op.set_value(a:module, info_dic["title"], alloc_index, info_dic["prev"], info_dic["next"])
-            if alloc_index != index_val
-                if index_init == index_val
-                    let index_init = alloc_index
-                    call s:write_list(a:module, index_file, 'b', [index_init])
-                endif
-
-                let new_name = GetVimDir(1, "quickfix")."/info.".a:module.".".alloc_index
-                call s:rename_file(a:module, info_file, new_name)
-
-                let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.index_val
-                if filereadable(list_file)
-                    let new_name = GetVimDir(1, "quickfix")."/list.".a:module.".".alloc_index
-                    call s:rename_file(a:module, list_file, new_name)
-                endif
+            
+            if has_key(info_dic, "title")
+                call s:map_op.set_value(a:module, info_dic["title"], index_val, info_dic["prev"], info_dic["next"])
+            else
+                call LogPrint("error", "key-title empty from file [ ".info_file." ]")
             endif
         endif
     endfor
+
+    let map_index = 0
+    let map_size = s:map_op.get_size(a:module)
+    while map_index < map_size
+        let info_file = GetVimDir(1, "quickfix")."/info.".a:module.".".map_index
+        if filereadable(info_file)
+            let map_index += 1
+            continue
+        else
+            let map_next = map_index + 1
+            while map_next < map_size
+                let next_file = GetVimDir(1, "quickfix")."/info.".a:module.".".map_next
+                if filereadable(next_file)
+                    break
+                endif
+                let map_next += 1
+            endwhile
+
+            if map_next < map_size
+                let old_file = GetVimDir(1, "quickfix")."/info.".a:module.".".map_next
+                let new_name = GetVimDir(1, "quickfix")."/info.".a:module.".".map_index
+                call s:rename_file(a:module, old_file, new_name)
+
+                let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.map_next
+                if filereadable(list_file)
+                    let new_name = GetVimDir(1, "quickfix")."/list.".a:module.".".map_index
+                    call s:rename_file(a:module, list_file, new_name)
+                endif
+
+                if index_init == map_next
+                    let index_init = map_index
+                    call s:write_list(a:module, index_file, 'b', [index_init])
+                endif
+
+                call s:map_op.copy(a:module, map_index, map_next)
+                call s:map_op.remove(a:module, map_next)
+                let map_size = s:map_op.get_size(a:module)
+            endif
+        endif
+        let map_index += 1
+    endwhile
 
     let tag_list = s:map_op.get_tag_root(a:module)
     while len(tag_list) > 0
@@ -394,7 +423,7 @@ function! s:quick_rebuild(module)
         for ntag in tag_next
             let index = s:map_op.tag2index(a:module, ntag)
             if index < 0
-                call LogPrint("error", "destroyed info [ ".ntag." ] ")
+                call LogPrint("warn", "destroyed info [ ".ntag." ] ")
                 let Callback = function("s:quick_unset_callback", [a:module])
                 call s:map_op.unset_map(a:module, ntag, Callback) 
             endif

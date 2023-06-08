@@ -74,7 +74,7 @@ function! s:alloc_index(filepath) abort
     call s:file_lock()
     let oldest_index = s:get_oldest(a:filepath)
     if oldest_index >= 0
-        call LogPrint("2file", "old file_alloc_index: ".oldest_index." for: ".fnamemodify(a:filepath, ":t"))
+        call LogPrint("2file", "old file alloc_index: ".oldest_index." for: ".fnamemodify(a:filepath, ":t"))
         call s:file_unlock()
         return oldest_index
     endif
@@ -90,7 +90,7 @@ function! s:alloc_index(filepath) abort
     endif
     call s:file_unlock()
 
-    call LogPrint("2file", "new file_alloc_index: ".index." for: ".fnamemodify(a:filepath, ":t"))
+    call LogPrint("2file", "new file alloc_index: ".index." for: ".fnamemodify(a:filepath, ":t"))
     return index
 endfunction
 
@@ -134,7 +134,7 @@ function! s:get_index(filepath) abort
         let index += 1
     endwhile
 
-    call LogPrint("2file", "get_index: ".res_index) 
+    call LogPrint("2file", "file get_index: ".res_index) 
     return res_index 
 endfunction
 
@@ -148,6 +148,7 @@ endfunction
 
 function! s:get_cache(cache_index) abort
     let info_dic = s:file_table[a:cache_index]
+    "call PrintDict("2file", "cache[".a:cache_index."] info_dic", info_dic) 
     return s:get_data(info_dic) 
 endfunction
 
@@ -161,7 +162,7 @@ function! s:has_data(file_index) abort
     let data = s:get_data(info_dic) 
     let data_lines = len(data)
 
-    call LogPrint("2file", "work[".a:file_index."] data lines: ".data_lines) 
+    call LogPrint("2file", "work[".a:file_index."] data cache lines: ".data_lines) 
     return data_lines 
 endfunction
 
@@ -254,10 +255,10 @@ function! s:process_req(request) abort
                 let res_code = rename(filepath, new_name)
                 if res_code != 0
                     call LogPrint("error", "rename from ".filepath." to ".new_name." fail")
-                else
-                    let a:request["dat_list"] = []
-                    let a:request["filepath"] = new_name
                 endif
+
+                let a:request["filepath"] = new_name
+                let a:request["dat_list"] = []
             else
                 call LogPrint("error", "rename file invalid: ".string(data_list))
             endif

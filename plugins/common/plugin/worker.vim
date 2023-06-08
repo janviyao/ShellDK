@@ -93,9 +93,9 @@ function! s:worker_run(timer_id)
         let work_dic = work_table[work_index]
 
         let request = work_dic["request"]
-        "if worker_dic.log_en
-        "    call PrintDict("2file", "handle work_table[".work_index."]", work_dic)
-        "endif
+        if worker_dic.log_en
+            call PrintDict("2file", "handle work_table[".work_index."]", work_dic)
+        endif
 
         let work_dic['status'] = s:STATE_HANDLING
         call worker_dic.func(request)
@@ -382,11 +382,7 @@ function! s:fill_req(name, work_index, request) abort
 
     let work_table = worker_dic["works"]
     let work_dic = work_table[a:work_index]
-
-    if !has_key(work_dic, "request")
-        let work_dic["request"] = {}
-    endif
-    call extend(work_dic["request"], a:request)
+    let work_dic["request"] = a:request
 
     if s:is_paused(a:name)
         call s:exit_idle(a:name)
