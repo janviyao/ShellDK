@@ -320,7 +320,6 @@ function file_del
         #        echo_erro "file_del { $@ }"
         #        return 1
         #    fi
-
         #    line_nrs=($(file_linenr "${xfile}" "${string}" true))
         #done
     else
@@ -335,48 +334,47 @@ function file_del
             fi
         else
             if [[ "${string}" =~ '-' ]];then
+                local is_range=true
                 local index_s=$(string_split "${string}" "-" 1)
                 local index_e=$(string_split "${string}" "-" 2)
 
-                if ! is_integer "${index_s}";then
-                    echo_erro "file_del { $@ }: para \$2 invalid"
-                    return 1
-                fi
+                if is_integer "${index_s}";then
+                    if ! is_integer "${index_e}";then
+                        if [[ "${index_e}" != "$" ]];then
+                            echo_erro "file_del { $@ }: para \$2 invalid"
+                            return 1
+                        fi
+                    fi
 
-                if ! is_integer "${index_e}";then
-                    if [[ "${index_e}" != "$" ]];then
-                        echo_erro "file_del { $@ }: para \$2 invalid"
+                    eval "sed -i '${index_s},${index_e}d' ${xfile}"
+                    if [ $? -ne 0 ];then
+                        echo_erro "file_del { $@ }"
                         return 1
                     fi
-                fi
 
-                eval "sed -i '${index_s},${index_e}d' ${xfile}"
-                if [ $? -ne 0 ];then
-                    echo_erro "file_del { $@ }"
-                    return 1
+                    return 0
                 fi
-            else
-                if [[ "${string}" =~ '#' ]];then
-                    string=$(replace_str "${string}" '#' '\#')
-                fi
-
-                eval "sed -i '\#${string}#d' ${xfile}"
-                if [ $? -ne 0 ];then
-                    echo_erro "file_del { $@ } delete-str { ${string} }"
-                    return 1
-                fi
-                #local line_nrs=($(file_linenr "${xfile}" "${string}" false))
-                #while [ ${#line_nrs[*]} -gt 0 ]
-                #do
-                #    file_del "${xfile}" "${line_nrs[0]}"
-                #    if [ $? -ne 0 ];then
-                #        echo_erro "file_del { $@ }"
-                #        return 1
-                #    fi
-
-                #    line_nrs=($(file_linenr "${xfile}" "${string}" false))
-                #done
             fi
+
+            if [[ "${string}" =~ '#' ]];then
+                string=$(replace_str "${string}" '#' '\#')
+            fi
+
+            eval "sed -i '\#${string}#d' ${xfile}"
+            if [ $? -ne 0 ];then
+                echo_erro "file_del { $@ } delete-str { ${string} }"
+                return 1
+            fi
+            #local line_nrs=($(file_linenr "${xfile}" "${string}" false))
+            #while [ ${#line_nrs[*]} -gt 0 ]
+            #do
+            #    file_del "${xfile}" "${line_nrs[0]}"
+            #    if [ $? -ne 0 ];then
+            #        echo_erro "file_del { $@ }"
+            #        return 1
+            #    fi
+            #    line_nrs=($(file_linenr "${xfile}" "${string}" false))
+            #done
         fi
     fi
 
