@@ -71,6 +71,7 @@ EOF
 endfunction
 
 function! s:get_name(timer_id)
+    "call PrintArgs("2file", "worker.get_name", a:timer_id)
     for [key, value] in items(s:worker_table)
         if value.timer == a:timer_id
             return key
@@ -80,6 +81,7 @@ function! s:get_name(timer_id)
 endfunction
 
 function! s:worker_run(timer_id)
+    "call PrintArgs("2file", "worker.worker_run", a:timer_id)
     let name = s:get_name(a:timer_id)
     let worker_dic = s:worker_table[name]
 
@@ -87,7 +89,7 @@ function! s:worker_run(timer_id)
     let work_index = s:work_next(name)
     while work_index >= 0
         "if worker_dic.log_en
-        "    call PrintArgs("2file", "worker_run", work_index)
+        "    call PrintArgs("2file", "worker.worker_run", work_index)
         "endif
         let work_table = worker_dic["works"]
         let work_dic = work_table[work_index]
@@ -116,7 +118,8 @@ function! s:worker_run(timer_id)
     endif
 endfunction
 
-function! s:start(name, func, ring_size=500, run_once=50) abort
+function! s:start(name, func, ring_size=100, run_once=10) abort
+    "call PrintArgs("2file", "worker.start", a:name, a:func, a:ring_size, a:run_once)
     if has_key(s:worker_table, a:name)
         let worker_dic = s:worker_table[a:name]
         if worker_dic.timer > 0
@@ -141,6 +144,7 @@ function! s:start(name, func, ring_size=500, run_once=50) abort
 endfunction
 
 function! s:stop(name) abort
+    "call PrintArgs("2file", "worker.stop", a:name)
     if has_key(s:worker_table, a:name)
         let worker_dic = s:worker_table[a:name]
         call timer_stop(worker_dic.timer) 
@@ -149,6 +153,7 @@ function! s:stop(name) abort
 endfunction
 
 function! s:pause(name, paused) abort
+    "call PrintArgs("2file", "worker.pause", a:name, a:paused)
     if has_key(s:worker_table, a:name)
         let worker_dic = s:worker_table[a:name]
         call timer_pause(worker_dic.timer, a:paused) 
@@ -179,6 +184,7 @@ function! s:is_paused(name)
 endfunction
 
 function! s:work_cpl(name, work_index) abort
+    "call PrintArgs("2file", "worker.work_cpl", a:name, a:work_index)
     let worker_dic = s:worker_table[a:name]
     let work_table = worker_dic["works"]
     let work_dic = work_table[a:work_index]
@@ -191,6 +197,7 @@ function! s:work_cpl(name, work_index) abort
 endfunction
 
 function! s:enter_idle(name) abort
+    "call PrintArgs("2file", "worker.enter_idle", a:name)
     if has_key(s:worker_table, a:name)
         let worker_dic = s:worker_table[a:name]
         if has_key(worker_dic, "idle")
@@ -277,10 +284,7 @@ function! s:work_alloc(name) abort
         else
             let worker_dic.work_tail -= 1
         endif
-
-        if worker_dic.log_en
-            call LogPrint("error", a:name." ring full, head=".worker_dic.work_head." tail=".worker_dic.work_tail)
-        endif
+        call LogPrint("error", a:name." ring full, head=".worker_dic.work_head." tail=".worker_dic.work_tail)
 
         call s:worker_unlock()
         return -1
@@ -295,8 +299,9 @@ function! s:work_alloc(name) abort
     let work_dic['wk_time'] = GetElapsedTime() 
 
     if worker_dic.log_en
-        call LogPrint("2file", "new work_alloc: ".index." head: ".worker_dic.work_head." tail: ".worker_dic.work_tail)
+        call LogPrint("2file", "worker.work_alloc: ".index." [ head: ".worker_dic.work_head." tail: ".worker_dic.work_tail." ]")
     endif
+
     return index
 endfunction
 
@@ -370,13 +375,11 @@ endfunction
 function! s:fill_req(name, work_index, request) abort
     let worker_dic = s:worker_table[a:name]
     if worker_dic.log_en
-        call PrintArgs("2file", "fill_req", "index=".a:work_index, a:request)
+        call PrintArgs("2file", "worker.fill_req", "index=".a:work_index, a:request)
     endif
     
     if a:work_index < 0
-        if worker_dic.log_en
-            call LogPrint("error", a:name." work_index invalid")
-        endif
+        call LogPrint("error", a:name." work_index invalid")
         return
     endif
 

@@ -9,176 +9,77 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:file_table_index = 0
-let s:file_table = [
-            \   {
-            \     'cmd_time' : 0.0,
-            \     'cmd_type' : 'write',
-            \     'cmd_mode' : 'b',
-            \     'line_nr'  : 0,
-            \     'dat_type' : 'list',
-            \     'filepath' : '',
-            \     'dat_list' : [],
-            \     'dat_dict' : {},
+let s:file_table = {
+            \   'file1' : {
+            \         'cmd_time' : 0.0,
+            \         'cmd_type' : 'write',
+            \         'cmd_mode' : 'b',
+            \         'line_nr'  : 0,
+            \         'dat_type' : 'list',
+            \         'dat_list' : [],
+            \         'dat_dict' : {},
+            \         'filepath' : "file1",
             \   },
-            \   {
-            \     'cmd_time' : 0.0,
-            \     'cmd_type' : 'read',
-            \     'cmd_mode' : 'b',
-            \     'line_nr'  : 0,
-            \     'dat_type' : 'dict',
-            \     'filepath' : '',
-            \     'dat_list' : [],
-            \     'dat_dict' : {},
-            \   },
-            \   {
-            \     'cmd_time' : 0.0,
-            \     'cmd_type' : 'delete',
-            \     'cmd_mode' : '',
-            \     'line_nr'  : 0,
-            \     'dat_type' : '',
-            \     'filepath' : '',
-            \     'dat_list' : [],
-            \     'dat_dict' : {},
+            \   'file2' : {
+            \         'cmd_time' : 0.0,
+            \         'cmd_type' : 'read',
+            \         'cmd_mode' : 'b',
+            \         'line_nr'  : 0,
+            \         'dat_type' : 'dict',
+            \         'dat_list' : [],
+            \         'dat_dict' : {},
+            \         'filepath' : "file2",
             \   }
-            \ ]
+            \ }
 
-python << EOF
-import vim, threading
-file_lock = threading.Lock()
-def FileLock():
-    file_lock.acquire()
-def FileUnlock():
-    file_lock.release()
-EOF
-
-function! s:file_lock()
-python << EOF
-try:
-    FileLock()
-except Exception, e:
-    print e
-EOF
+function! s:has_file(filepath) abort
+    call PrintArgs("2file", "file.has_file", a:filepath)
+    return has_key(s:file_table, a:filepath)
 endfunction
 
-function! s:file_unlock()
-python << EOF
-try:
-    FileUnlock()
-except Exception, e:
-    print e
-EOF
-endfunction
+function! s:has_data(filepath) abort
+    call PrintArgs("2file", "file.has_data", a:filepath)
+    
+    if has_key(s:file_table, a:filepath)
+        let data = s:get_data(a:filepath) 
 
-function! s:alloc_index(filepath) abort
-    "call PrintArgs("2file", "alloc_index", "filepath=".a:filepath)
-    call s:file_lock()
-    let oldest_index = s:get_oldest(a:filepath)
-    if oldest_index >= 0
-        call LogPrint("2file", "old file alloc_index: ".oldest_index." for: ".fnamemodify(a:filepath, ":t"))
-        call s:file_unlock()
-        return oldest_index
-    endif
-
-    let index = s:file_table_index
-    let s:file_table_index += 1
-    if s:file_table_index > 5000
-        let s:file_table_index = 0
-    endif
-
-    if index >= len(s:file_table)
-        call insert(s:file_table, {}, index)
-    endif
-    call s:file_unlock()
-
-    call LogPrint("2file", "new file alloc_index: ".index." for: ".fnamemodify(a:filepath, ":t"))
-    return index
-endfunction
-
-function! s:get_oldest(filepath) abort
-    "call PrintArgs("2file", "get_oldest", a:filepath)
-    let time_oldest = GetElapsedTime()
-    let res_index = -1
-
-    let length = len(s:file_table)
-    let index =0
-    while index < length
-        let item = get(s:file_table, index)
-        if item["filepath"] == a:filepath 
-            if item["cmd_time"] < time_oldest 
-                let time_oldest = item["cmd_time"]
-                let res_index = index
-            endif
+        let data_lines = len(data)
+        "call LogPrint("2file", "data lines: ".data_lines) 
+        if data_lines > 0
+            return v:true
         endif
-        let index += 1
-    endwhile
-
-    "call LogPrint("2file", "get_oldest: ".res_index) 
-    return res_index 
-endfunction
-
-function! s:get_index(filepath) abort
-    "call PrintArgs("2file", "get_index", a:filepath)
-    let time_newest = 0
-    let res_index = -1
-
-    let length = len(s:file_table)
-    let index =0
-    while index < length
-        let item = get(s:file_table, index)
-        if item["filepath"] ==# a:filepath
-            if item["cmd_time"] > time_newest 
-                let time_newest = item["cmd_time"]
-                let res_index = index
-            endif
-        endif
-        let index += 1
-    endwhile
-
-    call LogPrint("2file", "file get_index: ".res_index) 
-    return res_index 
-endfunction
-
-function! s:get_data(request) abort
-    if a:request.dat_type ==# "dict"
-        return a:request["dat_dict"]
-    elseif a:request.dat_type ==# "list"
-        return a:request["dat_list"]
-    endif
-endfunction
-
-function! s:get_cache(cache_index) abort
-    let info_dic = s:file_table[a:cache_index]
-    "call PrintDict("2file", "cache[".a:cache_index."] info_dic", info_dic) 
-    return s:get_data(info_dic) 
-endfunction
-
-function! s:has_data(file_index) abort
-    if len(s:file_table) <= a:file_index
-        call LogPrint("2file", "no data, index(".a:file_index.") over max-length(".len(s:file_table).")") 
-        return 0
     endif
 
-    let info_dic = s:file_table[a:file_index]
-    let data = s:get_data(info_dic) 
-    let data_lines = len(data)
+    return v:false
+endfunction
 
-    call LogPrint("2file", "work[".a:file_index."] data cache lines: ".data_lines) 
-    return data_lines 
+function! s:get_data(filepath) abort
+    call PrintArgs("2file", "file.get_data", a:filepath)
+
+    let info_dic = s:file_table[a:filepath]
+    if info_dic.dat_type ==# "dict"
+        return info_dic["dat_dict"]
+    elseif info_dic.dat_type ==# "list"
+        return info_dic["dat_list"]
+    endif
 endfunction
 
 function! s:make_req(cmd_type, cmd_mode, dat_type, filepath, line_nr, status, data) abort
-    let file_index = s:alloc_index(a:filepath)
+    call PrintArgs("2file", "file.make_req", a:cmd_type, a:cmd_mode, a:dat_type, a:filepath, a:line_nr, a:status)
 
-    call PrintArgs("2file", "make_req", "index=".file_index, a:cmd_type, a:cmd_mode, a:dat_type, a:filepath, a:line_nr, a:status)
     if !empty(a:data)
         if a:dat_type == "dict"
-            call PrintDict("2file", a:cmd_type." dict-data @index-".file_index, a:data) 
+            call PrintDict("2file", a:cmd_type." dict-data", a:data) 
         elseif a:dat_type == "list"
-            call PrintList("2file", a:cmd_type." list-data @index-".file_index, a:data) 
+            call PrintList("2file", a:cmd_type." list-data", a:data) 
         endif
     endif
+    
+    if !has_key(s:file_table, a:filepath)
+        let s:file_table[a:filepath] = {}
+    endif
 
-    let request = s:file_table[file_index]
+    let request = s:file_table[a:filepath]
     let request['cmd_time'] = GetElapsedTime() 
     let request["cmd_type"] = a:cmd_type
     let request["cmd_mode"] = a:cmd_mode
@@ -209,7 +110,8 @@ function! s:make_req(cmd_type, cmd_mode, dat_type, filepath, line_nr, status, da
 endfunction
 
 function! s:process_req(request) abort
-    call PrintArgs("2file", "process_req", a:request)
+    call PrintArgs("2file", "file.process_req", a:request)
+
     let cmd_type = a:request['cmd_type'] 
     let cmd_mode = a:request['cmd_mode'] 
     let dat_type = a:request['dat_type'] 
@@ -270,8 +172,7 @@ let s:file_ops = {
             \   'process_req' : function("s:process_req"),
             \   'make_req'    : function("s:make_req"),
             \   'get_data'    : function("s:get_data"),
-            \   'get_index'   : function("s:get_index"),
-            \   'get_cache'   : function("s:get_cache"),
+            \   'has_file'    : function("s:has_file"),
             \   'has_data'    : function("s:has_data"),
             \ }
 

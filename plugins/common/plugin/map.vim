@@ -52,7 +52,7 @@ let s:map_table = {
             \ }
 
 function! s:get_key(module, value) abort
-    call PrintArgs("2file", "get_key", a:module, a:value)
+    call PrintArgs("2file", "map.get_key", a:module, a:value)
 
     let stor_dic = s:map_table[a:module].stor
     for okey in keys(stor_dic)
@@ -67,7 +67,7 @@ function! s:get_key(module, value) abort
 endfunction
 
 function! s:get_value(module, key) abort
-    call PrintArgs("2file", "get_value", a:module, a:key)
+    call PrintArgs("2file", "map.get_value", a:module, a:key)
 
     let stor_dic = s:map_table[a:module].stor
     if has_key(stor_dic, a:key)
@@ -80,7 +80,7 @@ function! s:get_value(module, key) abort
 endfunction
 
 function! s:get_time(module, key) abort
-    call PrintArgs("2file", "get_time", a:module, a:key)
+    call PrintArgs("2file", "map.get_time", a:module, a:key)
 
     let stor_dic = s:map_table[a:module].stor
     if has_key(stor_dic, a:key)
@@ -91,7 +91,7 @@ function! s:get_time(module, key) abort
 endfunction
 
 function! s:set_value(module, key, value, prev, next) abort
-    call PrintArgs("2file", "set_value", a:module, a:key, a:value, a:prev, string(a:next))
+    call PrintArgs("2file", "map.set_value", a:module, a:key, a:value, a:prev, string(a:next))
 
     if strlen(a:key) == 0
         call LogPrint("error", "module: ".a:module." key invalid")
@@ -117,9 +117,9 @@ function! s:set_value(module, key, value, prev, next) abort
 endfunction
 
 function! s:insert_at(module, index, info = {}) abort
-    call PrintArgs("2file", "insert_at", a:module, a:index, a:info)
-    let stor_dic = s:map_table[a:module].stor
+    call PrintArgs("2file", "map.insert_at", a:module, a:index, a:info)
 
+    let stor_dic = s:map_table[a:module].stor
     let length = len(stor_dic)
     if a:index < 0
         call LogPrint("error", "module: ".a:module." insert_at index=".a:index." invalid")
@@ -149,9 +149,9 @@ function! s:insert_at(module, index, info = {}) abort
 endfunction
 
 function! s:remove_at(module, index) abort
-    call PrintArgs("2file", "remove_at", a:module, a:index)
-    let stor_dic = s:map_table[a:module].stor
+    call PrintArgs("2file", "map.remove_at", a:module, a:index)
 
+    let stor_dic = s:map_table[a:module].stor
     let length = len(stor_dic)
     if length <= a:index || a:index < 0
         call LogPrint("error", "module: ".a:module." remove_at index=".a:index." invalid")
@@ -163,7 +163,7 @@ function! s:remove_at(module, index) abort
 endfunction
 
 function! s:unset_map(module, key, callback) abort
-    call PrintArgs("2file", "unset_map", a:module, a:key)
+    call PrintArgs("2file", "map.unset_map", a:module, a:key)
 
     if strlen(a:key) == 0
         call LogPrint("error", "module: ".a:module." key invalid")
@@ -211,6 +211,8 @@ function! s:unset_map(module, key, callback) abort
 endfunction
 
 function! s:get_all_value(module, value_list, start = 0, end = 0)
+    call PrintArgs("2file", "map.get_all_value", a:module, a:value_list, a:start, a:end)
+
     if empty(a:value_list)
         let root_list = s:get_root_value(a:module)
         call extend(a:value_list, root_list)
@@ -246,7 +248,7 @@ function! s:get_all_value(module, value_list, start = 0, end = 0)
 endfunction
 
 function! s:get_root_value(module) abort
-    call PrintArgs("2file", "get_root_value", a:module)
+    call PrintArgs("2file", "map.get_root_value", a:module)
 
     let res_list = []
     let stor_dic = s:map_table[a:module].stor
@@ -265,7 +267,7 @@ function! s:get_root_value(module) abort
 endfunction
 
 function! s:get_next_value(module, key) abort
-    call PrintArgs("2file", "get_next_value", a:module, a:key)
+    call PrintArgs("2file", "map.get_next_value", a:module, a:key)
 
     let res_list = []
     let stor_dic = s:map_table[a:module].stor
@@ -285,7 +287,7 @@ function! s:get_next_value(module, key) abort
 endfunction
 
 function! s:get_prev_value(module, key) abort
-    call PrintArgs("2file", "get_prev_value", a:module, a:key)
+    call PrintArgs("2file", "map.get_prev_value", a:module, a:key)
 
     let stor_dic = s:map_table[a:module].stor
     if has_key(stor_dic, a:key)
@@ -301,7 +303,7 @@ function! s:get_prev_value(module, key) abort
 endfunction
 
 function! s:get_root_key(module) abort
-    call PrintArgs("2file", "get_root_key", a:module)
+    call PrintArgs("2file", "map.get_root_key", a:module)
 
     let res_list = []
     let stor_dic = s:map_table[a:module].stor
@@ -320,7 +322,7 @@ function! s:get_root_key(module) abort
 endfunction
 
 function! s:get_next_key(module, key) abort
-    call PrintArgs("2file", "get_next_key", a:module, a:key)
+    call PrintArgs("2file", "map.get_next_key", a:module, a:key)
 
     let res_list = []
     let stor_dic = s:map_table[a:module].stor
@@ -339,7 +341,7 @@ function! s:get_next_key(module, key) abort
 endfunction
 
 function! s:get_prev_key(module, key) abort
-    call PrintArgs("2file", "get_prev_key", a:module, a:key)
+    call PrintArgs("2file", "map.get_prev_key", a:module, a:key)
     
     let stor_dic = s:map_table[a:module].stor
     if has_key(stor_dic, a:key)
@@ -360,6 +362,8 @@ function! s:empty(module) abort
 endfunction
 
 function! s:copy(module, des_key, src_key) abort
+    call PrintArgs("2file", "map.copy", a:module, a:des_key, a:src_key)
+
     let stor_dic = s:map_table[a:module].stor
     if has_key(stor_dic, a:src_key)
         let src_item = stor_dic[a:src_key] 
@@ -398,7 +402,7 @@ let s:map_ops = {
             \   'get_prev_key'     : function("s:get_prev_key"),
             \ }
 
-function! map#get_ops() abort
+function! Map_get_ops() abort
     return s:map_ops
 endfunction
 
