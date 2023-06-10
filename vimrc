@@ -26,7 +26,7 @@ endfunction
 function! LogEnable()
     let s:log_enable = 1
     if s:worker_op.is_stoped("loger")
-        call s:worker_op.start("loger", function("s:loger_worker"), 1000, 100)
+        call s:worker_op.start("loger", function("s:loger_worker"), 5000, 1000)
         call s:worker_op.set_log("loger", v:false)
     endif
 
@@ -45,7 +45,12 @@ function! s:loger_worker(request)
 endfunction
 
 function! LogPrint(type, msg)
-    if a:type == "error"
+    if a:type == "esave"
+        echohl ErrorMsg
+        echoerr "[".a:type."]: ".a:msg
+        echohl None
+        call LogPrint("save", a:msg)
+    elseif a:type == "error"
         echohl ErrorMsg
         echoerr "[".a:type."]: ".a:msg
         echohl None
@@ -67,7 +72,11 @@ function! LogPrint(type, msg)
             let request["type"] = "save"
             let request["msg"]  = "[".time_str."] ".a:msg
             let work_index = s:worker_op.work_alloc("loger")    
-            call s:worker_op.fill_req("loger", work_index, request)
+            if work_index >= 0
+                call s:worker_op.fill_req("loger", work_index, request)
+            else
+                call LogPrint("save", "loger dead: ".request["msg"])
+            endif
         endif
     elseif a:type == "save" 
         call writefile(split(a:msg, "\n", 1), s:log_file_path, 'a')
@@ -1121,7 +1130,7 @@ endfunction
 function! EnterHandler()
     let s:worker_op = Worker_get_ops()
     if s:log_enable
-        call s:worker_op.start("loger", function("s:loger_worker"), 1000, 100)
+        call s:worker_op.start("loger", function("s:loger_worker"), 5000, 1000)
         call s:worker_op.set_log("loger", v:false)
     endif
 

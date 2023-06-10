@@ -202,8 +202,8 @@ function! s:enter_idle(name) abort
         let worker_dic = s:worker_table[a:name]
         if has_key(worker_dic, "idle")
             let idle_time = s:idle_time(a:name)
-            " over 1s
-            if idle_time > 1
+            " over 3s
+            if idle_time > 3
                 if worker_dic.log_en
                     call LogPrint("2file", "###### ".a:name." enter_idle") 
                 endif
@@ -279,14 +279,17 @@ function! s:work_alloc(name) abort
     endif
 
     if worker_dic.work_tail == worker_dic.work_head
+        let head = worker_dic.work_head
+        let tail = worker_dic.work_tail
+
         if worker_dic.work_tail == 0
             let worker_dic.work_tail = worker_dic.ring_size
         else
             let worker_dic.work_tail -= 1
         endif
-        call LogPrint("error", a:name." ring full, head=".worker_dic.work_head." tail=".worker_dic.work_tail)
-
         call s:worker_unlock()
+
+        call LogPrint("esave", a:name." ring full, size=".worker_dic.ring_size." head=".head." tail=".tail)
         return -1
     endif 
     call s:worker_unlock()
@@ -379,7 +382,7 @@ function! s:fill_req(name, work_index, request) abort
     endif
     
     if a:work_index < 0
-        call LogPrint("error", a:name." work_index invalid")
+        call LogPrint("esave", a:name." work_index invalid")
         return
     endif
 
