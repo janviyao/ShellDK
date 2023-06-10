@@ -9,158 +9,118 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:map_table_index = 0
-let s:map_table = {
-            \   'csfind' : [
-            \   {
-            \     'tag'   : '',
-            \     'time'  : 0.0,
-            \     'index' : -1,
-            \     'prev'  : '',
-            \     'next'  : []
-            \   }
-            \   ],
-            \   'grep' : [
-            \   {
-            \     'tag'   : '',
-            \     'time'  : 0.0,
-            \     'index' : -1,
-            \     'prev'  : '',
-            \     'next'  : []
-            \   }
-            \   ]
-            \ }
 
-function! s:tag2index(module, tag) abort
-    call PrintArgs("2file", "tag2index", a:module, a:tag)
-    let info_list = s:map_table[a:module]
-    if strlen(a:tag) == 0
-        call LogPrint("2file", "tag2index return: -1")
-        return -1
-    endif
-
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if item["tag"] == a:tag
-            call LogPrint("2file", "tag2index return: ".index)
-            return index
-        endif
-        let index += 1
-    endwhile
-
-    call LogPrint("2file", "tag2index return: -1")
+function! s:compare(value1, value2) abort
     return -1
 endfunction
 
-function! s:alloc_index(module, tag) abort
-    let info_list = s:map_table[a:module]
-    let length = len(info_list)
-    call PrintArgs("2file", "map alloc_index", a:module, a:tag, "length=".length)
+let s:map_table = {
+            \   'csfind' : {
+            \          'stor' : {
+            \               'key1' : {
+            \                   'value' : {},
+            \                   'time'  : 0.0,
+            \                   'prev'  : '',
+            \                   'next'  : []
+            \               },
+            \               'key2' : {
+            \                   'value' : {},
+            \                   'time'  : 0.0,
+            \                   'prev'  : '',
+            \                   'next'  : []
+            \               },
+            \          },
+            \          'compare': function("s:compare")
+            \   },
+            \   'grep' : {
+            \          'stor' : {
+            \               'key1' : {
+            \                   'value' : {},
+            \                   'time'  : 0.0,
+            \                   'prev'  : '',
+            \                   'next'  : []
+            \               },
+            \               'key2' : {
+            \                   'value' : {},
+            \                   'time'  : 0.0,
+            \                   'prev'  : '',
+            \                   'next'  : []
+            \               },
+            \          },
+            \          'compare': function("s:compare")
+            \   },
+            \ }
 
-    let index = 0
-    while index < length
-        let item = get(info_list, index)
-        if item["tag"] == a:tag
-            call LogPrint("2file", "alloc_index return: ".index." @tag exist")
-            return index
+function! s:get_key(module, value) abort
+    call PrintArgs("2file", "get_key", a:module, a:value)
+
+    let stor_dic = s:map_table[a:module].stor
+    for okey in keys(stor_dic)
+        if s:map_table[a:module].compare(stor_dic[okey]["value"], a:value) == 0
+            call LogPrint("2file", "get_key return: ".okey)
+            return okey
         endif
-        let index += 1
-    endwhile
-
-    let index = 0
-    while index < length
-        let item = get(info_list, index)
-        if strlen(item["tag"]) == 0
-            call LogPrint("2file", "alloc_index return: ".index." @tag null")
-            return index
-        endif
-        let index += 1
-    endwhile
-
-    if s:map_table_index >= length
-        let s:map_table_index = length
-    endif
-
-    let index = s:map_table_index
-    let s:map_table_index += 1
-    if s:map_table_index > g:quickfix_index_max
-        let s:map_table_index = 0
-        let drop_tag = s:get_tag(a:module, 0)
-        if strlen(drop_tag) > 0
-            call s:unset_map(a:module, drop_tag)
-        endif
-    endif
-
-    call s:set_value(a:module, a:tag, index, "", [])
-    call LogPrint("2file", "alloc_index return: ".index)
-    return index
+    endfor
+    
+    call LogPrint("2file", "get_key return: ")
+    return ""
 endfunction
 
-function! s:set_value(module, tag, index, prev, next) abort
-    call PrintArgs("2file", "set_value", "module=".a:module, "tag=".a:tag, "index=".a:index, "prev=".a:prev, "next=".string(a:next))
-    if strlen(a:tag) == 0 || a:index < 0
-        call LogPrint("error", "module: ".a:module." tag or index invalid")
+function! s:get_value(module, key) abort
+    call PrintArgs("2file", "get_value", a:module, a:key)
+
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key)
+        call LogPrint("2file", "get_value return: ".string(stor_dic[a:key]["value"]))
+        return stor_dic[a:key]["value"]
+    endif
+    
+    call LogPrint("2file", "get_value return: {}")
+    return {}
+endfunction
+
+function! s:get_time(module, key) abort
+    call PrintArgs("2file", "get_time", a:module, a:key)
+
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key)
+        return stor_dic[a:key].time
+    endif
+
+    return 0.0
+endfunction
+
+function! s:set_value(module, key, value, prev, next) abort
+    call PrintArgs("2file", "set_value", a:module, a:key, a:value, a:prev, string(a:next))
+
+    if strlen(a:key) == 0
+        call LogPrint("error", "module: ".a:module." key invalid")
         return
     endif
 
-    let info_list = s:map_table[a:module]
-    let length = len(info_list)
-    if a:index >= length
-        call s:insert_at(a:module, a:index)
+    let stor_dic = s:map_table[a:module].stor
+    if ! has_key(stor_dic, a:key)
+        let stor_dic[a:key] = {}
     endif
 
-    let length = len(info_list)
-    if length > 0
-        let update = 0
-        while update < length
-            let item = get(info_list, update)
-            if item["tag"] == a:tag
-                call LogPrint("2file", "set [".a:tag."] find index: ".update)
-                break
-            endif
-            let update += 1
-        endwhile
-
-        let info_dic = {}
-        if update < length
-            let info_dic = get(info_list, update)
-            if update != a:index
-                call remove(info_list, update)
-                call insert(info_list, info_dic, a:index)
-            endif
-        else
-            call s:insert_at(a:module, a:index, info_dic)
-        endif
-    else
-        call s:insert_at(a:module, a:index, info_dic)
-    endif
-     
-    let info_dic = get(info_list, a:index)
+    let info_dic = stor_dic[a:key]
+    let info_dic["value"] = a:value
     let info_dic["time"]  = GetElapsedTime()
-    let info_dic["tag"]   = a:tag
-    let info_dic["index"] = a:index
     let info_dic["prev"]  = a:prev
-    if has_key(info_dic, "next")
-        for next_tag in a:next
-            if index(info_dic["next"], next_tag) < 0
-                call add(info_dic["next"], next_tag)
-            endif
-        endfor
-    else
+    if !has_key(info_dic, "next")
         let info_dic["next"]  = []
-        call extend(info_dic["next"], a:next)
     endif
+    call extend(info_dic["next"], a:next)
 
-    call PrintDict("2file", "set_value map_table[".a:index."]", info_dic)
-    return a:index
+    call PrintDict("2file", "set_value map_table[".a:key."]", info_dic)
+    return 0
 endfunction
 
-function! s:insert_at(module, index, item = {}) abort
-    call PrintArgs("2file", "insert_at", a:module, a:index, a:item)
-    let info_list = s:map_table[a:module]
+function! s:insert_at(module, index, info = {}) abort
+    call PrintArgs("2file", "insert_at", a:module, a:index, a:info)
+    let stor_dic = s:map_table[a:module].stor
 
-    let length = len(info_list)
+    let length = len(stor_dic)
     if a:index < 0
         call LogPrint("error", "module: ".a:module." insert_at index=".a:index." invalid")
         return -1
@@ -170,29 +130,19 @@ function! s:insert_at(module, index, item = {}) abort
         let fill_cnt = a:index - length
         while fill_cnt >= 0
             let info_dic = {}
-            let info_dic["tag"]   = ""
+            let info_dic["key"]   = ""
+            let info_dic["value"] = {} 
             let info_dic["time"]  = 0.0 
-            let info_dic["index"] = len(info_list)
             let info_dic["prev"]  = ""
             let info_dic["next"]  = []
-            call add(info_list, info_dic)
+            call add(stor_dic, info_dic)
             let fill_cnt -= 1
         endwhile
     endif
 
-    if !empty(a:item)
-        let length = len(info_list)
-        let next_index = a:index + 1
-        while next_index < length
-            let next_item = get(info_list, next_index)
-            if has_key(next_item, "index")
-                let next_item["index"] = next_index + 1
-            endif
-            let next_index += 1
-        endwhile
-
-        call insert(info_list, a:item, a:index)
-        call PrintDict("2file", "insert_at [".a:index."]", a:item)
+    if !empty(a:info)
+        call insert(stor_dic, a:info, a:index)
+        call PrintDict("2file", "insert_at [".a:index."]", a:info)
     endif
 
     return a:index
@@ -200,373 +150,252 @@ endfunction
 
 function! s:remove_at(module, index) abort
     call PrintArgs("2file", "remove_at", a:module, a:index)
-    let info_list = s:map_table[a:module]
+    let stor_dic = s:map_table[a:module].stor
 
-    let length = len(info_list)
+    let length = len(stor_dic)
     if length <= a:index || a:index < 0
         call LogPrint("error", "module: ".a:module." remove_at index=".a:index." invalid")
         return -1
     endif
 
-    let next_index = a:index + 1
-    while next_index < length
-        let next_item = get(info_list, next_index)
-        if has_key(next_item, "index")
-            let next_item["index"] = next_index - 1
-        endif
-        let next_index += 1
-    endwhile
-    call remove(info_list, a:index)
-
+    call remove(stor_dic, a:index)
     return a:index
 endfunction
 
-function! s:unset_map(module, tag, callback) abort
-    call PrintArgs("2file", "unset_map", a:module, a:tag)
-    if strlen(a:tag) == 0
-        call LogPrint("error", "module: ".a:module." tag invalid")
+function! s:unset_map(module, key, callback) abort
+    call PrintArgs("2file", "unset_map", a:module, a:key)
+
+    if strlen(a:key) == 0
+        call LogPrint("error", "module: ".a:module." key invalid")
         return
     endif
 
-    let info_list = s:map_table[a:module]
-
     let unset_item = {}
-    let tag_index = s:tag2index(a:module, a:tag)
-    if tag_index >= 0
-        let unset_item = info_list[tag_index]
-        let unset_item["tag"] = ""
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key)
+        let unset_item = deepcopy(stor_dic[a:key])
+        call PrintDict("2file", "unset_item[".a:key."]", unset_item)
+        unlet stor_dic[a:key]
     endif
 
-    for item in info_list 
-        if item["prev"] == a:tag
+    for okey in keys(stor_dic)
+        if stor_dic[okey]["prev"] == a:key
             if empty(unset_item)
-                let item["prev"] = "" 
-                call LogPrint("2file", "change [".item["tag"]."] prev from [".a:tag."] to []")
+                let stor_dic[okey]["prev"] = "" 
+                call LogPrint("2file", "change [".okey."] prev from [".a:key."] to []")
             else
-                let item["prev"] = unset_item["prev"]
-                call LogPrint("2file", "change [".item["tag"]."] prev from [".a:tag."] to [".unset_item["prev"]."]")
+                if len(unset_item["prev"]) == 0
+                    let stor_dic[okey]["prev"] = "" 
+                    call LogPrint("2file", "change [".okey."] prev from [".a:key."] to []")
+                else
+                    let stor_dic[okey]["prev"] = unset_item["prev"]
+                    call LogPrint("2file", "change [".okey."] prev from [".a:key."] to [".unset_item["prev"]."]")
+                endif
             endif
-            call a:callback(item["tag"])
+            call a:callback(okey)
         endif
 
-        let next_index = index(item["next"], a:tag)
+        let next_index = index(stor_dic[okey]["next"], a:key)
         if next_index >= 0
-            call LogPrint("2file", "delete [".item["tag"]."] from ".string(item["next"]))
-            call remove(item["next"], next_index)
+            call LogPrint("2file", "delete [".okey."] from ".string(stor_dic[okey]["next"]))
+            call remove(stor_dic[okey]["next"], next_index)
+
             if !empty(unset_item)
-                call add(item["next"], unset_item["next"])
+                if !empty(unset_item["next"])
+                    call extend(stor_dic[okey]["next"], unset_item["next"])
+                endif
             endif
-            call a:callback(item["tag"])
+            call a:callback(okey)
         endif
     endfor
-
-    if tag_index >= 0
-        call s:remove_at(a:module, tag_index)
-    endif
 endfunction
 
-function! s:get_index_all(module, index_list, start = 0, end = 0)
-    if empty(a:index_list)
-        let root_list = s:get_index_root(a:module)
-        call extend(a:index_list, root_list)
+function! s:get_all_value(module, value_list, start = 0, end = 0)
+    if empty(a:value_list)
+        let root_list = s:get_root_value(a:module)
+        call extend(a:value_list, root_list)
     endif
-    call LogPrint("2file", a:module." list: ".string(a:index_list)." start: ".a:start." end: ".a:end)
+    call LogPrint("2file", a:module." get_all_value: ".string(a:value_list)." start: ".a:start." end: ".a:end)
 
-    let cur_list = deepcopy(a:index_list)
+    let cur_list = deepcopy(a:value_list)
     if a:start < a:end && a:end > 0
         let cur_list = slice(cur_list, a:start, a:end)
     endif
 
-    for cur_idx in cur_list
-        let next_pos = index(a:index_list, cur_idx) 
+    for cur_val in cur_list
+        let next_pos = index(a:value_list, cur_val) 
         if next_pos < 0
-            call LogPrint("error", a:module." index ".cur_idx." over range: ".string(a:index_list))
+            call LogPrint("error", a:module." index ".string(cur_val)." over range: ".string(a:value_list))
             return -1
         endif
-        call LogPrint("2file", a:module." cur_idx: ".cur_idx." next_pos: ".next_pos)
+        call LogPrint("2file", a:module." cur_val: ".string(cur_val)." next_pos: ".next_pos)
 
-        let next_list = s:get_index_next(a:module, cur_idx)
+        let cur_key = s:get_key(a:module, cur_val)
+        let next_list = s:get_next_value(a:module, cur_key)
         if len(next_list) > 0
             "call LogPrint("2file", a:module." next: ".string(next_list))
             let insert_pos = next_pos + 1
-            for idx in next_list
-                call insert(a:index_list, idx, insert_pos)
+            for val in next_list
+                call insert(a:value_list, val, insert_pos)
                 let insert_pos += 1
             endfor
 
-            call s:get_index_all(a:module, a:index_list, next_pos + 1, insert_pos)
+            call s:get_all_value(a:module, a:value_list, next_pos + 1, insert_pos)
         endif
     endfor
 endfunction
 
-function! s:get_index_root(module) abort
-    call PrintArgs("2file", "get_index_root", a:module)
-    let info_list = s:map_table[a:module]
+function! s:get_root_value(module) abort
+    call PrintArgs("2file", "get_root_value", a:module)
 
     let res_list = []
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if strlen(item["tag"]) > 0
-            let prev_index = s:tag2index(a:module, item["prev"])
-            if prev_index < 0
-                call add(res_list, index)
-            endif
-        endif
-        let index += 1
-    endwhile
-
-    call LogPrint("2file", "get_index_root return: ".string(res_list))
-    return res_list
-endfunction
-
-function! s:get_index_next(module, index) abort
-    call PrintArgs("2file", "get_index_next", a:module, a:index)
-    let info_list = s:map_table[a:module]
-    if a:index < 0
-        call LogPrint("2file", "get_index_prev return: []")
-        return []
-    endif
-
-    let length = len(info_list)
-    if a:index >= length
-        call LogPrint("2file", "get_index_prev return: []")
-        return []
-    endif
-
-    let res_list = []
-    let item = get(info_list, a:index)
-    let tag_list = item["next"] 
-    for tag in tag_list
-        let next_index = s:tag2index(a:module, tag)
-        if next_index >= 0
-            call add(res_list, next_index)
+    let stor_dic = s:map_table[a:module].stor
+    for okey in keys(stor_dic)
+        if strlen(stor_dic[okey]["prev"]) == 0
+            call add(res_list, stor_dic[okey]["value"])
         else
-            call LogPrint("error", "module: ".a:module." tag: ".tag." not map")
+            if !has_key(stor_dic, stor_dic[okey]["prev"])
+                call add(res_list, stor_dic[okey]["value"])
+            endif
         endif
     endfor
 
-    call LogPrint("2file", "get_index_next return: ".string(res_list))
+    call LogPrint("2file", "get_root_value return: ".string(res_list))
     return res_list
 endfunction
 
-function! s:get_index_prev(module, index) abort
-    call PrintArgs("2file", "get_index_prev", a:module, a:index)
-    let info_list = s:map_table[a:module]
-    if a:index < 0
-        call LogPrint("2file", "get_index_prev return: -1")
-        return -1
-    endif
-
-    let length = len(info_list)
-    if a:index >= length
-        call LogPrint("2file", "get_index_prev return: -1")
-        return -1
-    endif
-
-    let item = get(info_list, a:index)
-    let prev_tag = item["prev"] 
-    let prev_index = s:tag2index(a:module, prev_tag)
-    if prev_index >= 0
-        call LogPrint("2file", "get_index_prev return: ".prev_index)
-        return prev_index
-    else
-        call LogPrint("2file", "get_index_prev return: -1")
-        return -1
-    endif
-
-    call LogPrint("2file", "get_index_prev return: -1")
-    return -1
-endfunction
-
-function! s:get_tag_root(module) abort
-    call PrintArgs("2file", "get_tag_root", a:module)
-    let info_list = s:map_table[a:module]
+function! s:get_next_value(module, key) abort
+    call PrintArgs("2file", "get_next_value", a:module, a:key)
 
     let res_list = []
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if strlen(item["tag"]) > 0
-            let prev_index = s:tag2index(a:module, item["prev"])
-            if prev_index < 0
-                call add(res_list, item["tag"])
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key) 
+        let next_list = stor_dic[a:key]["next"]
+        for okey in next_list
+            if has_key(stor_dic, okey) 
+                call add(res_list, stor_dic[okey]["value"])
+            else
+                call LogPrint("error", "module: ".a:module." key: ".okey." not map")
             endif
+        endfor
+    endif
+    
+    call LogPrint("2file", "get_next_value return: ".string(res_list))
+    return res_list
+endfunction
+
+function! s:get_prev_value(module, key) abort
+    call PrintArgs("2file", "get_prev_value", a:module, a:key)
+
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key)
+        let prev_key = stor_dic[a:key]["prev"]
+        if has_key(stor_dic, prev_key)
+            call LogPrint("2file", "get_prev_value return: ".string(stor_dic[prev_key].value))
+            return stor_dic[prev_key].value
         endif
-        let index += 1
-    endwhile
-
-    call LogPrint("2file", "get_tag_root return: ".string(res_list))
-    return res_list
+    endif
+    
+    call LogPrint("2file", "get_prev_value return: {}")
+    return {}
 endfunction
 
-function! s:get_tag_next(module, tag) abort
-    call PrintArgs("2file", "get_tag_next", a:module, a:tag)
-    let info_list = s:map_table[a:module]
-    if strlen(a:tag) == 0
-        call LogPrint("2file", "get_tag_next return: []")
-        return []
-    endif
+function! s:get_root_key(module) abort
+    call PrintArgs("2file", "get_root_key", a:module)
 
     let res_list = []
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if has_key(item, "tag")
-            if item["tag"] == a:tag
-                call extend(res_list, item["next"])
-                break
-            endif
+    let stor_dic = s:map_table[a:module].stor
+    for okey in keys(stor_dic)
+        if strlen(stor_dic[okey]["prev"]) == 0
+            call add(res_list, okey)
         else
-            call LogPrint("error", "module: ".a:module." tag: ".a:tag." invalid item: ".string(item))
+            if !has_key(stor_dic, stor_dic[okey]["prev"])
+                call add(res_list, okey)
+            endif
         endif
-        let index += 1
-    endwhile
+    endfor
 
-    call LogPrint("2file", "get_tag_next return: ".string(res_list))
+    call LogPrint("2file", "get_root_key return: ".string(res_list))
     return res_list
 endfunction
 
-function! s:get_tag_prev(module, tag) abort
-    call PrintArgs("2file", "get_tag_prev", a:module, a:tag)
+function! s:get_next_key(module, key) abort
+    call PrintArgs("2file", "get_next_key", a:module, a:key)
 
-    let info_list = s:map_table[a:module]
-    if strlen(a:tag) == 0
-        call LogPrint("2file", "get_tag_prev return: ")
-        return ""
+    let res_list = []
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key) 
+        let next_list = stor_dic[a:key]["next"]
+        for okey in next_list
+            call add(res_list, okey)
+            if !has_key(stor_dic, okey) 
+                call LogPrint("2file", "module: ".a:module." key: ".okey." not map")
+            endif
+        endfor
+    endif
+    
+    call LogPrint("2file", "get_next_key return: ".string(res_list))
+    return res_list
+endfunction
+
+function! s:get_prev_key(module, key) abort
+    call PrintArgs("2file", "get_prev_key", a:module, a:key)
+    
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:key)
+        let prev_key = stor_dic[a:key]["prev"]
+        if has_key(stor_dic, prev_key)
+            call LogPrint("2file", "get_prev_key return: ".prev_key)
+            return prev_key
+        endif
     endif
 
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if item["tag"] == a:tag
-            call LogPrint("2file", "get_tag_prev return: ".item["prev"]." @index: ".index)
-            return item["prev"] 
-        endif
-        let index += 1
-    endwhile
-
-    call LogPrint("2file", "get_tag_prev return: ")
+    call LogPrint("2file", "get_prev_key return: ")
     return ""
 endfunction
 
-function! s:get_index_oldest(module) abort
-    call PrintArgs("2file", "get_index_oldest", a:module)
-    let info_list = s:map_table[a:module]
-
-    let old_index = -1
-    let oldest = GetElapsedTime()
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if item["time"] < oldest
-            let oldest = item["time"]
-            let old_index = index
-        endif
-        let index += 1
-    endwhile
-
-    call LogPrint("2file", "get_index_oldest return: ".old_index)
-    return old_index
+function! s:empty(module) abort
+    let stor_dic = s:map_table[a:module].stor
+    return empty(stor_dic)
 endfunction
 
-function! s:copy(module, des_index, src_index) abort
-    let info_list = s:map_table[a:module]
+function! s:copy(module, des_key, src_key) abort
+    let stor_dic = s:map_table[a:module].stor
+    if has_key(stor_dic, a:src_key)
+        let src_item = stor_dic[a:src_key] 
 
-    let length = len(info_list)
-    if a:des_index < length && a:src_index < length
-        let des_item = get(info_list, a:des_index)
-        let src_item = get(info_list, a:src_index)
+        if ! has_key(stor_dic, a:des_key)
+            let stor_dic[a:des_key] = {}
+        endif
+        let des_item = stor_dic[a:des_key] 
+
         call extend(des_item, src_item)
-
-        let des_item["index"] = a:des_index 
-    else
-        call LogPrint("error", "module: ".a:module." copy length=".length." but des_index=".a:des_index." src_index=".a:src_index)
-        return 1
     endif
 endfunction
 
-function! s:map_empty(module) abort
-    let info_list = s:map_table[a:module]
-
-    let length = len(info_list)
-    let index = 0
-    while index < length
-        let item = get(info_list, index)
-        if strlen(item["tag"]) > 0
-            return 0
-        endif
-
-        let index += 1
-    endwhile
-    return 1
-endfunction
-
-function! s:get_size(module) abort
-    call PrintArgs("2file", "get_size", a:module)
-    let info_list = s:map_table[a:module]
-    let size = len(info_list) 
-
-    call LogPrint("2file", "get_size return: ".size)
-    return size
-endfunction
-
-function! s:get_tag(module, index) abort
-    call PrintArgs("2file", "get_tag", a:module, a:index)
-    let info_list = s:map_table[a:module]
-
-    if len(info_list) <= a:index || a:index < 0
-        call LogPrint("2file", "get_tag return: ")
-        return "" 
-    endif
-
-    let item = info_list[a:index] 
-    call LogPrint("2file", "get_tag return: ".item["tag"])
-    return item["tag"]
-endfunction
-
-function! s:get_time(module, tag) abort
-    call PrintArgs("2file", "get_time", a:module, a:tag)
-    let info_list = s:map_table[a:module]
-
-    let index = 0
-    let length = len(info_list)
-    while index < length
-        let item = get(info_list, index)
-        if item["tag"] == a:tag
-            return item["time"]
-        endif
-        let index += 1
-    endwhile
-
-    return 0.0
+function! s:map_initiate(module, compare_func) abort
+    let s:map_table[a:module] = {}
+    let s:map_table[a:module]["stor"] = {}
+    let s:map_table[a:module]["compare"] = a:compare_func
 endfunction
 
 let s:map_ops = {
-            \   'alloc_index'      : function("s:alloc_index"),
+            \   'map_initiate'     : function("s:map_initiate"),
             \   'set_value'        : function("s:set_value"),
             \   'unset_map'        : function("s:unset_map"),
-            \   'insert_at'        : function("s:insert_at"),
             \   'remove_at'        : function("s:remove_at"),
+            \   'empty'            : function("s:empty"),
             \   'copy'             : function("s:copy"),
-            \   'tag2index'        : function("s:tag2index"),
-            \   'get_size'         : function("s:get_size"),
-            \   'get_tag'          : function("s:get_tag"),
+            \   'get_key'          : function("s:get_key"),
+            \   'get_value'        : function("s:get_value"),
             \   'get_time'         : function("s:get_time"),
-            \   'get_index_all'    : function("s:get_index_all"),
-            \   'get_index_root'   : function("s:get_index_root"),
-            \   'get_index_next'   : function("s:get_index_next"),
-            \   'get_index_prev'   : function("s:get_index_prev"),
-            \   'get_index_oldest' : function("s:get_index_oldest"),
-            \   'get_tag_root'     : function("s:get_tag_root"),
-            \   'get_tag_next'     : function("s:get_tag_next"),
-            \   'get_tag_prev'     : function("s:get_tag_prev"),
-            \   'empty'            : function("s:map_empty")
+            \   'get_all_value'    : function("s:get_all_value"),
+            \   'get_root_value'   : function("s:get_root_value"),
+            \   'get_next_value'   : function("s:get_next_value"),
+            \   'get_prev_value'   : function("s:get_prev_value"),
+            \   'get_root_key'     : function("s:get_root_key"),
+            \   'get_next_key'     : function("s:get_next_key"),
+            \   'get_prev_key'     : function("s:get_prev_key"),
             \ }
 
 function! map#get_ops() abort
