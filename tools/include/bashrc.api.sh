@@ -56,7 +56,7 @@ readonly GBL_SPF1="#;"
 readonly GBL_SPF2="#."
 readonly GBL_SPF3="#,"
 
-function _bash_exit
+function _my_bash_exit
 { 
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit
@@ -85,5 +85,5 @@ else
     echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"
     mkdir -p ${BASH_WORK_DIR} 
 
-    trap "_bash_exit" EXIT
+    trap "_my_bash_exit" EXIT
 fi
