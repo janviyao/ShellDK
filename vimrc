@@ -1028,7 +1028,11 @@ function! RestoreLoad()
         let dirStr=GetVimDir(0, "undodir")
  
         call Quickfix_ctrl("load")
-        silent! execute 'e'
+
+        let bufnr = bufnr('%')
+        let filename = bufname(bufnr)
+        call LogPrint("2file", "RestoreLoad bufnr: ".bufnr." file: ".filename)
+        silent! execute 'e '.filename
     endif
 endfunction
 
@@ -1335,10 +1339,25 @@ let g:vbookmark_bookmarkSaveFile = GetVimDir(1, "bookmark")."/save.vbm"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "yegappan/grep"
 
-let Grep_Default_Filelist = '*.*'                                         "查找文件类型
+let Grep_Default_Filelist = '*'                                           "查找文件类型
 let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
 let Grep_Skip_Files = '*.o *.d *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
 let Grep_OpenQuickfixWindow = 0                                           "默认不自动打开quickfix, 完成格式化打开
+
+if filereadable(".gitignore")
+    for line in readfile(".gitignore", '')
+        "let line = shellescape(line)
+        if len(line) > 0 && strpart(line, 0, 1) != "#"
+            if isdirectory(line)
+                "call LogPrint("2file", "Grep_Skip_Dirs add: ".line)
+                let Grep_Skip_Dirs = Grep_Skip_Dirs." ".line
+            else
+                "call LogPrint("2file", "Grep_Skip_Files add: ".line)
+                let Grep_Skip_Files = Grep_Skip_Files." ".line
+            endif
+        endif
+    endfor
+endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 快速搜索 插件

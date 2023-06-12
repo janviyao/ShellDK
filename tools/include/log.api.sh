@@ -22,6 +22,30 @@ readonly COLOR_CLOSE='\033[0m'      #关闭颜色
 readonly FONT_BOLD='\033[1m'        #字体变粗
 readonly FONT_BLINK='\033[5m'       #字体闪烁
 
+function cecho
+{
+    local mode="$1"
+    shift
+
+    local code="\033["
+    case "${mode}" in
+        black  | bk) color="${code}0;30m";;
+        red    |  r) color="${code}1;31m";;
+        green  |  g) color="${code}1;32m";;
+        yellow |  y) color="${code}1;33m";;
+        blue   |  b) color="${code}1;34m";;
+        purple |  p) color="${code}1;35m";;
+        cyan   |  c) color="${code}1;36m";;
+        gray   | gr) color="${code}0;37m";;
+        *) local text="${mode} $@"
+    esac
+
+    if [ -z "${text}" ];then
+        local text="${color}$@${code}0m"
+    fi
+    echo -e "${text}"
+}
+
 function echo_file
 {
     local echo_level="$1"
