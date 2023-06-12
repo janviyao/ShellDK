@@ -8,6 +8,7 @@ let g:quickfix_worker_loaded = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
+let s:lock_ops       = Lock_get_ops()
 let s:STATE_INIT     = 0
 let s:STATE_HANDLING = 1
 let s:STATE_COMPLETE = 2
@@ -42,33 +43,6 @@ let s:worker_table   = {
            \     ]
            \   }
            \ }
-
-python << EOF
-import threading
-worker_lock = threading.Lock()
-def WorkerLock():
-    worker_lock.acquire()
-def WorkerUnlock():
-    worker_lock.release()
-EOF
-
-function! s:worker_lock()
-python << EOF
-try:
-    WorkerLock()
-except Exception, e:
-    print e
-EOF
-endfunction
-
-function! s:worker_unlock()
-python << EOF
-try:
-    WorkerUnlock()
-except Exception, e:
-    print e
-EOF
-endfunction
 
 function! s:get_name(timer_id)
     "call PrintArgs("2file", "worker.get_name", a:timer_id)
@@ -140,6 +114,8 @@ function! s:start(name, func, ring_size=100, run_once=10) abort
     let worker_dic["works"]  = []
 
     let s:worker_table[a:name] = worker_dic
+
+    call s:lock_ops.mutex_create(a:name)
     return timer
 endfunction
 
@@ -271,7 +247,7 @@ endfunction
 function! s:work_alloc(name) abort
     let worker_dic = s:worker_table[a:name]
 
-    call s:worker_lock()
+    call s:lock_ops.mutex_lock(a:name)
     let index = worker_dic.work_tail
     let worker_dic.work_tail += 1
     if worker_dic.work_tail > worker_dic.ring_size
@@ -287,13 +263,13 @@ function! s:work_alloc(name) abort
         else
             let worker_dic.work_tail -= 1
         endif
-        call s:worker_unlock()
+        call s:lock_ops.mutex_unlock(a:name)
 
         call LogPrint("esave", a:name." ring full, size=".worker_dic.ring_size." head=".head." tail=".tail)
         return -1
     endif 
-    call s:worker_unlock()
-    
+    call s:lock_ops.mutex_unlock(a:name)
+
     let work_table = worker_dic["works"]
     if index >= len(work_table)
         call insert(work_table, {}, index)

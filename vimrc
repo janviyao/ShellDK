@@ -71,11 +71,15 @@ function! LogPrint(type, msg)
             let request = {} 
             let request["type"] = "save"
             let request["msg"]  = "[".time_str."] ".a:msg
-            let work_index = s:worker_op.work_alloc("loger")    
-            if work_index >= 0
-                call s:worker_op.fill_req("loger", work_index, request)
+            if exists('s:worker_op')
+                let work_index = s:worker_op.work_alloc("loger")    
+                if work_index >= 0
+                    call s:worker_op.fill_req("loger", work_index, request)
+                else
+                    call LogPrint("save", "loger dead: ".request["msg"])
+                endif
             else
-                call LogPrint("save", "loger dead: ".request["msg"])
+                call LogPrint("save", "loger none: ".request["msg"])
             endif
         endif
     elseif a:type == "save" 
