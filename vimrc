@@ -502,7 +502,7 @@ vnoremap <silent> <C-k> 6k
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR>
 
 "搜索光标下单词
-nnoremap <silent> <Leader>rg :call Quickfix_grep()<CR>
+nnoremap <silent> <Leader>rg :call QuickfixDo("grep")<CR>
 
 "替换字符串
 nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
@@ -539,14 +539,14 @@ nnoremap <silent> <Leader>nt :call ToggleWindow("nt")<CR>  "切换NERDTree
 "扩展跳转功能
 nnoremap <Leader>tj  :cstag <C-R>=expand("<cword>")<CR>
 
-nmap <silent> <Leader>fs :call Quickfix_csfind('fs')<CR>      "查找符号
-nmap <silent> <Leader>fg :call Quickfix_csfind('fg')<CR>      "查找定义
-nmap <silent> <Leader>fc :call Quickfix_csfind('fc')<CR>      "查找调用这个函数的函数
-nmap <silent> <Leader>fd :call Quickfix_csfind('fd')<CR>      "查找被这个函数调用的函数
-nmap <silent> <Leader>ft :call Quickfix_csfind('ft')<CR>      "查找这个字符串
-nmap <silent> <Leader>fe :call Quickfix_csfind('fe')<CR>      "查找这个egrep匹配模式
-nmap <silent> <Leader>ff :call Quickfix_csfind('ff')<CR>      "查找同名文件
-nmap <silent> <Leader>fi :call Quickfix_csfind('fi')<CR>      "查找包含这个文件的文件
+nmap <silent> <Leader>fs :call QuickfixDo('cs', 'fs')<CR>  "查找符号
+nmap <silent> <Leader>fg :call QuickfixDo('cs', 'fg')<CR>  "查找定义
+nmap <silent> <Leader>fc :call QuickfixDo('cs', 'fc')<CR>  "查找调用这个函数的函数
+nmap <silent> <Leader>fd :call QuickfixDo('cs', 'fd')<CR>  "查找被这个函数调用的函数
+nmap <silent> <Leader>ft :call QuickfixDo('cs', 'ft')<CR>  "查找这个字符串
+nmap <silent> <Leader>fe :call QuickfixDo('cs', 'fe')<CR>  "查找这个egrep匹配模式
+nmap <silent> <Leader>ff :call QuickfixDo('cs', 'ff')<CR>  "查找同名文件
+nmap <silent> <Leader>fi :call QuickfixDo('cs', 'fi')<CR>  "查找包含这个文件的文件
 nmap <silent> <Leader>ss :cs find s <C-R>=expand("<cword>")<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
@@ -1089,6 +1089,16 @@ endfunction
 "自定义变量
 let s:vim_exit_act = 0
 
+function! QuickfixDo(opmode, arg="")
+    call LogPrint("2file", "QuickfixDo ".a:opmode." ".a:arg)
+
+    if a:opmode == "cs"
+        call Quickfix_csfind(a:arg)
+    elseif a:opmode == "grep" 
+        call Quickfix_grep()
+    endif
+endfunction
+
 "工程控制
 function! LoadProject(opmode) 
     call LogPrint("2file", "LoadProject ".a:opmode)
@@ -1343,21 +1353,6 @@ let Grep_Default_Filelist = '*'                                           "查�
 let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
 let Grep_Skip_Files = '*.o *.d *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
 let Grep_OpenQuickfixWindow = 0                                           "默认不自动打开quickfix, 完成格式化打开
-
-if filereadable(".gitignore")
-    for line in readfile(".gitignore", '')
-        "let line = shellescape(line)
-        if len(line) > 0 && strpart(line, 0, 1) != "#"
-            if isdirectory(line)
-                "call LogPrint("2file", "Grep_Skip_Dirs add: ".line)
-                let Grep_Skip_Dirs = Grep_Skip_Dirs." ".line
-            else
-                "call LogPrint("2file", "Grep_Skip_Files add: ".line)
-                let Grep_Skip_Files = Grep_Skip_Files." ".line
-            endif
-        endif
-    endfor
-endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 快速搜索 插件
