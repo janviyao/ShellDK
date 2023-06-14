@@ -161,7 +161,8 @@ function install_from_make
 
 function install_from_rpm
 {
-    local fname_reg="$1"
+    local f_reg="$1"
+    local force="${2:-false}"
     local rpm_file=""
 
     if [ $# -lt 1 ];then
@@ -169,26 +170,62 @@ function install_from_rpm
         return 1
     fi
 
-    local name_reg=$(string_trim "${fname_reg}" "\.rpm" 2)
-    local installed_arr=($(rpm -qa | grep -P "^${name_reg}"))
-
     # rpm -qf /usr/bin/nc #query nc rpm package
     # rpm -ql xxx.rpm     #query rpm package contents
-    local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
+    local local_arr=($(find . -regextype posix-awk -regex ".*/?${f_reg}"))
     for rpm_file in ${local_arr[*]}    
     do
         local full_name=$(path2fname ${rpm_file})
-        local rpm_name=$(string_trim "${full_name}" ".rpm" 2)
 
-        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${installed_arr[*]}")"
-        if ! string_contain "${installed_arr[*]}" "${rpm_name}";then
-            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
-            if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
-                return 1
+        local versions=($(string_regex "${full_name}" "\d+\.\d+(\.\d+)?"))
+        if [ -z "${versions[*]}" ];then
+            echo_erro "$(printf "[%13s]: { %-13s } failure, version invalid" "Install" "${full_name}")"
+            return 1
+        fi
+        echo_debug "rpm: { ${full_name} } versions: ${versions[*]}"
+
+        local split_names=($(string_split "${full_name}" "${versions[0]}"))
+        if [ -z "${split_names[*]}" ];then
+            echo_erro "$(printf "[%13s]: { %-13s } failure, version split fail" "Install" "${full_name}")"
+            return 1
+        fi
+        echo_debug "rpm: { ${full_name} } split_names: ${split_names[*]}"
+
+        local system_rpms=($(rpm -qa | grep -F "${split_names[0]}"))
+        if [ ${#system_rpms[*]} -gt 1 ];then
+            if bool_v "${force}";then
+                echo_warn "$(printf "[%13s]: { %-13s } force, but system multi-installed" "Install" "${full_name}")"
             else
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${full_name}")"
+                echo_warn "$(printf "[%13s]: { %-13s } skip, system multi-installed" "Install" "${full_name}")"
+                continue
             fi
+        fi
+        
+        if ! bool_v "${force}";then
+            local version_new=${versions[0]}
+            local version_cur=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
+            if version_lt ${version_cur} ${version_new}; then
+                echo_erro "$(printf "[%13s]: %-13s" "Version" "local: { ${version_cur} }  install: { ${version_new} }")"
+                return 1
+            fi
+        fi
+
+        if [ ${#system_rpms[*]} -eq 1 ];then
+            ${SUDO} rpm -e --nodeps ${system_rpms[0]} 
+        fi
+
+        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${system_rpms[*]}")"
+        if bool_v "${force}";then
+            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
+        else
+            ${SUDO} rpm -ivh --nodeps ${rpm_file} 
+        fi
+
+        if [ $? -ne 0 ]; then
+            echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${rpm_file}")"
+            return 1
+        else
+            echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${rpm_file}")"
         fi
     done
 
@@ -242,10 +279,10 @@ function install_from_tar
         do
             install_from_make "${tar_dir}"
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${full_name}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${full_name}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${full_name}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${full_name}")"
             fi
         done
     done
@@ -261,61 +298,33 @@ function rpm_install
         return 1
     fi
 
+    local cur_dir=$(pwd)
     local is_dir=false
     local -a install_list
     if [ -d "${xfile}" ];then
         is_dir=true
-        install_list=($(cd ${xfile};ls))
+        cd ${xfile}
+        install_list=($(ls))
     fi
 
     for rpm_file in ${install_list[*]}    
     do
         if ! string_match "${rpm_file}" ".rpm" 2;then
-            echo_debug "$(printf "[%13s]:    skip: %s" "Install" "${rpm_file}")"
+            echo_debug "$(printf "[%13s]: { %-13s } skip" "Install" "${rpm_file}")"
             continue
         fi
 
-        local versions=($(string_regex "${rpm_file}" "\d+\.\d+(\.\d+)?"))
-        if [ -z "${versions[*]}" ];then
-            echo_erro "$(printf "[%13s]: failure: %s, version invalid" "Install" "${rpm_file}")"
-            return 1
-        fi
-
-        local split_names=($(string_split "${rpm_file}" "${versions[0]}"))
-        if [ -z "${split_names[*]}" ];then
-            echo_erro "$(printf "[%13s]: failure: %s, version split fail" "Install" "${rpm_file}")"
-            return 1
-        fi
-        
-        echo_debug "split_names: ${split_names[*]}"
-        local system_rpms=($(rpm -qa | grep -F "${split_names[0]}"))
-        if [ ${#system_rpms[*]} -gt 1 ];then
-            echo_warn "$(printf "[%13s]:    skip: %s, system multi-installed" "Install" "${rpm_file}")"
-            continue
-        fi
-
-        local full_name="${rpm_file}"
-        if bool_v "${is_dir}";then
-            full_name="${xfile}/${rpm_file}"
-        fi
-
-        if [ ${#system_rpms[*]} -eq 1 ];then
-            ${SUDO} rpm -e --nodeps ${system_rpms[0]} 
-        fi
-
-        if bool_v "${force}";then
-            ${SUDO} rpm -ivh --nodeps --force ${full_name} 
-        else
-            ${SUDO} rpm -ivh --nodeps ${full_name} 
-        fi
-
+        install_from_rpm "$(regex_2str "${rpm_file}")" ${force}
         if [ $? -ne 0 ]; then
-            echo_erro "$(printf "[%13s]: failure: %s" "Install" "${full_name}")"
+            if bool_v "${is_dir}";then
+                cd ${cur_dir}
+            fi
             return 1
-        else
-            echo_info "$(printf "[%13s]: success: %s" "Install" "${full_name}")"
         fi
     done
 
+    if bool_v "${is_dir}";then
+        cd ${cur_dir}
+    fi
     return 0
 }

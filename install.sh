@@ -134,7 +134,7 @@ function update_check
             return 1
         fi
 
-        local version_cur=$(grep -P "\d+\.\d+" -o ${tmp_file} | head -n 1)
+        local version_cur=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
         rm -f ${tmp_file}
         local local_dir=$(pwd)
         cd ${ROOT_DIR}/deps
@@ -143,7 +143,7 @@ function update_check
         for full_nm in ${file_list}    
         do
             local file_name=$(path2fname ${full_nm})
-            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)*" -o)
+            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
             echo_info "$(printf "[%13s]: %-13s" "Version" "local: { ${version_cur} }  install: { ${version_new} }")"
             if version_lt ${version_cur} ${version_new}; then
                 cd ${local_dir}
