@@ -75,7 +75,7 @@ function install_from_make
     local conf_para="${2:-"--prefix=/usr"}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: specify compile directory"
+        echo_erro "\nUsage: [$@]\n\$1: specify compile directory\n\$2: specify configure args"
         return 1
     fi
 
@@ -249,4 +249,73 @@ function install_from_tar
             fi
         done
     done
+}
+
+function rpm_install
+{
+    local xfile="$1"
+    local force="${2:-false}"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify rpm-file or all-rpms-directory\n\$2: whether force"
+        return 1
+    fi
+
+    local is_dir=false
+    local -a install_list
+    if [ -d "${xfile}" ];then
+        is_dir=true
+        install_list=($(cd ${xfile};ls))
+    fi
+
+    for rpm_file in ${install_list[*]}    
+    do
+        if ! string_match "${rpm_file}" ".rpm" 2;then
+            echo_debug "$(printf "[%13s]:    skip: %s" "Install" "${rpm_file}")"
+            continue
+        fi
+
+        local versions=($(string_regex "${rpm_file}" "\d+\.\d+(\.\d+)?"))
+        if [ -z "${versions[*]}" ];then
+            echo_erro "$(printf "[%13s]: failure: %s, version invalid" "Install" "${rpm_file}")"
+            return 1
+        fi
+
+        local split_names=($(string_split "${rpm_file}" "${versions[0]}"))
+        if [ -z "${split_names[*]}" ];then
+            echo_erro "$(printf "[%13s]: failure: %s, version split fail" "Install" "${rpm_file}")"
+            return 1
+        fi
+        
+        echo_debug "split_names: ${split_names[*]}"
+        local system_rpms=($(rpm -qa | grep -F "${split_names[0]}"))
+        if [ ${#system_rpms[*]} -gt 1 ];then
+            echo_warn "$(printf "[%13s]:    skip: %s, system multi-installed" "Install" "${rpm_file}")"
+            continue
+        fi
+
+        local full_name="${rpm_file}"
+        if bool_v "${is_dir}";then
+            full_name="${xfile}/${rpm_file}"
+        fi
+
+        if [ ${#system_rpms[*]} -eq 1 ];then
+            ${SUDO} rpm -e --nodeps ${system_rpms[0]} 
+        fi
+
+        if bool_v "${force}";then
+            ${SUDO} rpm -ivh --nodeps --force ${full_name} 
+        else
+            ${SUDO} rpm -ivh --nodeps ${full_name} 
+        fi
+
+        if [ $? -ne 0 ]; then
+            echo_erro "$(printf "[%13s]: failure: %s" "Install" "${full_name}")"
+            return 1
+        else
+            echo_info "$(printf "[%13s]: success: %s" "Install" "${full_name}")"
+        fi
+    done
+
+    return 0
 }

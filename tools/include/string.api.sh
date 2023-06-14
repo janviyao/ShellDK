@@ -308,7 +308,7 @@ function string_match
     local posstr="${3:-0}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: match position(0: start&end 1:start 2:end)"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: match position(0: both start and end 1:start 2:end)"
         return 1
     fi
 
@@ -348,7 +348,7 @@ function string_same
     local posstr="${3:-0}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: start&end 1:start 2:end)"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: both start and end 1:start 2:end)"
         return 1
     fi
 
