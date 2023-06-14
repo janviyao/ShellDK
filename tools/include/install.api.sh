@@ -306,7 +306,7 @@ function rpm_install
 
     local cur_dir=$(pwd)
     local is_dir=false
-    local -a install_list
+    local -a install_list=(${xfile})
     if [ -d "${xfile}" ];then
         is_dir=true
         cd ${xfile}
