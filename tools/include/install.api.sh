@@ -163,7 +163,6 @@ function install_from_rpm
 {
     local f_reg="$1"
     local force="${2:-false}"
-    local rpm_file=""
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify rpm-regex name"
@@ -191,7 +190,8 @@ function install_from_rpm
         fi
         echo_debug "rpm: { ${full_name} } split_names: ${split_names[*]}"
 
-        local system_rpms=($(rpm -qa | grep -F "${split_names[0]}"))
+        local app_name=$(regex_2str "${split_names[0]}")
+        local system_rpms=($(rpm -qa | grep -P "${app_name}\d+"))
         if [ ${#system_rpms[*]} -gt 1 ];then
             if bool_v "${force}";then
                 echo_warn "$(printf "[%13s]: { %-13s } force, but system multi-installed" "Install" "${full_name}")"
@@ -205,7 +205,7 @@ function install_from_rpm
             local version_new=${versions[0]}
             local version_cur=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
             if version_lt ${version_cur} ${version_new}; then
-                echo_erro "$(printf "[%13s]: %-13s" "Version" "local: { ${version_cur} }  install: { ${version_new} }")"
+                echo_erro "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
                 return 1
             fi
         fi
@@ -214,18 +214,23 @@ function install_from_rpm
             ${SUDO} rpm -e --nodeps ${system_rpms[0]} 
         fi
 
-        echo_info "$(printf "[%13s]: %-50s   Have installed: %s" "Will install" "${full_name}" "${system_rpms[*]}")"
-        if bool_v "${force}";then
-            ${SUDO} rpm -ivh --nodeps --force ${rpm_file} 
+        if [ ${#system_rpms[*]} -gt 0 ];then
+            echo_info "$(printf "[%13s]: { %-50s }   Have installed: %s" "Will install" "${full_name}" "${system_rpms[*]}")"
         else
-            ${SUDO} rpm -ivh --nodeps ${rpm_file} 
+            echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${full_name}")"
+        fi
+
+        if bool_v "${force}";then
+            ${SUDO} rpm -ivh --nodeps --force ${full_name} 
+        else
+            ${SUDO} rpm -ivh --nodeps ${full_name} 
         fi
 
         if [ $? -ne 0 ]; then
-            echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${rpm_file}")"
+            echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${full_name}")"
             return 1
         else
-            echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${rpm_file}")"
+            echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${full_name}")"
         fi
     done
 

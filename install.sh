@@ -144,7 +144,7 @@ function update_check
         do
             local file_name=$(path2fname ${full_nm})
             local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
-            echo_info "$(printf "[%13s]: %-13s" "Version" "local: { ${version_cur} }  install: { ${version_new} }")"
+            echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
             if version_lt ${version_cur} ${version_new}; then
                 cd ${local_dir}
                 return 0
