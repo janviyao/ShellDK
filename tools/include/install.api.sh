@@ -194,9 +194,9 @@ function install_from_rpm
         local system_rpms=($(rpm -qa | grep -P "${app_name}\d+"))
         if [ ${#system_rpms[*]} -gt 1 ];then
             if bool_v "${force}";then
-                echo_warn "$(printf "[%13s]: { %-13s } force, but system multi-installed" "Install" "${full_name}")"
+                echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Install" "${full_name}")"
             else
-                echo_warn "$(printf "[%13s]: { %-13s } skip, system multi-installed" "Install" "${full_name}")"
+                echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Install" "${full_name}")"
                 continue
             fi
         fi
@@ -212,14 +212,15 @@ function install_from_rpm
 
         if [ ${#system_rpms[*]} -eq 1 ];then
             ${SUDO} rpm -e --nodeps ${system_rpms[0]} 
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Uninstall" "${system_rpms[0]}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Uninstall" "${system_rpms[0]}")"
+            fi
         fi
-
-        if [ ${#system_rpms[*]} -gt 0 ];then
-            echo_info "$(printf "[%13s]: { %-50s }   Have installed: %s" "Will install" "${full_name}" "${system_rpms[*]}")"
-        else
-            echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${full_name}")"
-        fi
-
+        
+        echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${full_name}")"
         if bool_v "${force}";then
             ${SUDO} rpm -ivh --nodeps --force ${full_name} 
         else
@@ -315,7 +316,7 @@ function rpm_install
     for rpm_file in ${install_list[*]}    
     do
         if ! string_match "${rpm_file}" ".rpm" 2;then
-            echo_debug "$(printf "[%13s]: { %-13s } skip" "Install" "${rpm_file}")"
+            echo_debug "$(printf "[%13s]: { %-13s } skiped" "Install" "${rpm_file}")"
             continue
         fi
 
