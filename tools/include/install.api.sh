@@ -203,9 +203,9 @@ function install_from_rpm
         
         if ! bool_v "${force}";then
             local version_new=${versions[0]}
-            local version_cur=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
-            if version_lt ${version_cur} ${version_new}; then
-                echo_erro "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
+            local version_sys=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
+            if version_gt ${version_sys} ${version_new}; then
+                echo_erro "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
                 return 1
             fi
         fi
