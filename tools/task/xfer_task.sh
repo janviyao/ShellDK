@@ -21,6 +21,10 @@ function do_rsync
         return 1
     fi
 
+    if [[ $(string_end "${xfer_src}" 1) == '/' ]]; then
+        xfer_src=$(string_trim "${xfer_src}" "/" 2)
+    fi
+
     local sync_src=${xfer_src}
     local sync_des=${xfer_des}
     local sync_cmd="cd ."
