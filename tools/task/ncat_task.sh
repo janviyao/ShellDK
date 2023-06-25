@@ -13,22 +13,26 @@ function local_port_available
         ss -tln | awk '{ print $4 }' &> ${ss_file}
     fi
 
-    if grep -F ":${port}" ${ss_file} &> /dev/null;then
-        echo_file "${LOG_DEBUG}" "port[$1] used"
-        return 1
-    else
-        if file_expire "${ns_file}" 30;then
-            netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
+    if can_access "${ss_file}";then
+        if grep -F ":${port}" ${ss_file} &> /dev/null;then
+            echo_file "${LOG_DEBUG}" "port[$1] used"
+            return 1
         fi
+    fi
 
+    if file_expire "${ns_file}" 30;then
+        netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
+    fi
+
+    if can_access "${ns_file}";then
         if grep -F ":${port}" ${ns_file} &> /dev/null;then
             echo_file "${LOG_DEBUG}" "port[$1] used"
             return 1
-        else
-            echo_file "${LOG_DEBUG}" "port[$1] avalible"
-            return 0
         fi
     fi
+
+    echo_file "${LOG_DEBUG}" "port[$1] avalible"
+    return 0
 }
 
 function ncat_port_gen
