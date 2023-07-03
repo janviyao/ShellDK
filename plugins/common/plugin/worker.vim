@@ -265,7 +265,7 @@ function! s:work_alloc(name) abort
         endif
         call s:lock_ops.mutex_unlock(a:name)
 
-        call LogPrint("esave", a:name." ring full, size=".worker_dic.ring_size." head=".head." tail=".tail)
+        "call LogPrint("esave", a:name." ring full, size=".worker_dic.ring_size." head=".head." tail=".tail)
         return -1
     endif 
     call s:lock_ops.mutex_unlock(a:name)

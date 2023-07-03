@@ -51,6 +51,14 @@ let s:map_table = {
             \   },
             \ }
 
+function! s:extend_uniq(list1, list2) abort
+    for item in a:list2
+        if index(a:list1, item) == -1
+            call add(a:list1, item)
+        endif
+    endfor
+endfunction
+
 function! s:get_key(module, value) abort
     call PrintArgs("2file", "map.get_key", a:module, a:value)
 
@@ -110,7 +118,7 @@ function! s:set_value(module, key, value, prev, next) abort
     if !has_key(info_dic, "next")
         let info_dic["next"]  = []
     endif
-    call extend(info_dic["next"], a:next)
+    call s:extend_uniq(info_dic["next"], a:next)
 
     call PrintDict("2file", "set_value map_table[".a:key."]", info_dic)
     return 0
@@ -202,7 +210,7 @@ function! s:unset_map(module, key, callback) abort
 
             if !empty(unset_item)
                 if !empty(unset_item["next"])
-                    call extend(stor_dic[okey]["next"], unset_item["next"])
+                    call s:extend_uniq(stor_dic[okey]["next"], unset_item["next"])
                 endif
             endif
             call a:callback(okey)
@@ -215,7 +223,7 @@ function! s:get_all_value(module, value_list, start = 0, end = 0)
 
     if empty(a:value_list)
         let root_list = s:get_root_value(a:module)
-        call extend(a:value_list, root_list)
+        call s:extend_uniq(a:value_list, root_list)
     endif
     call LogPrint("2file", a:module." get_all_value: ".string(a:value_list)." start: ".a:start." end: ".a:end)
 
@@ -275,7 +283,9 @@ function! s:get_next_value(module, key) abort
         let next_list = stor_dic[a:key]["next"]
         for okey in next_list
             if has_key(stor_dic, okey) 
-                call add(res_list, stor_dic[okey]["value"])
+                if index(res_list, stor_dic[okey]["value"]) == -1
+                    call add(res_list, stor_dic[okey]["value"])
+                endif
             else
                 call LogPrint("error", "module: ".a:module." key: ".okey." not map")
             endif
@@ -329,7 +339,10 @@ function! s:get_next_key(module, key) abort
     if has_key(stor_dic, a:key) 
         let next_list = stor_dic[a:key]["next"]
         for okey in next_list
-            call add(res_list, okey)
+            if index(res_list, okey) == -1
+                call add(res_list, okey)
+            endif
+
             if !has_key(stor_dic, okey) 
                 call LogPrint("2file", "module: ".a:module." key: ".okey." not map")
             endif
