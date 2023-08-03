@@ -28,6 +28,7 @@ function can_access
     fi
 
     if match_regex "${fname}" "\*$";then
+        local file
         for file in ${fname}
         do
             if match_regex "${file}" "\*$";then
@@ -196,6 +197,7 @@ function file_get
     
     if bool_v "${is_reg}";then
         local line_nrs=($(file_linenr "${xfile}" "${string}" true))
+        local line_nr
         for line_nr in ${line_nrs[*]}
         do
             local content=$(sed -n "${line_nr}p" ${xfile})
@@ -478,6 +480,7 @@ function file_linenr
     fi
 
     if [ ${#line_nrs[*]} -gt 0 ];then
+        local line_nr
         for line_nr in ${line_nrs[*]}
         do
             echo "${line_nr}"
@@ -518,6 +521,7 @@ function file_range_linenr
     fi
 
     if [ ${#line_nrs[*]} -gt 0 ];then
+        local line_nr
         for line_nr in ${line_nrs[*]}
         do
             echo "${line_nr}"
@@ -548,6 +552,8 @@ function file_range
     local line_nrs2=($(file_linenr "${xfile}" "${string2}" "${is_reg}"))
     
     local -a range_array
+    local line_nr1
+    local line_nr2
     for line_nr1 in ${line_nrs1[*]}
     do
         for line_nr2 in ${line_nrs2[*]}
@@ -559,6 +565,7 @@ function file_range
     done
     
     if [ ${#range_array[*]} -gt 0 ];then
+        local range
         for range in ${range_array[*]}
         do
             echo "${range}"
@@ -664,6 +671,7 @@ function file_count
 
     local -i index=0
     local -a c_array=($(echo ""))
+    local file
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then
@@ -705,6 +713,7 @@ function file_size
 
     local -i index=0
     local -a c_array=($(echo ""))
+    local file
     for file in ${f_array[*]}
     do
         if ! test -r ${file};then

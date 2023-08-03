@@ -66,6 +66,7 @@ function array_has
         return 1
     fi
 
+    local item
     for item in ${array[*]}
     do
         if [[ ${item} == ${value} ]];then
@@ -104,6 +105,7 @@ function array_index
 
 function array_cmp
 {
+    local idx=0
     local array1=($1)
     local array2=($2)
 
@@ -295,6 +297,7 @@ function select_one
         return 1
     fi
 
+    local item
     local index=1
     for item in ${array[*]}
     do

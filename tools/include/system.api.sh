@@ -82,6 +82,7 @@ function sshto
         fi
     fi
 
+    local key
     if [ -z "${des_key}" ];then
         local -a select_array
         for key in ${!ip_map[*]}
@@ -360,6 +361,7 @@ function linux_net
     local col_width1="28"
     local col_width2="18"
 
+    local ndev
     if can_access "ethtool";then
         local ip_array=($(get_hosts_ip))
         local half_wd=$((col_width1/2 - 3))
@@ -541,6 +543,7 @@ function du_find
 
     local -A size_map
     local dir_arr=($(sudo_it "find ${dpath} -maxdepth 1 -type d"))
+    local sub_dir
     for sub_dir in ${dir_arr[*]}
     do
         if [[ ${dpath} == ${sub_dir} ]];then

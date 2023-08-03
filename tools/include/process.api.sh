@@ -232,6 +232,7 @@ function process_cmdline
     local pid="$1"
 
     local -a pid_array=($(process_name2pid "${pid}"))
+    local ppid
     for ppid in ${pid_array[*]}
     do
         echo "$(ps -eo pid,cmd | grep -P "^\s*${ppid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
@@ -311,6 +312,7 @@ function thread_info
     index_map["CPU"]="%-3s %-3d 38"
     index_map["CPU-U"]="%-5s %4.1f x"
 
+    local header
     if bool_v "${show_header}"; then
         for header in ${header_array[*]}
         do
@@ -325,6 +327,7 @@ function thread_info
     for process in ${pid_array[*]}
     do
         local -a tid_array=($(process_subthread ${process}))
+        local tid
         for tid in ${tid_array[*]}
         do
             local -a pinfo=($(cat /proc/${process}/stat))
@@ -397,6 +400,8 @@ function process_info
 
     local is_header=${show_header}
     local -a all_pids
+    local pid
+    local x_proc
     for x_proc in ${x_list[*]}
     do
         local -a pid_array=($(process_name2pid ${x_proc}))    
@@ -456,9 +461,10 @@ function process_ptree
         fi
 
         local -a sub_array=($(process_subprocess "${process}"))    
-        for process in ${sub_array[*]}
+        local subp
+        for subp in ${sub_array[*]}
         do
-            process_ptree "${process}" "${show_thread}" "${show_header}"
+            process_ptree "${subp}" "${show_thread}" "${show_header}"
         done
     done
  
@@ -492,10 +498,11 @@ function process_pptree
         if [ ${#ppid_array[*]} -gt 0 ];then
             unset ppid_array[0]
         fi
-
-        for process in ${ppid_array[*]}
+        
+        local pproc
+        for pproc in ${ppid_array[*]}
         do
-            process_info "${process}" "${show_thread}" "${show_header}"
+            process_info "${pproc}" "${show_thread}" "${show_header}"
         done
     done
 
@@ -512,6 +519,7 @@ function process_cpu2
     fi
     
     printf "%-8s %s\n" "PID" "Process"
+    local cpu
     for cpu in ${cpu_list[*]}
     do
         if ! is_integer "${cpu}";then
@@ -520,6 +528,7 @@ function process_cpu2
         fi
         
         local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$2 == ${cpu}) print \$1 }")
+        local pid
         for pid in ${pid_list[*]}
         do
             printf "%-8d %s\n" "${pid}" "$(process_pid2name "${pid}")"
@@ -538,6 +547,7 @@ function process_2cpu
         return 1
     fi
     
+    local proc
     for proc in ${proc_list[*]}
     do
         local pid_list=($(process_name2pid "${proc}"))
@@ -545,7 +555,8 @@ function process_2cpu
             echo_erro "process: { ${proc} } invalid"
             continue
         fi
-
+        
+        local pid
         for pid in ${pid_list[*]}
         do
             local cpu_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$1 == ${pid}) print \$2 }")

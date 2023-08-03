@@ -19,6 +19,7 @@ function section_line_range
         return 1
     fi 
 
+    local range
     local -a range_array
     local sec_linenr_array=($(file_range "${sec_file}" "\[${sec_name}\]" "\[\w+\]" true))
     if [ ${#sec_linenr_array[*]} -ge 1 ];then
@@ -85,6 +86,7 @@ function section_key_has
         return 1
     fi 
     
+    local range
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
     if [ ${#line_array[*]} -gt 0 ];then
         for range in ${line_array[*]}
@@ -117,6 +119,7 @@ function section_val_has
         return 1
     fi 
     
+    local range
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
     if [ ${#line_array[*]} -gt 0 ];then
         for range in ${line_array[*]}
@@ -148,6 +151,8 @@ function section_line_nr
         return 1
     fi 
 
+    local range
+    local line_nr
     local -a line_nrs
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
     if [ ${#line_array[*]} -gt 0 ];then
@@ -215,6 +220,7 @@ function section_set
         fi
         
         if [ ${#line_array[*]} -eq 1 ];then
+            local range
             for range in ${line_array[*]}
             do
                 local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
@@ -250,6 +256,7 @@ function section_get_keys
         return 1
     fi 
     
+    local range
     local -a key_array
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
     if [ ${#line_array[*]} -gt 0 ];then
@@ -279,6 +286,7 @@ function section_get_keys
     fi
     
     if [ ${#key_array[*]} -gt 0 ];then
+        local key_str
         for key_str in ${key_array[*]}
         do
             echo "${key_str}"
@@ -437,6 +445,7 @@ function section_del_section
     
     local line_array=($(section_line_range "${sec_file}" "${sec_name}"))
     if [ ${#line_array[*]} -gt 0 ];then
+        local range
         for range in ${line_array[*]}
         do
             local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
@@ -468,6 +477,7 @@ function section_del_key
     
     local line_nrs=($(section_line_nr "${sec_file}" "${sec_name}" "${key_str}"))
     if [ ${#line_nrs[*]} -gt 0 ];then
+        local line_nr
         for line_nr in ${line_nrs[*]}
         do
             if ! file_del "${sec_file}" "${line_nr}" false;then

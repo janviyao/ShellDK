@@ -12,6 +12,7 @@ function regex_2str
 
     local result="${regex}"
     local reg_chars=('\/' '\\' '\*' '\+' '\.' '\[' '\]' '\{' '\}' '\(' '\)')
+    local char
     for char in ${reg_chars[*]}
     do
         if [[ ${regex} =~ ${char} ]];then
@@ -49,6 +50,7 @@ function regex_perl2posix
 
     local result="${regex}"
     local reg_chars=('\+' '\?' '\{' '\}' '\(' '\)' '|')
+    local char
     for char in ${reg_chars[*]}
     do
         if [[ ${regex} =~ ${char} ]];then

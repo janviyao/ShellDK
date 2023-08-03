@@ -172,6 +172,7 @@ function install_from_rpm
     # rpm -qf /usr/bin/nc #query nc rpm package
     # rpm -ql xxx.rpm     #query rpm package contents
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${f_reg}"))
+    local rpm_file
     for rpm_file in ${local_arr[*]}    
     do
         local full_name=$(path2fname ${rpm_file})
@@ -243,6 +244,7 @@ function tar_decompress
     local -a tar_array=($@)
     local -a dir_array
 
+    local file
     for file in ${tar_array[*]}    
     do
         if string_match "${file}" ".tar.gz" 2;then
@@ -255,6 +257,8 @@ function tar_decompress
 
         local fprefix=$(string_regex "${file}" "^[0-9a-zA-Z]+")
         local find_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+
+        local dir
         for dir in ${find_arr[*]}    
         do
             local real_dir=$(path2fname ${dir})
@@ -275,12 +279,14 @@ function install_from_tar
     fi
 
     local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
+    local tar_file
     for tar_file in ${local_arr[*]}    
     do
         local full_name=$(path2fname ${tar_file})
         echo_info "$(printf "[%13s]: %-50s" "Will install" "${full_name}")"
 
         local dir_arr=($(tar_decompress "${full_name}"))
+        local tar_dir
         for tar_dir in ${dir_arr[*]}    
         do
             install_from_make "${tar_dir}"
@@ -313,6 +319,7 @@ function rpm_install
         install_list=($(ls))
     fi
 
+    local rpm_file
     for rpm_file in ${install_list[*]}    
     do
         if ! string_match "${rpm_file}" ".rpm" 2;then

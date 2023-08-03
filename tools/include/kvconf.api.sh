@@ -45,6 +45,7 @@ function kvconf_has_val
         return 1
     fi
 
+    local old_val
     for old_val in ${line_cnts[*]}
     do
         if [[ "${old_val}" =~ "${GBL_COL_SPF}" ]];then
@@ -93,7 +94,7 @@ function kvconf_set
         if [ ${#line_nrs[*]} -gt 1 ];then
             echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
         fi
-
+    
         for line_nr in ${line_nrs[*]}
         do
             file_change "${kv_file}" "${key_str}${KV_FS}${val_str}" "${line_nr}"
@@ -132,6 +133,7 @@ function kvconf_get
         return 1
     fi
 
+    local line_cnt
     for line_cnt in ${line_cnts[*]}
     do
         if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
@@ -172,10 +174,10 @@ function kvconf_val_append
             echo_warn "kvconf_set { $@ }: has multiple duplicate key: ${key_str}"
         fi
 
-        local line_cnt=""
+        local line_nr
         for line_nr in ${line_nrs[*]}
         do
-            line_cnt=$(file_get "${kv_file}" "${line_nr}" false)
+            local line_cnt=$(file_get "${kv_file}" "${line_nr}" false)
             if [ $? -ne 0 ];then
                 echo_erro "kvconf_val_append { $@ }"
                 return 1
@@ -329,6 +331,7 @@ function kvconf_line_nr
     fi
 
     if [ ${#line_nrs[*]} -gt 0 ];then
+        local line_nr
         for line_nr in ${line_nrs[*]}
         do
             echo "${line_nr}"

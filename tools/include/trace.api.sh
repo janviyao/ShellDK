@@ -14,6 +14,7 @@ function print_backtrace
     if [ ${#FUNCNAME[*]} -gt 0 ];then
         echo "========== Backtrace start: =========="
         echo ""
+        local i
         for i in $(seq 1 $((${#FUNCNAME[*]} - 1)))
         do
             local func="${FUNCNAME[$i]}"

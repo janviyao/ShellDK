@@ -97,6 +97,7 @@ FUNC_MAP["hostname"]="inst_hostname"
 
 function do_action
 {     
+    local idx=0
     local check_arr=($@)
 
     for usr_cmd in ${check_arr[*]};
