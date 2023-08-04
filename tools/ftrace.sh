@@ -119,7 +119,12 @@ $SUDO "echo funcgraph-abstime > ${trace_dir}/trace_options"
 #echo nofuncgraph-tail > ${trace_dir}/trace_options
 $SUDO "echo funcgraph-tail > ${trace_dir}/trace_options"
 
+# enable all events
+$SUDO "echo 1 > ${trace_dir}/events/enable"
+
 $SUDO "echo ${ftrace_pid} > ${trace_dir}/set_ftrace_pid"
+$SUDO "echo ${ftrace_pid} > ${trace_dir}/set_event_pid"
+
 $SUDO "echo 1 > ${trace_dir}/tracing_on"
 
 echo_info "wait { $(process_pid2name "${ftrace_pid}")[${ftrace_pid}] } exit ..."
