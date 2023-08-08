@@ -56,6 +56,22 @@ readonly GBL_SPF1="#;"
 readonly GBL_SPF2="#."
 readonly GBL_SPF3="#,"
 
+function _my_bashrc_deps
+{
+    local bin_dir="${HOME}/.local/bin"
+    local app_dir="${MY_VIM_DIR}/tools/app"
+    local cur_dir=$(pwd)
+
+    if ! can_access "chk_passwd";then
+        cd ${app_dir}
+        gcc chk_passwd.c -g -lcrypt -o chk_passwd
+        mkdir -p ${bin_dir}
+        mv -f chk_passwd ${bin_dir}
+        cd ${cur_dir}
+    fi
+}
+_my_bashrc_deps
+
 function _my_bash_exit
 { 
     if [ -f ${HOME}/.bash_exit ];then
