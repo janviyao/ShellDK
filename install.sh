@@ -522,14 +522,18 @@ function inst_vim
     cd vim*/
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-    ./configure --prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset \
-        --enable-largefile \
-        --enable-pythoninterp=yes \
-        --disable-gui --disable-netbeans &>> build.log
-        #--enable-python3interp=yes \
-        #--enable-luainterp=yes \
+    local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
+    conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
+    #conf_paras="${conf_paras} --enable-luainterp=yes"
+    if can_access "python3";then
+        conf_paras="${conf_paras} --enable-python3interp=yes "
+    else
+        conf_paras="${conf_paras} --enable-pythoninterp=yes"
+    fi
+
+    ./configure ${conf_paras} &>> build.log
     if [ $? -ne 0 ]; then
-        echo_erro "Configure: vim fail"
+        echo_erro "Configure: vim fail: ${conf_paras}"
         exit -1
     fi
 
