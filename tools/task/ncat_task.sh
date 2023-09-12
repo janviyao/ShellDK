@@ -142,31 +142,31 @@ function ncat_send_msg
         ncat_addr="127.0.0.1"
     fi
 
-    if can_access "nc";then
-        #if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
-        #    echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
-        #    while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
-        #    do
-        #        echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] online"
-        #        sleep 1
-        #    done
-        #fi
-        local try_count=0
-        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
-        while test $? -ne 0
-        do
-            sleep 0.1
-            let try_count++
-            if [ ${try_count} -ge 300 ];then
-                echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
-                try_count=0
-            fi
-            (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
-        done
-    else
-        echo_erro "ncat donot installed"
+    if ! can_access "nc";then
+        echo_file "${LOG_ERRO}" "ncat donot installed"
         return 1
     fi
+
+    #if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
+    #    echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
+    #    while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
+    #    do
+    #        echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] online"
+    #        sleep 1
+    #    done
+    #fi
+    local try_count=0
+    (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+    while test $? -ne 0
+    do
+        sleep 0.1
+        let try_count++
+        if [ ${try_count} -ge 300 ];then
+            echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
+            try_count=0
+        fi
+        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+    done
 
     return 0
 }
@@ -275,6 +275,11 @@ function ncat_wait_resp
     local ncat_body="$1"
     local timeout_s="${2:-10}"
 
+    if ! can_access "nc";then
+        echo_file "${LOG_ERRO}" "ncat donot installed"
+        return 1
+    fi
+
     # the first pid is shell where ppid run
     local self_pid=$$
     if can_access "ppid";then
@@ -282,7 +287,7 @@ function ncat_wait_resp
         local self_pid=${ppids[1]}
     fi
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
-
+ 
     echo_debug "make ack: ${ack_pipe}"
     #can_access "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
@@ -333,7 +338,7 @@ function wait_event
         echo_erro "\nUsage: [$@]\n\$1: event_uid\n\$2: event_msg"
         return 1
     fi
-
+    
     local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
     ncat_wait_resp "${event_body}" "${MAX_TIMEOUT}"
 
