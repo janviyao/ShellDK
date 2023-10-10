@@ -25,7 +25,16 @@ done
 save_dir=${tmp_dir}
 mkdir -p ${save_dir}
 
-trace_dir=$(sed -ne 's/^tracefs \(.*\) tracefs.*/\1/p' /proc/mounts)
+if can_access "/sys/kernel/debug/tracing/trace";then
+    trace_dir="/sys/kernel/debug/tracing"
+else
+    sudo_it "mount -t tracefs tracefs /sys/kernel/debug/tracing"
+    trace_dir=$(sed -ne 's/^tracefs \(.*\) tracefs.*/\1/p' /proc/mounts)
+    if [ -z "${trace_dir}" ];then
+        echo_erro " mount tracefs fail"
+        exit 1
+    fi
+fi
 
 if [ $# -eq 1 ];then
     if is_integer "$1";then
@@ -67,56 +76,88 @@ done
 
 $SUDO "echo 0 > ${trace_dir}/tracing_on"
 $SUDO "echo nop > ${trace_dir}/current_tracer"
+$SUDO "echo > ${trace_dir}/trace"
 
-#echo function > ${trace_dir}/current_tracer
-# 当current_tracer为function时，设备func_stack_trace会记录每个函数调用栈，与set_ftrace_filter配合使用，否则影响系统性能
-#echo nofunc_stack_trace > ${trace_dir}/trace_options
-#echo func_stack_trace > ${trace_dir}/trace_options
-
+#$SUDO "echo nop > ${trace_dir}/current_tracer"
+#$SUDO "echo function > ${trace_dir}/current_tracer"
 $SUDO "echo function_graph > ${trace_dir}/current_tracer"
 
-# 增加支持的trace function
-# echo 'hrtimer_*' > ${trace_dir}/set_ftrace_filter
-# echo 'hrtimer_*' > ${trace_dir}/set_ftrace_notrace
+cur_tracer=$(cat ${trace_dir}/current_tracer)
+if [[ "${cur_tracer}" == "nop" ]];then
+    # available_events： 当前支持的所有静态trace event
+    # events/： events/目录下第一级目录是模块目录，第二级目录时事件目录
+    # set_event：用于设置打开事件，也可以查询
+    # set_event_pid：设置进程pid
+    # 跟踪静态事件一般把current_tracer设置为nop
 
-# 想看某个函数和他所有孩子的graph trace, 想跟踪所有的函数，清除filter配置
-# echo sys_open > ${trace_dir}/set_graph_function
-$SUDO "echo > ${trace_dir}/set_graph_function"
+    $SUDO "echo syscalls > ${trace_dir}/set_event"
+    $SUDO "echo ext4_releasepage >> ${trace_dir}/set_event"
+    $SUDO "echo ext4_mballoc_alloc >> ${trace_dir}/set_event"
+    
+    # kprobe_events：内核函数动态trace事件的设置和查询
+    # kprobe_profile：动态事件触发的次数
+    # kprobe需要对应内核ko驱动支持，参数tools/kprobe/*
+    # $SUDO "echo 'p:myprobe xxx_set_dma_addr base_addr=%x0 ds_ch=%x1 y_addr=%x2 cb_addr=%x' > ${trace_dir}/kprobe_events"
+    # if can_access "${trace_dir}/events/kprobes/enable";then
+    #     $SUDO "echo 1 > ${trace_dir}/events/kprobes/enable"
+    # fi
 
-# task/pid字段，用来显示执行进程的cmdline和pid。默认disable
-#echo nofuncgraph-proc > ${trace_dir}/trace_options
-$SUDO "echo funcgraph-proc > ${trace_dir}/trace_options"
+    # uprobe_events：用户空间函数动态trace事件的设置和查询
+    # uprobe_profile：动态事件触发的次数
+    # 以下0x114a是app elf对应位置代码段偏移，例如readelf -s main | grep add_func得到对应函数调用位置的代码段地址
+    $SUDO "echo 'p:sample_uprobe /root/test/app:0x114a %di %si' >  /sys/kernel/debug/tracing/uprobe_events"
+    $SUDO "echo 'r:sample_uretprobe /root/Make/main:0x114a %ax' >>  /sys/kernel/debug/tracing/uprobe_events"
+    $SUDO "echo 1 > /sys/kernel/tracing/events/uprobes/sample_uprobe/enable"
+    $SUDO "echo 1 > /sys/kernel/tracing/events/uprobes/sample_uretprobe/enable"
+    
+elif [[ "${cur_tracer}" == "function" ]];then
+    # 当current_tracer为function时，设置func_stack_trace会记录每个函数调用栈，与set_ftrace_filter配合使用，否则影响系统性能
+    #$SUDO "echo nofunc_stack_trace > ${trace_dir}/trace_options"
+    $SUDO "echo func_stack_trace > ${trace_dir}/trace_options"
 
-# 在每一个追踪函数后面打印调用栈
-#echo nofuncgraph-overrun > ${trace_dir}/trace_options
-#echo funcgraph-overrun > ${trace_dir}/trace_options
+    # 增加支持的trace function
+    #$SUDO "echo 'hrtimer_*' > ${trace_dir}/set_ftrace_notrace"
+    $SUDO "echo 'sys_*' > ${trace_dir}/set_ftrace_filter"
+elif [[ "${cur_tracer}" == "function_graph" ]];then
+    # 想看某个函数和他所有孩子的graph trace, 想跟踪所有的函数，清除filter配置
+    #$SUDO "echo sys_open > ${trace_dir}/set_graph_function"
+    $SUDO "echo > ${trace_dir}/set_graph_function"
 
-# 当某一函数调用超过一定次数时，在头部描述部分显示delay marker
-#echo nofuncgraph-overhead > ${trace_dir}/trace_options
-#echo funcgraph-overhead > ${trace_dir}/trace_options
+    # task/pid字段，用来显示执行进程的cmdline和pid。默认disable
+    #$SUDO "echo nofuncgraph-proc > ${trace_dir}/trace_options"
+    $SUDO "echo funcgraph-proc > ${trace_dir}/trace_options"
+
+    # 在每一个追踪函数后面打印调用栈
+    #$SUDO "echo nofuncgraph-overrun > ${trace_dir}/trace_options"
+    #$SUDO "echo funcgraph-overrun > ${trace_dir}/trace_options"
+
+    # 当某一函数调用超过一定次数时，在头部描述部分显示delay marker
+    #$SUDO "echo nofuncgraph-overhead > ${trace_dir}/trace_options"
+    #$SUDO "echo funcgraph-overhead > ${trace_dir}/trace_options"
+fi
 
 # 同时也监控fork子进程
-#echo nofunction-fork > ${trace_dir}/trace_options
-#echo function-fork > ${trace_dir}/trace_options
+#$SUDO "echo nofunction-fork > ${trace_dir}/trace_options"
+$SUDO "echo function-fork > ${trace_dir}/trace_options"
 
 # function call time 包含call期间scheduled out时间
-#echo nosleep-time > ${trace_dir}/trace_options
-#echo sleep-time > ${trace_dir}/trace_options
+#$SUDO "echo nosleep-time > ${trace_dir}/trace_options"
+#$SUDO "echo sleep-time > ${trace_dir}/trace_options"
 
 # 运行cpu的编号
-#echo nofuncgraph-cpu > ${trace_dir}/trace_options
+#$SUDO "echo nofuncgraph-cpu > ${trace_dir}/trace_options"
 $SUDO "echo funcgraph-cpu > ${trace_dir}/trace_options"
 
 # 函数执行时间。在函数的闭括号行显示，或者在叶子函数的同一行显示。默认enable
-#echo nofuncgraph-duration > ${trace_dir}/trace_options
+#$SUDO "echo nofuncgraph-duration > ${trace_dir}/trace_options"
 $SUDO "echo funcgraph-duration > ${trace_dir}/trace_options"
 
 # 绝对时间戳字段：
-#echo nofuncgraph-abstime > ${trace_dir}/trace_options
+#$SUDO "echo nofuncgraph-abstime > ${trace_dir}/trace_options"
 $SUDO "echo funcgraph-abstime > ${trace_dir}/trace_options"
 
 # 在函数结束括号处显示函数名。这样方便使用grep找出函数的执行时间，默认disable：
-#echo nofuncgraph-tail > ${trace_dir}/trace_options
+#$SUDO "echo nofuncgraph-tail > ${trace_dir}/trace_options"
 $SUDO "echo funcgraph-tail > ${trace_dir}/trace_options"
 
 # enable all events
