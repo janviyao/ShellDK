@@ -62,6 +62,9 @@ function construct_pid
         if [ ${#pid_array[*]} -gt 0 ];then
             echo "${pid_array[0]}"
             return 0
+        else
+            echo "${process_x}"
+            return 1
         fi
     else
         if [ ${para_cnt} -eq 1 ];then
@@ -81,6 +84,51 @@ function construct_pid
     fi
 
     return 1
+}
+
+function perf_list
+{
+    local item1="  hardware: List of pre-defined hardware events"
+    local item2="  software: List of pre-defined software events"
+    local item3="     cache: List of pre-defined hardware cache events"
+    local item4="       pmu: List of pre-defined kernel PMU events"
+    local item5="tracepoint: List of pre-defined tracepoint events"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}")
+    select_x=$(string_split "${select_x}" ":" 1)
+    select_x=$(string_trim "${select_x}" " ")
+
+    local perf_para="${select_x}" 
+
+    echo_info "perf list ${perf_para}"
+    sudo_it "perf list ${perf_para}"
+    return 0
+}
+
+function perf_trace
+{
+    local process_x="$1"
+    local perf_save="$2"
+    local perf_pid=$(construct_pid ${process_x})
+
+    local perf_para=""
+    if is_integer "${perf_pid}";then
+        perf_para="-a -o ${perf_save}/perf.trace.log -p ${perf_pid}" 
+    else
+        if [ -n "${perf_pid}" ];then
+            perf_para="-a -o ${perf_save}/perf.trace.log -- ${perf_pid}" 
+        else
+            if [ -n "${process_x}" ];then
+                perf_para="-a -o ${perf_save}/perf.trace.log -- ${process_x}" 
+            else
+                perf_para="-a -o ${perf_save}/perf.trace.log" 
+            fi
+        fi
+    fi
+
+    mkdir -p ${perf_save}
+    echo_info "perf trace ${perf_para}"
+    sudo_it "perf trace ${perf_para}"
+    return 0
 }
 
 function perf_record
@@ -379,7 +427,26 @@ function perf_sched
     return 0
 }
 
+function perf_bench
+{
+    local item1="sched: Scheduler and IPC mechanisms"
+    local item2="  mem: Memory access performance"
+    local item3=" numa: NUMA scheduling and MM benchmarks"
+    local item4="futex: Futex stressing benchmarks"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}")
+    select_x=$(string_split "${select_x}" ":" 1)
+    select_x=$(string_trim "${select_x}" " ")
+
+    local perf_para="${select_x}" 
+
+    echo_info "perf bench ${perf_para} all"
+    sudo_it "perf bench ${perf_para} all"
+    return 0
+}
+
 perf_func=$(select_one \
+            "  list: List all symbolic event types" \
+            " trace: Like strace cmd, but it trace more" \
             "record: Run a command and record its profile into perf.data" \
             "report: Read perf.data (created by perf record) and display the profile" \
             "   top: System profiling tool" \
@@ -388,12 +455,19 @@ perf_func=$(select_one \
             "  lock: Analyze lock events" \
             "   mem: Profile memory accesses" \
             "  kmem: Tool to trace/measure kernel memory properties" \
-            " sched: Tool to trace/measure scheduler properties (latencies)")
+            " sched: Tool to trace/measure scheduler properties (latencies)" \
+            " bench: Benchmark subsystems access performance")
 perf_func=$(string_split "${perf_func}" ":" 1)
 perf_func=$(string_trim "${perf_func}" " ")
 #echo_info "chose { ${perf_func} }"
 
 case ${perf_func} in
+    "list")
+        perf_list
+        ;;
+    "trace")
+        perf_trace "${perf_obj}" "${save_dir}"
+        ;;
     "record")
         perf_record "${perf_obj}" "${save_dir}"
         ;;
@@ -420,6 +494,9 @@ case ${perf_func} in
         ;;
     "sched")
         perf_sched "${perf_obj}"
+        ;;
+    "bench")
+        perf_bench
         ;;
     "*")
         echo_erro "perf function { ${perf_func} } invalid"

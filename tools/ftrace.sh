@@ -83,6 +83,7 @@ $SUDO "echo > ${trace_dir}/trace"
 $SUDO "echo function_graph > ${trace_dir}/current_tracer"
 
 cur_tracer=$(cat ${trace_dir}/current_tracer)
+echo_info "current_tracer: ${cur_tracer}"
 if [[ "${cur_tracer}" == "nop" ]];then
     # available_events： 当前支持的所有静态trace event
     # events/： events/目录下第一级目录是模块目录，第二级目录时事件目录
@@ -128,13 +129,16 @@ elif [[ "${cur_tracer}" == "function_graph" ]];then
     $SUDO "echo funcgraph-proc > ${trace_dir}/trace_options"
 
     # 在每一个追踪函数后面打印调用栈
-    #$SUDO "echo nofuncgraph-overrun > ${trace_dir}/trace_options"
+    $SUDO "echo nofuncgraph-overrun > ${trace_dir}/trace_options"
     #$SUDO "echo funcgraph-overrun > ${trace_dir}/trace_options"
 
     # 当某一函数调用超过一定次数时，在头部描述部分显示delay marker
     #$SUDO "echo nofuncgraph-overhead > ${trace_dir}/trace_options"
     #$SUDO "echo funcgraph-overhead > ${trace_dir}/trace_options"
 fi
+
+$SUDO "echo nodisplay-graph > ${trace_dir}/trace_options"
+$SUDO "echo nostacktrace > ${trace_dir}/trace_options"
 
 # 同时也监控fork子进程
 #$SUDO "echo nofunction-fork > ${trace_dir}/trace_options"
