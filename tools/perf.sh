@@ -377,14 +377,16 @@ function perf_kmem
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
 
-    local perf_para=""
+    local perf_para="${select_x} -v --alloc --caller --slab --page --live"
     if [[ "${select_x}" == "record" ]];then
-        perf_para="${select_x} --kernel-callchains --slab --page --live ${process_x}" 
+        perf_para="${perf_para} ${process_x}" 
     elif [[ "${select_x}" == "stat" ]];then
-        local report_file=$(input_prompt "can_access" "input file" "$(acquire_result)")
-        perf_para="${select_x} --kernel-callchains --slab --page --live -i ${report_file}" 
-    else
-        perf_para="${select_x} --kernel-callchains --slab --page --live" 
+        if can_access "./perf.data";then
+            perf_para="${perf_para} -i perf.data" 
+        else
+            echo_erro "record file { perf.data } lost, please record firstly"
+            return 1
+        fi
     fi
 
     echo_info "perf kmem ${perf_para}"
