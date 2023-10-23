@@ -90,7 +90,7 @@ function install_from_make
         echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${work_dir} fail"
+            echo_erro " Autogen: ${work_dir} failed, check: $(real_path build.log)"
             cd ${currdir}
             return 1
         fi
@@ -103,7 +103,7 @@ function install_from_make
             mkdir -p build && cd build
             ../configure ${conf_para} &>> ../build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${work_dir} fail"
+                echo_erro " Configure: ${work_dir} failed, check: $(real_path ../build.log)"
                 cd ${currdir}
                 return 1
             fi
@@ -121,9 +121,9 @@ function install_from_make
             ./configure ${conf_para} &>> build.log
             if [ $? -ne 0 ]; then
                 mkdir -p build && cd build
-                ../configure ${conf_para} &>> build.log
+                ../configure ${conf_para} &>> ../build.log
                 if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${work_dir} fail"
+                    echo_erro " Configure: ${work_dir} failed, check: $(real_path ../build.log)"
                     cd ${currdir}
                     return 1
                 fi
@@ -141,7 +141,7 @@ function install_from_make
     export CFLAGS="-fcommon"
     make -j ${MAKE_TD} &>> build.log
     if [ $? -ne 0 ]; then
-        echo_erro " Make: ${work_dir} fail"
+        echo_erro " Make: ${work_dir} failed, check: $(real_path build.log)"
         cd ${currdir}
         return 1
     fi
@@ -150,7 +150,7 @@ function install_from_make
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
     ${SUDO} "make install &>> build.log"
     if [ $? -ne 0 ]; then
-        echo_erro " Install: ${work_dir} fail"
+        echo_erro " Install: ${work_dir} failed, check: $(real_path build.log)"
         cd ${currdir}
         return 1
     fi
