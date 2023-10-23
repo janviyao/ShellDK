@@ -101,7 +101,7 @@ function install_from_make
         ./configure ${conf_para} &>> build.log
         if [ $? -ne 0 ]; then
             mkdir -p build && cd build
-            ../configure ${conf_para} &>> build.log
+            ../configure ${conf_para} &>> ../build.log
             if [ $? -ne 0 ]; then
                 echo_erro " Configure: ${work_dir} fail"
                 cd ${currdir}
