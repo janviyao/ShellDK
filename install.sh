@@ -28,7 +28,7 @@ INST_GUIDE["tig"]="${CMD1};install_from_tar 'tig-.+\.tar\.gz';rm -fr tig-*/"
 #INST_GUIDE["ag"]="${CMD1};install_from_tar 'the_silver_searcher-.+\.tar\.gz';rm -fr the_silver_searcher-*/"
 INST_GUIDE["ag"]="${CMD1};install_from_rpm 'the_silver_searcher-.+\.rpm'"
 
-INST_GUIDE["glibc-2.18"]="${CMD1};install_from_tar 'glibc-2.18.tar.gz';rm -fr glibc-2.18/"
+INST_GUIDE["glibc-2.28"]="${CMD1};install_from_tar 'glibc-2.28.tar.xz';rm -fr glibc-2.28/"
 INST_GUIDE["glibc-common"]="${CMD1};install_from_rpm 'glibc-common-.+\.rpm'"
 
 INST_GUIDE["m4"]="${CMD1};install_from_tar 'm4-.+\.tar\.gz';rm -fr m4-*/"
@@ -91,8 +91,8 @@ FUNC_MAP["astyle"]="inst_astyle"
 FUNC_MAP["system"]="inst_system"
 FUNC_MAP["deps"]="inst_deps"
 FUNC_MAP["all"]="inst_deps inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
-FUNC_MAP["glibc2.18"]="inst_glibc"
-FUNC_MAP["gcc"]="inst_gcc"
+FUNC_MAP["glibc2.28"]="inst_glibc"
+FUNC_MAP["gcc4.9.2"]="inst_gcc"
 FUNC_MAP["hostname"]="inst_hostname"
 
 function do_action
@@ -172,8 +172,8 @@ function inst_usage
     echo "install.sh -o tig        @install tig package"
     echo "install.sh -o astyle     @install astyle package"
     echo "install.sh -o ack        @install ack package"
-    echo "install.sh -o gcc        @install gcc package"
-    echo "install.sh -o glibc2.18  @install glibc2.18 package"
+    echo "install.sh -o gcc4.9.2   @install gcc package"
+    echo "install.sh -o glibc2.28  @install glibc2.28 package"
     echo "install.sh -o system     @configure run system: linux & windows"
     echo "install.sh -o deps       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
@@ -445,7 +445,7 @@ function inst_update
 
 function inst_deps
 {
-    local rid_arr=(glibc-2.18 glibc-common ctags cscope vim tig astyle ag)
+    local rid_arr=(glibc-2.28 glibc-common ctags cscope vim tig astyle ag)
     local -A inst_map
 
     for key in ${!INST_GUIDE[*]}
@@ -633,7 +633,7 @@ function inst_gcc
         return 1
     fi
 
-    local dir_array=($(tar_decompress "${tar_array[0]}"))
+    local dir_array=($(tar2do 0 "${tar_array[0]}"))
     if [ ${#dir_array[*]} -gt 1 ];then
         echo_erro "multiple tar dirs exist: ${dir_array[*]}"
         return 1
@@ -660,12 +660,12 @@ function inst_glibc
     cd ${ROOT_DIR}/deps
 
     local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
-    local version_new=2.18
+    local version_new=2.28
 
     if version_lt ${version_cur} ${version_new}; then
         # Install glibc
-        do_action "glibc-2.18"
-        do_action "glibc-common"
+        do_action "glibc-2.28"
+        #do_action "glibc-common"
 
         ${SUDO} "echo 'LANG=en_US.UTF-8' >> /etc/environment"
         ${SUDO} "echo 'LC_ALL=' >> /etc/environment"

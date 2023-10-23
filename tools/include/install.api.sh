@@ -239,22 +239,55 @@ function install_from_rpm
     return 0
 }
 
-function tar_decompress
+function tar2do
 {
-    local -a tar_array=($@)
-    local -a dir_array
+    local argc=$#
+    local iscompress="$1"
+    shift
+    local fpath="$1"
+    shift
+    local flist="$@"
 
-    local file
-    for file in ${tar_array[*]}    
-    do
-        if string_match "${file}" ".tar.gz" 2;then
-            tar -xzf ${file}
-        elif string_match "${file}" ".tar.bz2" 2;then
-            tar -xjf ${file}
-        elif string_match "${file}" ".tar" 2;then
-            tar -xf ${file}
+    if [ ${argc} -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: bool: whether to compress\n\$2: compress-package name\n\$3: files and directorys"
+        return 1
+    fi
+
+    if ! can_access "${fpath}";then
+        echo_erro "File { ${fpath} } lost"
+        return 1
+    fi
+
+    local options="-cf"
+    if ! bool_v "${iscompress}";then
+        options="-xf"
+        if [ -n "${flist}" ];then
+            if can_access "${flist}";then
+                flist="-C ${flist}"
+            else
+                flist=""
+            fi
         fi
+    fi
+    
+    local file=$(path2fname "${fpath}")
+    if string_match "${file}" ".tar.gz" 2;then
+        options="-z ${options}"
+    elif string_match "${file}" ".tar.bz2" 2;then
+        options="-j ${options}"
+    elif string_match "${file}" ".tar.xz" 2;then
+        options="-J ${options}"
+    elif string_match "${file}" ".tar" 2;then
+        options="${options}"
+    else
+        echo_erro "invalid compress-package name"
+        return 1
+    fi
 
+    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${flist}"
+    tar ${options} ${fpath} ${flist}
+
+    if ! bool_v "${iscompress}";then
         local fprefix=$(string_regex "${file}" "^[0-9a-zA-Z]+")
         local find_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
 
@@ -262,11 +295,11 @@ function tar_decompress
         for dir in ${find_arr[*]}    
         do
             local real_dir=$(path2fname ${dir})
-            dir_array[${#dir_array[*]}]="${real_dir}" 
+            echo "${real_dir}"
         done
-    done
+    fi
 
-    echo "${dir_array[*]}"
+    return $?
 }
 
 function install_from_tar
@@ -285,7 +318,7 @@ function install_from_tar
         local full_name=$(path2fname ${tar_file})
         echo_info "$(printf "[%13s]: %-50s" "Will install" "${full_name}")"
 
-        local dir_arr=($(tar_decompress "${full_name}"))
+        local dir_arr=($(tar2do 0 "${full_name}"))
         local tar_dir
         for tar_dir in ${dir_arr[*]}    
         do

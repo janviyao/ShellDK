@@ -377,7 +377,8 @@ function perf_kmem
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
 
-    local perf_para="${select_x} -v --alloc --caller --slab --page --live"
+    #local perf_para="${select_x} -v --alloc --caller --slab --page --live"
+    local perf_para="${select_x} -v --caller --slab --page --live"
     if [[ "${select_x}" == "record" ]];then
         perf_para="${perf_para} ${process_x}" 
     elif [[ "${select_x}" == "stat" ]];then
