@@ -526,9 +526,18 @@ function inst_vim
     conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
     #conf_paras="${conf_paras} --enable-luainterp=yes"
     if can_access "python3";then
+        if ! can_access "/usr/bin/python3-config";then
+            do_action "/usr/bin/python3-config"
+        fi
         conf_paras="${conf_paras} --enable-python3interp=yes "
-    else
+    elif can_access "python";then
+        if ! can_access "/usr/bin/python-config";then
+            do_action "/usr/bin/python-config"
+        fi
         conf_paras="${conf_paras} --enable-pythoninterp=yes"
+    else
+        echo_erro "python environment not ready"
+        exit -1
     fi
 
     ./configure ${conf_paras} &>> build.log
@@ -667,8 +676,11 @@ function inst_glibc
         do_action "glibc-2.28"
         #do_action "glibc-common"
 
-        ${SUDO} "echo 'LANG=en_US.UTF-8' >> /etc/environment"
-        ${SUDO} "echo 'LC_ALL=' >> /etc/environment"
+        ${SUDO} "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"
+        ${SUDO} "echo 'LC_ALL=en_US.UTF-8'   >> /etc/environment"
+        ${SUDO} "echo 'LANG=en_US.UTF-8'     >> /etc/environment"
+        ${SUDO} "echo 'LC_CTYPE=en_US.UTF-8' >> /etc/environment"
+
         ${SUDO} "localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null"
     fi
 }
