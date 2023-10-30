@@ -68,8 +68,9 @@ INST_GUIDE["/usr/lib64/libpcre.so"]="${CMD1};install_from_rpm 'pcre-devel.+\.rpm
 #INST_GUIDE["/usr/lib64/libpcrecpp.so.0"]="${CMD1};install_from_rpm 'pcre-cpp.+\.rpm'"
 #INST_GUIDE["/usr/lib64/libpcre16.so.0"]="${CMD1};install_from_rpm 'pcre-utf16.+\.rpm'"
 #INST_GUIDE["/usr/lib64/libpcre32.so.0"]="${CMD1};install_from_rpm 'pcre-utf32.+\.rpm'"
-INST_GUIDE["/usr/lib64/libncurses.so"]="${CMD1};install_from_rpm 'ncurses-devel.+\.rpm'"
+INST_GUIDE["/usr/share/terminfo/x/xterm"]="${CMD1};install_from_rpm 'ncurses-base.+\.rpm'"
 INST_GUIDE["/usr/lib64/libncurses.so.5"]="${CMD1};install_from_rpm 'ncurses-libs.+\.rpm'"
+INST_GUIDE["/usr/lib64/libncurses.so"]="${CMD1};install_from_rpm 'ncurses-devel.+\.rpm'"
 INST_GUIDE["/usr/lib64/libz.so.1"]="${CMD1};install_from_rpm 'zlib-1.+\.rpm'"
 INST_GUIDE["/usr/lib64/libz.so"]="${CMD1};install_from_rpm 'zlib-devel.+\.rpm'"
 INST_GUIDE["/usr/share/doc/perl-Data-Dumper"]="${CMD1};install_from_rpm 'perl-Data-Dumper-2.167.+\.rpm'"
@@ -538,6 +539,12 @@ function inst_vim
     else
         echo_erro "python environment not ready"
         exit -1
+    fi
+    
+    if can_access "/usr/lib64/libcurses.so";
+        do_action "/usr/share/terminfo/x/xterm"
+        do_action "/usr/lib64/libncurses.so.5"
+        do_action "/usr/lib64/libcurses.so"
     fi
 
     ./configure ${conf_paras} &>> build.log
