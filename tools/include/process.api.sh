@@ -202,6 +202,12 @@ function process_name2pid
             continue
         fi
 
+        res_array=($(pgrep ${proc}))
+        if [ ${#res_array[*]} -gt 0 ];then
+            pid_array=(${pid_array[*]} ${res_array[*]})
+            continue
+        fi
+
         local none_regex=$(regex_2str "${proc}")
         res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
         if [ ${#res_array[*]} -gt 0 ];then
@@ -451,7 +457,7 @@ function process_ptree
         return 1
     fi
     
-    local -a pid_array=($(process_name2pid "${process}"))    
+    local -a pid_array=($(process_name2pid "${process}"))
     for process in ${pid_array[*]}
     do
         process_info "${process}" "${show_thread}" "${show_header}"
@@ -485,7 +491,7 @@ function process_pptree
         process="$$"
     fi
     
-    local -a pid_array=($(process_name2pid "${process}"))    
+    local -a pid_array=($(process_name2pid "${process}"))
     for process in ${pid_array[*]}
     do
         process_info "${process}" "${show_thread}" "${show_header}"
@@ -503,6 +509,25 @@ function process_pptree
         do
             process_info "${pproc}" "${show_thread}" "${show_header}"
         done
+    done
+
+    return 0
+}
+
+function process_path
+{
+    local process="$1"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: pid"
+        return 1
+    fi
+
+    local -a pid_array=($(process_name2pid "${process}"))
+    for process in ${pid_array[*]}
+    do
+        local full_path=$(sudo_it readlink -f /proc/${process}/exe)
+        echo "${full_path}"
     done
 
     return 0
