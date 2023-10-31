@@ -168,8 +168,10 @@ function process_pid2name
         fi
     done
 
-    echo "${proc_list[*]}"
-    #echo "$(ps -q ${pid} -o comm=)"
+    if [ ${#proc_list[*]} -gt 0 ];then
+        echo "${proc_list[*]}"
+        #echo "$(ps -q ${pid} -o comm=)"
+    fi
     return 0
 }
 
@@ -202,11 +204,11 @@ function process_name2pid
             continue
         fi
 
-        res_array=($(pgrep ${proc}))
-        if [ ${#res_array[*]} -gt 0 ];then
-            pid_array=(${pid_array[*]} ${res_array[*]})
-            continue
-        fi
+        #res_array=($(pgrep ${proc}))
+        #if [ ${#res_array[*]} -gt 0 ];then
+        #    pid_array=(${pid_array[*]} ${res_array[*]})
+        #    continue
+        #fi
 
         local none_regex=$(regex_2str "${proc}")
         res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
@@ -227,8 +229,10 @@ function process_name2pid
             continue
         fi
     done
-
-    echo "${pid_array[*]}"
+    
+    if [ ${#pid_array[*]} -gt 0 ];then
+        echo "${pid_array[*]}"
+    fi
     return 0
 }
 
@@ -527,7 +531,9 @@ function process_path
     for process in ${pid_array[*]}
     do
         local full_path=$(sudo_it readlink -f /proc/${process}/exe)
-        echo "${full_path}"
+        if [ -n "${full_path}" ];then
+            echo "${full_path}"
+        fi
     done
 
     return 0
