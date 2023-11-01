@@ -618,7 +618,7 @@ function process_coredump
         sudo_it "kill -6 ${process}"
     done
     
-    local stor=$(/proc/sys/kernel/core_pattern)
+    local stor=$(cat /proc/sys/kernel/core_pattern)
     if [ -n "${stor}" ];then
         echo_info "Please check: ${stor}"
     else
