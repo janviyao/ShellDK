@@ -523,7 +523,7 @@ function process_path
     local process="$1"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid"
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
         return 1
     fi
 
@@ -573,7 +573,7 @@ function process_2cpu
     local proc_list=($@)
 
     if [ ${#proc_list[*]} -eq 0 ];then
-        echo_erro "please input [pid/process-name] parameters"
+        echo_erro "please input [pid|process-name] parameters"
         return 1
     fi
     
@@ -594,5 +594,36 @@ function process_2cpu
         done
     done
  
+    return 0
+}
+
+function process_coredump
+{
+    local process="$1"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
+        return 1
+    fi
+
+    local limit=$(ulimit -c)
+    if [[ ${limit} != "unlimited" ]];then
+        sudo_it "ulimit -c unlimited"
+    fi
+
+    local -a pid_array=($(process_name2pid "${process}"))
+    for process in ${pid_array[*]}
+    do
+        sudo_it "echo 0x7b > /proc/${process}/coredump_filter"
+        sudo_it "kill -6 ${process}"
+    done
+    
+    local stor=$(/proc/sys/kernel/core_pattern)
+    if [ -n "${stor}" ];then
+        echo_info "Please check: ${stor}"
+    else
+        echo_info "Please check: $(pwd)"
+    fi
+
     return 0
 }
