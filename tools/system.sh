@@ -36,7 +36,7 @@ function mem_statistics
     select_x=$(string_trim "${select_x}" " ")
 
     if string_contain "${select_x}" "<PID>";then
-        local process_x=$(input_prompt "" "specify one running-app's name or its pid" "")
+        local process_x=$(input_prompt "" "specify one running-app's pid" "")
         local pid_array=($(process_name2pid "${process_x}"))
         select_x=$(replace_str "${select_x}" "<PID>" "${pid_array[0]}")
     fi
@@ -134,6 +134,28 @@ function system_statistics
     return 0
 }
 
+function software_statistics
+{
+    local item1="strace -f -v -ttt --syscall-times=ns -C -S avg-time -p <PID>: trace systemcall time and summary output"
+    local select_x=$(select_one "${item1}")
+    select_x=$(string_split "${select_x}" ":" 1)
+    select_x=$(string_trim "${select_x}" " ")
+
+    if string_contain "${select_x}" "<PID>";then
+        local process_x=$(input_prompt "" "specify one app with parameters or one running-app's pid" "")
+        if is_integer "${process_x}";then
+            select_x=$(replace_str "${select_x}" "<PID>" "${process_x}")
+        else
+            select_x=$(replace_str "${select_x}" "-p <PID>" "${process_x}")
+        fi
+    fi
+
+    echo_info "${select_x}"
+    sudo_it "${select_x}"
+
+    return 0
+}
+
 perf_func=$(select_one \
             "      CPU: CPU utilization statistics" \
             "   Memory: Memory, Paging, Swap space utilization statistics" \
@@ -141,7 +163,8 @@ perf_func=$(select_one \
             "     Disk: Block device, I/O statistics" \
             "Interrupt: Interrupts statistics" \
             " Workload: Kernel table, task, queue-length, load-average statistics" \
-            "   System: System event counter statistics")
+            "   System: System event counter statistics" \
+            " Software: Trace application systemcall")
 perf_func=$(string_split "${perf_func}" ":" 1)
 perf_func=$(string_trim "${perf_func}" " ")
 #echo_info "chose { ${perf_func} }"
@@ -167,6 +190,9 @@ case ${perf_func} in
         ;;
     "System")
         system_statistics "$@"
+        ;;
+    "Software")
+        software_statistics "$@"
         ;;
     "*")
         echo_erro "perf function { ${perf_func} } invalid"
