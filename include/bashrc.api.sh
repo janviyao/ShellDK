@@ -23,14 +23,6 @@ alias mylsblk='lsblk -o NAME,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,TRAN,WWN,MIN-IO,OPT-IO
 alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
-alias mygit='loop_2success git'
-alias gadd='git add -A'
-alias gpull='mygit pull'
-alias gpush='function git_push { git push origin $(git symbolic-ref --short -q HEAD); }; git_push'
-alias gcommit='function git_commit { git commit -s -m "$@"; }; git_commit'
-alias gamend='function git_amend { git commit --amend -s -m "$@"; }; git_amend'
-alias gall='function git_all { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); }; git_all'
-
 alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "pid,nlwp=TID-CNT,psr=RUN-CPU,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 

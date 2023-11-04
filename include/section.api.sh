@@ -21,7 +21,7 @@ function section_line_range
 
     local range
     local -a range_array
-    local sec_linenr_array=($(file_range "${sec_file}" "\[${sec_name}\]" "\[\w+\]" true))
+    local sec_linenr_array=($(file_range "${sec_file}" "\[${sec_name}\]" "\[.+\]" true))
     if [ ${#sec_linenr_array[*]} -ge 1 ];then
         for range in ${sec_linenr_array[*]}
         do

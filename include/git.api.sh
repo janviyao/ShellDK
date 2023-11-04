@@ -1,0 +1,99 @@
+#!/bin/bash
+: ${INCLUDE_GIT:=1}
+
+alias mygit='loop_2success git'
+alias gclone='mygit clone --recurse-submodules'
+alias gadd='git add -A'
+alias gpull='mygit pull'
+alias gpush='function git_push { git push origin $(git symbolic-ref --short -q HEAD); return $?; }; git_push'
+alias gcommit='function git_commit { git commit -s -m "$@"; return $?; }; git_commit'
+alias gamend='function git_amend { git commit --amend -s -m "$@"; return $?; }; git_amend'
+alias gall='function git_all { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); return $?; }; git_all'
+alias ggrep='function git_grep { git log --grep="$@" --oneline; return $?; }; git_grep'
+
+function glog
+{
+    local select_x=$(select_one "Author" "Committer" "Time")
+
+    case "${select_x}" in
+        "Author")
+            git log --author="$@"
+            ;;
+        "Committer")
+            git log --committer="$@"
+            ;;
+        "Time")
+            local tm_s=$(input_prompt "" "input start time" "$(date '+%Y-%m-%d')")
+            local tm_e=$(input_prompt "" "input end time" "$(date '+%Y-%m-%d')")
+            git log --since="${tm_s}" --until="${tm_e}"
+            ;;
+        *)
+            echo "Nothing"
+            return 1
+            ;;
+    esac
+
+    return 0
+}
+
+function git_submodule_add
+{
+    local repo="$1"
+    local subdir="$2"
+    local branch="${3:-master}"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: git repository\n\$2: submodule repository directory\n\$3: submodule branch"
+        return 1
+    fi
+    
+    if can_access "${subdir}";then
+        echo_erro "sub-directory { ${subdir} } already exists!"
+        return 1
+    fi
+
+    git submodule add ${repo} ${subdir}
+
+    local retcode=$?
+    if [ ${retcode} -eq 0 ];then
+        git config -f .gitmodules submodule.${repo}.branch ${branch}
+        local retcode=$?
+    fi
+
+    return ${retcode}
+}
+
+function git_submodule_del
+{
+    local repo="$1"
+
+    if [ $# -ne 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: submodule repository"
+        return 1
+    fi
+    
+    git rm --cached ${repo}
+    section_del_section .gitmodules "submodule \"${repo}\""
+    rm -rf .git/modules/${repo}
+
+    return $?
+}
+
+function git_submodule_update
+{
+    local repo="$1"
+
+    #if [ $# -ne 1 ];then
+    #    echo_erro "\nUsage: [$@]\n\$1: submodule repository"
+    #    return 1
+    #fi
+    
+    if [ -n "${repo}" ];then
+        git submodule update --remote ${repo} --recursive
+    else
+
+        git submodule update --init --recursive
+    fi
+
+    return $?
+}
