@@ -395,3 +395,4 @@ INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/include/math.api.sh
 INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/include/file.api.sh
 INCLUDE "INCLUDE_K8S"     $MY_VIM_DIR/include/k8s.api.sh
 INCLUDE "INCLUDE_GIT"     $MY_VIM_DIR/include/git.api.sh
+INCLUDE "INCLUDE_GDB"     $MY_VIM_DIR/include/gdb.api.sh
