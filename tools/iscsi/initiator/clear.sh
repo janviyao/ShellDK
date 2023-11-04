@@ -32,7 +32,7 @@ do
     done
 done
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     echo_info "remove mpath device"
     ${SUDO} "multipath -F"
     if [ $? -ne 0 ];then

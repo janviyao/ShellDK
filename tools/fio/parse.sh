@@ -66,16 +66,16 @@ function get_iops
         iops_unit=$(echo ${iops_ctx} | grep -P '[a-zA-Z]+' -o | cut -c 1)
 
         if [ "${iops_unit}"x = "k"x ];then
-            iops_value=$(FLOAT "${iops_value}*1000/1" 0)
+            iops_value=$(math_float "${iops_value}*1000/1" 0)
         elif [ "${iops_unit}"x = "m"x ];then
-            iops_value=$(FLOAT "${iops_value}*1000*1000/1" 0)
+            iops_value=$(math_float "${iops_value}*1000*1000/1" 0)
         elif [ "${iops_unit}"x = "g"x ];then
-            iops_value=$(FLOAT "${iops_value}*1000*1000*1000/1" 0)
+            iops_value=$(math_float "${iops_value}*1000*1000*1000/1" 0)
         else
-            iops_value=$(FLOAT "${iops_value}/1" 0)
+            iops_value=$(math_float "${iops_value}/1" 0)
         fi
 
-        iops_total=$(FLOAT "(${iops_total}+${iops_value})/1" 0)
+        iops_total=$(math_float "(${iops_total}+${iops_value})/1" 0)
         echo_debug "parse ${grep_param}: {${iops_ctx}} iops-value: {${iops_value}}"
 
         let iops_cnt++
@@ -106,16 +106,16 @@ function get_bandwidth
         bandwidth_unit=$(echo ${bandwidth_ctx} | grep -P '[a-zA-Z]+' -o)
 
         if [ "${bandwidth_unit}"x = "K"x ];then
-            bandwidth_value=$(FLOAT "${bandwidth_value}/1024" 3)
+            bandwidth_value=$(math_float "${bandwidth_value}/1024" 3)
         elif [ "${bandwidth_unit}"x = "M"x ];then
-            bandwidth_value=$(FLOAT "${bandwidth_value}/1" 3)
+            bandwidth_value=$(math_float "${bandwidth_value}/1" 3)
         elif [ "${bandwidth_unit}"x = "G"x ];then
-            bandwidth_value=$(FLOAT "${bandwidth_value}*1024/1" 3)
+            bandwidth_value=$(math_float "${bandwidth_value}*1024/1" 3)
         else
             bandwidth_value=0
         fi
 
-        bandwidth_total=$(FLOAT "(${bandwidth_total}+${bandwidth_value})/1" 3)
+        bandwidth_total=$(math_float "(${bandwidth_total}+${bandwidth_value})/1" 3)
         echo_debug "parse ${grep_param}: {${bandwidth_ctx}} bw-value: {${bandwidth_value}}"
 
         let bandwidth_cnt++
@@ -146,22 +146,22 @@ function get_latency
         nsec_flag=$(echo "${lat_ctx}" | grep -P "lat\s*\(nsec\):" | wc -l)
         if [ ${nsec_flag} -eq 1 ];then
             lat_value=$(echo "${lat_ctx}" | grep -P "lat\s*\(nsec\):" | grep -P "avg\s*=\s*\d+\.?\d*" -o | grep -P "\d+\.?\d*" -o)
-            lat_value=$(FLOAT "${lat_value}/1000/1000" 4)
+            lat_value=$(math_float "${lat_value}/1000/1000" 4)
         else
             usec_flag=$(echo "${lat_ctx}" | grep -P "lat\s*\(usec\):" | wc -l)
             if [ ${usec_flag} -eq 1 ];then
                 lat_value=$(echo "${lat_ctx}" | grep -P "lat\s*\(usec\):" | grep -P "avg\s*=\s*\d+\.?\d*" -o | grep -P "\d+\.?\d*" -o)
-                lat_value=$(FLOAT "${lat_value}/1000" 4)
+                lat_value=$(math_float "${lat_value}/1000" 4)
             else
                 msec_flag=$(echo "${lat_ctx}" | grep -P "lat\s*\(msec\):" | wc -l)
                 if [ ${msec_flag} -eq 1 ];then
                     lat_value=$(echo "${lat_ctx}" | grep -P "lat\s*\(msec\):" | grep -P "avg\s*=\s*\d+\.?\d*" -o | grep -P "\d+\.?\d*" -o)
-                    lat_value=$(FLOAT "${lat_value}/1" 4)
+                    lat_value=$(math_float "${lat_value}/1" 4)
                 fi
             fi
         fi
 
-        lat_total=$(FLOAT "(${lat_total}+${lat_value})/1" 4)
+        lat_total=$(math_float "(${lat_total}+${lat_value})/1" 4)
         echo_debug "parse ${grep_param}: {${lat_ctx}} lat-value: {${lat_value}}"
 
         let lat_cnt++
@@ -171,7 +171,7 @@ function get_latency
     done
     
     if [ ${lat_cnt} -gt 0 ]; then
-        lat_total=$(FLOAT "${lat_total}/${lat_cnt}" 4)
+        lat_total=$(math_float "${lat_total}/${lat_cnt}" 4)
     fi
 
     echo "${lat_total}" > ${return_file}
@@ -195,20 +195,20 @@ function get_runtime
         runtime_value=$(echo "${runtime_ctx}" | grep -P "\d+\.?\d*" -o)
         nsec_flag=$(echo "${runtime_ctx}" | grep "nsec" | wc -l)
         if [ ${nsec_flag} -eq 1 ];then
-            runtime_value=$(FLOAT "${runtime_value}/1000/1000/1000" 2)
+            runtime_value=$(math_float "${runtime_value}/1000/1000/1000" 2)
         else
             usec_flag=$(echo "${runtime_ctx}" | grep "usec" | wc -l)
             if [ ${usec_flag} -eq 1 ];then
-                runtime_value=$(FLOAT "${runtime_value}/1000/1000" 2)
+                runtime_value=$(math_float "${runtime_value}/1000/1000" 2)
             else
                 msec_flag=$(echo "${runtime_ctx}" | grep "msec" | wc -l)
                 if [ ${msec_flag} -eq 1 ];then
-                    runtime_value=$(FLOAT "${runtime_value}/1000" 2)
+                    runtime_value=$(math_float "${runtime_value}/1000" 2)
                 fi
             fi
         fi
 
-        runtime_total=$(FLOAT "${runtime_total}+${runtime_value}" 2)
+        runtime_total=$(math_float "${runtime_total}+${runtime_value}" 2)
         echo_debug "parse ${grep_param}: {${runtime_ctx}} rt-value: {${runtime_value}}"
 
         let runtime_cnt++
@@ -218,7 +218,7 @@ function get_runtime
     done    
 
     if [ ${runtime_cnt} -gt 0 ]; then
-        runtime_total=$(FLOAT "${runtime_total}/${runtime_cnt}" 2)
+        runtime_total=$(math_float "${runtime_total}/${runtime_cnt}" 2)
     fi
 
     echo "${runtime_total}" > ${return_file}
@@ -249,14 +249,14 @@ function get_result
     
     if [ "${grep_param}"x = "read"x ];then 
         let g_read_iops+=iops
-        g_read_bw=$(FLOAT "(${g_read_bw}+${bandwidth})/1" 4)
-        g_read_lat=$(FLOAT "(${g_read_lat}+${latency})/1" 4)
-        g_read_runtime=$(FLOAT "${g_read_runtime}+${runtime}" 1)
+        g_read_bw=$(math_float "(${g_read_bw}+${bandwidth})/1" 4)
+        g_read_lat=$(math_float "(${g_read_lat}+${latency})/1" 4)
+        g_read_runtime=$(math_float "${g_read_runtime}+${runtime}" 1)
     else
         let g_write_iops+=iops
-        g_write_bw=$(FLOAT "(${g_write_bw}+${bandwidth})/1" 4)
-        g_write_lat=$(FLOAT "(${g_write_lat}+${latency})/1" 4)
-        g_write_runtime=$(FLOAT "(${g_write_runtime}+${runtime})/1" 1)
+        g_write_bw=$(math_float "(${g_write_bw}+${bandwidth})/1" 4)
+        g_write_lat=$(math_float "(${g_write_lat}+${latency})/1" 4)
+        g_write_runtime=$(math_float "(${g_write_runtime}+${runtime})/1" 1)
     fi
 }
 
@@ -292,17 +292,17 @@ function collect_result
 
 function summary_calc
 {
-    local avg_read_iops=$(FLOAT "${g_read_iops}*${g_read_pct}/100" 1)
-    local avg_write_iops=$(FLOAT "${g_write_iops}*(100-${g_read_pct})/100" 1)
-    local total_iops=$(FLOAT "(${avg_read_iops}+${avg_write_iops})/1" 0)
+    local avg_read_iops=$(math_float "${g_read_iops}*${g_read_pct}/100" 1)
+    local avg_write_iops=$(math_float "${g_write_iops}*(100-${g_read_pct})/100" 1)
+    local total_iops=$(math_float "(${avg_read_iops}+${avg_write_iops})/1" 0)
 
-    local avg_read_bandwidth=$(FLOAT "${g_read_bw}*${g_read_pct}/100" 4)
-    local avg_write_bandwidth=$(FLOAT "${g_write_bw}*(100-${g_read_pct})/100" 4)
-    local total_bandwidth=$(FLOAT "(${avg_read_bandwidth}+${avg_write_bandwidth})/1" 3)
+    local avg_read_bandwidth=$(math_float "${g_read_bw}*${g_read_pct}/100" 4)
+    local avg_write_bandwidth=$(math_float "${g_write_bw}*(100-${g_read_pct})/100" 4)
+    local total_bandwidth=$(math_float "(${avg_read_bandwidth}+${avg_write_bandwidth})/1" 3)
 
-    local avg_read_latency=$(FLOAT "${g_read_lat}*${g_read_pct}/100" 4)
-    local avg_write_latency=$(FLOAT "${g_write_lat}*(100-${g_read_pct})/100" 4)
-    local total_latency=$(FLOAT "(${avg_read_latency}+${avg_write_latency})/1" 3)
+    local avg_read_latency=$(math_float "${g_read_lat}*${g_read_pct}/100" 4)
+    local avg_write_latency=$(math_float "${g_write_lat}*(100-${g_read_pct})/100" 4)
+    local total_latency=$(math_float "(${avg_read_latency}+${avg_write_latency})/1" 3)
 
     echo_debug ""
     echo_debug "******g_read_iops : { ${g_read_iops} } avg: { ${avg_read_iops} }"
@@ -314,10 +314,10 @@ function summary_calc
     echo_debug "******write_late: { ${g_write_lat} } avg: { ${avg_write_latency} }"
 
     local result_num=${#g_output_arr[*]}
-    if EXPR_IF "${g_read_runtime} > 0";then
-        local avg_run_time=$(FLOAT "${g_read_runtime}/${result_num}" 1)
+    if math_expr_if "${g_read_runtime} > 0";then
+        local avg_run_time=$(math_float "${g_read_runtime}/${result_num}" 1)
     else
-        local avg_run_time=$(FLOAT "${g_write_runtime}/${result_num}" 1)
+        local avg_run_time=$(math_float "${g_write_runtime}/${result_num}" 1)
     fi
 
     echo "${g_start_time},${total_iops},${total_bandwidth},${total_latency},${avg_run_time}" > ${g_return_file}

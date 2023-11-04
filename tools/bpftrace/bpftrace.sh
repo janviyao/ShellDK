@@ -134,7 +134,7 @@ do
             fi
 
             lhist_count=$((lhist_count + ${values[2]}))
-            tmp_val=$(FLOAT "${values[2]} * (${values[1]} + (${values[1]} - ${values[0]})/2)" 0)
+            tmp_val=$(math_float "${values[2]} * (${values[1]} + (${values[1]} - ${values[0]})/2)" 0)
             lhist_total=$((lhist_total + tmp_val))
         fi
     done < ${g_save_dir}/${script}.log
@@ -145,13 +145,13 @@ do
         continue
     fi
     
-    lhist_avg=$(FLOAT "${lhist_total}/${lhist_count}" 2)
+    lhist_avg=$(math_float "${lhist_total}/${lhist_count}" 2)
     g_lhist_array[${#g_lhist_array[*]}]="${script}:${lhist_avg}"
-    g_lhist_total=$(FLOAT "${g_lhist_total} + ${lhist_avg}" 2)
+    g_lhist_total=$(math_float "${g_lhist_total} + ${lhist_avg}" 2)
 
-    stats_avg=$(FLOAT "${stats_total}/${stats_count}" 2)
+    stats_avg=$(math_float "${stats_total}/${stats_count}" 2)
     g_stats_array[${#g_stats_array[*]}]="${script}:${stats_avg}"
-    g_stats_total=$(FLOAT "${g_stats_total} + ${stats_avg}" 2)
+    g_stats_total=$(math_float "${g_stats_total} + ${stats_avg}" 2)
 
     echo_info "finish { ${g_save_dir}/${script}.log }"
 done
@@ -188,6 +188,7 @@ do
         fi
     done
 
-    save_result "${g_save_dir}/avg.result" "%-30s %-20s %-12s %-20s %-12s\n" "${script}" "${lhist_avg}" "$(FLOAT "100*${lhist_avg}/${g_lhist_total}" 1)" "${stats_avg}" "$(FLOAT "100*${stats_avg}/${g_stats_total}" 1)"
+    save_result "${g_save_dir}/avg.result" "%-30s %-20s %-12s %-20s %-12s\n" "${script}" "${lhist_avg}" "$(math_float "100*${lhist_avg}/${g_lhist_total}" 1)" "${stats_avg}" "$(math_float "100*${stats_avg}/${g_stats_total}" 1)"
 done
 save_result "${g_save_dir}/avg.result" "%-30s %-20s %-12s %-20s %-12s\n" "all io-stacks" "${g_lhist_total}" "100" "${g_stats_total}" "100"
+

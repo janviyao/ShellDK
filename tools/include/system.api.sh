@@ -343,10 +343,10 @@ function linux_sys
 
     local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
     local core_thread=$(lscpu | grep "Thread" | awk -F: '{ print $2 }')
-    core_thread=$(replace_regex "${core_thread}" '^\s*' "")
+    core_thread=$(string_replace "${core_thread}" '^\s*' "" true)
 
     local socket_core=$(lscpu | grep "socket" | awk -F: '{ print $2 }')
-    socket_core=$(replace_regex "${socket_core}" '^\s*' "")
+    socket_core=$(string_replace "${socket_core}" '^\s*' "" true)
 
     printf "[%${col_width1}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
 
@@ -516,7 +516,7 @@ function du_find
             if is_integer "${size}";then
                 size=$((size*1024))
             elif is_float "${size}";then
-                size=$(FLOAT "${size}*1024" 0)
+                size=$(math_float "${size}*1024" 0)
             fi
             unit="KB"
         elif match_regex "${size^^}" "^\d+(\.\d+)?MB?$";then
@@ -524,7 +524,7 @@ function du_find
             if is_integer "${size}";then
                 size=$((size*1024*1024))
             elif is_float "${size}";then
-                size=$(FLOAT "${size}*1024*10244" 0)
+                size=$(math_float "${size}*1024*10244" 0)
             fi
             unit="MB"
         elif match_regex "${size^^}" "^\d+(\.\d+)?GB?$";then
@@ -532,7 +532,7 @@ function du_find
             if is_integer "${size}";then
                 size=$((size*1024*1024*1024))
             elif is_float "${size}";then
-                size=$(FLOAT "${size}*1024*1024*1024" 0)
+                size=$(math_float "${size}*1024*1024*1024" 0)
             fi
             unit="GB"
         else
@@ -597,11 +597,11 @@ function du_find
         if is_integer "${obj_size}" || is_float "${obj_size}";then
             if [ ${obj_size} -ge ${size} ];then
                 if [[ ${unit} == "KB" ]];then
-                    echo "$(printf "%-10s %s" "$(FLOAT "${obj_size}/1024" 1)KB" "${obj_info}")"
+                    echo "$(printf "%-10s %s" "$(math_float "${obj_size}/1024" 1)KB" "${obj_info}")"
                 elif [[ ${unit} == "MB" ]];then
-                    echo "$(printf "%-8s %s" "$(FLOAT "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
+                    echo "$(printf "%-8s %s" "$(math_float "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
                 elif [[ ${unit} == "GB" ]];then
-                    echo "$(printf "%-4s %s" "$(FLOAT "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
+                    echo "$(printf "%-4s %s" "$(math_float "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
                 else
                     echo "$(printf "%-12s %s" "${obj_size}" "${obj_info}")"
                 fi

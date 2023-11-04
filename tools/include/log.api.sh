@@ -123,7 +123,7 @@ function echo_header
 
 function echo_erro
 {
-    #local para=$(replace_str "$@" "${MY_HOME}/" "")
+    #local para=$(string_replace "$@" "${MY_HOME}/" "")
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_ERRO} ];then
         echo_file "${LOG_ERRO}" "$@"
         return
@@ -154,7 +154,7 @@ function echo_info
         return
     fi
 
-    #local para=$(replace_str "$@" "${MY_HOME}/" "")
+    #local para=$(string_replace "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
@@ -178,7 +178,7 @@ function echo_warn
         return
     fi
 
-    #local para=$(replace_str "$@" "${MY_HOME}/" "")
+    #local para=$(string_replace "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
@@ -202,7 +202,7 @@ function echo_debug
         return
     fi
 
-    #local para=$(replace_str "$@" "${MY_HOME}/" "")
+    #local para=$(string_replace "$@" "${MY_HOME}/" "")
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then

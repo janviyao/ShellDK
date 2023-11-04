@@ -344,8 +344,8 @@ function thread_info
             local tinfo_str=$(cat /proc/${process}/task/${tid}/stat)
             if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
                 local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
-                local new_str=$(replace_regex "${old_str}" "\s+" "-")
-                tinfo_str=$(replace_regex "${tinfo_str}" "\(\S+\s+\S+\)" "${new_str}")
+                local new_str=$(string_replace "${old_str}" "\s+" "-" true)
+                tinfo_str=$(string_replace "${tinfo_str}" "\(\S+\s+\S+\)" "${new_str}" true)
             fi
 
             local -a tinfo=(${tinfo_str})

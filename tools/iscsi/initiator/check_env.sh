@@ -18,7 +18,7 @@ fi
 can_access "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
 can_access "sg_raw"           || { cd ${MY_VIM_DIR}/deps; install_from_rpm "sg3_utils-.+\.rpm"; }
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     can_access "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
     can_access "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-libs-.+\.rpm"; }
     can_access "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-libs-.+\.rpm"; }
@@ -63,7 +63,7 @@ else
     fi
 fi
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && EXPR_IF "${ISCSI_SESSION_NR} > 1";then
+if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     if ! (lsmod | grep dm_multipath &> /dev/null);then
         echo_info "multipath modprobe"
         ${SUDO} modprobe dm-multipath

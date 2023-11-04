@@ -50,7 +50,7 @@ function can_access
     fi
  
     if match_regex "${fname}" "^~";then
-        fname=$(replace_regex "${fname}" '^~' "${HOME}")
+        fname=$(string_replace "${fname}" '^~' "${HOME}" true)
     fi
 
     if [ -d ${fname} ];then
@@ -100,7 +100,7 @@ function file_has
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(default: false)"
         return 1
     fi
 
@@ -130,7 +130,7 @@ function file_range_has
     local is_reg="${5:-false}"
 
     if [ $# -lt 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
         return 1
     fi
 
@@ -187,7 +187,7 @@ function file_get
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(default: false)"
         return 1
     fi
 
@@ -202,7 +202,7 @@ function file_get
         do
             local content=$(sed -n "${line_nr}p" ${xfile})
             if [[ "${content}" =~ ' ' ]];then
-                echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+                echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
             else
                 echo "${content}"
             fi
@@ -213,7 +213,7 @@ function file_get
             if [ ${string} -le ${total_nr} ];then
                 local content=$(sed -n "${string}p" ${xfile})
                 if [[ "${content}" =~ ' ' ]];then
-                    echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+                    echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
                 else
                     echo "${content}"
                 fi
@@ -224,7 +224,7 @@ function file_get
             if [[ "${string}" == "$" ]];then
                 local content=$(sed -n "${string}p" ${xfile})
                 if [[ "${content}" =~ ' ' ]];then
-                    echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+                    echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
                 else
                     echo "${content}"
                 fi
@@ -246,7 +246,7 @@ function file_range_get
     local is_reg="${5:-false}"
 
     if [ $# -lt 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
         return 1
     fi
 
@@ -273,7 +273,7 @@ function file_range_get
         fi
 
         if [[ "${content}" =~ ' ' ]];then
-            echo $(replace_str "${content}" " " "${GBL_COL_SPF}")
+            echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
         else
             echo "${content}"
         fi
@@ -290,7 +290,7 @@ function file_del
     local is_reg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string or line-range\n\$3: \$2 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string or line-range\n\$3: \$2 whether regex(default: false)"
         return 1
     fi
 
@@ -306,7 +306,7 @@ function file_del
     if bool_v "${is_reg}";then
         local posix_reg=$(regex_perl2posix "${string}")
         if [[ "${posix_reg}" =~ '#' ]];then
-            posix_reg=$(replace_str "${posix_reg}" '#' '\#')
+            posix_reg=$(string_replace "${posix_reg}" '#' '\#')
         fi
 
         eval "sed -i '\#${posix_reg}#d' ${xfile}"
@@ -359,7 +359,7 @@ function file_del
             fi
 
             if [[ "${string}" =~ '#' ]];then
-                string=$(replace_str "${string}" '#' '\#')
+                string=$(string_replace "${string}" '#' '\#')
             fi
 
             eval "sed -i '\#${string}#d' ${xfile}"
@@ -449,7 +449,7 @@ function file_linenr
     local is_reg="${3:-false}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(default: false)"
         return 1
     fi
 
@@ -468,7 +468,7 @@ function file_linenr
         line_nrs=($(grep -n -P "${string}" ${xfile} | awk -F ':' '{ print $1 }'))
     else
         #if [[ "${string}" =~ '/' ]];then
-        #    string=$(replace_str "${string}" "/" "\/")
+        #    string=$(string_replace "${string}" "/" "\/")
         #fi
         #line_nrs=($(sed -n "/^\s*${string}/{=;q;}" ${xfile}))
         #line_nrs=($(sed -n "/^\s*${string}\s*$/{=;}" ${xfile}))
@@ -500,7 +500,7 @@ function file_range_linenr
     local is_reg="${5:-false}"
 
     if [ $# -lt 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
         return 1
     fi
 
@@ -540,7 +540,7 @@ function file_range
     local is_reg="${4:-false}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: string\n\$4: \$2 and \$3 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: string\n\$4: \$2 and \$3 whether regex(default: false)"
         return 1
     fi
 
@@ -632,7 +632,7 @@ function file_replace
     local is_reg="${4:-false}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(default: false)"
         return 1
     fi
 
@@ -646,11 +646,11 @@ function file_replace
     fi
 
     if [[ "${string}" =~ '/' ]];then
-        string=$(replace_str "${string}" '/' '\/')
+        string=$(string_replace "${string}" '/' '\/')
     fi
 
     if [[ "${new_str}" =~ '/' ]];then
-        new_str=$(replace_str "${new_str}" '/' '\/')
+        new_str=$(string_replace "${new_str}" '/' '\/')
     fi
 
     eval "sed -i '1,$ s/${string}/${new_str}/g' ${xfile}"
@@ -785,7 +785,7 @@ function real_path
 
     local this_path="${orig_path}"
     if match_regex "${this_path}" "^-";then
-        this_path=$(replace_regex "${this_path}" "\-" "\-")
+        this_path=$(string_replace "${this_path}" "\-" "\-" true)
     fi
 
     if can_access "${this_path}";then
@@ -836,7 +836,7 @@ function path2fname
     fi
 
     if [[ "${file_name}" =~ '\\' ]];then
-        file_name=$(replace_regex "${file_name}" '\\' '')
+        file_name=$(string_replace "${file_name}" '\\' '' true)
     fi
 
     echo "${file_name}"

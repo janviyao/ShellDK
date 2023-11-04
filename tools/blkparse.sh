@@ -187,7 +187,7 @@ do
     #echo "${snd_line}"
     frt_val=$(echo "${frt_line}" | awk '{ print $4 }')
     snd_val=$(echo "${snd_line}" | awk '{ print $4 }')
-    dif_val=$(FLOAT "(${snd_val}-${frt_val})*1000" 9)
+    dif_val=$(math_float "(${snd_val}-${frt_val})*1000" 9)
 
     #echo "${snd_val} - ${frt_val} = ${dif_val}"
     echo "${snd_val} - ${frt_val} = ${dif_val}" >> ${o_prefix}.dc.diff

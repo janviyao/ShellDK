@@ -11,7 +11,7 @@ function cpu_statistics
 
     if string_contain "${select_x}" "<CPU>";then
         local input_val=$(input_prompt "is_integer" "input one cpu id" "0")
-        select_x=$(replace_str "${select_x}" "<CPU>" "${input_val}")
+        select_x=$(string_replace "${select_x}" "<CPU>" "${input_val}")
     fi
 
     echo_info "${select_x}"
@@ -38,7 +38,7 @@ function mem_statistics
     if string_contain "${select_x}" "<PID>";then
         local process_x=$(input_prompt "" "specify one running-app's pid" "")
         local pid_array=($(process_name2pid "${process_x}"))
-        select_x=$(replace_str "${select_x}" "<PID>" "${pid_array[0]}")
+        select_x=$(string_replace "${select_x}" "<PID>" "${pid_array[0]}")
     fi
 
     echo_info "${select_x}"
@@ -61,7 +61,7 @@ function net_statistics
 
     if string_contain "${select_x}" "<ETH>";then
         local network_n=$(input_prompt "" "specify one network device name" "eth0")
-        select_x=$(replace_str "${select_x}" "<ETH>" "${network_n}")
+        select_x=$(string_replace "${select_x}" "<ETH>" "${network_n}")
     fi
 
     echo_info "${select_x}"
@@ -97,7 +97,7 @@ function interrupt_statistics
     
     if string_contain "${select_x}" "<INTR>";then
         local input_val=$(input_prompt "is_integer" "input one interrupt number" "16")
-        select_x=$(replace_str "${select_x}" "<INTR>" "${input_val}")
+        select_x=$(string_replace "${select_x}" "<INTR>" "${input_val}")
     fi
 
     echo_info "${select_x}"
@@ -144,9 +144,9 @@ function software_statistics
     if string_contain "${select_x}" "<PID>";then
         local process_x=$(input_prompt "" "specify one app with parameters or one running-app's pid" "")
         if is_integer "${process_x}";then
-            select_x=$(replace_str "${select_x}" "<PID>" "${process_x}")
+            select_x=$(string_replace "${select_x}" "<PID>" "${process_x}")
         else
-            select_x=$(replace_str "${select_x}" "-p <PID>" "${process_x}")
+            select_x=$(string_replace "${select_x}" "-p <PID>" "${process_x}")
         fi
     fi
 

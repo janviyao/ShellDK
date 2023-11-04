@@ -135,7 +135,7 @@ done
 if [[ "${op_mode}" == "create_portal_group" ]];then
     for item in ${create_portal_group_array[*]} 
     do
-        item=$(replace_str "${item}" "${GBL_SPF1}" " ")
+        item=$(string_replace "${item}" "${GBL_SPF1}" " ")
         echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         if [ $? -ne 0 ];then
@@ -149,7 +149,7 @@ fi
 if [[ "${op_mode}" == "create_initiator_group" ]];then
     for item in ${create_initiator_group_array[*]} 
     do
-        item=$(replace_str "${item}" "${GBL_SPF1}" " ")
+        item=$(string_replace "${item}" "${GBL_SPF1}" " ")
 
         echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${item}"

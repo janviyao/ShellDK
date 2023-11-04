@@ -25,16 +25,7 @@ function is_float
     fi
 }
 
-function FLOAT
-{
-    local expre="$1"
-    local scale="${2:-2}"
-    
-    echo $(echo "scale=${scale};(${expre})/1.0" | bc -l | awk "{ printf \"%.${scale}f\", \$0 }")
-    return 0
-}
-
-function EXPR_IF
+function math_expr_if
 {
     local expre="$@"
 
@@ -45,7 +36,198 @@ function EXPR_IF
     fi
 }
 
-function NOT
+function math_expr_val
+{
+    local expre="$@"
+
+    echo $(echo "scale=2;${expre}" | bc -l)
+    return 0
+}
+
+function math_float
+{
+    local expre="$1"
+    local scale="${2:-2}"
+    
+    echo $(echo "scale=${scale};(${expre})/1.0" | bc -l | awk "{ printf \"%.${scale}f\", \$0 }")
+    return 0
+}
+
+function math_mod
+{
+    local expre="$1"
+    local divisor="$2"
+
+    if [[ $# -ne 2 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: divisor value"
+        return 1
+    fi
+
+    if ! is_integer "${divisor}";then
+        echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
+        return 1
+    fi
+
+    echo $(echo "scale=0;(${expre})%${divisor}" | bc -l)
+    return 0
+}
+
+function math_round
+{
+    local expre="$1"
+    local divisor="$2"
+
+    if [[ $# -ne 2 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: divisor value"
+        return 1
+    fi
+
+    if ! is_integer "${divisor}";then
+        echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
+        return 1
+    fi
+
+    echo $(echo "scale=0;(${expre})/${divisor}" | bc -l)
+    return 0
+}
+
+function math_dec2bin
+{
+    local value="$1"
+
+    if [[ $# -lt 1 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one integer"
+        return 1
+    fi
+
+    if ! is_integer "${value}";then
+        echo_erro "\nUsage: [$@]\n\$1: one integer"
+        return 1
+    fi
+
+    local result=""
+    while true
+    do
+        local modulo=$(math_mod "${value}" 2) 
+        value=$(math_round "${value}" 2) 
+
+        result=${modulo}${result}
+        if [ "${value}" -le 0 ];then
+            break
+        fi
+    done
+    [ -n "${result}" ] && echo "${result}"
+
+    return 0
+}
+
+function math_dec2hex
+{
+    local value="$1"
+    local upper="${2:-true}"
+
+    if [[ $# -lt 1 ]] || [[ $# -gt 2 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
+        return 1
+    fi
+
+    if ! is_integer "${value}";then
+        echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
+        return 1
+    fi
+
+    local result=$(printf "0x%llx" ${value})
+    if [ -n "${result}" ];then
+        if bool_v "${upper}";then
+            echo "${result^^}"
+        else
+            echo "${result,,}"
+        fi
+    fi
+
+    return 0
+}
+
+function math_bin2dec
+{
+    local value="$1"
+
+    if [[ $# -lt 1 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one binary-number"
+        return 1
+    fi
+    [ -z "${value}" ] && return 1
+
+    local base=1
+    local result=0
+
+    local max_index=$(string_length "${value}")
+    local index=$((max_index - 1))
+    while [ ${index} -gt 0 ]
+    do
+        local char=$(string_char "${value}" ${index}) 
+        if [[ ${char} == 1 ]];then
+            result=$(echo "${result} + ${base} * ${char}" | bc -l)
+        fi
+        base=$(echo "${base} * 2" | bc -l)
+        let index--
+    done
+
+    local char=$(string_char "${value}" ${index}) 
+    if [[ ${char} == 1 ]];then
+        result=$(echo "${result} + ${base} * ${char}" | bc -l)
+    fi
+
+    [ -n "${result}" ] && echo "${result}"
+    return 0
+}
+
+function math_hex2dec
+{
+    local value="$1"
+    local result=0
+
+    if [[ $# -lt 1 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one hex-number"
+        return 1
+    fi
+    
+    local prestr=$(string_start "${value}" 2)
+    if [[ ${prestr,,} != '0x' ]]; then
+        value="0x${value}"
+    fi
+
+    result=$(printf "%lld" ${value})
+    if [ $? -ne 0 ];then
+        result=""
+    fi
+    [ -n "${result}" ] && echo "${result}"
+
+    return 0
+}
+
+function math_hex2bin
+{
+    local value="$1"
+
+    if [[ $# -lt 1 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one hex-number"
+        return 1
+    fi
+
+    local prestr=$(string_start "${value}" 2)
+    if [[ ${prestr,,} != '0x' ]]; then
+        value="0x${value}"
+    fi
+
+    local result=$(math_hex2dec "${value}")
+    [ -n "${result}" ] && result=$(math_dec2bin "${result}")
+    [ -n "${result}" ] && echo "${result}"
+
+    return 0
+}
+
+function math_not
 {
     local es=0
 

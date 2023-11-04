@@ -271,7 +271,7 @@ function section_get_keys
                 local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
                 if [ -n "${line_cnt}" ];then
                     if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-                        line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+                        line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
                         if [ $? -ne 0 ];then
                             echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                             return 1
@@ -322,7 +322,7 @@ function section_get_val
         local line_cnt=$(file_get ${sec_file} "${line_nrs[0]}" false)
         if [ -n "${line_cnt}" ];then
             if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-                line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+                line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
                 if [ $? -ne 0 ];then
                     echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                     return 1
@@ -330,7 +330,7 @@ function section_get_val
             fi
 
             if [ -n "${line_cnt}" ];then
-                line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${SKV_FS}" "")
+                line_cnt=$(string_replace "${line_cnt}" "^\s*${key_str}\s*${SKV_FS}" "" true)
                 if [ $? -ne 0 ];then
                     echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                     return 1
@@ -372,7 +372,7 @@ function section_append
         fi
 
         if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-            line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+            line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                 return 1
@@ -380,7 +380,7 @@ function section_append
         fi
 
         if [ -n "${line_cnt}" ];then
-            line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${SKV_FS}" "")
+            line_cnt=$(string_replace "${line_cnt}" "^\s*${key_str}\s*${SKV_FS}" "" true)
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                 return 1

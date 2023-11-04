@@ -49,7 +49,7 @@ function kvconf_has_val
     for old_val in ${line_cnts[*]}
     do
         if [[ "${old_val}" =~ "${GBL_COL_SPF}" ]];then
-            old_val=$(replace_str "${old_val}" "${GBL_COL_SPF}" " ")
+            old_val=$(string_replace "${old_val}" "${GBL_COL_SPF}" " ")
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                 return 1
@@ -57,7 +57,7 @@ function kvconf_has_val
         fi
 
         if [ -n "${old_val}" ];then
-            old_val=$(replace_regex "${old_val}" "^\s*${key_str}\s*${KV_FS}" "")
+            old_val=$(string_replace "${old_val}" "^\s*${key_str}\s*${KV_FS}" "" true)
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                 return 1
@@ -137,7 +137,7 @@ function kvconf_get
     for line_cnt in ${line_cnts[*]}
     do
         if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-            line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+            line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                 return 1
@@ -145,7 +145,7 @@ function kvconf_get
         fi
 
         if [ -n "${line_cnt}" ];then
-            line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "")
+            line_cnt=$(string_replace "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "" true)
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "kvconf_get { $@ }"
                 return 1
@@ -184,7 +184,7 @@ function kvconf_val_append
             fi
 
             if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-                line_cnt=$(replace_str "${line_cnt}" "${GBL_COL_SPF}" " ")
+                line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
                 if [ $? -ne 0 ];then
                     echo_erro "kvconf_val_append { $@ }"
                     return 1
@@ -192,7 +192,7 @@ function kvconf_val_append
             fi
 
             if [ -n "${line_cnt}" ];then
-                line_cnt=$(replace_regex "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "")
+                line_cnt=$(string_replace "${line_cnt}" "^\s*${key_str}\s*${KV_FS}" "" true)
                 if [ $? -ne 0 ];then
                     echo_erro "kvconf_val_append { $@ }"
                     return 1

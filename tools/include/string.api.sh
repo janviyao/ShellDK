@@ -31,7 +31,7 @@ function regex_2str
                 echo_file "${LOG_ERRO}" "regex_2str { $@ }"
                 return 1
             fi
-            #regex=$(replace_str "${regex}" "${char}" "\\${char}")
+            #regex=$(string_replace "${regex}" "${char}" "\\${char}")
         fi
     done
 
@@ -106,6 +106,22 @@ function string_length
     return 0
 }
 
+function string_char
+{
+    local string="$1"
+    local posstr="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: char position(index from 0)"
+        return 1
+    fi
+
+    is_integer "${posstr}" || { return 1; }
+
+    echo "${string:${posstr}:1}"
+    return 0
+}
+
 function string_contain
 {
     local string="$1"
@@ -177,7 +193,7 @@ function string_split
                 fi
 
                 if [[ "${substr}" =~ ' ' ]];then
-                    substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
+                    substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
                 fi
 
                 sub_array[${#sub_array[*]}]="${substr}"
@@ -203,7 +219,7 @@ function string_split
                 do
                     substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index}}")
                     if [[ "${substr}" =~ ' ' ]];then
-                        substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
+                        substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
                     fi
                     sub_array[${#sub_array[*]}]="${substr}"
                 done
@@ -216,7 +232,7 @@ function string_split
                     fi
 
                     if [[ "${substr}" =~ ' ' ]];then
-                        substr=$(replace_str "${substr}" " " "${GBL_COL_SPF}")
+                        substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
                     fi
                     sub_array[${#sub_array[*]}]="${substr}"
                     let index_s++
@@ -362,7 +378,7 @@ function string_same
     if [[ ${posstr} -eq 1 ]];then 
         local index=1
         local sublen=${#substr}
-        while EXPR_IF "${index} <= ${sublen}"
+        while math_expr_if "${index} <= ${sublen}"
         do
             if [[ $(string_start "${string}" ${index}) != $(string_start "${substr}" ${index}) ]]; then
                 break
@@ -381,7 +397,7 @@ function string_same
     if [[ ${posstr} -eq 2 ]];then
         local index=1
         local sublen=${#substr}
-        while EXPR_IF "${index} <= ${sublen}"
+        while math_expr_if "${index} <= ${sublen}"
         do
             if [[ $(string_end "${string}" ${index}) != $(string_end "${substr}" ${index}) ]]; then
                 break
@@ -436,7 +452,7 @@ function string_trim
             #local sublen=${#substr}
             #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
             if [[ "${string}" =~ '\*' ]];then
-                string=$(replace_regex "${string}" '\*' '\*')
+                string=$(string_replace "${string}" '\*' '\*' true)
             fi
 
             newsub=$(regex_2str "${newsub}")
@@ -448,79 +464,73 @@ function string_trim
     return 0
 }
 
-function replace_regex
-{
-    local string="$1"
-    local regstr="$2"
-    local newstr="$3"
-
-    if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr\n\$3: newstr"
-        return 1
-    fi
-
-    #donot use (), because it fork child shell
-    [ -z "${regstr}" ] && { echo "${string}"; return 1; }
- 
-    local oldstr=$(echo "${string}" | grep -P "${regstr}" -o | head -n 1) 
-    [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
-
-    local res_str=""
-    oldstr=$(regex_2str "${oldstr}")
-    if [[ $(string_start "${regstr}" 1) == '^' ]]; then
-        if [[ "${newstr}" =~ '\' ]];then
-            newstr="${newstr//\\/\\\\}"
-        fi
-
-        if [[ "${newstr}" =~ '/' ]];then
-            newstr="${newstr//\//\\/}"
-        fi
-
-        res_str=$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")
-        if [ $? -ne 0 ];then
-            echo_file "${LOG_ERRO}" "replace_regex { $@ }"
-            return 1
-        fi
-
-        echo "${res_str}"
-    elif [[ $(string_end "${regstr}" 1) == '$' ]]; then
-        if [[ "${newstr}" =~ '\' ]];then
-            newstr="${newstr//\\/\\\\}"
-        fi
-
-        if [[ "${newstr}" =~ '/' ]];then
-            newstr="${newstr//\//\\/}"
-        fi
-
-        res_str=$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")
-        if [ $? -ne 0 ];then
-            echo_file "${LOG_ERRO}" "replace_regex { $@ }"
-            return 1
-        fi
-
-        echo "${res_str}"
-    else
-        echo "${string//${oldstr}/${newstr}}"
-    fi
-
-    return 0
-}
-
-function replace_str
+function string_replace
 {
     local string="$1"
     local oldstr="$2"
     local newstr="$3"
+    local is_reg="${4:-false}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: oldstr\n\$3: newstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: oldstr\n\$3: newstr\n\$4: whether regex(default: false)"
         return 1
     fi
 
-    #donot use (), because it fork child shell
-    [ -z "${oldstr}" ] && { echo "${string}"; return 1; }
+    if [ -z "${oldstr}" ];then
+        echo "${string}"
+        return 1
+    fi
 
-    oldstr=$(regex_2str "${oldstr}") 
-    echo "${string//${oldstr}/${newstr}}"
+    if bool_v "${is_reg}";then
+        #donot use (), because it fork child shell
+        local oldstr=$(echo "${string}" | grep -P "${oldstr}" -o | head -n 1) 
+        if [ -z "${oldstr}" ];then
+            echo "${string}"
+            return 1
+        fi
+
+        local res_str=""
+        oldstr=$(regex_2str "${oldstr}")
+        if [[ $(string_start "${oldstr}" 1) == '^' ]]; then
+            if [[ "${newstr}" =~ '\' ]];then
+                newstr="${newstr//\\/\\\\}"
+            fi
+
+            if [[ "${newstr}" =~ '/' ]];then
+                newstr="${newstr//\//\\/}"
+            fi
+
+            res_str=$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "string_replace { $@ }"
+                return 1
+            fi
+
+            echo "${res_str}"
+        elif [[ $(string_end "${oldstr}" 1) == '$' ]]; then
+            if [[ "${newstr}" =~ '\' ]];then
+                newstr="${newstr//\\/\\\\}"
+            fi
+
+            if [[ "${newstr}" =~ '/' ]];then
+                newstr="${newstr//\//\\/}"
+            fi
+
+            res_str=$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "string_replace { $@ }"
+                return 1
+            fi
+
+            echo "${res_str}"
+        else
+            echo "${string//${oldstr}/${newstr}}"
+        fi
+    else
+        #donot use (), because it fork child shell
+        oldstr=$(regex_2str "${oldstr}") 
+        echo "${string//${oldstr}/${newstr}}"
+    fi
+
     return 0
 }

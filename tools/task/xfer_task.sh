@@ -383,19 +383,19 @@ function _xfer_thread_main
             fi
             
             if [[ "${xfer_cmd}" =~ '^0' ]];then
-                xfer_cmd=$(replace_str "${xfer_cmd}" "^0" "${GBL_ACK_SPF}")
+                xfer_cmd=$(string_replace "${xfer_cmd}" "^0" "${GBL_ACK_SPF}")
             fi
 
             if [[ "${xfer_cmd}" =~ '^1' ]];then
-                xfer_cmd=$(replace_str "${xfer_cmd}" "^1" "${GBL_SPF1}")
+                xfer_cmd=$(string_replace "${xfer_cmd}" "^1" "${GBL_SPF1}")
             fi
 
             if [[ "${xfer_cmd}" =~ '^2' ]];then
-                xfer_cmd=$(replace_str "${xfer_cmd}" "^2" "${GBL_SPF2}")
+                xfer_cmd=$(string_replace "${xfer_cmd}" "^2" "${GBL_SPF2}")
             fi
 
             if [[ "${xfer_cmd}" =~ '^3' ]];then
-                xfer_cmd=$(replace_str "${xfer_cmd}" "^3" "${GBL_SPF3}")
+                xfer_cmd=$(string_replace "${xfer_cmd}" "^3" "${GBL_SPF3}")
             fi
 
             echo_debug "xfer_cmd: [${xfer_cmd}]"

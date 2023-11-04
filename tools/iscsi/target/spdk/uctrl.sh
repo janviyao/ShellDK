@@ -105,7 +105,7 @@ do
         ig_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 2)
 
         combine_str="${ISCSI_NODE_BASE}:${tgt_name}${GBL_SPF1}${tgt_name}_alias${GBL_SPF1}\"${bdev_name_id_pairs[*]}\"${GBL_SPF1}${pg_id}:${ig_id}${GBL_SPF1}256${GBL_SPF1}-d"
-        combine_str=$(replace_regex "${combine_str}" "\s*" "${GBL_SPF2}")
+        combine_str=$(string_replace "${combine_str}" "\s*" "${GBL_SPF2}" true)
         if ! array_has "${create_target_node_array[*]}" "${combine_str}";then
             arr_idx=${#create_target_node_array[*]}
             create_target_node_array[${arr_idx}]="${combine_str}"
@@ -116,7 +116,7 @@ done
 if [[ "${op_mode}" == "create_portal_group" ]];then
     for item in ${create_portal_group_array[*]} 
     do
-        item=$(replace_str "${item}" "${GBL_SPF1}" " ")
+        item=$(string_replace "${item}" "${GBL_SPF1}" " ")
         echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         if [ $? -ne 0 ];then
@@ -130,7 +130,7 @@ fi
 if [[ "${op_mode}" == "create_initiator_group" ]];then
     for item in ${create_initiator_group_array[*]} 
     do
-        item=$(replace_str "${item}" "${GBL_SPF1}" " ")
+        item=$(string_replace "${item}" "${GBL_SPF1}" " ")
 
         echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${item}"
@@ -169,8 +169,8 @@ if [[ "${op_mode}" == "create_target_node" ]];then
     for item in ${create_target_node_array[*]} 
     do
         target_node=$(string_split "${item}" "${GBL_SPF1}" 1)
-        item=$(replace_str "${item}" "${GBL_SPF1}" " ")
-        item=$(replace_str "${item}" "${GBL_SPF2}" " ")
+        item=$(string_replace "${item}" "${GBL_SPF1}" " ")
+        item=$(string_replace "${item}" "${GBL_SPF2}" " ")
 
         echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
         eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}]} ${item}"

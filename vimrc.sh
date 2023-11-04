@@ -44,7 +44,7 @@ function create_project
     local -a type_list=(${find_str})
     local input_val=$(input_prompt "" "input file type (separated with comma) to parse" "")
     if [ -n "${input_val}" ];then
-        find_str=$(replace_str "${input_val}" ',' '\\|')
+        find_str=$(string_replace "${input_val}" ',' '\\|')
         type_list=(${find_str})
     fi
     
@@ -69,8 +69,8 @@ function create_project
     while [ -n "${input_val}" ]
     do
         if [ -d "${input_val}" ];then
-            input_val=$(replace_str "${input_val}" "$HOME/" "")
-            input_val=$(replace_regex "${input_val}" '^\.?\/' '')
+            input_val=$(string_replace "${input_val}" "$HOME/" "")
+            input_val=$(string_replace "${input_val}" '^\.?\/' '' true)
             wipe_list=(${wipe_list[*]} ${input_val})
         else
             echo_erro "dir { ${input_val} } invalid"
@@ -137,19 +137,19 @@ function create_project
                 if match_regex "${line}" "^\.";then
                     line="^${line}"
                 fi
-                line=$(replace_str "${line}" '.' '\.')
+                line=$(string_replace "${line}" '.' '\.')
             fi
 
             if string_contain "${line}" "*";then
-                line=$(replace_str "${line}" '*' '.*')
+                line=$(string_replace "${line}" '*' '.*')
             fi
 
             if string_contain "${line}" "?";then
-                line=$(replace_str "${line}" '?' '.')
+                line=$(string_replace "${line}" '?' '.')
             fi
  
             if string_contain "${line}" "/";then
-                line=$(replace_str "${line}" '/' '\/')
+                line=$(string_replace "${line}" '/' '\/')
             fi
             echo_debug "new  regex: ${line}"
 

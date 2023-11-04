@@ -125,7 +125,7 @@ if string_match "${dev_name}" "dm" 1;then
 
     slaves=($(ls /sys/block/${dev_name}/slaves 2>/dev/null))
     if [ ${#slaves[*]} -gt 0 ];then
-        bdq_deep=$(FLOAT "${bdq_deep}/${#slaves[*]}" 0)
+        bdq_deep=$(math_float "${bdq_deep}/${#slaves[*]}" 0)
     fi
 
     for dev in ${slaves[*]}

@@ -68,9 +68,9 @@ function run_fio_func
     fi
 
     #local run_cmd="${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${other_paras}"
-    #run_cmd=$(replace_str "${run_cmd}" "${TOOL_ROOT_DIR}/" "")
-    #run_cmd=$(replace_str "${run_cmd}" "${WORK_ROOT_DIR}/" "")
-    #run_cmd=$(replace_str "${run_cmd}" "${MY_HOME}/" "")
+    #run_cmd=$(string_replace "${run_cmd}" "${TOOL_ROOT_DIR}/" "")
+    #run_cmd=$(string_replace "${run_cmd}" "${WORK_ROOT_DIR}/" "")
+    #run_cmd=$(string_replace "${run_cmd}" "${MY_HOME}/" "")
     #echo_info "${run_cmd}"
     if [ ! -f ${output_dir}/${fio_out} ];then
         ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${other_paras}
