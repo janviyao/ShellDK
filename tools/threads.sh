@@ -16,8 +16,8 @@ readonly all_num="$1"
 readonly concurrent_num="$2"
 readonly include_api="$3"
 
-if [ -f "$MY_VIM_DIR/tools/include/${include_api}" ];then
-    . $MY_VIM_DIR/tools/include/${include_api}
+if [ -f "$MY_VIM_DIR/include/${include_api}" ];then
+    . $MY_VIM_DIR/include/${include_api}
 fi
 
 # get the last para

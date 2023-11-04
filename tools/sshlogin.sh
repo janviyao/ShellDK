@@ -60,7 +60,7 @@ TERM_ENV="export BTASK_LIST='mdat,ncat,xfer,logr';export LOCAL_IP=${HOST_IP};exp
 PASS_ENV="\
 if test -d '$MY_VIM_DIR';then \
     export MY_VIM_DIR='$MY_VIM_DIR'; \
-    source $MY_VIM_DIR/tools/include/common.api.sh; \
+    source $MY_VIM_DIR/include/common.api.sh; \
     if ! is_me ${USR_NAME};then \
         source $MY_VIM_DIR/bashrc; \
     fi;\

@@ -1,6 +1,7 @@
 #!/bin/bash
 GBL_NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
 GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
+GBL_NCAT_PORT="${GBL_NCAT_WORK_DIR}/port"
 
 function local_port_available
 {
@@ -36,27 +37,38 @@ function local_port_available
 }
 
 function ncat_port_gen
-{
-    local port_file="${GBL_NCAT_WORK_DIR}/port"
-    
-    local port_val=$(($$%32767 + 32767))
+{ 
+    if can_access "${GBL_NCAT_PORT}";then
+        local port_val=$(cat ${GBL_NCAT_PORT})
+        if [ -z "${port_val}" ];then
+            port_val=$(($$%32767 + 32767))
+        fi
+    else
+        local port_val=$(($$%32767 + 32767))
+    fi
+
     while ! local_port_available "${port_val}"
     do
         port_val=$(($RANDOM + 32767))
     done 
-    echo "${port_val}" > ${port_file}
+
+    echo "${port_val}" > ${GBL_NCAT_PORT}
     echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] available"
 }
 
 function ncat_port_get
 {
-    local port_file="${GBL_NCAT_WORK_DIR}/port"
-    if ! can_access "${port_file}";then
+    if ! can_access "${GBL_NCAT_PORT}";then
         ncat_port_gen
     fi
 
-    local port_val=$(cat ${port_file})
-    echo "${port_val}"
+    local port_val=$(cat ${GBL_NCAT_PORT})
+    if local_port_available "${port_val}";then
+        echo "${port_val}"
+    else
+        ncat_port_gen
+        echo "$(cat ${GBL_NCAT_PORT})"
+    fi
 }
 
 if string_contain "${BTASK_LIST}" "ncat";then

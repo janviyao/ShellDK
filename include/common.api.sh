@@ -383,14 +383,14 @@ function loop_2fail
     return 0
 }
 
-INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/tools/include/log.api.sh
-INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/tools/include/string.api.sh
-INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/tools/include/system.api.sh
-INCLUDE "INCLUDE_TRACE"   $MY_VIM_DIR/tools/include/trace.api.sh
-INCLUDE "INCLUDE_KVCONF"  $MY_VIM_DIR/tools/include/kvconf.api.sh
-INCLUDE "INCLUDE_SECTION" $MY_VIM_DIR/tools/include/section.api.sh
-INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/tools/include/process.api.sh
-INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/tools/include/install.api.sh
-INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/tools/include/math.api.sh
-INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/tools/include/file.api.sh
-INCLUDE "INCLUDE_K8S"    $MY_VIM_DIR/tools/include/k8s.api.sh
+INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/include/log.api.sh
+INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/include/string.api.sh
+INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/include/system.api.sh
+INCLUDE "INCLUDE_TRACE"   $MY_VIM_DIR/include/trace.api.sh
+INCLUDE "INCLUDE_KVCONF"  $MY_VIM_DIR/include/kvconf.api.sh
+INCLUDE "INCLUDE_SECTION" $MY_VIM_DIR/include/section.api.sh
+INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/include/process.api.sh
+INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/include/install.api.sh
+INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/include/math.api.sh
+INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/include/file.api.sh
+INCLUDE "INCLUDE_K8S"    $MY_VIM_DIR/include/k8s.api.sh

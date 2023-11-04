@@ -34,8 +34,8 @@ if [ -z "${MY_HOME}" ];then
     readonly MY_HOME=${HOME}
 fi
 
-source $MY_VIM_DIR/tools/include/common.api.sh
-source $MY_VIM_DIR/tools/include/bashrc.api.sh
+source $MY_VIM_DIR/include/common.api.sh
+source $MY_VIM_DIR/include/bashrc.api.sh
 echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
 echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
