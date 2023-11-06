@@ -29,6 +29,11 @@ function check_passwd
 
 function run_timeout
 {
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: time(s)\n\$2-\$x: command"
+        return 1
+    fi
+
     local time_s="${1:-60}"
     shift
     local cmd=$(para_pack "$@")
@@ -44,11 +49,19 @@ function run_timeout
 
 function run_lock
 {
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: lock id\n\$2-\$x: command"
+        return 1
+    fi
+
+    local lockid=$1
+    shift
+
     local cmd=$(para_pack "$@")
     (
-        flock -x 8  #flock文件锁，-x表示独享锁
+        flock -x ${lockid}  #flock文件锁，-x表示独享锁
         bash -c "${cmd}"
-    ) 8<>${GBL_BASE_DIR}/base.lock
+    ) {lockid}<>/tmp/shell.lock.${lockid}
 }
 
 function is_me
