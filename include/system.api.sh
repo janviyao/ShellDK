@@ -30,7 +30,7 @@ function check_passwd
 function run_timeout
 {
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: time(s)\n\$2-\$x: command"
+        echo_erro "\nUsage: [$@]\n\$1: time(s)\n\$2~N: one command with its parameters"
         return 1
     fi
 
@@ -50,7 +50,7 @@ function run_timeout
 function run_lock
 {
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: lock id\n\$2-\$x: command"
+        echo_erro "\nUsage: [$@]\n\$1: lock id\n\$2~N: one command with its parameters"
         return 1
     fi
 
