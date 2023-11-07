@@ -3,19 +3,19 @@
 
 function process_wait
 {
-    local pinfo="$1"
+    local xproc="$1"
     local stime="$2"
-    local pid=""
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pinfo\n\$2: stime(default: 0.01s)"
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: stime(default: 0.01s)"
         return 1
     fi
 
-    [ -z "${pinfo}" ] && return 1
+    [ -z "${xproc}" ] && return 1
     [ -z "${stime}" ] && stime=0.01
 
-    local -a pid_array=($(process_name2pid "${pinfo}"))
+    local pid
+    local -a pid_array=($(process_name2pid "${xproc}"))
     for pid in ${pid_array[*]}
     do
         echo_debug "wait [$(process_pid2name "${pid}")(${pid})] exit"
@@ -24,22 +24,21 @@ function process_wait
             sleep ${stime}
         done
     done
+
     return 0
 }
 
 function process_exist
 {
-    local pinfo="$1"
-    local pid=""
+    local xproc="$1"
 
-    [ -z "${pinfo}" ] && return 1
-
-    if is_integer "${pinfo}";then
-        local -a pid_array=(${pinfo})
+    if is_integer "${xproc}";then
+        local -a pid_array=(${xproc})
     else
-        local -a pid_array=($(process_name2pid "${pinfo}"))
+        local -a pid_array=($(process_name2pid "${xproc}"))
     fi
 
+    local pid
     for pid in ${pid_array[*]}
     do
         #${SUDO} "kill -s 0 ${pid} &> /dev/null"
@@ -58,12 +57,11 @@ function process_signal
     local signal=$1
     shift
 
-    local para_arr=($@)
-    local pinfo=""
-    local pid=""
+    local para_list=($@)
+    local xproc=""
     local exclude_pid_array=($(mdata_kv_get "BASH_TASK"))
 
-    [ ${#para_arr[*]} -eq 0 ] && return 1
+    [ ${#para_list[*]} -eq 0 ] && return 1
 
     if ! is_integer "${signal}";then
         signal=$(string_trim "${signal^^}" "SIG" 1)
@@ -74,9 +72,10 @@ function process_signal
         fi
     fi
 
-    for pinfo in ${para_arr[*]}
+    local pid
+    for xproc in ${para_list[*]}
     do
-        local -a pid_array=($(process_name2pid "${pinfo}"))
+        local -a pid_array=($(process_name2pid "${xproc}"))
         for pid in ${pid_array[*]}
         do
             if array_has "${exclude_pid_array[*]}" "${pid}";then
@@ -85,8 +84,8 @@ function process_signal
             fi
 
             if process_exist "${pid}"; then
-                local child_pid_array=($(process_subprocess ${pid}))
-                echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pid_array[*]}"
+                local child_pids=($(process_childs ${pid}))
+                echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pids[*]}"
 
                 if ! array_has "${exclude_pid_array[*]}" "${pid}";then
                     echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
@@ -100,8 +99,8 @@ function process_signal
                     echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
                 fi
 
-                if [ -n "${child_pid_array[*]}" ];then
-                    process_signal ${signal} ${child_pid_array[*]} 
+                if [ -n "${child_pids[*]}" ];then
+                    process_signal ${signal} ${child_pids[*]} 
                     if [ $? -ne 0 ];then
                         return 1
                     fi
@@ -114,11 +113,11 @@ function process_signal
 
 function process_kill
 {
-    local para_arr=($@)
+    local para_list=($@)
 
-    [ ${#para_arr[*]} -eq 0 ] && return 1
+    [ ${#para_list[*]} -eq 0 ] && return 1
 
-    if process_signal KILL "${para_arr[*]}"; then
+    if process_signal KILL "${para_list[*]}"; then
         return 0
     fi
 
@@ -127,15 +126,15 @@ function process_kill
 
 function process_pid2name
 {
-    local pid_list=($@)
-    if [ ${#pid_list[*]} -eq 0 ];then
+    local para_list=($@)
+    if [ ${#para_list[*]} -eq 0 ];then
         echo_file "${LOG_ERRO}" "please input [pid/process-name] parameters"
         return 1
     fi
 
-    local pid="$1"
+    local pid
     local -a proc_list
-    for pid in ${pid_list[*]}
+    for pid in ${para_list[*]}
     do
         if ! is_integer "${pid}";then
             proc_list=(${proc_list[*]} ${pid})
@@ -168,49 +167,47 @@ function process_pid2name
         fi
     done
 
-    if [ ${#proc_list[*]} -gt 0 ];then
-        echo "${proc_list[*]}"
-        #echo "$(ps -q ${pid} -o comm=)"
-    fi
+    [ ${#proc_list[*]} -gt 0 ] && echo "${proc_list[*]}"
+    #echo "$(ps -q ${pid} -o comm=)"
     return 0
 }
 
 function process_name2pid
 {
-    local proc_list=($@)
-    if [ ${#proc_list[*]} -eq 0 ];then
+    local para_list=($@)
+    if [ ${#para_list[*]} -eq 0 ];then
         echo_file "${LOG_ERRO}" "please input [pid/process-name] parameters"
         return 1
     fi
 
-    local proc=""
+    local para
     local -a pid_array
-    for proc in ${proc_list[*]}
+    for para in ${para_list[*]}
     do
-        if is_integer "${proc}";then
-            pid_array=(${pid_array[*]} ${proc})
+        if is_integer "${para}";then
+            pid_array=(${pid_array[*]} ${para})
             continue
         fi
 
-        local -a res_array=($(ps -C ${proc} -o pid=))
+        local -a res_array=($(ps -C ${para} -o pid=))
         if [ ${#res_array[*]} -gt 0 ];then
             pid_array=(${pid_array[*]} ${res_array[*]})
             continue
         fi
 
-        res_array=($(pidof ${proc}))
+        res_array=($(pidof ${para}))
         if [ ${#res_array[*]} -gt 0 ];then
             pid_array=(${pid_array[*]} ${res_array[*]})
             continue
         fi
 
-        #res_array=($(pgrep ${proc}))
+        #res_array=($(pgrep ${para}))
         #if [ ${#res_array[*]} -gt 0 ];then
         #    pid_array=(${pid_array[*]} ${res_array[*]})
         #    continue
         #fi
 
-        local none_regex=$(regex_2str "${proc}")
+        local none_regex=$(regex_2str "${para}")
         res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
         if [ ${#res_array[*]} -gt 0 ];then
             pid_array=(${pid_array[*]} ${res_array[*]})
@@ -230,60 +227,80 @@ function process_name2pid
         fi
     done
     
-    if [ ${#pid_array[*]} -gt 0 ];then
-        echo "${pid_array[*]}"
-    fi
+    [ ${#pid_array[*]} -gt 0 ] && echo "${pid_array[*]}"
     return 0
 }
 
 function process_cmdline
 {
-    local pid="$1"
+    local para_list=($@)
 
-    local -a pid_array=($(process_name2pid "${pid}"))
-    local ppid
-    for ppid in ${pid_array[*]}
+    local pid
+    local -a pid_array=($(process_name2pid "${para_list[*]}"))
+    for pid in ${pid_array[*]}
     do
-        echo "$(ps -eo pid,cmd | grep -P "^\s*${ppid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
+        echo "$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
     done
 
     return 0
 }
 
-function process_subprocess
+function process_ppid
 {
-    local ppid="$1"
-    local -a pid_array=($(process_name2pid "${ppid}"))
-
-    local -a child_pid_array=($(echo ""))
-    for ppid in ${pid_array[*]}
+    local para_list=($@)
+        
+    local pid
+    local -a ppid_array
+    local -a pid_array=($(process_name2pid ${para_list[*]}))
+    for pid in ${pid_array[*]}
     do
-        # ps -p $$ -o ppid=
-        local subpro_path="/proc/${ppid}/task/${ppid}/children"
-        if can_access "${subpro_path}"; then
-            child_pid_array=(${child_pid_array[*]} $(cat ${subpro_path} 2>/dev/null))
+        local ppids=($(ppid ${pid}))
+        if [ ${#ppids[*]} -gt 1 ];then
+            unset ppids[0]
+            ppid_array=(${ppid_array[*]} ${ppids[*]})
         fi
     done
 
-    echo "${child_pid_array[*]}"
+    [ ${#ppid_array[*]} -gt 0 ] && echo "${ppid_array[*]}"
     return 0
 }
 
-function process_subthread
+function process_childs
 {
-    local ppid="$1"
-    local -a pid_array=($(process_name2pid "${ppid}"))
+    local para_list=($@)
 
-    local -a child_tids=($(echo ""))
-    for ppid in ${pid_array[*]}
+    local pid
+    local -a child_pids
+    local -a pid_array=($(process_name2pid "${para_list[*]}"))
+    for pid in ${pid_array[*]}
     do
-        local thread_path="/proc/${ppid}/task"
-        if can_access "${thread_path}"; then
-            child_tids=(${child_tids[*]} $(ls --color=never ${thread_path}))
+        # ps -p $$ -o ppid=
+        local subpro_path="/proc/${pid}/task/${pid}/children"
+        if can_access "${subpro_path}"; then
+            child_pids=(${child_pids[*]} $(cat ${subpro_path} 2>/dev/null))
+        fi
+    done
+
+    [ ${#child_pids[*]} -gt 0 ] && echo "${child_pids[*]}"
+    return 0
+}
+
+function process_threads
+{
+    local para_list=($@)
+
+    local pid
+    local -a child_tids
+    local -a pid_array=($(process_name2pid "${para_list[*]}"))
+    for pid in ${pid_array[*]}
+    do
+        local threads=($(ps H --no-headers -T -p ${pid} | awk '{ print $2 }' | grep -v ${pid}))
+        if [ ${#threads[*]} -gt 0 ]; then
+            child_tids=(${child_tids[*]} ${threads[*]})
         fi
     done
      
-    echo "${child_tids[*]}"
+    [ ${#child_tids[*]} -gt 0 ] && echo "${child_tids[*]}"
     return 0
 }
 
@@ -335,11 +352,11 @@ function thread_info
     local -a pid_array=($(process_name2pid "${process}"))
     for process in ${pid_array[*]}
     do
-        local -a tid_array=($(process_subthread ${process}))
+        local -a tid_array=($(process_threads ${process}))
         local tid
         for tid in ${tid_array[*]}
         do
-            local -a pinfo=($(cat /proc/${process}/stat))
+            local -a xproc=($(cat /proc/${process}/stat))
             
             local tinfo_str=$(cat /proc/${process}/task/${tid}/stat)
             if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
@@ -360,17 +377,17 @@ function thread_info
 
             values=(${index_map["UTIME"]})
             local tutime=${tinfo[${values[2]}]}
-            local putime=${pinfo[${values[2]}]}
+            local putime=${xproc[${values[2]}]}
 
             values=(${index_map["CUTIME"]})
-            local pcutime=${pinfo[${values[2]}]}
+            local pcutime=${xproc[${values[2]}]}
 
             values=(${index_map["STIME"]})
             local tstime=${tinfo[${values[2]}]}
-            local pstime=${pinfo[${values[2]}]}
+            local pstime=${xproc[${values[2]}]}
 
             values=(${index_map["CSTIME"]})
-            local pcstime=${pinfo[${values[2]}]}
+            local pcstime=${xproc[${values[2]}]}
 
             local ttime=$((tutime+tstime))
             local ptime=$((putime+pstime+pcutime+pcstime))
@@ -433,7 +450,7 @@ function process_info
 
         for pid in ${all_pids[*]}
         do
-            local -a tid_array=($(process_subthread ${pid}))
+            local -a tid_array=($(process_threads ${pid}))
             if [ ${#tid_array[*]} -gt 0 ];then
                 local info="$(process_pid2name ${pid})[${pid}]"
                 printf "************************************ %s { %s } ************************************\n" "Threads" "${info}"
@@ -461,19 +478,20 @@ function process_ptree
         return 1
     fi
     
+    local pid
+    local spid
     local -a pid_array=($(process_name2pid "${process}"))
-    for process in ${pid_array[*]}
+    for pid in ${pid_array[*]}
     do
-        process_info "${process}" "${show_thread}" "${show_header}"
+        process_info "${pid}" "${show_thread}" "${show_header}"
         if math_bool "${show_header}"; then
             show_header=false
         fi
 
-        local -a sub_array=($(process_subprocess "${process}"))    
-        local subp
-        for subp in ${sub_array[*]}
+        local -a sub_array=($(process_childs "${pid}"))    
+        for spid in ${sub_array[*]}
         do
-            process_ptree "${subp}" "${show_thread}" "${show_header}"
+            process_ptree "${spid}" "${show_thread}" "${show_header}"
         done
     done
  
@@ -490,28 +508,21 @@ function process_pptree
         echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)"
         return 1
     fi
-
-    if [ -z "${process}" ];then
-        process="$$"
-    fi
     
+    local pid
+    local ppid
     local -a pid_array=($(process_name2pid "${process}"))
-    for process in ${pid_array[*]}
+    for pid in ${pid_array[*]}
     do
-        process_info "${process}" "${show_thread}" "${show_header}"
+        process_info "${pid}" "${show_thread}" "${show_header}"
         if math_bool "${show_header}"; then
             show_header=false
         fi
         
-        local ppid_array=($(ppid ${process}))
-        if [ ${#ppid_array[*]} -gt 0 ];then
-            unset ppid_array[0]
-        fi
-        
-        local pproc
-        for pproc in ${ppid_array[*]}
+        local ppid_array=($(process_ppid ${pid}))
+        for ppid in ${ppid_array[*]}
         do
-            process_info "${pproc}" "${show_thread}" "${show_header}"
+            process_info "${ppid}" "${show_thread}" "${show_header}"
         done
     done
 
@@ -520,14 +531,15 @@ function process_pptree
 
 function process_path
 {
-    local process="$1"
+    local para_list=($@)
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
         return 1
     fi
 
-    local -a pid_array=($(process_name2pid "${process}"))
+    local process
+    local -a pid_array=($(process_name2pid "${para_list[*]}"))
     for process in ${pid_array[*]}
     do
         local full_path=$(sudo_it readlink -f /proc/${process}/exe)
@@ -543,11 +555,11 @@ function process_cpu2
 {
     local cpu_list=($@)
 
-    if [ ${#cpu_list[*]} -eq 0 ];then
-        echo_erro "please input cpu-id parameters"
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: cpu list"
         return 1
     fi
-    
+
     printf "%-8s %s\n" "PID" "Process"
     local cpu
     for cpu in ${cpu_list[*]}
@@ -572,17 +584,17 @@ function process_2cpu
 {
     local proc_list=($@)
 
-    if [ ${#proc_list[*]} -eq 0 ];then
-        echo_erro "please input [pid|process-name] parameters"
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
         return 1
     fi
-    
-    local proc
-    for proc in ${proc_list[*]}
+
+    local xproc
+    for xproc in ${proc_list[*]}
     do
-        local pid_list=($(process_name2pid "${proc}"))
+        local pid_list=($(process_name2pid "${xproc}"))
         if [ ${#pid_list[*]} -eq 0 ];then
-            echo_erro "process: { ${proc} } invalid"
+            echo_erro "process: { ${xproc} } invalid"
             continue
         fi
         
@@ -590,7 +602,34 @@ function process_2cpu
         for pid in ${pid_list[*]}
         do
             local cpu_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$1 == ${pid}) print \$2 }")
-            echo ${cpu_list[*]}
+            [ ${#cpu_list[*]} -gt 0 ] && echo ${cpu_list[*]}
+        done
+    done
+ 
+    return 0
+}
+
+function process_setaffinity
+{
+    local xproc="$1"
+    local cpu_list="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: pid or tid or app-name\n\$1: cpu-list, such as 0,3,7-11"
+        return 1
+    fi
+
+    local pid
+    local tid
+    local -a pid_array=($(process_name2pid "${xproc}"))
+    for pid in ${pid_array[*]}
+    do
+        sudo_it taskset -pc ${cpu_list} ${pid}
+
+        local -a tid_array=($(process_threads ${ppid}))
+        for tid in ${tid_array[*]}
+        do
+            sudo_it taskset -pc ${cpu_list} ${tid}
         done
     done
  
@@ -599,7 +638,7 @@ function process_2cpu
 
 function process_coredump
 {
-    local process="$1"
+    local para_list=($@)
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
@@ -611,11 +650,12 @@ function process_coredump
         sudo_it "ulimit -c unlimited"
     fi
 
-    local -a pid_array=($(process_name2pid "${process}"))
-    for process in ${pid_array[*]}
+    local pid
+    local -a pid_array=($(process_name2pid "${para_list[*]}"))
+    for pid in ${pid_array[*]}
     do
-        sudo_it "echo 0x7b > /proc/${process}/coredump_filter"
-        sudo_it "kill -6 ${process}"
+        sudo_it "echo 0x7b > /proc/${pid}/coredump_filter"
+        sudo_it "kill -6 ${pid}"
     done
     
     local stor=$(cat /proc/sys/kernel/core_pattern)
