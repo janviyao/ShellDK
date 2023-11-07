@@ -194,7 +194,7 @@ function install_from_rpm
         local app_name=$(regex_2str "${split_names[0]}")
         local system_rpms=($(rpm -qa | grep -P "${app_name}\d+"))
         if [ ${#system_rpms[*]} -gt 1 ];then
-            if bool_v "${force}";then
+            if math_bool "${force}";then
                 echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Install" "${full_name}")"
             else
                 echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Install" "${full_name}")"
@@ -202,7 +202,7 @@ function install_from_rpm
             fi
         fi
         
-        if ! bool_v "${force}";then
+        if ! math_bool "${force}";then
             local version_new=${versions[0]}
             local version_sys=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
             if version_gt ${version_sys} ${version_new}; then
@@ -222,7 +222,7 @@ function install_from_rpm
         fi
         
         echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${full_name}")"
-        if bool_v "${force}";then
+        if math_bool "${force}";then
             ${SUDO} rpm -ivh --nodeps --force ${full_name} 
         else
             ${SUDO} rpm -ivh --nodeps ${full_name} 
@@ -253,13 +253,15 @@ function tar2do
         return 1
     fi
 
-    if ! can_access "${fpath}";then
-        echo_erro "File { ${fpath} } lost"
-        return 1
+    if ! math_bool "${iscompress}";then
+        if ! can_access "${fpath}";then
+            echo_erro "File { ${fpath} } lost"
+            return 1
+        fi
     fi
 
     local options="-cf"
-    if ! bool_v "${iscompress}";then
+    if ! math_bool "${iscompress}";then
         options="-xf"
         if [ -n "${flist}" ];then
             if can_access "${flist}";then
@@ -287,7 +289,7 @@ function tar2do
     echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${flist}"
     tar ${options} ${fpath} ${flist}
 
-    if ! bool_v "${iscompress}";then
+    if ! math_bool "${iscompress}";then
         local fprefix=$(string_regex "${file}" "^[0-9a-zA-Z]+")
         local find_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
 
@@ -362,14 +364,14 @@ function rpm_install
 
         install_from_rpm "$(regex_2str "${rpm_file}")" ${force}
         if [ $? -ne 0 ]; then
-            if bool_v "${is_dir}";then
+            if math_bool "${is_dir}";then
                 cd ${cur_dir}
             fi
             return 1
         fi
     done
 
-    if bool_v "${is_dir}";then
+    if math_bool "${is_dir}";then
         cd ${cur_dir}
     fi
     return 0

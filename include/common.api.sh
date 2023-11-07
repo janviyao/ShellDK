@@ -44,18 +44,6 @@ function var_exist
     return 1
 }
 
-function bool_v
-{
-    local para=$1
-    if [[ "${para,,}" == "yes" ]] || [[ "${para,,}" == "true" ]] || [[ "${para,,}" == "y" ]] || [[ "${para,,}" == "1" ]]; then
-        return 0
-    elif [[ "${para,,}" == "no" ]] || [[ "${para,,}" == "false" ]] || [[ "${para,,}" == "n" ]] || [[ "${para,,}" == "0" ]]; then
-        return 1
-    else
-        return 1
-    fi
-}
-
 function array_has
 {
     local array=($1)

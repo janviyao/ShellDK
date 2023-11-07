@@ -77,7 +77,7 @@ function echo_file
     fi
 
     local headpart=$(printf "[%5s]" "${log_type}")
-    if bool_v "${LOG_HEADER}";then
+    if math_bool "${LOG_HEADER}";then
         headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
     fi
 
@@ -99,21 +99,21 @@ function echo_header
 {
     local color=${1:-true}
 
-    if bool_v "${LOG_HEADER}";then
+    if math_bool "${LOG_HEADER}";then
         local header=""
-        if bool_v "${HEADER_TIME}";then
+        if math_bool "${HEADER_TIME}";then
             header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@$(whoami)] [${LOCAL_IP}]"
         else
             header="[${LOCAL_IP}@$(whoami)]"
         fi
 
-        if bool_v "${HEADER_FILE}";then
+        if math_bool "${HEADER_FILE}";then
             header="${header} $(printf "[%-18s[%-7d]]" "$(path2fname $0)" "$$")"
         else
             header="${header} $(printf "[%-7d]" "$$")"
         fi
 
-        if bool_v "${color}";then
+        if math_bool "${color}";then
             echo "${COLOR_HEADER}${FONT_BOLD}${header}${COLOR_CLOSE} "
         else
             echo "${header} "

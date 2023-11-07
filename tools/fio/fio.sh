@@ -48,7 +48,7 @@ function run_fio_func
             fi
         fi
 
-        if bool_v "${FIO_VERIFY_ON}"; then
+        if math_bool "${FIO_VERIFY_ON}"; then
             echo_info "testcs-(${case_index}): { [${host_ip}] | [${dev_array[*]}] | ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} | verify }"
         else
             echo_info "testcs-(${case_index}): { [${host_ip}] | [${dev_array[*]}] | ${ioengine} | ${rwtype} | ${read_pct}% | ${iosize} | ${numjobs} | ${iodepth} }"
@@ -63,7 +63,7 @@ function run_fio_func
         fi
     done
 
-    if bool_v "${FIO_DEBUG_ON}";then
+    if math_bool "${FIO_DEBUG_ON}";then
         other_paras="${other_paras} --debug=io"
     fi
 
@@ -197,7 +197,7 @@ function start_test_func
 
             sed -i "s/blocksize[ ]*=[ ]*[0-9]\+[kmgKMG]\?/blocksize=${bs_value}/g" ${output_dir}/${remote_conf}
 
-            if bool_v "${FIO_VERIFY_ON}"; then
+            if math_bool "${FIO_VERIFY_ON}"; then
                 sed -i "${g_sed_insert_pre}verify=md5" ${output_dir}/${remote_conf}
                 sed -i "${g_sed_insert_pre}do_verify=1" ${output_dir}/${remote_conf}
                 sed -i "${g_sed_insert_pre}verify_dump=1" ${output_dir}/${remote_conf}
@@ -211,7 +211,7 @@ function start_test_func
             sed -i "s/cpus_allowed[ ]*=[ ]*.\+/cpus_allowed=${FIO_CPU_MASK}/g" ${output_dir}/${remote_conf}
             sed -i "s/cpus_allowed_policy[ ]*=[ ]*.\+/cpus_allowed_policy=${FIO_CPU_POLICY}/g" ${output_dir}/${remote_conf}
 
-            if bool_v "${FIO_THREAD_ON}"; then
+            if math_bool "${FIO_THREAD_ON}"; then
                 sed -i "s/thread[ ]*=[ ]*[0-1]/thread=1/g" ${output_dir}/${remote_conf}
             fi
 

@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! bool_v "${KEEP_ENV_STATE}";then
+if ! math_bool "${KEEP_ENV_STATE}";then
     echo_info "kill and start: ${ISCSI_APP_NAME}"
 else
     echo_info "keep exe: ${ISCSI_APP_NAME}"
@@ -36,7 +36,7 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-if bool_v "${TARGET_DEBUG_ON}";then
+if math_bool "${TARGET_DEBUG_ON}";then
     if ! can_access "${ISCSI_APP_LOG}";then
         ${SUDO} "touch ${ISCSI_APP_LOG}"
     fi

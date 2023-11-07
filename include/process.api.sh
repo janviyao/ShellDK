@@ -322,7 +322,7 @@ function thread_info
     index_map["CPU-U"]="%-5s %4.1f x"
 
     local header
-    if bool_v "${show_header}"; then
+    if math_bool "${show_header}"; then
         for header in ${header_array[*]}
         do
             local -a values=(${index_map[${header}]})
@@ -416,7 +416,7 @@ function process_info
         local -a pid_array=($(process_name2pid ${x_proc}))    
         for pid in ${pid_array[*]}
         do
-            if bool_v "${is_header}"; then
+            if math_bool "${is_header}"; then
                 ps -p ${pid} -o ${ps_header}
                 local is_header=false
             else
@@ -426,7 +426,7 @@ function process_info
         local -a all_pids=(${all_pids[*]} ${pid_array[*]})
     done
 
-    if bool_v "${show_thread}"; then
+    if math_bool "${show_thread}"; then
         if [ ${#all_pids[*]} -gt 0 ]; then
             printf "\n"
         fi
@@ -441,7 +441,7 @@ function process_info
                 #printf "*********************************************************************************\n"
             fi
 
-            if bool_v "${show_header}" || bool_v "${show_thread}"; then
+            if math_bool "${show_header}" || math_bool "${show_thread}"; then
                 printf "\n"
             fi
         done 
@@ -465,7 +465,7 @@ function process_ptree
     for process in ${pid_array[*]}
     do
         process_info "${process}" "${show_thread}" "${show_header}"
-        if bool_v "${show_header}"; then
+        if math_bool "${show_header}"; then
             show_header=false
         fi
 
@@ -499,7 +499,7 @@ function process_pptree
     for process in ${pid_array[*]}
     do
         process_info "${process}" "${show_thread}" "${show_header}"
-        if bool_v "${show_header}"; then
+        if math_bool "${show_header}"; then
             show_header=false
         fi
         

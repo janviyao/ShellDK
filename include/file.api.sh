@@ -108,7 +108,7 @@ function file_has
         return 1
     fi 
 
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         if grep -P "${string}" ${xfile} &>/dev/null;then
             return 0
         fi
@@ -138,7 +138,7 @@ function file_range_has
         return 1
     fi 
 
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         if sed -n "${line_s},${line_e}p" | grep -P "${string}" &>/dev/null;then
             return 0
         fi
@@ -195,7 +195,7 @@ function file_get
         return 1
     fi 
     
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         local line_nrs=($(file_linenr "${xfile}" "${string}" true))
         local line_nr
         for line_nr in ${line_nrs[*]}
@@ -261,7 +261,7 @@ function file_range_get
     local content=""
     while [ ${line_s} -le ${${line_e}} ]
     do
-        if bool_v "${is_reg}";then
+        if math_bool "${is_reg}";then
             content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}")
         else
             content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}")
@@ -303,7 +303,7 @@ function file_del
         return 1
     fi
 
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         local posix_reg=$(regex_perl2posix "${string}")
         if [[ "${posix_reg}" =~ '#' ]];then
             posix_reg=$(string_replace "${posix_reg}" '#' '\#')
@@ -463,7 +463,7 @@ function file_linenr
     fi
 
     local -a line_nrs
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         #line_nrs=($(sed = ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${string}" | awk -F ':' '{ print $1 }'))
         line_nrs=($(grep -n -P "${string}" ${xfile} | awk -F ':' '{ print $1 }'))
     else
@@ -509,7 +509,7 @@ function file_range_linenr
     fi 
      
     local -a line_nrs
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         if [[ $(string_start "${string}" 1) == '^' ]]; then
             local tmp_reg=$(string_sub "${string}" 1)
             line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${tmp_reg}" | awk -F ':' '{ print $1 }'))
@@ -641,7 +641,7 @@ function file_replace
         return 1
     fi 
 
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         string=$(regex_perl2posix "${string}")
     fi
 
@@ -686,7 +686,7 @@ function file_count
         fi
     done
 
-    if bool_v "${readable}";then
+    if math_bool "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
     else
         local tmp_file="$(file_temp)"
@@ -728,7 +728,7 @@ function file_size
         fi
     done
 
-    if bool_v "${readable}";then
+    if math_bool "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
         local tmp_file="$(file_temp)"

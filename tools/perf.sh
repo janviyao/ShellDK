@@ -209,7 +209,7 @@ function perf_stat
         fi
 
         local aggregate=$(input_prompt "" "aggregate counts across all monitored CPUs ? (yes/no)" "yes")
-        if bool_v "${aggregate}";then
+        if math_bool "${aggregate}";then
             perf_para="-a -d -d -d -- ${process_x}" 
         else
             perf_para="-a -A -d -d -d -- ${process_x}" 

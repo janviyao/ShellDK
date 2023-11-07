@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if bool_v "${KERNEL_DEBUG_ON}";then
+if math_bool "${KERNEL_DEBUG_ON}";then
     echo_info "Save: kernel log"
     ${SUDO} "cp -f /var/log/messages* ${INITIATOR_LOG_DIR}"
     ${SUDO} "cp -f /var/log/kern* ${INITIATOR_LOG_DIR}"

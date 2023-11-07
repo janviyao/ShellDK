@@ -427,7 +427,7 @@ function _ncat_thread_main
     local master_work=true
     mdata_set_var "master_work"
  
-    while bool_v "${master_work}" 
+    while math_bool "${master_work}" 
     do
         local ncat_port=$(ncat_port_get)
 

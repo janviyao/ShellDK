@@ -214,7 +214,7 @@ if [[ "${op_mode}" == "create_target_node" ]];then
     done
 fi
 
-if bool_v "${do_success}";then
+if math_bool "${do_success}";then
     exit 0
 else
     echo_erro "fail. please check { "${op_mode}" } or { custom/private.conf }"

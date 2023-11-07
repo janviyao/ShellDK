@@ -481,7 +481,7 @@ function string_replace
         return 1
     fi
 
-    if bool_v "${is_reg}";then
+    if math_bool "${is_reg}";then
         #donot use (), because it fork child shell
         local oldstr=$(echo "${string}" | grep -P "${oldstr}" -o | head -n 1) 
         if [ -z "${oldstr}" ];then

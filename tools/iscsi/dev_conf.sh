@@ -20,7 +20,7 @@ function conf_sched
         use_blk_mq=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
     fi
 
-    if ! bool_v "${use_blk_mq}";then
+    if ! math_bool "${use_blk_mq}";then
         if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
             use_blk_mq=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
         fi
@@ -30,7 +30,7 @@ function conf_sched
     local sys_scheds=$(cat ${sys_path}/queue/scheduler)
 
     local chose_sched=""
-    if bool_v "${disk_type}";then
+    if math_bool "${disk_type}";then
         # HDD device
         for sched in ${hdd_sheds[*]}
         do

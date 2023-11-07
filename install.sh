@@ -125,7 +125,7 @@ function update_check
     local local_cmd="$1"
     local fname_reg="$2"
 
-    if bool_v "${FORCE_DO}"; then
+    if math_bool "${FORCE_DO}"; then
         return 0
     fi
 
@@ -245,7 +245,7 @@ echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 echo_info "$(printf "[%13s]: %-6s" "Will force"  "${FORCE_DO}")"
 
-if bool_v "${NEED_NET}"; then
+if math_bool "${NEED_NET}"; then
     if check_net; then
         NEED_NET=1
         echo_info "$(printf "[%13s]: %-6s" "Netwk ping" "Ok")"
@@ -430,7 +430,7 @@ function inst_env
 
 function inst_update
 {
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         local need_update=1
         if can_access "${MY_HOME}/.vim/bundle/vundle"; then
             git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
@@ -490,7 +490,7 @@ function inst_system
 
 function inst_ctags
 {
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
         do_action "ctags"
@@ -499,7 +499,7 @@ function inst_ctags
 
 function inst_cscope
 {
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
         do_action "cscope"
@@ -514,7 +514,7 @@ function inst_vim
 
     cd ${ROOT_DIR}/deps
 
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         git clone https://github.com/vim/vim.git vim
     else
         tar -xzf vim-*.tar.gz
@@ -580,7 +580,7 @@ function inst_tig
 {
     cd ${ROOT_DIR}/deps
 
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         git clone https://github.com/jonas/tig.git tig
     else
         do_action "tig"
@@ -595,7 +595,7 @@ function inst_astyle
 
     cd ${ROOT_DIR}/deps
 
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
         cd astyle*/AStyle/build/gcc
     else
@@ -626,7 +626,7 @@ function inst_ack
     chmod 777 ${BIN_DIR}/ack-grep
     
     # install ag
-    if bool_v "${NEED_NET}"; then
+    if math_bool "${NEED_NET}"; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
         do_action "ag"
@@ -704,7 +704,7 @@ function inst_hostname
     fi
 }
 
-if ! bool_v "${REMOTE_INST}"; then
+if ! math_bool "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
     do
         if string_contain "${NEED_OP}" "${key}"; then
@@ -739,7 +739,7 @@ else
         fi
     done
 
-    if bool_v "${COPY_PKG}"; then
+    if math_bool "${COPY_PKG}"; then
         $MY_VIM_DIR/tools/collect.sh "${MY_HOME}/vim.tar"
     fi
 
@@ -756,14 +756,14 @@ else
             fi
         fi
 
-        if bool_v "${COPY_PKG}"; then
+        if math_bool "${COPY_PKG}"; then
             ${MY_VIM_DIR}/tools/scplogin.sh "${MY_HOME}/vim.tar" "${ipaddr}:${MY_HOME}"
             ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "tar -xf ${MY_HOME}/vim.tar"
         fi
         ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "${MY_VIM_DIR}/install.sh ${inst_paras}"
     done
 
-    if bool_v "${COPY_PKG}"; then
+    if math_bool "${COPY_PKG}"; then
         ${SUDO} rm -f ${MY_HOME}/vim.tar
     fi
 fi

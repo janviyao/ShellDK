@@ -102,7 +102,7 @@ do
         fi
     done
 
-    if bool_v "${keep_loop}";then
+    if math_bool "${keep_loop}";then
         sleep 1
     else
         break
@@ -136,7 +136,7 @@ do
     fi
     echo_info "%-15s %s" "btt" "into { ${output_dir}/${o_prefix}.btt }"
     
-    if ! bool_v "${do_collect}";then
+    if ! math_bool "${do_collect}";then
         continue
     fi
 

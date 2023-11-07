@@ -9,7 +9,7 @@ ${SUDO} "echo '/core-%e-%s-%u-%g-%p-%t' > /proc/sys/kernel/core_pattern"
 ${SUDO} "cat /dev/null > /var/log/messages; rm -f /var/log/messages-*"
 ${SUDO} "cat /dev/null > /var/log/kern; rm -f /var/log/kern-*"
 
-if bool_v "${APPLY_SYSCTRL}";then
+if math_bool "${APPLY_SYSCTRL}";then
     echo_info "sysctl reload"
     can_access "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} sysctl -p
@@ -18,7 +18,7 @@ fi
 can_access "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "iscsi-initiator-utils-.+\.rpm"; }
 can_access "sg_raw"           || { cd ${MY_VIM_DIR}/deps; install_from_rpm "sg3_utils-.+\.rpm"; }
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     can_access "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-1.+\.rpm"; }
     can_access "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-libs-.+\.rpm"; }
     can_access "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps; install_from_rpm "device-mapper-multipath-libs-.+\.rpm"; }
@@ -29,7 +29,7 @@ fi
 can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
 can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
-if bool_v "${INITIATOR_DEBUG_ON}";then
+if math_bool "${INITIATOR_DEBUG_ON}";then
     echo_info "enable iscsid debug"
     if process_exist "iscsid";then
         ${SUDO} systemctl stop iscsid.service
@@ -51,7 +51,7 @@ else
     fi
 
     if process_exist "iscsid";then
-        if bool_v "${ISCSI_INITIATOR_RESTART}";then
+        if math_bool "${ISCSI_INITIATOR_RESTART}";then
             echo_info "iscsid restart"
             ${SUDO} systemctl restart iscsid
             #${SUDO} systemctl restart iscsid.socket
@@ -63,7 +63,7 @@ else
     fi
 fi
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     if ! (lsmod | grep dm_multipath &> /dev/null);then
         echo_info "multipath modprobe"
         ${SUDO} modprobe dm-multipath
@@ -77,7 +77,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
 
     can_access "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
     if process_exist "multipathd";then
-        if bool_v "${ISCSI_MUTLIPATH_RESTART}";then
+        if math_bool "${ISCSI_MUTLIPATH_RESTART}";then
             echo_info "multipath restart"
             ${SUDO} systemctl restart multipathd
         fi
@@ -106,7 +106,7 @@ if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
     fi
 fi
 
-if bool_v "${KERNEL_DEBUG_ON}";then
+if math_bool "${KERNEL_DEBUG_ON}";then
     echo_info "enable kernel iscsi debug"
 
     # Block log

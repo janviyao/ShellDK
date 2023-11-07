@@ -162,7 +162,7 @@ function create_project
                 fi
             done
 
-            if bool_v "${conflict}"; then
+            if math_bool "${conflict}"; then
                 continue
             fi
 

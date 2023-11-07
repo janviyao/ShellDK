@@ -133,7 +133,7 @@ function mdata_kv_has_key
     echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
 
-    if bool_v "${ack_value}";then
+    if math_bool "${ack_value}";then
         return 0
     else
         return 1
@@ -165,7 +165,7 @@ function mdata_kv_has_val
     echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
 
-    if bool_v "${ack_value}";then
+    if math_bool "${ack_value}";then
         return 0
     else
         return 1
@@ -187,7 +187,7 @@ function mdata_kv_bool
     echo_file "${LOG_DEBUG}" "mdat bool: [$@]"
      
     _xval_=$(mdata_kv_get "${_xkey_}" "${_pipe_}")
-    if bool_v "${_xval_}";then
+    if math_bool "${_xval_}";then
         return 0
     else
         return 1

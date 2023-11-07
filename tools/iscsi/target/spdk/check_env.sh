@@ -16,7 +16,7 @@ ${SUDO} "echo '/core-%e-%s-%u-%g-%p-%t' > /proc/sys/kernel/core_pattern"
 ${SUDO} "echo > /var/log/messages; rm -f /var/log/messages-*"
 ${SUDO} "echo > /var/log/kern; rm -f /var/log/kern-*"
 
-if bool_v "${APPLY_SYSCTRL}";then
+if math_bool "${APPLY_SYSCTRL}";then
     can_access "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} echo_iferror sysctl -p
 fi

@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if bool_v "${KEEP_ENV_STATE}";then
+if math_bool "${KEEP_ENV_STATE}";then
     echo_info "keep devs: ${LOCAL_IP}"
     exit 0
 fi
@@ -48,7 +48,7 @@ if [[ "${ISCSI_HEADER_DIGEST}" != "None" ]];then
     fi
 fi
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     ${SUDO} "iscsiadm -m node -o update -n node.session.nr_sessions -v ${ISCSI_SESSION_NR}"
     if [ $? -ne 0 ];then
         echo_erro "update node.session.nr_sessions=${ISCSI_SESSION_NR} fail"
@@ -92,7 +92,7 @@ do
 done
 rm -f ${tmp_file}
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     ${SUDO} multipath -r
 
     count=30
@@ -110,7 +110,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
             fi
         done
 
-        if bool_v "${loaded_fin}";then
+        if math_bool "${loaded_fin}";then
             break
         fi
 
@@ -123,7 +123,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
 fi
 
 declare -a dm_device_array
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     for iscsi_dev in ${iscsi_device_array[*]}
     do
         for dm_dev in $(ls /sys/block/${iscsi_dev}/holders)
@@ -135,7 +135,7 @@ if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     done
 fi
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     for mdev in ${dm_device_array[*]}
     do
         ${ISCSI_ROOT_DIR}/dev_conf.sh ${mdev} $((ISCSI_DEV_QD * ISCSI_SESSION_NR))
@@ -147,7 +147,7 @@ else
     done
 fi
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     echo_info "dev(${#dm_device_array[*]}): { ${dm_device_array[*]} }"
     echo "${dm_device_array[*]}" > ${WORK_ROOT_DIR}/disk.${LOCAL_IP}
 else

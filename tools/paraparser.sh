@@ -26,7 +26,7 @@ do
         b_single=true
     fi
 
-    if bool_v "${b_single}";then
+    if math_bool "${b_single}";then
         if [[ "${value:0:1}" == "-" ]];then
             echo_erro "para: ${option}=${value} invalid"
             exit 0
@@ -45,7 +45,7 @@ do
                 parasMap[${option}]="${value}"
             fi
 
-            if ! bool_v "${b_single}";then
+            if ! math_bool "${b_single}";then
                 all_paras[${all_cnt}]="$1"
                 let all_cnt++
                 shift
@@ -62,7 +62,7 @@ do
                     parasMap[${option}]="${value}"
                 fi
 
-                if ! bool_v "${b_single}";then
+                if ! math_bool "${b_single}";then
                     all_paras[${all_cnt}]="$1"
                     let all_cnt++
                     shift
@@ -79,7 +79,7 @@ do
     shift
 done
 
-#if bool_v "${LOG_OPEN}";then
+#if math_bool "${LOG_OPEN}";then
 #    for key in ${!parasMap[*]}
 #    do
 #        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${parasMap[$key]}")"

@@ -25,11 +25,30 @@ function is_float
     fi
 }
 
+function math_bool
+{
+    local expr="$@"
+
+    if [[ $# -gt 1 ]];then
+        math_expr_if "${expr}"
+        return $?
+    fi
+
+    if [[ "${expr,,}" == "yes" ]] || [[ "${expr,,}" == "true" ]] || [[ "${expr,,}" == "y" ]] || [[ "${expr,,}" == "1" ]]; then
+        return 0
+    elif [[ "${expr,,}" == "no" ]] || [[ "${expr,,}" == "false" ]] || [[ "${expr,,}" == "n" ]] || [[ "${expr,,}" == "0" ]]; then
+        return 1
+    else
+        math_expr_if "${expr}"
+        return $?
+    fi
+}
+
 function math_expr_if
 {
     local expre="$@"
 
-    if [ $(echo "${expre}" | bc -l) -eq 1 ];then
+    if [[ $(echo "scale=0;${expre}" | bc -l) -ge 1 ]];then
         return 0
     else
         return 1
@@ -138,7 +157,7 @@ function math_dec2hex
 
     local result=$(printf "0x%llx" ${value})
     if [ -n "${result}" ];then
-        if bool_v "${upper}";then
+        if math_bool "${upper}";then
             echo "${result^^}"
         else
             echo "${result,,}"

@@ -6,7 +6,7 @@ if ! can_access "iscsiadm" || ! process_exist "iscsid";then
     exit 0
 fi
 
-if bool_v "${KEEP_ENV_STATE}";then
+if math_bool "${KEEP_ENV_STATE}";then
     echo_info "donot clean from ${LOCAL_IP}"
     exit 0
 else
@@ -32,7 +32,7 @@ do
     done
 done
 
-if bool_v "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
+if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
     echo_info "remove mpath device"
     ${SUDO} "multipath -F"
     if [ $? -ne 0 ];then

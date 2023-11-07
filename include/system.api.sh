@@ -256,7 +256,7 @@ function account_check
     fi
 
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-        if bool_v "${can_input}";then
+        if math_bool "${can_input}";then
             USR_NAME=${MY_NAME}
 
             local input_val=$(input_prompt "" "input username" "${USR_NAME}")

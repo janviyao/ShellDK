@@ -5,7 +5,7 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 #${ISCSI_APP_UCTRL} bdev_set_options --disable-auto-examine
 #${ISCSI_APP_UCTRL} framework_start_init
 
-if bool_v "${TARGET_DEBUG_ON}";then
+if math_bool "${TARGET_DEBUG_ON}";then
     eval "${ISCSI_APP_UCTRL} log_set_level DEBUG"
     eval "${ISCSI_APP_UCTRL} log_set_print_level DEBUG"
 

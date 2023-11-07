@@ -403,7 +403,7 @@ function _xfer_thread_main
 
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-                if ! bool_v "${account_success}";then
+                if ! math_bool "${account_success}";then
                     if account_check ${MY_NAME};then
                         account_success=true
                     else

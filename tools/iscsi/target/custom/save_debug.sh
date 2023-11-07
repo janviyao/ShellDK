@@ -2,14 +2,14 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if bool_v "${KERNEL_DEBUG_ON}";then
+if math_bool "${KERNEL_DEBUG_ON}";then
     echo_info "Save: kernel log"
     ${SUDO} "cp -f /var/log/messages* ${ISCSI_LOG_DIR}"
     ${SUDO} "cp -f /var/log/kern* ${ISCSI_LOG_DIR}"
     dmesg &> ${ISCSI_LOG_DIR}/dmesg.log 
 fi
 
-if bool_v "${DUMP_SAVE_ON}";then
+if math_bool "${DUMP_SAVE_ON}";then
     coredump_dir=$(fname2path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
     if ! can_access "${coredump_dir}";then
         coredump_dir=""
@@ -32,7 +32,7 @@ if bool_v "${DUMP_SAVE_ON}";then
         have_coredump=true
     fi
     
-    if bool_v "${have_coredump}";then
+    if math_bool "${have_coredump}";then
         if can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
             echo_info "Save: ${ISCSI_APP_NAME}"
             cp -f ${ISCSI_APP_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}
