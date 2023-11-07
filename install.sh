@@ -541,7 +541,7 @@ function inst_vim
         exit -1
     fi
     
-    if can_access "/usr/lib64/libcurses.so";
+    if can_access "/usr/lib64/libcurses.so";then
         do_action "/usr/share/terminfo/x/xterm"
         do_action "/usr/lib64/libncurses.so.5"
         do_action "/usr/lib64/libcurses.so"
