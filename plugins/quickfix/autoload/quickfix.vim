@@ -523,6 +523,10 @@ endfunction
 
 function! s:qfix_load(module, index)
     call PrintArgs("2file", "quickfix.qfix_load", a:module, a:index)
+    if strlen(a:module) == 0
+        call LogPrint("error", "qfix_load module null")
+        return -1
+    endif
 
     let s:qfix_main_index = a:index
     if s:qfix_main_index < 0 
@@ -827,8 +831,7 @@ function! quickfix#ctrl_main(mode)
 
         let next_index = s:info_seek(s:qfix_module, "next", s:qfix_main_index)
         if next_index >= 0
-            call s:qfix_load(s:qfix_module, next_index)
-            return 0
+            return s:qfix_load(s:qfix_module, next_index)
         endif
         return -1
     elseif a:mode == "recover-prev"
@@ -837,8 +840,7 @@ function! quickfix#ctrl_main(mode)
 
         let prev_index = s:info_seek(s:qfix_module, "prev", s:qfix_main_index)
         if prev_index >= 0
-            call s:qfix_load(s:qfix_module, prev_index)
-            return 0
+            return s:qfix_load(s:qfix_module, prev_index)
         endif
         return -1
     elseif a:mode == "next"
