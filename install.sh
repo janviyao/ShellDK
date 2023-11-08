@@ -9,77 +9,14 @@ export MY_VIM_DIR=${ROOT_DIR}
 export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 #export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
 
+source $MY_VIM_DIR/bashrc
+. ${ROOT_DIR}/tools/paraparser.sh
+if ! account_check ${MY_NAME};then
+    echo_erro "Username or Password check fail"
+    exit 1
+fi
+
 declare -A FUNC_MAP
-declare -A INST_GUIDE
-
-CMD1="cd ${ROOT_DIR}/deps"
-CMD2="cd ${ROOT_DIR}/tools/app"
-INST_GUIDE["ppid"]="${CMD2};gcc ppid.c -g -o ppid;mv -f ppid ${BIN_DIR}"
-INST_GUIDE["fstat"]="${CMD2};gcc fstat.c -g -o fstat;mv -f fstat ${BIN_DIR}"
-INST_GUIDE["chk_passwd"]="${CMD2};gcc chk_passwd.c -g -lcrypt -o chk_passwd;mv -f chk_passwd ${BIN_DIR}"
-INST_GUIDE["deno"]="${CMD1};unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${BIN_DIR}"
-
-INST_GUIDE["make"]="install_from_net make"
-INST_GUIDE["g++"]="install_from_net gcc-c++"
-
-INST_GUIDE["ctags"]="${CMD1};install_from_tar 'universal-ctags-.+\.tar\.gz';rm -fr universal-ctags-*/"
-INST_GUIDE["cscope"]="${CMD1};install_from_tar 'cscope-.+\.tar\.gz';rm -fr cscope-*/"
-INST_GUIDE["tig"]="${CMD1};install_from_tar 'tig-.+\.tar\.gz';rm -fr tig-*/"
-#INST_GUIDE["ag"]="${CMD1};install_from_tar 'the_silver_searcher-.+\.tar\.gz';rm -fr the_silver_searcher-*/"
-INST_GUIDE["ag"]="${CMD1};install_from_rpm 'the_silver_searcher-.+\.rpm'"
-
-INST_GUIDE["glibc-2.28"]="${CMD1};install_from_tar 'glibc-2.28.tar.xz';rm -fr glibc-2.28/"
-INST_GUIDE["glibc-common"]="${CMD1};install_from_rpm 'glibc-common-.+\.rpm'"
-
-INST_GUIDE["m4"]="${CMD1};install_from_tar 'm4-.+\.tar\.gz';rm -fr m4-*/"
-INST_GUIDE["autoconf"]="${CMD1};install_from_tar 'autoconf-.+\.tar\.gz';rm -fr autoconf-*/"
-INST_GUIDE["automake"]="${CMD1};install_from_tar 'automake-.+\.tar\.gz';rm -fr automake-*/"
-INST_GUIDE["sshpass"]="${CMD1};install_from_tar 'sshpass-.+\.tar\.gz';rm -fr sshpass-*/"
-INST_GUIDE["tclsh8.6"]="${CMD1};install_from_tar 'tcl.+\.tar\.gz';rm -fr tcl*/"
-INST_GUIDE["expect"]="${CMD1};install_from_tar 'tcl.+\.tar\.gz';${CMD1};install_from_tar 'expect.+\.tar\.gz';rm -fr expect*/;rm -fr tcl*/"
-INST_GUIDE["unzip"]="${CMD1};install_from_rpm 'unzip-.+\.rpm'"
-
-INST_GUIDE["netperf"]="${CMD1};install_from_tar 'netperf-.+\.tar\.gz';rm -fr netperf-*/"
-INST_GUIDE["perf"]="install_from_net perf"
-INST_GUIDE["atop"]="${CMD1};install_from_rpm 'atop-.+\.rpm'"
-INST_GUIDE["iperf3"]="${CMD1};install_from_rpm 'iperf3-.+\.rpm'"
-INST_GUIDE["ss"]="${CMD1};install_from_rpm 'iproute-.+\.rpm'"
-INST_GUIDE["rsync"]="${CMD1};install_from_rpm 'rsync-.+\.rpm'"
-INST_GUIDE["nc"]="${CMD1};install_from_rpm 'nmap-ncat-.+\.rpm'"
-INST_GUIDE["m4"]="${CMD1};install_from_rpm 'm4-.+\.rpm'"
-INST_GUIDE["sar"]="${CMD1};install_from_rpm 'sysstat-.+\.rpm'"
-INST_GUIDE["autoconf"]="${CMD1};install_from_rpm 'autoconf-.+\.rpm'"
-INST_GUIDE["automake"]="${CMD1};install_from_rpm 'automake-.+\.rpm'"
-
-INST_GUIDE["/usr/libexec/sudo/libsudo_util.so.0"]="${CMD1};install_from_rpm 'sudo-.+\.rpm'"
-INST_GUIDE["/lib64/libreadline.so.6"]="${CMD1};install_from_rpm 'readline-.+\.rpm'"
-INST_GUIDE["/usr/include/readline"]="${CMD1};install_from_rpm 'readline-devel-.+\.rpm'"
-INST_GUIDE["/usr/lib64/libssl.so.10"]="${CMD1};install_from_rpm 'compat-openssl10-.+\.rpm'"
-INST_GUIDE["/usr/bin/python-config"]="${CMD1};install_from_rpm 'python-devel.+\.rpm'"
-INST_GUIDE["/usr/lib64/libpython2.7.so.1.0"]="${CMD1};install_from_rpm 'python-libs.+\.rpm'"
-INST_GUIDE["/usr/bin/python3-config"]="${CMD1};install_from_rpm 'python3-devel.+\.rpm'"
-INST_GUIDE["/usr/lib64/libpython3.so"]="${CMD1};install_from_rpm 'python3-libs-.+\.rpm'"
-INST_GUIDE["/usr/lib64/liblzma.so.5"]="${CMD1};install_from_rpm 'xz-libs.+\.rpm'"
-INST_GUIDE["/usr/lib64/liblzma.so"]="${CMD1};install_from_rpm 'xz-devel.+\.rpm'"
-INST_GUIDE["/usr/libiconv/lib64/libiconv.so.2"]="${CMD1};install_from_rpm 'libiconv-1.+\.rpm'"
-INST_GUIDE["/usr/libiconv/lib64/libiconv.so"]="${CMD1};install_from_rpm 'libiconv-devel.+\.rpm'"
-INST_GUIDE["/usr/lib64/libpcre.so.1"]="${CMD1};install_from_rpm 'pcre-8.+\.rpm'"
-INST_GUIDE["/usr/lib64/libpcre.so"]="${CMD1};install_from_rpm 'pcre-devel.+\.rpm'"
-#INST_GUIDE["/usr/lib64/libpcrecpp.so.0"]="${CMD1};install_from_rpm 'pcre-cpp.+\.rpm'"
-#INST_GUIDE["/usr/lib64/libpcre16.so.0"]="${CMD1};install_from_rpm 'pcre-utf16.+\.rpm'"
-#INST_GUIDE["/usr/lib64/libpcre32.so.0"]="${CMD1};install_from_rpm 'pcre-utf32.+\.rpm'"
-INST_GUIDE["/usr/share/terminfo/x/xterm"]="${CMD1};install_from_rpm 'ncurses-base.+\.rpm'"
-INST_GUIDE["/usr/lib64/libncurses.so.5"]="${CMD1};install_from_rpm 'ncurses-libs.+\.rpm'"
-INST_GUIDE["/usr/lib64/libncurses.so"]="${CMD1};install_from_rpm 'ncurses-devel.+\.rpm'"
-INST_GUIDE["/usr/lib64/libz.so.1"]="${CMD1};install_from_rpm 'zlib-1.+\.rpm'"
-INST_GUIDE["/usr/lib64/libz.so"]="${CMD1};install_from_rpm 'zlib-devel.+\.rpm'"
-INST_GUIDE["/usr/share/doc/perl-Data-Dumper"]="${CMD1};install_from_rpm 'perl-Data-Dumper-2.167.+\.rpm'"
-INST_GUIDE["/usr/share/doc/perl-Thread-Queue-3.02"]="${CMD1};install_from_rpm 'perl-Thread-Queue-.+\.rpm'"
-INST_GUIDE["locale"]="${CMD1};install_from_rpm 'glibc-common-.+\.rpm'"
-#INST_GUIDE["/usr/lib/golang/api"]="${CMD1};install_from_rpm 'golang-1.+\.rpm'"
-#INST_GUIDE["/usr/lib/golang/src"]="${CMD1};install_from_rpm 'golang-src-.+\.rpm'"
-#INST_GUIDE["/usr/lib/golang/bin"]="${CMD1};install_from_rpm 'golang-bin-.+\.rpm'"
-
 FUNC_MAP["env"]="inst_env"
 FUNC_MAP["update"]="inst_update"
 FUNC_MAP["clean"]="clean_env"
@@ -98,15 +35,27 @@ FUNC_MAP["hostname"]="inst_hostname"
 
 function do_action
 {     
-    local idx=0
     local check_arr=($@)
 
+    local usr_cmd
     for usr_cmd in ${check_arr[*]};
     do
         if ! can_access "${usr_cmd}";then
-            local guides="${INST_GUIDE["${usr_cmd}"]}"
+            local norm_str=$(regex_2str "${usr_cmd}")
+            local line_cnt=$(file_get ${ROOT_DIR}/install.spec "^\s*${norm_str}\s*;" true)
+            if [ -z "${line_cnt}" ];then
+                echo_erro "[^\s*${norm_str}\s*;] donot match from ${ROOT_DIR}/install.spec"
+                continue
+            fi
+
+            if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
+                line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
+            fi
+
+            local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;" "" true)
             local total=$(echo "${guides}" | awk -F';' '{ print NF }')
 
+            local idx=0
             for (( idx = 1; idx <= ${total}; idx++))
             do
                 local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
@@ -188,13 +137,6 @@ function inst_usage
         printf "Op: %-10s Funcs: %s\n" ${key} "${FUNC_MAP[${key}]}"
     done
 }
-
-source $MY_VIM_DIR/bashrc
-. ${ROOT_DIR}/tools/paraparser.sh
-if ! account_check ${MY_NAME};then
-    echo_erro "Username or Password check fail"
-    exit 1
-fi
 
 NEED_OP="${parasMap['-o']}"
 NEED_OP="${NEED_OP:-${parasMap['--op']}}"
@@ -449,11 +391,26 @@ function inst_deps
     local rid_arr=(glibc-2.28 glibc-common ctags cscope vim tig astyle ag)
     local -A inst_map
 
-    for key in ${!INST_GUIDE[*]}
+    local line
+    while read line
     do
-        inst_map[${key}]="${INST_GUIDE["${key}"]}"
-    done
+        if [ -n "${line}" ];then
+            #echo_file "${LOG_DEBUG}" "install: [${line}]"
+            if [[ $(string_start "${line}" 1) != '#' ]];then
+                local key=$(string_split "${line}" ";" 1)
+                if [[ "${key}" =~ "${GBL_COL_SPF}" ]];then
+                    key=$(string_replace "${key}" "${GBL_COL_SPF}" " ")
+                fi
 
+                local norm_str=$(regex_2str "${key}")
+                local value=$(string_replace "${line}" "^\s*${norm_str}\s*;\s*" "" true)
+
+                #echo_file "${LOG_DEBUG}" "key: [${key}] value: [${value}]"
+                inst_map["${key}"]="${value}"
+            fi
+        fi
+    done < ${ROOT_DIR}/install.spec
+    
     for key in ${rid_arr[*]}
     do
         unset inst_map[${key}]
@@ -527,25 +484,19 @@ function inst_vim
     conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
     #conf_paras="${conf_paras} --enable-luainterp=yes"
     if can_access "python3";then
-        if ! can_access "/usr/bin/python3-config";then
-            do_action "/usr/bin/python3-config"
-        fi
+        do_action "/usr/bin/python3-config"
         conf_paras="${conf_paras} --enable-python3interp=yes "
     elif can_access "python";then
-        if ! can_access "/usr/bin/python-config";then
-            do_action "/usr/bin/python-config"
-        fi
+        do_action "/usr/bin/python-config"
         conf_paras="${conf_paras} --enable-pythoninterp=yes"
     else
         echo_erro "python environment not ready"
         exit -1
     fi
     
-    if can_access "/usr/lib64/libcurses.so";then
-        do_action "/usr/share/terminfo/x/xterm"
-        do_action "/usr/lib64/libncurses.so.5"
-        do_action "/usr/lib64/libcurses.so"
-    fi
+    do_action "/usr/share/terminfo/x/xterm"
+    do_action "/usr/lib64/libncurses.so.5"
+    do_action "/usr/lib64/libcurses.so"
 
     ./configure ${conf_paras} &>> build.log
     if [ $? -ne 0 ]; then

@@ -1,7 +1,7 @@
 #!/bin/bash
 : ${INCLUDE_FILE:=1}
 
-function is_owner
+function file_owner_is
 {
     local fname="$1"
     local fuser="$2"
@@ -579,6 +579,24 @@ function file_range
     fi
 
     return 1
+}
+
+function file_line_num
+{
+    local xfile="$1"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile"
+        return 1
+    fi
+
+    if ! can_access "${xfile}";then
+        echo "0"
+        return 0
+    fi 
+
+    echo $(sed -n '$=' ${xfile})
+    return 0
 }
 
 function file_change

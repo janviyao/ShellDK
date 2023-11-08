@@ -524,7 +524,7 @@ endfunction
 function! s:qfix_load(module, index)
     call PrintArgs("2file", "quickfix.qfix_load", a:module, a:index)
     if strlen(a:module) == 0
-        call LogPrint("error", "qfix_load module null")
+        call LogPrint("error", "qfix_load index ".a:index." but module null")
         return -1
     endif
 
@@ -871,6 +871,10 @@ function! quickfix#ctrl_main(mode)
             let module_file = GetVimDir(1, "quickfix").'/module'
             if filereadable(module_file)
                 let s:qfix_module = get(readfile(module_file, 'b', 1), 0, '')
+                if strlen(s:qfix_module) == 0
+                    call LogPrint("error", "file [".module_file."] content null, recover to default: csfind")
+                    let s:qfix_module = "csfind"
+                endif
             else
                 let s:qfix_module = "csfind"
             endif

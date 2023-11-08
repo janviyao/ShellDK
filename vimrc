@@ -6,7 +6,7 @@ let g:my_vim_dir = expand('$MY_VIM_DIR')
 let g:log_dump_dict = 1
 let g:log_dump_list = 0
 
-let s:log_enable    = 1
+let s:log_enable    = 0
 let s:log_file_path = '/tmp/vim.debug'
 let s:log_file_max  = 698351616
 let s:log_line_max  = 500

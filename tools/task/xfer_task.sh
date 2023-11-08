@@ -66,13 +66,13 @@ function do_rsync
                         if ! test -d '${xfer_dir}';then\
                             sudo_it mkdir -p '${xfer_dir}';\
                             sudo_it chmod +w '${xfer_dir}';\
-                            if ! is_owner '${xfer_dir}' '${USR_NAME}';then\
+                            if ! file_owner_is '${xfer_dir}' '${USR_NAME}';then\
                                 sudo_it chown ${USR_NAME} '${xfer_dir}';\
                             fi;\
                         else\
                             if ! test -w '${xfer_dir}';then\
                                 sudo_it chmod +w '${xfer_dir}';\
-                                if ! is_owner '${xfer_dir}' '${USR_NAME}';then\
+                                if ! file_owner_is '${xfer_dir}' '${USR_NAME}';then\
                                     sudo_it chown ${USR_NAME} '${xfer_dir}';\
                                 fi;\
                             fi;\
