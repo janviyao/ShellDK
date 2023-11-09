@@ -27,8 +27,8 @@ FUNC_MAP["tig"]="inst_tig"
 FUNC_MAP["ack"]="inst_ack"
 FUNC_MAP["astyle"]="inst_astyle"
 FUNC_MAP["system"]="inst_system"
-FUNC_MAP["deps"]="inst_deps"
-FUNC_MAP["all"]="inst_deps inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
+FUNC_MAP["spec"]="inst_spec"
+FUNC_MAP["all"]="inst_spec inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
 FUNC_MAP["glibc2.28"]="inst_glibc"
 FUNC_MAP["gcc4.9.2"]="inst_gcc"
 FUNC_MAP["hostname"]="inst_hostname"
@@ -36,6 +36,7 @@ FUNC_MAP["hostname"]="inst_hostname"
 function do_action
 {     
     local check_arr=($@)
+    echo_debug "do_action: ${check_arr[*]}"
 
     local usr_cmd
     for usr_cmd in ${check_arr[*]};
@@ -44,15 +45,18 @@ function do_action
             local norm_str=$(regex_2str "${usr_cmd}")
             local line_cnt=$(file_get ${ROOT_DIR}/install.spec "^\s*${norm_str}\s*;" true)
             if [ -z "${line_cnt}" ];then
-                echo_erro "[^\s*${norm_str}\s*;] donot match from ${ROOT_DIR}/install.spec"
-                continue
+                if install_from_net "${usr_cmd}";then
+                    continue
+                else
+                    echo_erro "regex [^\s*${norm_str}\s*;] donot match from ${ROOT_DIR}/install.spec"
+                fi
             fi
 
             if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
                 line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
             fi
 
-            local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;" "" true)
+            local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;\s*" "" true)
             local total=$(echo "${guides}" | awk -F';' '{ print NF }')
 
             local idx=0
@@ -63,10 +67,13 @@ function do_action
                 eval "${action}"
                 if [ $? -ne 0 ];then
                     echo_erro "${action}"
+                    return 1
                 fi
             done
         fi
     done
+
+    return 0
 }
 
 function update_check
@@ -125,7 +132,7 @@ function inst_usage
     echo "install.sh -o gcc4.9.2   @install gcc package"
     echo "install.sh -o glibc2.28  @install glibc2.28 package"
     echo "install.sh -o system     @configure run system: linux & windows"
-    echo "install.sh -o deps       @install all rpm package being depended on"
+    echo "install.sh -o spec       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
     echo "install.sh -o hostname   @set hostname"
     echo "install.sh -j num        @install with thread-num"
@@ -386,37 +393,42 @@ function inst_update
     fi
 }
 
-function inst_deps
+function inst_spec
 {
+    local keys=($@)
     local rid_arr=(glibc-2.28 glibc-common ctags cscope vim tig astyle ag)
     local -A inst_map
+    
+    if [ ${#keys[*]} -eq 0 ];then
+        local line
+        while read line
+        do
+            if [ -n "${line}" ];then
+                #echo_file "${LOG_DEBUG}" "install: [${line}]"
+                if [[ $(string_start "${line}" 1) != '#' ]];then
+                    local key=$(string_split "${line}" ";" 1)
+                    if [[ "${key}" =~ "${GBL_COL_SPF}" ]];then
+                        key=$(string_replace "${key}" "${GBL_COL_SPF}" " ")
+                    fi
 
-    local line
-    while read line
-    do
-        if [ -n "${line}" ];then
-            #echo_file "${LOG_DEBUG}" "install: [${line}]"
-            if [[ $(string_start "${line}" 1) != '#' ]];then
-                local key=$(string_split "${line}" ";" 1)
-                if [[ "${key}" =~ "${GBL_COL_SPF}" ]];then
-                    key=$(string_replace "${key}" "${GBL_COL_SPF}" " ")
-                fi
-
-                local norm_str=$(regex_2str "${key}")
-                local value=$(string_replace "${line}" "^\s*${norm_str}\s*;\s*" "" true)
+                    local norm_str=$(regex_2str "${key}")
+                    local value=$(string_replace "${line}" "^\s*${norm_str}\s*;\s*" "" true)
 
                 #echo_file "${LOG_DEBUG}" "key: [${key}] value: [${value}]"
                 inst_map["${key}"]="${value}"
+                fi
             fi
-        fi
-    done < ${ROOT_DIR}/install.spec
-    
-    for key in ${rid_arr[*]}
-    do
-        unset inst_map[${key}]
-    done
+        done < ${ROOT_DIR}/install.spec
 
-    do_action ${!inst_map[*]}
+        for key in ${rid_arr[*]}
+        do
+            unset inst_map[${key}]
+        done
+
+        do_action ${!inst_map[*]}
+    else
+        do_action ${keys[*]}
+    fi
 }
 
 function inst_system
@@ -664,7 +676,7 @@ if ! math_bool "${REMOTE_INST}"; then
             for func in ${FUNC_MAP[${key}]};
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
-                ${func}
+                ${func} ${other_paras[*]}
                 echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
             done
         fi

@@ -1,19 +1,15 @@
 #!/bin/bash
 declare -A parasMap
 declare -a all_paras=()
-declare -i all_cnt=0
 declare -a other_paras=()
-declare -i other_cnt=0
 
 while [ $# -gt 0 ]
 do
     option=$1
     if [ -z "${option}" ];then
-        all_paras[${all_cnt}]="$1"
-        other_paras[${other_cnt}]="$1"
+        all_paras[${#all_paras[*]}]="$1"
+        other_paras[${#other_paras[*]}]="$1"
 
-        let all_cnt++
-        let other_cnt++
         shift
         continue
     fi
@@ -46,8 +42,7 @@ do
             fi
 
             if ! math_bool "${b_single}";then
-                all_paras[${all_cnt}]="$1"
-                let all_cnt++
+                all_paras[${#all_paras[*]}]="$1"
                 shift
             fi
         fi
@@ -63,19 +58,16 @@ do
                 fi
 
                 if ! math_bool "${b_single}";then
-                    all_paras[${all_cnt}]="$1"
-                    let all_cnt++
+                    all_paras[${#all_paras[*]}]="$1"
                     shift
                 fi
             fi
         else
-            other_paras[${other_cnt}]="$1"
-            let other_cnt++
+            other_paras[${#other_paras[*]}]="$1"
         fi
     fi
 
-    all_paras[${all_cnt}]="$1"
-    let all_cnt++
+    all_paras[${#all_paras[*]}]="$1"
     shift
 done
 

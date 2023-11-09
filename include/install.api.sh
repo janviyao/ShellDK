@@ -33,39 +33,39 @@ function version_eq
 
 function install_from_net
 {
-    local inst_name="$1"
+    local xname="$1"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify package name"
         return 1
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Will install" "${inst_name}")"
+    echo_info "$(printf "[%13s]: %-50s" "Will install" "${xname}")"
     if can_access "yum";then
-        ${SUDO} yum install ${inst_name} -y
+        sudo_it yum install ${xname} -y
         if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${inst_name}")"
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
             return 0
         fi
     fi
 
     if can_access "apt";then
-        ${SUDO} apt install ${inst_name} -y
+        sudo_it apt install ${xname} -y
         if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${inst_name}")"
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
             return 0
         fi
     fi
 
     if can_access "apt-cyg";then
-        ${SUDO} apt-cyg install ${inst_name} -y
+        sudo_it apt-cyg install ${xname} -y
         if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${inst_name}")"
+            echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
             return 0
         fi
     fi
 
-    echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${inst_name}")"
+    echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${xname}")"
     return 1
 }
 
@@ -148,7 +148,7 @@ function install_from_make
     export CFLAGS="${cflags_bk}"
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    ${SUDO} "make install &>> build.log"
+    sudo_it "make install &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${work_dir} failed, check: $(real_path build.log)"
         cd ${currdir}
@@ -161,23 +161,40 @@ function install_from_make
 
 function install_from_rpm
 {
-    local f_reg="$1"
-    local force="${2:-false}"
+    local xfile="$1"
+    local isreg="${2:-false}"
+    local force="${3:-false}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: specify rpm-regex name"
+        echo_erro "\nUsage: [$@]\n\$1: specify rpm-name or regex-string\n\$2: whether regex(default: false)\n\$3: whether force(default: false)"
         return 1
     fi
 
     # rpm -qf /usr/bin/nc #query nc rpm package
     # rpm -ql xxx.rpm     #query rpm package contents
-    local local_arr=($(find . -regextype posix-awk -regex ".*/?${f_reg}"))
-    local rpm_file
-    for rpm_file in ${local_arr[*]}    
-    do
-        local full_name=$(path2fname ${rpm_file})
+    local local_rpms=(${xfile})
+    if math_bool "${isreg}";then
+        local fpath=$(fname2path ${xfile})
+        if ! can_access "${fpath}";then
+            fpath="."
+        fi
+        local_rpms=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${xfile}"))
+    fi
+    
+    if [ ${#local_rpms[*]} -gt 1 ];then
+        local select_x=$(select_one ${local_rpms[*]} "all")
+        if [[ "${select_x}" != "all" ]];then
+            local_rpms=(${select_x})
+        fi
+    fi
 
-        local versions=($(string_regex "${full_name}" "\d+\.\d+(\.\d+)?"))
+    local rpm_file
+    for rpm_file in ${local_rpms[*]}    
+    do
+        local full_name=$(real_path ${rpm_file})
+        local fname=$(path2fname ${full_name})
+
+        local versions=($(string_regex "${fname}" "\d+\.\d+(\.\d+)?"))
         if [ -z "${versions[*]}" ];then
             echo_erro "$(printf "[%13s]: { %-13s } failure, version invalid" "Install" "${full_name}")"
             return 1
@@ -195,9 +212,9 @@ function install_from_rpm
         local system_rpms=($(rpm -qa | grep -P "${app_name}\d+"))
         if [ ${#system_rpms[*]} -gt 1 ];then
             if math_bool "${force}";then
-                echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Install" "${full_name}")"
+                echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Install" "${fname}")"
             else
-                echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Install" "${full_name}")"
+                echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Install" "${fname}")"
                 continue
             fi
         fi
@@ -212,7 +229,7 @@ function install_from_rpm
         fi
 
         if [ ${#system_rpms[*]} -eq 1 ];then
-            ${SUDO} rpm -e --nodeps ${system_rpms[0]} 
+            sudo_it rpm -e --nodeps ${system_rpms[0]} 
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: { %-13s } failure" "Uninstall" "${system_rpms[0]}")"
                 return 1
@@ -221,18 +238,18 @@ function install_from_rpm
             fi
         fi
         
-        echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${full_name}")"
+        echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${fname}")"
         if math_bool "${force}";then
-            ${SUDO} rpm -ivh --nodeps --force ${full_name} 
+            sudo_it rpm -ivh --nodeps --force ${full_name} 
         else
-            ${SUDO} rpm -ivh --nodeps ${full_name} 
+            sudo_it rpm -ivh --nodeps ${full_name} 
         fi
 
         if [ $? -ne 0 ]; then
-            echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${full_name}")"
+            echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${fname}")"
             return 1
         else
-            echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${full_name}")"
+            echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${fname}")"
         fi
     done
 
@@ -347,22 +364,22 @@ function rpm_install
 
     local cur_dir=$(pwd)
     local is_dir=false
-    local -a install_list=(${xfile})
+    local -a local_rpms=(${xfile})
     if [ -d "${xfile}" ];then
         is_dir=true
         cd ${xfile}
-        install_list=($(ls))
+        local_rpms=($(ls))
     fi
 
     local rpm_file
-    for rpm_file in ${install_list[*]}    
+    for rpm_file in ${local_rpms[*]}    
     do
         if ! string_match "${rpm_file}" ".rpm" 2;then
             echo_debug "$(printf "[%13s]: { %-13s } skiped" "Install" "${rpm_file}")"
             continue
         fi
 
-        install_from_rpm "$(regex_2str "${rpm_file}")" ${force}
+        install_from_rpm "$(regex_2str "${rpm_file}")" false ${force}
         if [ $? -ne 0 ]; then
             if math_bool "${is_dir}";then
                 cd ${cur_dir}

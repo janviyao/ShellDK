@@ -806,21 +806,20 @@ function real_path
         this_path=$(string_replace "${this_path}" "\-" "\-" true)
     fi
 
-    if can_access "${this_path}";then
-        local old_path="${this_path}"
-        this_path=$(readlink -f ${this_path})
-        if [ $? -ne 0 ];then
-            echo_file "${LOG_ERRO}" "readlink fail: ${old_path}"
-            return 1
-        fi 
+    local old_path="${this_path}"
+    this_path=$(readlink -f ${this_path})
+    if [ $? -ne 0 ];then
+        echo_file "${LOG_ERRO}" "readlink fail: ${old_path}"
+        echo "${old_path}"
+        return 1
+    fi 
 
-        if ! can_access "${this_path}";then
-            if ! string_contain "${orig_path}" '/';then
-                local path_bk="${this_path}"
-                this_path=$(which --skip-alias ${orig_path} 2>/dev/null)
-                if ! can_access "${this_path}";then
-                    this_path="${path_bk}"
-                fi
+    if ! can_access "${this_path}";then
+        if ! string_contain "${orig_path}" '/';then
+            local path_bk="${this_path}"
+            this_path=$(which --skip-alias ${orig_path} 2>/dev/null)
+            if ! can_access "${this_path}";then
+                this_path="${path_bk}"
             fi
         fi
     fi
