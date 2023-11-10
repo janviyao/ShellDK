@@ -148,6 +148,11 @@ function inst_usage
 NEED_OP="${parasMap['-o']}"
 NEED_OP="${NEED_OP:-${parasMap['--op']}}"
 #NEED_OP="${NEED_OP:?'Please specify -o option'}"
+if [ -z "${NEED_OP}" ];then
+    if [ ${#other_paras[*]} -gt 0 ];then
+        NEED_OP="spec"
+    fi
+fi
 
 OP_MATCH=0
 for func in ${!FUNC_MAP[*]};
@@ -162,11 +167,6 @@ if [[ ${OP_MATCH} -eq 0 ]] || [[ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
     echo ""
     inst_usage
     exit -1
-fi
-
-if [[ ${NEED_OP} != "clean" ]];then
-    declare -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect" "nc")
-    do_action "${mustDeps[*]}"
 fi
 
 REMOTE_INST="${parasMap['-r']}"
@@ -256,6 +256,9 @@ function inst_env
         ${SUDO} chmod +r /etc/shadow 
     fi
 
+    local -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect" "nc")
+    do_action "${mustDeps[*]}"
+
     for linkf in ${!commandMap[*]};
     do
         local link_file=${commandMap["${linkf}"]}
@@ -269,8 +272,6 @@ function inst_env
         fi
     done
   
-    cd ${ROOT_DIR}/deps
-
     # build vim-work environment
     mkdir -p ${MY_HOME}/.vim
 

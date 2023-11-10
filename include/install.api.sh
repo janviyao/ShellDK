@@ -31,6 +31,68 @@ function version_eq
     fi
 }
 
+function install_provider
+{
+    local xfile="$1"
+    local isreg="${2:-false}"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: file-name or regex-string\n\$2: whether regex(default: false)"
+        return 1
+    fi
+    
+    local -a files
+    if math_bool "${isreg}";then
+        local fname=$(path2fname ${xfile})
+        local fpath=$(fname2path ${xfile})
+        if ! can_access "${fpath}";then
+            fpath="."
+        fi
+
+        if [ -n "${fname}" ];then
+            files=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${fname}"))
+        else
+            files=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${xfile}"))
+        fi
+
+        local select_x="${files[*]}"
+        if [ ${#files[*]} -gt 1 ];then
+            local select_x=$(select_one ${files[*]})
+        fi
+        xfile="${select_x}"
+    else
+        if ! can_access "${xfile}";then
+            echo_erro "file { ${xfile} } lost"
+            return 1
+        fi
+    fi
+
+    if can_access "rpm";then
+        local rpm_file=$(rpm -qf ${xfile})
+        if [ -n "${rpm_file}" ];then
+            echo "${rpm_file}"
+            return 0
+        fi
+    fi
+
+    if can_access "yum";then
+        local rpm_file=$(yum provides ${xfile} | grep -w "${xfile}")
+        if [ -n "${rpm_file}" ];then
+            echo "${rpm_file}"
+            return 0
+        fi
+
+        local fname=$(path2fname ${xfile})
+        local rpm_file=$(yum search ${fname} | grep -w "${fname}")
+        if [ -n "${rpm_file}" ];then
+            echo "${rpm_file}"
+            return 0
+        fi
+    fi
+    
+    return 0
+}
+
 function install_from_net
 {
     local xname="$1"
