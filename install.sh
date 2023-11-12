@@ -103,7 +103,7 @@ function update_check
             local file_name=$(path2fname ${full_nm})
             local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
             echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
-            if version_lt ${version_cur} ${version_new}; then
+            if __version_lt ${version_cur} ${version_new}; then
                 cd ${local_dir}
                 return 0
             fi
@@ -613,7 +613,7 @@ function inst_gcc
         return 1
     fi
 
-    local dir_array=($(tar2do 0 "${tar_array[0]}"))
+    local dir_array=($(mytar "${tar_array[0]}"))
     if [ ${#dir_array[*]} -gt 1 ];then
         echo_erro "multiple tar dirs exist: ${dir_array[*]}"
         return 1
@@ -642,7 +642,7 @@ function inst_glibc
     local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
     local version_new=2.28
 
-    if version_lt ${version_cur} ${version_new}; then
+    if __version_lt ${version_cur} ${version_new}; then
         # Install glibc
         do_action "glibc-2.28"
         #do_action "glibc-common"

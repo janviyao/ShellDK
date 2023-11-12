@@ -26,7 +26,7 @@ do
         continue
     fi
 
-    if ! array_has "${ISCSI_INITIATOR_IP_ARRAY[*]}" "${ini_ip}";then
+    if ! array_have "${ISCSI_INITIATOR_IP_ARRAY[*]}" "${ini_ip}";then
         echo_erro "target(${ini_ip}) not configed in custom/private.conf"
         exit 1
     fi
@@ -37,14 +37,14 @@ do
     fi
 
     tgt_ip=$(echo "${map_value}" | awk '{ print $1 }')
-    if ! array_has "${ISCSI_TARGET_IP_ARRAY[*]}" "${tgt_ip}";then
+    if ! array_have "${ISCSI_TARGET_IP_ARRAY[*]}" "${tgt_ip}";then
         echo_erro "iscsi map { ${tgt_ip} } not in { ${ISCSI_TARGET_IP_ARRAY[*]} }, please check { custom/private.conf }"
         exit 1
     fi
     tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
 
     if [ -n "${INITIATOR_TARGET_MAP[${ini_ip}]}" ];then
-        if ! array_has "${INITIATOR_TARGET_MAP[${ini_ip}]}" "${tgt_ip}:${tgt_name}";then
+        if ! array_have "${INITIATOR_TARGET_MAP[${ini_ip}]}" "${tgt_ip}:${tgt_name}";then
             INITIATOR_TARGET_MAP[${ini_ip}]="${INITIATOR_TARGET_MAP[${ini_ip}]} ${tgt_ip}:${tgt_name}"
         fi
     else

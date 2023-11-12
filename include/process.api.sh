@@ -78,7 +78,7 @@ function process_signal
         local -a pid_array=($(process_name2pid "${xproc}"))
         for pid in ${pid_array[*]}
         do
-            if array_has "${exclude_pid_array[*]}" "${pid}";then
+            if array_have "${exclude_pid_array[*]}" "${pid}";then
                 echo_debug "ignore { $(process_pid2name ${pid})[${pid}] }"
                 continue
             fi
@@ -87,7 +87,7 @@ function process_signal
                 local child_pids=($(process_childs ${pid}))
                 echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pids[*]}"
 
-                if ! array_has "${exclude_pid_array[*]}" "${pid}";then
+                if ! array_have "${exclude_pid_array[*]}" "${pid}";then
                     echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
 
                     if is_integer "${signal}";then

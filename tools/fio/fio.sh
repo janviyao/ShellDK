@@ -160,7 +160,7 @@ function start_test_func
                 break
             fi
 
-            if ! array_has "${host_info_array[*]}" "${host_info}";then
+            if ! array_have "${host_info_array[*]}" "${host_info}";then
                 local array_idx=${#host_info_array[*]}
                 host_info_array[${array_idx}]="${host_info}"
             fi
@@ -169,7 +169,7 @@ function start_test_func
             local dev_array=($(echo "${host_info}" | awk -F: '{print $2}' | tr ',' ' '))
             for sub_dev in ${dev_array[*]}
             do
-                if ! array_has "${host_devs_array[${host_ip}]}" "${sub_dev}";then
+                if ! array_have "${host_devs_array[${host_ip}]}" "${sub_dev}";then
                     host_devs_array[${host_ip}]="${host_devs_array[${host_ip}]} ${sub_dev}"
                 fi
             done

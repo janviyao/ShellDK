@@ -98,7 +98,7 @@ function mdata_get_var
         return 1
     fi
 
-    if var_exist "${_xkey_}";then
+    if __var_exist "${_xkey_}";then
         _xval_=$(eval "echo \$${_xkey_}")
         eval "declare -g ${_xkey_}=\"${_xval_}\""
         return 0

@@ -11,18 +11,18 @@
 : ${GBL_XFER_PIPE:=}
 : ${GBL_CTRL_PIPE:=}
 
-function INCLUDE
+function __INCLUDE
 {
     local flag="$1"
     local file="$2"
     
-    #var_exist "${flag}" || source ${file} 
-    if ! var_exist "${flag}" && test -f ${file};then
+    #__var_exist "${flag}" || source ${file} 
+    if ! __var_exist "${flag}" && test -f ${file};then
         source ${file} 
     fi
 }
 
-function var_exist
+function __var_exist
 {
     if [[ -n $1 ]]; then
         if [[ $1 =~ ^-?[0-9]+$ ]]; then
@@ -44,7 +44,7 @@ function var_exist
     return 1
 }
 
-function array_has
+function array_have
 {
     local array=($1)
     local value="$2"
@@ -77,7 +77,7 @@ function array_index
 
     local index=0
     local count=${#array[*]}
-    while (( index < count))
+    while ((index < count))
     do
         local item=${array[${index}]}
         if [[ ${item} == ${value} ]];then
@@ -91,7 +91,7 @@ function array_index
     return 1
 }
 
-function array_cmp
+function array_compare
 {
     local idx=0
     local array1=($1)
@@ -337,7 +337,7 @@ function para_pack
     echo "${cmd}"
 }
 
-function loop_2success
+function loop2success
 {
     local cmd=$(para_pack "$@")
     echo_debug "${cmd}"
@@ -353,7 +353,7 @@ function loop_2success
     return 1
 }
 
-function loop_2fail
+function loop2fail
 {
     local cmd=$(para_pack "$@")
     echo_debug "${cmd}"
@@ -371,16 +371,16 @@ function loop_2fail
     return 0
 }
 
-INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/include/log.api.sh
-INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/include/string.api.sh
-INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/include/system.api.sh
-INCLUDE "INCLUDE_TRACE"   $MY_VIM_DIR/include/trace.api.sh
-INCLUDE "INCLUDE_KVCONF"  $MY_VIM_DIR/include/kvconf.api.sh
-INCLUDE "INCLUDE_SECTION" $MY_VIM_DIR/include/section.api.sh
-INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/include/process.api.sh
-INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/include/install.api.sh
-INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/include/math.api.sh
-INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/include/file.api.sh
-INCLUDE "INCLUDE_K8S"     $MY_VIM_DIR/include/k8s.api.sh
-INCLUDE "INCLUDE_GIT"     $MY_VIM_DIR/include/git.api.sh
-INCLUDE "INCLUDE_GDB"     $MY_VIM_DIR/include/gdb.api.sh
+__INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/include/log.api.sh
+__INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/include/string.api.sh
+__INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/include/system.api.sh
+__INCLUDE "INCLUDE_TRACE"   $MY_VIM_DIR/include/trace.api.sh
+__INCLUDE "INCLUDE_KVCONF"  $MY_VIM_DIR/include/kvconf.api.sh
+__INCLUDE "INCLUDE_SECTION" $MY_VIM_DIR/include/section.api.sh
+__INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/include/process.api.sh
+__INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/include/install.api.sh
+__INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/include/math.api.sh
+__INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/include/file.api.sh
+__INCLUDE "INCLUDE_K8S"     $MY_VIM_DIR/include/k8s.api.sh
+__INCLUDE "INCLUDE_GIT"     $MY_VIM_DIR/include/git.api.sh
+__INCLUDE "INCLUDE_GDB"     $MY_VIM_DIR/include/gdb.api.sh

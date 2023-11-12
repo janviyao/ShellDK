@@ -34,10 +34,10 @@ if ! can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}" || ! can_access "${ISCSI_AP
     if check_net;then
         ${SUDO} mkdir -p ${ISCSI_APP_SRC}
         ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
-        loop_2success git clone git@gitlab.alibaba-inc.com:FusionTarget/FusionTarget.git ${ISCSI_APP_SRC} 
+        loop2success git clone git@gitlab.alibaba-inc.com:FusionTarget/FusionTarget.git ${ISCSI_APP_SRC} 
         cd ${ISCSI_APP_SRC}
-        loop_2success git checkout k8s_cstor
-        loop_2success git submodule update --init
+        loop2success git checkout k8s_cstor
+        loop2success git submodule update --init
     else
         echo_erro "network fail: ${ISCSI_APP_SRC}"
         exit 1

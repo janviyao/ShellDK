@@ -6,10 +6,10 @@ if ! can_access "${ISCSI_APP_SRC}";then
     if check_net;then
         ${SUDO} mkdir -p ${ISCSI_APP_SRC}
         ${SUDO} chmod -R 777 ${ISCSI_APP_SRC}
-        loop_2success git clone https://github.com/spdk/spdk.git ${ISCSI_APP_SRC} 
+        loop2success git clone https://github.com/spdk/spdk.git ${ISCSI_APP_SRC} 
         cd ${ISCSI_APP_SRC}
-        loop_2success git checkout v20.10.x
-        loop_2success git submodule update --init
+        loop2success git checkout v20.10.x
+        loop2success git submodule update --init
     else
         echo_erro "network fail: ${ISCSI_APP_SRC}"
         exit 1

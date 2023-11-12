@@ -745,7 +745,7 @@ function get_hosts_ip
             continue
         fi
 
-        if ! array_has "${!hostip_map[*]}" "${ipaddr}";then
+        if ! array_have "${!hostip_map[*]}" "${ipaddr}";then
             hostip_map[${ipaddr}]="${hostnm}"
         fi
     done < /etc/hosts

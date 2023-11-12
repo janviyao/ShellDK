@@ -1,7 +1,7 @@
 #!/bin/bash
 : ${INCLUDE_GIT:=1}
 
-alias mygit='loop_2success git'
+alias mygit='loop2success git'
 alias gclone='mygit clone --recurse-submodules'
 alias gadd='git add -A'
 alias gpull='mygit pull'
@@ -36,7 +36,7 @@ function glog
     return 0
 }
 
-function git_submodule_add
+function gsubmodule_add
 {
     local repo="$1"
     local subdir="$2"
@@ -63,7 +63,7 @@ function git_submodule_add
     return ${retcode}
 }
 
-function git_submodule_del
+function gsubmodule_del
 {
     local repo="$1"
 
@@ -79,7 +79,7 @@ function git_submodule_del
     return $?
 }
 
-function git_submodule_update
+function gsubmodule_update
 {
     local repo="$1"
 

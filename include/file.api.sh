@@ -21,15 +21,15 @@ function file_owner_is
 
 function can_access
 {
-    local fname="$1"
+    local xfile="$1"
 
-    if [ -z "${fname}" ];then
+    if [ -z "${xfile}" ];then
         return 1
     fi
 
-    if match_regex "${fname}" "\*$";then
+    if match_regex "${xfile}" "\*$";then
         local file
-        for file in ${fname}
+        for file in ${xfile}
         do
             if match_regex "${file}" "\*$";then
                 return 1
@@ -41,29 +41,29 @@ function can_access
         done
     fi
 
-    if ls --color=never ${fname} &> /dev/null;then
+    if ls --color=never ${xfile} &> /dev/null;then
         return 0
     fi
 
-    if which ${fname} &> /dev/null;then
+    if which ${xfile} &> /dev/null;then
         return 0
     fi
  
-    if match_regex "${fname}" "^~";then
-        fname=$(string_replace "${fname}" '^~' "${HOME}" true)
+    if match_regex "${xfile}" "^~";then
+        xfile=$(string_replace "${xfile}" '^~' "${HOME}" true)
     fi
 
-    if [ -d ${fname} ];then
+    if [ -d ${xfile} ];then
         return 0
-    elif [ -f ${fname} ];then
+    elif [ -f ${xfile} ];then
         return 0
-    elif [ -b ${fname} ];then
+    elif [ -b ${xfile} ];then
         return 0
-    elif [ -c ${fname} ];then
+    elif [ -c ${xfile} ];then
         return 0
-    elif [ -h ${fname} ];then
+    elif [ -h ${xfile} ];then
         return 0
-    elif [ -r ${fname} -o -w ${fname} -o -x ${fname} ];then
+    elif [ -r ${xfile} -o -w ${xfile} -o -x ${xfile} ];then
         return 0
     fi
 

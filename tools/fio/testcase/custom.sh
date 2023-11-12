@@ -20,7 +20,7 @@ do
         device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
         for device in ${device_array[*]}
         do
-            if ! array_has "${FIO_HOST_MAP[${ipaddr}]}" "${device}";then
+            if ! array_have "${FIO_HOST_MAP[${ipaddr}]}" "${device}";then
                 FIO_HOST_MAP[${ipaddr}]="${FIO_HOST_MAP[${ipaddr}]} ${device}"
             fi
         done

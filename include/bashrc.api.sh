@@ -48,7 +48,7 @@ readonly GBL_SPF1="#;"
 readonly GBL_SPF2="#."
 readonly GBL_SPF3="#,"
 
-function _my_bashrc_deps
+function __my_bashrc_deps
 {
     local bin_dir="${HOME}/.local/bin"
     local app_dir="${MY_VIM_DIR}/tools/app"
@@ -62,9 +62,9 @@ function _my_bashrc_deps
         cd ${cur_dir}
     fi
 }
-_my_bashrc_deps
+__my_bashrc_deps
 
-function _my_bash_exit
+function __my_bash_exit
 { 
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit
@@ -79,7 +79,7 @@ if can_access "ppid";then
     echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
 fi
 
-if var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
+if __var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
     echo_file "${LOG_DEBUG}" "share work: ${BASH_WORK_DIR}"
 else
     can_access "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
@@ -93,5 +93,5 @@ else
     echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"
     mkdir -p ${BASH_WORK_DIR} 
 
-    trap "_my_bash_exit" EXIT
+    trap "__my_bash_exit" EXIT
 fi

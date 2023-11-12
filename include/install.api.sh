@@ -1,9 +1,9 @@
 #!/bin/bash
 : ${INCLUDE_INSTALL:=1}
 
-function version_gt
+function __version_gt
 { 
-    array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    array_compare "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
     if [ $? -eq 1 ];then
         return 0
     else
@@ -11,9 +11,9 @@ function version_gt
     fi
 }
 
-function version_lt
+function __version_lt
 { 
-    array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    array_compare "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
     if [ $? -eq 255 ];then
         return 0
     else
@@ -21,9 +21,9 @@ function version_lt
     fi
 }
 
-function version_eq
+function __version_eq
 { 
-    array_cmp "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    array_compare "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
     if [ $? -eq 0 ];then
         return 0 
     else
@@ -131,96 +131,6 @@ function install_from_net
     return 1
 }
 
-function install_from_make
-{
-    local work_dir="$1"
-    local conf_para="${2:-"--prefix=/usr"}"
-
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: specify compile directory\n\$2: specify configure args"
-        return 1
-    fi
-
-    local currdir="$(pwd)"
-    cd ${work_dir} || { echo_erro "enter fail: ${work_dir}"; return 1; }
-
-    can_access "Makefile" || can_access "configure" 
-    [ $? -ne 0 ] && can_access "unix/" && cd unix/
-    [ $? -ne 0 ] && can_access "linux/" && cd linux/
-
-    if can_access "autogen.sh"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
-        ./autogen.sh &>> build.log
-        if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${work_dir} failed, check: $(real_path build.log)"
-            cd ${currdir}
-            return 1
-        fi
-    fi
-
-    if can_access "configure"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-        ./configure ${conf_para} &>> build.log
-        if [ $? -ne 0 ]; then
-            mkdir -p build && cd build
-            ../configure ${conf_para} &>> ../build.log
-            if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${work_dir} failed, check: $(real_path ../build.log)"
-                cd ${currdir}
-                return 1
-            fi
-
-            if ! can_access "Makefile"; then
-                ls --color=never -A | xargs -i cp -fr {} ../
-                cd ..
-            fi
-        fi
-    else
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
-        make configure &>> build.log
-        if [ $? -eq 0 ]; then
-            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-            ./configure ${conf_para} &>> build.log
-            if [ $? -ne 0 ]; then
-                mkdir -p build && cd build
-                ../configure ${conf_para} &>> ../build.log
-                if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${work_dir} failed, check: $(real_path ../build.log)"
-                    cd ${currdir}
-                    return 1
-                fi
-
-                if ! can_access "Makefile"; then
-                    ls --color=never -A | xargs -i cp -fr {} ../
-                    cd ..
-                fi
-            fi
-        fi
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
-    local cflags_bk="${CFLAGS}"
-    export CFLAGS="-fcommon"
-    make -j ${MAKE_TD} &>> build.log
-    if [ $? -ne 0 ]; then
-        echo_erro " Make: ${work_dir} failed, check: $(real_path build.log)"
-        cd ${currdir}
-        return 1
-    fi
-    export CFLAGS="${cflags_bk}"
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    sudo_it "make install &>> build.log"
-    if [ $? -ne 0 ]; then
-        echo_erro " Install: ${work_dir} failed, check: $(real_path build.log)"
-        cd ${currdir}
-        return 1
-    fi
-
-    cd ${currdir}
-    return 0
-}
-
 function install_from_rpm
 {
     local xfile="$1"
@@ -284,7 +194,7 @@ function install_from_rpm
         if ! math_bool "${force}";then
             local version_new=${versions[0]}
             local version_sys=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
-            if version_gt ${version_sys} ${version_new}; then
+            if __version_gt ${version_sys} ${version_new}; then
                 echo_erro "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
                 return 1
             fi
@@ -318,69 +228,171 @@ function install_from_rpm
     return 0
 }
 
-function tar2do
+function install_from_make
 {
-    local argc=$#
-    local iscompress="$1"
-    shift
-    local fpath="$1"
-    shift
-    local flist="$@"
+    local makedir="$1"
+    local conf_para="${2:-"--prefix=/usr"}"
 
-    if [ ${argc} -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: bool: whether to compress\n\$2: compress-package name\n\$3: files and directorys"
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify compile directory\n\$2: specify configure args"
         return 1
     fi
 
-    if ! math_bool "${iscompress}";then
-        if ! can_access "${fpath}";then
-            echo_erro "File { ${fpath} } lost"
+    local currdir="$(pwd)"
+    cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
+
+    can_access "Makefile" || can_access "configure" 
+    [ $? -ne 0 ] && can_access "unix/" && cd unix/
+    [ $? -ne 0 ] && can_access "linux/" && cd linux/
+
+    if can_access "autogen.sh"; then
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
+        ./autogen.sh &>> build.log
+        if [ $? -ne 0 ]; then
+            echo_erro " Autogen: ${makedir} failed, check: $(real_path build.log)"
+            cd ${currdir}
             return 1
         fi
     fi
 
-    local options="-cf"
-    if ! math_bool "${iscompress}";then
-        options="-xf"
-        if [ -n "${flist}" ];then
-            if can_access "${flist}";then
-                flist="-C ${flist}"
-            else
-                flist=""
+    if can_access "configure"; then
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        ./configure ${conf_para} &>> build.log
+        if [ $? -ne 0 ]; then
+            mkdir -p build && cd build
+            ../configure ${conf_para} &>> ../build.log
+            if [ $? -ne 0 ]; then
+                echo_erro " Configure: ${makedir} failed, check: $(real_path ../build.log)"
+                cd ${currdir}
+                return 1
+            fi
+
+            if ! can_access "Makefile"; then
+                ls --color=never -A | xargs -i cp -fr {} ../
+                cd ..
+            fi
+        fi
+    else
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
+        make configure &>> build.log
+        if [ $? -eq 0 ]; then
+            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+            ./configure ${conf_para} &>> build.log
+            if [ $? -ne 0 ]; then
+                mkdir -p build && cd build
+                ../configure ${conf_para} &>> ../build.log
+                if [ $? -ne 0 ]; then
+                    echo_erro " Configure: ${makedir} failed, check: $(real_path ../build.log)"
+                    cd ${currdir}
+                    return 1
+                fi
+
+                if ! can_access "Makefile"; then
+                    ls --color=never -A | xargs -i cp -fr {} ../
+                    cd ..
+                fi
             fi
         fi
     fi
-    
-    local file=$(path2fname "${fpath}")
-    if string_match "${file}" ".tar.gz" 2;then
-        options="-z ${options}"
-    elif string_match "${file}" ".tar.bz2" 2;then
-        options="-j ${options}"
-    elif string_match "${file}" ".tar.xz" 2;then
-        options="-J ${options}"
-    elif string_match "${file}" ".tar" 2;then
-        options="${options}"
-    else
-        echo_erro "invalid compress-package name"
+
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
+    local cflags_bk="${CFLAGS}"
+    export CFLAGS="-fcommon"
+    make -j ${MAKE_TD} &>> build.log
+    if [ $? -ne 0 ]; then
+        echo_erro " Make: ${makedir} failed, check: $(real_path build.log)"
+        cd ${currdir}
+        return 1
+    fi
+    export CFLAGS="${cflags_bk}"
+
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
+    sudo_it "make install &>> build.log"
+    if [ $? -ne 0 ]; then
+        echo_erro " Install: ${makedir} failed, check: $(real_path build.log)"
+        cd ${currdir}
         return 1
     fi
 
-    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${flist}"
-    tar ${options} ${fpath} ${flist}
+    cd ${currdir}
+    return 0
+}
+
+function mytar
+{
+    local argc=$#
+    local fpath="$1"
+    shift
+    local flist=($@)
+
+    local erro="\nUsage: [${fpath} $@]\n\$1: compress-package name\n\$2: (a)files or directorys when compress (b)directory when uncompress"
+    if [ ${argc} -lt 1 ];then
+        echo_erro "${erro}"
+        return 1
+    fi
+
+    local iscompress="true"
+    if can_access "${fpath}";then
+        iscompress="false"
+        if [ ${#flist[*]} -gt 1 ];then
+            echo_erro "${erro}"
+            return 1
+        fi
+    else
+        if [ ${#flist[*]} -eq 0 ];then
+            echo_erro "${erro}"
+            return 1
+        fi
+    fi
+
+    local outopt=""
+    local options="-cf"
+    if ! math_bool "${iscompress}";then
+        options="-xf"
+        if can_access "${flist[0]}";then
+            outopt="-C ${flist[0]}"
+        fi
+    fi
+    
+    local fname=$(path2fname "${fpath}")
+    if string_match "${fname}" ".tar.gz" 2;then
+        options="-z ${options}"
+    elif string_match "${fname}" ".tar.bz2" 2;then
+        options="-j ${options}"
+    elif string_match "${fname}" ".tar.xz" 2;then
+        options="-J ${options}"
+    elif string_match "${fname}" ".tar" 2;then
+        options="${options}"
+    else
+        echo_erro "not support compress-package name: ${fname}"
+        return 1
+    fi
+
+    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${outopt}"
+    tar ${options} ${fpath} ${outopt}
 
     if ! math_bool "${iscompress}";then
-        local fprefix=$(string_regex "${file}" "^[0-9a-zA-Z]+")
-        local find_arr=($(find . -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        local outdir="."
+        if [ -n "${outopt}" ];then
+            outdir="${flist[0]}"
+        fi
+
+        local fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
+        local find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        if [ ${#find_arr[*]} -eq 0 ];then
+            fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+")
+            find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        fi
 
         local dir
         for dir in ${find_arr[*]}    
         do
-            local real_dir=$(path2fname ${dir})
+            local real_dir=$(real_path "${dir}")
             echo "${real_dir}"
         done
     fi
 
-    return $?
+    return 0
 }
 
 function install_from_tar
@@ -399,7 +411,7 @@ function install_from_tar
         local full_name=$(path2fname ${tar_file})
         echo_info "$(printf "[%13s]: %-50s" "Will install" "${full_name}")"
 
-        local dir_arr=($(tar2do 0 "${full_name}"))
+        local dir_arr=($(mytar "${full_name}"))
         local tar_dir
         for tar_dir in ${dir_arr[*]}    
         do

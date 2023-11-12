@@ -1,4 +1,4 @@
-if declare -F _my_bash_exit &>/dev/null;then
+if declare -F __my_bash_exit &>/dev/null;then
     echo_file "${LOG_WARN}" "bashrc has loaded"
     return
 fi
@@ -39,11 +39,11 @@ source $MY_VIM_DIR/include/bashrc.api.sh
 echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
 echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
-INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
-INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh
-INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
-INCLUDE "GBL_XFER_PIPE" $MY_VIM_DIR/tools/task/xfer_task.sh
-INCLUDE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/task/ctrl_task.sh
+__INCLUDE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
+__INCLUDE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh
+__INCLUDE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
+__INCLUDE "GBL_XFER_PIPE" $MY_VIM_DIR/tools/task/xfer_task.sh
+__INCLUDE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/task/ctrl_task.sh
 
 if string_contain "${BTASK_LIST}" "mdat";then
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
@@ -76,8 +76,8 @@ if string_contain "${BTASK_LIST}" "ctrl";then
 fi
 
 old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-[ -n "${old_spec}" ] && trap "trap - ERR; ${old_spec}; if var_exist BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
-[ -z "${old_spec}" ] && trap "trap - ERR; if var_exist BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
+[ -n "${old_spec}" ] && trap "trap - ERR; ${old_spec}; if __var_exist BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
+[ -z "${old_spec}" ] && trap "trap - ERR; if __var_exist BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
 unset old_spec
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
