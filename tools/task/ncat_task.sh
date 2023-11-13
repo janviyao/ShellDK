@@ -327,7 +327,7 @@ function ncat_wait_resp
     return ${retcode}
 }
 
-function ncat_task_ctrl
+function ncat_task_ctrl_async
 {
     local ncat_body="$1"
     local ncat_port=$(ncat_port_get)
@@ -418,7 +418,7 @@ function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
     if string_contain "${BTASK_LIST}" "ncat";then
-        ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
+        ncat_task_ctrl_async "EXIT${GBL_SPF1}$$"
     fi 
 }
 

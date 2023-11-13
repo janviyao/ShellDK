@@ -335,8 +335,15 @@ function mytar
     if can_access "${fpath}";then
         iscompress="false"
         if [ ${#flist[*]} -gt 1 ];then
-            echo_erro "${erro}"
-            return 1
+            local realfile=$(real_path "${fpath}")
+            local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
+            if math_bool "${xselect}";then
+                iscompress="true"
+                sudo rm -f ${realfile}
+            else
+                echo_erro "file { ${realfile} } already exists"
+                return 1
+            fi
         fi
     else
         if [ ${#flist[*]} -eq 0 ];then
@@ -345,12 +352,14 @@ function mytar
         fi
     fi
 
-    local outopt=""
     local options="-cf"
-    if ! math_bool "${iscompress}";then
+    local xwhat=""
+    if math_bool "${iscompress}";then
+        xwhat="${flist[*]}"
+    else
         options="-xf"
         if can_access "${flist[0]}";then
-            outopt="-C ${flist[0]}"
+            xwhat="-C ${flist[0]}"
         fi
     fi
     
@@ -368,20 +377,23 @@ function mytar
         return 1
     fi
 
-    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${outopt}"
-    tar ${options} ${fpath} ${outopt}
+    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${xwhat}"
+    tar ${options} ${fpath} ${xwhat}
 
-    if ! math_bool "${iscompress}";then
+    if math_bool "${iscompress}";then
+        echo $(real_path "${fpath}")
+    else
         local outdir="."
-        if [ -n "${outopt}" ];then
+        if can_access "${flist[0]}";then
             outdir="${flist[0]}"
         fi
-
+        
         local fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
-        local find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+        local fprefix=$(regex_2str "${fprefix}")
+        local find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
         if [ ${#find_arr[*]} -eq 0 ];then
             fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+")
-            find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.+"))
+            find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
         fi
 
         local dir
