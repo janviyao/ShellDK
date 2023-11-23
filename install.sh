@@ -1,16 +1,12 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
-ROOT_DIR=$(cd $(dirname $0);pwd)
-BIN_DIR="${HOME}/.local/bin"
-mkdir -p ${BIN_DIR}
-
-export MY_VIM_DIR=${ROOT_DIR}
+export MY_VIM_DIR=$(cd $(dirname $0);pwd)
 export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 #export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
 
 source $MY_VIM_DIR/bashrc
-. ${ROOT_DIR}/tools/paraparser.sh
+. ${MY_VIM_DIR}/tools/paraparser.sh
 if ! account_check ${MY_NAME};then
     echo_erro "Username or Password check fail"
     exit 1
@@ -32,89 +28,6 @@ FUNC_MAP["all"]="inst_spec inst_system inst_ctags inst_cscope inst_vim inst_tig 
 FUNC_MAP["glibc2.28"]="inst_glibc"
 FUNC_MAP["gcc4.9.2"]="inst_gcc"
 FUNC_MAP["hostname"]="inst_hostname"
-
-function do_action
-{     
-    local check_arr=($@)
-    echo_debug "do_action: ${check_arr[*]}"
-
-    local usr_cmd
-    for usr_cmd in ${check_arr[*]};
-    do
-        if ! can_access "${usr_cmd}";then
-            local norm_str=$(regex_2str "${usr_cmd}")
-            local line_cnt=$(file_get ${ROOT_DIR}/install.spec "^\s*${norm_str}\s*;" true)
-            if [ -z "${line_cnt}" ];then
-                if install_from_net "${usr_cmd}";then
-                    continue
-                else
-                    echo_erro "regex [^\s*${norm_str}\s*;] donot match from ${ROOT_DIR}/install.spec"
-                fi
-            fi
-
-            if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-                line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
-            fi
-
-            local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;\s*" "" true)
-            local total=$(echo "${guides}" | awk -F';' '{ print NF }')
-
-            local idx=0
-            for (( idx = 1; idx <= ${total}; idx++))
-            do
-                local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
-                echo_debug "${action}"
-                eval "${action}"
-                if [ $? -ne 0 ];then
-                    echo_erro "${action}"
-                    return 1
-                fi
-            done
-        fi
-    done
-
-    return 0
-}
-
-function update_check
-{
-    local local_cmd="$1"
-    local fname_reg="$2"
-
-    if math_bool "${FORCE_DO}"; then
-        return 0
-    fi
-
-    if can_access "${local_cmd}";then
-        local tmp_file="$(file_temp)"
-        ${local_cmd} --version &> ${tmp_file} 
-        if [ $? -ne 0 ];then
-            return 1
-        fi
-
-        local version_cur=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
-        rm -f ${tmp_file}
-        local local_dir=$(pwd)
-        cd ${ROOT_DIR}/deps
-
-        local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
-        for full_nm in ${file_list}    
-        do
-            local file_name=$(path2fname ${full_nm})
-            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
-            echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
-            if __version_lt ${version_cur} ${version_new}; then
-                cd ${local_dir}
-                return 0
-            fi
-        done
-
-        cd ${local_dir}
-        return 1
-    else
-        return 0
-    fi
-}
 
 function inst_usage
 {
@@ -206,25 +119,25 @@ fi
 
 CMD_PRE="my"
 declare -A commandMap
-commandMap["${CMD_PRE}sudo"]="${ROOT_DIR}/tools/sudo.sh"
-commandMap["${CMD_PRE}ftrace"]="${ROOT_DIR}/tools/ftrace.sh"
-commandMap["${CMD_PRE}bpftrace"]="${ROOT_DIR}/tools/bpftrace/bpftrace.sh"
-commandMap["${CMD_PRE}output"]="${ROOT_DIR}/tools/cmd_output.sh"
-commandMap["${CMD_PRE}collect"]="${ROOT_DIR}/tools/collect.sh"
-commandMap["${CMD_PRE}scplogin"]="${ROOT_DIR}/tools/scplogin.sh"
-commandMap["${CMD_PRE}scphosts"]="${ROOT_DIR}/tools/scphosts.sh"
-commandMap["${CMD_PRE}sshlogin"]="${ROOT_DIR}/tools/sshlogin.sh"
-commandMap["${CMD_PRE}sshhosts"]="${ROOT_DIR}/tools/sshhosts.sh"
-commandMap["${CMD_PRE}gitloop"]="${ROOT_DIR}/tools/gitloop.sh"
-commandMap["${CMD_PRE}backup"]="${ROOT_DIR}/tools/backup.sh"
-commandMap["${CMD_PRE}threads"]="${ROOT_DIR}/tools/threads.sh"
-commandMap["${CMD_PRE}paraparser"]="${ROOT_DIR}/tools/paraparser.sh"
-commandMap["${CMD_PRE}replace"]="${ROOT_DIR}/tools/replace.sh"
+commandMap["${CMD_PRE}sudo"]="${MY_VIM_DIR}/tools/sudo.sh"
+commandMap["${CMD_PRE}ftrace"]="${MY_VIM_DIR}/tools/ftrace.sh"
+commandMap["${CMD_PRE}bpftrace"]="${MY_VIM_DIR}/tools/bpftrace/bpftrace.sh"
+commandMap["${CMD_PRE}output"]="${MY_VIM_DIR}/tools/cmd_output.sh"
+commandMap["${CMD_PRE}collect"]="${MY_VIM_DIR}/tools/collect.sh"
+commandMap["${CMD_PRE}scplogin"]="${MY_VIM_DIR}/tools/scplogin.sh"
+commandMap["${CMD_PRE}scphosts"]="${MY_VIM_DIR}/tools/scphosts.sh"
+commandMap["${CMD_PRE}sshlogin"]="${MY_VIM_DIR}/tools/sshlogin.sh"
+commandMap["${CMD_PRE}sshhosts"]="${MY_VIM_DIR}/tools/sshhosts.sh"
+commandMap["${CMD_PRE}gitloop"]="${MY_VIM_DIR}/tools/gitloop.sh"
+commandMap["${CMD_PRE}backup"]="${MY_VIM_DIR}/tools/backup.sh"
+commandMap["${CMD_PRE}threads"]="${MY_VIM_DIR}/tools/threads.sh"
+commandMap["${CMD_PRE}paraparser"]="${MY_VIM_DIR}/tools/paraparser.sh"
+commandMap["${CMD_PRE}replace"]="${MY_VIM_DIR}/tools/replace.sh"
 
-commandMap[".vimrc"]="${ROOT_DIR}/vimrc"
-commandMap[".minttyrc"]="${ROOT_DIR}/minttyrc"
-commandMap[".inputrc"]="${ROOT_DIR}/inputrc"
-commandMap[".astylerc"]="${ROOT_DIR}/astylerc"
+commandMap[".vimrc"]="${MY_VIM_DIR}/vimrc"
+commandMap[".minttyrc"]="${MY_VIM_DIR}/minttyrc"
+commandMap[".inputrc"]="${MY_VIM_DIR}/inputrc"
+commandMap[".astylerc"]="${MY_VIM_DIR}/astylerc"
 
 function clean_env
 {
@@ -235,7 +148,7 @@ function clean_env
         if [[ ${linkf:0:1} == "." ]];then
             can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         else
-            can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && ${SUDO} rm -f ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
 
@@ -256,8 +169,8 @@ function inst_env
         ${SUDO} chmod +r /etc/shadow 
     fi
 
-    local -a mustDeps=("/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect" "nc")
-    do_action "${mustDeps[*]}"
+    local -a mustDeps=("make" "gcc" "/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect" "nc" "deno")
+    install_from_spec "${mustDeps[*]}"
 
     for linkf in ${!commandMap[*]};
     do
@@ -267,19 +180,19 @@ function inst_env
             can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            can_access "${BIN_DIR}/${linkf}" && ${SUDO} rm -f ${BIN_DIR}/${linkf}
-            ${SUDO} ln -s ${link_file} ${BIN_DIR}/${linkf}
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && ${SUDO} rm -f ${LOCAL_BIN_DIR}/${linkf}
+            ${SUDO} ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
   
     # build vim-work environment
     mkdir -p ${MY_HOME}/.vim
 
-    cp -fr ${ROOT_DIR}/colors ${MY_HOME}/.vim
-    cp -fr ${ROOT_DIR}/syntax ${MY_HOME}/.vim
+    cp -fr ${MY_VIM_DIR}/colors ${MY_HOME}/.vim
+    cp -fr ${MY_VIM_DIR}/syntax ${MY_HOME}/.vim
 
     if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
-        cd ${ROOT_DIR}/deps
+        cd ${MY_VIM_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
             mv -f bundle ${MY_HOME}/.vim/
@@ -299,10 +212,10 @@ function inst_env
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
     echo "export LOCAL_IP=\"${LOCAL_IP}\"" >> ${MY_HOME}/.bashrc
-    echo "export MY_VIM_DIR=\"${ROOT_DIR}\"" >> ${MY_HOME}/.bashrc
+    echo "export MY_VIM_DIR=\"${MY_VIM_DIR}\"" >> ${MY_HOME}/.bashrc
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
-    echo "source ${ROOT_DIR}/bashrc" >> ${MY_HOME}/.bashrc
-    #echo "source ${ROOT_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
+    echo "source ${MY_VIM_DIR}/bashrc" >> ${MY_HOME}/.bashrc
+    #echo "source ${MY_VIM_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
     
     if can_access "${MY_HOME}/.ssh";then
         can_access "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
@@ -310,7 +223,7 @@ function inst_env
     else
         mkdir -p ${MY_HOME}/.ssh
     fi
-    cp -f ${ROOT_DIR}/ssh_key/* ${MY_HOME}/.ssh
+    cp -f ${MY_VIM_DIR}/ssh_key/* ${MY_HOME}/.ssh
     ${SUDO} "chmod 600 ${MY_HOME}/.ssh/id_rsa" 
 
     can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
@@ -419,22 +332,22 @@ function inst_spec
                 inst_map["${key}"]="${value}"
                 fi
             fi
-        done < ${ROOT_DIR}/install.spec
+        done < ${MY_VIM_DIR}/install.spec
 
         for key in ${rid_arr[*]}
         do
             unset inst_map[${key}]
         done
 
-        do_action ${!inst_map[*]}
+        install_from_spec ${!inst_map[*]}
     else
-        do_action ${keys[*]}
+        install_from_spec ${keys[*]}
     fi
 }
 
 function inst_system
 {
-    cd ${ROOT_DIR}/deps
+    cd ${MY_VIM_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         ${SUDO} chmod +w /etc/ld.so.conf
 
@@ -450,11 +363,11 @@ function inst_system
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         # Install deno
         unzip deno-x86_64-pc-windows-msvc.zip
-        mv -f deno.exe ${BIN_DIR}
-        chmod +x ${BIN_DIR}/deno.exe
+        mv -f deno.exe ${LOCAL_BIN_DIR}
+        chmod +x ${LOCAL_BIN_DIR}/deno.exe
         
-        cp -f apt-cyg ${BIN_DIR}
-        chmod +x ${BIN_DIR}/apt-cyg
+        cp -f apt-cyg ${LOCAL_BIN_DIR}
+        chmod +x ${LOCAL_BIN_DIR}/apt-cyg
     fi 
 }
 
@@ -463,7 +376,7 @@ function inst_ctags
     if math_bool "${NEED_NET}"; then
         git clone https://github.com/universal-ctags/ctags.git ctags
     else
-        do_action "ctags"
+        install_from_spec "ctags"
     fi
 }
 
@@ -472,99 +385,73 @@ function inst_cscope
     if math_bool "${NEED_NET}"; then
         git clone https://git.code.sf.net/p/cscope/cscope cscope
     else
-        do_action "cscope"
+        install_from_spec "cscope"
     fi
 }
 
 function inst_vim
 {
-    if ! update_check "vim" "vim-.*\.tar\.gz";then
+    if ! install_check "vim" "vim-.*\.tar\.gz";then
         return 0     
     fi
 
-    cd ${ROOT_DIR}/deps
-
+    cd ${MY_VIM_DIR}/deps
+    local make_dir="vim"
     if math_bool "${NEED_NET}"; then
         git clone https://github.com/vim/vim.git vim
     else
-        tar -xzf vim-*.tar.gz
+        make_dir=$(mytar vim-*.tar.gz)
     fi
-
-    cd vim*/
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
     local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
     conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
     #conf_paras="${conf_paras} --enable-luainterp=yes"
     if can_access "python3";then
-        do_action "/usr/bin/python3-config"
+        install_from_spec "/usr/bin/python3-config"
         conf_paras="${conf_paras} --enable-python3interp=yes "
     elif can_access "python";then
-        do_action "/usr/bin/python-config"
+        install_from_spec "/usr/bin/python-config"
         conf_paras="${conf_paras} --enable-pythoninterp=yes"
     else
         echo_erro "python environment not ready"
         exit -1
     fi
     
-    do_action "/usr/share/terminfo/x/xterm"
-    do_action "/usr/lib64/libncurses.so.5"
-    do_action "/usr/lib64/libcurses.so"
-
-    ./configure ${conf_paras} &>> build.log
-    if [ $? -ne 0 ]; then
-        echo_erro "Configure: vim fail: ${conf_paras}"
-        exit -1
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
-    make -j ${MAKE_TD} &>> build.log
-    if [ $? -ne 0 ]; then
-        echo_erro "Make: vim fail"
-        exit -1
-    fi
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
-    ${SUDO} "make install &>> build.log"
-    if [ $? -ne 0 ]; then
-        echo_erro "Install: vim fail"
-        exit -1
-    fi
-
-    cd ${ROOT_DIR}/deps
-    rm -fr vim*/
+    install_from_spec "/usr/share/terminfo/x/xterm"
+    install_from_spec "/usr/lib64/libncurses.so.5"
+    install_from_spec "/usr/lib64/libcurses.so"
+    install_from_make "${make_dir}" "${conf_paras}"
 
     ${SUDO} rm -f /usr/local/bin/vim
-
-    can_access "${BIN_DIR}/vim" && rm -f ${BIN_DIR}/vim
-    ${SUDO} ln -s /usr/bin/vim ${BIN_DIR}/vim
+    can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
+    ${SUDO} ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
 }
 
 function inst_tig
 {
-    cd ${ROOT_DIR}/deps
+    cd ${MY_VIM_DIR}/deps
 
     if math_bool "${NEED_NET}"; then
         git clone https://github.com/jonas/tig.git tig
     else
-        do_action "tig"
+        install_from_spec "tig"
     fi
 }
 
 function inst_astyle
 {
-    if ! update_check "astyle" "astyle.*\.tar\.gz";then
+    if ! install_check "astyle" "astyle.*\.tar\.gz";then
         return 0     
     fi
 
-    cd ${ROOT_DIR}/deps
-
+    cd ${MY_VIM_DIR}/deps
     if math_bool "${NEED_NET}"; then
         svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
         cd astyle*/AStyle/build/gcc
     else
-        tar -xzf astyle_*.tar.gz
-        cd astyle*/build/gcc
+        local dir=$(mytar astyle_*.tar.gz)
+        cd ${dir}/build/gcc
     fi
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
@@ -574,77 +461,54 @@ function inst_astyle
         exit -1
     fi
 
-    cp -f bin/astyle* ${BIN_DIR}
-    chmod 777 ${BIN_DIR}/astyle*
+    cp -f bin/astyle* ${LOCAL_BIN_DIR}
+    chmod 777 ${LOCAL_BIN_DIR}/astyle*
 
-    cd ${ROOT_DIR}/deps
+    cd ${MY_VIM_DIR}/deps
     rm -fr astyle*/
 }
 
 function inst_ack
 {
     # install ack
-    cd ${ROOT_DIR}/deps
+    cd ${MY_VIM_DIR}/deps
 
-    cp -f ack-* ${BIN_DIR}/ack-grep
-    chmod 777 ${BIN_DIR}/ack-grep
+    cp -f ack-* ${LOCAL_BIN_DIR}/ack-grep
+    chmod 777 ${LOCAL_BIN_DIR}/ack-grep
     
     # install ag
     if math_bool "${NEED_NET}"; then
         git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
     else
-        do_action "ag"
+        install_from_spec "ag"
     fi
 }
 
 function inst_gcc
 {
+    install_from_spec "gcc"
+    return 0
+
     # install ack
-    if ! update_check "gcc" "gcc-.*\.tar\.gz";then
+    if ! install_check "gcc" "gcc-.*\.tar\.gz";then
         return 0     
     fi
 
-    cd ${ROOT_DIR}/deps
-    wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz 
-
-    local tar_array=($(ls gcc-*.tar.gz))
-    if [ ${#tar_array[*]} -gt 1 ];then
-        echo_erro "multiple tar files exist: ${tar_array[*]}"
-        return 1
-    fi
-
-    local dir_array=($(mytar "${tar_array[0]}"))
-    if [ ${#dir_array[*]} -gt 1 ];then
-        echo_erro "multiple tar dirs exist: ${dir_array[*]}"
-        return 1
-    fi
-    
-    eval "${dir_array[*]}/contrib/download_prerequisites"
-    ${SUDO} "yum install -y gcc-c++ glibc-static gcc"
-
-    install_from_make "${dir_array[*]}" "--prefix=/usr/local/gcc  --enable-bootstrap  --enable-checking=release --enable-languages=c,c++ --disable-multilib"
-    if [ $? -ne 0 ]; then
-        echo_erro "$(printf "[%13s]: %-13s failure" "Install" "${tar_array[0]}")"
-        return 1
-    else
-        echo_info "$(printf "[%13s]: %-13s success" "Install" "${tar_array[0]}")"
-    fi
-    
-    ${SUDO} "echo 'export PATH=/usr/local/gcc/bin:\$PATH' > /etc/profile.d/gcc.sh"
+    install_from_spec "gcc"
     source /etc/profile.d/gcc.sh
 }
 
 function inst_glibc
 {
     # install ack
-    cd ${ROOT_DIR}/deps
+    cd ${MY_VIM_DIR}/deps
 
     local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
     local version_new=2.28
 
     if __version_lt ${version_cur} ${version_new}; then
         # Install glibc
-        do_action "glibc-2.28"
+        install_from_spec "glibc-2.28"
         #do_action "glibc-common"
 
         ${SUDO} "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"

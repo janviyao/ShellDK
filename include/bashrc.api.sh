@@ -33,9 +33,11 @@ readonly ROOT_PID=$$
 readonly GBL_BASE_DIR="/tmp/gbl"
 readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
 readonly SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
+readonly LOCAL_BIN_DIR="${HOME}/.local/bin"
+readonly BASH_LOG="${GBL_BASE_DIR}/bash.log"
 
+mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${GBL_BASE_DIR}
-BASH_LOG="${GBL_BASE_DIR}/bash.log"
 
 OP_TRY_CNT=3
 OP_TIMEOUT=60
@@ -55,11 +57,33 @@ function __my_bashrc_deps
     local cur_dir=$(pwd)
 
     if ! can_access "chk_passwd";then
-        cd ${app_dir}
-        gcc chk_passwd.c -g -lcrypt -o chk_passwd
-        mkdir -p ${bin_dir}
-        mv -f chk_passwd ${bin_dir}
-        cd ${cur_dir}
+        if ! can_access "make";then
+            install_from_spec "make" &> /dev/null
+            if [ $? -ne 0 ];then
+                install_from_spec "make.local" &> /dev/null
+                if [ $? -ne 0 ];then
+                    echo_erro "install { make } failed"
+                    exit 1
+                fi
+            fi
+        fi
+
+        if ! can_access "gcc";then
+            install_from_spec "gcc" &> /dev/null
+            if [ $? -ne 0 ];then
+                install_from_spec "gcc.local" &> /dev/null
+                if [ $? -ne 0 ];then
+                    echo_erro "install { gcc } failed"
+                    exit 1
+                fi
+            fi
+        fi
+
+        install_from_spec "chk_passwd" &> /dev/null
+        if [ $? -ne 0 ];then
+            echo_erro "install { chk_passwd } failed"
+            exit 1
+        fi
     fi
 }
 __my_bashrc_deps
@@ -79,7 +103,7 @@ if can_access "ppid";then
     echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
 fi
 
-if __var_exist "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
+if __var_defined "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
     echo_file "${LOG_DEBUG}" "share work: ${BASH_WORK_DIR}"
 else
     can_access "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }

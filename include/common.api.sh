@@ -11,18 +11,18 @@
 : ${GBL_XFER_PIPE:=}
 : ${GBL_CTRL_PIPE:=}
 
-function __INCLUDE
+function __MY_SOURCE
 {
     local flag="$1"
     local file="$2"
     
-    #__var_exist "${flag}" || source ${file} 
-    if ! __var_exist "${flag}" && test -f ${file};then
+    #__var_defined "${flag}" || source ${file} 
+    if ! __var_defined "${flag}" && test -f ${file};then
         source ${file} 
     fi
 }
 
-function __var_exist
+function __var_defined
 {
     if [[ -n $1 ]]; then
         if [[ $1 =~ ^-?[0-9]+$ ]]; then
@@ -371,16 +371,17 @@ function loop2fail
     return 0
 }
 
-__INCLUDE "INCLUDE_LOG"     $MY_VIM_DIR/include/log.api.sh
-__INCLUDE "INCLUDE_STRING"  $MY_VIM_DIR/include/string.api.sh
-__INCLUDE "INCLUDE_SYSTEM"  $MY_VIM_DIR/include/system.api.sh
-__INCLUDE "INCLUDE_TRACE"   $MY_VIM_DIR/include/trace.api.sh
-__INCLUDE "INCLUDE_KVCONF"  $MY_VIM_DIR/include/kvconf.api.sh
-__INCLUDE "INCLUDE_SECTION" $MY_VIM_DIR/include/section.api.sh
-__INCLUDE "INCLUDE_PROCESS" $MY_VIM_DIR/include/process.api.sh
-__INCLUDE "INCLUDE_INSTALL" $MY_VIM_DIR/include/install.api.sh
-__INCLUDE "INCLUDE_MATH"    $MY_VIM_DIR/include/math.api.sh
-__INCLUDE "INCLUDE_FILE"    $MY_VIM_DIR/include/file.api.sh
-__INCLUDE "INCLUDE_K8S"     $MY_VIM_DIR/include/k8s.api.sh
-__INCLUDE "INCLUDE_GIT"     $MY_VIM_DIR/include/git.api.sh
-__INCLUDE "INCLUDE_GDB"     $MY_VIM_DIR/include/gdb.api.sh
+__MY_SOURCE "INCLUDE_LOG"     $MY_VIM_DIR/include/log.api.sh
+__MY_SOURCE "INCLUDE_STRING"  $MY_VIM_DIR/include/string.api.sh
+__MY_SOURCE "INCLUDE_SYSTEM"  $MY_VIM_DIR/include/system.api.sh
+__MY_SOURCE "INCLUDE_TRACE"   $MY_VIM_DIR/include/trace.api.sh
+__MY_SOURCE "INCLUDE_KVCONF"  $MY_VIM_DIR/include/kvconf.api.sh
+__MY_SOURCE "INCLUDE_SECTION" $MY_VIM_DIR/include/section.api.sh
+__MY_SOURCE "INCLUDE_PROCESS" $MY_VIM_DIR/include/process.api.sh
+__MY_SOURCE "INCLUDE_INSTALL" $MY_VIM_DIR/include/install.api.sh
+__MY_SOURCE "INCLUDE_MATH"    $MY_VIM_DIR/include/math.api.sh
+__MY_SOURCE "INCLUDE_FILE"    $MY_VIM_DIR/include/file.api.sh
+__MY_SOURCE "INCLUDE_K8S"     $MY_VIM_DIR/include/k8s.api.sh
+__MY_SOURCE "INCLUDE_GIT"     $MY_VIM_DIR/include/git.api.sh
+__MY_SOURCE "INCLUDE_GDB"     $MY_VIM_DIR/include/gdb.api.sh
+

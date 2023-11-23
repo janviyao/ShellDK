@@ -31,6 +31,135 @@ function __version_eq
     fi
 }
 
+function mytar
+{
+    local argc=$#
+    local fpath="$1"
+    shift
+    local flist=($@)
+
+    local erro="\nUsage: [${fpath} $@]\n\$1: compress-package name\n\$2: (a)files or directorys when compress (b)directory when uncompress"
+    if [ ${argc} -lt 1 ];then
+        echo_erro "${erro}"
+        return 1
+    fi
+
+    local iscompress="true"
+    if can_access "${fpath}";then
+        iscompress="false"
+        if [ ${#flist[*]} -gt 1 ];then
+            local realfile=$(real_path "${fpath}")
+            local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
+            if math_bool "${xselect}";then
+                iscompress="true"
+                sudo rm -f ${realfile}
+            else
+                echo_erro "file { ${realfile} } already exists"
+                return 1
+            fi
+        fi
+    else
+        if [ ${#flist[*]} -eq 0 ];then
+            echo_erro "${erro}"
+            return 1
+        fi
+    fi
+
+    local options="-cf"
+    local xwhat=""
+    if math_bool "${iscompress}";then
+        xwhat="${flist[*]}"
+    else
+        options="-xf"
+        if can_access "${flist[0]}";then
+            xwhat="-C ${flist[0]}"
+        fi
+    fi
+    
+    local fname=$(path2fname "${fpath}")
+    if string_match "${fname}" ".tar.gz" 2;then
+        options="-z ${options}"
+    elif string_match "${fname}" ".tar.bz2" 2;then
+        options="-j ${options}"
+    elif string_match "${fname}" ".tar.xz" 2;then
+        options="-J ${options}"
+    elif string_match "${fname}" ".tar" 2;then
+        options="${options}"
+    else
+        echo_erro "not support compress-package name: ${fname}"
+        return 1
+    fi
+
+    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${xwhat}"
+    tar ${options} ${fpath} ${xwhat}
+
+    if math_bool "${iscompress}";then
+        echo $(real_path "${fpath}")
+    else
+        local outdir="."
+        if can_access "${flist[0]}";then
+            outdir="${flist[0]}"
+        fi
+        
+        local fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
+        local fprefix=$(regex_2str "${fprefix}")
+        local find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
+        if [ ${#find_arr[*]} -eq 0 ];then
+            fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+")
+            find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
+        fi
+
+        local dir
+        for dir in ${find_arr[*]}    
+        do
+            local real_dir=$(real_path "${dir}")
+            echo "${real_dir}"
+        done
+    fi
+
+    return 0
+}
+
+function install_check
+{
+    local local_cmd="$1"
+    local fname_reg="$2"
+
+    if math_bool "${FORCE_DO}"; then
+        return 0
+    fi
+
+    if can_access "${local_cmd}";then
+        local tmp_file=$(file_temp)
+        ${local_cmd} --version &> ${tmp_file} 
+        if [ $? -ne 0 ];then
+            return 1
+        fi
+
+        local version_cur=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
+        rm -f ${tmp_file}
+        local local_dir=$(pwd)
+        cd ${MY_VIM_DIR}/deps
+
+        local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
+        for full_nm in ${file_list}    
+        do
+            local file_name=$(path2fname ${full_nm})
+            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
+            echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
+            if __version_lt ${version_cur} ${version_new}; then
+                cd ${local_dir}
+                return 0
+            fi
+        done
+
+        cd ${local_dir}
+        return 1
+    else
+        return 0
+    fi
+}
+
 function install_provider
 {
     local xfile="$1"
@@ -241,6 +370,17 @@ function install_from_make
     local currdir="$(pwd)"
     cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
 
+    if can_access "contrib/download_prerequisites"; then
+        #GCC installation need this:
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "download_prerequisites")"
+        ./contrib/download_prerequisites &>> build.log
+        if [ $? -ne 0 ]; then
+            echo_erro " Download_prerequisites: ${makedir} failed, check: $(real_path build.log)"
+            cd ${currdir}
+            return 1
+        fi
+    fi
+
     can_access "Makefile" || can_access "configure" 
     [ $? -ne 0 ] && can_access "unix/" && cd unix/
     [ $? -ne 0 ] && can_access "linux/" && cd linux/
@@ -318,127 +458,106 @@ function install_from_make
     return 0
 }
 
-function mytar
+function install_from_tar
 {
-    local argc=$#
-    local fpath="$1"
-    shift
-    local flist=($@)
+    local xfile="$1"
+    local isreg="${2:-false}"
+    local conf_para="$3"
 
-    local erro="\nUsage: [${fpath} $@]\n\$1: compress-package name\n\$2: (a)files or directorys when compress (b)directory when uncompress"
-    if [ ${argc} -lt 1 ];then
-        echo_erro "${erro}"
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify tar name or regex-name\n\$2: whether regex(default: false)\n\$3: specify make configure args"
         return 1
     fi
 
-    local iscompress="true"
-    if can_access "${fpath}";then
-        iscompress="false"
-        if [ ${#flist[*]} -gt 1 ];then
-            local realfile=$(real_path "${fpath}")
-            local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
-            if math_bool "${xselect}";then
-                iscompress="true"
-                sudo rm -f ${realfile}
-            else
-                echo_erro "file { ${realfile} } already exists"
-                return 1
-            fi
+    local local_tars=(${xfile})
+    if math_bool "${isreg}";then
+        local fpath=$(fname2path ${xfile})
+        if ! can_access "${fpath}";then
+            fpath="."
         fi
-    else
-        if [ ${#flist[*]} -eq 0 ];then
-            echo_erro "${erro}"
-            return 1
-        fi
-    fi
-
-    local options="-cf"
-    local xwhat=""
-    if math_bool "${iscompress}";then
-        xwhat="${flist[*]}"
-    else
-        options="-xf"
-        if can_access "${flist[0]}";then
-            xwhat="-C ${flist[0]}"
-        fi
+        local_tars=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${xfile}"))
     fi
     
-    local fname=$(path2fname "${fpath}")
-    if string_match "${fname}" ".tar.gz" 2;then
-        options="-z ${options}"
-    elif string_match "${fname}" ".tar.bz2" 2;then
-        options="-j ${options}"
-    elif string_match "${fname}" ".tar.xz" 2;then
-        options="-J ${options}"
-    elif string_match "${fname}" ".tar" 2;then
-        options="${options}"
-    else
-        echo_erro "not support compress-package name: ${fname}"
-        return 1
+    if [ ${#local_tars[*]} -gt 1 ];then
+        local select_x=$(select_one ${local_tars[*]} "all")
+        if [[ "${select_x}" != "all" ]];then
+            local_tars=(${select_x})
+        fi
     fi
 
-    echo_file "${LOG_DEBUG}" "tar ${options} ${fpath} ${xwhat}"
-    tar ${options} ${fpath} ${xwhat}
-
-    if math_bool "${iscompress}";then
-        echo $(real_path "${fpath}")
-    else
-        local outdir="."
-        if can_access "${flist[0]}";then
-            outdir="${flist[0]}"
-        fi
+    local tar_file
+    for tar_file in ${local_tars[*]}    
+    do
+        local file_dir=$(fname2path ${tar_file})
+        local file_name=$(path2fname ${tar_file})
+        echo_info "$(printf "[%13s]: %-50s" "Will install" "${file_name}")"
         
-        local fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
-        local fprefix=$(regex_2str "${fprefix}")
-        local find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
-        if [ ${#find_arr[*]} -eq 0 ];then
-            fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+")
-            find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
-        fi
+        local cur_dir=$(pwd)
+        cd ${file_dir}
 
-        local dir
-        for dir in ${find_arr[*]}    
+        local dir_arr=($(mytar "${file_name}"))
+        local tar_dir
+        for tar_dir in ${dir_arr[*]}    
         do
-            local real_dir=$(real_path "${dir}")
-            echo "${real_dir}"
+            install_from_make "${tar_dir}" "${conf_para}"
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${file_name}")"
+                cd ${cur_dir}
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${file_name}")"
+            fi
         done
-    fi
+        cd ${cur_dir}
+    done
+}
+
+function install_from_spec
+{     
+    local usr_specs=($@)
+    echo_debug "install specs: ${usr_specs[*]}"
+
+    local spec
+    for spec in ${usr_specs[*]};
+    do
+        if ! can_access "${spec}";then
+            local norm_str=$(regex_2str "${spec}")
+            local line_cnt=$(file_get ${MY_VIM_DIR}/install.spec "^\s*${norm_str}\s*;" true)
+            if [ -z "${line_cnt}" ];then
+                if install_from_net "${spec}";then
+                    continue
+                else
+                    echo_erro "regex [^\s*${norm_str}\s*;] donot match from ${MY_VIM_DIR}/install.spec"
+                fi
+            fi
+
+            if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
+                line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
+            fi
+
+            local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;\s*" "" true)
+            local total=$(echo "${guides}" | awk -F';' '{ print NF }')
+
+            local cur_dir=$(pwd)
+            local idx=0
+            for (( idx = 1; idx <= ${total}; idx++))
+            do
+                local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
+                echo_info "$(printf "[%13s]: %-50s" "Action" "${action}")"
+                eval "${action}"
+                if [ $? -ne 0 ];then
+                    echo_erro "${action}"
+                    return 1
+                fi
+            done
+            cd ${cur_dir}
+        fi
+    done
 
     return 0
 }
 
-function install_from_tar
-{
-    local fname_reg="$1"
-
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: specify tar-regex name"
-        return 1
-    fi
-
-    local local_arr=($(find . -regextype posix-awk -regex ".*/?${fname_reg}"))
-    local tar_file
-    for tar_file in ${local_arr[*]}    
-    do
-        local full_name=$(path2fname ${tar_file})
-        echo_info "$(printf "[%13s]: %-50s" "Will install" "${full_name}")"
-
-        local dir_arr=($(mytar "${full_name}"))
-        local tar_dir
-        for tar_dir in ${dir_arr[*]}    
-        do
-            install_from_make "${tar_dir}"
-            if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${full_name}")"
-                return 1
-            else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${full_name}")"
-            fi
-        done
-    done
-}
-
-function rpm_install
+function install_rpms
 {
     local xfile="$1"
     local force="${2:-false}"
