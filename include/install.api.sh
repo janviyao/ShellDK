@@ -371,6 +371,7 @@ function install_from_make
 
     local currdir="$(pwd)"
     cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
+    echo "${conf_para}" > build.log
 
     if can_access "contrib/download_prerequisites"; then
         #GCC installation need this:
@@ -535,10 +536,10 @@ function install_from_spec
                 fi
             fi
 
-            echo_debug "spec line: ${line_cnt}"
             if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
                 line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
             fi
+            echo_debug "spec line: ${line_cnt}"
 
             local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;\s*" "" true)
             local total=$(echo "${guides}" | awk -F';' '{ print NF }')

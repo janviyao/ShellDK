@@ -169,7 +169,7 @@ function inst_env
         ${SUDO} chmod +r /etc/shadow 
     fi
 
-    local -a mustDeps=("make" "gcc" "/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "autoconf" "automake" "sshpass" "tclsh8.6" "expect" "nc" "deno")
+    local -a mustDeps=("make" "gcc" "/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "sshpass" "tclsh8.6" "expect" "nc" "deno")
     install_from_spec "${mustDeps[*]}"
 
     for linkf in ${!commandMap[*]};

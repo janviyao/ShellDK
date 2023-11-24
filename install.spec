@@ -1,6 +1,6 @@
 make;                                       cd ${MY_VIM_DIR}/deps;install_from_rpm 'make-.+\.rpm' true
 gcc;                                        cd ${MY_VIM_DIR}/deps;install_from_rpm 'gcc-.+\.rpm' true
-#gcc;                                        cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
+#gcc;                                       cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
 
 ppid;                                       cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;mv -f ppid ${LOCAL_BIN_DIR}
 fstat;                                      cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;mv -f fstat ${LOCAL_BIN_DIR}
@@ -11,7 +11,7 @@ ctags;                                      cd ${MY_VIM_DIR}/deps;install_from_t
 cscope;                                     cd ${MY_VIM_DIR}/deps;install_from_tar 'cscope-.+\.tar\.gz' true;rm -fr cscope-*/
 tig;                                        cd ${MY_VIM_DIR}/deps;install_from_tar 'tig-.+\.tar\.gz' true;rm -fr tig-*/
 ag;                                         cd ${MY_VIM_DIR}/deps;install_from_rpm 'the_silver_searcher-.+\.rpm' true
-#ag;                                         cd ${MY_VIM_DIR}/deps;install_from_tar 'the_silver_searcher-.+\.tar\.gz' true;rm -fr the_silver_searcher-*/
+#ag;                                        cd ${MY_VIM_DIR}/deps;install_from_tar 'the_silver_searcher-.+\.tar\.gz' true;rm -fr the_silver_searcher-*/
 
 glibc-2.28;                                 cd ${MY_VIM_DIR}/deps;install_from_tar 'glibc-2.28.tar.xz' true;rm -fr glibc-2.28/
 glibc-common;                               cd ${MY_VIM_DIR}/deps;install_from_rpm 'glibc-common-.+\.rpm' true
@@ -30,10 +30,7 @@ iperf3;                                     cd ${MY_VIM_DIR}/deps;install_from_r
 ss;                                         cd ${MY_VIM_DIR}/deps;install_from_rpm 'iproute-.+\.rpm' true
 rsync;                                      cd ${MY_VIM_DIR}/deps;install_from_rpm 'rsync-.+\.rpm' true
 nc;                                         cd ${MY_VIM_DIR}/deps;install_from_rpm 'nmap-ncat-.+\.rpm' true
-m4;                                         cd ${MY_VIM_DIR}/deps;install_from_rpm 'm4-.+\.rpm' true
 sar;                                        cd ${MY_VIM_DIR}/deps;install_from_rpm 'sysstat-.+\.rpm' true
-autoconf;                                   cd ${MY_VIM_DIR}/deps;install_from_rpm 'autoconf-.+\.rpm' true
-automake;                                   cd ${MY_VIM_DIR}/deps;install_from_rpm 'automake-.+\.rpm' true
 
 /usr/libexec/sudo/libsudo_util.so.0;        cd ${MY_VIM_DIR}/deps;install_from_rpm 'sudo-.+\.rpm' true
 /lib64/libreadline.so.6;                    cd ${MY_VIM_DIR}/deps;install_from_rpm 'readline-.+\.rpm' true

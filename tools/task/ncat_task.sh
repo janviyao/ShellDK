@@ -9,9 +9,16 @@ function local_port_available
     local ss_file="${GBL_NCAT_WORK_DIR}/ss.res"
     local ns_file="${GBL_NCAT_WORK_DIR}/netstat.res"
 
+    if ! can_access "${GBL_NCAT_WORK_DIR}";then
+        echo_file "${LOG_DEBUG}" "dir already deleted: ${GBL_NCAT_WORK_DIR}"
+        return 1
+    fi
+
     #if netstat -at  2>/dev/null | awk '{ print $4 }' | grep -P "\d+\.\d+\.\d+\.\d+:${port}" &> /dev/null;then
     if file_expire "${ss_file}" 30;then
-        ss -tln | awk '{ print $4 }' &> ${ss_file}
+        if can_access "ss";then
+            ss -tln | awk '{ print $4 }' &> ${ss_file}
+        fi
     fi
 
     if can_access "${ss_file}";then
@@ -22,7 +29,9 @@ function local_port_available
     fi
 
     if file_expire "${ns_file}" 30;then
-        netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
+        if can_access "netstat";then
+            netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
+        fi
     fi
 
     if can_access "${ns_file}";then
