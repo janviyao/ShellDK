@@ -289,6 +289,12 @@ function inst_env
         echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
         ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
     fi
+
+    if can_access "git";then
+        git config --global credential.helper store
+        #git config --global credential.helper cache
+        #git config --global credential.helper 'cache --timeout=3600'
+    fi
 }
 
 function inst_update
