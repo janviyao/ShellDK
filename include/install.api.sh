@@ -232,27 +232,29 @@ function install_from_net
     fi
 
     echo_info "$(printf "[%13s]: %-50s" "Will install" "${xname}")"
-    if can_access "yum";then
-        sudo_it yum install ${xname} -y
-        if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
-            return 0
+    if check_net; then
+        if can_access "yum";then
+            sudo_it yum install ${xname} -y
+            if [ $? -eq 0 ];then
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
+                return 0
+            fi
         fi
-    fi
 
-    if can_access "apt";then
-        sudo_it apt install ${xname} -y
-        if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
-            return 0
+        if can_access "apt";then
+            sudo_it apt install ${xname} -y
+            if [ $? -eq 0 ];then
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
+                return 0
+            fi
         fi
-    fi
 
-    if can_access "apt-cyg";then
-        sudo_it apt-cyg install ${xname} -y
-        if [ $? -eq 0 ];then
-            echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
-            return 0
+        if can_access "apt-cyg";then
+            sudo_it apt-cyg install ${xname} -y
+            if [ $? -eq 0 ];then
+                echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
+                return 0
+            fi
         fi
     fi
 
@@ -372,12 +374,14 @@ function install_from_make
 
     if can_access "contrib/download_prerequisites"; then
         #GCC installation need this:
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "download_prerequisites")"
-        ./contrib/download_prerequisites &>> build.log
-        if [ $? -ne 0 ]; then
-            echo_erro " Download_prerequisites: ${makedir} failed, check: $(real_path build.log)"
-            cd ${currdir}
-            return 1
+        if check_net; then
+            echo_info "$(printf "[%13s]: %-50s" "Doing" "download_prerequisites")"
+            ./contrib/download_prerequisites &>> build.log
+            if [ $? -ne 0 ]; then
+                echo_erro " Download_prerequisites: ${makedir} failed, check: $(real_path build.log)"
+                cd ${currdir}
+                return 1
+            fi
         fi
     fi
 
@@ -531,12 +535,14 @@ function install_from_spec
                 fi
             fi
 
+            echo_debug "spec line: ${line_cnt}"
             if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
                 line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
             fi
 
             local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;\s*" "" true)
             local total=$(echo "${guides}" | awk -F';' '{ print NF }')
+            echo_debug "guides[${total}]: ${guides}"
 
             local cur_dir=$(pwd)
             local idx=0

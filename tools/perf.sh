@@ -447,6 +447,14 @@ function perf_bench
     return 0
 }
 
+if ! can_access "perf";then
+    install_from_net perf
+    if [ $? -ne 0 ];then
+        echo_erro "perf command not finded"
+        exit 1
+    fi
+fi
+
 perf_func=$(select_one \
             "  list: List all symbolic event types" \
             " trace: Like strace cmd, but it trace more" \

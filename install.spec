@@ -1,8 +1,6 @@
-make;                                       install_from_net make
-make.local;                                 cd ${MY_VIM_DIR}/deps;install_from_rpm 'make-.+\.rpm' true
-g++;                                        install_from_net gcc-c++
-gcc;                                        install_from_net gcc
-gcc.local;                                  cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
+make;                                       cd ${MY_VIM_DIR}/deps;install_from_rpm 'make-.+\.rpm' true
+gcc;                                        cd ${MY_VIM_DIR}/deps;install_from_rpm 'gcc-.+\.rpm' true
+#gcc;                                        cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
 
 ppid;                                       cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;mv -f ppid ${LOCAL_BIN_DIR}
 fstat;                                      cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;mv -f fstat ${LOCAL_BIN_DIR}
@@ -27,7 +25,6 @@ expect;                                     cd ${MY_VIM_DIR}/deps;install_from_t
 unzip;                                      cd ${MY_VIM_DIR}/deps;install_from_rpm 'unzip-.+\.rpm' true
 
 netperf;                                    cd ${MY_VIM_DIR}/deps;install_from_tar 'netperf-.+\.tar\.gz' true;rm -fr netperf-*/
-perf;                                       install_from_net perf
 atop;                                       cd ${MY_VIM_DIR}/deps;install_from_rpm 'atop-.+\.rpm' true
 iperf3;                                     cd ${MY_VIM_DIR}/deps;install_from_rpm 'iperf3-.+\.rpm' true
 ss;                                         cd ${MY_VIM_DIR}/deps;install_from_rpm 'iproute-.+\.rpm' true

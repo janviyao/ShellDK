@@ -58,9 +58,9 @@ function __my_bashrc_deps
 
     if ! can_access "chk_passwd";then
         if ! can_access "make";then
-            install_from_spec "make" &> /dev/null
+            install_from_net "make" &> /dev/null
             if [ $? -ne 0 ];then
-                install_from_spec "make.local" &> /dev/null
+                install_from_spec "make" &> /dev/null
                 if [ $? -ne 0 ];then
                     echo_erro "install { make } failed"
                     exit 1
@@ -69,9 +69,9 @@ function __my_bashrc_deps
         fi
 
         if ! can_access "gcc";then
-            install_from_spec "gcc" &> /dev/null
+            install_from_net "gcc" &> /dev/null
             if [ $? -ne 0 ];then
-                install_from_spec "gcc.local" &> /dev/null
+                install_from_spec "gcc" &> /dev/null
                 if [ $? -ne 0 ];then
                     echo_erro "install { gcc } failed"
                     exit 1
