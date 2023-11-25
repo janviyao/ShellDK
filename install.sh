@@ -92,30 +92,15 @@ COPY_PKG="${COPY_PKG:-0}"
 
 MAKE_TD=${parasMap['-j']:-8}
 
-NEED_NET="${parasMap['-n']}"
-NEED_NET="${NEED_NET:-${parasMap['--net']}}"
-NEED_NET="${NEED_NET:-0}"
-
 FORCE_DO="${parasMap['-f']}"
 FORCE_DO="${FORCE_DO:-${parasMap['--force']}}"
 FORCE_DO="${FORCE_DO:-0}"
 
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
 echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
-echo_info "$(printf "[%13s]: %-6s" "Need Netwrk" "${NEED_NET}")"
 echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 echo_info "$(printf "[%13s]: %-6s" "Will force"  "${FORCE_DO}")"
-
-if math_bool "${NEED_NET}"; then
-    if check_net; then
-        NEED_NET=1
-        echo_info "$(printf "[%13s]: %-6s" "Netwk ping" "Ok")"
-    else
-        NEED_NET=0
-        echo_info "$(printf "[%13s]: %-6s" "Netwk ping" "Fail")"
-    fi
-fi
 
 CMD_PRE="my"
 declare -A commandMap
@@ -169,8 +154,13 @@ function inst_env
         ${SUDO} chmod +r /etc/shadow 
     fi
 
-    local -a mustDeps=("make" "gcc" "/usr/libexec/sudo/libsudo_util.so.0" "ppid" "fstat" "chk_passwd" "unzip" "m4" "sshpass" "tclsh8.6" "expect" "nc" "deno")
-    install_from_spec "${mustDeps[*]}"
+    local -a mustDeps=("make" "automake" "autoconf" "gcc" "sudo" "ppid" "fstat" "chk_passwd" "unzip" "m4" "sshpass" "tclsh8.6" "expect" "nc" "deno")
+    for spec in ${mustDeps[*]}
+    do
+        if ! install_from_spec "${spec}";then
+            return 1
+        fi
+    done
 
     for linkf in ${!commandMap[*]};
     do
@@ -299,17 +289,15 @@ function inst_env
 
 function inst_update
 {
-    if math_bool "${NEED_NET}"; then
-        local need_update=1
-        if can_access "${MY_HOME}/.vim/bundle/vundle"; then
-            git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
-            vim +BundleInstall +q +q
-            need_update=0
-        fi
+    local need_update=1
+    if can_access "${MY_HOME}/.vim/bundle/vundle"; then
+        git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
+        vim +BundleInstall +q +q
+        need_update=0
+    fi
 
-        if [ ${need_update} -eq 1 ]; then
-            vim +BundleUpdate +q +q
-        fi
+    if [ ${need_update} -eq 1 ]; then
+        vim +BundleUpdate +q +q
     fi
 }
 
@@ -334,8 +322,8 @@ function inst_spec
                     local norm_str=$(regex_2str "${key}")
                     local value=$(string_replace "${line}" "^\s*${norm_str}\s*;\s*" "" true)
 
-                #echo_file "${LOG_DEBUG}" "key: [${key}] value: [${value}]"
-                inst_map["${key}"]="${value}"
+                    #echo_file "${LOG_DEBUG}" "key: [${key}] value: [${value}]"
+                    inst_map["${key}"]="${value}"
                 fi
             fi
         done < ${MY_VIM_DIR}/install.spec
@@ -345,9 +333,15 @@ function inst_spec
             unset inst_map[${key}]
         done
 
-        install_from_spec ${!inst_map[*]}
+        for spec in ${!inst_map[*]}
+        do
+            install_from_spec ${spec}
+        done
     else
-        install_from_spec ${keys[*]}
+        for spec in ${keys[*]}
+        do
+            install_from_spec ${spec}
+        done
     fi
 }
 
@@ -379,20 +373,14 @@ function inst_system
 
 function inst_ctags
 {
-    if math_bool "${NEED_NET}"; then
-        git clone https://github.com/universal-ctags/ctags.git ctags
-    else
-        install_from_spec "ctags"
-    fi
+    #git clone https://github.com/universal-ctags/ctags.git ctags
+    install_from_spec "ctags"
 }
 
 function inst_cscope
 {
-    if math_bool "${NEED_NET}"; then
-        git clone https://git.code.sf.net/p/cscope/cscope cscope
-    else
-        install_from_spec "cscope"
-    fi
+    #git clone https://git.code.sf.net/p/cscope/cscope cscope
+    install_from_spec "cscope"
 }
 
 function inst_vim
@@ -402,31 +390,27 @@ function inst_vim
     fi
 
     cd ${MY_VIM_DIR}/deps
-    local make_dir="vim"
-    if math_bool "${NEED_NET}"; then
-        git clone https://github.com/vim/vim.git vim
-    else
-        make_dir=$(mytar vim-*.tar.gz)
-    fi
+    #git clone https://github.com/vim/vim.git vim
+    local make_dir=$(mytar vim-*.tar.gz)
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
     local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
     conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
     #conf_paras="${conf_paras} --enable-luainterp=yes"
     if can_access "python3";then
-        install_from_spec "/usr/bin/python3-config"
+        install_from_spec "python3-devel"
         conf_paras="${conf_paras} --enable-python3interp=yes "
     elif can_access "python";then
-        install_from_spec "/usr/bin/python-config"
+        install_from_spec "python-devel"
         conf_paras="${conf_paras} --enable-pythoninterp=yes"
     else
         echo_erro "python environment not ready"
         exit -1
     fi
     
-    install_from_spec "/usr/share/terminfo/x/xterm"
-    install_from_spec "/usr/lib64/libncurses.so.5"
-    install_from_spec "/usr/lib64/libcurses.so"
+    install_from_spec "ncurses-base"
+    install_from_spec "ncurses-libs"
+    install_from_spec "ncurses-devel"
     install_from_make "${make_dir}" "${conf_paras}"
 
     ${SUDO} rm -f /usr/local/bin/vim
@@ -436,13 +420,8 @@ function inst_vim
 
 function inst_tig
 {
-    cd ${MY_VIM_DIR}/deps
-
-    if math_bool "${NEED_NET}"; then
-        git clone https://github.com/jonas/tig.git tig
-    else
-        install_from_spec "tig"
-    fi
+    #git clone https://github.com/jonas/tig.git tig
+    install_from_spec "tig"
 }
 
 function inst_astyle
@@ -452,13 +431,9 @@ function inst_astyle
     fi
 
     cd ${MY_VIM_DIR}/deps
-    if math_bool "${NEED_NET}"; then
-        svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
-        cd astyle*/AStyle/build/gcc
-    else
-        local dir=$(mytar astyle_*.tar.gz)
-        cd ${dir}/build/gcc
-    fi
+    #svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
+    local dir=$(mytar astyle_*.tar.gz)
+    cd ${dir}/build/gcc
 
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     make -j ${MAKE_TD}
@@ -482,12 +457,8 @@ function inst_ack
     cp -f ack-* ${LOCAL_BIN_DIR}/ack-grep
     chmod 777 ${LOCAL_BIN_DIR}/ack-grep
     
-    # install ag
-    if math_bool "${NEED_NET}"; then
-        git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
-    else
-        install_from_spec "ag"
-    fi
+    #git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
+    install_from_spec "ag"
 }
 
 function inst_gcc

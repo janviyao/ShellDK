@@ -519,48 +519,68 @@ function install_from_tar
 
 function install_from_spec
 {     
-    local usr_specs=($@)
-    echo_debug "install specs: ${usr_specs[*]}"
+    local xspec="$1"
+    local force="${2:-false}"
 
-    local spec
-    for spec in ${usr_specs[*]};
-    do
-        if ! can_access "${spec}";then
-            local norm_str=$(regex_2str "${spec}")
-            local line_cnt=$(file_get ${MY_VIM_DIR}/install.spec "^\s*${norm_str}\s*;" true)
-            if [ -z "${line_cnt}" ];then
-                if install_from_net "${spec}";then
-                    continue
-                else
-                    echo_erro "regex [^\s*${norm_str}\s*;] donot match from ${MY_VIM_DIR}/install.spec"
-                fi
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify spec-key\n\$2: whether force(default: false)"
+        return 1
+    fi
+
+    echo_debug "install spec: ${xspec}"
+    if ! math_bool "${force}";then
+        if check_net; then
+            if install_from_net "${xspec}";then
+                echo_debug "install { ${xspec} } success"
+                return 0
             fi
-
-            if [[ "${line_cnt}" =~ "${GBL_COL_SPF}" ]];then
-                line_cnt=$(string_replace "${line_cnt}" "${GBL_COL_SPF}" " ")
-            fi
-            echo_debug "spec line: ${line_cnt}"
-
-            local guides=$(string_replace "${line_cnt}" "^\s*${norm_str}\s*;\s*" "" true)
-            local total=$(echo "${guides}" | awk -F';' '{ print NF }')
-            echo_debug "guides[${total}]: ${guides}"
-
-            local cur_dir=$(pwd)
-            local idx=0
-            for (( idx = 1; idx <= ${total}; idx++))
-            do
-                local action=$(echo "${guides}" | awk -F';' "{ print \$${idx} }")         
-                echo_info "$(printf "[%13s]: %-50s" "Action" "${action}")"
-                eval "${action}"
-                if [ $? -ne 0 ];then
-                    echo_erro "${action}"
-                    return 1
-                fi
-            done
-            cd ${cur_dir}
         fi
-    done
+    fi
 
+    local key_str=$(regex_2str "${xspec}")
+    local spec_lines=($(file_get ${MY_VIM_DIR}/install.spec "^\s*${key_str}\s*;" true))
+    if [ ${#spec_lines[*]} -eq 0 ];then
+        echo_erro "regex [^\s*${key_str}\s*;] donot match from ${MY_VIM_DIR}/install.spec"
+        return 1
+    elif [ ${#spec_lines[*]} -gt 1 ];then
+        echo_erro "regex [^\s*${key_str}\s*;] match more from ${MY_VIM_DIR}/install.spec: \n${spec_lines[*]}"
+        return 1
+    fi
+
+    local spec_line="${spec_lines[0]}"
+    if [[ "${spec_line}" =~ "${GBL_COL_SPF}" ]];then
+        spec_line=$(string_replace "${spec_line}" "${GBL_COL_SPF}" " ")
+    fi
+    echo_debug "spec line: ${spec_line}"
+
+    local actions=$(string_replace "${spec_line}" "^\s*${key_str}\s*;\s*" "" true)
+    local total=$(echo "${actions}" | awk -F';' '{ print NF }')
+    echo_debug "actions[${total}]: ${actions}"
+
+    if [[ ${total} -le 1 ]];then
+        echo_erro "invalid actions: { ${actions} } "
+        return 1
+    fi
+
+    local idx=1
+    local action=$(echo "${actions}" | awk -F';' "{ print \$${idx} }")         
+    echo_debug "action condition: ${action}"
+
+    if eval "${action}";then
+        local cur_dir=$(pwd)
+        for (( idx = 2; idx <= ${total}; idx++))
+        do
+            action=$(echo "${actions}" | awk -F';' "{ print \$${idx} }")         
+            echo_info "$(printf "[%13s]: %-50s" "Action" "${action}")"
+            if ! eval "${action}";then
+                echo_erro "${action}"
+                return 1
+            fi
+        done
+        cd ${cur_dir}
+    fi
+
+    echo_debug "install { ${xspec} } success"
     return 0
 }
 
