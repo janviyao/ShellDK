@@ -10,26 +10,27 @@ glibc-common;        ! math_bool 'true';cd ${MY_VIM_DIR}/deps;install_from_rpm '
 ppid;                ! can_access 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;mv -f ppid ${LOCAL_BIN_DIR}
 fstat;               ! can_access 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;mv -f fstat ${LOCAL_BIN_DIR}
 chk_passwd;          ! can_access 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;mv -f chk_passwd ${LOCAL_BIN_DIR}
-
 deno;                ! can_access 'deno';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR}
+
+astyle;              ! can_access 'astyle';cd ${MY_VIM_DIR}/deps;install_from_net 'gcc-c++';install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/
 ctags;               ! can_access 'ctags';cd ${MY_VIM_DIR}/deps;install_from_tar 'universal-ctags-.+\.tar\.gz' true;rm -fr universal-ctags-*/
 cscope;              ! can_access 'cscope';cd ${MY_VIM_DIR}/deps;install_from_tar 'cscope-.+\.tar\.gz' true;rm -fr cscope-*/
 tig;                 ! can_access 'tig';cd ${MY_VIM_DIR}/deps;install_from_tar 'tig-.+\.tar\.gz' true;rm -fr tig-*/
 ag;                  ! can_access 'ag';cd ${MY_VIM_DIR}/deps;install_from_rpm 'the_silver_searcher-.+\.rpm' true
 #ag;                 ! can_access 'ag';cd ${MY_VIM_DIR}/deps;install_from_tar 'the_silver_searcher-.+\.tar\.gz' true;rm -fr the_silver_searcher-*/
+ack-grep;            ! can_access 'ack-grep';cd ${MY_VIM_DIR}/deps;cp -f ack-* ${LOCAL_BIN_DIR}/ack-grep;chmod 777 ${LOCAL_BIN_DIR}/ack-grep
 
-m4;                  ! can_access 'm4';cd ${MY_VIM_DIR}/deps;install_from_tar 'm4-.+\.tar\.gz' true;rm -fr m4-*/
 sshpass;             ! can_access 'sshpass';cd ${MY_VIM_DIR}/deps;install_from_tar 'sshpass-.+\.tar\.gz' true;rm -fr sshpass-*/
-tclsh8.6;            ! can_access 'tclsh8.6';cd ${MY_VIM_DIR}/deps;install_from_tar 'tcl.+\.tar\.gz' true;rm -fr tcl*/
+tcl;                 ! can_access 'tclsh8.6';cd ${MY_VIM_DIR}/deps;install_from_tar 'tcl.+\.tar\.gz' true;rm -fr tcl*/
 expect;              ! can_access 'expect';cd ${MY_VIM_DIR}/deps;install_from_tar 'tcl.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'expect.+\.tar\.gz' true;rm -fr expect*/;rm -fr tcl*/
 unzip;               ! can_access 'unzip';cd ${MY_VIM_DIR}/deps;install_from_rpm 'unzip-.+\.rpm' true
 
 netperf;             ! can_access 'netperf';cd ${MY_VIM_DIR}/deps;install_from_tar 'netperf-.+\.tar\.gz' true;rm -fr netperf-*/
 atop;                ! can_access 'atop';cd ${MY_VIM_DIR}/deps;install_from_rpm 'atop-.+\.rpm' true
 iperf3;              ! can_access 'iperf3';cd ${MY_VIM_DIR}/deps;install_from_rpm 'iperf3-.+\.rpm' true
-ss;                  ! can_access 'ss';cd ${MY_VIM_DIR}/deps;install_from_rpm 'iproute-.+\.rpm' true
+iproute;             ! can_access 'ss';cd ${MY_VIM_DIR}/deps;install_from_rpm 'iproute-.+\.rpm' true
 rsync;               ! can_access 'rsync';cd ${MY_VIM_DIR}/deps;install_from_rpm 'rsync-.+\.rpm' true
-nc;                  ! can_access 'nc';cd ${MY_VIM_DIR}/deps;install_from_rpm 'nmap-ncat-.+\.rpm' true
+nmap-ncat;           ! can_access 'nc';cd ${MY_VIM_DIR}/deps;install_from_rpm 'nmap-ncat-.+\.rpm' true
 sar;                 ! can_access 'sar';cd ${MY_VIM_DIR}/deps;install_from_rpm 'sysstat-.+\.rpm' true
 
 sudo;                ! can_access '/usr/libexec/sudo/libsudo_util.so.0';cd ${MY_VIM_DIR}/deps;install_from_rpm 'sudo-.+\.rpm' true
@@ -57,6 +58,7 @@ zlib-devel;          ! can_access '/usr/lib64/libz.so';cd ${MY_VIM_DIR}/deps;ins
 perl-Data-Dumper;    ! can_access '/usr/share/doc/perl-Data-Dumper';cd ${MY_VIM_DIR}/deps;install_from_rpm 'perl-Data-Dumper-2.167.+\.rpm' true
 perl-Thread-Queue;   ! can_access '/usr/share/doc/perl-Thread-Queue-3.02';cd ${MY_VIM_DIR}/deps;install_from_rpm 'perl-Thread-Queue-.+\.rpm' true
 locale;              ! can_access 'locale';cd ${MY_VIM_DIR}/deps;install_from_rpm 'glibc-common-.+\.rpm' true
+m4;                  ! can_access 'm4';cd ${MY_VIM_DIR}/deps;install_from_tar 'm4-.+\.tar\.gz' true;rm -fr m4-*/
 #golang;             ! can_access '/usr/lib/golang/api';cd ${MY_VIM_DIR}/deps;install_from_rpm 'golang-1.+\.rpm' true
 #golang-src;         ! can_access '/usr/lib/golang/src';cd ${MY_VIM_DIR}/deps;install_from_rpm 'golang-src-.+\.rpm' true
 #golang-bin;         ! can_access '/usr/lib/golang/bin';cd ${MY_VIM_DIR}/deps;install_from_rpm 'golang-bin-.+\.rpm' true

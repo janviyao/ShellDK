@@ -231,6 +231,12 @@ function install_from_net
         return 1
     fi
 
+    if can_access "rpm";then
+        if rpm -qa | grep -P "\w*${xname}\w*" &> /dev/null;then
+            return 0
+        fi
+    fi
+
     echo_info "$(printf "[%13s]: %-50s" "Will install" "${xname}")"
     if check_net; then
         if can_access "yum";then
@@ -256,9 +262,9 @@ function install_from_net
                 return 0
             fi
         fi
+        #echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${xname}")"
     fi
 
-    echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${xname}")"
     return 1
 }
 
@@ -368,6 +374,7 @@ function install_from_make
         echo_erro "\nUsage: [$@]\n\$1: specify compile directory\n\$2: specify configure args"
         return 1
     fi
+    echo_file "${LOG_DEBUG}" "make into: { ${makedir} } conf: { ${conf_para} }"
 
     local currdir="$(pwd)"
     cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
@@ -440,6 +447,11 @@ function install_from_make
         fi
     fi
 
+    if can_access "build/gcc"; then
+        #astyle install
+        cd build/gcc
+    fi
+
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     local cflags_bk="${CFLAGS}"
     export CFLAGS="-fcommon"
@@ -495,6 +507,7 @@ function install_from_tar
     do
         local file_dir=$(fname2path ${tar_file})
         local file_name=$(path2fname ${tar_file})
+        echo_file "${LOG_DEBUG}" "tar: { ${tar_file} } path: { ${file_dir} } name: { ${file_name} }"
         echo_info "$(printf "[%13s]: %-50s" "Will install" "${file_name}")"
         
         local cur_dir=$(pwd)
@@ -527,13 +540,11 @@ function install_from_spec
         return 1
     fi
 
-    echo_debug "install spec: ${xspec}"
+    echo_debug "install spec: { ${xspec} }"
     if ! math_bool "${force}";then
-        if check_net; then
-            if install_from_net "${xspec}";then
-                echo_debug "install { ${xspec} } success"
-                return 0
-            fi
+        if install_from_net "${xspec}";then
+            echo_debug "install { ${xspec} } success"
+            return 0
         fi
     fi
 
@@ -551,11 +562,11 @@ function install_from_spec
     if [[ "${spec_line}" =~ "${GBL_COL_SPF}" ]];then
         spec_line=$(string_replace "${spec_line}" "${GBL_COL_SPF}" " ")
     fi
-    echo_debug "spec line: ${spec_line}"
+    echo_debug "spec line: { ${spec_line} }"
 
     local actions=$(string_replace "${spec_line}" "^\s*${key_str}\s*;\s*" "" true)
     local total=$(echo "${actions}" | awk -F';' '{ print NF }')
-    echo_debug "actions[${total}]: ${actions}"
+    echo_debug "actions[${total}]: { ${actions} }"
 
     if [[ ${total} -le 1 ]];then
         echo_erro "invalid actions: { ${actions} } "
@@ -564,7 +575,7 @@ function install_from_spec
 
     local idx=1
     local action=$(echo "${actions}" | awk -F';' "{ print \$${idx} }")         
-    echo_debug "action condition: ${action}"
+    echo_debug "install condition: { ${action} }"
 
     if eval "${action}";then
         local cur_dir=$(pwd)

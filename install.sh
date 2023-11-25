@@ -14,17 +14,10 @@ fi
 
 declare -A FUNC_MAP
 FUNC_MAP["env"]="inst_env"
-FUNC_MAP["update"]="inst_update"
 FUNC_MAP["clean"]="clean_env"
 FUNC_MAP["vim"]="inst_vim"
-FUNC_MAP["ctags"]="inst_ctags"
-FUNC_MAP["cscope"]="inst_cscope"
-FUNC_MAP["tig"]="inst_tig"
-FUNC_MAP["ack"]="inst_ack"
-FUNC_MAP["astyle"]="inst_astyle"
-FUNC_MAP["system"]="inst_system"
 FUNC_MAP["spec"]="inst_spec"
-FUNC_MAP["all"]="inst_spec inst_system inst_ctags inst_cscope inst_vim inst_tig inst_astyle inst_ack clean_env inst_env"
+FUNC_MAP["all"]="clean_env inst_env inst_vim"
 FUNC_MAP["glibc2.28"]="inst_glibc"
 FUNC_MAP["gcc4.9.2"]="inst_gcc"
 FUNC_MAP["hostname"]="inst_hostname"
@@ -39,9 +32,6 @@ function inst_usage
     echo "install.sh -o clean      @clean vim environment"
     echo "install.sh -o env        @deploy vim's usage environment"
     echo "install.sh -o vim        @install vim package"
-    echo "install.sh -o tig        @install tig package"
-    echo "install.sh -o astyle     @install astyle package"
-    echo "install.sh -o ack        @install ack package"
     echo "install.sh -o gcc4.9.2   @install gcc package"
     echo "install.sh -o glibc2.28  @install glibc2.28 package"
     echo "install.sh -o system     @configure run system: linux & windows"
@@ -154,10 +144,18 @@ function inst_env
         ${SUDO} chmod +r /etc/shadow 
     fi
 
-    local -a mustDeps=("make" "automake" "autoconf" "gcc" "sudo" "ppid" "fstat" "chk_passwd" "unzip" "m4" "sshpass" "tclsh8.6" "expect" "nc" "deno")
-    for spec in ${mustDeps[*]}
+    local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute")
+    for spec in ${must_deps[*]}
     do
         if ! install_from_spec "${spec}";then
+            return 1
+        fi
+    done
+
+    must_deps=("ppid" "fstat" "chk_passwd" "tig")
+    for spec in ${must_deps[*]}
+    do
+        if ! install_from_spec "${spec}" true;then
             return 1
         fi
     done
@@ -280,75 +278,9 @@ function inst_env
         ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
     fi
 
-    if can_access "git";then
-        git config --global credential.helper store
-        #git config --global credential.helper cache
-        #git config --global credential.helper 'cache --timeout=3600'
-    fi
-}
-
-function inst_update
-{
-    local need_update=1
-    if can_access "${MY_HOME}/.vim/bundle/vundle"; then
-        git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
-        vim +BundleInstall +q +q
-        need_update=0
-    fi
-
-    if [ ${need_update} -eq 1 ]; then
-        vim +BundleUpdate +q +q
-    fi
-}
-
-function inst_spec
-{
-    local keys=($@)
-    local rid_arr=(glibc-2.28 glibc-common ctags cscope vim tig astyle ag)
-    local -A inst_map
-    
-    if [ ${#keys[*]} -eq 0 ];then
-        local line
-        while read line
-        do
-            if [ -n "${line}" ];then
-                #echo_file "${LOG_DEBUG}" "install: [${line}]"
-                if [[ $(string_start "${line}" 1) != '#' ]];then
-                    local key=$(string_split "${line}" ";" 1)
-                    if [[ "${key}" =~ "${GBL_COL_SPF}" ]];then
-                        key=$(string_replace "${key}" "${GBL_COL_SPF}" " ")
-                    fi
-
-                    local norm_str=$(regex_2str "${key}")
-                    local value=$(string_replace "${line}" "^\s*${norm_str}\s*;\s*" "" true)
-
-                    #echo_file "${LOG_DEBUG}" "key: [${key}] value: [${value}]"
-                    inst_map["${key}"]="${value}"
-                fi
-            fi
-        done < ${MY_VIM_DIR}/install.spec
-
-        for key in ${rid_arr[*]}
-        do
-            unset inst_map[${key}]
-        done
-
-        for spec in ${!inst_map[*]}
-        do
-            install_from_spec ${spec}
-        done
-    else
-        for spec in ${keys[*]}
-        do
-            install_from_spec ${spec}
-        done
-    fi
-}
-
-function inst_system
-{
-    cd ${MY_VIM_DIR}/deps
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
+        install_from_spec "deno" true
+
         ${SUDO} chmod +w /etc/ld.so.conf
 
         ${SUDO} "file_del /etc/ld.so.conf '/usr/lib64'"
@@ -361,26 +293,24 @@ function inst_system
 
         ${SUDO} ldconfig
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
-        # Install deno
         unzip deno-x86_64-pc-windows-msvc.zip
         mv -f deno.exe ${LOCAL_BIN_DIR}
         chmod +x ${LOCAL_BIN_DIR}/deno.exe
         
         cp -f apt-cyg ${LOCAL_BIN_DIR}
         chmod +x ${LOCAL_BIN_DIR}/apt-cyg
-    fi 
+    fi
+
+    if can_access "git";then
+        git config --global credential.helper store
+        #git config --global credential.helper cache
+        #git config --global credential.helper 'cache --timeout=3600'
+    fi
 }
 
-function inst_ctags
+function inst_spec
 {
-    #git clone https://github.com/universal-ctags/ctags.git ctags
-    install_from_spec "ctags"
-}
-
-function inst_cscope
-{
-    #git clone https://git.code.sf.net/p/cscope/cscope cscope
-    install_from_spec "cscope"
+    install_from_spec "$@"
 }
 
 function inst_vim
@@ -416,56 +346,35 @@ function inst_vim
     ${SUDO} rm -f /usr/local/bin/vim
     can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
     ${SUDO} ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
-}
-
-function inst_tig
-{
-    #git clone https://github.com/jonas/tig.git tig
-    install_from_spec "tig"
-}
-
-function inst_astyle
-{
-    if ! install_check "astyle" "astyle.*\.tar\.gz";then
-        return 0     
-    fi
-
-    cd ${MY_VIM_DIR}/deps
-    #svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
-    local dir=$(mytar astyle_*.tar.gz)
-    cd ${dir}/build/gcc
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
-    make -j ${MAKE_TD}
-    if [ $? -ne 0 ]; then
-        echo_erro "Make: astyle fail"
-        exit -1
-    fi
-
-    cp -f bin/astyle* ${LOCAL_BIN_DIR}
-    chmod 777 ${LOCAL_BIN_DIR}/astyle*
-
-    cd ${MY_VIM_DIR}/deps
-    rm -fr astyle*/
-}
-
-function inst_ack
-{
-    # install ack
-    cd ${MY_VIM_DIR}/deps
-
-    cp -f ack-* ${LOCAL_BIN_DIR}/ack-grep
-    chmod 777 ${LOCAL_BIN_DIR}/ack-grep
     
-    #git clone https://github.com/ggreer/the_silver_searcher.git the_silver_searcher
-    install_from_spec "ag"
+    if check_net;then
+        local need_update=true
+        if can_access "${MY_HOME}/.vim/bundle/vundle"; then
+            git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
+            vim +BundleInstall +q +q
+            need_update=false
+        fi
+
+        if math_bool "${need_update}"; then
+            vim +BundleUpdate +q +q
+        fi
+    fi
+
+    #git clone https://git.code.sf.net/p/cscope/cscope cscope
+    #git clone https://github.com/universal-ctags/ctags.git ctags
+    #svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
+    local vim_deps=("cscope" "ctags" "astyle" "ack-grep" "ag")
+    for spec in ${vim_deps[*]}
+    do
+        if ! install_from_spec "${spec}" true;then
+            return 1
+        fi
+    done
+
 }
 
 function inst_gcc
 {
-    install_from_spec "gcc"
-    return 0
-
     # install ack
     if ! install_check "gcc" "gcc-.*\.tar\.gz";then
         return 0     
@@ -477,9 +386,6 @@ function inst_gcc
 
 function inst_glibc
 {
-    # install ack
-    cd ${MY_VIM_DIR}/deps
-
     local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
     local version_new=2.28
 
