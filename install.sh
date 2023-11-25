@@ -19,7 +19,6 @@ FUNC_MAP["vim"]="inst_vim"
 FUNC_MAP["spec"]="inst_spec"
 FUNC_MAP["all"]="clean_env inst_env inst_vim"
 FUNC_MAP["glibc2.28"]="inst_glibc"
-FUNC_MAP["gcc4.9.2"]="inst_gcc"
 FUNC_MAP["hostname"]="inst_hostname"
 
 function inst_usage
@@ -32,7 +31,6 @@ function inst_usage
     echo "install.sh -o clean      @clean vim environment"
     echo "install.sh -o env        @deploy vim's usage environment"
     echo "install.sh -o vim        @install vim package"
-    echo "install.sh -o gcc4.9.2   @install gcc package"
     echo "install.sh -o glibc2.28  @install glibc2.28 package"
     echo "install.sh -o system     @configure run system: linux & windows"
     echo "install.sh -o spec       @install all rpm package being depended on"
@@ -82,15 +80,10 @@ COPY_PKG="${COPY_PKG:-0}"
 
 MAKE_TD=${parasMap['-j']:-8}
 
-FORCE_DO="${parasMap['-f']}"
-FORCE_DO="${FORCE_DO:-${parasMap['--force']}}"
-FORCE_DO="${FORCE_DO:-0}"
-
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
 echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
 echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
-echo_info "$(printf "[%13s]: %-6s" "Will force"  "${FORCE_DO}")"
 
 CMD_PRE="my"
 declare -A commandMap
@@ -373,17 +366,6 @@ function inst_vim
 
 }
 
-function inst_gcc
-{
-    # install ack
-    if ! install_check "gcc" "gcc-.*\.tar\.gz";then
-        return 0     
-    fi
-
-    install_from_spec "gcc"
-    source /etc/profile.d/gcc.sh
-}
-
 function inst_glibc
 {
     local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
@@ -392,7 +374,7 @@ function inst_glibc
     if __version_lt ${version_cur} ${version_new}; then
         # Install glibc
         install_from_spec "glibc-2.28"
-        #do_action "glibc-common"
+        #install_from_spec "glibc-common"
 
         ${SUDO} "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"
         ${SUDO} "echo 'LC_ALL=en_US.UTF-8'   >> /etc/environment"

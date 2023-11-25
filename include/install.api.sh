@@ -122,38 +122,37 @@ function mytar
 
 function install_check
 {
-    local local_cmd="$1"
-    local fname_reg="$2"
+    local inst_bin="$1"
+    local spec_reg="$2"
 
-    if math_bool "${FORCE_DO}"; then
-        return 0
+    if [ $# -ne 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: executable bin\n\$2: regex spec-key"
+        return 1
     fi
 
-    if can_access "${local_cmd}";then
+    if can_access "${inst_bin}";then
         local tmp_file=$(file_temp)
-        ${local_cmd} --version &> ${tmp_file} 
+        ${inst_bin} --version &> ${tmp_file} 
         if [ $? -ne 0 ];then
+            rm -f ${tmp_file}
             return 1
         fi
 
-        local version_cur=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
-        rm -f ${tmp_file}
-        local local_dir=$(pwd)
-        cd ${MY_VIM_DIR}/deps
+        local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
 
-        local file_list=$(find . -regextype posix-awk  -regex "\.?/?${fname_reg}")
-        for full_nm in ${file_list}    
+        local file_list=($(find ${MY_VIM_DIR}/deps -regextype posix-awk  -regex ".*/?${spec_reg}"))
+        for xfile in ${file_list[*]}    
         do
-            local file_name=$(path2fname ${full_nm})
-            local version_new=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
-            echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_cur} }")"
-            if __version_lt ${version_cur} ${version_new}; then
-                cd ${local_dir}
+            local file_name=$(path2fname "${xfile}")
+            local new_version=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
+            echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${new_version} }  installed: { ${cur_version} }")"
+            if __version_lt ${cur_version} ${new_version}; then
+                rm -f ${tmp_file}
                 return 0
             fi
         done
 
-        cd ${local_dir}
+        rm -f ${tmp_file}
         return 1
     else
         return 0

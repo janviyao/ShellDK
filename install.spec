@@ -1,8 +1,8 @@
 make;                ! can_access 'make';cd ${MY_VIM_DIR}/deps;install_from_rpm 'make-.+\.rpm' true
 autoconf;            ! can_access 'autoconf';cd ${MY_VIM_DIR}/deps;install_from_tar 'autoconf-.+\.tar\.gz' true;rm -fr autoconf-*/
 automake;            ! can_access 'automake';cd ${MY_VIM_DIR}/deps;install_from_tar 'automake-.+\.tar\.gz' true;rm -fr automake-*/
-gcc;                 ! can_access 'gcc';cd ${MY_VIM_DIR}/deps;install_from_rpm 'gcc-.+\.rpm' true
-#gcc;                ! can_access 'gcc';cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
+#gcc;                install_check 'gcc' 'gcc-.+\.rpm';cd ${MY_VIM_DIR}/deps;install_from_rpm 'gcc-.+\.rpm' true
+gcc;                 install_check 'gcc' 'gcc-.*\.tar\.gz';cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
 
 glibc-2.28;          ! math_bool 'true';cd ${MY_VIM_DIR}/deps;install_from_tar 'glibc-2.28.tar.xz' true;rm -fr glibc-2.28/
 glibc-common;        ! math_bool 'true';cd ${MY_VIM_DIR}/deps;install_from_rpm 'glibc-common-.+\.rpm' true
