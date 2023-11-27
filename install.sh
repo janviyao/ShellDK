@@ -102,7 +102,6 @@ commandMap["${CMD_PRE}threads"]="${MY_VIM_DIR}/tools/threads.sh"
 commandMap["${CMD_PRE}paraparser"]="${MY_VIM_DIR}/tools/paraparser.sh"
 commandMap["${CMD_PRE}replace"]="${MY_VIM_DIR}/tools/replace.sh"
 
-commandMap[".vimrc"]="${MY_VIM_DIR}/vimrc"
 commandMap[".minttyrc"]="${MY_VIM_DIR}/minttyrc"
 commandMap[".inputrc"]="${MY_VIM_DIR}/inputrc"
 commandMap[".astylerc"]="${MY_VIM_DIR}/astylerc"
@@ -165,20 +164,6 @@ function inst_env
             ${SUDO} ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
-  
-    # build vim-work environment
-    mkdir -p ${MY_HOME}/.vim
-
-    cp -fr ${MY_VIM_DIR}/colors ${MY_HOME}/.vim
-    cp -fr ${MY_VIM_DIR}/syntax ${MY_HOME}/.vim
-
-    if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
-        cd ${MY_VIM_DIR}/deps
-        if [ -f bundle.tar.gz ]; then
-            tar -xzf bundle.tar.gz
-            mv -f bundle ${MY_HOME}/.vim/
-        fi
-    fi
     
     can_access "${MY_HOME}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc
     can_access "${MY_HOME}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile
@@ -308,38 +293,61 @@ function inst_spec
 
 function inst_vim
 {
-    if ! install_check "vim" "vim-.*\.tar\.gz";then
-        return 0     
+    if install_check "vim" "vim-.*\.tar\.gz";then
+        cd ${MY_VIM_DIR}/deps
+        #git clone https://github.com/vim/vim.git vim
+        local make_dir=$(mytar vim-*.tar.gz)
+
+        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
+        conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
+        #conf_paras="${conf_paras} --enable-luainterp=yes"
+        if can_access "python3";then
+            install_from_spec "python3-devel"
+            conf_paras="${conf_paras} --enable-python3interp=yes "
+        elif can_access "python";then
+            install_from_spec "python-devel"
+            conf_paras="${conf_paras} --enable-pythoninterp=yes"
+        else
+            echo_erro "python environment not ready"
+            exit -1
+        fi
+
+        install_from_spec "ncurses-base"
+        install_from_spec "ncurses-libs"
+        install_from_spec "ncurses-devel"
+        install_from_make "${make_dir}" "${conf_paras}"
+
+        ${SUDO} rm -f /usr/local/bin/vim
+        can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
+        ${SUDO} ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
     fi
 
-    cd ${MY_VIM_DIR}/deps
-    #git clone https://github.com/vim/vim.git vim
-    local make_dir=$(mytar vim-*.tar.gz)
-
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
-    local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
-    conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
-    #conf_paras="${conf_paras} --enable-luainterp=yes"
-    if can_access "python3";then
-        install_from_spec "python3-devel"
-        conf_paras="${conf_paras} --enable-python3interp=yes "
-    elif can_access "python";then
-        install_from_spec "python-devel"
-        conf_paras="${conf_paras} --enable-pythoninterp=yes"
+    local linkf=".vimrc"
+    local link_file="${MY_VIM_DIR}/vimrc"
+    echo_debug "create slink: ${linkf}"
+    if [[ ${linkf:0:1} == "." ]];then
+        can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+        ln -s ${link_file} ${MY_HOME}/${linkf}
     else
-        echo_erro "python environment not ready"
-        exit -1
+        can_access "${LOCAL_BIN_DIR}/${linkf}" && ${SUDO} rm -f ${LOCAL_BIN_DIR}/${linkf}
+        ${SUDO} ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
     fi
-    
-    install_from_spec "ncurses-base"
-    install_from_spec "ncurses-libs"
-    install_from_spec "ncurses-devel"
-    install_from_make "${make_dir}" "${conf_paras}"
 
-    ${SUDO} rm -f /usr/local/bin/vim
-    can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
-    ${SUDO} ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
-    
+    # build vim-work environment
+    mkdir -p ${MY_HOME}/.vim
+
+    cp -fr ${MY_VIM_DIR}/colors ${MY_HOME}/.vim
+    cp -fr ${MY_VIM_DIR}/syntax ${MY_HOME}/.vim
+
+    if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
+        cd ${MY_VIM_DIR}/deps
+        if [ -f bundle.tar.gz ]; then
+            tar -xzf bundle.tar.gz
+            mv -f bundle ${MY_HOME}/.vim/
+        fi
+    fi
+
     if check_net;then
         local need_update=true
         if can_access "${MY_HOME}/.vim/bundle/vundle"; then
