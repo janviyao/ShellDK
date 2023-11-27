@@ -427,7 +427,7 @@ function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
     if string_contain "${BTASK_LIST}" "ncat";then
-        ncat_task_ctrl_async "EXIT${GBL_SPF1}$$"
+        ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
     fi 
 }
 

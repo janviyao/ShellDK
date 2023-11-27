@@ -550,8 +550,8 @@ function install_from_spec
     local key_str=$(regex_2str "${xspec}")
     local spec_lines=($(file_get ${MY_VIM_DIR}/install.spec "^\s*${key_str}\s*;" true))
     if [ ${#spec_lines[*]} -eq 0 ];then
-        echo_erro "regex [^\s*${key_str}\s*;] donot match from ${MY_VIM_DIR}/install.spec"
-        return 1
+        echo_info "$(printf "[%13s]: %-50s" "Return" "spec { ${key_str} } not found")"
+        return 0
     elif [ ${#spec_lines[*]} -gt 1 ];then
         echo_erro "regex [^\s*${key_str}\s*;] match more from ${MY_VIM_DIR}/install.spec: \n${spec_lines[*]}"
         return 1
