@@ -309,7 +309,7 @@ function install_from_rpm
         fi
         echo_debug "rpm: { ${full_name} } versions: ${versions[*]}"
 
-        local split_names=($(string_split "${full_name}" "${versions[0]}"))
+        local split_names=($(string_split "${fname}" "${versions[0]}"))
         if [ -z "${split_names[*]}" ];then
             echo_erro "$(printf "[%13s]: { %-13s } failure, version split fail" "Install" "${full_name}")"
             return 1
@@ -336,14 +336,25 @@ function install_from_rpm
             fi
         fi
 
-        if [ ${#system_rpms[*]} -eq 1 ];then
-            sudo_it rpm -e --nodeps ${system_rpms[0]} 
-            if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Uninstall" "${system_rpms[0]}")"
-                return 1
-            else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Uninstall" "${system_rpms[0]}")"
+        if [ ${#system_rpms[*]} -ge 1 ];then
+            if [ ${#system_rpms[*]} -gt 1 ];then
+                local select_x=$(select_one ${system_rpms[*]} "all")
+                if [[ "${select_x}" != "all" ]];then
+                    system_rpms=(${select_x})
+                fi
             fi
+
+            local sys_rpm
+            for sys_rpm in ${system_rpms[*]}
+            do
+                sudo_it rpm -e --nodeps ${sys_rpm} 
+                if [ $? -ne 0 ]; then
+                    echo_erro "$(printf "[%13s]: { %-13s } failure" "Uninstall" "${sys_rpm}")"
+                    return 1
+                else
+                    echo_info "$(printf "[%13s]: { %-13s } success" "Uninstall" "${sys_rpm}")"
+                fi
+            done
         fi
         
         echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${fname}")"
@@ -621,7 +632,7 @@ function install_rpms
             continue
         fi
 
-        install_from_rpm "$(regex_2str "${rpm_file}")" false ${force}
+        install_from_rpm "${rpm_file}" false ${force}
         if [ $? -ne 0 ]; then
             if math_bool "${is_dir}";then
                 cd ${cur_dir}
