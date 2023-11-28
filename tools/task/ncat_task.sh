@@ -85,7 +85,7 @@ if string_contain "${BTASK_LIST}" "ncat";then
     mkdir -p ${GBL_NCAT_WORK_DIR}
 
     GBL_NCAT_FD=${GBL_NCAT_FD:-9}
-    mkfifo ${GBL_NCAT_PIPE}
+    can_access "${GBL_NCAT_PIPE}" || mkfifo ${GBL_NCAT_PIPE}
     can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
     exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 

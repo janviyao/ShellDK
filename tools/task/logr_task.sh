@@ -4,7 +4,7 @@ GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
 
 if string_contain "${BTASK_LIST}" "logr";then
     GBL_LOGR_FD=${GBL_LOGR_FD:-8}
-    mkfifo ${GBL_LOGR_PIPE}
+    can_access "${GBL_LOGR_PIPE}" || mkfifo ${GBL_LOGR_PIPE}
     can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
     exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
 fi

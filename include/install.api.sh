@@ -551,13 +551,6 @@ function install_from_spec
     fi
 
     echo_debug "install spec: { ${xspec} }"
-    if ! math_bool "${force}";then
-        if install_from_net "${xspec}";then
-            echo_debug "install { ${xspec} } success"
-            return 0
-        fi
-    fi
-
     local key_str=$(regex_2str "${xspec}")
     local spec_lines=($(file_get ${MY_VIM_DIR}/install.spec "^\s*${key_str}\s*;" true))
     if [ ${#spec_lines[*]} -eq 0 ];then

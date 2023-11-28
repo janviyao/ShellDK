@@ -140,8 +140,10 @@ function inst_env
     local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute")
     for spec in ${must_deps[*]}
     do
-        if ! install_from_spec "${spec}";then
-            return 1
+        if ! install_from_net "${spec}";then
+            if ! install_from_spec "${spec}";then
+                return 1
+            fi
         fi
     done
 
@@ -260,7 +262,7 @@ function inst_env
     fi
 
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        install_from_spec "deno" true
+        install_from_spec "deno"
 
         ${SUDO} chmod +w /etc/ld.so.conf
 
@@ -306,19 +308,32 @@ function inst_vim
         conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
         #conf_paras="${conf_paras} --enable-luainterp=yes"
         if can_access "python3";then
-            install_from_spec "python3-devel"
+            if ! install_from_net "python3-devel";then
+                install_from_spec "python3-devel"
+            fi
             conf_paras="${conf_paras} --enable-python3interp=yes "
         elif can_access "python";then
-            install_from_spec "python-devel"
+            if ! install_from_net "python-devel";then
+                install_from_spec "python-devel"
+            fi
             conf_paras="${conf_paras} --enable-pythoninterp=yes"
         else
             echo_erro "python environment not ready"
             exit -1
         fi
 
-        install_from_spec "ncurses-base"
-        install_from_spec "ncurses-libs"
-        install_from_spec "ncurses-devel"
+        if ! install_from_net "ncurses-base";then
+            install_from_spec "ncurses-base"
+        fi
+
+        if ! install_from_net "ncurses-libs";then
+            install_from_spec "ncurses-libs"
+        fi
+
+        if ! install_from_net "ncurses-devel";then
+            install_from_spec "ncurses-devel"
+        fi
+
         install_from_make "${make_dir}" "${conf_paras}"
 
         ${SUDO} rm -f /usr/local/bin/vim
@@ -353,7 +368,7 @@ function inst_vim
 
     if check_net;then
         local need_update=true
-        if can_access "${MY_HOME}/.vim/bundle/vundle"; then
+        if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
             git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
             vim +BundleInstall +q +q
             need_update=false
@@ -384,8 +399,8 @@ function inst_glibc
 
     if __version_lt ${version_cur} ${version_new}; then
         # Install glibc
-        install_from_spec "make-4.3"
-        install_from_spec "glibc-2.28"
+        install_from_spec "make-4.3" true
+        install_from_spec "glibc-2.28" true
         #install_from_spec "glibc-common"
 
         ${SUDO} "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"

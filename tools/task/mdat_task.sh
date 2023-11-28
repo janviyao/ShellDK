@@ -4,7 +4,7 @@ GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdat.pipe"
 
 if string_contain "${BTASK_LIST}" "mdat";then
     GBL_MDAT_FD=${GBL_MDAT_FD:-7}
-    mkfifo ${GBL_MDAT_PIPE}
+    can_access "${GBL_MDAT_PIPE}" || mkfifo ${GBL_MDAT_PIPE}
     can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
     exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
 fi
