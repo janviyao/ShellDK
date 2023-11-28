@@ -576,7 +576,7 @@ function install_from_spec
     local action=$(echo "${actions}" | awk -F';' "{ print \$${idx} }")         
     echo_debug "install condition: { ${action} }"
 
-    if eval "${action}";then
+    if eval "${action}" || math_bool "${force}";then
         local cur_dir=$(pwd)
         for (( idx = 2; idx <= ${total}; idx++))
         do

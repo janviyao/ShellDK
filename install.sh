@@ -384,6 +384,7 @@ function inst_glibc
 
     if __version_lt ${version_cur} ${version_new}; then
         # Install glibc
+        install_from_spec "make-4.3"
         install_from_spec "glibc-2.28"
         #install_from_spec "glibc-common"
 

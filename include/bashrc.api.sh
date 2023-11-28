@@ -60,7 +60,7 @@ function __my_bashrc_deps
         if ! can_access "make";then
             install_from_net "make" &> /dev/null
             if [ $? -ne 0 ];then
-                install_from_spec "make" &> /dev/null
+                install_from_spec "make-3.82" &> /dev/null
                 if [ $? -ne 0 ];then
                     echo_erro "install { make } failed"
                     exit 1
