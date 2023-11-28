@@ -39,11 +39,11 @@ source $MY_VIM_DIR/include/bashrc.api.sh
 echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
 echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
-__MY_SOURCE "GBL_MDAT_PIPE" $MY_VIM_DIR/tools/task/mdat_task.sh
-__MY_SOURCE "GBL_LOGR_PIPE" $MY_VIM_DIR/tools/task/logr_task.sh
-__MY_SOURCE "GBL_NCAT_PIPE" $MY_VIM_DIR/tools/task/ncat_task.sh
-__MY_SOURCE "GBL_XFER_PIPE" $MY_VIM_DIR/tools/task/xfer_task.sh
-__MY_SOURCE "GBL_CTRL_PIPE" $MY_VIM_DIR/tools/task/ctrl_task.sh
+__MY_SOURCE "INCLUDED_MDAT" $MY_VIM_DIR/tools/task/mdat_task.sh
+__MY_SOURCE "INCLUDED_LOGR" $MY_VIM_DIR/tools/task/logr_task.sh
+__MY_SOURCE "INCLUDED_NCAT" $MY_VIM_DIR/tools/task/ncat_task.sh
+__MY_SOURCE "INCLUDED_XFER" $MY_VIM_DIR/tools/task/xfer_task.sh
+__MY_SOURCE "INCLUDED_CTRL" $MY_VIM_DIR/tools/task/ctrl_task.sh
 
 if string_contain "${BTASK_LIST}" "mdat";then
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)

@@ -1,4 +1,5 @@
 #!/bin/bash
+: ${INCLUDED_LOGR:=1}
 GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
 
 if string_contain "${BTASK_LIST}" "logr";then

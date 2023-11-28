@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_FILE:=1}
+: ${INCLUDED_FILE:=1}
 
 function file_owner_is
 {

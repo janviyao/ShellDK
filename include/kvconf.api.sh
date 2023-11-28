@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_KVCONF:=1}
+: ${INCLUDED_KVCONF:=1}
 
 KV_FS="="
 KVAL_FS=","

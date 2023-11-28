@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_GDB:=1}
+: ${INCLUDED_GDB:=1}
 
 function gdb_eval
 {

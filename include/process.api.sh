@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_PROCESS:=1}
+: ${INCLUDED_PROCESS:=1}
 
 function process_wait
 {

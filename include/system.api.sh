@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_SYSTEM:=1}
+: ${INCLUDED_SYSTEM:=1}
 
 function is_root
 {

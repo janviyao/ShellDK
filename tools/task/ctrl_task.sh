@@ -1,4 +1,5 @@
 #!/bin/bash
+: ${INCLUDED_CTRL:=1}
 GBL_CTRL_PIPE="${BASH_WORK_DIR}/ctrl.pipe"
 
 if string_contain "${BTASK_LIST}" "ctrl";then

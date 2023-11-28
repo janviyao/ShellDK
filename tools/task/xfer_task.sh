@@ -1,4 +1,5 @@
 #!/bin/bash
+: ${INCLUDED_XFER:=1}
 GBL_XFER_PIPE="${BASH_WORK_DIR}/xfer.pipe"
 
 if string_contain "${BTASK_LIST}" "xfer";then

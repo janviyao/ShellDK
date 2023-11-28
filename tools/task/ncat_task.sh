@@ -1,4 +1,5 @@
 #!/bin/bash
+: ${INCLUDED_NCAT:=1}
 GBL_NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
 GBL_NCAT_PIPE="${BASH_WORK_DIR}/ncat.pipe"
 GBL_NCAT_PORT="${GBL_NCAT_WORK_DIR}/port"

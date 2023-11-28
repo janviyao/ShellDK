@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_GIT:=1}
+: ${INCLUDED_GIT:=1}
 
 alias mygit='loop2success git'
 alias gclone='mygit clone --recurse-submodules'

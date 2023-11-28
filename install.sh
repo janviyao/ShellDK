@@ -123,6 +123,7 @@ function clean_env
     can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
     can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
 
+    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$\(.+\)" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
@@ -171,12 +172,14 @@ function inst_env
     can_access "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
     #can_access "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
+    file_del "${MY_HOME}/.bashrc" "unset\s+\$\(.+\)" true
     file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
     file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
     file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
     file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
+    echo "unset  \$(compgen -v | grep INCLUDED_)" >> ${MY_HOME}/.bashrc
     echo "export LOCAL_IP=\"${LOCAL_IP}\"" >> ${MY_HOME}/.bashrc
     echo "export MY_VIM_DIR=\"${MY_VIM_DIR}\"" >> ${MY_HOME}/.bashrc
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
@@ -225,7 +228,7 @@ function inst_env
     fi
 
     if ! can_access "${MY_HOME}/.timerc";then
-        echo "#!/bin/bash"                           >  ${MY_HOME}/.timerc
+        echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
         ${SUDO} chmod +x ${MY_HOME}/.timerc 
     fi
 

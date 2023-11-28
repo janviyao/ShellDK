@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_TRACE:=1}
+: ${INCLUDED_TRACE:=1}
 
 : ${PREV_BASH_OPTS:=}
 : ${XTRACE_DISABLED:=}

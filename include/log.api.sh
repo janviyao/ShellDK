@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_LOG:=1}
+: ${INCLUDED_LOG:=1}
 
 readonly LOG_ERRO=1
 readonly LOG_WARN=2

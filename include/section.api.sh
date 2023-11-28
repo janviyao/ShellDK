@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_SESSION:=1}
+: ${INCLUDED_SESSION:=1}
 
 HEADER_SPACE="  "
 SKV_FS=" "

@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_MATH:=1}
+: ${INCLUDED_MATH:=1}
 
 function is_integer
 {

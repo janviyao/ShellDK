@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_INSTALL:=1}
+: ${INCLUDED_INSTALL:=1}
 
 function __version_gt
 { 

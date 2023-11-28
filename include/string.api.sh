@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_STRING:=1}
+: ${INCLUDED_STRING:=1}
 
 function regex_2str
 {

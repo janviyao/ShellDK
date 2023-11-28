@@ -1,5 +1,5 @@
 #!/bin/bash
-: ${INCLUDE_K8S:=1}
+: ${INCLUDED_K8S:=1}
 
 function k8s_pod_get
 {
