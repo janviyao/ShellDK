@@ -298,7 +298,7 @@ function inst_spec
 
 function inst_vim
 {
-    if install_check "vim" "vim-.*\.tar\.gz";then
+    if install_check "vim" "vim-.*\.tar\.gz" true;then
         cd ${MY_VIM_DIR}/deps
         #git clone https://github.com/vim/vim.git vim
         local make_dir=$(mytar vim-*.tar.gz)

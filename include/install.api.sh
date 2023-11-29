@@ -122,29 +122,33 @@ function mytar
 
 function install_check
 {
-    local inst_bin="$1"
-    local spec_reg="$2"
+    local xbin="$1"
+    local xfile="$2"
+    local isreg="${3:-false}"
 
-    if [ $# -ne 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: executable bin\n\$2: regex spec-key"
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: executable bin\n\$2: file-name or regex-string\n\$3: whether regex(default: false)"
         return 1
     fi
 
-    if can_access "${inst_bin}";then
+    if can_access "${xbin}";then
         local tmp_file=$(file_temp)
-        ${inst_bin} --version &> ${tmp_file} 
+        ${xbin} --version &> ${tmp_file}
         if [ $? -ne 0 ];then
             rm -f ${tmp_file}
-            return 1
+            return 0
+        fi
+
+        local file_list=(${xfile})
+        if math_bool "${isreg}";then
+            file_list=($(find ${MY_VIM_DIR}/deps -regextype posix-awk -regex ".*/?${xfile}"))
         fi
 
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
-
-        local file_list=($(find ${MY_VIM_DIR}/deps -regextype posix-awk  -regex ".*/?${spec_reg}"))
         for xfile in ${file_list[*]}    
         do
             local file_name=$(path2fname "${xfile}")
-            local new_version=$(echo "${file_name}" | grep -P "\d+\.\d+(\.\d+)?" -o)
+            local new_version=$(string_regex "${file_name}" "\d+\.\d+(\.\d+)?")
             echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${new_version} }  installed: { ${cur_version} }")"
             if __version_lt ${cur_version} ${new_version}; then
                 rm -f ${tmp_file}
@@ -154,9 +158,9 @@ function install_check
 
         rm -f ${tmp_file}
         return 1
-    else
-        return 0
     fi
+
+    return 0
 }
 
 function install_provider
