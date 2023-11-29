@@ -47,7 +47,7 @@ function mytar
     local iscompress="true"
     if can_access "${fpath}";then
         iscompress="false"
-        if [ ${#flist[*]} -gt 1 ];then
+        if [ ${#flist[*]} -ge 1 ];then
             local realfile=$(real_path "${fpath}")
             local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
             if math_bool "${xselect}";then
@@ -338,7 +338,7 @@ function install_from_rpm
 
         if [ ${#system_rpms[*]} -ge 1 ];then
             if [ ${#system_rpms[*]} -gt 1 ];then
-                local select_x=$(select_one ${system_rpms[*]} "all")
+                local select_x=$(select_one "all" ${system_rpms[*]})
                 if [[ "${select_x}" != "all" ]];then
                     system_rpms=(${select_x})
                 fi
