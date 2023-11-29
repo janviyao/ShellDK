@@ -137,7 +137,7 @@ function inst_env
         ${SUDO} chmod +r /etc/shadow 
     fi
 
-    local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute")
+    local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
     for spec in ${must_deps[*]}
     do
         if ! install_from_net "${spec}";then
@@ -385,7 +385,7 @@ function inst_vim
     local vim_deps=("cscope" "ctags" "astyle" "ack-grep" "ag")
     for spec in ${vim_deps[*]}
     do
-        if ! install_from_spec "${spec}" true;then
+        if ! install_from_spec "${spec}";then
             return 1
         fi
     done
