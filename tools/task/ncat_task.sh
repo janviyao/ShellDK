@@ -160,7 +160,7 @@ function ncat_send_msg
             fi
         fi
 
-        echo_file "${LOG_DEBUG}" "change IP from { ${ncat_addr} } to { {127.0.0.1 } }"
+        echo_file "${LOG_DEBUG}" "change IP from { ${ncat_addr} } to { 127.0.0.1 }"
         ncat_addr="127.0.0.1"
     fi
 
@@ -181,6 +181,11 @@ function ncat_send_msg
     (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
     while test $? -ne 0
     do
+        if ! can_access "${GBL_NCAT_PIPE}.run";then
+            echo_debug "ncat task have exited"
+            return 1
+        fi
+
         sleep 0.1
         let try_count++
         if [ ${try_count} -ge 300 ];then
@@ -321,15 +326,20 @@ function ncat_wait_resp
     local ncat_port=$(ncat_port_get)
     echo_debug "wait ncat's response: ${ack_pipe}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
+    if [ $? -eq 0 ];then
+        run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
+        local retcode=$?
 
-    run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
-    local retcode=$?
-
-    if can_access "${ack_pipe}.result";then
-        export resp_ack=$(cat ${ack_pipe}.result)
+        if can_access "${ack_pipe}.result";then
+            export resp_ack=$(cat ${ack_pipe}.result)
+        else
+            export resp_ack=""
+        fi
     else
-        export resp_ack=""
+        export resp_ack="EXCEPTION"
+        local retcode=1
     fi
+
     echo_debug "read [${resp_ack}] from ${ack_pipe}"
 
     eval "exec ${ack_fhno}>&-"

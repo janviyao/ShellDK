@@ -245,7 +245,6 @@ function account_check
     local can_input=${2:-true}
     local input_val=""
 
-    echo_file "${LOG_DEBUG}" "[account_check] USR_NAME{ ${usr_name} } USR_PASSWORD{ ${USR_PASSWORD} }"
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
         if can_access "${GBL_BASE_DIR}/.${usr_name}";then
             export USR_NAME=${usr_name}
@@ -266,7 +265,6 @@ function account_check
             local input_val=$(input_prompt "" "input password" "")
             echo ""
 
-            echo_file "${LOG_DEBUG}" "[account_check] input USR_NAME{ ${USR_NAME} } USR_PASSWORD{ ${input_val} }"
             if [ -n "${input_val}" ];then
                 export USR_PASSWORD="${input_val}"
                 new_password=$(system_encrypt "${USR_PASSWORD}")
@@ -300,9 +298,9 @@ function sudo_it
         echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
             if ! account_check "${MY_NAME}" false;then
-                echo_file "${LOG_ERRO}" "Username or Password check fail"
-                bash -c "${cmd}"
-                return $?
+                echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+                #bash -c "${cmd}"
+                return 1
             fi
 
             if can_access "${GBL_BASE_DIR}/askpass.sh";then

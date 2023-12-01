@@ -53,9 +53,9 @@ function can_access
         xfile=$(string_replace "${xfile}" '^~' "${HOME}" true)
     fi
 
-    if [ -d ${xfile} ];then
+    if [ -f ${xfile} ];then
         return 0
-    elif [ -f ${xfile} ];then
+    elif [ -d ${xfile} ];then
         return 0
     elif [ -b ${xfile} ];then
         return 0

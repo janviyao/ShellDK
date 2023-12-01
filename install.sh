@@ -115,11 +115,9 @@ function clean_env
         fi
     done
 
-    can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
+    TIMER_RUNDIR=${GBL_BASE_DIR}/timer
+    can_access "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
     can_access "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
-    if can_access "/var/spool/cron/$(whoami)";then
-        ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
-    fi
 
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
@@ -127,6 +125,8 @@ function clean_env
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         rm -f ${LOCAL_BIN_DIR}/apt-cyg
     fi
+
+    ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
 
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$\(.+\)" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
