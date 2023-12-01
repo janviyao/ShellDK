@@ -34,9 +34,11 @@ readonly GBL_BASE_DIR="/tmp/gbl"
 readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
 readonly SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
 readonly LOCAL_BIN_DIR="${HOME}/.local/bin"
+readonly LOCAL_LIB_DIR="${HOME}/.local/lib"
 readonly BASH_LOG="${GBL_BASE_DIR}/bash.log"
 
 mkdir -p ${LOCAL_BIN_DIR}
+mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_BASE_DIR}
 
 OP_TRY_CNT=3

@@ -36,7 +36,6 @@ function inst_usage
     echo "install.sh -o spec       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
     echo "install.sh -o hostname   @set hostname"
-    echo "install.sh -j num        @install with thread-num"
 
     echo ""
     echo "=================== Opers ==================="
@@ -78,10 +77,7 @@ COPY_PKG="${parasMap['-c']}"
 COPY_PKG="${COPY_PKG:-${parasMap['--copy']}}"
 COPY_PKG="${COPY_PKG:-0}"
 
-MAKE_TD=${parasMap['-j']:-8}
-
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
-echo_info "$(printf "[%13s]: %-6s" "Make Thread" "${MAKE_TD}")"
 echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 
@@ -119,9 +115,18 @@ function clean_env
         fi
     done
 
-    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
-    can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
     can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
+    can_access "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
+    if can_access "/var/spool/cron/$(whoami)";then
+        ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
+    fi
+
+    if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
+        ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
+        ${SUDO} ldconfig
+    elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
+        rm -f ${LOCAL_BIN_DIR}/apt-cyg
+    fi
 
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$\(.+\)" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
@@ -129,12 +134,33 @@ function clean_env
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
     #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
+
+    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
+    can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
 }
 
 function inst_env
-{ 
+{
+    local mode="$@"
+
     if ! test -r /etc/shadow;then
         ${SUDO} chmod +r /etc/shadow 
+    fi
+
+    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
+    if ! can_access "${GBL_BASE_DIR}/.${USR_NAME}";then
+        echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
+    fi
+
+    can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
+    if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
+        new_password="$(system_encrypt "${USR_PASSWORD}")"
+        echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/askpass.sh
+        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/askpass.sh
+        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
+        echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
+        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
+        ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
     fi
 
     local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
@@ -215,71 +241,51 @@ function inst_env
     ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
 
     # timer
-    TIMER_RUNDIR=${GBL_BASE_DIR}/timer
-    if ! can_access "${TIMER_RUNDIR}";then
-        ${SUDO} mkdir -p ${TIMER_RUNDIR}
-        ${SUDO} chmod 777 ${TIMER_RUNDIR}
-    fi
+    if string_contain "${mode}" "timer"; then
+        TIMER_RUNDIR=${GBL_BASE_DIR}/timer
+        if ! can_access "${TIMER_RUNDIR}";then
+            ${SUDO} mkdir -p ${TIMER_RUNDIR}
+            ${SUDO} chmod 777 ${TIMER_RUNDIR}
+        fi
 
-    can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
-    if ! can_access "${TIMER_RUNDIR}/timerc";then
-        echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/timerc
-        echo "export MY_NAME=${MY_NAME}"       >> ${TIMER_RUNDIR}/timerc
-        echo "export MY_HOME=${MY_HOME}"       >> ${TIMER_RUNDIR}/timerc
-        echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/timerc
-    fi
+        can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
+        if ! can_access "${TIMER_RUNDIR}/timerc";then
+            echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/timerc
+            echo "export MY_NAME=${MY_NAME}"       >> ${TIMER_RUNDIR}/timerc
+            echo "export MY_HOME=${MY_HOME}"       >> ${TIMER_RUNDIR}/timerc
+            echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/timerc
+        fi
 
-    if ! can_access "${MY_HOME}/.timerc";then
-        echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
-        ${SUDO} chmod +x ${MY_HOME}/.timerc 
-    fi
+        if ! can_access "${MY_HOME}/.timerc";then
+            echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
+            ${SUDO} chmod +x ${MY_HOME}/.timerc 
+        fi
 
-    if can_access "/var/spool/cron/$(whoami)";then
-        ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
-        echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
-        ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
-    else
-        ${SUDO} "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+        if can_access "/var/spool/cron/$(whoami)";then
+            ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
+            echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
+            ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
+        else
+            ${SUDO} "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+        fi
+        ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
+        ${SUDO} systemctl restart crond
+        ${SUDO} systemctl status crond
     fi
-    ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
-    ${SUDO} systemctl restart crond
-    ${SUDO} systemctl status crond
-
-    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
-    if ! can_access "${GBL_BASE_DIR}/.${USR_NAME}";then
-        echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
-    fi
-
-    can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
-    if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
-        new_password="$(system_encrypt "${USR_PASSWORD}")"
-        echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/askpass.sh
-        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/askpass.sh
-        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
-        echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
-        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
-        ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
-    fi
-
+ 
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        install_from_spec "deno"
-
         ${SUDO} chmod +w /etc/ld.so.conf
 
         ${SUDO} "file_del /etc/ld.so.conf '/usr/lib64'"
         ${SUDO} "file_del /etc/ld.so.conf '/usr/local/lib'"
-        ${SUDO} "file_del /etc/ld.so.conf '${MY_HOME}/.local/lib'"
+        ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
         ${SUDO} "file_add /etc/ld.so.conf '/usr/lib64'"
         ${SUDO} "file_add /etc/ld.so.conf '/usr/local/lib'"
-        ${SUDO} "file_add /etc/ld.so.conf '${MY_HOME}/.local/lib'"
+        ${SUDO} "file_add /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
         ${SUDO} ldconfig
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
-        unzip deno-x86_64-pc-windows-msvc.zip
-        mv -f deno.exe ${LOCAL_BIN_DIR}
-        chmod +x ${LOCAL_BIN_DIR}/deno.exe
-        
         cp -f apt-cyg ${LOCAL_BIN_DIR}
         chmod +x ${LOCAL_BIN_DIR}/apt-cyg
     fi
@@ -390,6 +396,13 @@ function inst_vim
         fi
     done
 
+    if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
+        install_from_spec "deno"
+    elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
+        unzip deno-x86_64-pc-windows-msvc.zip
+        mv -f deno.exe ${LOCAL_BIN_DIR}
+        chmod +x ${LOCAL_BIN_DIR}/deno.exe
+    fi
 }
 
 function inst_glibc

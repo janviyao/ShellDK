@@ -469,7 +469,7 @@ function install_from_make
     echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
     local cflags_bk="${CFLAGS}"
     export CFLAGS="-fcommon"
-    make -j ${MAKE_TD} &>> build.log
+    make -j 32 &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${makedir} failed, check: $(real_path build.log)"
         cd ${currdir}
