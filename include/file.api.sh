@@ -19,6 +19,15 @@ function file_owner_is
     fi
 }
 
+function file_privilege
+{
+    local xfile="$1"
+
+    local privilege=$(find ${xfile} -maxdepth 0 -printf "%m" 2>> ${BASH_LOG})
+    echo "${privilege}"
+    return 0
+}
+
 function can_access
 {
     local xfile="$1"

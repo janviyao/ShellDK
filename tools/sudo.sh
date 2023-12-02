@@ -52,7 +52,7 @@ if test -d '$MY_VIM_DIR';then \
 fi\
 "
 
-if declare -F sudo_it &>/dev/null;then
+if declare -F sudo_it &>/dev/null && test -x ${GBL_BASE_DIR}/askpass.sh;then
     sudo_cmd="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?;"
     sudo_it "${sudo_cmd}"
     exit $?

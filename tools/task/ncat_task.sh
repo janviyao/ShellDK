@@ -11,7 +11,7 @@ function local_port_available
     local ns_file="${GBL_NCAT_WORK_DIR}/netstat.res"
 
     if ! can_access "${GBL_NCAT_WORK_DIR}";then
-        echo_file "${LOG_DEBUG}" "dir already deleted: ${GBL_NCAT_WORK_DIR}"
+        echo_file "${LOG_DEBUG}" "already deleted: ${GBL_NCAT_WORK_DIR}"
         return 1
     fi
 
@@ -81,17 +81,15 @@ function ncat_port_get
     fi
 }
 
-if string_contain "${BTASK_LIST}" "ncat";then
-    mkdir -p ${GBL_NCAT_WORK_DIR}
+mkdir -p ${GBL_NCAT_WORK_DIR}
 
-    GBL_NCAT_FD=${GBL_NCAT_FD:-9}
-    can_access "${GBL_NCAT_PIPE}" || mkfifo ${GBL_NCAT_PIPE}
-    can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
-    exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
+GBL_NCAT_FD=${GBL_NCAT_FD:-9}
+can_access "${GBL_NCAT_PIPE}" || mkfifo ${GBL_NCAT_PIPE}
+can_access "${GBL_NCAT_PIPE}" || echo_erro "mkfifo: ${GBL_NCAT_PIPE} fail"
+exec {GBL_NCAT_FD}<>${GBL_NCAT_PIPE}
 
-    NCAT_MASTER_ADDR=$(get_local_ip)
-    ncat_port_gen
-fi
+NCAT_MASTER_ADDR=$(get_local_ip)
+ncat_port_gen
 
 function remote_ncat_alive
 {
@@ -182,7 +180,7 @@ function ncat_send_msg
     while test $? -ne 0
     do
         if ! can_access "${GBL_NCAT_PIPE}.run";then
-            echo_debug "ncat task have exited"
+            echo_file "${LOG_ERRO}" "ncat task have exited"
             return 1
         fi
 
@@ -437,9 +435,7 @@ function remote_send_file
 function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
-    if string_contain "${BTASK_LIST}" "ncat";then
-        ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
-    fi 
+    ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
 }
 
 function _ncat_thread_main
@@ -556,18 +552,17 @@ function _ncat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_file "${LOG_DEBUG}" "ncat_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "ncat bg_thread [${ppinfos[*]}]"
     else
-        echo_file "${LOG_DEBUG}" "ncat_bg_thread [$(process_pid2name $$)[$$]]"
+        echo_file "${LOG_DEBUG}" "ncat bg_thread [$(process_pid2name $$)[$$]]"
     fi
-
-    ( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
+    #( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_NCAT_PIPE}.run
-    echo_file "${LOG_DEBUG}" "ncat_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ncat_thread_main
-    echo_file "${LOG_DEBUG}" "ncat_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] exit"
     rm -f ${GBL_NCAT_PIPE}.run
 
     eval "exec ${GBL_NCAT_FD}>&-"
@@ -575,6 +570,4 @@ function _ncat_thread
     exit 0
 }
 
-if string_contain "${BTASK_LIST}" "ncat";then
-    ( _ncat_thread & )
-fi
+( _ncat_thread & )

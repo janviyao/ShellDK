@@ -111,7 +111,7 @@ function clean_env
         if [[ ${linkf:0:1} == "." ]];then
             can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && ${SUDO} rm -f ${LOCAL_BIN_DIR}/${linkf}
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && sudo_it rm -f ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
 
@@ -121,7 +121,7 @@ function clean_env
 
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
-        ${SUDO} ldconfig
+        sudo_it ldconfig
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         rm -f ${LOCAL_BIN_DIR}/apt-cyg
     fi
@@ -144,7 +144,7 @@ function inst_env
     local mode="$@"
 
     if ! test -r /etc/shadow;then
-        ${SUDO} chmod +r /etc/shadow 
+        $SUDO chmod +r /etc/shadow 
     fi
 
     can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
@@ -160,7 +160,7 @@ function inst_env
         echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
         echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
         echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
-        ${SUDO} chmod +x ${GBL_BASE_DIR}/askpass.sh 
+        $SUDO chmod +x ${GBL_BASE_DIR}/askpass.sh 
     fi
 
     local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
@@ -189,8 +189,8 @@ function inst_env
             can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && ${SUDO} rm -f ${LOCAL_BIN_DIR}/${linkf}
-            ${SUDO} ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && sudo_it rm -f ${LOCAL_BIN_DIR}/${linkf}
+            sudo_it ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
     
@@ -207,7 +207,7 @@ function inst_env
     file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    echo "unset  \$(compgen -v | grep INCLUDED_)" >> ${MY_HOME}/.bashrc
+    echo "unset  \$(compgen -v | grep -E 'INCLUDED_|USR_NAME|USR_PASSWORD')" >> ${MY_HOME}/.bashrc
     echo "export LOCAL_IP=\"${LOCAL_IP}\"" >> ${MY_HOME}/.bashrc
     echo "export MY_VIM_DIR=\"${MY_VIM_DIR}\"" >> ${MY_HOME}/.bashrc
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
@@ -221,7 +221,7 @@ function inst_env
         mkdir -p ${MY_HOME}/.ssh
     fi
     cp -f ${MY_VIM_DIR}/ssh_key/* ${MY_HOME}/.ssh
-    ${SUDO} "chmod 600 ${MY_HOME}/.ssh/id_rsa" 
+    sudo_it chmod 600 ${MY_HOME}/.ssh/id_rsa
 
     can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
     if ! can_access "${MY_HOME}/.rsync.exclude";then
@@ -238,14 +238,14 @@ function inst_env
         echo "*.cmd"    >> ${MY_HOME}/.rsync.exclude
         echo "*.out"    >> ${MY_HOME}/.rsync.exclude
     fi
-    ${SUDO} chmod +r ${MY_HOME}/.rsync.exclude 
+    sudo_it chmod +r ${MY_HOME}/.rsync.exclude 
 
     # timer
     if string_contain "${mode}" "timer"; then
         TIMER_RUNDIR=${GBL_BASE_DIR}/timer
         if ! can_access "${TIMER_RUNDIR}";then
-            ${SUDO} mkdir -p ${TIMER_RUNDIR}
-            ${SUDO} chmod 777 ${TIMER_RUNDIR}
+            sudo_it mkdir -p ${TIMER_RUNDIR}
+            sudo_it chmod 777 ${TIMER_RUNDIR}
         fi
 
         can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
@@ -258,23 +258,23 @@ function inst_env
 
         if ! can_access "${MY_HOME}/.timerc";then
             echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
-            ${SUDO} chmod +x ${MY_HOME}/.timerc 
+            sudo_it chmod +x ${MY_HOME}/.timerc 
         fi
 
         if can_access "/var/spool/cron/$(whoami)";then
             ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
             echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
-            ${SUDO} chmod 0644 /var/spool/cron/$(whoami) 
+            sudo_it chmod 0644 /var/spool/cron/$(whoami) 
         else
-            ${SUDO} "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+            sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
         fi
-        ${SUDO} chmod +x ${MY_VIM_DIR}/timer.sh 
-        ${SUDO} systemctl restart crond
-        ${SUDO} systemctl status crond
+        sudo_it chmod +x ${MY_VIM_DIR}/timer.sh 
+        sudo_it systemctl restart crond
+        sudo_it systemctl status crond
     fi
  
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        ${SUDO} chmod +w /etc/ld.so.conf
+        sudo_it chmod +w /etc/ld.so.conf
 
         ${SUDO} "file_del /etc/ld.so.conf '/usr/lib64'"
         ${SUDO} "file_del /etc/ld.so.conf '/usr/local/lib'"
@@ -284,7 +284,7 @@ function inst_env
         ${SUDO} "file_add /etc/ld.so.conf '/usr/local/lib'"
         ${SUDO} "file_add /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
-        ${SUDO} ldconfig
+        sudo_it ldconfig
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
         cp -f apt-cyg ${LOCAL_BIN_DIR}
         chmod +x ${LOCAL_BIN_DIR}/apt-cyg
@@ -342,9 +342,9 @@ function inst_vim
 
         install_from_make "${make_dir}" "${conf_paras}"
 
-        ${SUDO} rm -f /usr/local/bin/vim
+        sudo_it rm -f /usr/local/bin/vim
         can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
-        ${SUDO} ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
+        sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
     fi
 
     local linkf=".vimrc"
@@ -354,8 +354,8 @@ function inst_vim
         can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         ln -s ${link_file} ${MY_HOME}/${linkf}
     else
-        can_access "${LOCAL_BIN_DIR}/${linkf}" && ${SUDO} rm -f ${LOCAL_BIN_DIR}/${linkf}
-        ${SUDO} ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
+        can_access "${LOCAL_BIN_DIR}/${linkf}" && sudo_it rm -f ${LOCAL_BIN_DIR}/${linkf}
+        sudo_it ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
     fi
 
     # build vim-work environment
@@ -416,12 +416,12 @@ function inst_glibc
         install_from_spec "glibc-2.28" true
         #install_from_spec "glibc-common"
 
-        ${SUDO} "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"
-        ${SUDO} "echo 'LC_ALL=en_US.UTF-8'   >> /etc/environment"
-        ${SUDO} "echo 'LANG=en_US.UTF-8'     >> /etc/environment"
-        ${SUDO} "echo 'LC_CTYPE=en_US.UTF-8' >> /etc/environment"
+        sudo_it "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"
+        sudo_it "echo 'LC_ALL=en_US.UTF-8'   >> /etc/environment"
+        sudo_it "echo 'LANG=en_US.UTF-8'     >> /etc/environment"
+        sudo_it "echo 'LC_CTYPE=en_US.UTF-8' >> /etc/environment"
 
-        ${SUDO} "localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null"
+        sudo_it "localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null"
     fi
 }
 
@@ -432,7 +432,7 @@ function inst_hostname
     local hostnm=($(grep -F "${local_ip}" /etc/hosts | awk '{ print $2 }'))
     if [ -n "${hostnm}" ];then
         if [[ "$(hostname)" != "${hostnm}" ]];then
-            ${SUDO} hostnamectl set-hostname ${hostnm}
+            sudo_it hostnamectl set-hostname ${hostnm}
         fi
     fi
 }
@@ -497,7 +497,7 @@ else
     done
 
     if math_bool "${COPY_PKG}"; then
-        ${SUDO} rm -f ${MY_HOME}/vim.tar
+        sudo_it rm -f ${MY_HOME}/vim.tar
     fi
 fi
 #if can_access "git";then

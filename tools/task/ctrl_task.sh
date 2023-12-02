@@ -2,12 +2,10 @@
 : ${INCLUDED_CTRL:=1}
 GBL_CTRL_PIPE="${BASH_WORK_DIR}/ctrl.pipe"
 
-if string_contain "${BTASK_LIST}" "ctrl";then
-    GBL_CTRL_FD=${GBL_CTRL_FD:-6}
-    can_access "${GBL_CTRL_PIPE}" || mkfifo ${GBL_CTRL_PIPE}
-    can_access "${GBL_CTRL_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_PIPE} fail"
-    exec {GBL_CTRL_FD}<>${GBL_CTRL_PIPE}
-fi
+GBL_CTRL_FD=${GBL_CTRL_FD:-6}
+can_access "${GBL_CTRL_PIPE}" || mkfifo ${GBL_CTRL_PIPE}
+can_access "${GBL_CTRL_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_PIPE} fail"
+exec {GBL_CTRL_FD}<>${GBL_CTRL_PIPE}
 
 function ctrl_task_ctrl
 {
@@ -59,6 +57,10 @@ function ctrl_task_ctrl_sync
 function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit"
+    if ! can_access "${GBL_CTRL_PIPE}.run";then
+        return 0
+    fi
+
     ctrl_task_ctrl_sync "EXIT"
  
     if [ -f ${HOME}/.bash_exit ];then
@@ -111,14 +113,14 @@ function _ctrl_thread
         local ppids=($(ppid))
         local self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_file "${LOG_DEBUG}" "ctrl_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "ctrl bg_thread [${ppinfos[*]}]"
     fi
 
     touch ${GBL_CTRL_PIPE}.run
-    echo_file "${LOG_DEBUG}" "ctrl_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ctrl_thread_main
-    echo_file "${LOG_DEBUG}" "ctrl_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] exit"
     rm -f ${GBL_CTRL_PIPE}.run
 
     eval "exec ${GBL_CTRL_FD}>&-"
@@ -126,6 +128,4 @@ function _ctrl_thread
     exit 0
 }
 
-if string_contain "${BTASK_LIST}" "ctrl";then
-    ( _ctrl_thread & )
-fi
+( _ctrl_thread & )

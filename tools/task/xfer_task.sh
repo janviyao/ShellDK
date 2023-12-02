@@ -2,12 +2,10 @@
 : ${INCLUDED_XFER:=1}
 GBL_XFER_PIPE="${BASH_WORK_DIR}/xfer.pipe"
 
-if string_contain "${BTASK_LIST}" "xfer";then
-    GBL_XFER_FD=${GBL_XFER_FD:-6}
-    can_access "${GBL_XFER_PIPE}" || mkfifo ${GBL_XFER_PIPE}
-    can_access "${GBL_XFER_PIPE}" || echo_erro "mkfifo: ${GBL_XFER_PIPE} fail"
-    exec {GBL_XFER_FD}<>${GBL_XFER_PIPE}
-fi
+GBL_XFER_FD=${GBL_XFER_FD:-6}
+can_access "${GBL_XFER_PIPE}" || mkfifo ${GBL_XFER_PIPE}
+can_access "${GBL_XFER_PIPE}" || echo_erro "mkfifo: ${GBL_XFER_PIPE} fail"
+exec {GBL_XFER_FD}<>${GBL_XFER_PIPE}
 
 function do_rsync
 {
@@ -33,7 +31,7 @@ function do_rsync
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
         if ! account_check ${MY_NAME};then
-            echo_erro "Username or Password check fail"
+            echo_erro "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
             return 1
         fi
 
@@ -342,7 +340,7 @@ function _xfer_thread_main
 {
     local account_success=true
     if ! account_check ${MY_NAME};then
-        echo_file "${LOG_ERRO}" "Username or Password check fail"
+        echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
         account_success=false
     fi
 
@@ -408,7 +406,7 @@ function _xfer_thread_main
                     if account_check ${MY_NAME};then
                         account_success=true
                     else
-                        echo_erro "Username or Password check fail"
+                        echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
                     fi
                 fi
                 sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
@@ -436,14 +434,14 @@ function _xfer_thread
         local ppids=($(ppid))
         local self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_file "${LOG_DEBUG}" "xfer_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "xfer bg_thread [${ppinfos[*]}]"
     fi
 
     touch ${GBL_XFER_PIPE}.run
-    echo_file "${LOG_DEBUG}" "xfer_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _xfer_thread_main
-    echo_file "${LOG_DEBUG}" "xfer_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] exit"
     rm -f ${GBL_XFER_PIPE}.run
 
     eval "exec ${GBL_XFER_FD}>&-"
@@ -451,6 +449,4 @@ function _xfer_thread
     exit 0
 }
 
-if string_contain "${BTASK_LIST}" "xfer";then
-    ( _xfer_thread & )
-fi
+( _xfer_thread & )

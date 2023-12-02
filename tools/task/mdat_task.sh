@@ -2,12 +2,10 @@
 : ${INCLUDED_MDAT:=1}
 GBL_MDAT_PIPE="${BASH_WORK_DIR}/mdat.pipe"
 
-if string_contain "${BTASK_LIST}" "mdat";then
-    GBL_MDAT_FD=${GBL_MDAT_FD:-7}
-    can_access "${GBL_MDAT_PIPE}" || mkfifo ${GBL_MDAT_PIPE}
-    can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
-    exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
-fi
+GBL_MDAT_FD=${GBL_MDAT_FD:-7}
+can_access "${GBL_MDAT_PIPE}" || mkfifo ${GBL_MDAT_PIPE}
+can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
+exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
 
 function mdata_task_alive
 {
@@ -492,18 +490,17 @@ function _mdat_thread
         local ppids=($(ppid))
         self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_file "${LOG_DEBUG}" "mdat_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "mdat bg_thread [${ppinfos[*]}]"
     else
-        echo_file "${LOG_DEBUG}" "mdat_bg_thread [$(process_pid2name $$)[$$]]"
+        echo_file "${LOG_DEBUG}" "mdat bg_thread [$(process_pid2name $$)[$$]]"
     fi
-
-    ( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
+    #( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_MDAT_PIPE}.run
-    echo_file "${LOG_DEBUG}" "mdat_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _mdat_thread_main
-    echo_file "${LOG_DEBUG}" "mdat_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run
 
     eval "exec ${GBL_MDAT_FD}>&-"
@@ -511,6 +508,13 @@ function _mdat_thread
     exit 0
 }
 
-if string_contain "${BTASK_LIST}" "mdat";then
-    ( _mdat_thread & )
-fi
+( _mdat_thread & )
+
+while true
+do
+    if can_access "${GBL_MDAT_PIPE}.run";then
+        break
+    else
+        sleep 0.1
+    fi
+done

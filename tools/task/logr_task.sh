@@ -2,12 +2,10 @@
 : ${INCLUDED_LOGR:=1}
 GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
 
-if string_contain "${BTASK_LIST}" "logr";then
-    GBL_LOGR_FD=${GBL_LOGR_FD:-8}
-    can_access "${GBL_LOGR_PIPE}" || mkfifo ${GBL_LOGR_PIPE}
-    can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
-    exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
-fi
+GBL_LOGR_FD=${GBL_LOGR_FD:-8}
+can_access "${GBL_LOGR_PIPE}" || mkfifo ${GBL_LOGR_PIPE}
+can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
+exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
 
 function logr_task_ctrl
 {
@@ -65,7 +63,7 @@ function _redirect_func
         local ppids=($(ppid))
         self_pid=${ppids[2]}
     fi
-    ${SUDO} "renice -n -1 -p ${self_pid} &> /dev/null"
+    #${SUDO} "renice -n -1 -p ${self_pid} &> /dev/null"
 
     local log_pipe="${log_file}.redirect.pipe.${self_pid}"
     local pipe_fd=0
@@ -192,14 +190,14 @@ function _logr_thread
         local ppids=($(ppid))
         local self_pid=${ppids[2]}
         local ppinfos=($(ppid true))
-        echo_file "${LOG_DEBUG}" "logr_bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "logr bg_thread [${ppinfos[*]}]"
     fi
 
     touch ${GBL_LOGR_PIPE}.run
-    echo_file "${LOG_DEBUG}" "logr_bg_thread[${self_pid}] start"
+    echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] start"
     mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _logr_thread_main
-    echo_file "${LOG_DEBUG}" "logr_bg_thread[${self_pid}] exit"
+    echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run
 
     eval "exec ${GBL_LOGR_FD}>&-"
@@ -207,6 +205,4 @@ function _logr_thread
     exit 0
 }
 
-if string_contain "${BTASK_LIST}" "logr";then
-    ( _logr_thread & )
-fi
+( _logr_thread & )
