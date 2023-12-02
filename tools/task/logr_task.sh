@@ -51,6 +51,10 @@ function logr_task_ctrl_sync
 function _bash_logr_exit
 { 
     echo_debug "logr signal exit" 
+    if ! can_access "${GBL_LOGR_PIPE}.run";then
+        return 0
+    fi
+
     logr_task_ctrl_sync "CTRL" "EXIT" 
 }
 

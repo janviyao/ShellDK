@@ -435,6 +435,10 @@ function remote_send_file
 function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
+    if ! can_access "${GBL_NCAT_PIPE}.run";then
+        return 0
+    fi
+
     ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
 }
 

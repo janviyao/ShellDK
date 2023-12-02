@@ -347,6 +347,10 @@ function mdata_kv_clear
 function _bash_mdat_exit
 { 
     echo_debug "mdat signal exit"
+    if ! can_access "${GBL_MDAT_PIPE}.run";then
+        return 0
+    fi
+
     mdata_task_ctrl_sync "EXIT" 
 }
 

@@ -329,6 +329,10 @@ function xfer_task_ctrl_sync
 function _bash_xfer_exit
 { 
     echo_debug "xfer signal exit"
+    if ! can_access "${GBL_XFER_PIPE}.run";then
+        return 0
+    fi
+
     xfer_task_ctrl_sync "EXIT"
  
     if [ -f ${HOME}/.bash_exit ];then
