@@ -1,7 +1,7 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 "                      Personal Customal VIM IDE
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:my_vim_dir = expand('$MY_VIM_DIR')
+let g:my_vim_dir = fnamemodify(resolve(expand('$MYVIMRC')), ":p:h") 
 
 let g:log_dump_dict = 1
 let g:log_dump_list = 0
