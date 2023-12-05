@@ -104,6 +104,14 @@ commandMap[".astylerc"]="${MY_VIM_DIR}/astylerc"
 
 function clean_env
 {
+    local spec
+    local must_deps=("ppid" "fstat" "chk_passwd" "tig")
+    for spec in ${must_deps[*]}
+    do
+        can_access "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
+    done
+
+    local linkf
     for linkf in ${!commandMap[*]};
     do
         local link_file=${commandMap["${linkf}"]}
@@ -111,7 +119,7 @@ function clean_env
         if [[ ${linkf:0:1} == "." ]];then
             can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && sudo_it rm -f ${LOCAL_BIN_DIR}/${linkf}
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
 
@@ -160,10 +168,11 @@ function inst_env
         echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
         echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
         echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
-        $SUDO chmod +x ${GBL_BASE_DIR}/askpass.sh 
+        chmod +x ${GBL_BASE_DIR}/askpass.sh 
     fi
 
     local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+    local spec
     for spec in ${must_deps[*]}
     do
         if ! install_from_net "${spec}";then
@@ -176,11 +185,12 @@ function inst_env
     must_deps=("ppid" "fstat" "chk_passwd" "tig")
     for spec in ${must_deps[*]}
     do
-        if ! install_from_spec "${spec}" true;then
+        if ! install_from_spec "${spec}";then
             return 1
         fi
     done
 
+    local linkf
     for linkf in ${!commandMap[*]};
     do
         local link_file=${commandMap["${linkf}"]}
@@ -189,8 +199,8 @@ function inst_env
             can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && sudo_it rm -f ${LOCAL_BIN_DIR}/${linkf}
-            sudo_it ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
     
@@ -221,7 +231,7 @@ function inst_env
         mkdir -p ${MY_HOME}/.ssh
     fi
     cp -f ${MY_VIM_DIR}/ssh_key/* ${MY_HOME}/.ssh
-    sudo_it chmod 600 ${MY_HOME}/.ssh/id_rsa
+    chmod 600 ${MY_HOME}/.ssh/id_rsa
 
     can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
     if ! can_access "${MY_HOME}/.rsync.exclude";then
@@ -238,14 +248,14 @@ function inst_env
         echo "*.cmd"    >> ${MY_HOME}/.rsync.exclude
         echo "*.out"    >> ${MY_HOME}/.rsync.exclude
     fi
-    sudo_it chmod +r ${MY_HOME}/.rsync.exclude 
+    chmod +r ${MY_HOME}/.rsync.exclude 
 
     # timer
     if string_contain "${mode}" "timer"; then
         TIMER_RUNDIR=${GBL_BASE_DIR}/timer
         if ! can_access "${TIMER_RUNDIR}";then
-            sudo_it mkdir -p ${TIMER_RUNDIR}
-            sudo_it chmod 777 ${TIMER_RUNDIR}
+            mkdir -p ${TIMER_RUNDIR}
+            chmod 777 ${TIMER_RUNDIR}
         fi
 
         can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
@@ -258,7 +268,7 @@ function inst_env
 
         if ! can_access "${MY_HOME}/.timerc";then
             echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
-            sudo_it chmod +x ${MY_HOME}/.timerc 
+            chmod +x ${MY_HOME}/.timerc 
         fi
 
         if can_access "/var/spool/cron/$(whoami)";then
@@ -268,7 +278,8 @@ function inst_env
         else
             sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
         fi
-        sudo_it chmod +x ${MY_VIM_DIR}/timer.sh 
+
+        chmod +x ${MY_VIM_DIR}/timer.sh 
         sudo_it systemctl restart crond
         sudo_it systemctl status crond
     fi
@@ -354,8 +365,8 @@ function inst_vim
         can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         ln -s ${link_file} ${MY_HOME}/${linkf}
     else
-        can_access "${LOCAL_BIN_DIR}/${linkf}" && sudo_it rm -f ${LOCAL_BIN_DIR}/${linkf}
-        sudo_it ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
+        can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+        ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
     fi
 
     # build vim-work environment
@@ -375,7 +386,7 @@ function inst_vim
     if check_net;then
         local need_update=true
         if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
-            git clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
+            mygit clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
             vim +BundleInstall +q +q
             need_update=false
         fi
@@ -497,7 +508,7 @@ else
     done
 
     if math_bool "${COPY_PKG}"; then
-        sudo_it rm -f ${MY_HOME}/vim.tar
+        rm -f ${MY_HOME}/vim.tar
     fi
 fi
 #if can_access "git";then

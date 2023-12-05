@@ -9,7 +9,6 @@ if can_access "ppid";then
     ppinfos=($(ppid true))
     echo_debug "threads [${ppinfos[*]}]"
 fi
-
 mdata_kv_append "${LAST_PID}" "${SELF_PID}"
 
 readonly all_num="$1"

@@ -149,7 +149,7 @@ function install_check
         do
             local file_name=$(path2fname "${xfile}")
             local new_version=$(string_regex "${file_name}" "\d+\.\d+(\.\d+)?")
-            echo_info "$(printf "[%13s]: %-13s" "Version" "installing: { ${new_version} }  installed: { ${cur_version} }")"
+            echo_info "$(printf "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
                 rm -f ${tmp_file}
                 return 0
@@ -240,32 +240,40 @@ function install_from_net
         fi
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Will install" "${xname}")"
+    echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xname}")"
     if check_net; then
         if can_access "yum";then
             sudo_it yum install ${xname} -y
-            if [ $? -eq 0 ];then
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xname}")"
                 return 0
             fi
         fi
 
         if can_access "apt";then
             sudo_it apt install ${xname} -y
-            if [ $? -eq 0 ];then
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xname}")"
                 return 0
             fi
         fi
 
         if can_access "apt-cyg";then
             sudo_it apt-cyg install ${xname} -y
-            if [ $? -eq 0 ];then
-                echo_info "$(printf "[%13s]: %-13s success" "Install" "${xname}")"
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xname}")"
                 return 0
             fi
         fi
-        #echo_erro "$(printf "[%13s]: %-13s fail" "Install" "${xname}")"
     fi
 
     return 1
@@ -361,7 +369,7 @@ function install_from_rpm
             done
         fi
         
-        echo_info "$(printf "[%13s]: { %-50s }" "Will install" "${fname}")"
+        echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${fname}")"
         if math_bool "${force}";then
             sudo_it rpm -ivh --nodeps --force ${full_name} 
         else
@@ -466,7 +474,7 @@ function install_from_make
         cd build/gcc
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make")"
+    echo_info "$(printf "[%13s]: %-50s" "Doing" "make -j 32")"
     local cflags_bk="${CFLAGS}"
     export CFLAGS="-fcommon"
     make -j 32 &>> build.log
@@ -522,7 +530,7 @@ function install_from_tar
         local file_dir=$(fname2path ${tar_file})
         local file_name=$(path2fname ${tar_file})
         echo_file "${LOG_DEBUG}" "tar: { ${tar_file} } path: { ${file_dir} } name: { ${file_name} }"
-        echo_info "$(printf "[%13s]: %-50s" "Will install" "${file_name}")"
+        echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${file_name}")"
         
         local cur_dir=$(pwd)
         cd ${file_dir}
@@ -554,7 +562,7 @@ function install_from_spec
         return 1
     fi
 
-    echo_debug "install spec: { ${xspec} }"
+    echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xspec}")"
     local key_str=$(regex_2str "${xspec}")
     local spec_lines=($(file_get ${MY_VIM_DIR}/install.spec "^\s*${key_str}\s*;" true))
     if [ ${#spec_lines[*]} -eq 0 ];then
@@ -584,6 +592,7 @@ function install_from_spec
     local action=$(echo "${actions}" | awk -F';' "{ print \$${idx} }")         
     echo_debug "install condition: { ${action} }"
 
+    local success=true
     if eval "${action}" || math_bool "${force}";then
         local cur_dir=$(pwd)
         for (( idx = 2; idx <= ${total}; idx++))
@@ -592,14 +601,20 @@ function install_from_spec
             echo_info "$(printf "[%13s]: %-50s" "Action" "${action}")"
             if ! eval "${action}";then
                 echo_erro "${action}"
-                return 1
+                success=false
+                break
             fi
         done
         cd ${cur_dir}
     fi
 
-    echo_debug "install { ${xspec} } success"
-    return 0
+    if math_bool "${success}"; then
+        echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xspec}")"
+        return 0
+    else
+        echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xspec}")"
+        return 1
+    fi
 }
 
 function install_rpms

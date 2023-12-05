@@ -33,8 +33,9 @@ readonly ROOT_PID=$$
 readonly GBL_BASE_DIR="/tmp/gbl"
 readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
 readonly SUDO_ASKPASS="${GBL_BASE_DIR}/askpass.sh"
-readonly LOCAL_BIN_DIR="${HOME}/.local/bin"
-readonly LOCAL_LIB_DIR="${HOME}/.local/lib"
+readonly LOCAL_DIR="${HOME}/.local"
+readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
+readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
 readonly BASH_LOG="${GBL_BASE_DIR}/bash.log"
 
 mkdir -p ${LOCAL_BIN_DIR}

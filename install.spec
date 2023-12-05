@@ -8,17 +8,17 @@ gcc;                 install_check 'gcc' 'gcc-.*\.tar\.gz' true;cd ${MY_VIM_DIR}
 glibc-2.28;          math_bool 'true';cd ${MY_VIM_DIR}/deps;install_from_tar 'glibc-2.28.tar.xz' false;rm -fr glibc-2.28/
 glibc-common;        math_bool 'true';cd ${MY_VIM_DIR}/deps;install_from_rpm 'glibc-common-.+\.rpm' true
 
-ppid;                ! can_access 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;mv -f ppid ${LOCAL_BIN_DIR}
-fstat;               ! can_access 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;mv -f fstat ${LOCAL_BIN_DIR}
-chk_passwd;          ! can_access 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;mv -f chk_passwd ${LOCAL_BIN_DIR}
-deno;                ! can_access 'deno';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR}
+ppid;                ! can_access 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;mv -f ppid ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/ppid
+fstat;               ! can_access 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;mv -f fstat ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/fstat
+chk_passwd;          ! can_access 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;mv -f chk_passwd ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/chk_passwd
+deno;                ! can_access 'deno';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno
 
 astyle;              install_check 'astyle' 'astyle-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_net 'gcc-c++';install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/
 ctags;               install_check 'ctags' 'universal-ctags-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'universal-ctags-.+\.tar\.gz' true;rm -fr universal-ctags-*/
 cscope;              install_check 'cscope' 'cscope-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'cscope-.+\.tar\.gz' true;rm -fr cscope-*/
 ag;                  install_check 'ag' 'the_silver_searcher-.+\.rpm' true;cd ${MY_VIM_DIR}/deps;install_from_rpm 'the_silver_searcher-.+\.rpm' true
 #ag;                 install_check 'ag' 'the_silver_searcher-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'the_silver_searcher-.+\.tar\.gz' true;rm -fr the_silver_searcher-*/
-ack-grep;            install_check 'ack-grep' 'ack-2.14-single-file' false;cd ${MY_VIM_DIR}/deps;cp -f ack-* ${LOCAL_BIN_DIR}/ack-grep;chmod 777 ${LOCAL_BIN_DIR}/ack-grep
+ack-grep;            ! can_access 'ack-grep';cd ${MY_VIM_DIR}/deps;cp -f ack-* ${LOCAL_BIN_DIR}/ack-grep;chmod +x ${LOCAL_BIN_DIR}/ack-grep
 tig;                 install_check 'tig' 'tig-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'tig-.+\.tar\.gz' true;rm -fr tig-*/
 
 sshpass;             install_check 'sshpass' 'sshpass-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'sshpass-.+\.tar\.gz' true;rm -fr sshpass-*/
