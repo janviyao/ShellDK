@@ -49,13 +49,14 @@ function mem_statistics
 
 function net_statistics
 {
-    local item1="sar -n DEV 1 5       : Network interfaces statistics"
-    local item2="sar -n EDEV 1 5      : Network interfaces errors statistics"
-    local item3="sar -n TCP 1 5       : TCP(v4) traffic statistics"
-    local item4="sar -n ETCP 1 5      : TCP(v4) traffic errors statistics"
-    local item5="sar -n UDP 1 5       : UDP(v4) traffic errors statistics"
-    local item6="dstat -n -N <ETH> 1 5: Show special network-device traffic stats"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}")
+    local item1="sar -n DEV 1 5        : Network interfaces statistics"
+    local item2="sar -n EDEV 1 5       : Network interfaces errors statistics"
+    local item3="sar -n TCP 1 5        : TCP(v4) traffic statistics"
+    local item4="sar -n ETCP 1 5       : TCP(v4) traffic errors statistics"
+    local item5="sar -n UDP 1 5        : UDP(v4) traffic errors statistics"
+    local item6="dstat -n -N <ETH> 1 5 : Show special network-device traffic stats"
+    local item7="dstat -n 1 5          : Show whole-system traffic stats"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
 
