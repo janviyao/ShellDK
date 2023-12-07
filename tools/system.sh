@@ -1,11 +1,12 @@
 #!/bin/bash
 function cpu_statistics
 {
-    local item1="sar -u 1 5           : CPU utilization statistics"
-    local item2="mpstat -P ALL 1 1    : List all cpus utilization statistics"
-    local item3="mpstat -P <CPU> 1 1  : Special cpu utilization statistics"
-    local item4="dstat -c -C <CPU> 1 5: Special cpu utilization statistics"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}")
+    local item1="sar -u 1 5           : CPU all utilization statistics"
+    local item2="sar -P ALL 1 5       : CPU all and single utilization statistics"
+    local item3="mpstat -P ALL 1 1    : List all cpus utilization statistics"
+    local item4="mpstat -P <CPU> 1 1  : Special cpu utilization statistics"
+    local item5="dstat -c -C <CPU> 1 5: Special cpu utilization statistics"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
 
