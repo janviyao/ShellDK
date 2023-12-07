@@ -7,7 +7,7 @@ can_access "${GBL_MDAT_PIPE}" || mkfifo ${GBL_MDAT_PIPE}
 can_access "${GBL_MDAT_PIPE}" || echo_erro "mkfifo: ${GBL_MDAT_PIPE} fail"
 exec {GBL_MDAT_FD}<>${GBL_MDAT_PIPE}
 
-function mdata_task_alive
+function mdat_task_alive
 {
     if can_access "${GBL_MDAT_PIPE}.run";then
         return 0
@@ -16,7 +16,7 @@ function mdata_task_alive
     fi
 }
 
-function mdata_task_ctrl
+function mdat_task_ctrl_async
 {
     local _body_="$1"
     local _pipe_="$2"
@@ -39,7 +39,7 @@ function mdata_task_ctrl
     return 0
 }
 
-function mdata_task_ctrl_sync
+function mdat_task_ctrl_sync
 {
     local _body_="$1"
     local _pipe_="$2"
@@ -63,7 +63,7 @@ function mdata_task_ctrl_sync
     return 0
 }
 
-function mdata_set_var
+function mdat_set_var
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -82,11 +82,11 @@ function mdata_set_var
         _xval_="$(eval "echo \"\$${_xkey_}\"")"
     fi
 
-    mdata_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
+    mdat_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
     return $?
 }
 
-function mdata_get_var
+function mdat_get_var
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -103,12 +103,12 @@ function mdata_get_var
         return 0
     fi
     
-    _xval_=$(mdata_kv_get "${_xkey_}" "${_pipe_}")
+    _xval_=$(mdat_kv_get "${_xkey_}" "${_pipe_}")
     eval "declare -g ${_xkey_}=\"${_xval_}\""
     return 0
 }
 
-function mdata_kv_has_key
+function mdat_kv_has_key
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -139,7 +139,7 @@ function mdata_kv_has_key
     fi
 }
 
-function mdata_kv_has_val
+function mdat_kv_has_val
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -172,7 +172,7 @@ function mdata_kv_has_val
 }
 
 
-function mdata_kv_bool
+function mdat_kv_bool
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -185,7 +185,7 @@ function mdata_kv_bool
 
     echo_file "${LOG_DEBUG}" "mdat bool: [$@]"
      
-    _xval_=$(mdata_kv_get "${_xkey_}" "${_pipe_}")
+    _xval_=$(mdat_kv_get "${_xkey_}" "${_pipe_}")
     if math_bool "${_xval_}";then
         return 0
     else
@@ -193,7 +193,7 @@ function mdata_kv_bool
     fi
 }
 
-function mdata_kv_unset_key
+function mdat_kv_unset_key
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -213,11 +213,11 @@ function mdata_kv_unset_key
     fi
 
     echo_file "${LOG_DEBUG}" "mdat unset-key: [${_xkey_}]"
-    mdata_task_ctrl "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    mdat_task_ctrl_async "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
     return $?
 }
 
-function mdata_kv_unset_val
+function mdat_kv_unset_val
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -238,11 +238,11 @@ function mdata_kv_unset_val
     fi
 
     echo_file "${LOG_DEBUG}" "mdat unset-val: [${_xkey_} = \"${_xval_}\"]"
-    mdata_task_ctrl "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdat_task_ctrl_async "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return $?
 }
 
-function mdata_kv_append
+function mdat_kv_append
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -263,11 +263,11 @@ function mdata_kv_append
     fi
     
     echo_file "${LOG_DEBUG}" "mdat append: [${_xkey_} = \"${_xval_}\"]"
-    mdata_task_ctrl "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdat_task_ctrl_async "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
 
-function mdata_kv_set
+function mdat_kv_set
 {
     local _xkey_="$1"
     local _xval_="$2"
@@ -288,11 +288,11 @@ function mdata_kv_set
     fi
     
     echo_file "${LOG_DEBUG}" "mdat set: [${_xkey_} = \"${_xval_}\"]"
-    mdata_task_ctrl "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdat_task_ctrl_async "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
 
-function mdata_kv_get
+function mdat_kv_get
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -322,25 +322,25 @@ function mdata_kv_get
     return 0
 }
 
-function mdata_kv_print
+function mdat_kv_print
 {
     local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
-        mdata_task_ctrl "KEY_PRT${GBL_SPF1}ALL"
+        mdat_task_ctrl_async "KEY_PRT${GBL_SPF1}ALL"
     else
-        mdata_task_ctrl "KEY_PRT${GBL_SPF1}${_xkey_}"
+        mdat_task_ctrl_async "KEY_PRT${GBL_SPF1}${_xkey_}"
     fi
 }
 
-function mdata_kv_clear
+function mdat_kv_clear
 {
     local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
-        mdata_task_ctrl "KEY_CLR${GBL_SPF1}ALL"
+        mdat_task_ctrl_async "KEY_CLR${GBL_SPF1}ALL"
     else
-        mdata_task_ctrl "KEY_CLR${GBL_SPF1}${_xkey_}"
+        mdat_task_ctrl_async "KEY_CLR${GBL_SPF1}${_xkey_}"
     fi
 }
 
@@ -351,7 +351,7 @@ function _bash_mdat_exit
         return 0
     fi
 
-    mdata_task_ctrl_sync "EXIT" 
+    mdat_task_ctrl_sync "EXIT" 
 }
 
 function _mdat_thread_main
@@ -498,11 +498,11 @@ function _mdat_thread
     else
         echo_file "${LOG_DEBUG}" "mdat bg_thread [$(process_pid2name $$)[$$]]"
     fi
-    #( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
+    ( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
 
     touch ${GBL_MDAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _mdat_thread_main
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] exit"
     rm -f ${GBL_MDAT_PIPE}.run

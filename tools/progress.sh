@@ -15,16 +15,16 @@ if can_access "ppid";then
     echo_debug "progress [${ppinfos[*]}]"
 fi
 
-mdata_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
-mdata_kv_append "${LAST_PID}" "${SELF_PID}"
+mdat_kv_set "${SELF_PID}" "touch ${PRG_FIN}"
+mdat_kv_append "${LAST_PID}" "${SELF_PID}"
 
 function progress_exit
 {
     echo_debug "gitloop exit signal"
     trap "" EXIT
 
-    mdata_kv_unset_key "${SELF_PID}"
-    mdata_kv_unset_val "${LAST_PID}" "${SELF_PID}"
+    mdat_kv_unset_key "${SELF_PID}"
+    mdat_kv_unset_val "${LAST_PID}" "${SELF_PID}"
 
     exit 0
 }
@@ -103,9 +103,9 @@ function progress3
     local now=$current
     local last=$((total+1))
     
-    logr_task_ctrl "CURSOR_MOVE" "${rows}${GBL_SPF2}${cols}"
-    logr_task_ctrl "ERASE_LINE"
-    #logr_task_ctrl "CURSOR_HIDE"
+    logr_task_ctrl_async "CURSOR_MOVE" "${rows}${GBL_SPF2}${cols}"
+    logr_task_ctrl_async "ERASE_LINE"
+    #logr_task_ctrl_async "CURSOR_HIDE"
 
     local postfix=('|' '/' '-' '\')
     while [ $now -le $last ] && [ ! -f ${PRG_FIN} ] 
@@ -121,17 +121,17 @@ function progress3
         let index=now%4
         local value=$(printf "%.0f" `echo "scale=1;($now-$current)*$step"|bc`)
 
-        logr_task_ctrl "CURSOR_SAVE"
-        logr_task_ctrl "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
-        logr_task_ctrl "CURSOR_RESTORE"
+        logr_task_ctrl_async "CURSOR_SAVE"
+        logr_task_ctrl_async "PRINT" "$(printf "[%-50s %-2d%% %c]" "$str" "$value" "${postfix[$index]}")"
+        logr_task_ctrl_async "CURSOR_RESTORE"
 
         let now++
         sleep 0.1 
     done
 
-    logr_task_ctrl "CURSOR_MOVE" "${rows}${GBL_SPF2}${cols}"
-    logr_task_ctrl "ERASE_LINE"
-    #logr_task_ctrl "CURSOR_SHOW"
+    logr_task_ctrl_async "CURSOR_MOVE" "${rows}${GBL_SPF2}${cols}"
+    logr_task_ctrl_async "ERASE_LINE"
+    #logr_task_ctrl_async "CURSOR_SHOW"
 }
 
 readonly PRG_CURR="$1"

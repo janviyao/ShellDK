@@ -281,7 +281,7 @@ function rsync_p2p_from
     return $?
 }
 
-function xfer_task_ctrl
+function xfer_task_ctrl_async
 {
     local xfer_body="$1"
     local one_pipe="$2"
@@ -443,7 +443,7 @@ function _xfer_thread
 
     touch ${GBL_XFER_PIPE}.run
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _xfer_thread_main
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] exit"
     rm -f ${GBL_XFER_PIPE}.run

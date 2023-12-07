@@ -59,7 +59,7 @@ if declare -F sudo_it &>/dev/null && test -x ${GBL_BASE_DIR}/askpass.sh;then
 fi
 
 #RET_VAR="sudo_ret$$"
-#GET_RET="${RET_VAR}=\$?; mdata_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
+#GET_RET="${RET_VAR}=\$?; mdat_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
 GET_RET="export BASH_EXIT=\$?; exit \\\$BASH_EXIT"
 CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET};"
 
@@ -97,8 +97,8 @@ expect << EOF
 EOF
 
 exit $?
-#mdata_get_var ${RET_VAR}
-#mdata_kv_unset_key ${RET_VAR}
+#mdat_get_var ${RET_VAR}
+#mdat_kv_unset_key ${RET_VAR}
 #
 #eval "exit_code=\$${RET_VAR}"
 #if is_integer "${exit_code}";then

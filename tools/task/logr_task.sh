@@ -7,7 +7,7 @@ can_access "${GBL_LOGR_PIPE}" || mkfifo ${GBL_LOGR_PIPE}
 can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
 exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
 
-function logr_task_ctrl
+function logr_task_ctrl_async
 {
     local req_ctrl="$1"
     local req_body="$2"
@@ -67,7 +67,7 @@ function _redirect_func
         local ppids=($(ppid))
         self_pid=${ppids[2]}
     fi
-    #${SUDO} "renice -n -1 -p ${self_pid} &> /dev/null"
+    #sudo_it "renice -n -1 -p ${self_pid} &> /dev/null"
 
     local log_pipe="${log_file}.redirect.pipe.${self_pid}"
     local pipe_fd=0
@@ -85,12 +85,12 @@ function _redirect_func
     mkfifo ${log_pipe}
     exec {pipe_fd}<>${log_pipe}
 
-    mdata_kv_set "${log_file}" "${log_pipe}"
+    mdat_kv_set "${log_file}" "${log_pipe}"
     while read line
     do
         if [[ "${line}" == "EXIT" ]];then
             eval "exec ${pipe_fd}>&-"
-            mdata_kv_unset_key "${log_file}"
+            mdat_kv_unset_key "${log_file}"
             rm -f ${log_pipe}
             return
         fi
@@ -103,7 +103,7 @@ function _logr_thread_main
 {
     while read line
     do
-        echo_file "${LOG_DEBUG}" "logr recv: [${line}]" 
+        #echo_file "${LOG_DEBUG}" "logr recv: [${line}]" 
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
@@ -180,8 +180,7 @@ function _logr_thread_main
             echo_debug "ack to [${ack_pipe}]"
             run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
-        
-        echo_file "${LOG_DEBUG}" "logr wait: [${GBL_LOGR_PIPE}]"
+        #echo_file "${LOG_DEBUG}" "logr wait: [${GBL_LOGR_PIPE}]"
     done < ${GBL_LOGR_PIPE}
 }
 
@@ -199,7 +198,7 @@ function _logr_thread
 
     touch ${GBL_LOGR_PIPE}.run
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _logr_thread_main
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] exit"
     rm -f ${GBL_LOGR_PIPE}.run

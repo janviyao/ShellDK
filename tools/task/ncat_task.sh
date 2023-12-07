@@ -445,7 +445,7 @@ function _bash_ncat_exit
 function _ncat_thread_main
 {
     local master_work=true
-    mdata_set_var "master_work"
+    mdat_set_var "master_work"
  
     while math_bool "${master_work}" 
     do
@@ -454,7 +454,7 @@ function _ncat_thread_main
         echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
         local ncat_body=$(ncat_recv_msg "${ncat_port}")
         if [ -z "${ncat_body}" ];then
-            mdata_get_var "master_work"
+            mdat_get_var "master_work"
             if ! local_port_available "${ncat_port}";then
                 if ps -ef | grep "nc -l" | grep -v grep | awk '{ print $11 }' | grep 52642 &> /dev/null;then
                     ncat_port_gen
@@ -471,7 +471,7 @@ function _ncat_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
                 echo_erro "ack pipe invalid: ${ack_pipe}"
-                mdata_get_var "master_work"
+                mdat_get_var "master_work"
                 continue
             fi
         fi
@@ -486,7 +486,7 @@ function _ncat_thread_main
                 echo_debug "ack to [${ack_pipe}]"
                 run_timeout 2 echo "ACK" \> ${ack_pipe}
             fi
-            #mdata_set_var "master_work=false"
+            #mdat_set_var "master_work=false"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
@@ -505,7 +505,7 @@ function _ncat_thread_main
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
             local var_name=$(string_split "${req_body}" "=" 1)
             local var_valu=$(string_split "${req_body}" "=" 2)
-            mdata_set_var "${var_name}=${var_valu}"
+            mdat_set_var "${var_name}=${var_valu}"
         elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
             local rport=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
             local fname=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
@@ -515,11 +515,11 @@ function _ncat_thread_main
             local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                mdata_kv_set "${event_uid}.pipe" "${ack_pipe}"
+                mdat_kv_set "${event_uid}.pipe" "${ack_pipe}"
                 ack_ctrl="donot need ack"
             fi
             {
-                if ! mdata_kv_has_key "${event_uid}.pipe";then
+                if ! mdat_kv_has_key "${event_uid}.pipe";then
                     return 0
                 fi
                 sleep 1
@@ -532,8 +532,8 @@ function _ncat_thread_main
             local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
             local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
 
-            local ack_pipe=$(mdata_kv_get "${event_uid}.pipe")
-            mdata_kv_unset_key "${event_uid}.pipe"
+            local ack_pipe=$(mdat_kv_get "${event_uid}.pipe")
+            mdat_kv_unset_key "${event_uid}.pipe"
             echo_debug "notify to [${ack_pipe}]"
             run_timeout 2 echo "${event_msg}" \> ${ack_pipe}
         fi
@@ -543,7 +543,7 @@ function _ncat_thread_main
             run_timeout 2 echo "ACK" \> ${ack_pipe}
         fi
 
-        mdata_get_var "master_work"
+        mdat_get_var "master_work"
     done
 }
 
@@ -564,7 +564,7 @@ function _ncat_thread
 
     touch ${GBL_NCAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] start"
-    mdata_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ncat_thread_main
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] exit"
     rm -f ${GBL_NCAT_PIPE}.run

@@ -102,7 +102,7 @@ expect << EOF
 EOF
 
 count=0
-while ! mdata_kv_has_key "${RET_VAR}"
+while ! mdat_kv_has_key "${RET_VAR}"
 do
     sleep 0.1
     let count++
@@ -112,7 +112,7 @@ do
 done
 
 if [ ${count} -le 50 ];then
-    mdata_get_var ${RET_VAR}
+    mdat_get_var ${RET_VAR}
 fi
 
 eval "exit \$${RET_VAR}"

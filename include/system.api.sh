@@ -658,8 +658,8 @@ function cursor_pos
     local x_pos=$(string_split "${pos}" ';' 1)
     local y_pos=$(string_split "${pos}" ';' 2)
 
-    mdata_set_var x_pos
-    mdata_set_var y_pos
+    mdat_set_var x_pos
+    mdat_set_var y_pos
 }
 
 function get_iscsi_device

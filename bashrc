@@ -52,7 +52,7 @@ if string_contain "${BTASK_LIST}" "mdat";then
     [ -n "${old_spec}" ] && trap "_bash_mdat_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_mdat_exit" EXIT
 
-    mdata_kv_append "BASH_TASK" "${ROOT_PID}"
+    mdat_kv_append "BASH_TASK" "${ROOT_PID}"
 fi
 
 if string_contain "${BTASK_LIST}" "ncat";then

@@ -28,8 +28,8 @@ function gitloop_exit
     echo_debug "gitloop exit signal"
     trap "" EXIT
 
-    mdata_kv_unset_key "gitloop-quit"
-    mdata_kv_unset_key "${SELF_PID}"
+    mdat_kv_unset_key "gitloop-quit"
+    mdat_kv_unset_key "${SELF_PID}"
     rm -f ${tmp_file}
 
     exit 0
@@ -41,15 +41,15 @@ function gitloop_signal
     echo_debug "gitloop exception signal"
     trap "" SIGINT SIGTERM SIGKILL
 
-    mdata_kv_set "gitloop-quit" "true"
+    mdat_kv_set "gitloop-quit" "true"
 
-    local pid_array=($(mdata_kv_get "${SELF_PID}"))
+    local pid_array=($(mdat_kv_get "${SELF_PID}"))
     echo_debug "gitloop-childs: ${pid_array[*]}"
     for pid in ${pid_array[*]} 
     do
         echo_debug "kill gitloop-child: ${pid}"
         process_signal KILL ${pid} &> /dev/null
-        mdata_kv_unset_key "${pid}"
+        mdat_kv_unset_key "${pid}"
     done
 
     gitloop_exit
@@ -65,13 +65,13 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
 fi
 
 cursor_pos
-mdata_get_var x_pos
+mdat_get_var x_pos
 let x_pos--
 y_pos=0
 
 for gitdir in $(ls -d */)
 do
-    if mdata_kv_bool "gitloop-quit";then
+    if mdat_kv_bool "gitloop-quit";then
         break
     fi
 
@@ -81,32 +81,40 @@ do
         prefix=$(printf "%-30s @ " "${gitdir}")
         y_pos=${#prefix}
 
-        logr_task_ctrl "PRINT" "${prefix}"
+        logr_task_ctrl_async "PRINT" "${prefix}"
 
         prg_time=$((OP_TIMEOUT * 10 * OP_TRY_CNT + 2 * 10))
         $MY_VIM_DIR/tools/progress.sh 1 ${prg_time} ${x_pos} ${y_pos} &
         prg_pid=$!
         sleep 2
-        prg_cmd=$(mdata_kv_get "${prg_pid}")
+        prg_cmd=$(mdat_kv_get "${prg_pid}")
 
-        $MY_VIM_DIR/tools/threads.sh ${OP_TRY_CNT} 1 "timeout ${OP_TIMEOUT}s ${CMD_STR} &> ${tmp_file}"
-        if [ $? -ne 0 ];then
+        thread_pid=$(ctrl_create_thread timeout ${OP_TIMEOUT}s ${CMD_STR} \&\> ${tmp_file}) 
+        while ! mdat_kv_has_key "thread-${thread_pid}-return"
+        do
+            sleep 1
+        done
+
+        thread_ret=$(mdat_kv_get "thread-${thread_pid}-return")
+        mdat_kv_unset_key "thread-${thread_pid}-return"
+
+        if [ ${thread_ret} -ne 0 ];then
             echo_debug "threads exception"
             
             eval "${prg_cmd}"
             wait ${prg_pid}
 
-            logr_task_ctrl "CURSOR_MOVE" "${x_pos}${GBL_SPF2}${y_pos}"
-            logr_task_ctrl "ERASE_LINE" 
-            logr_task_ctrl "NEWLINE"
+            logr_task_ctrl_async "CURSOR_MOVE" "${x_pos}${GBL_SPF2}${y_pos}"
+            logr_task_ctrl_async "ERASE_LINE" 
+            logr_task_ctrl_async "NEWLINE"
             break
         fi
 
         eval "${prg_cmd}"
         wait ${prg_pid}
 
-        logr_task_ctrl "CURSOR_MOVE" "${x_pos}${GBL_SPF2}${y_pos}"
-        logr_task_ctrl "ERASE_LINE" 
+        logr_task_ctrl_async "CURSOR_MOVE" "${x_pos}${GBL_SPF2}${y_pos}"
+        logr_task_ctrl_async "ERASE_LINE" 
         logr_task_ctrl_sync "PRINT_FROM_FILE" "${tmp_file}"
         logr_task_ctrl_sync "NEWLINE"
         let x_pos++

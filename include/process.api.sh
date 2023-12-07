@@ -59,7 +59,7 @@ function process_signal
 
     local para_list=($@)
     local xproc=""
-    local exclude_pid_array=($(mdata_kv_get "BASH_TASK"))
+    local exclude_pid_array=($(mdat_kv_get "BASH_TASK"))
 
     [ ${#para_list[*]} -eq 0 ] && return 1
 
