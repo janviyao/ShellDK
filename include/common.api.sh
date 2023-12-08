@@ -198,14 +198,14 @@ function wait_value
 
     echo_debug "wait ack: ${ack_pipe}"
     echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
-    run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
+    run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
 
     if can_access "${ack_pipe}.result";then
-        export ack_value=$(cat ${ack_pipe}.result)
+        export FUNC_RET=$(cat ${ack_pipe}.result)
     else
-        export ack_value=""
+        export FUNC_RET=""
     fi
-    echo_debug "read [${ack_value}] from ${ack_pipe}"
+    echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
 
     eval "exec ${ack_fhno}>&-"
     rm -f ${ack_pipe}*
@@ -369,6 +369,63 @@ function loop2fail
     done
 
     return 0
+}
+
+function progress_bar
+{
+    local orign="$1"
+    local total="$2"
+    local stop="$3"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: directory finded\n\$2: file-size filter"
+        return 1
+    fi
+
+    local coordinate=$(cursor_pos)
+    local x_coord=$(string_split "${coordinate}" ',' 1)
+    local y_coord=$(string_split "${coordinate}" ',' 2)
+    echo_debug "progress_bar: $@ @[${x_coord},${y_coord}]"
+
+    local shrink=$((100 / 50))
+    local move=${orign}
+    local last=${total}
+    local step=$(math_float "100 / ${total}" 5)
+    
+    logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
+    logr_task_ctrl_async "ERASE_LINE"
+    #logr_task_ctrl_async "CURSOR_HIDE"
+    
+    local index
+    local postfix=('|' '/' '-' '\')
+    while [ ${move} -le ${last} ]
+    do
+        if eval "${stop}";then
+            break
+        fi
+
+        local count=$(math_round "(${move} - 1) * ${step}" ${shrink})
+        local bar_str=''
+        for index in $(seq 1 ${count})
+        do 
+            bar_str+='+'
+        done
+
+        index=$(math_mod ${move} 4)
+        local percentage=$(math_round "${move} * ${step}" 1)
+
+        logr_task_ctrl_async "CURSOR_SAVE"
+        logr_task_ctrl_async "PRINT" "$(printf "[%-50s %-2d%% %c]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
+        logr_task_ctrl_async "CURSOR_RESTORE"
+
+        let move++
+        sleep 0.1 
+    done
+
+    logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
+    logr_task_ctrl_async "ERASE_LINE"
+    #logr_task_ctrl_async "CURSOR_SHOW"
+    echo_debug "progress_bar finish"
 }
 
 __MY_SOURCE "INCLUDED_LOG"     $MY_VIM_DIR/include/log.api.sh

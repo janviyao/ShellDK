@@ -21,10 +21,10 @@ function ctrl_create_thread
         return 1
     fi
     
-    echo_file "${LOG_DEBUG}" "create thread:\"${_cmdstr}\""
+    echo_file "${LOG_DEBUG}" "create thread: ${_cmdstr}"
     wait_value "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${GBL_CTRL_PIPE}"
 
-    echo "${ack_value}"
+    echo "${FUNC_RET}"
     return 0
 }
 
@@ -118,8 +118,7 @@ function _ctrl_thread_main
             return 
         elif [[ "${req_ctrl}" == "THREAD_CREATE" ]];then
             local _cmdstr="${req_body}"
-
-            echo_file "${LOG_DEBUG}" "new thread:\"${_cmdstr}\""
+            echo_file "${LOG_DEBUG}" "new thread: ${_cmdstr}"
             {
                 local ppids=($(ppid))
                 local self_pid=${ppids[2]}
@@ -132,7 +131,7 @@ function _ctrl_thread_main
 
             local bgpid=$!
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                echo_debug "bgpid[${bgpid}] to [${ack_pipe}]"
+                echo_debug "echo { ${bgpid} } to [${ack_pipe}]"
                 run_timeout 2 echo "${bgpid}" \> ${ack_pipe}
                 continue
             fi

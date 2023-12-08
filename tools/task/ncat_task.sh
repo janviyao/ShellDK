@@ -42,7 +42,7 @@ function local_port_available
         fi
     fi
 
-    echo_file "${LOG_DEBUG}" "port[$1] avalible"
+    #echo_file "${LOG_DEBUG}" "port[$1] avalible"
     return 0
 }
 
@@ -450,8 +450,8 @@ function _ncat_thread_main
     while math_bool "${master_work}" 
     do
         local ncat_port=$(ncat_port_get)
+        #echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
 
-        echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
         local ncat_body=$(ncat_recv_msg "${ncat_port}")
         if [ -z "${ncat_body}" ];then
             mdat_get_var "master_work"

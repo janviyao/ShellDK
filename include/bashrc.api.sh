@@ -47,6 +47,7 @@ OP_TIMEOUT=60
 SSH_TIMEOUT=600
 MAX_TIMEOUT=1800
 
+readonly GBL_SPACE="[_]"
 readonly GBL_COL_SPF="==="
 readonly GBL_ACK_SPF="#@"
 readonly GBL_SPF1="#;"

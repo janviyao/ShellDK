@@ -52,7 +52,7 @@ function mytar
             local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
             if math_bool "${xselect}";then
                 iscompress="true"
-                sudo rm -f ${realfile}
+                sudo_it rm -f ${realfile}
             else
                 echo_erro "file { ${realfile} } already exists"
                 return 1

@@ -23,7 +23,12 @@ function logr_task_ctrl_async
         return 1
     fi
     
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}" > ${GBL_LOGR_PIPE}
+    local msg="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
+    if [[ "${msg}" =~ " " ]];then
+        msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
+    fi
+
+    echo "${msg}" > ${GBL_LOGR_PIPE}
     return 0
 }
 
@@ -43,8 +48,13 @@ function logr_task_ctrl_sync
         return 1
     fi
 
+    local msg="${req_ctrl}${GBL_SPF1}${req_body}"
+    if [[ "${msg}" =~ " " ]];then
+        msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
+    fi
+
     echo_debug "logr wait for ${GBL_LOGR_PIPE}"
-    wait_value "${req_ctrl}${GBL_SPF1}${req_body}" "${GBL_LOGR_PIPE}"
+    wait_value "${msg}" "${GBL_LOGR_PIPE}"
     return 0
 }
 
@@ -101,9 +111,14 @@ function _redirect_func
 
 function _logr_thread_main
 {
+    local line
     while read line
     do
+        if [[ "${line}" =~ "${GBL_SPACE}" ]];then
+            line=$(string_replace "${line}" "${GBL_SPACE}" " ")
+        fi
         #echo_file "${LOG_DEBUG}" "logr recv: [${line}]" 
+
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)

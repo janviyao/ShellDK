@@ -1,18 +1,26 @@
 #!/bin/bash
 function cpu_statistics
 {
-    local item1="sar -u 1 5           : CPU all utilization statistics"
-    local item2="sar -P ALL 1 5       : CPU all and single utilization statistics"
-    local item3="mpstat -P ALL 1 1    : List all cpus utilization statistics"
-    local item4="mpstat -P <CPU> 1 1  : Special cpu utilization statistics"
-    local item5="dstat -c -C <CPU> 1 5: Special cpu utilization statistics"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}")
+    local item1="sar -u 1 5                   : CPU all utilization statistics"
+    local item2="sar -P ALL 1 5               : CPU all and single utilization statistics"
+    local item3="pidstat -t -p <PID> 1 5      : Special threads cpu utilization statistics and cpu id"
+    local item4="top -b -H -p <PID> -d 1 -n 5 : Special threads cpu utilization statistics"
+    local item5="mpstat -P ALL 1 1            : List all cpus utilization statistics"
+    local item6="mpstat -P <CPU> 1 1          : Special cpu utilization statistics"
+    local item7="dstat -c -C <CPU> 1 5        : Special cpu utilization statistics"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
 
     if string_contain "${select_x}" "<CPU>";then
         local input_val=$(input_prompt "is_integer" "input one cpu id" "0")
         select_x=$(string_replace "${select_x}" "<CPU>" "${input_val}")
+    fi
+
+    if string_contain "${select_x}" "<PID>";then
+        local process_x=$(input_prompt "" "specify one running-app's pid" "")
+        local pid_array=($(process_name2pid "${process_x}"))
+        select_x=$(string_replace "${select_x}" "<PID>" "${pid_array[0]}")
     fi
 
     echo_info "${select_x}"

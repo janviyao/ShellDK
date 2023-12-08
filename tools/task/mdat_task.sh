@@ -132,7 +132,7 @@ function mdat_kv_has_key
     echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
 
-    if math_bool "${ack_value}";then
+    if math_bool "${FUNC_RET}";then
         return 0
     else
         return 1
@@ -164,7 +164,7 @@ function mdat_kv_has_val
     echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
 
-    if math_bool "${ack_value}";then
+    if math_bool "${FUNC_RET}";then
         return 0
     else
         return 1
@@ -316,9 +316,9 @@ function mdat_kv_get
 
     echo_file "${LOG_DEBUG}" "mdat wait for ${_pipe_}"
     wait_value "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
-    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${ack_value}\"]"
 
-    echo "${ack_value}"
+    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${FUNC_RET}\"]"
+    echo "${FUNC_RET}"
     return 0
 }
 
