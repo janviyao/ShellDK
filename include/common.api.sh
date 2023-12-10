@@ -165,7 +165,7 @@ function wait_value
 {
     local send_body="$1"
     local send_pipe="$2"
-    local timeout_s="${3:-10}"
+    local timeout_s="${3:-2}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe"
@@ -185,30 +185,48 @@ function wait_value
         ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
     done
 
-    echo_debug "make ack: ${ack_pipe}"
+    echo_debug "make ack: [${ack_pipe}]"
     #can_access "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
+    can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+
     if is_root && [[ "${USR_NAME}" != "root" ]];then
         chmod 777 ${ack_pipe}
     fi
-    can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
+    
+    local try_cnt=0
+    while true
+    do
+        echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
+        echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
+        run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
 
-    echo_debug "wait ack: ${ack_pipe}"
-    echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
-    run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
+        if can_access "${ack_pipe}.result";then
+            export FUNC_RET=$(cat ${ack_pipe}.result)
+        else
+            export FUNC_RET=""
+        fi
 
-    if can_access "${ack_pipe}.result";then
-        export FUNC_RET=$(cat ${ack_pipe}.result)
-    else
-        export FUNC_RET=""
-    fi
-    echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
-
+        echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
+        let try_cnt++
+        if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 3 ];then
+            break;
+        else
+            echo_debug "try[${try_cnt}] to write"
+        fi
+    done
     eval "exec ${ack_fhno}>&-"
-    rm -f ${ack_pipe}*
+    
+    if [ ${try_cnt} -eq 3 ];then
+        echo_debug "write [${send_pipe}] failed"
+    fi
+
+    echo_debug "remove: [${ack_pipe}]"
+    rm -f ${ack_pipe}
+    rm -f ${ack_pipe}.result
     return 0
 }
 

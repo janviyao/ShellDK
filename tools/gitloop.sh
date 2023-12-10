@@ -26,6 +26,7 @@ function gitloop_signal
     exit 0
 }
 trap "gitloop_signal" EXIT SIGINT SIGTERM SIGKILL
+mdat_kv_set "gitloop-exit" "false"
 
 PROGRESS_TIME=$((OP_TIMEOUT * 10 * OP_TRY_CNT))
 cd ${RUN_DIR}

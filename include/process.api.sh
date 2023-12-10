@@ -650,14 +650,23 @@ function process_coredump
         sudo_it "ulimit -c unlimited"
     fi
 
+    sudo_it "echo '/tmp/core-%e-%p-%s-%t' > /proc/sys/kernel/core_pattern" 
+    if can_access "/etc/security/limits.conf";then
+        sudo_it "sed -i '\#\s\+core\s\\+#d' /etc/security/limits.conf"
+        sudo_it "echo '* hard core unlimited' >> /etc/security/limits.conf" 
+        sudo_it "echo '* soft core unlimited' >> /etc/security/limits.conf" 
+    fi
+
     local pid
     local -a pid_array=($(process_name2pid "${para_list[*]}"))
     for pid in ${pid_array[*]}
     do
-        sudo_it "echo 0x7b > /proc/${pid}/coredump_filter"
+        if can_access "/proc/${pid}/coredump_filter";then
+            sudo_it "echo 0x7b > /proc/${pid}/coredump_filter"
+        fi
         sudo_it "kill -6 ${pid}"
     done
-    
+
     local stor=$(cat /proc/sys/kernel/core_pattern)
     if [ -n "${stor}" ];then
         echo_info "Please check: ${stor}"

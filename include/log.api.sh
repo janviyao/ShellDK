@@ -10,7 +10,7 @@ LOG_SHOW_LEVEL=3
 LOG_FILE_LEVEL=4
 
 LOG_HEADER=true
-HEADER_TIME=false
+HEADER_TIME=true
 HEADER_FILE=false
 
 readonly COLOR_HEADER='\033[40;35m' #黑底紫字
@@ -102,7 +102,8 @@ function echo_header
     if math_bool "${LOG_HEADER}";then
         local header=""
         if math_bool "${HEADER_TIME}";then
-            header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@$(whoami)] [${LOCAL_IP}]"
+            #header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@$(whoami)] [${LOCAL_IP}]"
+            header="[$(date '+%Y-%m-%d %H:%M:%S:%N')]"
         else
             header="[${LOCAL_IP}@$(whoami)]"
         fi

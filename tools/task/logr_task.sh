@@ -1,11 +1,13 @@
 #!/bin/bash
 : ${INCLUDED_LOGR:=1}
-GBL_LOGR_PIPE="${BASH_WORK_DIR}/logr.pipe"
+LOGR_WORK_DIR="${BASH_WORK_DIR}/logr"
+mkdir -p ${LOGR_WORK_DIR}
 
-GBL_LOGR_FD=${GBL_LOGR_FD:-8}
-can_access "${GBL_LOGR_PIPE}" || mkfifo ${GBL_LOGR_PIPE}
-can_access "${GBL_LOGR_PIPE}" || echo_erro "mkfifo: ${GBL_LOGR_PIPE} fail"
-exec {GBL_LOGR_FD}<>${GBL_LOGR_PIPE} # 自动分配FD 
+LOGR_PIPE="${LOGR_WORK_DIR}/pipe"
+LOGR_FD=${LOGR_FD:-8}
+can_access "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
+can_access "${LOGR_PIPE}" || echo_erro "mkfifo: ${LOGR_PIPE} fail"
+exec {LOGR_FD}<>${LOGR_PIPE} # 自动分配FD 
 
 function logr_task_ctrl_async
 {
@@ -18,8 +20,8 @@ function logr_task_ctrl_async
     fi
 
     #echo_debug "log to self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
-    if ! can_access "${GBL_LOGR_PIPE}.run";then
-        echo_erro "logr task [${GBL_LOGR_PIPE}.run] donot run for [$@]"
+    if ! can_access "${LOGR_PIPE}.run";then
+        echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
     
@@ -28,7 +30,7 @@ function logr_task_ctrl_async
         msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
     fi
 
-    echo "${msg}" > ${GBL_LOGR_PIPE}
+    echo "${msg}" > ${LOGR_PIPE}
     return 0
 }
 
@@ -43,8 +45,8 @@ function logr_task_ctrl_sync
     fi
 
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
-    if ! can_access "${GBL_LOGR_PIPE}.run";then
-        echo_erro "logr task [${GBL_LOGR_PIPE}.run] donot run for [$@]"
+    if ! can_access "${LOGR_PIPE}.run";then
+        echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
 
@@ -53,15 +55,14 @@ function logr_task_ctrl_sync
         msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
     fi
 
-    echo_debug "logr wait for ${GBL_LOGR_PIPE}"
-    wait_value "${msg}" "${GBL_LOGR_PIPE}"
+    wait_value "${msg}" "${LOGR_PIPE}"
     return 0
 }
 
 function _bash_logr_exit
 { 
     echo_debug "logr signal exit" 
-    if ! can_access "${GBL_LOGR_PIPE}.run";then
+    if ! can_access "${LOGR_PIPE}.run";then
         return 0
     fi
 
@@ -114,18 +115,19 @@ function _logr_thread_main
     local line
     while read line
     do
+        #echo_file "${LOG_DEBUG}" "logr recv: [${line}]" 
         if [[ "${line}" =~ "${GBL_SPACE}" ]];then
             line=$(string_replace "${line}" "${GBL_SPACE}" " ")
         fi
-        #echo_file "${LOG_DEBUG}" "logr recv: [${line}]" 
 
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
+        #echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
-                echo_erro "ack pipe invalid: ${ack_pipe}"
+                echo_erro "pipe invalid: [${ack_pipe}]"
                 continue
             fi
         fi
@@ -136,9 +138,10 @@ function _logr_thread_main
         if [[ "${req_ctrl}" == "CTRL" ]];then
             if [[ "${req_body}" == "EXIT" ]];then
                 if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                    echo_debug "ack to [${ack_pipe}]"
-                    run_timeout 2 echo "ACK" \> ${ack_pipe}
+                    echo_debug "write [ACK] to [${ack_pipe}]"
+                    run_timeout 2 echo \"ACK\" \> ${ack_pipe}
                 fi
+                echo_debug "logr main exit"
                 return
             fi
         elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
@@ -192,11 +195,11 @@ function _logr_thread_main
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            echo_debug "ack to [${ack_pipe}]"
-            run_timeout 2 echo "ACK" \> ${ack_pipe}
+            echo_debug "write [ACK] to [${ack_pipe}]"
+            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
-        #echo_file "${LOG_DEBUG}" "logr wait: [${GBL_LOGR_PIPE}]"
-    done < ${GBL_LOGR_PIPE}
+        #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"
+    done < ${LOGR_PIPE}
 }
 
 function _logr_thread
@@ -211,15 +214,15 @@ function _logr_thread
         echo_file "${LOG_DEBUG}" "logr bg_thread [${ppinfos[*]}]"
     fi
 
-    touch ${GBL_LOGR_PIPE}.run
+    touch ${LOGR_PIPE}.run
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] start"
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _logr_thread_main
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] exit"
-    rm -f ${GBL_LOGR_PIPE}.run
+    rm -f ${LOGR_PIPE}.run
 
-    eval "exec ${GBL_LOGR_FD}>&-"
-    rm -f ${GBL_LOGR_PIPE}
+    eval "exec ${LOGR_FD}>&-"
+    rm -f ${LOGR_PIPE}
     exit 0
 }
 

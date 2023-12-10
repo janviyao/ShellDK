@@ -1,11 +1,13 @@
 #!/bin/bash
 : ${INCLUDED_XFER:=1}
-GBL_XFER_PIPE="${BASH_WORK_DIR}/xfer.pipe"
+XFER_WORK_DIR="${BASH_WORK_DIR}/xfer"
+mkdir -p ${XFER_WORK_DIR}
 
-GBL_XFER_FD=${GBL_XFER_FD:-6}
-can_access "${GBL_XFER_PIPE}" || mkfifo ${GBL_XFER_PIPE}
-can_access "${GBL_XFER_PIPE}" || echo_erro "mkfifo: ${GBL_XFER_PIPE} fail"
-exec {GBL_XFER_FD}<>${GBL_XFER_PIPE}
+XFER_PIPE="${XFER_WORK_DIR}/pipe"
+XFER_FD=${XFER_FD:-6}
+can_access "${XFER_PIPE}" || mkfifo ${XFER_PIPE}
+can_access "${XFER_PIPE}" || echo_erro "mkfifo: ${XFER_PIPE} fail"
+exec {XFER_FD}<>${XFER_PIPE}
 
 function do_rsync
 {
@@ -287,12 +289,12 @@ function xfer_task_ctrl_async
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_body\n\$2: one_pipe(default: ${GBL_XFER_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xfer_body\n\$2: one_pipe(default: ${XFER_PIPE})"
         return 1
     fi
 
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_XFER_PIPE}"
+        one_pipe="${XFER_PIPE}"
     fi
 
     if ! can_access "${one_pipe}.run";then
@@ -309,12 +311,12 @@ function xfer_task_ctrl_sync
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_body\n\$2: one_pipe(default: ${GBL_XFER_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: xfer_body\n\$2: one_pipe(default: ${XFER_PIPE})"
         return 1
     fi
 
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_XFER_PIPE}"
+        one_pipe="${XFER_PIPE}"
     fi
 
     if ! can_access "${one_pipe}.run";then
@@ -329,7 +331,7 @@ function xfer_task_ctrl_sync
 function _bash_xfer_exit
 { 
     echo_debug "xfer signal exit"
-    if ! can_access "${GBL_XFER_PIPE}.run";then
+    if ! can_access "${XFER_PIPE}.run";then
         return 0
     fi
 
@@ -351,13 +353,14 @@ function _xfer_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "xfer recv: [${line}]"
-        local ack_xfer=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
+        local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
-        if [[ "${ack_xfer}" == "NEED_ACK" ]];then
+        echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
+        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
-                echo_erro "ack pipe invalid: ${ack_pipe}"
+                echo_erro "pipe invalid: [${ack_pipe}]"
                 continue
             fi
         fi
@@ -367,10 +370,11 @@ function _xfer_thread_main
         local req_foot=$(string_split "${ack_body}" "${GBL_SPF1}" 3)
 
         if [[ "${req_xfer}" == "EXIT" ]];then
-            if [[ "${ack_xfer}" == "NEED_ACK" ]];then
-                echo_debug "ack to [${ack_pipe}]"
-                run_timeout 2 echo "ACK" \> ${ack_pipe}
+            if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
+                echo_debug "write [ACK] to [${ack_pipe}]"
+                run_timeout 2 echo \"ACK\" \> ${ack_pipe}
             fi
+            echo_debug "xfer main exit"
             return 
         elif [[ "${req_xfer}" == "RSYNC" ]];then
             local xfer_act=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
@@ -420,13 +424,13 @@ function _xfer_thread_main
             fi
         fi
 
-        if [[ "${ack_xfer}" == "NEED_ACK" ]];then
-            echo_debug "ack to [${ack_pipe}]"
-            run_timeout 2 echo "ACK" \> ${ack_pipe}
+        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
+            echo_debug "write [ACK] to [${ack_pipe}]"
+            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
 
-        echo_file "${LOG_DEBUG}" "xfer wait: [${GBL_XFER_PIPE}]"
-    done < ${GBL_XFER_PIPE}
+        echo_file "${LOG_DEBUG}" "xfer wait: [${XFER_PIPE}]"
+    done < ${XFER_PIPE}
 }
 
 function _xfer_thread
@@ -441,15 +445,15 @@ function _xfer_thread
         echo_file "${LOG_DEBUG}" "xfer bg_thread [${ppinfos[*]}]"
     fi
 
-    touch ${GBL_XFER_PIPE}.run
+    touch ${XFER_PIPE}.run
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] start"
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _xfer_thread_main
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] exit"
-    rm -f ${GBL_XFER_PIPE}.run
+    rm -f ${XFER_PIPE}.run
 
-    eval "exec ${GBL_XFER_FD}>&-"
-    rm -f ${GBL_XFER_PIPE} 
+    eval "exec ${XFER_FD}>&-"
+    rm -f ${XFER_PIPE} 
     exit 0
 }
 

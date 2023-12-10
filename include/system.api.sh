@@ -42,6 +42,8 @@ function run_timeout
         echo_debug "timeout(${time_s}s): ${cmd}"
         timeout ${time_s} bash -c "${cmd}"
         return $?
+    else
+        echo_erro "timeout(${time_s}s): ${cmd}"
     fi
 
     return 1
@@ -60,6 +62,7 @@ function run_lock
     local cmd=$(para_pack "$@")
     (
         flock -x ${lockid}  #flock文件锁，-x表示独享锁
+        echo_file "${LOG_DEBUG}" "[run_lock] ${cmd}"
         bash -c "${cmd}"
     ) {lockid}<>/tmp/shell.lock.${lockid}
 }

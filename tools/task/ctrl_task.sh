@@ -1,11 +1,13 @@
 #!/bin/bash
 : ${INCLUDED_CTRL:=1}
-GBL_CTRL_PIPE="${BASH_WORK_DIR}/ctrl.pipe"
+CTRL_WORK_DIR="${BASH_WORK_DIR}/ctrl"
+mkdir -p ${CTRL_WORK_DIR}
 
-GBL_CTRL_FD=${GBL_CTRL_FD:-6}
-can_access "${GBL_CTRL_PIPE}" || mkfifo ${GBL_CTRL_PIPE}
-can_access "${GBL_CTRL_PIPE}" || echo_erro "mkfifo: ${GBL_CTRL_PIPE} fail"
-exec {GBL_CTRL_FD}<>${GBL_CTRL_PIPE}
+CTRL_PIPE="${CTRL_WORK_DIR}/pipe"
+CTRL_FD=${CTRL_FD:-6}
+can_access "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
+can_access "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
+exec {CTRL_FD}<>${CTRL_PIPE}
 
 function ctrl_create_thread
 {
@@ -16,13 +18,13 @@ function ctrl_create_thread
         return 1
     fi
 
-    if ! can_access "${GBL_CTRL_PIPE}.run";then
-        echo_erro "ctrl task [${GBL_CTRL_PIPE}.run] donot run for [$@]"
+    if ! can_access "${CTRL_PIPE}.run";then
+        echo_erro "ctrl task [${CTRL_PIPE}.run] donot run for [$@]"
         return 1
     fi
     
     echo_file "${LOG_DEBUG}" "create thread: ${_cmdstr}"
-    wait_value "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${GBL_CTRL_PIPE}"
+    wait_value "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${CTRL_PIPE}"
 
     echo "${FUNC_RET}"
     return 0
@@ -34,12 +36,12 @@ function ctrl_task_ctrl_async
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${CTRL_PIPE})"
         return 1
     fi
 
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_CTRL_PIPE}"
+        one_pipe="${CTRL_PIPE}"
     fi
 
     if ! can_access "${one_pipe}.run";then
@@ -57,12 +59,12 @@ function ctrl_task_ctrl_sync
     local one_pipe="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${GBL_CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${CTRL_PIPE})"
         return 1
     fi
 
     if [ -z "${one_pipe}" ];then
-        one_pipe="${GBL_CTRL_PIPE}"
+        one_pipe="${CTRL_PIPE}"
     fi
 
     if ! can_access "${one_pipe}.run";then
@@ -70,7 +72,6 @@ function ctrl_task_ctrl_sync
         return 1
     fi
 
-    echo_debug "ctrl wait for ${one_pipe}"
     wait_value "${ctrl_body}" "${one_pipe}"
     return 0
 }
@@ -78,7 +79,7 @@ function ctrl_task_ctrl_sync
 function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit"
-    if ! can_access "${GBL_CTRL_PIPE}.run";then
+    if ! can_access "${CTRL_PIPE}.run";then
         return 0
     fi
 
@@ -100,9 +101,10 @@ function _ctrl_thread_main
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
+        echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
-                echo_erro "ack pipe invalid: ${ack_pipe}"
+                echo_erro "pipe invalid: [${ack_pipe}]"
                 continue
             fi
         fi
@@ -112,9 +114,10 @@ function _ctrl_thread_main
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                echo_debug "ack to [${ack_pipe}]"
-                run_timeout 2 echo "ACK" \> ${ack_pipe}
+                echo_debug "write [ACK] to [${ack_pipe}]"
+                run_timeout 2 echo \"ACK\" \> ${ack_pipe}
             fi
+            echo_debug "ctrl main exit"
             return 
         elif [[ "${req_ctrl}" == "THREAD_CREATE" ]];then
             local _cmdstr="${req_body}"
@@ -131,19 +134,19 @@ function _ctrl_thread_main
 
             local bgpid=$!
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                echo_debug "echo { ${bgpid} } to [${ack_pipe}]"
-                run_timeout 2 echo "${bgpid}" \> ${ack_pipe}
+                echo_debug "write [${bgpid}] to [${ack_pipe}]"
+                run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
                 continue
             fi
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            echo_debug "ack to [${ack_pipe}]"
-            run_timeout 2 echo "ACK" \> ${ack_pipe}
+            echo_debug "write [ACK] to [${ack_pipe}]"
+            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
 
-        echo_file "${LOG_DEBUG}" "ctrl wait: [${GBL_CTRL_PIPE}]"
-    done < ${GBL_CTRL_PIPE}
+        echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
+    done < ${CTRL_PIPE}
 }
 
 function _ctrl_thread
@@ -158,15 +161,15 @@ function _ctrl_thread
         echo_file "${LOG_DEBUG}" "ctrl bg_thread [${ppinfos[*]}]"
     fi
 
-    touch ${GBL_CTRL_PIPE}.run
+    touch ${CTRL_PIPE}.run
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] start"
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ctrl_thread_main
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] exit"
-    rm -f ${GBL_CTRL_PIPE}.run
+    rm -f ${CTRL_PIPE}.run
 
-    eval "exec ${GBL_CTRL_FD}>&-"
-    rm -f ${GBL_CTRL_PIPE} 
+    eval "exec ${CTRL_FD}>&-"
+    rm -f ${CTRL_PIPE} 
     exit 0
 }
 
