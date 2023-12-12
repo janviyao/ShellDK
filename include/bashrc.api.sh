@@ -47,12 +47,12 @@ OP_TIMEOUT=60
 SSH_TIMEOUT=600
 MAX_TIMEOUT=1800
 
-readonly GBL_SPACE="[_]"
-readonly GBL_COL_SPF="==="
-readonly GBL_ACK_SPF="##"
-readonly GBL_SPF1="#;"
-readonly GBL_SPF2="#."
-readonly GBL_SPF3="#,"
+readonly GBL_SPACE="<.>"
+readonly GBL_COL_SPF="<=>"
+readonly GBL_ACK_SPF="<#>"
+readonly GBL_SPF1="<1>"
+readonly GBL_SPF2="<2>"
+readonly GBL_SPF3="<3>"
 
 function __my_bashrc_deps
 {
