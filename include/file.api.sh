@@ -50,6 +50,30 @@ function can_access
         done
     fi
 
+    if match_regex "${xfile}" "^~";then
+        xfile=$(string_replace "${xfile}" '^~' "${HOME}" true)
+    fi
+
+    if [ -e ${xfile} ];then
+        return 0
+    elif [ -f ${xfile} ];then
+        return 0
+    elif [ -d ${xfile} ];then
+        return 0
+    elif [ -r ${xfile} -o -w ${xfile} -o -x ${xfile} ];then
+        return 0
+    elif [ -h ${xfile} ];then
+        return 0
+    elif [ -L ${xfile} ];then
+        return 0
+    elif [ -b ${xfile} ];then
+        return 0
+    elif [ -c ${xfile} ];then
+        return 0
+    elif [ -s ${xfile} ];then
+        return 0
+    fi
+
     if ls --color=never ${xfile} &> /dev/null;then
         return 0
     fi
@@ -57,25 +81,7 @@ function can_access
     if which ${xfile} &> /dev/null;then
         return 0
     fi
- 
-    if match_regex "${xfile}" "^~";then
-        xfile=$(string_replace "${xfile}" '^~' "${HOME}" true)
-    fi
-
-    if [ -f ${xfile} ];then
-        return 0
-    elif [ -d ${xfile} ];then
-        return 0
-    elif [ -b ${xfile} ];then
-        return 0
-    elif [ -c ${xfile} ];then
-        return 0
-    elif [ -h ${xfile} ];then
-        return 0
-    elif [ -r ${xfile} -o -w ${xfile} -o -x ${xfile} ];then
-        return 0
-    fi
-
+  
     return 1
 }
 
@@ -816,7 +822,12 @@ function real_path
     fi
 
     local old_path="${this_path}"
-    this_path=$(readlink -f ${this_path})
+    if test -r ${this_path};then
+        this_path=$(readlink -f ${this_path})
+    else
+        this_path=$(sudo_it readlink -f ${this_path})
+    fi
+
     if [ $? -ne 0 ];then
         echo_file "${LOG_ERRO}" "readlink fail: ${old_path}"
         echo "${old_path}"

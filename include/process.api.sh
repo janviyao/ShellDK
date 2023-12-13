@@ -146,8 +146,10 @@ function process_pid2name
         if can_access "/proc/${pid}/exe";then
             local fname=$(path2fname "/proc/${pid}/exe")
             if [ -n "${fname}" ];then
-                proc_list=(${proc_list[*]} ${fname})
-                continue
+                if [[ ${fname} != 'exe' ]];then
+                    proc_list=(${proc_list[*]} ${fname})
+                    continue
+                fi
             fi
         fi
 
@@ -254,9 +256,12 @@ function process_ppid
     local -a pid_array=($(process_name2pid ${para_list[*]}))
     for pid in ${pid_array[*]}
     do
-        local ppids=($(ppid ${pid}))
-        if [ ${#ppids[*]} -gt 1 ];then
-            unset ppids[0]
+        if [ ${pid} -eq 0 ];then
+            continue
+        fi
+
+        local ppids=($(ps -o ppid= -p ${pid}))
+        if [ ${#ppids[*]} -gt 0 ];then
             ppid_array=(${ppid_array[*]} ${ppids[*]})
         fi
     done
@@ -274,6 +279,10 @@ function process_childs
     local -a pid_array=($(process_name2pid "${para_list[*]}"))
     for pid in ${pid_array[*]}
     do
+        if [ ${pid} -eq 0 ];then
+            continue
+        fi
+
         # ps -p $$ -o ppid=
         local subpro_path="/proc/${pid}/task/${pid}/children"
         if can_access "${subpro_path}"; then
@@ -294,6 +303,10 @@ function process_threads
     local -a pid_array=($(process_name2pid "${para_list[*]}"))
     for pid in ${pid_array[*]}
     do
+        if [ ${pid} -eq 0 ];then
+            continue
+        fi
+
         local threads=($(ps H --no-headers -T -p ${pid} | awk '{ print $2 }' | grep -v ${pid}))
         if [ ${#threads[*]} -gt 0 ]; then
             child_tids=(${child_tids[*]} ${threads[*]})
@@ -356,6 +369,10 @@ function thread_info
         local tid
         for tid in ${tid_array[*]}
         do
+            if [ ${tid} -eq 0 ];then
+                continue
+            fi
+
             local -a xproc=($(cat /proc/${process}/stat))
             
             local tinfo_str=$(cat /proc/${process}/task/${tid}/stat)
@@ -433,6 +450,10 @@ function process_info
         local -a pid_array=($(process_name2pid ${x_proc}))    
         for pid in ${pid_array[*]}
         do
+            if [ ${pid} -eq 0 ];then
+                continue
+            fi
+
             if math_bool "${is_header}"; then
                 ps -p ${pid} -o ${ps_header}
                 local is_header=false
@@ -522,7 +543,7 @@ function process_pptree
         local ppid_array=($(process_ppid ${pid}))
         for ppid in ${ppid_array[*]}
         do
-            process_info "${ppid}" "${show_thread}" "${show_header}"
+            process_pptree "${ppid}" "${show_thread}" "${show_header}"
         done
     done
 
