@@ -56,7 +56,7 @@ function mdat_task_ctrl_sync
     fi
 
     if ! can_access "${_pipe_}";then
-        echo_erro "pipe invalid: ${_pipe_}"
+        echo_erro "pipe invalid: [${_pipe_}]"
         return 1
     fi
     
@@ -348,6 +348,12 @@ function _bash_mdat_exit
         return 0
     fi
 
+    local task_pid=$(mdat_kv_get "MDAT_TASK")
+    if ! process_exist "${task_pid}";then
+        echo_debug "task[${task_pid}] have exited"
+        return 0
+    fi
+
     mdat_task_ctrl_sync "EXIT" 
 }
 
@@ -356,7 +362,7 @@ function _mdat_thread_main
     local -A _global_map_
     while read line
     do
-        echo_file "${LOG_DEBUG}" "mdat recv: [${line}]"
+        echo_file "${LOG_DEBUG}" "mdat recv: [${line}] from [${MDAT_PIPE}]"
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
@@ -497,10 +503,11 @@ function _mdat_thread
     else
         echo_file "${LOG_DEBUG}" "mdat bg_thread [$(process_pid2name $$)[$$]]"
     fi
-    ( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
+    #( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
 
     touch ${MDAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] start"
+    mdat_kv_set "MDAT_TASK" "${self_pid}" &> /dev/null
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _mdat_thread_main
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] exit"

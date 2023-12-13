@@ -82,6 +82,12 @@ function _bash_ctrl_exit
     if ! can_access "${CTRL_PIPE}.run";then
         return 0
     fi
+    
+    local task_pid=$(mdat_kv_get "CTRL_TASK")
+    if ! process_exist "${task_pid}";then
+        echo_debug "task[${task_pid}] have exited"
+        return 0
+    fi
 
     ctrl_task_ctrl_sync "EXIT"
  
@@ -96,7 +102,7 @@ function _ctrl_thread_main
 
     while read line
     do
-        echo_file "${LOG_DEBUG}" "ctrl recv: [${line}]"
+        echo_file "${LOG_DEBUG}" "ctrl recv: [${line}] from [${CTRL_PIPE}]"
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
@@ -163,6 +169,7 @@ function _ctrl_thread
 
     touch ${CTRL_PIPE}.run
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] start"
+    mdat_kv_set "CTRL_TASK" "${self_pid}" &> /dev/null
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ctrl_thread_main
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] exit"

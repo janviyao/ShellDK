@@ -325,13 +325,19 @@ function xfer_task_ctrl_sync
     fi
 
     echo_debug "xfer wait for ${one_pipe}"
-    wait_value "${xfer_body}" "${one_pipe}" "${MAX_TIMEOUT}"
+    wait_value "${xfer_body}" "${one_pipe}" "+${MAX_TIMEOUT}"
 }
 
 function _bash_xfer_exit
 { 
     echo_debug "xfer signal exit"
     if ! can_access "${XFER_PIPE}.run";then
+        return 0
+    fi
+
+    local task_pid=$(mdat_kv_get "XFER_TASK")
+    if ! process_exist "${task_pid}";then
+        echo_debug "task[${task_pid}] have exited"
         return 0
     fi
 
@@ -352,7 +358,7 @@ function _xfer_thread_main
 
     while read line
     do
-        echo_file "${LOG_DEBUG}" "xfer recv: [${line}]"
+        echo_file "${LOG_DEBUG}" "xfer recv: [${line}] from [${XFER_PIPE}]"
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
@@ -447,6 +453,7 @@ function _xfer_thread
 
     touch ${XFER_PIPE}.run
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] start"
+    mdat_kv_set "XFER_TASK" "${self_pid}" &> /dev/null
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _xfer_thread_main
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] exit"

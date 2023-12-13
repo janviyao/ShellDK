@@ -66,6 +66,12 @@ function _bash_logr_exit
         return 0
     fi
 
+    local task_pid=$(mdat_kv_get "LOGR_TASK")
+    if ! process_exist "${task_pid}";then
+        echo_debug "task[${task_pid}] have exited"
+        return 0
+    fi
+
     logr_task_ctrl_sync "CTRL" "EXIT" 
 }
 
@@ -115,7 +121,7 @@ function _logr_thread_main
     local line
     while read line
     do
-        #echo_file "${LOG_DEBUG}" "logr recv: [${line}]" 
+        #echo_file "${LOG_DEBUG}" "logr recv: [${line}] from [${LOGR_PIPE}]" 
         if [[ "${line}" =~ "${GBL_SPACE}" ]];then
             line=$(string_replace "${line}" "${GBL_SPACE}" " ")
         fi
@@ -216,6 +222,7 @@ function _logr_thread
 
     touch ${LOGR_PIPE}.run
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] start"
+    mdat_kv_set "LOGR_TASK" "${self_pid}" &> /dev/null
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _logr_thread_main
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] exit"

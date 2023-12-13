@@ -161,7 +161,7 @@ function ncat_send_msg
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
             if ! can_access "${NCAT_PIPE}.run";then
-                echo_erro "ncat task donot run"
+                echo_erro "ncat task donot run: [${NCAT_PIPE}.run]"
                 return 1
             fi
         fi
@@ -188,7 +188,7 @@ function ncat_send_msg
     while test $? -ne 0
     do
         if ! can_access "${NCAT_PIPE}.run";then
-            echo_file "${LOG_ERRO}" "ncat task have exited"
+            echo_file "${LOG_ERRO}" "ncat task have exited: [${NCAT_PIPE}.run]"
             return 1
         fi
 
@@ -449,6 +449,12 @@ function _bash_ncat_exit
         return 0
     fi
 
+    local task_pid=$(mdat_kv_get "NCAT_TASK")
+    if ! process_exist "${task_pid}";then
+        echo_debug "task[${task_pid}] have exited"
+        return 0
+    fi
+
     ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
 }
 
@@ -585,6 +591,7 @@ function _ncat_thread
 
     touch ${NCAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] start"
+    mdat_kv_set "NCAT_TASK" "${self_pid}" &> /dev/null
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ncat_thread_main
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] exit"

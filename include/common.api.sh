@@ -172,6 +172,14 @@ function wait_value
         return 1
     fi
 
+    local try_cnt=3
+    if [[ $(string_start "${timeout_s}" 1) == '+' ]]; then
+        timeout_s=$(string_trim "${timeout_s}" "+" 1)
+        try_cnt=$(math_round ${timeout_s} 2)
+        timeout_s=2
+    fi
+    echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s]"
+
     # the first pid is shell where ppid run
     local self_pid=$$
     if can_access "ppid";then
@@ -197,7 +205,6 @@ function wait_value
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
     
-    local try_cnt=0
     while true
     do
         echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
@@ -211,8 +218,8 @@ function wait_value
         fi
 
         echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
-        let try_cnt++
-        if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 3 ];then
+        let try_cnt--
+        if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 0 ];then
             break;
         else
             echo_debug "try[${try_cnt}] to write"
@@ -220,7 +227,7 @@ function wait_value
     done
     eval "exec ${ack_fhno}>&-"
     
-    if [ ${try_cnt} -eq 3 ];then
+    if [ ${try_cnt} -eq 0 ];then
         echo_debug "write [${send_pipe}] failed"
     fi
 

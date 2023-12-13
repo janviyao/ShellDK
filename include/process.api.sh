@@ -32,6 +32,10 @@ function process_exist
 {
     local xproc="$1"
 
+    if [ -z "${xproc}" ];then
+        return 1
+    fi
+
     if is_integer "${xproc}";then
         local -a pid_array=(${xproc})
     else
@@ -49,6 +53,7 @@ function process_exist
             return 1
         fi
     done
+
     return 1
 }
 
