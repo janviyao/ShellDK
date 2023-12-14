@@ -3,6 +3,7 @@
 NCAT_WORK_DIR="${BASH_WORK_DIR}/ncat"
 mkdir -p ${NCAT_WORK_DIR}
 
+NCAT_TASK="${NCAT_WORK_DIR}/task"
 NCAT_PIPE="${NCAT_WORK_DIR}/pipe"
 NCAT_PROT_CURR="${NCAT_WORK_DIR}/port.$$"
 NCAT_PORT_USED="${GBL_BASE_DIR}/port.used"
@@ -449,12 +450,24 @@ function _bash_ncat_exit
         return 0
     fi
 
-    local task_pid=$(mdat_kv_get "NCAT_TASK")
-    if ! process_exist "${task_pid}";then
-        echo_debug "task[${task_pid}] have exited"
+    local task_list=($(cat ${NCAT_TASK}))
+    local task_line=0
+    while [ ${#task_list[*]} -gt 0 ]
+    do
+        local task_pid=${task_list[0]}
+        if process_exist "${task_pid}";then
+            let task_line++
+        else
+            echo_debug "task[${task_pid}] have exited"
+        fi
+        unset task_list[0]
+    done
+
+    if [ ${task_line} -eq 0 ];then
+        echo_debug "ncat task have exited"
         return 0
     fi
-
+    
     ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
 }
 
@@ -591,7 +604,7 @@ function _ncat_thread
 
     touch ${NCAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] start"
-    mdat_kv_set "NCAT_TASK" "${self_pid}" &> /dev/null
+    echo "${self_pid}" >> ${NCAT_TASK}
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _ncat_thread_main
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] exit"

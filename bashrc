@@ -26,10 +26,10 @@ set -o allexport
 shopt -s expand_aliases
 #set -o errexit # when error, then exit
 #set -o nounset # variable not exist, then exit
-
 if [ -z "${MY_NAME}" ];then
     readonly MY_NAME=$(whoami)
 fi
+
 if [ -z "${MY_HOME}" ];then
     readonly MY_HOME=${HOME}
 fi

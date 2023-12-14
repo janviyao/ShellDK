@@ -3,6 +3,7 @@
 LOGR_WORK_DIR="${BASH_WORK_DIR}/logr"
 mkdir -p ${LOGR_WORK_DIR}
 
+LOGR_TASK="${LOGR_WORK_DIR}/task"
 LOGR_PIPE="${LOGR_WORK_DIR}/pipe"
 LOGR_FD=${LOGR_FD:-8}
 can_access "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
@@ -66,9 +67,21 @@ function _bash_logr_exit
         return 0
     fi
 
-    local task_pid=$(mdat_kv_get "LOGR_TASK")
-    if ! process_exist "${task_pid}";then
-        echo_debug "task[${task_pid}] have exited"
+    local task_list=($(cat ${LOGR_TASK}))
+    local task_line=0
+    while [ ${#task_list[*]} -gt 0 ]
+    do
+        local task_pid=${task_list[0]}
+        if process_exist "${task_pid}";then
+            let task_line++
+        else
+            echo_debug "task[${task_pid}] have exited"
+        fi
+        unset task_list[0]
+    done
+
+    if [ ${task_line} -eq 0 ];then
+        echo_debug "logr task have exited"
         return 0
     fi
 
@@ -222,7 +235,7 @@ function _logr_thread
 
     touch ${LOGR_PIPE}.run
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] start"
-    mdat_kv_set "LOGR_TASK" "${self_pid}" &> /dev/null
+    echo "${self_pid}" >> ${LOGR_TASK}
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _logr_thread_main
     echo_file "${LOG_DEBUG}" "logr bg_thread[${self_pid}] exit"

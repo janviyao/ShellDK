@@ -217,7 +217,7 @@ function inst_env
     file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    echo "unset  \$(compgen -v | grep -E 'INCLUDED_|USR_NAME|USR_PASSWORD')" >> ${MY_HOME}/.bashrc
+    echo "unset  \$(compgen -v | grep -E 'INCLUDED_|USR_NAME|USR_PASSWORD|BASH_WORK_DIR')" >> ${MY_HOME}/.bashrc
     echo "export LOCAL_IP=\"${LOCAL_IP}\"" >> ${MY_HOME}/.bashrc
     echo "export MY_VIM_DIR=\"${MY_VIM_DIR}\"" >> ${MY_HOME}/.bashrc
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc

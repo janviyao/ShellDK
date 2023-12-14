@@ -172,7 +172,7 @@ function wait_value
         return 1
     fi
 
-    local try_cnt=3
+    local try_cnt=6
     if [[ $(string_start "${timeout_s}" 1) == '+' ]]; then
         timeout_s=$(string_trim "${timeout_s}" "+" 1)
         try_cnt=$(math_round ${timeout_s} 2)
@@ -205,9 +205,13 @@ function wait_value
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
     
+    local try_old=${try_cnt}
     while true
     do
-        echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
+        if [ ${try_old} -eq ${try_cnt} ];then
+            echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
+        fi
+
         echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
         run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
 
@@ -217,12 +221,15 @@ function wait_value
             export FUNC_RET=""
         fi
 
-        echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
+        if [ ${try_old} -eq ${try_cnt} ];then
+            echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
+        fi
+
         let try_cnt--
         if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 0 ];then
             break;
         else
-            echo_debug "try[${try_cnt}] to write"
+            echo_debug "try[${try_cnt}] to write to [${send_pipe}]"
         fi
     done
     eval "exec ${ack_fhno}>&-"
@@ -466,5 +473,3 @@ __MY_SOURCE "INCLUDED_FILE"    $MY_VIM_DIR/include/file.api.sh
 __MY_SOURCE "INCLUDED_K8S"     $MY_VIM_DIR/include/k8s.api.sh
 __MY_SOURCE "INCLUDED_GIT"     $MY_VIM_DIR/include/git.api.sh
 __MY_SOURCE "INCLUDED_GDB"     $MY_VIM_DIR/include/gdb.api.sh
-
-

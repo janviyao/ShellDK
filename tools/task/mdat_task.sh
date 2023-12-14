@@ -3,6 +3,7 @@
 MDAT_WORK_DIR="${BASH_WORK_DIR}/mdat"
 mkdir -p ${MDAT_WORK_DIR}
 
+MDAT_TASK="${MDAT_WORK_DIR}/task"
 MDAT_PIPE="${MDAT_WORK_DIR}/mdat.pipe"
 MDAT_FD=${MDAT_FD:-7}
 can_access "${MDAT_PIPE}" || mkfifo ${MDAT_PIPE}
@@ -348,12 +349,24 @@ function _bash_mdat_exit
         return 0
     fi
 
-    local task_pid=$(mdat_kv_get "MDAT_TASK")
-    if ! process_exist "${task_pid}";then
-        echo_debug "task[${task_pid}] have exited"
+    local task_list=($(cat ${MDAT_TASK}))
+    local task_line=0
+    while [ ${#task_list[*]} -gt 0 ]
+    do
+        local task_pid=${task_list[0]}
+        if process_exist "${task_pid}";then
+            let task_line++
+        else
+            echo_debug "task[${task_pid}] have exited"
+        fi
+        unset task_list[0]
+    done
+
+    if [ ${task_line} -eq 0 ];then
+        echo_debug "mdat task have exited"
         return 0
     fi
-
+    
     mdat_task_ctrl_sync "EXIT" 
 }
 
@@ -507,7 +520,7 @@ function _mdat_thread
 
     touch ${MDAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] start"
-    mdat_kv_set "MDAT_TASK" "${self_pid}" &> /dev/null
+    echo "${self_pid}" >> ${MDAT_TASK}
     mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
     _mdat_thread_main
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] exit"
