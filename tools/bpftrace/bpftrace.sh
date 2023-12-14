@@ -1,5 +1,5 @@
 #!/bin/bash
-CUR_DIR=$(current_dir)
+CUR_DIR=$(current_scriptdir)
 
 pid_list=($(process_name2pid $1))
 if [ ${#pid_list[*]} -eq 0 ];then

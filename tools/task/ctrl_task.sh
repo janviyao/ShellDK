@@ -130,7 +130,7 @@ function _ctrl_thread_main
             echo_file "${LOG_DEBUG}" "new thread: ${_cmdstr}"
             {
                 local ppids=($(ppid))
-                local self_pid=${ppids[2]}
+                local self_pid=${ppids[1]}
                 echo_file "${LOG_DEBUG}" "thread[${self_pid}] running: ${_cmdstr}"
 
                 eval "${_cmdstr}"
@@ -162,8 +162,8 @@ function _ctrl_thread
     local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        local self_pid=${ppids[2]}
-        local ppinfos=($(ppid true))
+        local self_pid=${ppids[1]}
+        local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "ctrl bg_thread [${ppinfos[*]}]"
     fi
 

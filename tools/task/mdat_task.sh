@@ -497,8 +497,8 @@ function _mdat_thread
     local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        self_pid=${ppids[2]}
-        local ppinfos=($(ppid true))
+        self_pid=${ppids[1]}
+        local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "mdat bg_thread [${ppinfos[*]}]"
     else
         echo_file "${LOG_DEBUG}" "mdat bg_thread [$(process_pid2name $$)[$$]]"

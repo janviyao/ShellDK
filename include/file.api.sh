@@ -793,13 +793,18 @@ function file_temp
     echo "${base_dir}/tmp.${self_pid}"
 }
 
-function current_dir
+function current_scriptdir
 {
     local curfile="$0"
+
+    if [ -z "${curfile}" ];then
+        curfile="${BASH_SOURCE[0]}"
+    fi
+
     if [ -f "${curfile}" ];then
         echo $(fname2path "${curfile}")
     else
-        echo $(pwd)
+        echo $PWD
     fi
 }
 

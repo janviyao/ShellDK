@@ -82,7 +82,7 @@ function _redirect_func
     local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        self_pid=${ppids[2]}
+        self_pid=${ppids[1]}
     fi
     #sudo_it "renice -n -1 -p ${self_pid} &> /dev/null"
 
@@ -215,8 +215,8 @@ function _logr_thread
     local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        local self_pid=${ppids[2]}
-        local ppinfos=($(ppid true))
+        local self_pid=${ppids[1]}
+        local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "logr bg_thread [${ppinfos[*]}]"
     fi
 

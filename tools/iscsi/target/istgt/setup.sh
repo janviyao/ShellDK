@@ -6,7 +6,7 @@ if [ $? -ne 0 ];then
     exit 1
 fi
 
-ISTGT_ROOT_DIR=$(current_dir)
+ISTGT_ROOT_DIR=$(current_scriptdir)
 
 ISTGT_APP_NAME=istgt
 ISTGT_CONF_DIR=/usr/local/etc/istgt

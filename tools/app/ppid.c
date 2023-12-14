@@ -1,4 +1,5 @@
 #include <stdio.h>  
+#include <getopt.h>
 #include <stdlib.h>  
 #include <stdint.h>
 #include <stdbool.h>
@@ -11,20 +12,63 @@
 #include <sys/types.h>  
 #include <sys/stat.h>  
 
-#define MAX_TMPBUF 128
-
+#define VERSION     "1.1"
+#define MAX_TMPBUF  128
 #define __NR_gettid 186
-static bool  g_print_name = false;
-static pid_t g_self_pid  = 0;
 
-static pid_t get_ppid(pid_t pid)
+static bool  g_print_name = false;
+static pid_t g_stop_pid = 0;
+
+static void help_usage(void)
+{
+    printf("ppid [options] [pid [,...]]\n");
+    printf("DESCRIPTION\n");
+    printf("    show parent pids up to root pid. when no parameter is specified, printout start from ppid-cmd's pid\n");
+    printf("    pid: one special pid, when not specified, ppid-cmd's pid is default\n");
+    printf("OPTIONS\n");
+    printf("    -h|--help             : show this message\n");
+    printf("    -v|--version          : show this message\n");
+    printf("    -n|--name             : whether to show process-name\n");
+    printf("    -s|--self             : whether to show process-self\n");
+    printf("    -u <pid>|--until=<pid>: stop to show until this pid\n");
+    printf("EXAMPLES\n");
+    printf("    ppid $$ -u 1 -n -s\n");
+}
+
+static bool is_alpha(char *str, int len)
+{
+    int idx;
+    
+    for(idx = 0; idx < len; idx++){
+        if (isalpha(str[idx]) == 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool is_digit(char *str, int len)
+{
+    int idx;
+    
+    for(idx = 0; idx < len; idx++){
+        if (isdigit(str[idx]) == 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static pid_t get_ppid(pid_t pid, bool show)
 {
     struct stat st;
     char path[MAX_TMPBUF] = {0};
     char buf[MAX_TMPBUF] = {0};
     char pname[MAX_TMPBUF] = {0};
     pid_t ppid = 0;
-
+ 
     sprintf(path, "/proc/%d/stat", pid);
     if(stat(path, &st) != 0) {
         return 0;
@@ -41,145 +85,134 @@ static pid_t get_ppid(pid_t pid)
 
     sscanf(buf, "%*d %*c%s %*c %d %*s", pname, &ppid);
     pname[strlen(pname) - 1] = '\0';
-
-    if(ppid == 0) {
-        return 0;
+ 
+    if (show) {
+        if (g_print_name == true) {
+            printf("%s[%d]\n", pname, pid);
+        } else {
+            printf("%d\n", pid);
+        }
     }
 
-    if (g_print_name == true) {
-        printf("%s[%d]\n", pname, pid);
-    } else {
-        printf("%d\n", pid);
+    if(pid == g_stop_pid) {
+        return 0;
     }
 
     return ppid;
 }
 
-static int print_ppid(int pid)
+static void print_info(int pid)
 {
     int ret;
 
-    pid_t ppid = get_ppid(pid);
-    if(ppid == 0) {
-        return 1;
+    pid_t next = get_ppid(pid, true);
+    if(!next) {
+        return;
     }
 
-    if(ppid == 1) {
+#if 0
+    if(next == 1) {
         /* systemd */
-        return 0;
-    } else if(ppid == 2) {
+        return;
+    } else if(next == 2) {
         /* kthreadd */
-        return 0; 
+        return; 
     }
+#endif
 
-    return print_ppid(ppid);
+    print_info(next);
 }
 
 int main(int argc, char **argv)  
 {
     int idx, ret = 0;
-    pid_t ppid = 0;
-    bool isdigit = true;
-    char buf[MAX_TMPBUF] = {0};
-
-    if(argc < 2) {
-        g_self_pid = syscall(__NR_gettid);
-
-        ppid = get_ppid(g_self_pid);
-        if(ppid == 0) {
-            return 1;
-        }
-
-        ret = print_ppid(ppid);
-    } else if (argc == 2) {
-        isdigit = true;
-        memcpy(buf, argv[1], MAX_TMPBUF);
-        for(idx = 0; buf[idx]; idx++){
-            if (!isdigit(buf[idx])) {
-                isdigit = false;
+    pid_t cpid, ppid;
+    bool show_self;
+    int opt, option_index;
+  
+    char *string = "hvnsu:";
+    static struct option long_options[] =
+    {
+        {"help",    no_argument,       NULL, 'h'},
+        {"version", no_argument,       NULL, 'v'},
+        {"name",    no_argument,       NULL, 'n'},
+        {"self",    no_argument,       NULL, 's'},
+        {"until",   required_argument, NULL, 'u'},
+    };
+    
+    cpid = 0;
+    show_self = false;
+    while((opt = getopt_long(argc, argv, string, long_options, &option_index)) != -1) {
+        switch(opt) {
+            case 'h':
+                help_usage();
+                exit(EXIT_SUCCESS);
+            case 'v':
+                printf("ppid version: %s\n", VERSION);
+                exit(EXIT_SUCCESS);
+            case 'n':
+                g_print_name = true;
                 break;
+            case 's':
+                show_self = true;
+                break;
+            case 'u':
+                if (!optarg) {
+                    help_usage();
+                    goto error;
+                }
+
+                if (is_digit(optarg, strlen(optarg))) {
+                    g_stop_pid = strtol(optarg, NULL, 10);
+                } else {
+                    help_usage();
+                    goto error;
+                }
+                break;
+            default:
+                help_usage();
+                goto error;
+        }
+    }
+ 
+    if (optind < argc) {
+        for (idx = optind; idx < argc; idx++) {
+            if (is_digit(argv[idx], strlen(argv[idx]))) {
+                cpid = strtol(argv[idx], NULL, 10);
+                if (show_self) {
+                    ppid = cpid;
+                } else {
+                    ppid = get_ppid(cpid, false);
+                    if(ppid == 0) {
+                        goto error;
+                    }
+                }
+
+                print_info(ppid);
+            } else {
+                goto error;
             }
         }
+    } else {
+        if (!cpid) {
+            cpid = syscall(__NR_gettid);
+        }
 
-        if (isdigit) {
-            g_self_pid  = strtol(argv[1], NULL, 10);
-        } else {
-            g_self_pid = syscall(__NR_gettid);
-
-            for(idx = 0; buf[idx]; idx++){
-                if (isalpha(buf[idx]) == 1) {
-                    buf[idx] = tolower(buf[idx]);
+        if (cpid) {
+            if (show_self) {
+                ppid = cpid;
+            } else {
+                ppid = get_ppid(cpid, false);
+                if(ppid == 0) {
+                    goto error;
                 }
             }
 
-            if (strcmp(buf, "true") == 0) {
-                g_print_name  = true;
-            } else if (strcmp(buf, "false") == 0) {
-                g_print_name  = false;
-            } else {
-                printf("invalid pid[%s]\n", argv[1]);
-                return 1;
-            }
+            print_info(ppid);
         }
-
-        ppid = get_ppid(g_self_pid);
-        if(ppid == 0) {
-            return 1;
-        }
-
-        ret = print_ppid(ppid);
-    } else if (argc == 3) {
-        isdigit = true;
-        memcpy(buf, argv[1], MAX_TMPBUF);
-        for(idx = 0; buf[idx]; idx++){
-            if (!isdigit(buf[idx])) {
-                isdigit = false;
-                break;
-            }
-        }
-
-        if (isdigit) {
-            g_self_pid  = strtol(argv[1], NULL, 10);
-        } else {
-            printf("invalid pid[%s]\n", argv[1]);
-            return 1;
-        }
-
-        isdigit = true;
-        memcpy(buf, argv[2], MAX_TMPBUF);
-        for(idx = 0; buf[idx]; idx++){
-            if (!isdigit(buf[idx])) {
-                isdigit = false;
-                break;
-            }
-        }
-
-        if (isdigit) {
-            g_print_name = (bool)strtol(buf, NULL, 10);
-        } else {
-            for(idx = 0; buf[idx]; idx++){
-                if (isalpha(buf[idx]) == 1) {
-                    buf[idx] = tolower(buf[idx]);
-                }
-            }
-
-            if (strcmp(buf, "true") == 0) {
-                g_print_name  = true;
-            } else if (strcmp(buf, "false") == 0) {
-                g_print_name  = false;
-            } else {
-                printf("invalid bool[%s]\n", argv[2]);
-                return 1;
-            }
-        }
-
-        ppid = get_ppid(g_self_pid);
-        if(ppid == 0) {
-            return 1;
-        }
-
-        ret = print_ppid(ppid);
     }
 
-    return ret;
+    return 0;
+error:
+    exit(EXIT_FAILURE);
 }

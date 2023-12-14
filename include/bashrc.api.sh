@@ -103,7 +103,7 @@ function __my_bash_exit
 }
 
 if can_access "ppid";then
-    ppinfos=($(ppid true))
+    ppinfos=($(ppid -n))
     echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
 fi
 

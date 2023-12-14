@@ -446,8 +446,8 @@ function _xfer_thread
     local self_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        local self_pid=${ppids[2]}
-        local ppinfos=($(ppid true))
+        local self_pid=${ppids[1]}
+        local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "xfer bg_thread [${ppinfos[*]}]"
     fi
 

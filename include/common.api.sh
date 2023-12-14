@@ -151,7 +151,7 @@ function import_all
     local parent_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        local parent_pid=${ppids[2]}
+        local parent_pid=${ppids[1]}
     fi
 
     local import_file="/tmp/export.${parent_pid}"
