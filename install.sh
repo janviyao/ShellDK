@@ -352,6 +352,9 @@ function inst_vim
         fi
 
         install_from_make "${make_dir}" "${conf_paras}"
+        if [ $? -ne 0 ];then
+            return 1
+        fi
 
         sudo_it rm -f /usr/local/bin/vim
         can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
