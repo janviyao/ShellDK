@@ -182,8 +182,8 @@ function inst_env
         fi
     done
 
-    must_deps=("ppid" "fstat" "chk_passwd" "tig")
-    for spec in ${must_deps[*]}
+    local comm_tools=("ppid" "fstat" "chk_passwd" "perror" "tig")
+    for spec in ${comm_tools[*]}
     do
         if ! install_from_spec "${spec}";then
             return 1

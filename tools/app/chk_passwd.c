@@ -1,33 +1,35 @@
 #define _GNU_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <pwd.h>
-#include <shadow.h>
-#include <sys/types.h>
+#include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <shadow.h>
 
-#define DBG()                                   \
-    do {                                        \
-        char buf[100];                          \
-        sprintf (buf, "error: %d\n", __LINE__); \
-        perror (buf);                           \
+#define DEBUG(str)                                             \
+    do {                                                       \
+        int err = errno;                                       \
+        char buf[BUFSIZ];                                      \
+        sprintf (buf, "[%s:%d] %s ", __func__, __LINE__, str); \
+        errno = err;                                           \
+        perror (buf);                                          \
     } while (0)
 
-void help(void) 
+static void help_usage(void)
 {
     printf("chk_passwd [usr-name] [usr-password]\n");
 }
 
 int main(int argc, char *argv[])
 {
+    char *salt;
     char *usrname, *password;
     struct spwd *shadow_entry;
-    char *salt;
 
     if(argc != 3) {
-        help();
+        help_usage();
         return 2;
     }
 
@@ -37,13 +39,13 @@ int main(int argc, char *argv[])
     /* Read the correct hash from the shadow entry */
     shadow_entry = getspnam(usrname);
     if(shadow_entry == NULL) {
-        DBG();
+        DEBUG("user shadow null");
         return 1;
     }
-    
+
     salt = crypt(password, shadow_entry->sp_pwdp);
     if(salt == NULL) {
-        DBG();
+        DEBUG("crypt fail");
         return 2;
     }
 

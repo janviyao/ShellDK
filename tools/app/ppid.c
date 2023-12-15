@@ -1,20 +1,28 @@
 #include <stdio.h>  
-#include <getopt.h>
 #include <stdlib.h>  
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>  
 #include <ctype.h>
 #include <string.h>
-
+#include <limits.h>
 #include <fcntl.h>  
+#include <getopt.h>
 #include <sys/time.h>  
 #include <sys/types.h>  
 #include <sys/stat.h>  
 
-#define VERSION     "1.1"
-#define MAX_TMPBUF  128
-#define __NR_gettid 186
+#define VERSION      "1.1"
+#define __NR_gettid  186
+
+#define DEBUG(str)                                             \
+    do {                                                       \
+        int err = errno;                                       \
+        char buf[BUFSIZ];                                      \
+        sprintf (buf, "[%s:%d] %s ", __func__, __LINE__, str); \
+        errno = err;                                           \
+        perror (buf);                                          \
+    } while (0)
 
 static bool  g_print_name = false;
 static pid_t g_stop_pid = 0;
@@ -64,9 +72,9 @@ static bool is_digit(char *str, int len)
 static pid_t get_ppid(pid_t pid, bool show)
 {
     struct stat st;
-    char path[MAX_TMPBUF] = {0};
-    char buf[MAX_TMPBUF] = {0};
-    char pname[MAX_TMPBUF] = {0};
+    char path[PATH_MAX] = {0};
+    char buf[BUFSIZ] = {0};
+    char pname[NAME_MAX] = {0};
     pid_t ppid = 0;
  
     sprintf(path, "/proc/%d/stat", pid);

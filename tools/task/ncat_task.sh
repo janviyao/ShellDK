@@ -134,19 +134,6 @@ function remote_ncat_alive
     fi
 }
 
-function local_ncat_alive
-{
-    if can_access "nc";then
-        if process_exist "nc";then
-            return 0
-        else
-            return 1
-        fi
-    else
-        return 1
-    fi
-}
-
 function ncat_send_msg
 {
     local ncat_addr="$1"

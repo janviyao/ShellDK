@@ -10,6 +10,7 @@ glibc-common;        math_bool 'true';cd ${MY_VIM_DIR}/deps;install_from_rpm 'gl
 
 ppid;                ! can_access 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;mv -f ppid ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/ppid
 fstat;               ! can_access 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;mv -f fstat ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/fstat
+perror;              ! can_access 'perror';cd ${MY_VIM_DIR}/tools/app;gcc perror.c -g -o perror;mv -f perror ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/perror
 chk_passwd;          ! can_access 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;mv -f chk_passwd ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/chk_passwd
 deno;                ! can_access 'deno';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno
 
