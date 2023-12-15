@@ -10,6 +10,15 @@ function is_root
     fi
 }
 
+function have_sudoed
+{
+    if echo | sudo -S -u 'root' echo &> /dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function check_passwd
 {
     local usrnam="$1"
@@ -299,6 +308,11 @@ function sudo_it
         return $?
     else
         echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
+        if have_sudoed;then
+            sudo bash -c "${cmd}"
+            return $?
+        fi
+
         if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
             if ! account_check "${MY_NAME}" false;then
                 echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
