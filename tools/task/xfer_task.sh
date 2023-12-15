@@ -29,7 +29,7 @@ function do_rsync
 
     local sync_src=${xfer_src}
     local sync_des=${xfer_des}
-    local sync_cmd="cd ."
+    local sync_cmd="LOCAL${GBL_SPF3}cd ."
 
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
@@ -53,7 +53,7 @@ function do_rsync
                         xfer_dir=$(fname2path "${xfer_dir}")
                     fi
 
-                    sync_cmd="<ENV>"
+                    sync_cmd="REMOTE${GBL_SPF3}<DIR>=${xfer_dir}"
                 elif [[ ${x_direct} == "FROM" ]];then
                     if ! match_regex "${xfer_src}" "\d+\.\d+\.\d+\.\d+";then
                         sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
@@ -328,17 +328,17 @@ function _xfer_thread_main
         if ! is_me ${USR_NAME};then \
             source $MY_VIM_DIR/bashrc; \
         fi;\
-        if ! test -d '${xfer_dir}';then\
-            sudo_it mkdir -p '${xfer_dir}';\
-            sudo_it chmod +w '${xfer_dir}';\
-            if ! file_owner_is '${xfer_dir}' '${USR_NAME}';then\
-                sudo_it chown ${USR_NAME} '${xfer_dir}';\
+        if ! test -d '<DIR>';then\
+            sudo_it mkdir -p '<DIR>';\
+            sudo_it chmod +w '<DIR>';\
+            if ! file_owner_is '<DIR>' '${USR_NAME}';then\
+                sudo_it chown ${USR_NAME} '<DIR>';\
             fi;\
         else\
-            if ! test -w '${xfer_dir}';then\
-                sudo_it chmod +w '${xfer_dir}';\
-                if ! file_owner_is '${xfer_dir}' '${USR_NAME}';then\
-                    sudo_it chown ${USR_NAME} '${xfer_dir}';\
+            if ! test -w '<DIR>';then\
+                sudo_it chmod +w '<DIR>';\
+                if ! file_owner_is '<DIR>' '${USR_NAME}';then\
+                    sudo_it chown ${USR_NAME} '<DIR>';\
                 fi;\
             fi;\
         fi;\
@@ -355,17 +355,17 @@ function _xfer_thread_main
             fi;\
             exit 1;\
         fi;\
-        if ! test -d '${xfer_dir}';then \
-            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '${xfer_dir}' &> /dev/null;\
-            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}' &> /dev/null;\
-            if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
-                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '${xfer_dir}' &> /dev/null;\
+        if ! test -d '<DIR>';then \
+            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '<DIR>' &> /dev/null;\
+            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null;\
+            if [[ \$(ls -l -d '<DIR>' | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
+                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null;\
             fi;\
         else\
-            if ! test -w '${xfer_dir}';then \
-                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '${xfer_dir}' &> /dev/null;\
-                if [[ \$(ls -l -d ${xfer_dir} | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
-                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '${xfer_dir}' &> /dev/null;\
+            if ! test -w '<DIR>';then \
+                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null;\
+                if [[ \$(ls -l -d <DIR> | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
+                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null;\
                 fi;\
             fi;\
         fi;\
@@ -416,15 +416,35 @@ function _xfer_thread_main
             echo_debug "xfer_src: [${xfer_src}]"
             echo_debug "xfer_des: [${xfer_des}]"
 
-            if [[ "${xfer_cmd}" == '<ENV>' ]];then
-                xfer_cmd="${sync_env}"
+            local cmd_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 1) 
+            if [[ "${cmd_act}" == 'REMOTE' ]];then
+                local xfer_env="${sync_env}"
+
+                local index=2
+                local next_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" ${index}) 
+                while [ -n "${next_act}" ]
+                do
+                    local key=$(string_split "${next_act}" "=" 1) 
+                    local value=$(string_split "${next_act}" "=" 2) 
+                    echo_debug "key: [${key}] value: [${value}]"
+
+                    if [ -n "${key}" ];then
+                        xfer_env=$(string_replace "${xfer_env}" "${key}" "${value}")
+                    fi
+
+                    let index++
+                    next_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" ${index}) 
+                done
 
                 local ncat_port=$(ncat_port_get)
-                if [[ "${xfer_cmd}" =~ '<PORT>' ]];then
-                    xfer_cmd=$(string_replace "${xfer_cmd}" "<PORT>" "${ncat_port}")
+                if [[ "${xfer_env}" =~ '<PORT>' ]];then
+                    xfer_env=$(string_replace "${xfer_env}" "<PORT>" "${ncat_port}")
                 fi
-                #echo_debug "xfer_cmd: [${xfer_cmd}]"
+                xfer_cmd="${xfer_env}"
+            elif [[ "${cmd_act}" == 'LOCAL' ]];then
+                xfer_cmd=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 2-) 
             fi
+            #echo_debug "xfer_cmd: [${xfer_cmd}]"
 
             can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
