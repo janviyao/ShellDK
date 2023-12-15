@@ -110,9 +110,9 @@ function rsync_to
     fi
 
     local xfer_ips=($@)
-    if [ -z "${xfer_ips[*]}" ];then        
-        xfer_ips=($(get_hosts_ip))
-    fi
+    #if [ -z "${xfer_ips[*]}" ];then        
+    #    xfer_ips=($(get_hosts_ip))
+    #fi
 
     if ! can_access "${xfer_src}";then
         echo_erro "{ ${xfer_src} } not exist"
@@ -183,9 +183,9 @@ function rsync_p2p_to
     fi
 
     local xfer_ips=($@)
-    if [ -z "${xfer_ips[*]}" ];then        
-        xfer_ips=($(get_hosts_ip))
-    fi
+    #if [ -z "${xfer_ips[*]}" ];then        
+    #    xfer_ips=($(get_hosts_ip))
+    #fi
 
     if ! can_access "${xfer_src}";then
         echo_erro "{ ${xfer_src} } not exist"
@@ -382,7 +382,7 @@ function _xfer_thread_main
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
-                echo_erro "pipe invalid: [${ack_pipe}]"
+                echo_debug "pipe invalid: [${ack_pipe}]"
                 continue
             fi
         fi
