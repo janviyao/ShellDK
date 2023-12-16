@@ -30,9 +30,13 @@ function file_privilege
 
 function can_access
 {
+    local bash_options="$-"
+    set +x
+
     local xfile="$1"
 
     if [ -z "${xfile}" ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
@@ -41,10 +45,12 @@ function can_access
         for file in ${xfile}
         do
             if match_regex "${file}" "\*$";then
+                [[ "${bash_options}" =~ x ]] && set -x
                 return 1
             fi
 
             if can_access "${file}"; then
+                [[ "${bash_options}" =~ x ]] && set -x
                 return 0
             fi
         done
@@ -55,33 +61,45 @@ function can_access
     fi
 
     if [ -e ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -f ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -d ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -r ${xfile} -o -w ${xfile} -o -x ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -h ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -L ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -b ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -c ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -s ${xfile} ];then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
 
     if ls --color=never ${xfile} &> /dev/null;then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
 
     if which ${xfile} &> /dev/null;then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
   
+    [[ "${bash_options}" =~ x ]] && set -x
     return 1
 }
 
@@ -864,14 +882,12 @@ function real_path
 
 function path2fname
 {
-    local file_name=""
-
     local full_path=$(real_path "$1")
     if [ -z "${full_path}" ];then
         return 1
     fi
 
-    file_name=$(basename ${full_path})
+    local file_name=$(basename --multiple ${full_path})
     if [ $? -ne 0 ];then
         echo_file "${LOG_ERRO}" "basename fail: ${full_path}"    
         return 1

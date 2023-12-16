@@ -1,37 +1,39 @@
 #!/bin/bash
 #echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
-CMD_STR=$(para_pack "$@")
+CMD_STR="$@"
+
+if ! test -d "$MY_VIM_DIR";then
+    # root user
+    if [ $UID -eq 0 ]; then
+        bash -c "${CMD_STR}"
+        exit $?
+    fi
+
+    # password bypass
+    if ( echo | sudo -S -u 'root' echo &> /dev/null ); then
+        sudo bash -c "${CMD_STR}"
+        exit $?
+    fi
+
+    if [ -n "${USR_PASSWORD}" ]; then
+        echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${CMD_STR}"
+    else
+        if test -x ${SUDO_ASKPASS};then
+            sudo -A bash -c "${CMD_STR}"
+        else
+            sudo bash -c "${CMD_STR}"
+        fi
+    fi
+
+    exit $?
+fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if ! account_check ${MY_NAME};then
-        echo_erro "Username or Password check fail"
-        eval "${CMD_STR}"
+        echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+        sudo bash -c "${CMD_STR}"
         exit $?
     fi
-fi
-
-if is_root; then
-    eval "${CMD_STR}"
-    exit $?
-else 
-    if ! which sudo &> /dev/null; then
-        echo_debug "sudo not supported"
-        eval "${CMD_STR}"
-        exit $?
-    fi
-
-    if ! which expect &> /dev/null; then
-        echo_debug "expect not supported"
-        sudo_it "${CMD_STR}"
-        exit $?
-    fi
-
-    echo_debug "[sudo.sh] ${CMD_STR}"
-fi
-
-EXPECT_EOF=""
-if is_root; then
-    EXPECT_EOF="expect eof"
 fi
 
 # trap - EXIT : prevent from removing global directory
@@ -52,25 +54,41 @@ if test -d '$MY_VIM_DIR';then \
 fi\
 "
 
+ENV_CMD="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?"
+
+echo_debug "[sudo.sh] ${CMD_STR}"
 if have_sudoed;then
-    sudo_cmd="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?;"
-    sudo bash -c "${sudo_cmd}"
+    sudo bash -c "${ENV_CMD}"
     exit $?
 fi
 
-if declare -F sudo_it &>/dev/null && test -x ${GBL_BASE_DIR}/askpass.sh;then
-    sudo_cmd="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?;"
-    sudo_it "${sudo_cmd}"
+if is_root; then
+    bash -c "${ENV_CMD}"
+    exit $?
+else
+    if ! which sudo &> /dev/null; then
+        echo_debug "sudo not supported"
+        eval "${ENV_CMD}"
+        exit $?
+    fi
+
+    if ! which expect &> /dev/null; then
+        echo_debug "expect not supported"
+        sudo_it "${ENV_CMD}"
+        exit $?
+    fi
+fi
+
+if test -x ${GBL_BASE_DIR}/askpass.sh;then
+    sudo_it "${ENV_CMD}"
     exit $?
 fi
 
 #RET_VAR="sudo_ret$$"
 #GET_RET="${RET_VAR}=\$?; mdat_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
-GET_RET="export BASH_EXIT=\$?; exit \\\$BASH_EXIT"
-CMD_STR="${PASS_ENV}; (${CMD_STR}); ${GET_RET};"
+EXP_CMD="${ENV_CMD}; exit \\\$BASH_EXIT;"
 
 trap "exit 1" SIGINT SIGTERM SIGKILL
-
 # expect -d # debug expect
 expect << EOF
     set timeout ${SSH_TIMEOUT}
@@ -79,7 +97,7 @@ expect << EOF
     #exp_internal 0 #disable debug
     #exp_internal -f ~/.expect.log 0 # debug into file and no echo
 
-    spawn -noecho sudo bash -c "${CMD_STR}"
+    spawn -noecho sudo bash -c "${EXP_CMD}"
     expect {
         "*username*:*" { send "${USR_NAME}\r"; exp_continue }
         "*password*:*" { send "${USR_PASSWORD}\r"; exp_continue }

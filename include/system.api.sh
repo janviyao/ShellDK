@@ -12,6 +12,10 @@ function is_root
 
 function have_sudoed
 {
+    if is_root; then
+        return 0
+    fi
+
     if echo | sudo -S -u 'root' echo &> /dev/null; then
         return 0
     else
@@ -45,7 +49,7 @@ function run_timeout
 
     local time_s="${1:-60}"
     shift
-    local cmd=$(para_pack "$@")
+    local cmd="$@"
 
     if [ -n "${cmd}" ];then
         echo_debug "timeout(${time_s}s): ${cmd}"
@@ -68,7 +72,7 @@ function run_lock
     local lockid=$1
     shift
 
-    local cmd=$(para_pack "$@")
+    local cmd="$@"
     (
         flock -x ${lockid}  #flock文件锁，-x表示独享锁
         echo_file "${LOG_DEBUG}" "[run_lock] ${cmd}"
@@ -253,9 +257,17 @@ function system_decrypt
 
 function account_check
 {
+    local bash_options="$-"
+    set +x
+
     local usr_name="$1"
     local can_input=${2:-true}
     local input_val=""
+
+    if is_root; then
+        [[ "${bash_options}" =~ x ]] && set -x
+        return 0
+    fi
 
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
         if can_access "${GBL_BASE_DIR}/.${usr_name}";then
@@ -275,7 +287,7 @@ function account_check
             export USR_NAME=${input_val:-${USR_NAME}}
 
             local input_val=$(input_prompt "" "input password" "")
-            echo ""
+            #echo ""
 
             if [ -n "${input_val}" ];then
                 export USR_PASSWORD="${input_val}"
@@ -287,54 +299,51 @@ function account_check
                 echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
                 echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
                 chmod +x ${GBL_BASE_DIR}/askpass.sh 
-            else
-                return 1
+
+                [[ "${bash_options}" =~ x ]] && set -x
+                return 0
             fi
-        else
-            return 1
         fi
+
+        [[ "${bash_options}" =~ x ]] && set -x
+        return 1
     fi
 
+    [[ "${bash_options}" =~ x ]] && set -x
     return 0
 }
 
 function sudo_it
 {
-    local cmd=$(para_pack "$@")
+    local cmd="$@"
 
+    echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
     if is_root; then
-        echo_file "${LOG_DEBUG}" "[ROOT] ${cmd}"
         eval "${cmd}"
         return $?
     else
-        echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
         if have_sudoed;then
             sudo bash -c "${cmd}"
             return $?
         fi
 
-        if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
-            if ! account_check "${MY_NAME}" false;then
-                echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
-                #bash -c "${cmd}"
-                return 1
-            fi
-
-            if can_access "${GBL_BASE_DIR}/askpass.sh";then
-                sudo -A bash -c "${cmd}"
-                return $?
-            else
-                if [ -n "${USR_PASSWORD}" ]; then
-                    echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
-                    return $?
-                else
-                    bash -c "${cmd}"
-                    return $?
-                fi
-            fi
-        else
+        if test -x ${GBL_BASE_DIR}/askpass.sh;then
             sudo -A bash -c "${cmd}"
             return $?
+        else
+            if ! account_check "${MY_NAME}" false;then
+                echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+                sudo bash -c "${cmd}"
+                return $?
+            fi
+
+            if [ -n "${USR_PASSWORD}" ]; then
+                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${cmd}"
+                return $?
+            else
+                sudo bash -c "${cmd}"
+                return $?
+            fi
         fi
     fi
 

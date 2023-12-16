@@ -49,7 +49,7 @@ function k8s_pod_cmd
         return 1
     fi
     shift
-    local cmd_str=$(para_pack "$@")
+    local cmd_str="$@"
     
     local namespace=$(kubectl get pod -A -o wide | grep -F "${pod_name}" | awk '{ print $1 }')
     if [ -z "${namespace}" ];then

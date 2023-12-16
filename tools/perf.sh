@@ -53,7 +53,7 @@ function acquire_result
 function construct_pid
 {
     local para_cnt=$#
-    local para_str=$(para_pack "$@")
+    local para_str="$@"
     echo_file "${LOG_DEBUG}" "construct_pid: ${para_str}"
 
     if [ ${para_cnt} -eq 0 ];then

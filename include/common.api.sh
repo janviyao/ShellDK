@@ -349,6 +349,9 @@ function select_one
 
 function para_pack
 {
+    local bash_options="$-"
+    set +x
+
     local cmd="$1"
 
     shift
@@ -366,12 +369,13 @@ function para_pack
         shift
     done
 
+    [[ "${bash_options}" =~ x ]] && set -x
     echo "${cmd}"
 }
 
 function loop2success
 {
-    local cmd=$(para_pack "$@")
+    local cmd="$@"
     echo_debug "${cmd}"
 
     while true
@@ -387,7 +391,7 @@ function loop2success
 
 function loop2fail
 {
-    local cmd=$(para_pack "$@")
+    local cmd="$@"
     echo_debug "${cmd}"
 
     while true

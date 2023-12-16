@@ -27,20 +27,29 @@ function is_float
 
 function math_bool
 {
+    local bash_options="$-"
+    set +x
+
     local expr="$@"
 
     if [[ $# -gt 1 ]];then
         math_expr_if "${expr}"
-        return $?
+        local ret=$?
+        [[ "${bash_options}" =~ x ]] && set -x
+        return ${ret}
     fi
 
     if [[ "${expr,,}" == "yes" ]] || [[ "${expr,,}" == "true" ]] || [[ "${expr,,}" == "y" ]] || [[ "${expr,,}" == "1" ]]; then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [[ "${expr,,}" == "no" ]] || [[ "${expr,,}" == "false" ]] || [[ "${expr,,}" == "n" ]] || [[ "${expr,,}" == "0" ]]; then
+        [[ "${bash_options}" =~ x ]] && set -x
         return 1
     else
         math_expr_if "${expr}"
-        return $?
+        local ret=$?
+        [[ "${bash_options}" =~ x ]] && set -x
+        return ${ret}
     fi
 }
 

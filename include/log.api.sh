@@ -48,6 +48,9 @@ function cecho
 
 function echo_file
 {
+    local bash_options="$-"
+    set +x
+
     local echo_level="$1"
     shift
 
@@ -55,6 +58,7 @@ function echo_file
         if [ ${echo_level} -le ${LOG_ERRO} ];then
             echo -e "$(print_backtrace)" >> ${BASH_LOG}
         fi
+        [[ "${bash_options}" =~ x ]] && set -x
         return
     fi
 
@@ -93,6 +97,7 @@ function echo_file
     if [ ${echo_level} -le ${LOG_ERRO} ];then
         echo -e "$(print_backtrace)" >> ${BASH_LOG}
     fi
+    [[ "${bash_options}" =~ x ]] && set -x
 }
 
 function echo_header
@@ -124,9 +129,13 @@ function echo_header
 
 function echo_erro
 {
+    local bash_options="$-"
+    set +x
+
     #local para=$(string_replace "$@" "${MY_HOME}/" "")
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_ERRO} ];then
         echo_file "${LOG_ERRO}" "$@"
+        [[ "${bash_options}" =~ x ]] && set -x
         return
     fi
 
@@ -146,12 +155,17 @@ function echo_erro
         echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
     echo_file "${LOG_ERRO}" "$@"
+    [[ "${bash_options}" =~ x ]] && set -x
 }
 
 function echo_info
 {
+    local bash_options="$-"
+    set +x
+
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_INFO} ];then
         echo_file "${LOG_INFO}" "$@"
+        [[ "${bash_options}" =~ x ]] && set -x
         return
     fi
 
@@ -170,12 +184,17 @@ function echo_info
         echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
     fi
     echo_file "${LOG_INFO}" "$@"
+    [[ "${bash_options}" =~ x ]] && set -x
 }
 
 function echo_warn
 {
+    local bash_options="$-"
+    set +x
+
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_WARN} ];then
         echo_file "${LOG_WARN}" "$@"
+        [[ "${bash_options}" =~ x ]] && set -x
         return
     fi
 
@@ -194,12 +213,17 @@ function echo_warn
         echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
     fi
     echo_file "${LOG_WARN}" "$@"
+    [[ "${bash_options}" =~ x ]] && set -x
 }
 
 function echo_debug
 {
+    local bash_options="$-"
+    set +x
+
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_DEBUG} ];then
         echo_file "${LOG_DEBUG}" "$@"
+        [[ "${bash_options}" =~ x ]] && set -x
         return
     fi
 
@@ -218,6 +242,7 @@ function echo_debug
         echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
     fi
     echo_file "${LOG_DEBUG}" "$@"
+    [[ "${bash_options}" =~ x ]] && set -x
 }
 
 function echo_iferror
