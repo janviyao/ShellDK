@@ -88,6 +88,6 @@ if string_contain "${BTASK_LIST}" "ctrl";then
 fi
 
 old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-[ -n "${old_spec}" ] && trap "trap - ERR; ${old_spec}; if __var_defined BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
+[ -n "${old_spec}" ] && trap "trap - ERR; ${old_spec}; if __var_defined BASH_EXIT;then exit \${BASH_EXIT}; fi;" EXIT
 [ -z "${old_spec}" ] && trap "trap - ERR; if __var_defined BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
 unset old_spec
