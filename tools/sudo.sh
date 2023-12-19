@@ -3,29 +3,8 @@
 CMD_STR="$@"
 
 if ! test -d "$MY_VIM_DIR";then
-    # root user
-    if [ $UID -eq 0 ]; then
-        bash -c "${CMD_STR}"
-        exit $?
-    fi
-
-    # password bypass
-    if ( echo | sudo -S -u 'root' echo &> /dev/null ); then
-        sudo bash -c "${CMD_STR}"
-        exit $?
-    fi
-
-    if [ -n "${USR_PASSWORD}" ]; then
-        echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${CMD_STR}"
-    else
-        if test -x ${SUDO_ASKPASS};then
-            sudo -A bash -c "${CMD_STR}"
-        else
-            sudo bash -c "${CMD_STR}"
-        fi
-    fi
-
-    exit $?
+    MY_VIM_DIR=$(cd $(dirname $0)/..;pwd)
+    source $MY_VIM_DIR/bashrc
 fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then

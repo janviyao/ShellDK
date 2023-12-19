@@ -269,6 +269,11 @@ function account_check
         return 0
     fi
 
+    if have_sudoed; then
+        [[ "${bash_options}" =~ x ]] && set -x
+        return 0
+    fi
+
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
         if can_access "${GBL_BASE_DIR}/.${usr_name}";then
             export USR_NAME=${usr_name}
