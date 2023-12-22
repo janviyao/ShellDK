@@ -10,6 +10,10 @@ function regex_2str
         return 1
     fi
 
+    if [ -z "${regex}" ];then
+        return 0
+    fi
+
     local result="${regex}"
     local reg_chars=('\/' '\\' '\*' '\+' '\.' '\[' '\]' '\{' '\}' '\(' '\)')
     local char
@@ -417,6 +421,28 @@ function string_same
     return 1
 }
 
+function string_insert
+{
+    local string="$1"
+    local substr="$2"
+    local posstr="${3:-0}"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: insert position index"
+        return 1
+    fi
+
+    if ! is_integer "${posstr}";then
+        echo_file "${LOG_ERRO}" "insert index { ${posstr} } invalid"
+        echo "${string}"
+        return 1
+    fi
+
+    string="${string:0:posstr}${substr}${string:posstr}"
+    echo "${string}"
+    return 0
+}
+
 function string_trim
 {
     local string="$1"
@@ -433,30 +459,41 @@ function string_trim
         return 1
     fi
 
-    substr=$(regex_2str "${substr}")
+    if [ -n "${substr}" ];then
+        substr=$(regex_2str "${substr}")
+    fi
+
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then 
-        local newsub=$(string_regex "${string}" "^(${substr})+")
-        if [ -n "${newsub}" ]; then
-            #local sublen=${#substr}
-            #let sublen++
-            #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
-            newsub=$(regex_2str "${newsub}")
-            string="${string#${newsub}}"
+        if [ -n "${substr}" ];then
+            local newsub=$(string_regex "${string}" "^(${substr})+")
+            if [ -n "${newsub}" ]; then
+                #local sublen=${#substr}
+                #let sublen++
+                #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
+                newsub=$(regex_2str "${newsub}")
+                string="${string#${newsub}}"
+            fi
+        else
+            string="${string#?}"
         fi
     fi
 
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 2 ]];then
-        local newsub=$(string_regex "${string}" "(${substr})+$")
-        if [ -n "${newsub}" ]; then
-            #local total=${#string}
-            #local sublen=${#substr}
-            #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
-            if [[ "${string}" =~ '\*' ]];then
-                string=$(string_replace "${string}" '\*' '\*' true)
-            fi
+        if [ -n "${substr}" ];then
+            local newsub=$(string_regex "${string}" "(${substr})+$")
+            if [ -n "${newsub}" ]; then
+                #local total=${#string}
+                #local sublen=${#substr}
+                #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
+                if [[ "${string}" =~ '\*' ]];then
+                    string=$(string_replace "${string}" '\*' '\*' true)
+                fi
 
-            newsub=$(regex_2str "${newsub}")
-            string="${string%${newsub}}"
+                newsub=$(regex_2str "${newsub}")
+                string="${string%${newsub}}"
+            fi
+        else
+            string="${string%?}"
         fi
     fi
 
