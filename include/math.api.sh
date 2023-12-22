@@ -255,6 +255,82 @@ function math_hex2bin
     return 0
 }
 
+function math_lshift
+{
+    local value="$1"
+    local leftv="$2"
+
+    if [[ $# -lt 2 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
+        return 1
+    fi
+
+    if ! is_integer "${value}";then
+        echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
+        return 1
+    fi
+
+    if ! is_integer "${leftv}";then
+        echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
+        return 1
+    fi
+    
+    if [ ${value} -eq 0 ];then
+        echo "0"
+        return 0
+    fi
+
+    local result=$(math_dec2bin ${value})
+    while [ ${leftv} -gt 0 ]
+    do
+        result="${result}0"
+        let leftv--
+    done
+    [ -n "${result}" ] && echo "${result}"
+
+    return 0
+}
+
+function math_rshift
+{
+    local value="$1"
+    local rightv="$2"
+
+    if [[ $# -lt 2 ]];then
+        echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
+        return 1
+    fi
+
+    if ! is_integer "${value}";then
+        echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
+        return 1
+    fi
+
+    if ! is_integer "${rightv}";then
+        echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
+        return 1
+    fi
+
+    if [ ${value} -eq 0 ];then
+        echo "0"
+        return 0
+    fi
+
+    local result=$(math_dec2bin ${value})
+    while [ ${rightv} -gt 0 ]
+    do
+        result=${result%?}
+        if [ -z "${result}" ];then
+            result="0"
+            break
+        fi
+        let rightv--
+    done
+    [ -n "${result}" ] && echo "${result}"
+
+    return 0
+}
+
 function math_not
 {
     local es=0
