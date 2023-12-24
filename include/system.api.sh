@@ -355,7 +355,7 @@ function sudo_it
     return 250
 }
 
-function linux_sys
+function dump_system
 {
     local value=""
     local col_width1="15"
@@ -399,142 +399,144 @@ function linux_sys
     fi
 }
 
-function linux_net
+function dump_network
 {
     local value=""
     local col_width1="28"
     local col_width2="18"
 
-    local ndev
-    if can_access "ethtool";then
-        local ip_array=($(get_hosts_ip))
-        local half_wd=$((col_width1/2 - 3))
-        local tmp_file="$(file_temp)"
-        local -a net_arr=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
-        for ndev in ${net_arr[*]}
-        do
-            printf "[%-${half_wd}s %-5s %${half_wd}s]: \n" "*********" "${ndev}" "*********"
- 
-            local speed=$(ethtool ${ndev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
-            local nmode=$(ethtool ${ndev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
-            if [[ -n "${speed}" ]] || [[ -n "${nmode}" ]];then
-                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Performence:" "Speed: ${speed}" "Duplex: ${nmode}"
-            fi
+    local ip_list=($(get_hosts_ip))
+    local half_wd=$((col_width1/2 - 3))
+    local tmp_file="$(file_temp)"
+    local -a device_list=($(ip a | awk -F: '{ if (NF==3) { printf $2 }}'))
 
-            local local_mtu=$(ifconfig ${ndev} 2>/dev/null | grep "${ndev}:" | grep -P "mtu\s+\d+" -o | awk '{ print $2 }')
-            local gateway_mtu=""
-            if [ ${#ip_array[*]} -gt 0 ];then
-                local pkg_size=$((local_mtu - 20 - 8))
-                if ping -s ${pkg_size} -M do ${ip_array[0]} -c 1 &> /dev/null;then
-                    gateway_mtu=">=${local_mtu}"
-                else
-                    gateway_mtu="< ${local_mtu} exception"
-                fi
-            fi
-            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Max Transmission Unit:" "local: ${local_mtu}" "gateway: ${gateway_mtu}"
-
-            local ringbuffer_info=$(ethtool -g ${ndev} 2>/dev/null)
-            local ringbuffer_rx=($(echo "${ringbuffer_info}" | grep "RX:" | grep -P "\d+" -o))
-            local ringbuffer_tx=($(echo "${ringbuffer_info}" | grep "TX:" | grep -P "\d+" -o))
- 
-            if [[ -n "${ringbuffer_rx[*]}" ]] || [[ -n "${ringbuffer_tx[*]}" ]];then
-                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Ring Buffer:" "RX: ${ringbuffer_rx[1]}/${ringbuffer_rx[0]}" "TX: ${ringbuffer_tx[1]}/${ringbuffer_tx[0]}" 
-            fi
-
-            local discards_info=$(ethtool -S ${ndev} 2>/dev/null | grep "discards")
-            local rx_discards_phy=$(echo "${discards_info}" | grep "rx_discards_" | grep -P "\d+" -o)
-            local tx_discards_phy=$(echo "${discards_info}" | grep "tx_discards_" | grep -P "\d+" -o)
-
-            if [[ -n "${rx_discards_phy}" ]] || [[ -n "${tx_discards_phy}" ]];then
-                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Data Discard:" "RX: ${rx_discards_phy}" "TX: ${tx_discards_phy}" 
-            fi
-
-            # 硬中断合并配置
-            local coalesce_info=$(ethtool -c ${ndev} 2>/dev/null)
-            local adapter_info=$(echo "${coalesce_info}" | grep "Adaptive" | cut -d " " -f 2-)
-            local rx_usecs_info=($(echo "${coalesce_info}" | grep "rx-usecs" | awk '{ print $2 }'))
-            local rx_frame_info=($(echo "${coalesce_info}" | grep "rx-frames" | awk '{ print $2 }'))
-            local tx_usecs_info=($(echo "${coalesce_info}" | grep "tx-usecs" | awk '{ print $2 }'))
-            local tx_frame_info=($(echo "${coalesce_info}" | grep "tx-frames" | awk '{ print $2 }'))
-            if [[ -n "${adapter_info}" ]];then
-                printf "%$((col_width1 + 4))s %-${col_width2}s\n" "HW Interrput:" "Adaptive  ${adapter_info}" 
-                printf "%$((col_width1 + 4))s %-${col_width2}s\n" " " "RX:  time(us)=${rx_usecs_info[0]}  time(us)-irq=${rx_usecs_info[1]}  frames=${rx_frame_info[0]} frames-irq=${rx_frame_info[1]}" 
-                printf "%$((col_width1 + 4))s %-${col_width2}s\n" " " "TX:  time(us)=${tx_usecs_info[0]}  time(us)-irq=${tx_usecs_info[1]}  frames=${tx_frame_info[0]} frames-irq=${tx_frame_info[1]}" 
-            fi
-
-            # 软中断 budget
-            ${SUDO} sysctl -a | grep "net.core.netdev_budget" &> ${tmp_file}
-            local net_budget=($(cat ${tmp_file} | grep -P "\d+" -o))
-            if [ ${#net_budget[*]} -eq 1 ];then
-                printf "%$((col_width1 + 4))s %-${col_width2}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}"
-            elif [ ${#net_budget[*]} -eq 2 ];then
-                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}" "time(us)=${net_budget[1]}"
-            fi
-
-            # 接收处理合并
-            local recv_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "receive-offload")
-            local gro_state=$(echo "${recv_offload}" | grep "generic-" | awk '{ print $2 }')
-            local lro_state=$(echo "${recv_offload}" | grep "large-" | awk '{ print $2 }')
-            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Receive offload:" "GRO: ${gro_state}" "LRO: ${lro_state}" 
-            
-            # 发送处理合并
-            # 发送的数据大于 MTU 的话，会被分片，这个动作可以卸载到网卡, 需要网卡支持TSO
-            local segment_offload=$(ethtool -k ${ndev} 2>/dev/null  | grep "segmentation-offload")
-            local tso_state=$(echo "${segment_offload}" | grep "tcp-" | awk '{ print $2 }')
-            local gso_state=$(echo "${segment_offload}" | grep "generic-" | awk '{ print $2 }')
-            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Segmentation offload:" "TSO: ${tso_state}" "GSO: ${gso_state}" 
-
-            # 多队列网卡 XPS 调优
-            # cat /sys/class/net/eth0/queues/tx-0/xps_cpus
-            # /proc/irq/8/smp_affinity
-
-            # 网卡多队列
-            local channel_info=$(ethtool -l ${ndev} 2>/dev/null)
-            local channel_rx=($(echo "${channel_info}" | grep "RX:" | awk '{ print $2 }'))
-            local channel_tx=($(echo "${channel_info}" | grep "TX:" | awk '{ print $2 }'))
-            local channel_combine=($(echo "${channel_info}" | grep "Combined:" | awk '{ print $2 }'))
-            local channel_other=($(echo "${channel_info}" | grep "Other:" | awk '{ print $2 }'))
-            printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s %-${col_width2}s %-${col_width2}s\n" "RSS Channel:" "RX: ${channel_rx[1]}/${channel_rx[0]}" "TX: ${channel_tx[1]}/${channel_tx[0]}" \
-                "Other: ${channel_other[1]}/${channel_other[0]}" "Combined: ${channel_combine[1]}/${channel_combine[0]}" 
-
-            if string_contain " $@ " "rss";then
-                local cpu_list=$(lscpu | grep "list" | awk '{ print $4 }')
-                local stt_idx=$(echo "${cpu_list}" | awk -F- '{ print $1 }')
-                stt_idx=$((stt_idx + 1))
-                local end_idx=$(echo "${cpu_list}" | awk -F- '{ print $2 }')
-                end_idx=$((end_idx + 1))
-
-                cat /proc/interrupts | grep "${ndev}-" > ${tmp_file}
-                while read line
-                do
-                    if [ -z "${line}" ];then
-                        continue
-                    fi
-
-                    local interrupt_no=$(echo "${line}" | awk '{ print $1 }' | awk -F: '{ print $1 }')
-                    local channel_name=$(echo "${line}" | awk '{ print $NF }')
-
-                    local cpu_int_info=""
-                    for((idx=${stt_idx}; idx <= ${end_idx}; idx++))
-                    do
-                        local interrupt_cnt=$(echo "${line}" | awk "{ print \$$((idx+1)) }")
-                        if [ ${interrupt_cnt} -gt 0 ];then
-                            cpu_int_info=$(printf "CPU-%02d: %d" "$((idx-1))" "${interrupt_cnt}")
-                            break
-                        fi
-                    done
-                    printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "Queue ${channel_name}:" "Int-No: ${interrupt_no}" "${cpu_int_info}" 
-                done < ${tmp_file}
+    printf "%-10s %-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s\n" "Device" "Speed" "Duplex" "Local-MTU" "Gateway-MTU" "rx-buffer" "tx-buffer" "rx-discard" "tx-discard"
+    local net_dev
+    for net_dev in ${device_list[*]}
+    do
+        local speed=$(ethtool ${net_dev} 2>/dev/null | grep "Speed:"  | awk '{ print $2 }')
+        local duplex=$(ethtool ${net_dev} 2>/dev/null | grep "Duplex:" | awk '{ print $2 }')
+        
+        local local_mtu=$(ifconfig ${net_dev} 2>/dev/null | grep "${net_dev}:" | grep -P "mtu\s+\d+" -o | awk '{ print $2 }')
+        local gateway_mtu=""
+        if [ ${#ip_list[*]} -gt 0 ];then
+            local pkg_size=$((local_mtu - 20 - 8))
+            if ping -s ${pkg_size} -M do ${ip_list[0]} -c 1 &> /dev/null;then
+                gateway_mtu=">=${local_mtu}"
             else
-                printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "RSS Interrput:" "parameter [rss] for { cpu and interrupt } per queue" 
+                gateway_mtu="< ${local_mtu} exception"
+            fi
+        fi
+
+        local buffer_info=$(ethtool -g ${net_dev} 2>/dev/null)
+        local buffer_rx=($(echo "${buffer_info}" | grep "RX:" | grep -P "\d+" -o))
+        local buffer_tx=($(echo "${buffer_info}" | grep "TX:" | grep -P "\d+" -o))
+
+        local discard_info=$(ethtool -S ${net_dev} 2>/dev/null | grep "discards")
+        local discard_rx=$(echo "${discard_info}" | grep "rx_discards_" | grep -P "\d+" -o)
+        local discard_tx=$(echo "${discard_info}" | grep "tx_discards_" | grep -P "\d+" -o)
+
+        printf "%-10s %-20s %-20s %-20s %-20s %-20s %-20s\n" "${net_dev}" "${speed}" "${duplex}" "${local_mtu}" "${gateway_mtu}" "${buffer_rx}" "${buffer_tx}" "${discard_rx}" "${discard_tx}"
+    done
+
+    printf "%-10s %-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s\n" "Device" "Adaptive" "rx-usecs" "rx-frames" "tx-usecs" "tx-frames" "GRO" "LRO" "TSO" "GSO"
+    for net_dev in ${device_list[*]}
+    do
+        printf "[%-${half_wd}s %-5s %${half_wd}s]: \n" "*********" "${net_dev}" "*********"
+ 
+        # 硬中断合并配置
+        local coalesce_info=$(ethtool -c ${net_dev} 2>/dev/null)
+        local adapter=$(echo "${coalesce_info}" | grep "Adaptive" | cut -d " " -f 2-)
+        local rx_usecs=($(echo "${coalesce_info}" | grep "rx-usecs" | awk '{ print $2 }'))
+        local rx_frame=($(echo "${coalesce_info}" | grep "rx-frames" | awk '{ print $2 }'))
+        local tx_usecs=($(echo "${coalesce_info}" | grep "tx-usecs" | awk '{ print $2 }'))
+        local tx_frame=($(echo "${coalesce_info}" | grep "tx-frames" | awk '{ print $2 }'))
+        
+        # 接收处理合并
+        local recv_offload=$(ethtool -k ${net_dev} 2>/dev/null  | grep "receive-offload")
+        local gro_state=$(echo "${recv_offload}" | grep "generic-" | awk '{ print $2 }')
+        local lro_state=$(echo "${recv_offload}" | grep "large-" | awk '{ print $2 }')
+
+        # 发送处理合并
+        # 发送的数据大于 MTU 的话，会被分片，这个动作可以卸载到网卡, 需要网卡支持TSO
+        local segment_offload=$(ethtool -k ${net_dev} 2>/dev/null  | grep "segmentation-offload")
+        local tso_state=$(echo "${segment_offload}" | grep "tcp-" | awk '{ print $2 }')
+        local gso_state=$(echo "${segment_offload}" | grep "generic-" | awk '{ print $2 }')
+
+        printf "%-10s %-20s %-20s %-20s %-20s %-20s %-20s\n" "${net_dev}" "${adapter}" "${rx_usecs}" "${rx_frame}" "${tx_usecs}" "${tx_frame}" "${gro_state}" "${lro_state}" "${tso_state}" "${gso_state}"
+    done
+    #for net_dev in ${device_list[*]}
+    #do
+    #    # 软中断 budget
+    #    sudo_it sysctl -a | grep "net.core.netdev_budget" &> ${tmp_file}
+    #    local net_budget=($(cat ${tmp_file} | grep -P "\d+" -o))
+    #    if [ ${#net_budget[*]} -eq 1 ];then
+    #        printf "%$((col_width1 + 4))s %-${col_width2}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}"
+    #    elif [ ${#net_budget[*]} -eq 2 ];then
+    #        printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s\n" "NAPI ksoftirqd:" "poll=${net_budget[0]}" "time(us)=${net_budget[1]}"
+    #    fi
+
+    #    # 多队列网卡 XPS 调优
+    #    # cat /sys/class/net/eth0/queues/tx-0/xps_cpus
+    #    # /proc/irq/8/smp_affinity
+
+    #    # 网卡多队列
+    #    local channel_info=$(ethtool -l ${net_dev} 2>/dev/null)
+    #    local channel_rx=($(echo "${channel_info}" | grep "RX:" | awk '{ print $2 }'))
+    #    local channel_tx=($(echo "${channel_info}" | grep "TX:" | awk '{ print $2 }'))
+    #    local channel_combine=($(echo "${channel_info}" | grep "Combined:" | awk '{ print $2 }'))
+    #    local channel_other=($(echo "${channel_info}" | grep "Other:" | awk '{ print $2 }'))
+    #    printf "%$((col_width1 + 4))s %-${col_width2}s %-${col_width2}s %-${col_width2}s %-${col_width2}s\n" "RSS Channel:" "RX: ${channel_rx[1]}/${channel_rx[0]}" "TX: ${channel_tx[1]}/${channel_tx[0]}" \
+    #        "Other: ${channel_other[1]}/${channel_other[0]}" "Combined: ${channel_combine[1]}/${channel_combine[0]}" 
+    #done
+    rm -f ${tmp_file}
+}
+
+function dump_interrupt
+{
+    local cpu_num=0
+
+    printf "%-10s %-30s %-30s %-50s\n" "IRQ-nr" "IRQ-cnt" "CPU-list" "Description"
+    while read line
+    do
+        if [ -z "${line}" ];then
+            continue
+        fi
+
+        if [ ${cpu_num} -eq 0 ];then
+            cpu_num=$(echo "${line}" | awk '{ print NF }')
+        else
+            local irq_nr=$(string_regex "${line}" "^\s*\w+(?=:)")
+            irq_nr=$(string_trim "${irq_nr}" " " 0)
+            if [ -z "${irq_nr}" ];then
+                continue
             fi
 
-            echo
-        done
-        rm -f ${tmp_file}
-    else
-        printf "%s\n" "not support ethtool"
-    fi
+            local irq_total=0
+            local cpu_list=""
+            local index=2
+            while [ ${index} -le $((cpu_num + 1)) ]
+            do
+                local irq_cnt=$(echo "${line}" | awk "{ print \$${index} }")
+                if is_integer "${irq_cnt}";then
+                    if [ ${irq_cnt} -gt 0 ];then
+                        irq_total=$((irq_total + irq_cnt))
+                        if [ -n "${cpu_list}" ];then
+                            cpu_list="${cpu_list},$((index - 2))"
+                        else
+                            cpu_list="$((index - 2))"
+                        fi
+                    fi
+                fi
+                let index++
+            done
+
+            if [ -n "${cpu_list}" ];then
+                local desc=$(string_split "${line}" " " "$((cpu_num + 2))-$")
+                printf "%-10s %-30s %-30s %-50s\n" "${irq_nr}" "${irq_total}" "${cpu_list}" "${desc}"
+            fi
+        fi
+    done < /proc/interrupts
 }
 
 function du_find
@@ -699,7 +701,7 @@ function get_iscsi_device
     local return_file="$2"
 
     local iscsi_dev_array=($(echo))
-    local iscsi_sessions=$(${SUDO} iscsiadm -m session -P 3 2>/dev/null)
+    local iscsi_sessions=$(sudo_it iscsiadm -m session -P 3 2>/dev/null)
 
     if [ -z "${iscsi_sessions}" ];then
         if can_access "${return_file}";then

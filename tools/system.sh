@@ -1,4 +1,69 @@
 #!/bin/bash
+function tcpdump_expr
+{
+    local prot_str=""
+    local host_str=""
+    local port_str=""
+
+    local select_x=$(select_one "tcp" "udp" "icmp" "ip" "arp" "rarp" "vlan" "all")
+    while [ -n "${select_x}" ]
+    do
+        if [[ "${select_x}" == "all" ]];then
+            prot_str="tcp or udp or icmp or ip or arp or rarp or vlan"
+            break
+        fi
+
+        if [ -n "${prot_str}" ];then
+            prot_str="${prot_str} or ${select_x}"
+        else
+            prot_str="${select_x}"
+        fi
+        select_x=$(select_one "tcp" "udp" "icmp" "ip" "arp" "rarp" "vlan" "all")
+    done
+
+    local input_val=$(input_prompt "" "specify one host address" "")
+    while [ -n "${input_val}" ]
+    do
+        if [ -n "${host_str}" ];then
+            host_str="${host_str} or host ${input_val}"
+        else
+            host_str="host ${input_val}"
+        fi
+        input_val=$(input_prompt "" "specify one host address" "")
+    done
+
+    input_val=$(input_prompt "" "specify one network port" "")
+    while [ -n "${input_val}" ]
+    do
+        if [ -n "${port_str}" ];then
+            port_str="${port_str} or port ${input_val}"
+        else
+            port_str="port ${input_val}"
+        fi
+        input_val=$(input_prompt "" "specify one network port" "")
+    done
+
+    local expr_str="" 
+    if [ -n "${prot_str}" ];then
+        expr_str="(${prot_str})"
+    fi
+
+    if [ -n "${host_str}" ];then
+        if string_regex "${expr_str}" "\(.+\)" &> /dev/null ;then
+            expr_str="${expr_str} and (${host_str})"
+        fi
+    fi
+
+    if [ -n "${port_str}" ];then
+        if string_regex "${expr_str}" "\(.+\)" &> /dev/null ;then
+            expr_str="${expr_str} and (${port_str})"
+        fi
+    fi
+
+    echo "${expr_str}"
+    return 0
+}
+
 function cpu_statistics
 {
     local item1="sar -u 1 5                   : CPU all utilization statistics"
@@ -58,20 +123,32 @@ function mem_statistics
 
 function net_statistics
 {
-    local item1="sar -n DEV 1 5        : Network interfaces statistics"
-    local item2="sar -n EDEV 1 5       : Network interfaces errors statistics"
-    local item3="sar -n TCP 1 5        : TCP(v4) traffic statistics"
-    local item4="sar -n ETCP 1 5       : TCP(v4) traffic errors statistics"
-    local item5="sar -n UDP 1 5        : UDP(v4) traffic errors statistics"
-    local item6="dstat -n -N <ETH> 1 5 : Show special network-device traffic stats"
-    local item7="dstat -n 1 5          : Show whole-system traffic stats"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}")
+    local item1="sar -n DEV 1 5           : Network interfaces statistics"
+    local item2="sar -n EDEV 1 5          : Network interfaces errors statistics"
+    local item3="sar -n TCP 1 5           : TCP(v4) traffic statistics"
+    local item4="sar -n ETCP 1 5          : TCP(v4) traffic errors statistics"
+    local item5="sar -n UDP 1 5           : UDP(v4) traffic errors statistics"
+    local item6="dstat -n -N <ETH> 1 5    : Show special network-device traffic stats"
+    local item7="dstat -n 1 5             : Show whole-system traffic stats"
+    local item8="tcpdump -i <ETH> '<EXPR>': Dump network traffic"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}" "${item8}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
+ 
+    if string_regex "${select_x}" "^\s*tcpdump" &> /dev/null ;then
+        local expression=$(tcpdump_expr)
+
+        local input_val=$(input_prompt "" "input dump's record number" "")
+        if is_integer "${input_val}";then
+            select_x=$(string_insert "${select_x}" " -c ${input_val}" 7)
+        fi
+
+        select_x=$(string_replace "${select_x}" "<EXPR>" "${expression}")
+    fi
 
     if string_contain "${select_x}" "<ETH>";then
-        local network_n=$(input_prompt "" "specify one network device name" "eth0")
-        select_x=$(string_replace "${select_x}" "<ETH>" "${network_n}")
+        local net_dev=$(input_prompt "" "specify one network device" "eth0")
+        select_x=$(string_replace "${select_x}" "<ETH>" "${net_dev}")
     fi
 
     echo_info "${select_x}"

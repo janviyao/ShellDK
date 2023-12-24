@@ -334,7 +334,11 @@ function select_one
     fi
 
     local selected=1
-    local input_val=$(input_prompt "is_integer" "select one" "1")
+    local input_val=$(input_prompt "" "select one" "")
+    if [ -z "${input_val}" ];then
+        return 0
+    fi
+
     selected=${input_val:-${selected}}
     selected=$((selected - 1))
 

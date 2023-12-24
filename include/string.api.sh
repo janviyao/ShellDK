@@ -319,8 +319,14 @@ function string_regex
 
     [ -z "${regstr}" ] && { echo "${string}"; return 1; } 
 
-    echo "$(echo "${string}" | grep -P "${regstr}" -o)"
-    return 0
+    string=$(echo "${string}" | grep -P "${regstr}" -o)
+    if [ $? -eq 0 ];then
+        echo "${string}"
+        return 0
+    else
+        echo "${string}"
+        return 1
+    fi
 }
 
 function string_match
