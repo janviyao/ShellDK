@@ -266,11 +266,13 @@ function account_check
 
     if is_root; then
         [[ "${bash_options}" =~ x ]] && set -x
+        export USR_NAME=${usr_name}
         return 0
     fi
 
     if have_sudoed; then
         [[ "${bash_options}" =~ x ]] && set -x
+        export USR_NAME=${usr_name}
         return 0
     fi
 

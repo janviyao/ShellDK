@@ -3,16 +3,21 @@ export LOCAL_IP="127.0.0.1"
 export GBL_BASE_DIR="/tmp/gbl"
 
 TIMER_RUNDIR=${GBL_BASE_DIR}/timer
-if [ -f ${TIMER_RUNDIR}/timerc ];then
-    source ${TIMER_RUNDIR}/timerc
-
-    export BTASK_LIST="master,mdat,ncat,xfer"
+if [ -f ${TIMER_RUNDIR}/.timerc ];then
+    source ${TIMER_RUNDIR}/.timerc
     source ${MY_VIM_DIR}/bashrc
 
     if can_access "${MY_HOME}/.timerc";then
         source ${MY_HOME}/.timerc
     else
         exit 0
+    fi
+
+    pid_list=($(process_name2pid timer.sh))
+    self_index=$(array_index "${pid_list[*]}" $$)
+    if [ ${self_index} -ge 0 ];then
+        unset pid_list[${self_index}]
+        process_kill ${pid_list[*]}
     fi
 
     if can_access "${TEST_SUIT_ENV}";then
@@ -42,8 +47,7 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
 
         maxsize=$((300*1024*1024))
         if (( logsize > maxsize ));then
-            date_time=$(date '+%Y%m%d-%H%M%S')
-            cp -f ${BASH_LOG} ${BASH_LOG}.${date_time}
+            cp -f ${BASH_LOG} ${BASH_LOG}.old
             cat /dev/null > ${BASH_LOG}
         fi
     fi
@@ -58,11 +62,5 @@ if [ -f ${TIMER_RUNDIR}/timerc ];then
         fi
     done
 
-    pid_list=($(process_name2pid timer.sh))
-    self_index=$(array_index "${pid_list[*]}" $$)
-    if [ ${self_index} -ge 0 ];then
-        unset pid_list[${self_index}]
-        process_kill ${pid_list[*]}
-    fi
     echo_debug "timer finish"
 fi

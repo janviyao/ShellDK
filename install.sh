@@ -5,6 +5,7 @@ export MY_VIM_DIR=$(cd $(dirname $0);pwd)
 export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 #export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
 
+unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc
 . ${MY_VIM_DIR}/tools/paraparser.sh
 if ! account_check ${MY_NAME};then
@@ -116,7 +117,7 @@ function clean_env
         fi
     done
 
-    TIMER_RUNDIR=${GBL_BASE_DIR}/timer
+    local TIMER_RUNDIR=${GBL_BASE_DIR}/timer
     can_access "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
     can_access "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
 
@@ -149,8 +150,6 @@ function clean_env
 
 function inst_env
 {
-    local mode="$@"
-
     if ! test -r /etc/shadow;then
         $SUDO chmod +r /etc/shadow 
     fi
@@ -251,38 +250,36 @@ function inst_env
     chmod +r ${MY_HOME}/.rsync.exclude 
 
     # timer
-    if string_contain "${mode}" "timer"; then
-        TIMER_RUNDIR=${GBL_BASE_DIR}/timer
-        if ! can_access "${TIMER_RUNDIR}";then
-            mkdir -p ${TIMER_RUNDIR}
-            chmod 777 ${TIMER_RUNDIR}
-        fi
-
-        can_access "${TIMER_RUNDIR}/timerc" && rm -f ${TIMER_RUNDIR}/timerc
-        if ! can_access "${TIMER_RUNDIR}/timerc";then
-            echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/timerc
-            echo "export MY_NAME=${MY_NAME}"       >> ${TIMER_RUNDIR}/timerc
-            echo "export MY_HOME=${MY_HOME}"       >> ${TIMER_RUNDIR}/timerc
-            echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/timerc
-        fi
-
-        if ! can_access "${MY_HOME}/.timerc";then
-            echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
-            chmod +x ${MY_HOME}/.timerc 
-        fi
-
-        if can_access "/var/spool/cron/$(whoami)";then
-            ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
-            echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
-            sudo_it chmod 0644 /var/spool/cron/$(whoami) 
-        else
-            sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
-        fi
-
-        chmod +x ${MY_VIM_DIR}/timer.sh 
-        sudo_it systemctl restart crond
-        sudo_it systemctl status crond
+    local TIMER_RUNDIR=${GBL_BASE_DIR}/timer
+    if ! can_access "${TIMER_RUNDIR}";then
+        mkdir -p ${TIMER_RUNDIR}
+        chmod 777 ${TIMER_RUNDIR}
     fi
+
+    can_access "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
+    if ! can_access "${TIMER_RUNDIR}/.timerc";then
+        echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/.timerc
+        echo "export MY_NAME=${MY_NAME}"       >> ${TIMER_RUNDIR}/.timerc
+        echo "export MY_HOME=${MY_HOME}"       >> ${TIMER_RUNDIR}/.timerc
+        echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/.timerc
+    fi
+
+    if ! can_access "${MY_HOME}/.timerc";then
+        echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
+        chmod +x ${MY_HOME}/.timerc 
+    fi
+
+    if can_access "/var/spool/cron/$(whoami)";then
+        ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
+        echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
+        sudo_it chmod 0644 /var/spool/cron/$(whoami) 
+    else
+        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+    fi
+
+    chmod +x ${MY_VIM_DIR}/timer.sh 
+    sudo_it systemctl restart crond
+    sudo_it systemctl status crond
  
     if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
         sudo_it chmod +w /etc/ld.so.conf
