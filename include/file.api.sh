@@ -852,7 +852,7 @@ function real_path
     fi
 
     if [ $? -ne 0 ];then
-        echo_file "${LOG_ERRO}" "readlink fail: ${old_path}"
+        echo_file "${LOG_DEBUG}" "readlink fail: ${old_path}"
         echo "${old_path}"
         return 1
     fi 

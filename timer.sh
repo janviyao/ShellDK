@@ -17,8 +17,8 @@ if [ -f ${TIMER_RUNDIR}/.timerc ];then
     self_index=$(array_index "${pid_list[*]}" $$)
     if [ ${self_index} -ge 0 ];then
         unset pid_list[${self_index}]
-        process_kill ${pid_list[*]}
     fi
+    process_kill ${pid_list[*]}
 
     if can_access "${TEST_SUIT_ENV}";then
         source ${TEST_SUIT_ENV} 
