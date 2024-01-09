@@ -412,7 +412,7 @@ function dump_network
     local tmp_file="$(file_temp)"
     local -a device_list=($(ls /sys/class/net))
 
-    printf "%-10s %-10s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "IFACE" "Dirver" "BSF" "VendorID" "DeviceID" "MTU" "RX-Queue" "TX-Queue" "RX-Buffer" "TX-Buffer"
+    printf "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "IFACE" "Dirver" "BSF" "VendorID" "DeviceID" "MTU" "RX-Queue" "TX-Queue" "RX-Buffer" "TX-Buffer"
     local net_dev
     for net_dev in ${device_list[*]}
     do
@@ -449,7 +449,7 @@ function dump_network
         local buffer_rx=($(echo "${buffer_info}" | grep "RX:" | grep -P "\d+" -o))
         local buffer_tx=($(echo "${buffer_info}" | grep "TX:" | grep -P "\d+" -o))
 
-        printf "%-10s %-10s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "${net_dev}" "${dirver}" "${bsf}" "${vendor_id}" "${device_id}" "${mtu_size}" "${rx_queue_size}" "${tx_queue_size}" "${buffer_rx}" "${buffer_tx}"
+        printf "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "${net_dev}" "${dirver}" "${bsf}" "${vendor_id}" "${device_id}" "${mtu_size}" "${rx_queue_size}" "${tx_queue_size}" "${buffer_rx}" "${buffer_tx}"
     done
     rm -f ${tmp_file}
 }
