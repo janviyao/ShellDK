@@ -421,18 +421,29 @@ function dump_network
         fi
 
         local dev_dir=$(real_path /sys/class/net/${net_dev})
-        local mtu_size=$(cat ${dev_dir}/mtu)
+        if can_access "${dev_dir}/mtu";then
+            local mtu_size=$(cat ${dev_dir}/mtu)
+        else
+            continue
+        fi
+
         local tx_queue_size=$(ls -l ${dev_dir}/queues | grep tx | wc -l)
         local rx_queue_size=$(ls -l ${dev_dir}/queues | grep rx | wc -l)
 
         dev_dir=$(fname2path ${dev_dir})
         dev_dir=$(fname2path ${dev_dir})
-        local dirver=$(path2fname ${dev_dir})
-        local vendor_id=$(cat ${dev_dir}/vendor)
-        local device_id=$(cat ${dev_dir}/device)
+        local dirver=$(path2fname ${dev_dir}) 
+
+        if can_access "${dev_dir}/vendor";then
+            local vendor_id=$(cat ${dev_dir}/vendor)
+            local device_id=$(cat ${dev_dir}/device)
+        fi
 
         dev_dir=$(fname2path ${dev_dir})
         local bsf=$(path2fname ${dev_dir})
+        if ! match_regex "${bsf}" "[a-f0-9]+:[a-f0-9]+:[a-f0-9]+\.[a-f0-9]+";then
+            bsf="virtual" 
+        fi
 
         local buffer_info=$(ethtool -g ${net_dev} 2>/dev/null)
         local buffer_rx=($(echo "${buffer_info}" | grep "RX:" | grep -P "\d+" -o))
