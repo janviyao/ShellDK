@@ -131,7 +131,8 @@ function net_statistics
     local item6="dstat -n -N <ETH> 1 5    : Show special network-device traffic stats"
     local item7="dstat -n 1 5             : Show whole-system traffic stats"
     local item8="tcpdump -i <ETH> '<EXPR>': Dump network traffic"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}" "${item8}")
+    local item9="ethtool -S <ETH>         : Show special network-device per-queue package of recv/send detailed"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}" "${item8}" "${item9}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
  
@@ -223,7 +224,7 @@ function system_statistics
 
 function software_statistics
 {
-    local item1="strace -f -v -ttt --syscall-times=ns -C -S avg-time -p <PID>: trace systemcall time and summary output"
+    local item1="strace -f -v -ttt -C -S name -p <PID>: trace systemcall time and summary output"
     local select_x=$(select_one "${item1}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
