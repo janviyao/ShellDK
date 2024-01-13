@@ -224,7 +224,7 @@ function system_statistics
 
 function software_statistics
 {
-    local item1="strace -f -v -ttt -C -S name -p <PID>: trace systemcall time and summary output"
+    local item1="strace -v -f -ttt -T -C -S name -p <PID>: trace systemcall time and summary output"
     local select_x=$(select_one "${item1}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")

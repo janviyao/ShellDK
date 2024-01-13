@@ -5,6 +5,7 @@ export GBL_BASE_DIR="/tmp/gbl"
 TIMER_RUNDIR=${GBL_BASE_DIR}/timer
 if [ -f ${TIMER_RUNDIR}/.timerc ];then
     source ${TIMER_RUNDIR}/.timerc
+    export BTASK_LIST="master,mdat"
     source ${MY_VIM_DIR}/bashrc
 
     if can_access "${MY_HOME}/.timerc";then
@@ -14,9 +15,8 @@ if [ -f ${TIMER_RUNDIR}/.timerc ];then
     fi
 
     pid_list=($(process_name2pid timer.sh))
-    self_index=$(array_index "${pid_list[*]}" $$)
-    if [ ${self_index} -ge 0 ];then
-        unset pid_list[${self_index}]
+    if string_contain "${pid_list[*]}" " $$";then
+        pid_list=($(string_replace "${pid_list[*]}" " $$" "" false))
     fi
     process_kill ${pid_list[*]}
 
@@ -44,6 +44,7 @@ if [ -f ${TIMER_RUNDIR}/.timerc ];then
         if [ -z "${logsize}" ];then
             logsize=0
         fi
+        echo_info "timer: bash.log size= $((logsize / 1024 / 1024))MB"
 
         maxsize=$((300*1024*1024))
         if (( logsize > maxsize ));then
@@ -62,5 +63,5 @@ if [ -f ${TIMER_RUNDIR}/.timerc ];then
         fi
     done
 
-    echo_debug "timer finish"
+    echo_info "timer: finish"
 fi
