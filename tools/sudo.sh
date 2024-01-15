@@ -58,7 +58,7 @@ else
     fi
 fi
 
-if test -x ${GBL_BASE_DIR}/askpass.sh;then
+if test -x ${GBL_BASE_DIR}/.askpass.sh;then
     sudo_it "${ENV_CMD}"
     exit $?
 fi

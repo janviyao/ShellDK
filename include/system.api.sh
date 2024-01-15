@@ -300,12 +300,12 @@ function account_check
                 export USR_PASSWORD="${input_val}"
                 new_password=$(system_encrypt "${USR_PASSWORD}")
                 echo "${new_password}"                                             >  ${GBL_BASE_DIR}/.${USR_NAME} 
-                echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/askpass.sh
-                echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/askpass.sh
-                echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
-                echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
-                echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
-                chmod +x ${GBL_BASE_DIR}/askpass.sh 
+                echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/.askpass.sh
+                echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/.askpass.sh
+                echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/.askpass.sh
+                echo "fi"                                                          >> ${GBL_BASE_DIR}/.askpass.sh
+                echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/.askpass.sh
+                chmod +x ${GBL_BASE_DIR}/.askpass.sh 
 
                 [[ "${bash_options}" =~ x ]] && set -x
                 return 0
@@ -334,7 +334,7 @@ function sudo_it
             return $?
         fi
 
-        if test -x ${GBL_BASE_DIR}/askpass.sh;then
+        if test -x ${GBL_BASE_DIR}/.askpass.sh;then
             sudo -A bash -c "${cmd}"
             return $?
         else

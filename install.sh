@@ -138,7 +138,7 @@ function clean_env
     #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
     can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
-    can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
+    can_access "${GBL_BASE_DIR}/.askpass.sh" && rm -f ${GBL_BASE_DIR}/.askpass.sh
 
     local spec
     local must_deps=("ppid" "fstat" "chk_passwd" "tig")
@@ -159,15 +159,15 @@ function inst_env
         echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
     fi
 
-    can_access "${GBL_BASE_DIR}/askpass.sh" && rm -f ${GBL_BASE_DIR}/askpass.sh
-    if ! can_access "${GBL_BASE_DIR}/askpass.sh";then
+    can_access "${GBL_BASE_DIR}/.askpass.sh" && rm -f ${GBL_BASE_DIR}/.askpass.sh
+    if ! can_access "${GBL_BASE_DIR}/.askpass.sh";then
         new_password="$(system_encrypt "${USR_PASSWORD}")"
-        echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/askpass.sh
-        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/askpass.sh
-        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/askpass.sh
-        echo "fi"                                                          >> ${GBL_BASE_DIR}/askpass.sh
-        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/askpass.sh
-        chmod +x ${GBL_BASE_DIR}/askpass.sh 
+        echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/.askpass.sh
+        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/.askpass.sh
+        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/.askpass.sh
+        echo "fi"                                                          >> ${GBL_BASE_DIR}/.askpass.sh
+        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/.askpass.sh
+        chmod +x ${GBL_BASE_DIR}/.askpass.sh 
     fi
 
     local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
@@ -259,8 +259,6 @@ function inst_env
     can_access "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
     if ! can_access "${TIMER_RUNDIR}/.timerc";then
         echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/.timerc
-        echo "export MY_NAME=${MY_NAME}"       >> ${TIMER_RUNDIR}/.timerc
-        echo "export MY_HOME=${MY_HOME}"       >> ${TIMER_RUNDIR}/.timerc
         echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/.timerc
     fi
 
@@ -269,13 +267,14 @@ function inst_env
         chmod +x ${MY_HOME}/.timerc 
     fi
 
+    sudo_it chmod o+x /var/spool/cron
     if can_access "/var/spool/cron/$(whoami)";then
-        ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
-        echo "*/2 * * * * ${MY_VIM_DIR}/timer.sh" >> /var/spool/cron/$(whoami)
-        sudo_it chmod 0644 /var/spool/cron/$(whoami) 
+        ${SUDO} file_del "/var/spool/cron/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
+        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> /var/spool/cron/$(whoami)"
     else
-        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh' > /var/spool/cron/$(whoami)"
+        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > /var/spool/cron/$(whoami)"
     fi
+    sudo_it chmod 0644 /var/spool/cron/$(whoami) 
 
     chmod +x ${MY_VIM_DIR}/timer.sh 
     sudo_it systemctl restart crond

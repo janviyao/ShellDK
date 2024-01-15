@@ -1,11 +1,12 @@
 #!/bin/bash
+export MY_NAME="$1"
+export MY_HOME="/home/$1"
 export LOCAL_IP="127.0.0.1"
-export GBL_BASE_DIR="/tmp/gbl"
+export BTASK_LIST="master,mdat"
+export GBL_BASE_DIR="/tmp/gbl/${MY_NAME}"
 
-TIMER_RUNDIR=${GBL_BASE_DIR}/timer
-if [ -f ${TIMER_RUNDIR}/.timerc ];then
-    source ${TIMER_RUNDIR}/.timerc
-    export BTASK_LIST="master,mdat"
+if [ -f ${GBL_BASE_DIR}/timer/.timerc ];then
+    source ${GBL_BASE_DIR}/timer/.timerc
     source ${MY_VIM_DIR}/bashrc
 
     if can_access "${MY_HOME}/.timerc";then
