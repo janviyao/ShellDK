@@ -72,12 +72,17 @@ function run_lock
     local lockid=$1
     shift
 
+    if ! can_access "${GBL_BASE_DIR}/shell.lock.${lockid}";then
+        touch ${GBL_BASE_DIR}/shell.lock.${lockid}
+        chmod 777 ${GBL_BASE_DIR}/shell.lock.${lockid}
+    fi
+
     local cmd="$@"
     (
         flock -x ${lockid}  #flock文件锁，-x表示独享锁
         echo_file "${LOG_DEBUG}" "[run_lock] ${cmd}"
         bash -c "${cmd}"
-    ) {lockid}<>/tmp/shell.lock.${lockid}
+    ) {lockid}<>${GBL_BASE_DIR}/shell.lock.${lockid}
 }
 
 function is_me
@@ -277,9 +282,9 @@ function account_check
     fi
 
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
-        if can_access "${GBL_BASE_DIR}/.${usr_name}";then
+        if can_access "${GBL_USER_DIR}/.${usr_name}";then
             export USR_NAME=${usr_name}
-            export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_BASE_DIR}/.${usr_name})")
+            export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_USER_DIR}/.${usr_name})")
             if ! check_passwd "${USR_NAME}" "${USR_PASSWORD}";then
                 export USR_PASSWORD=""
             fi
@@ -299,13 +304,13 @@ function account_check
             if [ -n "${input_val}" ];then
                 export USR_PASSWORD="${input_val}"
                 new_password=$(system_encrypt "${USR_PASSWORD}")
-                echo "${new_password}"                                             >  ${GBL_BASE_DIR}/.${USR_NAME} 
-                echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/.askpass.sh
-                echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/.askpass.sh
-                echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/.askpass.sh
-                echo "fi"                                                          >> ${GBL_BASE_DIR}/.askpass.sh
-                echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/.askpass.sh
-                chmod +x ${GBL_BASE_DIR}/.askpass.sh 
+                echo "${new_password}"                                             >  ${GBL_USER_DIR}/.${USR_NAME} 
+                echo "#!/bin/bash"                                                 >  ${GBL_USER_DIR}/.askpass.sh
+                echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
+                echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
+                echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
+                echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
+                chmod +x ${GBL_USER_DIR}/.askpass.sh 
 
                 [[ "${bash_options}" =~ x ]] && set -x
                 return 0
@@ -334,7 +339,7 @@ function sudo_it
             return $?
         fi
 
-        if test -x ${GBL_BASE_DIR}/.askpass.sh;then
+        if test -x ${GBL_USER_DIR}/.askpass.sh;then
             sudo -A bash -c "${cmd}"
             return $?
         else

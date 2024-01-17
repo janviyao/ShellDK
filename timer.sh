@@ -3,10 +3,10 @@ export MY_NAME="$1"
 export MY_HOME="/home/$1"
 export LOCAL_IP="127.0.0.1"
 export BTASK_LIST="master,mdat"
-export GBL_BASE_DIR="/tmp/gbl/${MY_NAME}"
+export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
 
-if [ -f ${GBL_BASE_DIR}/timer/.timerc ];then
-    source ${GBL_BASE_DIR}/timer/.timerc
+if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
+    source ${GBL_USER_DIR}/timer/.timerc
     source ${MY_VIM_DIR}/bashrc
 
     if can_access "${MY_HOME}/.timerc";then
@@ -54,12 +54,12 @@ if [ -f ${GBL_BASE_DIR}/timer/.timerc ];then
         fi
     fi
 
-    for bash_dir in $(cd ${GBL_BASE_DIR};ls -d */)
+    for bash_dir in $(cd ${GBL_USER_DIR};ls -d */)
     do
         bash_pid=$(string_regex "${bash_dir}" "\d+")
         if [ -n "${bash_pid}" ];then
             if ! process_exist "${bash_pid}";then
-                rm -fr ${GBL_BASE_DIR}/${bash_dir}
+                rm -fr ${GBL_USER_DIR}/${bash_dir}
             fi
         fi
     done

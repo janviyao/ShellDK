@@ -117,7 +117,7 @@ function clean_env
         fi
     done
 
-    local TIMER_RUNDIR=${GBL_BASE_DIR}/timer
+    local TIMER_RUNDIR=${GBL_USER_DIR}/timer
     can_access "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
     can_access "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
 
@@ -137,8 +137,8 @@ function clean_env
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
     #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
-    can_access "${GBL_BASE_DIR}/.askpass.sh" && rm -f ${GBL_BASE_DIR}/.askpass.sh
+    can_access "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
+    can_access "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
 
     local spec
     local must_deps=("ppid" "fstat" "chk_passwd" "tig")
@@ -154,20 +154,20 @@ function inst_env
         $SUDO chmod +r /etc/shadow 
     fi
 
-    can_access "${GBL_BASE_DIR}/.${USR_NAME}" && rm -f ${GBL_BASE_DIR}/.${USR_NAME}
-    if ! can_access "${GBL_BASE_DIR}/.${USR_NAME}";then
-        echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_BASE_DIR}/.${USR_NAME} 
+    can_access "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
+    if ! can_access "${GBL_USER_DIR}/.${USR_NAME}";then
+        echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_USER_DIR}/.${USR_NAME} 
     fi
 
-    can_access "${GBL_BASE_DIR}/.askpass.sh" && rm -f ${GBL_BASE_DIR}/.askpass.sh
-    if ! can_access "${GBL_BASE_DIR}/.askpass.sh";then
+    can_access "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
+    if ! can_access "${GBL_USER_DIR}/.askpass.sh";then
         new_password="$(system_encrypt "${USR_PASSWORD}")"
-        echo "#!/bin/bash"                                                 >  ${GBL_BASE_DIR}/.askpass.sh
-        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_BASE_DIR}/.askpass.sh
-        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_BASE_DIR}/.askpass.sh
-        echo "fi"                                                          >> ${GBL_BASE_DIR}/.askpass.sh
-        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_BASE_DIR}/.askpass.sh
-        chmod +x ${GBL_BASE_DIR}/.askpass.sh 
+        echo "#!/bin/bash"                                                 >  ${GBL_USER_DIR}/.askpass.sh
+        echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
+        echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
+        echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
+        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
+        chmod +x ${GBL_USER_DIR}/.askpass.sh 
     fi
 
     local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
@@ -250,7 +250,7 @@ function inst_env
     chmod +r ${MY_HOME}/.rsync.exclude 
 
     # timer
-    local TIMER_RUNDIR=${GBL_BASE_DIR}/timer
+    local TIMER_RUNDIR=${GBL_USER_DIR}/timer
     if ! can_access "${TIMER_RUNDIR}";then
         mkdir -p ${TIMER_RUNDIR}
         chmod 777 ${TIMER_RUNDIR}

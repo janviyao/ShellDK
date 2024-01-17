@@ -65,7 +65,7 @@ if test -d '$MY_VIM_DIR';then \
         source $MY_VIM_DIR/bashrc; \
     fi;\
 else \
-    export SUDO_ASKPASS='${GBL_BASE_DIR}/.askpass.sh';\
+    export SUDO_ASKPASS='${GBL_USER_DIR}/.askpass.sh';\
     export SUDO='sudo -A';\
 fi\
 "

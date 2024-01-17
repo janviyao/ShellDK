@@ -3,7 +3,7 @@
 mkdir -p $(fname2path "${TEST_SUIT_ENV}")
 echo "#!/bin/bash" > ${TEST_SUIT_ENV}
 
-WORK_ROOT_DIR=${GBL_BASE_DIR}/test
+WORK_ROOT_DIR=${GBL_USER_DIR}/test
 TOOL_ROOT_DIR=${MY_VIM_DIR}/tools
 TEST_ROOT_DIR=$(current_scriptdir)
 TEST_LOG_DIR="/home/fastdisk/report_$(date '+%Y%m%d')/$(date '+%H%M%S')"

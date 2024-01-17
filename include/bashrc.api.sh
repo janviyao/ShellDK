@@ -30,17 +30,18 @@ unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
 readonly ROOT_PID=$$
-readonly GBL_BASE_DIR="/tmp/gbl/${MY_NAME}"
+readonly GBL_BASE_DIR="/tmp/gbl"
+readonly GBL_USER_DIR="${GBL_BASE_DIR}/${MY_NAME}"
 readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
-readonly SUDO_ASKPASS="${GBL_BASE_DIR}/.askpass.sh"
+readonly SUDO_ASKPASS="${GBL_USER_DIR}/.askpass.sh"
 readonly LOCAL_DIR="${MY_HOME}/.local"
 readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
 readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
-readonly BASH_LOG="${GBL_BASE_DIR}/bash.log"
+readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
 
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
-mkdir -p ${GBL_BASE_DIR}
+mkdir -p ${GBL_USER_DIR}
 
 OP_TRY_CNT=3
 OP_TIMEOUT=60
@@ -113,9 +114,9 @@ else
     can_access "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
 
     if string_contain "${BTASK_LIST}" "master";then
-        BASH_WORK_DIR="${GBL_BASE_DIR}/bash.master.${ROOT_PID}"
+        BASH_WORK_DIR="${GBL_USER_DIR}/bash.master.${ROOT_PID}"
     else
-        BASH_WORK_DIR="${GBL_BASE_DIR}/bash.slaver.${ROOT_PID}"
+        BASH_WORK_DIR="${GBL_USER_DIR}/bash.slaver.${ROOT_PID}"
     fi
 
     echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"

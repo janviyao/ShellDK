@@ -6,7 +6,7 @@ mkdir -p ${NCAT_WORK_DIR}
 NCAT_TASK="${NCAT_WORK_DIR}/task"
 NCAT_PIPE="${NCAT_WORK_DIR}/pipe"
 NCAT_PROT_CURR="${NCAT_WORK_DIR}/port.$$"
-NCAT_PORT_USED="${GBL_BASE_DIR}/port.used"
+NCAT_PORT_USED="${GBL_USER_DIR}/port.used"
 
 NCAT_FD=${NCAT_FD:-9}
 can_access "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
