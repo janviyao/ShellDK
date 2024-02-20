@@ -1,6 +1,8 @@
 if declare -F __my_bash_exit &>/dev/null;then
     echo_file "${LOG_WARN}" "bashrc has loaded"
-    return
+    if [ -z "${TMUX}" ];then
+        return
+    fi
 fi
 
 if ! declare -p MY_VIM_DIR &>/dev/null;then

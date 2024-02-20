@@ -148,11 +148,11 @@ function echo_erro
 
     if [ -n "${REMOTE_IP}" ];then
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+        echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
         # echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     else
         # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
-        echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
+        echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
     fi
     echo_file "${LOG_ERRO}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
@@ -268,4 +268,15 @@ function echo_iferror
     fi
 
     return ${retcode}
+}
+
+function echo_die
+{
+    local bash_options="$-"
+    set +x
+
+    echo_erro "$@"
+
+    [[ "${bash_options}" =~ x ]] && set -x
+    exit 1
 }
