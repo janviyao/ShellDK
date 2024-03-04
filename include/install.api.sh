@@ -141,7 +141,7 @@ function install_check
 
         local file_list=(${xfile})
         if math_bool "${isreg}";then
-            file_list=($(find ${MY_VIM_DIR}/deps -regextype posix-awk -regex ".*/?${xfile}"))
+            file_list=($(find ${MY_VIM_DIR}/deps/packages -regextype posix-awk -regex ".*/?${xfile}"))
         fi
 
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)

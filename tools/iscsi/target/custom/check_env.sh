@@ -2,12 +2,12 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-can_access "/usr/bin/meson"                      || { cd ${MY_VIM_DIR}/deps; install_from_rpm "meson-.+\.rpm" true; }
-can_access "/usr/bin/ninja"                      || { cd ${MY_VIM_DIR}/deps; install_from_rpm "ninja-build-.+\.rpm" true; }
-can_access "/usr/lib64/libuuid.so.*"             || { cd ${MY_VIM_DIR}/deps; install_from_rpm "libuuid-2.+\.rpm" true; }
-can_access "/usr/include/uuid/uuid.h"            || { cd ${MY_VIM_DIR}/deps; install_from_rpm "libuuid-devel-.+\.rpm" true; }
-can_access "/usr/lib64/libjson-c.so.*"           || { cd ${MY_VIM_DIR}/deps; install_from_rpm "json-c-0.+\.rpm" true; }
-can_access "/usr/include/json/json_c_version.h"  || { cd ${MY_VIM_DIR}/deps; install_from_rpm "json-c-devel.+\.rpm" true; }
+can_access "/usr/bin/meson"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "meson-.+\.rpm" true; }
+can_access "/usr/bin/ninja"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "ninja-build-.+\.rpm" true; }
+can_access "/usr/lib64/libuuid.so.*"             || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libuuid-2.+\.rpm" true; }
+can_access "/usr/include/uuid/uuid.h"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libuuid-devel-.+\.rpm" true; }
+can_access "/usr/lib64/libjson-c.so.*"           || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "json-c-0.+\.rpm" true; }
+can_access "/usr/include/json/json_c_version.h"  || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "json-c-devel.+\.rpm" true; }
 
 # configure core-dump path
 $SUDO file_del /etc/security/limits.conf '^.*\*\s+soft\s+core\s+.+' true

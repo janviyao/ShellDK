@@ -294,7 +294,7 @@ function inst_env
 
         sudo_it ldconfig
     elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
-        cp -f apt-cyg ${LOCAL_BIN_DIR}
+        cp -f ${MY_VIM_DIR}/deps/apt-cyg ${LOCAL_BIN_DIR}
         chmod +x ${LOCAL_BIN_DIR}/apt-cyg
     fi
 

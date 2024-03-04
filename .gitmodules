@@ -1,0 +1,3 @@
+[submodule "deps/packages"]
+	path = deps/packages
+	url = git@github.com:janviyao/packages.git
