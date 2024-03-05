@@ -788,7 +788,12 @@ function get_local_ip
         fi
     done
     
-    local local_iparray=($(ip route show | grep -P 'src\s+\d+\.\d+\.\d+\.\d+' -o | grep -P '\d+\.\d+\.\d+\.\d+' -o))
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        local local_iparray=($(ifconfig | grep -w inet | awk '{ print $2 }' | grep -P '\d+\.\d+\.\d+\.\d+' -o))
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        local local_iparray=($(ipconfig | grep -a -w "IPv4" | grep -P '\d+\.\d+\.\d+\.\d+' -o))
+    fi
+
     for ipaddr in ${local_iparray[*]}
     do
         if cat /etc/hosts | grep -w -F "${ipaddr}" &> /dev/null;then

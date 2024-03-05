@@ -281,7 +281,7 @@ function inst_env
     sudo_it systemctl restart crond
     sudo_it systemctl status crond
  
-    if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
+    if [[ "${SYSTEM}" == "Linux" ]]; then
         sudo_it chmod +w /etc/ld.so.conf
 
         ${SUDO} "file_del /etc/ld.so.conf '/usr/lib64'"
@@ -293,7 +293,7 @@ function inst_env
         ${SUDO} "file_add /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
         sudo_it ldconfig
-    elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         cp -f ${MY_VIM_DIR}/deps/apt-cyg ${LOCAL_BIN_DIR}
         chmod +x ${LOCAL_BIN_DIR}/apt-cyg
     fi

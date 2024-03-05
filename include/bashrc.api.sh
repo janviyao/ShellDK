@@ -38,6 +38,7 @@ readonly LOCAL_DIR="${MY_HOME}/.local"
 readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
 readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
 readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
+readonly SYSTEM=$(uname -s | grep -P "^\w+" -o)
 
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
