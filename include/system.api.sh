@@ -646,6 +646,7 @@ function efind
     local xdir="$1"
     local regstr="$2"
     
+    echo_file "${LOG_DEBUG}" "[efind] $@"
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string\n\$3~\$n: other options to find"
         return 1
@@ -672,6 +673,7 @@ function emove
     local regstr="$1"
     local xfile="$2"
     
+    echo_file "${LOG_DEBUG}" "[efind] $@"
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string\n\$2: directory or file"
         return 1
