@@ -367,7 +367,7 @@ function sudo_it
                 fi
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            eval "${cmd}"
+            bash -c "${cmd}"
             return $?
         fi
     fi
