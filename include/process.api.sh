@@ -160,17 +160,21 @@ function process_pid2name
                     local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
                 fi
             elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-                local pname=$(cat /proc/${pid}/stat | grep -P "(?<=\().+(?=\))" -o)
+                if can_access "/proc/${pid}/stat";then
+                    local pname=$(cat /proc/${pid}/stat | grep -P "(?<=\().+(?=\))" -o)
+                fi
             fi
-
-            if [[ "${pname}" =~ '/' ]];then
-                if can_access "${pname}";then
-                    name_list=(${name_list[*]} $(path2fname "${pname}"))
+ 
+            if [ -n "${pname}" ];then
+                if [[ "${pname}" =~ '/' ]];then
+                    if can_access "${pname}";then
+                        name_list=(${name_list[*]} $(path2fname "${pname}"))
+                    else
+                        name_list=(${name_list[*]} ${pname})
+                    fi
                 else
                     name_list=(${name_list[*]} ${pname})
                 fi
-            else
-                name_list=(${name_list[*]} ${pname})
             fi
         else
             name_list=(${name_list[*]} ${pid})
