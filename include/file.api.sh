@@ -337,7 +337,7 @@ function file_del
     fi
 
     if math_bool "${is_reg}";then
-        local posix_reg=$(regex_perl2posix "${string}")
+        local posix_reg=$(regex_perl2posix_basic "${string}")
         if [[ "${posix_reg}" =~ '#' ]];then
             posix_reg=$(string_replace "${posix_reg}" '#' '\#')
         fi
@@ -693,7 +693,7 @@ function file_replace
     fi 
 
     if math_bool "${is_reg}";then
-        string=$(regex_perl2posix "${string}")
+        string=$(regex_perl2posix_basic "${string}")
     fi
 
     if [[ "${string}" =~ '/' ]];then

@@ -43,7 +43,7 @@ function regex_2str
     return 0
 }
 
-function regex_perl2posix
+function regex_perl2posix_basic
 {
     local regex="$@"
 
@@ -69,7 +69,7 @@ function regex_perl2posix
             fi
 
             if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "regex_perl2posix { $@ }"
+                echo_file "${LOG_ERRO}" "regex_perl2posix_basic { $@ }"
                 return 1
             fi
         fi

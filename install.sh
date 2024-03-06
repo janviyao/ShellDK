@@ -282,18 +282,29 @@ function inst_env
         chmod +x ${MY_HOME}/.timerc 
     fi
 
-    sudo_it chmod o+x /var/spool/cron
-    if can_access "/var/spool/cron/$(whoami)";then
-        ${SUDO} file_del "/var/spool/cron/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
-        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> /var/spool/cron/$(whoami)"
-    else
-        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > /var/spool/cron/$(whoami)"
+    local cron_dir="/var/spool/cron"
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        cron_dir="/var/cron/tabs"
     fi
-    sudo_it chmod 0644 /var/spool/cron/$(whoami) 
+
+    sudo_it chmod o+x ${cron_dir} 
+    if can_access "${cron_dir}/$(whoami)";then
+        ${SUDO} file_del "${cron_dir}/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
+        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/$(whoami)"
+    else
+        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/$(whoami)"
+    fi
+    sudo_it chmod 0644 ${cron_dir}/$(whoami) 
 
     chmod +x ${MY_VIM_DIR}/timer.sh 
-    sudo_it systemctl restart crond
-    sudo_it systemctl status crond
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        sudo_it systemctl restart crond
+        sudo_it systemctl status crond
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        sudo_it cygrunsrv -E cron
+        sudo_it cygrunsrv -S cron
+        sudo_it cygrunsrv -Q cron
+    fi
  
     if [[ "${SYSTEM}" == "Linux" ]]; then
         sudo_it chmod +w /etc/ld.so.conf
@@ -398,14 +409,10 @@ function inst_vim
     fi
 
     if check_net;then
-        local need_update=true
         if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
             mygit clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
             vim +BundleInstall +q +q
-            need_update=false
-        fi
-
-        if math_bool "${need_update}"; then
+        else
             vim +BundleUpdate +q +q
         fi
     fi
