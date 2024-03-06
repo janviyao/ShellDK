@@ -65,5 +65,3 @@ m4;                  ! can_access 'm4';cd ${MY_VIM_DIR}/deps;install_from_tar 'm
 #golang;             ! can_access '/usr/lib/golang/api';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-1.+\.rpm' true
 #golang-src;         ! can_access '/usr/lib/golang/src';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-src-.+\.rpm' true
 #golang-bin;         ! can_access '/usr/lib/golang/bin';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-bin-.+\.rpm' true
-
-

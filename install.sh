@@ -176,16 +176,18 @@ function inst_env
         chmod +x ${GBL_USER_DIR}/.askpass.sh 
     fi
 
-    local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
-    local spec
-    for spec in ${must_deps[*]}
-    do
-        if ! install_from_net "${spec}";then
-            if ! install_from_spec "${spec}";then
-                return 1
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        local -a must_deps=("make-4.3" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+        local spec
+        for spec in ${must_deps[*]}
+        do
+            if ! install_from_net "${spec}";then
+                if ! install_from_spec "${spec}";then
+                    return 1
+                fi
             fi
-        fi
-    done
+        done
+    fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
         local comm_tools=("ppid" "fstat" "chk_passwd" "perror" "tig")
