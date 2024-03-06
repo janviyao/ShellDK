@@ -122,10 +122,10 @@ function clean_env
     can_access "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
     can_access "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
 
-    if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
+    if [[ "${SYSTEM}" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
         sudo_it ldconfig
-    elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         rm -f ${LOCAL_BIN_DIR}/apt-cyg
     fi
 
@@ -142,7 +142,12 @@ function clean_env
     can_access "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
 
     local spec
-    local must_deps=("ppid" "fstat" "chk_passwd" "tig")
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        local must_deps=("ppid" "fstat" "chk_passwd" "tig")
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        local must_deps=("ppid" "fstat" "tig")
+    fi
+
     for spec in ${must_deps[*]}
     do
         can_access "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
@@ -407,12 +412,10 @@ function inst_vim
         fi
     done
 
-    if [[ "$(string_start $(uname -s) 5)" == "Linux" ]]; then
-        install_from_spec "deno"
-    elif [[ "$(string_start $(uname -s) 9)" == "CYGWIN_NT" ]]; then
-        unzip deno-x86_64-pc-windows-msvc.zip
-        mv -f deno.exe ${LOCAL_BIN_DIR}
-        chmod +x ${LOCAL_BIN_DIR}/deno.exe
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        install_from_spec "linux.deno"
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        install_from_spec "cygwin.deno"
     fi
 }
 

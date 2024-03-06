@@ -85,7 +85,7 @@ function match_regex
     local regstr="$2"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regex string"
         return 1
     fi
 
@@ -313,7 +313,7 @@ function string_regex
     local regstr="$2"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regstr"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regex string"
         return 1
     fi
 

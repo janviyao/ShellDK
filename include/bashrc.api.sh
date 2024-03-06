@@ -62,33 +62,35 @@ function __my_bashrc_deps
     local app_dir="${MY_VIM_DIR}/tools/app"
     local cur_dir=$(pwd)
 
-    if ! can_access "chk_passwd";then
-        if ! can_access "make";then
-            install_from_net "make" &> /dev/null
-            if [ $? -ne 0 ];then
-                install_from_spec "make-3.82" &> /dev/null
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        if ! can_access "chk_passwd";then
+            if ! can_access "make";then
+                install_from_net "make" &> /dev/null
                 if [ $? -ne 0 ];then
-                    echo_erro "install { make } failed"
-                    exit 1
+                    install_from_spec "make-3.82" &> /dev/null
+                    if [ $? -ne 0 ];then
+                        echo_erro "install { make } failed"
+                        exit 1
+                    fi
                 fi
             fi
-        fi
 
-        if ! can_access "gcc";then
-            install_from_net "gcc" &> /dev/null
-            if [ $? -ne 0 ];then
-                install_from_spec "gcc" &> /dev/null
+            if ! can_access "gcc";then
+                install_from_net "gcc" &> /dev/null
                 if [ $? -ne 0 ];then
-                    echo_erro "install { gcc } failed"
-                    exit 1
+                    install_from_spec "gcc" &> /dev/null
+                    if [ $? -ne 0 ];then
+                        echo_erro "install { gcc } failed"
+                        exit 1
+                    fi
                 fi
             fi
-        fi
 
-        install_from_spec "chk_passwd" &> /dev/null
-        if [ $? -ne 0 ];then
-            echo_erro "install { chk_passwd } failed"
-            exit 1
+            install_from_spec "chk_passwd" &> /dev/null
+            if [ $? -ne 0 ];then
+                echo_erro "install { chk_passwd } failed"
+                exit 1
+            fi
         fi
     fi
 }

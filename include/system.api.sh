@@ -28,15 +28,19 @@ function check_passwd
     local usrnam="$1"
     local passwd="$2"
 
-    if test -r /etc/shadow;then
-        if chk_passwd "${usrnam}" "${passwd}" 2>/dev/null; then
-            return 0
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        if test -r /etc/shadow;then
+            if chk_passwd "${usrnam}" "${passwd}" 2>/dev/null; then
+                return 0
+            else
+                return 1
+            fi
         else
+            echo_file "${LOG_WARN}" "not readable [/etc/shadow]"
             return 1
         fi
-    else
-        echo_file "${LOG_WARN}" "not readable [/etc/shadow]"
-        return 1
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        return 0
     fi
 }
 
@@ -626,6 +630,54 @@ function du_find
     done
 
     return 0
+}
+
+function efind
+{   
+    local xdir="$1"
+    local regstr="$2"
+    
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string\n\$3~\$n: other options to find"
+        return 1
+    fi
+
+    if ! can_access "${xdir}";then
+        echo_erro "directory invalid: ${xdir}"
+        return 1
+    fi
+
+    shift 2
+    local opts="$@"
+    
+    local xret
+    local ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "${regstr}"))
+    for xret in ${ret_arr[*]}    
+    do
+        echo "${xret}"
+    done
+}
+
+function emove
+{   
+    local regstr="$1"
+    local xfile="$2"
+    
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: regex string\n\$2: directory or file"
+        return 1
+    fi
+
+    local xret
+    local ret_arr=($(efind . "${regstr}" -maxdepth 1))
+    for xret in ${ret_arr[*]}    
+    do
+        sudo_it mv ${xret} ${xfile}
+        if [ $? -ne 0 ];then
+            echo_erro "failed { mv ${xret} ${xfile} }"
+            return 1
+        fi
+    done
 }
 
 function check_net
