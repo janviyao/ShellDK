@@ -156,8 +156,10 @@ function clean_env
 
 function inst_env
 {
-    if ! test -r /etc/shadow;then
-        $SUDO chmod +r /etc/shadow 
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        if ! test -r /etc/shadow;then
+            $SUDO chmod +r /etc/shadow 
+        fi
     fi
 
     can_access "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
