@@ -16,9 +16,13 @@ function have_sudoed
         return 0
     fi
 
-    if echo | sudo -S -u 'root' echo &> /dev/null; then
-        return 0
-    else
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        if echo | sudo -S -u 'root' echo &> /dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         return 1
     fi
 }
@@ -338,28 +342,37 @@ function sudo_it
         eval "${cmd}"
         return $?
     else
-        if have_sudoed;then
-            sudo bash -c "${cmd}"
-            return $?
-        fi
-
-        if test -x ${GBL_USER_DIR}/.askpass.sh;then
-            sudo -A bash -c "${cmd}"
-            return $?
-        else
-            if ! account_check "${MY_NAME}" false;then
-                echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+        if [[ "${SYSTEM}" == "Linux" ]]; then
+            if have_sudoed;then
                 sudo bash -c "${cmd}"
                 return $?
             fi
 
-            if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${cmd}"
+            if test -x ${GBL_USER_DIR}/.askpass.sh;then
+                sudo -A bash -c "${cmd}"
                 return $?
             else
-                sudo bash -c "${cmd}"
-                return $?
+                if ! account_check "${MY_NAME}" false;then
+                    echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+                    sudo bash -c "${cmd}"
+                    return $?
+                fi
+
+                if [ -n "${USR_PASSWORD}" ]; then
+                    echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${cmd}"
+                    return $?
+                else
+                    sudo bash -c "${cmd}"
+                    return $?
+                fi
             fi
+        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            if [ -n "${USR_NAME}" ]; then
+                runas /user:${USR_NAME} "${cmd}"
+            else
+                bash -c "${cmd}"
+            fi
+            return $?
         fi
     fi
 

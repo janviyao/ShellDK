@@ -498,8 +498,13 @@ else
         if string_contain "${NEED_OP}" "hostname"; then
             hostname=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
             if [ -n "${hostname}" ];then
-                ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '/${ipaddr}/d' /etc/hosts"
-                ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '$ a${ipaddr}   ${hostname}' /etc/hosts"
+                if [[ "${SYSTEM}" == "Linux" ]]; then
+                    ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '/${ipaddr}/d' /etc/hosts"
+                    ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sudo sed -i '$ a${ipaddr}   ${hostname}' /etc/hosts"
+                elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                    ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sed -i '/${ipaddr}/d' /etc/hosts"
+                    ${MY_VIM_DIR}/tools/sshlogin.sh "${ipaddr}" "sed -i '$ a${ipaddr}   ${hostname}' /etc/hosts"
+                fi
             fi
         fi
 

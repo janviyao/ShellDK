@@ -7,6 +7,13 @@ if ! test -d "$MY_VIM_DIR";then
     source $MY_VIM_DIR/bashrc
 fi
 
+if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+    if [ -n "${USR_NAME}" ]; then
+        runas /user:${USR_NAME} "${CMD_STR}"
+        exit $?
+    fi
+fi
+
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if ! account_check ${MY_NAME};then
         echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
