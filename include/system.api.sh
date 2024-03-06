@@ -660,7 +660,7 @@ function efind
     local opts="$@"
     
     local xret
-    local ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "${regstr}"))
+    local ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "\"${regstr}\""))
     for xret in ${ret_arr[*]}    
     do
         echo "${xret}"
