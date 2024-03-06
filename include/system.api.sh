@@ -661,7 +661,7 @@ function efind
     local opts="$@"
     
     local xret
-    local ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "\"${regstr}\""))
+    local ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "\"(.+/)*${regstr}\""))
     for xret in ${ret_arr[*]}    
     do
         echo "${xret}"
@@ -673,7 +673,7 @@ function emove
     local regstr="$1"
     local xfile="$2"
     
-    echo_file "${LOG_DEBUG}" "[efind] $@"
+    echo_file "${LOG_DEBUG}" "[emove] $@"
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string\n\$2: directory or file"
         return 1

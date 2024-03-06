@@ -243,34 +243,34 @@ function install_from_net
     echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xname}")"
     if check_net; then
         if can_access "yum";then
-            sudo_it yum install ${xname} -y
+            sudo_it yum install ${xname} -y \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xname}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
                 return 0
             fi
         fi
 
         if can_access "apt";then
-            sudo_it apt install ${xname} -y
+            sudo_it apt install ${xname} -y \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xname}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
                 return 0
             fi
         fi
 
         if can_access "apt-cyg";then
-            sudo_it apt-cyg install ${xname} -y
+            sudo_it apt-cyg install ${xname} -y \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xname}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
                 return 0
             fi
         fi
@@ -316,14 +316,14 @@ function install_from_rpm
 
         local versions=($(string_regex "${fname}" "\d+\.\d+(\.\d+)?"))
         if [ -z "${versions[*]}" ];then
-            echo_erro "$(printf "[%13s]: { %-13s } failure, version invalid" "Install" "${full_name}")"
+            echo_erro "$(printf "[%13s]: { %-13s } failure, version invalid" "Rpm Install" "${full_name}")"
             return 1
         fi
         echo_debug "rpm: { ${full_name} } versions: ${versions[*]}"
 
         local split_names=($(string_split "${fname}" "${versions[0]}"))
         if [ -z "${split_names[*]}" ];then
-            echo_erro "$(printf "[%13s]: { %-13s } failure, version split fail" "Install" "${full_name}")"
+            echo_erro "$(printf "[%13s]: { %-13s } failure, version split fail" "Rpm Install" "${full_name}")"
             return 1
         fi
         echo_debug "rpm: { ${full_name} } split_names: ${split_names[*]}"
@@ -332,9 +332,9 @@ function install_from_rpm
         local system_rpms=($(rpm -qa | grep -P "${app_name}\d+"))
         if [ ${#system_rpms[*]} -gt 1 ];then
             if math_bool "${force}";then
-                echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Install" "${fname}")"
+                echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Rpm Install" "${fname}")"
             else
-                echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Install" "${fname}")"
+                echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Rpm Install" "${fname}")"
                 continue
             fi
         fi
@@ -377,10 +377,10 @@ function install_from_rpm
         fi
 
         if [ $? -ne 0 ]; then
-            echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${fname}")"
+            echo_erro "$(printf "[%13s]: { %-13s } failure" "Rpm Install" "${fname}")"
             return 1
         else
-            echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${fname}")"
+            echo_info "$(printf "[%13s]: { %-13s } success" "Rpm Install" "${fname}")"
         fi
     done
 
@@ -541,11 +541,11 @@ function install_from_tar
         do
             install_from_make "${tar_dir}" "${conf_para}"
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${file_name}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Tar Install" "${file_name}")"
                 cd ${cur_dir}
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${file_name}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "Tar Install" "${file_name}")"
             fi
         done
         cd ${cur_dir}
@@ -609,10 +609,10 @@ function install_from_spec
     fi
 
     if math_bool "${success}"; then
-        echo_info "$(printf "[%13s]: { %-13s } success" "Install" "${xspec}")"
+        echo_info "$(printf "[%13s]: { %-13s } success" "Spec Install" "${xspec}")"
         return 0
     else
-        echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xspec}")"
+        echo_erro "$(printf "[%13s]: { %-13s } failure" "Spec Install" "${xspec}")"
         return 1
     fi
 }
