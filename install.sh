@@ -145,7 +145,7 @@ function clean_env
     if [[ "${SYSTEM}" == "Linux" ]]; then
         local must_deps=("ppid" "fstat" "chk_passwd" "tig")
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        local must_deps=("ppid" "fstat" "tig")
+        local must_deps=("fstat" "tig")
     fi
 
     for spec in ${must_deps[*]}
@@ -187,7 +187,12 @@ function inst_env
         fi
     done
 
-    local comm_tools=("ppid" "fstat" "chk_passwd" "perror" "tig")
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        local comm_tools=("ppid" "fstat" "chk_passwd" "perror" "tig")
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        local comm_tools=("fstat" "perror" "tig")
+    fi
+
     for spec in ${comm_tools[*]}
     do
         if ! install_from_spec "${spec}";then

@@ -9,7 +9,7 @@ fi
 
 if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
     if [ -n "${USR_NAME}" ]; then
-        runas /user:${USR_NAME} "${CMD_STR}"
+        bash -c "${CMD_STR}"
         exit $?
     fi
 fi

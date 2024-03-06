@@ -367,11 +367,7 @@ function sudo_it
                 fi
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            if [ -n "${USR_NAME}" ]; then
-                runas /user:${USR_NAME} "${cmd}"
-            else
-                bash -c "${cmd}"
-            fi
+            eval "${cmd}"
             return $?
         fi
     fi
@@ -695,10 +691,10 @@ function emove
 
 function check_net
 {   
-    local address="${1:-https://www.baidu.com}"
+    local address="${1:-www.baidu.com}"
     local timeout=5 
     
-    if sudo_it ping -c 1 -W ${timeout} ${address} &> /dev/null;then
+    if sudo_it ping -c 1 -w ${timeout} ${address} &> /dev/null;then
         return 0
     else
         local ret_code=$(curl -I -s --connect-timeout ${timeout} ${address} -w %{http_code} | tail -n1)   
