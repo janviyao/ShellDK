@@ -52,7 +52,7 @@ else
 fi
 
 EXPECT_EOF=""
-if is_root; then
+if have_admin; then
     EXPECT_EOF="expect eof"
 fi
 

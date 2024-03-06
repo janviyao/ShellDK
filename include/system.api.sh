@@ -1,18 +1,23 @@
 #!/bin/bash
 : ${INCLUDED_SYSTEM:=1}
 
-function is_root
+function have_admin
 {
-    if [ $UID -eq 0 ]; then
-        return 0
-    else
-        return 1
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        if [ $UID -eq 0 ]; then
+            return 0
+        fi
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        if id -Gn | grep -w "Administrators" &> /dev/null;then
+            return 0
+        fi
     fi
+    return 1
 }
 
 function have_sudoed
 {
-    if is_root; then
+    if have_admin; then
         return 0
     fi
 
@@ -23,7 +28,11 @@ function have_sudoed
             return 1
         fi
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        return 1
+        if id -Gn | grep -w "Administrators" &> /dev/null;then
+            return 0
+        else
+            return 1
+        fi
     fi
 }
 
@@ -277,7 +286,7 @@ function account_check
     local can_input=${2:-true}
     local input_val=""
 
-    if is_root; then
+    if have_admin; then
         [[ "${bash_options}" =~ x ]] && set -x
         export USR_NAME=${usr_name}
         return 0
@@ -338,7 +347,7 @@ function sudo_it
     local cmd="$@"
 
     echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
-    if is_root; then
+    if have_admin; then
         eval "${cmd}"
         return $?
     else

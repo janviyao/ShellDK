@@ -198,7 +198,7 @@ function wait_value
     mkfifo ${ack_pipe}
     can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 
-    if is_root && [[ "${USR_NAME}" != "root" ]];then
+    if have_admin && [[ "${USR_NAME}" != "root" ]];then
         chmod 777 ${ack_pipe}
     fi
 

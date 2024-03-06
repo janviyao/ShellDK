@@ -15,7 +15,7 @@ chk_passwd;          ! can_access 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc ch
 linux.deno;          ! can_access 'deno';cd ${MY_VIM_DIR}/deps/packages;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno
 cygwin.deno;         ! can_access 'deno.exe';cd ${MY_VIM_DIR}/deps/packages;unzip deno-x86_64-pc-windows-msvc.zip;mv -f deno.exe ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno.exe
 
-astyle;              install_check 'astyle' 'astyle-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_net 'gcc-c++';install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/
+astyle;              install_check 'astyle' 'astyle-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/
 ctags;               install_check 'ctags' 'universal-ctags-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'universal-ctags-.+\.tar\.gz' true;rm -fr universal-ctags-*/
 cscope;              install_check 'cscope' 'cscope-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'cscope-.+\.tar\.gz' true;rm -fr cscope-*/
 ag;                  install_check 'ag' 'the_silver_searcher-.+\.rpm' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'the_silver_searcher-.+\.rpm' true

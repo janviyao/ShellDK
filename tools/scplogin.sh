@@ -46,7 +46,7 @@ fi
 echo_info "Cp { ${SRC_DIR} } to { ${DES_DIR} }"
 
 EXPECT_EOF=""
-if is_root; then
+if have_admin; then
     EXPECT_EOF="expect eof"
 fi
 

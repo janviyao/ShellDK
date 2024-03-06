@@ -48,7 +48,7 @@ if have_sudoed;then
     exit $?
 fi
 
-if is_root; then
+if have_admin; then
     bash -c "${ENV_CMD}"
     exit $?
 else
