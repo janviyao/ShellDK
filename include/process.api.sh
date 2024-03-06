@@ -93,8 +93,7 @@ function process_signal
                 echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pids[*]}"
 
                 if ! array_have "${exclude_pid_array[*]}" "${pid}";then
-                    echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(ps -q ${pid} -o cmd=)]"
-
+                    echo_info "signal { ${signal} } into {$(process_pid2name ${pid})[${pid}]} [$(process_cmdline ${pid})]"
                     if is_integer "${signal}";then
                         sudo_it "kill -${signal} ${pid} &> /dev/null"
                     else
@@ -138,43 +137,47 @@ function process_pid2name
     fi
 
     local pid
-    local -a proc_list
+    local -a name_list
     for pid in ${para_list[*]}
     do
-        if ! is_integer "${pid}";then
-            proc_list=(${proc_list[*]} ${pid})
-            continue
-        fi
-        # ps -p 2133 -o args=
-        # ps -p 2133 -o cmd=
-        # cat /proc/${pid}/status
-        if can_access "/proc/${pid}/exe";then
-            local fname=$(path2fname "/proc/${pid}/exe")
-            if [ -n "${fname}" ];then
-                if [[ ${fname} != 'exe' ]];then
-                    proc_list=(${proc_list[*]} ${fname})
-                    continue
+        if is_integer "${pid}";then
+            # ps -p 2133 -o args=
+            # ps -p 2133 -o cmd=
+            # cat /proc/${pid}/status
+            if can_access "/proc/${pid}/exe";then
+                local fname=$(path2fname "/proc/${pid}/exe")
+                if [ -n "${fname}" ];then
+                    if [[ ${fname} != 'exe' ]];then
+                        name_list=(${name_list[*]} ${fname})
+                        continue
+                    fi
                 fi
             fi
-        fi
 
-        local pname=$(ps -eo pid,comm | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
-        if [ -z "${pname}" ];then
-            local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
-        fi
+            if [[ "${SYSTEM}" == "Linux" ]]; then
+                local pname=$(ps -eo pid,comm | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+                if [ -z "${pname}" ];then
+                    local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
+                fi
+            elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                local pname=$(cat /proc/${pid}/stat | grep -P "(?<=\().+(?=\))" -o)
+            fi
 
-        if [[ "${pname}" =~ '/' ]];then
-            if can_access "${pname}";then
-                proc_list=(${proc_list[*]} $(path2fname "${pname}"))
+            if [[ "${pname}" =~ '/' ]];then
+                if can_access "${pname}";then
+                    name_list=(${name_list[*]} $(path2fname "${pname}"))
+                else
+                    name_list=(${name_list[*]} ${pname})
+                fi
             else
-                proc_list=(${proc_list[*]} ${pname})
+                name_list=(${name_list[*]} ${pname})
             fi
         else
-            proc_list=(${proc_list[*]} ${pname})
+            name_list=(${name_list[*]} ${pid})
         fi
     done
 
-    [ ${#proc_list[*]} -gt 0 ] && echo "${proc_list[*]}"
+    [ ${#name_list[*]} -gt 0 ] && echo "${name_list[*]}"
     #echo "$(ps -q ${pid} -o comm=)"
     return 0
 }
@@ -196,44 +199,53 @@ function process_name2pid
             continue
         fi
 
-        local -a res_array=($(ps -C ${para} -o pid=))
-        if [ ${#res_array[*]} -gt 0 ];then
-            pid_array=(${pid_array[*]} ${res_array[*]})
-            continue
-        fi
+        if [[ "${SYSTEM}" == "Linux" ]]; then
+            local -a res_array=($(ps -C ${para} -o pid=))
+            if [ ${#res_array[*]} -gt 0 ];then
+                pid_array=(${pid_array[*]} ${res_array[*]})
+                continue
+            fi
 
-        res_array=($(pidof ${para}))
-        if [ ${#res_array[*]} -gt 0 ];then
-            pid_array=(${pid_array[*]} ${res_array[*]})
-            continue
-        fi
+            res_array=($(pidof ${para}))
+            if [ ${#res_array[*]} -gt 0 ];then
+                pid_array=(${pid_array[*]} ${res_array[*]})
+                continue
+            fi
 
-        #res_array=($(pgrep ${para}))
-        #if [ ${#res_array[*]} -gt 0 ];then
-        #    pid_array=(${pid_array[*]} ${res_array[*]})
-        #    continue
-        #fi
+            #res_array=($(pgrep ${para}))
+            #if [ ${#res_array[*]} -gt 0 ];then
+            #    pid_array=(${pid_array[*]} ${res_array[*]})
+            #    continue
+            #fi
 
-        local none_regex=$(regex_2str "${para}")
-        res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
-        if [ ${#res_array[*]} -gt 0 ];then
-            pid_array=(${pid_array[*]} ${res_array[*]})
-            continue
-        fi
+            local none_regex=$(regex_2str "${para}")
+            res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
+            if [ ${#res_array[*]} -gt 0 ];then
+                pid_array=(${pid_array[*]} ${res_array[*]})
+                continue
+            fi
 
-        res_array=($(ps -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
-        if [ ${#res_array[*]} -gt 0 ];then
-            pid_array=(${pid_array[*]} ${res_array[*]})
-            continue
-        fi
+            res_array=($(ps -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
+            if [ ${#res_array[*]} -gt 0 ];then
+                pid_array=(${pid_array[*]} ${res_array[*]})
+                continue
+            fi
 
-        res_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
-        if [ ${#res_array[*]} -gt 0 ];then
-            pid_array=(${pid_array[*]} ${res_array[*]})
-            continue
+            res_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
+            if [ ${#res_array[*]} -gt 0 ];then
+                pid_array=(${pid_array[*]} ${res_array[*]})
+                continue
+            fi
+        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            local none_regex=$(regex_2str "${para}")
+            local -a res_array=($(ps -s | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
+            if [ ${#res_array[*]} -gt 0 ];then
+                pid_array=(${pid_array[*]} ${res_array[*]})
+                continue
+            fi
         fi
     done
-    
+
     [ ${#pid_array[*]} -gt 0 ] && echo "${pid_array[*]}"
     return 0
 }
@@ -246,7 +258,11 @@ function process_cmdline
     local -a pid_array=($(process_name2pid "${para_list[*]}"))
     for pid in ${pid_array[*]}
     do
-        echo "$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
+        if [[ "${SYSTEM}" == "Linux" ]]; then
+            echo "$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
+        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            echo "$(ps -p ${pid} | grep -w "${pid}" | awk '{ print $NF }')"
+        fi
     done
 
     return 0
@@ -265,7 +281,12 @@ function process_ppid
             continue
         fi
 
-        local ppids=($(ps -o ppid= -p ${pid}))
+        if [[ "${SYSTEM}" == "Linux" ]]; then
+            local ppids=($(ps -o ppid= -p ${pid}))
+        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            local ppids=($(ps -p ${pid} | grep -w "${pid}" | awk '{ print $2 }'))
+        fi
+
         if [ ${#ppids[*]} -gt 0 ];then
             ppid_array=(${ppid_array[*]} ${ppids[*]})
         fi
@@ -288,10 +309,15 @@ function process_childs
             continue
         fi
 
-        # ps -p $$ -o ppid=
-        local subpro_path="/proc/${pid}/task/${pid}/children"
-        if can_access "${subpro_path}"; then
-            child_pids=(${child_pids[*]} $(cat ${subpro_path} 2>/dev/null))
+        if [[ "${SYSTEM}" == "Linux" ]]; then
+            # ps -p $$ -o ppid=
+            local subpro_path="/proc/${pid}/task/${pid}/children"
+            if can_access "${subpro_path}"; then
+                child_pids=(${child_pids[*]} $(cat ${subpro_path} 2>/dev/null))
+            fi
+        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            local childs=($(ps -ef | awk "{ if (\$3 == ${pid}) { print \$2 } }"))
+            child_pids=(${child_pids[*]} ${childs[*]})
         fi
     done
 
@@ -302,6 +328,10 @@ function process_childs
 function process_threads
 {
     local para_list=($@)
+
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        return 0
+    fi
 
     local pid
     local -a child_tids
@@ -330,6 +360,10 @@ function thread_info
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print header(bool)"
         return 1
+    fi
+
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        return 0
     fi
 
     #local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
@@ -460,10 +494,19 @@ function process_info
             fi
 
             if math_bool "${is_header}"; then
-                ps -p ${pid} -o ${ps_header}
+                if [[ "${SYSTEM}" == "Linux" ]]; then
+                    ps -p ${pid} -o ${ps_header}
+                elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                    ps -a | grep -w "PID" 
+                    ps -a | awk "{ if (\$1 == ${pid}) { print \$0 } }"
+                fi
                 local is_header=false
             else
-                ps -p ${pid} -o ${ps_header} --no-headers
+                if [[ "${SYSTEM}" == "Linux" ]]; then
+                    ps -p ${pid} -o ${ps_header} --no-headers
+                elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                    ps -a | awk "{ if (\$1 == ${pid}) { print \$0 } }"
+                fi
             fi
         done 
         local -a all_pids=(${all_pids[*]} ${pid_array[*]})
@@ -586,21 +629,24 @@ function process_cpu2
         return 1
     fi
 
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        return 0
+    fi
+
     printf "%-8s %s\n" "PID" "Process"
     local cpu
     for cpu in ${cpu_list[*]}
     do
-        if ! is_integer "${cpu}";then
+        if is_integer "${cpu}";then
+            local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$2 == ${cpu}) print \$1 }")
+            local pid
+            for pid in ${pid_list[*]}
+            do
+                printf "%-8d %s\n" "${pid}" "$(process_pid2name "${pid}")"
+            done
+        else
             echo_erro "cpu-id: { ${cpu} } invalid number"
-            continue
         fi
-        
-        local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$2 == ${cpu}) print \$1 }")
-        local pid
-        for pid in ${pid_list[*]}
-        do
-            printf "%-8d %s\n" "${pid}" "$(process_pid2name "${pid}")"
-        done
     done
  
     return 0
@@ -608,15 +654,19 @@ function process_cpu2
 
 function process_2cpu
 {
-    local proc_list=($@)
+    local name_list=($@)
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
         return 1
     fi
 
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        return 0
+    fi
+
     local xproc
-    for xproc in ${proc_list[*]}
+    for xproc in ${name_list[*]}
     do
         local pid_list=($(process_name2pid "${xproc}"))
         if [ ${#pid_list[*]} -eq 0 ];then
@@ -669,6 +719,10 @@ function process_coredump
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: pid or app-name"
         return 1
+    fi
+
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        return 0
     fi
 
     local limit=$(ulimit -c)
