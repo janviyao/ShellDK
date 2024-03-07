@@ -24,7 +24,7 @@
 #define PID_T DWORD
 #endif
 
-#define VERSION      "1.1"
+#define VERSION      "1.2"
 #define __NR_gettid  186
 
 #define DEBUG(str)                                             \

@@ -705,15 +705,25 @@ function check_net
     local address="${1:-www.baidu.com}"
     local timeout=5 
     
-    if sudo_it ping -c 1 -w ${timeout} ${address} &> /dev/null;then
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        sudo_it ping -c 1 -w ${timeout} ${address} &> /dev/null
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        sudo_it ping -n 1 -w ${timeout} ${address} &> /dev/null
+    fi
+
+    if [ $? -eq 0 ];then
         return 0
     else
-        local ret_code=$(curl -I -s --connect-timeout ${timeout} ${address} -w %{http_code} | tail -n1)   
-        if [ "x$ret_code" = "x200" ]; then   
-            return 0
-        else   
+        if match_regex "${address}" "^\s*\d+\.\d+\.\d+\.\d+";then
             return 1
-        fi 
+        else
+            local ret_code=$(curl -I -s --connect-timeout ${timeout} ${address} -w %{http_code} | tail -n1)   
+            if [ "x$ret_code" = "x200" ]; then   
+                return 0
+            else   
+                return 1
+            fi 
+        fi
     fi
 }
 
@@ -866,13 +876,15 @@ function get_local_ip
         local local_iparray=($(ipconfig | grep -a -w "IPv4" | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     fi
 
-    for ipaddr in ${local_iparray[*]}
-    do
-        if cat /etc/hosts | grep -w -F "${ipaddr}" &> /dev/null;then
-            echo "${ipaddr}"
-            return
-        fi
-    done
+    if can_access "/etc/hosts";then
+        for ipaddr in ${local_iparray[*]}
+        do
+            if cat /etc/hosts | grep -v -P "^#" | grep -w -F "${ipaddr}" &> /dev/null;then
+                echo "${ipaddr}"
+                return
+            fi
+        done
+    fi
 
     for ipaddr in ${local_iparray[*]}
     do

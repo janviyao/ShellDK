@@ -18,16 +18,20 @@ function update_port_used
 {
     echo > ${NCAT_PORT_USED}
     if can_access "ss";then
-        ss -tuln | grep -P "(?<=:)\d+\s+" -o &>> ${NCAT_PORT_USED}
+        ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
     fi
 
     if can_access "netstat";then
         #netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
-        netstat -tunlp 2>/dev/null | grep -P "(?<=:)\d+\s+" -o &>> ${NCAT_PORT_USED}
+        if [[ "${SYSTEM}" == "Linux" ]]; then
+            netstat -tunlp 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
+        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            netstat -n 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
+        fi
     fi
 
     if can_access "lsof";then
-        lsof -i | grep -P "(?<=:)\d+\s+" -o &>> ${NCAT_PORT_USED}
+        lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
     fi
     echo "======" >> ${NCAT_PORT_USED}
 }
@@ -147,11 +151,9 @@ function ncat_send_msg
 
     echo_file "${LOG_DEBUG}" "ncat will send: [$@]" 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
-        if local_port_available "${ncat_port}";then
-            if ! can_access "${NCAT_PIPE}.run";then
-                echo_erro "ncat task donot run: [${NCAT_PIPE}.run]"
-                return 1
-            fi
+        if ! can_access "${NCAT_PIPE}.run";then
+            echo_erro "ncat task donot run: [${NCAT_PIPE}.run]"
+            return 1
         fi
 
         echo_file "${LOG_DEBUG}" "change IP from { ${ncat_addr} } to { 127.0.0.1 }"
@@ -172,7 +174,7 @@ function ncat_send_msg
     #    done
     #fi
     local try_count=0
-    (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+    (echo "${ncat_body}" | timeout 1 nc ${ncat_addr} ${ncat_port}) &> /dev/null
     while test $? -ne 0
     do
         if ! can_access "${NCAT_PIPE}.run";then
@@ -186,7 +188,7 @@ function ncat_send_msg
             echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
             try_count=0
         fi
-        (echo "${ncat_body}" | nc ${ncat_addr} ${ncat_port}) &> /dev/null
+        (echo "${ncat_body}" | timeout 1 nc ${ncat_addr} ${ncat_port}) &> /dev/null
     done
 
     return 0
@@ -203,6 +205,7 @@ function ncat_recv_msg
         nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         do
             echo "${ncat_body}"
+            echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
             return 0
         done
     else
