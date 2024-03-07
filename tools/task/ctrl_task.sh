@@ -144,6 +144,15 @@ function _ctrl_thread_main
             {
                 local ppids=($(ppid))
                 local self_pid=${ppids[1]}
+                if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                    while [ -z "${self_pid}" ]
+                    do
+                        ppids=($(ppid))
+                        self_pid=${ppids[1]}
+                    done
+                    self_pid=$(process_winpid2pid ${self_pid})
+                fi
+
                 echo_file "${LOG_DEBUG}" "thread[${self_pid}] running: ${_cmdstr}"
 
                 eval "${_cmdstr}"
