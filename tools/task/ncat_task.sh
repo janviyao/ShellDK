@@ -318,7 +318,6 @@ function ncat_wait_resp
                 ppids=($(ppid))
                 self_pid=${ppids[1]}
             done
-            self_pid=$(process_winpid2pid ${self_pid})
         fi
     fi
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"

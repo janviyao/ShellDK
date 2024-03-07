@@ -811,7 +811,6 @@ function file_temp
                 ppids=($(ppid))
                 self_pid=${ppids[1]}
             done
-            self_pid=$(process_winpid2pid ${self_pid})
         fi
     fi
 

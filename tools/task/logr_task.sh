@@ -102,7 +102,6 @@ function _redirect_func
                 ppids=($(ppid))
                 self_pid=${ppids[1]}
             done
-            self_pid=$(process_winpid2pid ${self_pid})
         fi
     fi
     #sudo_it "renice -n -1 -p ${self_pid} &> /dev/null"

@@ -137,7 +137,6 @@ function export_all
                 ppids=($(ppid))
                 self_pid=${ppids[1]}
             done
-            self_pid=$(process_winpid2pid ${self_pid})
         fi
         local_pid=${self_pid}
     fi
@@ -167,7 +166,6 @@ function import_all
                 ppids=($(ppid))
                 self_pid=${ppids[1]}
             done
-            self_pid=$(process_winpid2pid ${self_pid})
         fi
         parent_pid=${self_pid}
     fi
@@ -209,7 +207,6 @@ function wait_value
                 ppids=($(ppid))
                 self_pid=${ppids[1]}
             done
-            self_pid=$(process_winpid2pid ${self_pid})
         fi
     fi
 
