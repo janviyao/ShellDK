@@ -89,7 +89,7 @@ function process_signal
             fi
 
             if process_exist "${pid}"; then
-                local child_pids=($(process_childs ${pid}))
+                local child_pids=($(process_cpid ${pid}))
                 echo_debug "$(process_pid2name ${pid})[${pid}] have childs: ${child_pids[*]}"
 
                 if ! array_have "${exclude_pid_array[*]}" "${pid}";then
@@ -300,7 +300,7 @@ function process_ppid
     return 0
 }
 
-function process_childs
+function process_cpid
 {
     local para_list=($@)
 
@@ -320,7 +320,7 @@ function process_childs
                 child_pids=(${child_pids[*]} $(cat ${subpro_path} 2>/dev/null))
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            local childs=($(ps -ef | awk "{ if (\$3 == ${pid}) { print \$2 } }"))
+            local childs=($(ps -ef | awk -v pid=${pid} '{ if ($3 == pid) { print $2 } }'))
             child_pids=(${child_pids[*]} ${childs[*]})
         fi
     done
@@ -502,14 +502,14 @@ function process_info
                     ps -p ${pid} -o ${ps_header}
                 elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
                     ps -a | grep -w "PID" 
-                    ps -a | awk "{ if (\$1 == ${pid}) { print \$0 } }"
+                    ps -a | awk -v pid=${pid} '{ if ($1 == pid) { print $0 } }'
                 fi
                 local is_header=false
             else
                 if [[ "${SYSTEM}" == "Linux" ]]; then
                     ps -p ${pid} -o ${ps_header} --no-headers
                 elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-                    ps -a | awk "{ if (\$1 == ${pid}) { print \$0 } }"
+                    ps -a | awk -v pid=${pid} '{ if ($1 == pid) { print $0 } }'
                 fi
             fi
         done 
@@ -552,7 +552,7 @@ function process_ptree
     fi
     
     local pid
-    local spid
+    local cpid
     local -a pid_array=($(process_name2pid "${process}"))
     for pid in ${pid_array[*]}
     do
@@ -561,10 +561,10 @@ function process_ptree
             show_header=false
         fi
 
-        local -a sub_array=($(process_childs "${pid}"))    
-        for spid in ${sub_array[*]}
+        local -a cpid_array=($(process_cpid "${pid}"))    
+        for cpid in ${cpid_array[*]}
         do
-            process_ptree "${spid}" "${show_thread}" "${show_header}"
+            process_ptree "${cpid}" "${show_thread}" "${show_header}"
         done
     done
  
@@ -642,7 +642,7 @@ function process_cpu2
     for cpu in ${cpu_list[*]}
     do
         if is_integer "${cpu}";then
-            local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$2 == ${cpu}) print \$1 }")
+            local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk -v cid=${cpu} '{ if ($2 == cid) print $1 }')
             local pid
             for pid in ${pid_list[*]}
             do
@@ -681,7 +681,7 @@ function process_2cpu
         local pid
         for pid in ${pid_list[*]}
         do
-            local cpu_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk "{ if (\$1 == ${pid}) print \$2 }")
+            local cpu_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk -v pid=${pid} '{ if ($1 == pid) print $2 }')
             [ ${#cpu_list[*]} -gt 0 ] && echo ${cpu_list[*]}
         done
     done

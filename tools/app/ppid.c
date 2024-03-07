@@ -6,11 +6,23 @@
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
+
+#if defined(__linux__)
 #include <fcntl.h>  
 #include <getopt.h>
 #include <sys/time.h>  
 #include <sys/types.h>  
 #include <sys/stat.h>  
+#elif defined(_WIN32)
+#include <windows.h>
+#include <tlhelp32.h>
+#endif
+
+#if defined(__linux__)
+#define PID_T pid_t
+#elif defined(_WIN32)
+#define PID_T DWORD
+#endif
 
 #define VERSION      "1.1"
 #define __NR_gettid  186
@@ -25,7 +37,7 @@
     } while (0)
 
 static bool  g_print_name = false;
-static pid_t g_stop_pid = 0;
+static PID_T g_stop_pid = 0;
 
 static void help_usage(void)
 {
@@ -69,14 +81,29 @@ static bool is_digit(char *str, int len)
     return true;
 }
 
-static pid_t get_ppid(pid_t pid, bool show)
+static PID_T get_main_pid()
 {
+    PID_T pid = 0;
+
+#if defined(__linux__)
+    pid = syscall(__NR_gettid);
+#elif defined(_WIN32)
+    pid = GetCurrentProcessId();
+#endif
+
+    return pid;
+}
+
+static PID_T get_ppid(PID_T pid, char *name, int length)
+{
+    PID_T ppid = 0;
+    char pname[NAME_MAX] = {0};
+ 
+#if defined(__linux__)
+    char buf[BUFSIZ] = {0};
     struct stat st;
     char path[PATH_MAX] = {0};
-    char buf[BUFSIZ] = {0};
-    char pname[NAME_MAX] = {0};
-    pid_t ppid = 0;
- 
+
     sprintf(path, "/proc/%d/stat", pid);
     if(stat(path, &st) != 0) {
         return 0;
@@ -92,15 +119,33 @@ static pid_t get_ppid(pid_t pid, bool show)
     fclose(fp);
 
     sscanf(buf, "%*d %*c%s %*c %d %*s", pname, &ppid);
-    pname[strlen(pname) - 1] = '\0';
- 
-    if (show) {
-        if (g_print_name == true) {
-            printf("%s[%d]\n", pname, pid);
-        } else {
-            printf("%d\n", pid);
+    pname[strlen(pname) - 1] = '\0'; 
+
+    if (name) {
+        if (strlen(pname) >= length) {
+            exit(EXIT_FAILURE);
         }
+        memcpy(name, pname, length);
     }
+#elif defined(_WIN32)
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot != INVALID_HANDLE_VALUE) {
+        PROCESSENTRY32 processEntry;
+        processEntry.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hSnapshot, &processEntry)) {
+            do {
+                if (processEntry.th32ProcessID == processId) {
+                    ppid = processEntry.th32ParentProcessID;
+                    if (name) {
+                        memcpy(name, processEntry.szExeFile, length);
+                    }
+                    break;
+                }
+            } while (Process32Next(hSnapshot, &processEntry));
+        }
+        CloseHandle(hSnapshot);
+    }
+#endif
 
     if(pid == g_stop_pid) {
         return 0;
@@ -112,32 +157,39 @@ static pid_t get_ppid(pid_t pid, bool show)
 static void print_info(int pid)
 {
     int ret;
+    char pname[NAME_MAX] = {0};
 
-    pid_t next = get_ppid(pid, true);
-    if(!next) {
+    PID_T npid = get_ppid(pid, pname, NAME_MAX);
+    if (g_print_name == true) {
+        printf("%s[%d]\n", pname, pid);
+    } else {
+        printf("%d\n", pid);
+    }
+
+    if(!npid) {
         return;
     }
 
 #if 0
-    if(next == 1) {
+    if(npid == 1) {
         /* systemd */
         return;
-    } else if(next == 2) {
+    } else if(npid == 2) {
         /* kthreadd */
         return; 
     }
 #endif
 
-    print_info(next);
+    print_info(npid);
 }
 
 int main(int argc, char **argv)  
 {
     int idx, ret = 0;
-    pid_t cpid, ppid;
+    PID_T cpid, ppid;
     bool show_self;
     int opt, option_index;
-  
+
     char *string = "hvnsu:";
     static struct option long_options[] =
     {
@@ -190,7 +242,7 @@ int main(int argc, char **argv)
                 if (show_self) {
                     ppid = cpid;
                 } else {
-                    ppid = get_ppid(cpid, false);
+                    ppid = get_ppid(cpid, NULL, 0);
                     if(ppid == 0) {
                         goto error;
                     }
@@ -203,14 +255,14 @@ int main(int argc, char **argv)
         }
     } else {
         if (!cpid) {
-            cpid = syscall(__NR_gettid);
+            cpid = get_main_pid();
         }
 
         if (cpid) {
             if (show_self) {
                 ppid = cpid;
             } else {
-                ppid = get_ppid(cpid, false);
+                ppid = get_ppid(cpid, NULL, 0);
                 if(ppid == 0) {
                     goto error;
                 }
