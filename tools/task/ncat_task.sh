@@ -174,11 +174,12 @@ function ncat_send_msg
     #    done
     #fi
     local try_count=0
-    (echo "${ncat_body}" | timeout 1 nc ${ncat_addr} ${ncat_port}) &> /dev/null
+
+    (echo "${ncat_body}" | nc -w 1 ${ncat_addr} ${ncat_port}) &> /dev/null
     while test $? -ne 0
     do
         if ! can_access "${NCAT_PIPE}.run";then
-            echo_file "${LOG_ERRO}" "ncat task have exited: [${NCAT_PIPE}.run]"
+            #echo_file "${LOG_ERRO}" "ncat task have exited: [${NCAT_PIPE}.run]"
             return 1
         fi
 
@@ -188,7 +189,7 @@ function ncat_send_msg
             echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] recv"
             try_count=0
         fi
-        (echo "${ncat_body}" | timeout 1 nc ${ncat_addr} ${ncat_port}) &> /dev/null
+        (echo "${ncat_body}" | nc -w 1 ${ncat_addr} ${ncat_port}) &> /dev/null
     done
 
     return 0
