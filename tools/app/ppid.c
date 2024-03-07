@@ -24,8 +24,9 @@
 #define PID_T DWORD
 #endif
 
-#define VERSION      "1.2"
-#define __NR_gettid  186
+#define VERSION         "1.2"
+#define PTREE_MAX_DEPTH 30
+#define __NR_gettid     186
 
 #define DEBUG(str)                                             \
     do {                                                       \
@@ -36,8 +37,16 @@
         perror (buf);                                          \
     } while (0)
 
+typedef struct pid_info
+{
+    PID_T pid;
+    char  name[NAME_MAX];
+} pid_info_t;
+
 static bool  g_print_name = false;
 static PID_T g_stop_pid = 0;
+static int g_tree_index = 0;
+static pid_info_t g_ptree[PTREE_MAX_DEPTH];
 
 static void help_usage(void)
 {
@@ -154,33 +163,39 @@ static PID_T get_ppid(PID_T pid, char *name, int length)
     return ppid;
 }
 
-static void print_info(int pid)
+static void print_ptree(PID_T pid)
 {
-    int ret;
-    char pname[NAME_MAX] = {0};
+    int index;
+    PID_T next = pid;
 
-    PID_T npid = get_ppid(pid, pname, NAME_MAX);
-    if (g_print_name == true) {
-        printf("%s[%d]\n", pname, pid);
-    } else {
-        printf("%d\n", pid);
+failed:
+    while (next > 0) {
+        g_ptree[g_tree_index].pid = next;
+        next = get_ppid(next, g_ptree[g_tree_index].name, NAME_MAX);
+        g_tree_index++;
+        if (g_tree_index >= PTREE_MAX_DEPTH) {
+            printf("failed: process depth over max(%d)\n", PTREE_MAX_DEPTH);
+            exit(EXIT_FAILURE);
+        }
     }
-
-    if(!npid) {
-        return;
-    }
-
-#if 0
-    if(npid == 1) {
-        /* systemd */
-        return;
-    } else if(npid == 2) {
-        /* kthreadd */
-        return; 
+    
+#if defined(_WIN32) || defined(__CYGWIN__)
+    if (g_tree_index <= 1) {
+        g_tree_index = 0;
+        next = pid;
+        goto failed;
     }
 #endif
 
-    print_info(npid);
+    index = 0;
+    while (index < g_tree_index) {
+        if (g_print_name == true) {
+            printf("%s[%d]\n", g_ptree[index].name, g_ptree[index].pid);
+        } else {
+            printf("%d\n", g_ptree[index].pid);
+        }
+        index++;
+    }
 }
 
 int main(int argc, char **argv)  
@@ -234,7 +249,9 @@ int main(int argc, char **argv)
                 goto error;
         }
     }
- 
+    
+    memset(g_ptree, 0, PTREE_MAX_DEPTH * sizeof(pid_info_t));
+
     if (optind < argc) {
         for (idx = optind; idx < argc; idx++) {
             if (is_digit(argv[idx], strlen(argv[idx]))) {
@@ -248,7 +265,7 @@ int main(int argc, char **argv)
                     }
                 }
 
-                print_info(ppid);
+                print_ptree(ppid);
             } else {
                 goto error;
             }
@@ -268,7 +285,7 @@ int main(int argc, char **argv)
                 }
             }
 
-            print_info(ppid);
+            print_ptree(ppid);
         }
     }
 
