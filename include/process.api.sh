@@ -761,10 +761,10 @@ function process_coredump
     return 0
 }
 
-if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
 function process_winpid2pid
 {
     local para_list=($@)
+
     if [ ${#para_list[*]} -eq 0 ];then
         echo_file "${LOG_ERRO}" "please input [pid/process-name] parameters"
         return 1
@@ -783,4 +783,3 @@ function process_winpid2pid
     [ ${#pid_list[*]} -gt 0 ] && echo "${pid_list[*]}"
     return 0
 }
-fi

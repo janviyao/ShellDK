@@ -574,6 +574,11 @@ function _ncat_thread
         local ppids=($(ppid))
         self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            while [ -z "${self_pid}" ]
+            do
+                ppids=($(ppid))
+                self_pid=${ppids[1]}
+            done
             self_pid=$(process_winpid2pid ${self_pid})
         fi
         local ppinfos=($(ppid -n))
