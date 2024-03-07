@@ -511,6 +511,9 @@ function _mdat_thread
     if can_access "ppid";then
         local ppids=($(ppid))
         self_pid=${ppids[1]}
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            self_pid=$(process_winpid2pid ${self_pid})
+        fi
         local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "mdat bg_thread [${ppinfos[*]}]"
     else

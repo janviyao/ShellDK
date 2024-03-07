@@ -482,6 +482,9 @@ function _xfer_thread
     if can_access "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            self_pid=$(process_winpid2pid ${self_pid})
+        fi
         local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "xfer bg_thread [${ppinfos[*]}]"
     fi
