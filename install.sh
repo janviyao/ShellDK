@@ -417,22 +417,20 @@ function inst_vim
         fi
     fi
 
+    if [[ "${SYSTEM}" == "Linux" ]]; then
+        install_from_spec "linux.deno"
+    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        install_from_spec "cygwin.deno"
+    fi
+
     #git clone https://git.code.sf.net/p/cscope/cscope cscope
     #git clone https://github.com/universal-ctags/ctags.git ctags
     #svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
     local vim_deps=("cscope" "ctags" "astyle" "ack-grep" "ag")
     for spec in ${vim_deps[*]}
     do
-        if ! install_from_spec "${spec}";then
-            return 1
-        fi
+        install_from_spec "${spec}"
     done
-
-    if [[ "${SYSTEM}" == "Linux" ]]; then
-        install_from_spec "linux.deno"
-    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        install_from_spec "cygwin.deno"
-    fi
 }
 
 function inst_glibc
