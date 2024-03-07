@@ -6,21 +6,21 @@
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
+#include <getopt.h>
 
 #if defined(__linux__)
 #include <fcntl.h>  
-#include <getopt.h>
 #include <sys/time.h>  
 #include <sys/types.h>  
 #include <sys/stat.h>  
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #include <tlhelp32.h>
 #endif
 
 #if defined(__linux__)
 #define PID_T pid_t
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__CYGWIN__)
 #define PID_T DWORD
 #endif
 
@@ -87,7 +87,7 @@ static PID_T get_main_pid()
 
 #if defined(__linux__)
     pid = syscall(__NR_gettid);
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__CYGWIN__)
     pid = GetCurrentProcessId();
 #endif
 
@@ -127,14 +127,14 @@ static PID_T get_ppid(PID_T pid, char *name, int length)
         }
         memcpy(name, pname, length);
     }
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__CYGWIN__)
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot != INVALID_HANDLE_VALUE) {
         PROCESSENTRY32 processEntry;
         processEntry.dwSize = sizeof(PROCESSENTRY32);
         if (Process32First(hSnapshot, &processEntry)) {
             do {
-                if (processEntry.th32ProcessID == processId) {
+                if (processEntry.th32ProcessID == pid) {
                     ppid = processEntry.th32ParentProcessID;
                     if (name) {
                         memcpy(name, processEntry.szExeFile, length);
