@@ -165,9 +165,10 @@ static PID_T get_ppid(PID_T pid, char *name, int length)
 
 static void print_ptree(PID_T pid)
 {
-    int index;
+    int index, fail_cnt;
     PID_T next = pid;
 
+    fail_cnt = 0;
 failed:
     while (next > 0) {
         g_ptree[g_tree_index].pid = next;
@@ -179,11 +180,14 @@ failed:
         }
     }
     
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if 0//defined(_WIN32) || defined(__CYGWIN__)
     if (g_tree_index <= 1) {
-        g_tree_index = 0;
-        next = pid;
-        goto failed;
+        fail_cnt++;
+        if (fail_cnt < 3) {
+            g_tree_index = 0;
+            next = pid;
+            goto failed;
+        }
     }
 #endif
 
