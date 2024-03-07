@@ -805,6 +805,14 @@ function file_temp
     if can_access "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            while [ -z "${self_pid}" ]
+            do
+                ppids=($(ppid))
+                self_pid=${ppids[1]}
+            done
+            self_pid=$(process_winpid2pid ${self_pid})
+        fi
     fi
 
     echo > ${base_dir}/tmp.${self_pid}

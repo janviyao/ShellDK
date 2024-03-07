@@ -130,7 +130,16 @@ function export_all
     local local_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        local local_pid=${ppids[1]}
+        local self_pid=${ppids[1]}
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            while [ -z "${self_pid}" ]
+            do
+                ppids=($(ppid))
+                self_pid=${ppids[1]}
+            done
+            self_pid=$(process_winpid2pid ${self_pid})
+        fi
+        local_pid=${self_pid}
     fi
 
     local export_file="/tmp/export.${local_pid}"
@@ -151,7 +160,16 @@ function import_all
     local parent_pid=$$
     if can_access "ppid";then
         local ppids=($(ppid))
-        local parent_pid=${ppids[1]}
+        local self_pid=${ppids[1]}
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            while [ -z "${self_pid}" ]
+            do
+                ppids=($(ppid))
+                self_pid=${ppids[1]}
+            done
+            self_pid=$(process_winpid2pid ${self_pid})
+        fi
+        parent_pid=${self_pid}
     fi
 
     local import_file="/tmp/export.${parent_pid}"
@@ -185,6 +203,14 @@ function wait_value
     if can_access "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+            while [ -z "${self_pid}" ]
+            do
+                ppids=($(ppid))
+                self_pid=${ppids[1]}
+            done
+            self_pid=$(process_winpid2pid ${self_pid})
+        fi
     fi
 
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
