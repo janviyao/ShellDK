@@ -129,7 +129,11 @@ function clean_env
         rm -f ${LOCAL_BIN_DIR}/apt-cyg
     fi
 
-    ${SUDO} file_del "/var/spool/cron/$(whoami)" ".+timer\.sh" true
+    local cron_dir="/var/spool/cron"
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        cron_dir="/var/cron/tabs"
+    fi
+    ${SUDO} file_del "${cron_dir}/$(whoami)" ".+timer\.sh" true
 
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true

@@ -1353,6 +1353,10 @@ let Grep_Default_Filelist = '*'                                           "查�
 let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
 let Grep_Skip_Files = '*.o *.d *.bak *~ .git* tags cscope.* vim.debug'    "不匹配指定文件
 let Grep_OpenQuickfixWindow = 0                                           "默认不自动打开quickfix, 完成格式化打开
+if has('win32unix')
+let Grep_Xargs_Path = 'env -i '.trim(system('which xargs'))               "xargs传递大量环境变量会导致出错
+let Grep_Path = trim(system('which grep'))                                "清空环境变量后指定全路径
+endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 快速搜索 插件
