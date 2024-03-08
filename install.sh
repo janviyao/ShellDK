@@ -290,9 +290,9 @@ function inst_env
     sudo_it chmod o+x ${cron_dir} 
     if can_access "${cron_dir}/$(whoami)";then
         ${SUDO} file_del "${cron_dir}/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
-        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/$(whoami)"
+        sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/$(whoami)"
     else
-        sudo_it "echo '*/2 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/$(whoami)"
+        sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/$(whoami)"
     fi
     sudo_it chmod 0644 ${cron_dir}/$(whoami) 
 

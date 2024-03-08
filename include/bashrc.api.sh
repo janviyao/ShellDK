@@ -30,6 +30,7 @@ unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
 readonly ROOT_PID=$$
+readonly LOCAL_IP=$(get_local_ip)
 readonly GBL_BASE_DIR="/tmp/gbl"
 readonly GBL_USER_DIR="${GBL_BASE_DIR}/${MY_NAME}"
 readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"

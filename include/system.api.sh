@@ -896,5 +896,3 @@ function get_local_ip
 
     echo "127.0.0.1"
 }
-
-LOCAL_IP="$(get_local_ip)"
