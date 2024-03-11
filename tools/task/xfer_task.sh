@@ -458,10 +458,16 @@ function _xfer_thread_main
 
                 if math_bool "${check_ok}";then
                     sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                    if [ $? -ne 0 ];then
+                        echo_erro "failed[$?] { sshpass -p \"${USR_PASSWORD}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
+                    fi
                 fi
             else
                 #can_access "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
                 rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                if [ $? -ne 0 ];then
+                    echo_erro "failed[$?] { rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
+                fi
             fi
         fi
 

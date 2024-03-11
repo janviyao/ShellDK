@@ -287,15 +287,19 @@ function account_check
     local input_val=""
 
     if have_admin; then
-        [[ "${bash_options}" =~ x ]] && set -x
         export USR_NAME=${usr_name}
-        return 0
+        if [ -n "${USR_PASSWORD}" ]; then
+            [[ "${bash_options}" =~ x ]] && set -x
+            return 0
+        fi
     fi
 
     if have_sudoed; then
-        [[ "${bash_options}" =~ x ]] && set -x
         export USR_NAME=${usr_name}
-        return 0
+        if [ -n "${USR_PASSWORD}" ]; then
+            [[ "${bash_options}" =~ x ]] && set -x
+            return 0
+        fi
     fi
 
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
