@@ -30,6 +30,7 @@ unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
 readonly ROOT_PID=$$
+readonly SYSTEM=$(uname -s | grep -P "^\w+" -o)
 readonly LOCAL_IP=$(get_local_ip)
 readonly GBL_BASE_DIR="/tmp/gbl"
 readonly GBL_USER_DIR="${GBL_BASE_DIR}/${MY_NAME}"
@@ -39,7 +40,6 @@ readonly LOCAL_DIR="${MY_HOME}/.local"
 readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
 readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
 readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
-readonly SYSTEM=$(uname -s | grep -P "^\w+" -o)
 
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
