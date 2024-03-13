@@ -123,6 +123,8 @@ function _redirect_func
     exec {pipe_fd}<>${log_pipe}
 
     mdat_kv_set "${log_file}" "${log_pipe}"
+
+    local line
     while read line
     do
         if [[ "${line}" == "EXIT" ]];then

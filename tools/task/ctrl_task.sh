@@ -113,6 +113,7 @@ function _ctrl_thread_main
 {
     local index
 
+    local line
     while read line
     do
         echo_file "${LOG_DEBUG}" "ctrl recv: [${line}] from [${CTRL_PIPE}]"

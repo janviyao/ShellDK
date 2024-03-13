@@ -280,9 +280,9 @@ function input_prompt
 
     local input_val="";
     if [ -n "${dflt_value}" ];then
-        read -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val
+        read -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
     else
-        read -p "Please ${prompt_ctn}: " input_val
+        read -p "Please ${prompt_ctn}: " input_val < /dev/tty
     fi
     
     if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -293,9 +293,9 @@ function input_prompt
         while ! eval "${check_func} ${input_val}"
         do
             if [ -n "${dflt_value}" ];then
-                read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val
+                read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
             else
-                read -p "check fail, Please ${prompt_ctn}: " input_val
+                read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty
             fi
 
             if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -307,9 +307,9 @@ function input_prompt
             while [ -z "${input_val}" ]
             do
                 if [ -n "${dflt_value}" ];then
-                    read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val
+                    read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
                 else
-                    read -p "check fail, Please ${prompt_ctn}: " input_val
+                    read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty
                 fi
 
                 if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then

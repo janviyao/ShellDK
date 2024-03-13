@@ -515,6 +515,8 @@ function dump_interrupt
     
     cat /proc/interrupts &> ${tmp_file}
     printf "%-10s %-30s %-30s %-50s\n" "IRQ-nr" "IRQ-cnt" "CPU-list" "Description"
+
+    local line
     while read line
     do
         if [ -z "${line}" ];then
@@ -651,6 +653,7 @@ function du_find
         dpath=""
     fi
 
+    local line
     sudo_it "du -b -s ${dpath}/* 2>/dev/null" | sort -ur -n -t ' ' -k 1 | while read line
     do
         local obj_info=$(echo "${line}" | awk '{ print $2 }')
@@ -756,6 +759,7 @@ function check_net
 
 function cursor_pos
 {
+    local pos
     # ask the terminal for the position
     echo -ne "\033[6n" > /dev/tty
 
@@ -839,6 +843,8 @@ function get_hosts_ip
     local ret_guide="$@"
 
     local -A hostip_map
+
+    local line
     while read line
     do
         ipaddr=$(echo "${line}" | awk '{ print $1 }')

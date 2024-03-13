@@ -371,7 +371,8 @@ function _xfer_thread_main
         fi;\
     fi\
     "
-
+    
+    local line
     while read line
     do
         echo_file "${LOG_DEBUG}" "xfer recv: [${line}] from [${XFER_PIPE}]"

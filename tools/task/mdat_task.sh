@@ -373,6 +373,7 @@ function _bash_mdat_exit
 function _mdat_thread_main
 {
     local -A _global_map_
+    local line
     while read line
     do
         echo_file "${LOG_DEBUG}" "mdat recv: [${line}] from [${MDAT_PIPE}]"

@@ -201,6 +201,7 @@ function ncat_recv_msg
 
     echo_file "${LOG_DEBUG}" "ncat will recv: [port ${ncat_port}]"
     if can_access "nc";then
+        local ncat_body
         #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body

@@ -112,6 +112,7 @@ function create_project
 
     if can_access ".gitignore"; then
         local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+        local line
         while read line
         do
             [ -z "${line}" ] && continue
