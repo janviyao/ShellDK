@@ -34,7 +34,7 @@ function do_rsync
     can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
         if ! account_check ${MY_NAME};then
-            echo_erro "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+            echo_erro "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
             return 1
         fi
 
@@ -313,7 +313,7 @@ function _xfer_thread_main
 {
     local check_ok=true
     if ! account_check ${MY_NAME};then
-        echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+        echo_file "${LOG_ERRO}" "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
         check_ok=false
     fi
 
@@ -452,14 +452,30 @@ function _xfer_thread_main
                     if account_check ${MY_NAME};then
                         check_ok=true
                     else
-                        echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+                        echo_file "${LOG_ERRO}" "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
                     fi
                 fi
 
                 if math_bool "${check_ok}";then
-                    sshpass -p "${USR_PASSWORD}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                    local username="${USR_NAME}"
+                    local password="${USR_PASSWORD}"
+
+                    local remote_ip=$(string_regex "${xfer_des}" "(?<=@)\d+\.\d+\.\d+\.\d+(?=:)")
+                    if [ -n "${remote_ip}" ];then
+                        if ! check_remote_passwd "${remote_ip}" "${USR_NAME}" "${USR_PASSWORD}";then
+                            local input_val=$(input_prompt "" "input remote username" "${USR_NAME}")
+                            username=${input_val:-${USR_NAME}}
+                            input_val=$(input_prompt "" "input remote password" "")
+                            password=${input_val:-${USR_PASSWORD}}
+
+                            local remote_dir=$(string_regex "${xfer_des}" "(?<=:).+$")
+                            xfer_des="${username}@${remote_ip}:${remote_dir}"
+                        fi
+                    fi
+
+                    sshpass -p "${password}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
                     if [ $? -ne 0 ];then
-                        echo_erro "failed[$?] { sshpass -p \"${USR_PASSWORD}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
+                        echo_erro "failed[$?] { sshpass -p \"${password}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
                     fi
                 fi
             else

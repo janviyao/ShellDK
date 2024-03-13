@@ -41,6 +41,11 @@ function check_passwd
     local usrnam="$1"
     local passwd="$2"
 
+    if [ $# -ne 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: user name\n\$2: user password"
+        return 1
+    fi
+
     if [[ "${SYSTEM}" == "Linux" ]]; then
         if test -r /etc/shadow;then
             if chk_passwd "${usrnam}" "${passwd}" 2>/dev/null; then
@@ -54,6 +59,24 @@ function check_passwd
         fi
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         return 0
+    fi
+}
+
+function check_remote_passwd
+{
+    local remote="$1"
+    local usrnam="$2"
+    local passwd="$3"
+
+    if [ $# -ne 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: remote ipaddr\n\$2: user name\n\$3: user password"
+        return 1
+    fi
+
+    if sshpass -p "${passwd}" ssh -o StrictHostKeyChecking=no ${usrnam}@${remote} exit &> /dev/null;then
+        return 0
+    else
+        return 1
     fi
 }
 
