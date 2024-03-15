@@ -30,7 +30,6 @@ do
     fi
 
     echo_debug "para: ${option} ${value}"
-
     if [[ "${option:0:2}" == "--" ]];then
         if [[ "${value:0:1}" == "-" ]];then
             parasMap[${option}]="true"

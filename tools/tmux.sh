@@ -1,5 +1,4 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 . $MY_VIM_DIR/tools/paraparser.sh
 
 function how_use
@@ -8,7 +7,7 @@ function how_use
 
 	cat <<-END >&2
     ============================== Usage ==============================
-    ${script_name} [options] [command [sub-parameter]]
+    ${script_name} [options] <command [sub-parameter]>
     DESCRIPTION
         simplify tmux usage
 
