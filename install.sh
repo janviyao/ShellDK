@@ -20,6 +20,7 @@ FUNC_MAP["vim"]="inst_vim"
 FUNC_MAP["spec"]="inst_spec"
 FUNC_MAP["all"]="clean_env inst_env inst_vim"
 FUNC_MAP["glibc2.28"]="inst_glibc"
+FUNC_MAP["cygwin"]="inst_cygwin"
 FUNC_MAP["hostname"]="inst_hostname"
 
 function inst_usage
@@ -32,10 +33,10 @@ function inst_usage
     echo "install.sh -o clean      @clean vim environment"
     echo "install.sh -o env        @deploy vim's usage environment"
     echo "install.sh -o vim        @install vim package"
-    echo "install.sh -o glibc2.28  @install glibc2.28 package"
-    echo "install.sh -o system     @configure run system: linux & windows"
     echo "install.sh -o spec       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
+    echo "install.sh -o glibc2.28  @install glibc2.28 package"
+    echo "install.sh -o cygwin     @install cygwin environment packages"
     echo "install.sh -o hostname   @set hostname"
 
     echo ""
@@ -133,7 +134,10 @@ function clean_env
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         cron_dir="/var/cron/tabs"
     fi
-    ${SUDO} file_del "${cron_dir}/$(whoami)" ".+timer\.sh" true
+
+    if can_access "${cron_dir}";then
+        ${SUDO} file_del "${cron_dir}/$(whoami)" ".+timer\.sh" true
+    fi
 
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
@@ -254,7 +258,6 @@ function inst_env
     can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
     if ! can_access "${MY_HOME}/.rsync.exclude";then
         echo "build/*"  >  ${MY_HOME}/.rsync.exclude
-        echo "dpdk*/*"  >> ${MY_HOME}/.rsync.exclude
         echo ".git/*"   >> ${MY_HOME}/.rsync.exclude
         echo "tags"     >> ${MY_HOME}/.rsync.exclude
         echo "cscope.*" >> ${MY_HOME}/.rsync.exclude
@@ -285,20 +288,30 @@ function inst_env
         echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
         chmod +x ${MY_HOME}/.timerc 
     fi
+    
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
+            apt-cyg install cron
+        fi
+    fi
 
     local cron_dir="/var/spool/cron"
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         cron_dir="/var/cron/tabs"
     fi
 
-    sudo_it chmod o+x ${cron_dir} 
-    if can_access "${cron_dir}/$(whoami)";then
-        ${SUDO} file_del "${cron_dir}/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
-        sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/$(whoami)"
+    if can_access "${cron_dir}";then
+        sudo_it chmod o+x ${cron_dir} 
+        if can_access "${cron_dir}/$(whoami)";then
+            ${SUDO} file_del "${cron_dir}/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
+            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/$(whoami)"
+        else
+            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/$(whoami)"
+        fi
+        sudo_it chmod 0644 ${cron_dir}/$(whoami) 
     else
-        sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/$(whoami)"
+        echo_erro "cron { ${cron_dir} } is not installed"
     fi
-    sudo_it chmod 0644 ${cron_dir}/$(whoami) 
 
     chmod +x ${MY_VIM_DIR}/timer.sh 
     if [[ "${SYSTEM}" == "Linux" ]]; then
@@ -469,6 +482,31 @@ function inst_hostname
     fi
 }
 
+function inst_cygwin
+{
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        echo_erro "not cygwin environment"
+        return 1
+    fi
+
+    mkpasswd -l > /etc/passwd
+    mkgroup -l > /etc/group
+    chmod +rwx /var
+
+    cygrunsrv -R sshd
+    ssh-host-config -y 
+    cygrunsrv -S sshd
+    if [ $? -ne 0 ];then
+        echo "*** Enter into windows services.msc"
+        echo "*** Check CYGWINsshd service whether to have started ?"
+        echo "*** and then execute 'ssh localhost' to check whether success"
+    fi
+
+    if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
+        apt-cyg install cron
+    fi
+}
+
 if ! math_bool "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
     do
@@ -537,6 +575,7 @@ else
         rm -f ${MY_HOME}/vim.tar
     fi
 fi
+
 #if can_access "git";then
 #    git config --global user.email "9971289@qq.com"
 #    git config --global user.name "Janvi Yao"
