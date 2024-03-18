@@ -26,7 +26,7 @@ function run_fio_func
     local fio_out="${conf_fname}.log"
     echo > ${output_dir}/hosts
 
-    local other_paras=""
+    local opt_sub=""
     for host_info in ${host_info_array[*]}
     do
         local host_ip=$(echo "${host_info}" | awk -F: '{print $1}')
@@ -55,7 +55,7 @@ function run_fio_func
         fi
 
         echo "${host_ip}" >> ${output_dir}/hosts
-        other_paras="${other_paras} --client=${host_ip} --remote-config=${output_dir}/${conf_fname}.${host_ip}" 
+        opt_sub="${opt_sub} --client=${host_ip} --remote-config=${output_dir}/${conf_fname}.${host_ip}" 
 
         ${TOOL_ROOT_DIR}/scplogin.sh "${output_dir}/${conf_fname}.${host_ip}" "${host_ip}:${output_dir}/${conf_fname}.${host_ip}" &> /dev/null
         if [ $? -ne 0 ];then
@@ -64,18 +64,18 @@ function run_fio_func
     done
 
     if math_bool "${FIO_DEBUG_ON}";then
-        other_paras="${other_paras} --debug=io"
+        opt_sub="${opt_sub} --debug=io"
     fi
 
-    #local run_cmd="${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${other_paras}"
+    #local run_cmd="${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${opt_sub}"
     #run_cmd=$(string_replace "${run_cmd}" "${TOOL_ROOT_DIR}/" "")
     #run_cmd=$(string_replace "${run_cmd}" "${WORK_ROOT_DIR}/" "")
     #run_cmd=$(string_replace "${run_cmd}" "${MY_HOME}/" "")
     #echo_info "${run_cmd}"
     if [ ! -f ${output_dir}/${fio_out} ];then
-        ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${other_paras}
+        ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${opt_sub}
         if [ $? -ne 0 ];then
-            echo_erro "please check: ${output_dir}/${fio_out} ${other_paras}" 
+            echo_erro "please check: ${output_dir}/${fio_out} ${opt_sub}" 
             exit 1
         fi
         echo ""
@@ -84,7 +84,7 @@ function run_fio_func
     local have_error=$(cat ${output_dir}/${fio_out} | grep "error=")
     if [ -n "${have_error}" ]; then
         cat ${output_dir}/${fio_out}
-        echo_erro "failed: ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${other_paras}" 
+        echo_erro "failed: ${FIO_APP_RUNTIME} --output ${output_dir}/${fio_out} ${opt_sub}" 
         exit 1
     fi
 

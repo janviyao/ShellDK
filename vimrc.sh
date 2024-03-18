@@ -3,14 +3,12 @@ echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 . $MY_VIM_DIR/tools/paraparser.sh
 #set -x
 
-OP_MODE="${parasMap['-m']}"
-OP_MODE="${OP_MODE:-${parasMap['--mode']}}"
+OP_MODE=$(get_options "-m" "--mode")
 if [ -n "${OP_MODE}" ];then
     echo_debug "work-mode: ${OP_MODE}"
 fi
 
-PRJ_DIR="${parasMap['-p']}"
-PRJ_DIR="${PRJ_DIR:-${parasMap['--project-dir']}}"
+PRJ_DIR=$(get_options "-p" "--project-dir")
 PRJ_DIR="${PRJ_DIR:-.}"
 PRJ_DIR=$(string_trim "${PRJ_DIR}" "/" 2)
 if [ -n "${PRJ_DIR}" ];then
@@ -21,8 +19,7 @@ if [ -n "${PRJ_DIR}" ];then
     fi
 fi
 
-OUT_DIR="${parasMap['-o']}"
-OUT_DIR="${OUT_DIR:-${parasMap['--output-dir']}}"
+OUT_DIR=$(get_options "-o" "--output-dir")
 OUT_DIR=$(string_trim "${OUT_DIR}" "/" 2)
 if [ -n "${OUT_DIR}" ];then
     echo_debug "output-dir: ${OUT_DIR}"

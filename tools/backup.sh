@@ -13,19 +13,19 @@ function how_use
     echo "============================================="
 }
 
-if [ ${#other_paras[*]} -lt 1 ];then
+if [ -z "$(get_subopt '*')" ];then
     how_use
     exit 1
 fi
 
-SRC_DIR="${other_paras[0]}"
+SRC_DIR="$(get_subopt 0)"
 if [ ! -d ${SRC_DIR} ]; then
     echo_erro "first-para(SRC_DIR) must be directory: ${SRC_DIR}"
     exit 1
 fi
 SRC_DIR=$(real_path ${SRC_DIR})
 
-DES_DIR="${other_paras[1]}"
+DES_DIR="$(get_subopt 1)"
 if [ -n "${DES_DIR}" ];then
     if [ ! -d ${DES_DIR} ]; then
         echo_erro "second-para(DES_DIR) not directory: ${DES_DIR}"
@@ -33,26 +33,26 @@ if [ -n "${DES_DIR}" ];then
     fi
     
     # remove the first two item
-    unset other_paras[0]
-    unset other_paras[1]
+    del_subopt 0
+    del_subopt 1
 else
     suffix=$(date '+%Y%m%d-%H%M%S')
     DES_DIR=~/${suffix}
 
     if [ ${#paras_list[*]} -ge 2 ];then
         # remove the first two item
-        unset other_paras[0]
-        unset other_paras[1]
+        del_subopt 0
+        del_subopt 1
     else
         # remove the first item
-        unset other_paras[0]
+        del_subopt 0
     fi
 fi
 DES_DIR=$(real_path ${DES_DIR})
 
 BAK_CONF=$(pwd)/.bak.conf
-EXCLUDE_FILS=(${other_paras[*]} "\w+\.d" "\w+\.o" "\w+\.gcno")
-EXCLUDE_DIRS=(${other_paras[*]} "build")
+EXCLUDE_FILS=($(get_subopt '*') "\w+\.d" "\w+\.o" "\w+\.gcno")
+EXCLUDE_DIRS=($(get_subopt '*') "build")
 
 function common_backup
 {

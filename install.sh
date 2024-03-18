@@ -47,39 +47,42 @@ function inst_usage
     done
 }
 
-NEED_OP="${parasMap['-o']}"
-NEED_OP="${NEED_OP:-${parasMap['--op']}}"
-#NEED_OP="${NEED_OP:?'Please specify -o option'}"
-if [ -z "${NEED_OP}" ];then
-    if [ ${#other_paras[*]} -gt 0 ];then
-        NEED_OP="spec"
+OPT_HELP=$(get_options "-h" "--help")
+if math_bool "${OPT_HELP}";then
+    inst_usage
+    exit 0
+fi
+
+NEED_OPT=$(get_options "-o" "--op")
+#NEED_OP="${NEED_OPT:?'Please specify -o option'}"
+if [ -z "${NEED_OPT}" ];then
+    if [ -n "$(get_subopt '*')" ];then
+        NEED_OPT="spec"
     fi
 fi
 
-OP_MATCH=0
+OPT_MATCH=0
 for func in ${!FUNC_MAP[*]};
 do
-    if string_contain "${NEED_OP}" "${func}"; then
-        let OP_MATCH=OP_MATCH+1
+    if string_contain "${NEED_OPT}" "${func}"; then
+        let OPT_MATCH=OPT_MATCH+1
     fi
 done
 
-if [[ ${OP_MATCH} -eq 0 ]] || [[ ${OP_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
-    echo_erro "unkown op: ${NEED_OP}"
+if [[ ${OPT_MATCH} -eq 0 ]] || [[ ${OPT_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
+    echo_erro "unkown op: ${NEED_OPT}"
     echo ""
     inst_usage
     exit -1
 fi
 
-REMOTE_INST="${parasMap['-r']}"
-REMOTE_INST="${REMOTE_INST:-${parasMap['--remote']}}"
+REMOTE_INST=$(get_options "-r" "--remote")
 REMOTE_INST="${REMOTE_INST:-0}"
 
-COPY_PKG="${parasMap['-c']}"
-COPY_PKG="${COPY_PKG:-${parasMap['--copy']}}"
+COPY_PKG=$(get_options "-c" "--copy")
 COPY_PKG="${COPY_PKG:-0}"
 
-echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OP}")"
+echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OPT}")"
 echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
 echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 
@@ -510,35 +513,35 @@ function inst_cygwin
 if ! math_bool "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
     do
-        if string_contain "${NEED_OP}" "${key}"; then
+        if string_contain "${NEED_OPT}" "${key}"; then
             echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
             echo_info "$(printf "[%13s]: %-6s" "Funcs" "${FUNC_MAP[${key}]}")"
             for func in ${FUNC_MAP[${key}]};
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
-                ${func} ${other_paras[*]}
+                ${func} $(get_subopt '*')
                 echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
             done
         fi
     done
 else
-    declare -a ip_array=($(echo "${other_paras[*]}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    declare -a ip_array=($(echo "$(get_subopt '*')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
         ip_array=($(get_hosts_ip))
     fi
     echo_info "Remote install into { ${ip_array[*]} }"
 
     inst_paras=""
-    for key in ${!parasMap[*]}
+    for key in ${!_OPTION_MAP[*]}
     do
         if match_regex "${key}" "\-?\-[rc][a-zA-Z]*";then
             continue
         fi
 
         if [ -n "${inst_paras}" ];then
-            inst_paras="${inst_paras} ${key} ${parasMap[$key]}"
+            inst_paras="${inst_paras} ${key} ${_OPTION_MAP[$key]}"
         else
-            inst_paras="${inst_paras} ${key} ${parasMap[$key]}"
+            inst_paras="${inst_paras} ${key} ${_OPTION_MAP[$key]}"
         fi
     done
 
@@ -551,7 +554,7 @@ else
         ipaddr="${ip_array[idx]}"
         echo_info "Install ${inst_paras} into { ${ipaddr} }"
 
-        if string_contain "${NEED_OP}" "hostname"; then
+        if string_contain "${NEED_OPT}" "hostname"; then
             hostname=($(grep -F "${ipaddr}" /etc/hosts | awk '{ print $2 }'))
             if [ -n "${hostname}" ];then
                 if [[ "${SYSTEM}" == "Linux" ]]; then

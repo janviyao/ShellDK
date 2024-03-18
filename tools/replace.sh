@@ -30,28 +30,24 @@ function how_use
 END
 }
 
-if [ ${#other_paras[*]} -lt 2 ];then
+sub_opts=($(get_subopt '*'))
+if [ ${#sub_opts[*]} -lt 2 ];then
     how_use
     exit 1
 fi
-#echo "===${!parasMap[*]} ${parasMap[*]}"
-#echo "===${other_paras[*]}"
 
-OPT_HELP="${parasMap['-h']}"
-OPT_HELP="${OPT_HELP:-${parasMap['--help']}}"
+OPT_HELP=$(get_options "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use
     exit 0
 fi
 
-SRC_REGEX="${parasMap['-r']}"
-SRC_REGEX="${SRC_REGEX:-${parasMap['--src-regex']}}"
-
-OLD_STR="${other_paras[0]}"
-NEW_STR="${other_paras[1]}"
-unset other_paras[0]
-unset other_paras[1]
-replace_list=(${other_paras[*]})
+SRC_REGEX=$(get_options "-r" "--src-regex")
+OLD_STR=$(get_subopt 0)
+NEW_STR=$(get_subopt 1)
+del_subopt 0
+del_subopt 1
+replace_list=($(get_subopt '*'))
 
 CUR_DIR=$(pwd)
 if [ ${#replace_list[*]} -eq 0 ];then

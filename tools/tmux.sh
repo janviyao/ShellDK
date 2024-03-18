@@ -31,20 +31,19 @@ function how_use
 END
 }
 
-if [ ${#other_paras[*]} -lt 1 ];then
+if [ -z "$(get_subopt '*')" ];then
     how_use
     exit 1
 fi
 
-OPT_HELP="${parasMap['-h']}"
-OPT_HELP="${OPT_HELP:-${parasMap['--help']}}"
+OPT_HELP=$(get_options "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use
     exit 0
 fi
 
-SUB_CMD="${other_paras[0]}"
-SUB_PARA1="${other_paras[1]}"
+SUB_CMD=$(get_subopt 0)
+SUB_PARA1=$(get_subopt 1)
 case ${SUB_CMD} in
     new)
         if [ -n "${SUB_PARA1}" ];then

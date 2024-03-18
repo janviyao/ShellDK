@@ -75,20 +75,38 @@ function array_index
         return 1
     fi
 
-    local index=0
-    local count=${#array[*]}
-    while ((index < count))
+    local index
+    for index in ${!array[*]}
     do
         local item=${array[${index}]}
         if [[ ${item} == ${value} ]];then
             echo "${index}"
             return 0
         fi
-        let index++
     done
 
     echo "-1"
     return 1
+}
+
+function array_del
+{
+    local array=($1)
+    local index="$2"
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: array\n\$2: index to be deleted"
+        return 1
+    fi
+
+    local indexs=(${!array[*]})
+    local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
+    if [ ${index} -lt ${total} ];then
+        unset array[${index}]
+    fi
+
+    echo "${array[*]}"
+    return 0
 }
 
 function array_compare
