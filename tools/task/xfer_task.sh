@@ -475,15 +475,17 @@ function _xfer_thread_main
                     fi
 
                     sshpass -p "${password}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
-                    if [ $? -ne 0 ];then
-                        echo_erro "failed[$?] { sshpass -p \"${password}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
+                    local ret=$?
+                    if [ ${ret} -ne 0 ];then
+                        echo_warn "failed[${ret}] { sshpass -p \"${password}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
                     fi
                 fi
             else
                 #can_access "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
                 rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
-                if [ $? -ne 0 ];then
-                    echo_erro "failed[$?] { rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
+                local ret=$?
+                if [ ${ret} -ne 0 ];then
+                    echo_warn "failed[${ret}] { rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
                 fi
             fi
         fi
