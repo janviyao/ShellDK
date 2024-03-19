@@ -27,3 +27,4 @@ ClicksTargetApp=yes
 SelectionShowSize=12
 ScrollMod=shift
 PgUpDnScroll=yes
+ConfirmExit=no
