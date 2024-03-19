@@ -4,6 +4,7 @@ XFER_WORK_DIR="${BASH_WORK_DIR}/xfer"
 mkdir -p ${XFER_WORK_DIR}
 
 XFER_TASK="${XFER_WORK_DIR}/task"
+XFER_WORK="${XFER_WORK_DIR}/work"
 XFER_PIPE="${XFER_WORK_DIR}/pipe"
 XFER_FD=${XFER_FD:-6}
 can_access "${XFER_PIPE}" || mkfifo ${XFER_PIPE}
@@ -474,7 +475,11 @@ function _xfer_thread_main
                         fi
                     fi
 
-                    sshpass -p "${password}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                    sshpass -p "${password}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} &
+                    local bgpid=$!
+                    echo ${bgpid} > ${XFER_WORK}
+                    wait ${bgpid}
+
                     local ret=$?
                     if [ ${ret} -ne 0 ];then
                         echo_warn "failed[${ret}] { sshpass -p \"${password}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
@@ -482,7 +487,11 @@ function _xfer_thread_main
                 fi
             else
                 #can_access "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
-                rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des}
+                rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} &
+                local bgpid=$!
+                echo ${bgpid} > ${XFER_WORK}
+                wait ${bgpid}
+
                 local ret=$?
                 if [ ${ret} -ne 0 ];then
                     echo_warn "failed[${ret}] { rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
@@ -501,23 +510,12 @@ function _xfer_thread_main
 
 function _xfer_kill_rsync
 {
-    local task_list=($(cat ${XFER_TASK}))
-    local rsync_pids=($(process_name2pid rsync))
+    local work_list=($(cat ${XFER_WORK}))
+    echo_file "${LOG_DEBUG}" "xfer works[${work_list[*]}]"
 
-    echo_file "${LOG_DEBUG}" "xfer tasks[${task_list[*]}] rsync[${rsync_pids[*]}]"
-    for pid in ${rsync_pids[*]}
+    for pid in ${work_list[*]}
     do
-        local ppid=$(process_ppid ${pid})
-        echo_file "${LOG_DEBUG}" "xfer tasks[${task_list[*]}] ppid[${ppid}]"
-        while [[ ${ppid} -gt 1 ]]
-        do
-            if array_have "${task_list[*]}" "${ppid}";then
-                process_kill ${pid}
-                break
-            fi
-            ppid=$(process_ppid ${ppid})
-            echo_file "${LOG_DEBUG}" "xfer tasks[${task_list[*]}] ppid[${ppid}]"
-        done
+        process_kill ${pid}
     done
 }
 
