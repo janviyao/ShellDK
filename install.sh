@@ -487,7 +487,7 @@ function inst_hostname
 
 function inst_cygwin
 {
-    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+    if [[ "${SYSTEM}" != "CYGWIN_NT" ]]; then
         echo_erro "not cygwin environment"
         return 1
     fi
@@ -495,6 +495,19 @@ function inst_cygwin
     mkpasswd -l > /etc/passwd
     mkgroup -l > /etc/group
     chmod +rwx /var
+
+    if ! can_access "apt-cyg";then
+        cp -f ${MY_VIM_DIR}/deps/apt-cyg ${LOCAL_BIN_DIR}
+        chmod +x ${LOCAL_BIN_DIR}/apt-cyg
+    fi
+
+    if ! can_access "cygrunsrv";then
+        install_from_net cygrunsrv
+    fi
+
+    if ! can_access "ssh-host-config";then
+        install_from_net ssh-host-config
+    fi
 
     cygrunsrv -R sshd
     ssh-host-config -y 
@@ -506,7 +519,7 @@ function inst_cygwin
     fi
 
     if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
-        apt-cyg install cron
+        install_from_net cron
     fi
 }
 
