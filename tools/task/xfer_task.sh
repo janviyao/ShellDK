@@ -497,9 +497,55 @@ function _xfer_thread_main
     done < ${XFER_PIPE}
 }
 
+function _xfer_kill_rsync
+{
+    local task_list=($(cat ${XFER_TASK}))
+    local rsync_pids=($(process_name2pid rsync))
+
+    echo_file "${LOG_DEBUG}" "xfer tasks[${task_list[*]}] rsync[${rsync_pids[*]}]"
+    for pid in ${rsync_pids[*]}
+    do
+        local ppid=$(process_ppid ${pid})
+        echo_file "${LOG_DEBUG}" "xfer tasks[${task_list[*]}] ppid[${ppid}]"
+        while [[ ${ppid} -gt 1 ]]
+        do
+            if array_have "${task_list[*]}" "${ppid}";then
+                process_kill ${pid}
+                break
+            fi
+            ppid=$(process_ppid ${ppid})
+            echo_file "${LOG_DEBUG}" "xfer tasks[${task_list[*]}] ppid[${ppid}]"
+        done
+    done
+}
+
+function _xfer_handle_signal
+{
+    case "${SIGNAL}" in
+        INT)
+            echo_debug "xfer catch SIGINT"
+            _xfer_kill_rsync  
+            ;;
+        TERM)
+            echo_debug "xfer catch SIGTERM"
+            _xfer_kill_rsync
+            ;;
+        KILL)
+            echo_debug "xfer catch SIGKILL"
+            _xfer_kill_rsync
+            ;;
+        *)
+            echo_debug "xfer catch unknown signal: ${SIGNAL}"
+            ;;
+    esac
+    unset SIGNAL
+}
+
 function _xfer_thread
 {
-    trap "" SIGINT SIGTERM SIGKILL
+    trap 'SIGNAL=INT;  _xfer_handle_signal' SIGINT
+    trap 'SIGNAL=TERM; _xfer_handle_signal' SIGTERM
+    trap 'SIGNAL=KILL; _xfer_handle_signal' SIGKILL
 
     local self_pid=$$
     if can_access "ppid";then
