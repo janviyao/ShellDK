@@ -253,29 +253,31 @@ function install_from_net
                     return 0
                 fi
             fi
+        fi
 
-            if can_access "apt";then
-                sudo_it apt install ${xname} -y \&\> /dev/null
-                if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
-                    return 1
-                else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
-                    return 0
-                fi
+        if can_access "apt";then
+            sudo_it apt install ${xname} -y \&\> /dev/null
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
+                return 0
             fi
+        fi
 
-            if can_access "apt-get";then
-                sudo_it apt-get install ${xname} -y \&\> /dev/null
-                if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
-                    return 1
-                else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
-                    return 0
-                fi
+        if can_access "apt-get";then
+            sudo_it apt-get install ${xname} -y \&\> /dev/null
+            if [ $? -ne 0 ]; then
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
+                return 1
+            else
+                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
+                return 0
             fi
-        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        fi
+
+        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             if can_access "apt-cyg";then
                 sudo_it apt-cyg install ${xname} -y \&\> /dev/null
                 if [ $? -ne 0 ]; then

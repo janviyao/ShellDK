@@ -139,7 +139,7 @@ function clean_env
     fi
 
     if can_access "${cron_dir}";then
-        ${SUDO} file_del "${cron_dir}/$(whoami)" ".+timer\.sh" true
+        ${SUDO} file_del "${cron_dir}/${MY_NAME}" ".+timer\.sh" true
     fi
 
     can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
@@ -305,13 +305,13 @@ function inst_env
 
     if can_access "${cron_dir}";then
         sudo_it chmod o+x ${cron_dir} 
-        if can_access "${cron_dir}/$(whoami)";then
-            ${SUDO} file_del "${cron_dir}/$(whoami)" "'.+timer\.sh\s+${MY_NAME}'" true
-            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/$(whoami)"
+        if can_access "${cron_dir}/${MY_NAME}";then
+            ${SUDO} file_del "${cron_dir}/${MY_NAME}" "'.+timer\.sh\s+${MY_NAME}'" true
+            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/${MY_NAME}"
         else
-            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/$(whoami)"
+            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/${MY_NAME}"
         fi
-        sudo_it chmod 0644 ${cron_dir}/$(whoami) 
+        sudo_it chmod 0644 ${cron_dir}/${MY_NAME} 
     else
         echo_erro "cron { ${cron_dir} } is not installed"
     fi

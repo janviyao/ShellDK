@@ -107,10 +107,10 @@ function echo_header
     if math_bool "${LOG_HEADER}";then
         local header=""
         if math_bool "${HEADER_TIME}";then
-            #header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@$(whoami)] [${LOCAL_IP}]"
+            #header="[$(date '+%Y-%m-%d %H:%M:%S:%N')@${MY_NAME}] [${LOCAL_IP}]"
             header="[$(date '+%Y-%m-%d %H:%M:%S:%N')]"
         else
-            header="[${LOCAL_IP}@$(whoami)]"
+            header="[${LOCAL_IP}@${MY_NAME}]"
         fi
 
         if math_bool "${HEADER_FILE}";then

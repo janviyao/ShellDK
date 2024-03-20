@@ -128,7 +128,7 @@ function run_lock
 function is_me
 {
     local user_name="$1"
-    [[ $(whoami) == ${user_name} ]] && return 0    
+    [[ ${MY_NAME} == ${user_name} ]] && return 0    
     return 1
 }
 
