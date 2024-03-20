@@ -94,7 +94,7 @@ function can_access
         return 0
     fi
 
-    if which ${xfile} &> /dev/null;then
+    if command -v ${xfile} &> /dev/null;then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi

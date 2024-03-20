@@ -39,7 +39,11 @@ if [ -z "${MY_NAME}" ];then
 fi
 
 if [ -z "${MY_HOME}" ];then
-    readonly MY_HOME=${HOME}
+    if declare -p HOME &>/dev/null;then
+        readonly MY_HOME=${HOME}
+    else
+        readonly MY_HOME="/home/${MY_NAME}"
+    fi
 fi
 
 source $MY_VIM_DIR/include/common.api.sh

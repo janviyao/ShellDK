@@ -499,6 +499,9 @@ function inst_cygwin
 
     if ! can_access "flock";then
         install_from_net util-linux
+        if [ $? -ne 0 ];then
+            return 1
+        fi
     fi
 
     mkpasswd -l > /etc/passwd
@@ -512,6 +515,9 @@ function inst_cygwin
 
     if ! can_access "cygrunsrv";then
         install_from_net cygrunsrv
+        if [ $? -ne 0 ];then
+            return 1
+        fi
     fi
  
     if cygrunsrv -Q cygsshd &> /dev/null;then
@@ -520,8 +526,16 @@ function inst_cygwin
 
     if ! can_access "ssh-host-config";then
         install_from_net openssh
+        if [ $? -ne 0 ];then
+            return 1
+        fi
     fi
+
     ssh-host-config -y 
+    if [ $? -ne 0 ];then
+        echo_erro "failed: ssh-host-config"
+        return 1
+    fi
 
     cygrunsrv -S cygsshd
     if [ $? -ne 0 ];then
@@ -532,7 +546,12 @@ function inst_cygwin
 
     if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
         install_from_net cron
+        if [ $? -ne 0 ];then
+            return 1
+        fi
     fi
+
+    return 0
 }
 
 if ! math_bool "${REMOTE_INST}"; then
