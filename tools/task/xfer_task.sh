@@ -510,13 +510,15 @@ function _xfer_thread_main
 
 function _xfer_kill_rsync
 {
-    local work_list=($(cat ${XFER_WORK}))
-    echo_file "${LOG_DEBUG}" "xfer works[${work_list[*]}]"
+    if can_access "${XFER_WORK}";then
+        local work_list=($(cat ${XFER_WORK}))
+        echo_file "${LOG_DEBUG}" "xfer works[${work_list[*]}]"
 
-    for pid in ${work_list[*]}
-    do
-        process_kill ${pid}
-    done
+        for pid in ${work_list[*]}
+        do
+            process_kill ${pid}
+        done
+    fi
 }
 
 function _xfer_handle_signal

@@ -492,6 +492,10 @@ function inst_cygwin
         return 1
     fi
 
+    if ! can_access "flock";then
+        install_from_net util-linux
+    fi
+
     mkpasswd -l > /etc/passwd
     mkgroup -l > /etc/group
     chmod +rwx /var
@@ -504,14 +508,17 @@ function inst_cygwin
     if ! can_access "cygrunsrv";then
         install_from_net cygrunsrv
     fi
-
-    if ! can_access "ssh-host-config";then
-        install_from_net ssh-host-config
+    
+    if cygrunsrv -Q cygsshd &> /dev/null;then
+        cygrunsrv -R cygsshd
     fi
 
-    cygrunsrv -R sshd
+    if ! can_access "ssh-host-config";then
+        install_from_net openssh
+    fi
     ssh-host-config -y 
-    cygrunsrv -S sshd
+
+    cygrunsrv -S cygsshd
     if [ $? -ne 0 ];then
         echo "*** Enter into windows services.msc"
         echo "*** Check CYGWINsshd service whether to have started ?"

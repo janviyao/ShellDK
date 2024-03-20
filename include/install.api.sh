@@ -234,63 +234,58 @@ function install_from_net
         return 1
     fi
 
-    if can_access "rpm";then
-        if rpm -qa | grep -P "\w*${xname}\w*" &> /dev/null;then
-            return 0
-        fi
-    fi
-
     echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xname}")"
     if check_net; then
         if [[ "${SYSTEM}" == "Linux" ]]; then
             if can_access "yum";then
-                sudo_it yum install ${xname} -y \&\> /dev/null
+                sudo_it yum -y install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
+                    echo_erro "$(printf "[%13s]: { %-13s } failure" "yum Install" "${xname}")"
                     return 1
                 else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
+                    echo_info "$(printf "[%13s]: { %-13s } success" "yum Install" "${xname}")"
                     return 0
                 fi
             fi
         fi
 
         if can_access "apt";then
-            sudo_it apt install ${xname} -y \&\> /dev/null
+            sudo_it apt -y install ${xname} \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "apt Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "apt Install" "${xname}")"
                 return 0
             fi
         fi
 
         if can_access "apt-get";then
-            sudo_it apt-get install ${xname} -y \&\> /dev/null
+            sudo_it apt-get -y install ${xname} \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
+                echo_erro "$(printf "[%13s]: { %-13s } failure" "apt-get Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
+                echo_info "$(printf "[%13s]: { %-13s } success" "apt-get Install" "${xname}")"
                 return 0
             fi
         fi
 
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             if can_access "apt-cyg";then
-                sudo_it apt-cyg install ${xname} -y \&\> /dev/null
+                sudo_it apt-cyg -y install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "Net Install" "${xname}")"
+                    echo_erro "$(printf "[%13s]: { %-13s } failure" "apt-cyg Install" "${xname}")"
                     return 1
                 else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "Net Install" "${xname}")"
+                    echo_info "$(printf "[%13s]: { %-13s } success" "apt-cyg Install" "${xname}")"
                     return 0
                 fi
             fi
         fi
     fi
 
+    echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
     return 1
 }
 
