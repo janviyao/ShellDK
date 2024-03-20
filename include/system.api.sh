@@ -700,7 +700,13 @@ function efind
     local opts="$@"
     
     local xret
-    local ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "\"(.+/)*${regstr}\""))
+    local -a ret_arr
+
+    ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "\"(.+/)*${regstr}\""))
+    if [ $? -ne 0 ];then
+        ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${regstr}"))
+    fi
+
     for xret in ${ret_arr[*]}    
     do
         echo "${xret}"

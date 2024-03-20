@@ -103,10 +103,11 @@ function mytar
         
         local fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
         local fprefix=$(regex_2str "${fprefix}")
-        local find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
+
+        local find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
         if [ ${#find_arr[*]} -eq 0 ];then
             fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+")
-            find_arr=($(find ${outdir} -maxdepth 1 -type d -regextype posix-awk -regex ".*/?${fprefix}.*"))
+            find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
         fi
 
         local dir
@@ -141,7 +142,7 @@ function install_check
 
         local file_list=(${xfile})
         if math_bool "${isreg}";then
-            file_list=($(find ${MY_VIM_DIR}/deps/packages -regextype posix-awk -regex ".*/?${xfile}"))
+            file_list=($(efind ${MY_VIM_DIR}/deps/packages ".*/?${xfile}"))
         fi
 
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
@@ -182,9 +183,9 @@ function install_provider
         fi
 
         if [ -n "${fname}" ];then
-            files=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${fname}"))
+            files=($(efind ${fpath} ".*/?${fname}"))
         else
-            files=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${xfile}"))
+            files=($(efind ${fpath} ".*/?${xfile}"))
         fi
 
         local select_x="${files[*]}"
@@ -308,7 +309,7 @@ function install_from_rpm
         if ! can_access "${fpath}";then
             fpath="."
         fi
-        local_rpms=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${xfile}"))
+        local_rpms=($(efind ${fpath} ".*/?${xfile}"))
     fi
     
     if [ ${#local_rpms[*]} -gt 1 ];then
@@ -524,7 +525,7 @@ function install_from_tar
         if ! can_access "${fpath}";then
             fpath="."
         fi
-        local_tars=($(sudo_it find ${fpath} -regextype posix-awk -regex ".*/?${xfile}"))
+        local_tars=($(efind ${fpath} ".*/?${xfile}"))
     fi
     
     if [ ${#local_tars[*]} -gt 1 ];then
