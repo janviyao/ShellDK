@@ -516,7 +516,11 @@ function file_linenr
         local line_nr
         for line_nr in ${line_nrs[*]}
         do
-            echo "${line_nr}"
+            if is_integer "${line_nr}" || [[ "${line_nr}" == "$" ]];then
+                echo "${line_nr}"
+            else
+                echo_file "${LOG_ERRO}" "file_get { $@ } linenr invalid: ${line_nr}"
+            fi
         done
         return 0
     fi

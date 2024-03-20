@@ -488,7 +488,12 @@ function inst_hostname
 function inst_cygwin
 {
     if [[ "${SYSTEM}" != "CYGWIN_NT" ]]; then
-        echo_erro "not cygwin environment"
+        echo_erro "NOT cygwin environment"
+        return 1
+    fi
+
+    if ! have_admin; then
+        echo_erro "NO administrator privilege"
         return 1
     fi
 
@@ -508,7 +513,7 @@ function inst_cygwin
     if ! can_access "cygrunsrv";then
         install_from_net cygrunsrv
     fi
-    
+ 
     if cygrunsrv -Q cygsshd &> /dev/null;then
         cygrunsrv -R cygsshd
     fi
