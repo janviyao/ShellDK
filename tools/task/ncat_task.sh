@@ -101,7 +101,10 @@ function ncat_port_get
             port_val=32767
         fi
     done
-    echo "${port_val}" > ${NCAT_PROT_CURR}
+
+    if can_access "${NCAT_WORK_DIR}";then
+        echo "${port_val}" > ${NCAT_PROT_CURR}
+    fi
     echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] generated"
 
     echo "${port_val}"
