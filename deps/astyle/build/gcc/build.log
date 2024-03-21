@@ -1,0 +1,13 @@
+D:/Works/Cygwin64/bin/make.exe: error while loading shared libraries: cygguile-3.0-1.dll: cannot open shared object file: No such file or directory
+g++ -DNDEBUG -Wall -Wextra -fno-rtti -fno-exceptions -std=c++11 -fcommon -c ../../src/astyle_main.cpp -o obj/astyle_main.o
+g++ -DNDEBUG -Wall -Wextra -fno-rtti -fno-exceptions -std=c++11 -fcommon -c ../../src/ASFormatter.cpp -o obj/ASFormatter.o
+g++ -DNDEBUG -Wall -Wextra -fno-rtti -fno-exceptions -std=c++11 -fcommon -c ../../src/ASBeautifier.cpp -o obj/ASBeautifier.o
+g++ -DNDEBUG -Wall -Wextra -fno-rtti -fno-exceptions -std=c++11 -fcommon -c ../../src/ASEnhancer.cpp -o obj/ASEnhancer.o
+g++ -DNDEBUG -Wall -Wextra -fno-rtti -fno-exceptions -std=c++11 -fcommon -c ../../src/ASLocalizer.cpp -o obj/ASLocalizer.o
+g++ -DNDEBUG -Wall -Wextra -fno-rtti -fno-exceptions -std=c++11 -fcommon -c ../../src/ASResource.cpp -o obj/ASResource.o
+../../src/astyle_main.cpp: 在成员函数‘std::string astyle::ASConsole::getFullPathName(const string&) const’中:
+../../src/astyle_main.cpp:1386:9: 错误：‘realpath’在此作用域中尚未声明
+ 1386 |         realpath(relativePath.c_str(), fullPath);
+      |         ^~~~~~~~
+make: *** [Makefile:96：obj/astyle_main.o] 错误 1
+make: *** 正在等待未完成的任务....
