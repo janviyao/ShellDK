@@ -1,0 +1,2 @@
+--prefix=/usr
+make: *** 没有规则可制作目标“configure”。 停止。
