@@ -6,8 +6,29 @@ export GOPATH=${HOME}/.local
 export GOROOT=${GOPATH}/go
 export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${HOME}/.local/bin:${GOROOT}/bin:/usr/lib/udev
 
-# export VIM config
-export VIM_LIGHT=0
+readonly ROOT_PID=$$
+readonly SYSTEM=$(uname -s | grep -E '^[A-Za-z_]+' -o)
+readonly LOCAL_IP=$(get_local_ip)
+readonly GBL_BASE_DIR="/tmp/gbl"
+readonly GBL_USER_DIR="${GBL_BASE_DIR}/${MY_NAME}"
+readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
+readonly SUDO_ASKPASS="${GBL_USER_DIR}/.askpass.sh"
+readonly LOCAL_DIR="${MY_HOME}/.local"
+readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
+readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
+readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
+
+readonly OP_TRY_CNT=3
+readonly OP_TIMEOUT=60
+readonly SSH_TIMEOUT=600
+readonly MAX_TIMEOUT=1800
+
+readonly GBL_SPACE="<.>"
+readonly GBL_COL_SPF="<=>"
+readonly GBL_ACK_SPF="<#>"
+readonly GBL_SPF1="<1>"
+readonly GBL_SPF2="<2>"
+readonly GBL_SPF3="<3>"
 
 # more aliases
 alias ls='ls --color=auto'
@@ -29,33 +50,9 @@ alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompres
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
-readonly ROOT_PID=$$
-readonly SYSTEM=$(uname -s | grep -E '[A-Za-z_]+' -o)
-readonly LOCAL_IP=$(get_local_ip)
-readonly GBL_BASE_DIR="/tmp/gbl"
-readonly GBL_USER_DIR="${GBL_BASE_DIR}/${MY_NAME}"
-readonly SUDO="$MY_VIM_DIR/tools/sudo.sh"
-readonly SUDO_ASKPASS="${GBL_USER_DIR}/.askpass.sh"
-readonly LOCAL_DIR="${MY_HOME}/.local"
-readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
-readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
-readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
-
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_USER_DIR}
-
-OP_TRY_CNT=3
-OP_TIMEOUT=60
-SSH_TIMEOUT=600
-MAX_TIMEOUT=1800
-
-readonly GBL_SPACE="<.>"
-readonly GBL_COL_SPF="<=>"
-readonly GBL_ACK_SPF="<#>"
-readonly GBL_SPF1="<1>"
-readonly GBL_SPF2="<2>"
-readonly GBL_SPF3="<3>"
 
 function __my_bashrc_deps
 {

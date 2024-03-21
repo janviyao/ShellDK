@@ -14,6 +14,7 @@ perror;              ! can_access 'perror';cd ${MY_VIM_DIR}/tools/app;gcc perror
 chk_passwd;          ! can_access 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;emove 'chk_passwd(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/chk_passwd*
 linux.deno;          ! can_access 'deno';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno
 cygwin.deno;         ! can_access 'deno.exe';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-pc-windows-msvc.zip;mv -f deno.exe ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno.exe
+cygwin.sudo;         ! can_access 'cygwin-sudo.py';cd ${MY_VIM_DIR}/deps/cygwin-sudo;cp -f cygwin-sudo.py ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/cygwin-sudo.py
 
 astyle;              install_check 'astyle' 'astyle-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/
 ctags;               install_check 'ctags' 'universal-ctags-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'universal-ctags-.+\.tar\.gz' true;rm -fr universal-ctags-*/

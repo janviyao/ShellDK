@@ -103,6 +103,10 @@ commandMap["${CMD_PRE}gitloop"]="${MY_VIM_DIR}/tools/gitloop.sh"
 commandMap["${CMD_PRE}backup"]="${MY_VIM_DIR}/tools/backup.sh"
 commandMap["${CMD_PRE}paraparser"]="${MY_VIM_DIR}/tools/paraparser.sh"
 commandMap["${CMD_PRE}replace"]="${MY_VIM_DIR}/tools/replace.sh"
+if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+    commandMap["sudo"]="${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py"
+    commandMap["apt-cyg"]="${MY_VIM_DIR}/deps/apt-cyg"
+fi
 
 commandMap[".minttyrc"]="${MY_VIM_DIR}/minttyrc"
 commandMap[".inputrc"]="${MY_VIM_DIR}/inputrc"
@@ -129,8 +133,6 @@ function clean_env
     if [[ "${SYSTEM}" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
         sudo_it ldconfig
-    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        rm -f ${LOCAL_BIN_DIR}/apt-cyg
     fi
 
     local cron_dir="/var/spool/cron"
@@ -293,8 +295,8 @@ function inst_env
     fi
     
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
-            apt-cyg install cron
+        if ! inst_cygwin;then
+            return 1
         fi
     fi
 
@@ -338,9 +340,6 @@ function inst_env
         ${SUDO} "file_add /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
         sudo_it ldconfig
-    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        cp -f ${MY_VIM_DIR}/deps/apt-cyg ${LOCAL_BIN_DIR}
-        chmod +x ${LOCAL_BIN_DIR}/apt-cyg
     fi
 
     if can_access "git";then
@@ -491,12 +490,7 @@ function inst_cygwin
         echo_erro "NOT cygwin environment"
         return 1
     fi
-
-    if ! have_admin; then
-        echo_erro "NO administrator privilege"
-        return 1
-    fi
-
+    
     if ! can_access "flock";then
         install_from_net util-linux
         if [ $? -ne 0 ];then
@@ -504,13 +498,20 @@ function inst_cygwin
         fi
     fi
 
-    mkpasswd -l > /etc/passwd
-    mkgroup -l > /etc/group
-    chmod +rwx /var
+    $SUDO mkpasswd -l \> /etc/passwd
+    $SUDO mkgroup -l \> /etc/group
+    $SUDO chmod +rwx /var
 
     if ! can_access "apt-cyg";then
-        cp -f ${MY_VIM_DIR}/deps/apt-cyg ${LOCAL_BIN_DIR}
-        chmod +x ${LOCAL_BIN_DIR}/apt-cyg
+        local link_file=${commandMap["apt-cyg"]}
+        echo_debug "create slink: ${linkf}"
+        if [[ ${linkf:0:1} == "." ]];then
+            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            ln -s ${link_file} ${MY_HOME}/${linkf}
+        else
+            can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
+        fi
     fi
 
     if ! can_access "cygrunsrv";then
@@ -521,7 +522,7 @@ function inst_cygwin
     fi
  
     if cygrunsrv -Q cygsshd &> /dev/null;then
-        cygrunsrv -R cygsshd
+        $SUDO cygrunsrv -R cygsshd
     fi
 
     if ! can_access "ssh-host-config";then
@@ -531,13 +532,13 @@ function inst_cygwin
         fi
     fi
 
-    ssh-host-config -y 
+    $SUDO ssh-host-config -y 
     if [ $? -ne 0 ];then
         echo_erro "failed: ssh-host-config"
         return 1
     fi
 
-    cygrunsrv -S cygsshd
+    $SUDO cygrunsrv -S cygsshd
     if [ $? -ne 0 ];then
         echo "*** Enter into windows services.msc"
         echo "*** Check CYGWINsshd service whether to have started ?"

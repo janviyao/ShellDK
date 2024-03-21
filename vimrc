@@ -1282,7 +1282,6 @@ endfunction
 " c) 指定非Github的Git仓库的插件，需要使用git地址，如：Bundle 'git://git.wincent.com/command-t.git'
 " d) 指定本地Git仓库中的插件，如：Bundle 'file:///Users/gmarik/path/to/plugin'
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let load_light=$VIM_LIGHT
 filetype off
 set runtimepath+=~/.vim/bundle/vundle
 silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/common"

@@ -8,10 +8,8 @@ if ! test -d "$MY_VIM_DIR";then
 fi
 
 if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-    if [ -n "${USR_NAME}" ]; then
-        bash -c "${CMD_STR}"
-        exit $?
-    fi
+    ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py "${CMD_STR}"
+    exit $?
 fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then

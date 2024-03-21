@@ -374,37 +374,38 @@ function sudo_it
     local cmd="$@"
 
     echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
+
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+        ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py "${CMD_STR}"
+        return $?
+    fi
+
     if have_admin; then
-        eval "${cmd}"
+        bash -c "${cmd}"
         return $?
     else
-        if [[ "${SYSTEM}" == "Linux" ]]; then
-            if have_sudoed;then
+        if have_sudoed;then
+            sudo bash -c "${cmd}"
+            return $?
+        fi
+
+        if test -x ${GBL_USER_DIR}/.askpass.sh;then
+            sudo -A bash -c "${cmd}"
+            return $?
+        else
+            if ! account_check "${MY_NAME}" false;then
+                echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
                 sudo bash -c "${cmd}"
                 return $?
             fi
 
-            if test -x ${GBL_USER_DIR}/.askpass.sh;then
-                sudo -A bash -c "${cmd}"
+            if [ -n "${USR_PASSWORD}" ]; then
+                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${cmd}"
                 return $?
             else
-                if ! account_check "${MY_NAME}" false;then
-                    echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
-                    sudo bash -c "${cmd}"
-                    return $?
-                fi
-
-                if [ -n "${USR_PASSWORD}" ]; then
-                    echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${cmd}"
-                    return $?
-                else
-                    sudo bash -c "${cmd}"
-                    return $?
-                fi
+                sudo bash -c "${cmd}"
+                return $?
             fi
-        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            bash -c "${cmd}"
-            return $?
         fi
     fi
 
