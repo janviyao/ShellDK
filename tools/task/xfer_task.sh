@@ -318,60 +318,65 @@ function _xfer_thread_main
         check_ok=false
     fi
 
-    local sync_env="\
-    export BTASK_LIST='';\
-    export REMOTE_IP=${LOCAL_IP};\
-    export USR_NAME='${USR_NAME}';\
-    export USR_PASSWORD='${USR_PASSWORD}';\
-    if test -d '$MY_VIM_DIR';then \
-        export MY_VIM_DIR='${MY_VIM_DIR}';\
-        source $MY_VIM_DIR/include/common.api.sh;\
-        if ! is_me ${USR_NAME};then \
-            source $MY_VIM_DIR/bashrc; \
-        fi;\
-        if ! test -d '<DIR>';then\
-            sudo_it mkdir -p '<DIR>';\
-            sudo_it chmod +w '<DIR>';\
-            if ! file_owner_is '<DIR>' '${USR_NAME}';then\
-                sudo_it chown ${USR_NAME} '<DIR>';\
-            fi;\
-        else\
-            if ! test -w '<DIR>';then\
-                sudo_it chmod +w '<DIR>';\
-                if ! file_owner_is '<DIR>' '${USR_NAME}';then\
-                    sudo_it chown ${USR_NAME} '<DIR>';\
-                fi;\
-            fi;\
-        fi;\
-    else\
-        if ! which rsync &> /dev/null;then \
-            if which nc &> /dev/null;then \
-                (echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} <PORT>) &> /dev/null;\
-                exit 1;\
-            else\
-                if which sshpass &> /dev/null;then \
-                    (sshpass -p '${USR_PASSWORD}' ssh ${USR_NAME}@${LOCAL_IP} \"echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ssh msg]: rsync command not install' > ${GBL_LOGR_PIPE}\") &> /dev/null;\
-                    exit 1;\
-                fi;\
-            fi;\
-            exit 1;\
-        fi;\
-        if ! test -d '<DIR>';then \
-            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '<DIR>' &> /dev/null;\
-            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null;\
-            if [[ \$(ls -l -d '<DIR>' | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
-                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null;\
-            fi;\
-        else\
-            if ! test -w '<DIR>';then \
-                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null;\
-                if [[ \$(ls -l -d <DIR> | awk '{ print \$3 }') != '${USR_NAME}' ]];then \
-                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null;\
-                fi;\
-            fi;\
-        fi;\
-    fi\
-    "
+    local sync_env=$(cat << EOF
+    echo '*** xfer rsync enter ***' >> ${BASH_LOG}
+    export BTASK_LIST='master'
+    export REMOTE_IP=${LOCAL_IP}
+    export USR_NAME='${USR_NAME}'
+    export USR_PASSWORD='${USR_PASSWORD}'
+    if test -d '$MY_VIM_DIR';then
+        export MY_VIM_DIR='${MY_VIM_DIR}'
+        source $MY_VIM_DIR/include/common.api.sh
+
+        if ! is_me ${USR_NAME};then
+            source $MY_VIM_DIR/bashrc
+        fi
+
+        if ! test -d '<DIR>';then
+            sudo_it mkdir -p '<DIR>'
+            sudo_it chmod +w '<DIR>'
+            if ! file_owner_is '<DIR>' '${USR_NAME}';then
+                sudo_it chown ${USR_NAME} '<DIR>'
+            fi
+        else
+            if ! test -w '<DIR>';then
+                sudo_it chmod +w '<DIR>'
+                if ! file_owner_is '<DIR>' '${USR_NAME}';then
+                    sudo_it chown ${USR_NAME} '<DIR>'
+                fi
+            fi
+        fi
+    else
+        if ! which rsync &> /dev/null;then
+            if which nc &> /dev/null;then
+                (echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} <PORT>) &> /dev/null
+                exit 1
+            else
+                if which sshpass &> /dev/null;then
+                    (sshpass -p '${USR_PASSWORD}' ssh ${USR_NAME}@${LOCAL_IP} \"echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ssh msg]: rsync command not install' > ${GBL_LOGR_PIPE}\") &> /dev/null
+                    exit 1
+                fi
+            fi
+            exit 1
+        fi
+
+        if ! test -d '<DIR>';then
+            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '<DIR>' &> /dev/null
+            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null
+            if [[ \$(ls -l -d '<DIR>' | awk '{ print \$3 }') != '${USR_NAME}' ]];then
+                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null
+            fi
+        else
+            if ! test -w '<DIR>';then
+                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null
+                if [[ \$(ls -l -d <DIR> | awk '{ print \$3 }') != '${USR_NAME}' ]];then
+                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null
+                fi
+            fi
+        fi
+    fi
+EOF
+    )
     
     local line
     while read line
@@ -512,7 +517,7 @@ function _xfer_kill_rsync
 {
     if can_access "${XFER_WORK}";then
         local work_list=($(cat ${XFER_WORK}))
-        echo_file "${LOG_DEBUG}" "xfer works[${work_list[*]}]"
+        echo_file "${LOG_DEBUG}" "kill xfer works[${work_list[*]}]"
 
         for pid in ${work_list[*]}
         do
