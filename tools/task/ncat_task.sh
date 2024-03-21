@@ -614,6 +614,12 @@ function _ncat_thread
     fi
     ncat_port_get &> /dev/null
 
+    if ! can_access "${NCAT_WORK_DIR}";then
+        echo_file "${LOG_DEBUG}" "because master have exited, ncat bg_thread[${self_pid}] exit"
+        eval "exec ${NCAT_FD}>&-"
+        exit 0
+    fi
+
     touch ${NCAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] start"
     echo "${self_pid}" >> ${NCAT_TASK}
