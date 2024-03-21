@@ -295,11 +295,13 @@ function inst_env
     fi
     
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
+        if ! ( cygrunsrv -L | grep -w "cron" &> /dev/null );then
             install_from_net cron
             if [ $? -ne 0 ];then
                 return 1
             fi
+
+            $SUDO cron-config
         fi
     fi
 
@@ -326,10 +328,13 @@ function inst_env
         sudo_it systemctl restart crond
         sudo_it systemctl status crond
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        sudo_it cygrunsrv -E cron
-        sudo_it cygrunsrv -S cron
-        sudo_it cygrunsrv -Q cron
+        if cygrunsrv -Q cron | grep -w "Running" &> /dev/null;then
+            $SUDO cygrunsrv -E cron
+        fi
+        $SUDO cygrunsrv -S cron
+        $SUDO cygrunsrv -Q cron
     fi
+    crontab -l
  
     if [[ "${SYSTEM}" == "Linux" ]]; then
         sudo_it chmod +w /etc/ld.so.conf
@@ -523,29 +528,32 @@ function inst_cygwin
             return 1
         fi
     fi
- 
-    if cygrunsrv -Q cygsshd &> /dev/null;then
-        $SUDO cygrunsrv -R cygsshd
-    fi
 
-    if ! can_access "ssh-host-config";then
-        install_from_net openssh
+    if ! ( cygrunsrv -L | grep -w "cygsshd" &> /dev/null );then
+        #if cygrunsrv -Q cygsshd &> /dev/null;then
+        #    $SUDO cygrunsrv -R cygsshd
+        #fi
+        if ! can_access "ssh-host-config";then
+            install_from_net openssh
+            if [ $? -ne 0 ];then
+                return 1
+            fi
+        fi
+
+        $SUDO ssh-host-config -y 
         if [ $? -ne 0 ];then
+            echo_erro "execute { ssh-host-config } failed"
             return 1
         fi
     fi
 
-    $SUDO ssh-host-config -y 
-    if [ $? -ne 0 ];then
-        echo_erro "execute { ssh-host-config } failed"
-        return 1
-    fi
-
-    $SUDO cygrunsrv -S cygsshd
-    if [ $? -ne 0 ];then
-        echo "*** Enter into windows services.msc"
-        echo "*** Check CYGWINsshd service whether to have started ?"
-        echo "*** and then execute 'ssh localhost' to check whether success"
+    if ! ( cygrunsrv -Q cygsshd | grep -w "Running" &> /dev/null );then
+        $SUDO cygrunsrv -S cygsshd
+        if [ $? -ne 0 ];then
+            echo "*** Enter into windows services.msc"
+            echo "*** Check CYGWINsshd service whether to have started ?"
+            echo "*** and then execute 'ssh localhost' to check whether success"
+        fi
     fi
  
     return 0
