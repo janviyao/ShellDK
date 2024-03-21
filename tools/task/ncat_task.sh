@@ -502,6 +502,11 @@ function _ncat_thread_main
             if ! local_port_available "${ncat_port}";then
                 ncat_port_get ${ncat_port} &> /dev/null
             fi
+
+            if ! can_access "${NCAT_WORK_DIR}";then
+                echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
+                break
+            fi
             continue
         fi
         echo_file "${LOG_DEBUG}" "ncat recv: [${ncat_body}]" 
@@ -515,6 +520,11 @@ function _ncat_thread_main
             if ! can_access "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
                 mdat_get_var "master_work"
+
+                if ! can_access "${NCAT_WORK_DIR}";then
+                    echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
+                    break
+                fi
                 continue
             fi
         fi

@@ -34,7 +34,9 @@ function mdat_task_ctrl_async
     fi
 
     if ! can_access "${_pipe_}";then
-        echo_erro "pipe invalid: ${_pipe_}"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "pipe invalid: ${_pipe_}"
+        fi
         return 1
     fi
 
@@ -57,7 +59,9 @@ function mdat_task_ctrl_sync
     fi
 
     if ! can_access "${_pipe_}";then
-        echo_erro "pipe invalid: [${_pipe_}]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "pipe invalid: [${_pipe_}]"
+        fi
         return 1
     fi
     
@@ -127,7 +131,9 @@ function mdat_kv_has_key
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
     
@@ -158,7 +164,9 @@ function mdat_kv_has_val
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
     
@@ -207,7 +215,9 @@ function mdat_kv_unset_key
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
 
@@ -232,7 +242,9 @@ function mdat_kv_unset_val
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
 
@@ -257,7 +269,9 @@ function mdat_kv_append
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
     
@@ -282,7 +296,9 @@ function mdat_kv_set
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
     
@@ -309,7 +325,9 @@ function mdat_kv_get
     fi
 
     if ! can_access "${_pipe_}.run";then
-        echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        if can_access "${BASH_WORK_DIR}";then
+            echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
+        fi
         return 1
     fi
 
@@ -386,6 +404,10 @@ function _mdat_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
+                if ! can_access "${MDAT_WORK_DIR}";then
+                    echo_file "${LOG_ERRO}" "because master have exited, mdat will exit"
+                    break
+                fi
                 continue
             fi
         fi

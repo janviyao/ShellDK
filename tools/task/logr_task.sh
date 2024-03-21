@@ -157,6 +157,10 @@ function _logr_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
+                if ! can_access "${LOGR_WORK_DIR}";then
+                    echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
+                    break
+                fi
                 continue
             fi
         fi

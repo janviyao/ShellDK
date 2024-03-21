@@ -126,6 +126,10 @@ function _ctrl_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
+                if ! can_access "${CTRL_WORK_DIR}";then
+                    echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
+                    break
+                fi
                 continue
             fi
         fi
@@ -166,6 +170,10 @@ function _ctrl_thread_main
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [${bgpid}] to [${ack_pipe}]"
                 run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
+                if ! can_access "${CTRL_WORK_DIR}";then
+                    echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
+                    break
+                fi
                 continue
             fi
         fi

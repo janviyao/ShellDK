@@ -391,6 +391,10 @@ EOF
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! can_access "${ack_pipe}";then
                 echo_debug "pipe invalid: [${ack_pipe}]"
+                if ! can_access "${XFER_WORK_DIR}";then
+                    echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
+                    break
+                fi
                 continue
             fi
         fi
