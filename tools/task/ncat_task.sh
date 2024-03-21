@@ -45,6 +45,10 @@ function local_port_available
         return 1
     fi
 
+    if ! can_access "${BASH_WORK_DIR}";then
+        return 1
+    fi
+
     if ! can_access "${NCAT_WORK_DIR}";then
         echo_file "${LOG_ERRO}" "already deleted: ${NCAT_WORK_DIR}"
         return 1
@@ -474,9 +478,15 @@ function _bash_ncat_exit
 function _ncat_thread_main
 {
     local master_work=true
-    mdat_set_var "master_work"
- 
+
+    if ! can_access "${NCAT_WORK_DIR}";then
+        echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
+        return
+    fi
+
     local ncat_port=$(ncat_port_get)
+
+    mdat_set_var "master_work"
     while math_bool "${master_work}" 
     do
         ncat_port=$(ncat_port_get ${ncat_port})
@@ -612,7 +622,6 @@ function _ncat_thread
             run_lock 1 update_port_used
         fi
     fi
-    ncat_port_get &> /dev/null
 
     if ! can_access "${NCAT_WORK_DIR}";then
         echo_file "${LOG_DEBUG}" "because master have exited, ncat bg_thread[${self_pid}] exit"
