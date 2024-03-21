@@ -376,7 +376,7 @@ function sudo_it
     echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
 
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py "${CMD_STR}"
+        bash -c "${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py ${cmd}"
         return $?
     fi
 

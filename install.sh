@@ -295,8 +295,11 @@ function inst_env
     fi
     
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        if ! inst_cygwin;then
-            return 1
+        if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
+            install_from_net cron
+            if [ $? -ne 0 ];then
+                return 1
+            fi
         fi
     fi
 
@@ -487,7 +490,7 @@ function inst_hostname
 function inst_cygwin
 {
     if [[ "${SYSTEM}" != "CYGWIN_NT" ]]; then
-        echo_erro "NOT cygwin environment"
+        echo_erro "NOT CYGWIN ENVIRONMENT"
         return 1
     fi
     
@@ -534,7 +537,7 @@ function inst_cygwin
 
     $SUDO ssh-host-config -y 
     if [ $? -ne 0 ];then
-        echo_erro "failed: ssh-host-config"
+        echo_erro "execute { ssh-host-config } failed"
         return 1
     fi
 
@@ -544,14 +547,7 @@ function inst_cygwin
         echo "*** Check CYGWINsshd service whether to have started ?"
         echo "*** and then execute 'ssh localhost' to check whether success"
     fi
-
-    if ! ( cygcheck -c cron | grep -w "OK" &> /dev/null );then
-        install_from_net cron
-        if [ $? -ne 0 ];then
-            return 1
-        fi
-    fi
-
+ 
     return 0
 }
 
