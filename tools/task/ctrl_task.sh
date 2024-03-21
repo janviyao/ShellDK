@@ -81,6 +81,7 @@ function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit"
     if ! can_access "${CTRL_PIPE}.run";then
+        echo_debug "ctrl task not started but signal EXIT"
         return 0
     fi
     
@@ -175,6 +176,11 @@ function _ctrl_thread_main
         fi
 
         echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
+
+        if ! can_access "${CTRL_WORK_DIR}";then
+            echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
+            break
+        fi
     done < ${CTRL_PIPE}
 }
 

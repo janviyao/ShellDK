@@ -282,6 +282,7 @@ function _bash_xfer_exit
 { 
     echo_debug "xfer signal exit"
     if ! can_access "${XFER_PIPE}.run";then
+        echo_debug "xfer task not started but signal EXIT"
         return 0
     fi
 
@@ -319,7 +320,7 @@ function _xfer_thread_main
     fi
 
     local sync_env=$(cat << EOF
-    [ test -f ${BASH_LOG} ] && echo '*** xfer rsync enter ***' >> ${BASH_LOG}
+    test -f ${BASH_LOG} && echo '*** xfer rsync enter ***' >> ${BASH_LOG}
     export BTASK_LIST='master,mdat,ncat'
     export REMOTE_IP=${LOCAL_IP}
     export USR_NAME='${USR_NAME}'
@@ -510,6 +511,10 @@ EOF
         fi
 
         echo_file "${LOG_DEBUG}" "xfer wait: [${XFER_PIPE}]"
+        if ! can_access "${XFER_WORK_DIR}";then
+            echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
+            break
+        fi
     done < ${XFER_PIPE}
 }
 

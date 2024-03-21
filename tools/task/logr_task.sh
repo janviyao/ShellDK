@@ -64,6 +64,7 @@ function _bash_logr_exit
 { 
     echo_debug "logr signal exit" 
     if ! can_access "${LOGR_PIPE}.run";then
+        echo_debug "logr task not started but signal EXIT"
         return 0
     fi
 
@@ -227,6 +228,10 @@ function _logr_thread_main
             run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
         #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"
+        if ! can_access "${LOGR_WORK_DIR}";then
+            echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
+            break
+        fi
     done < ${LOGR_PIPE}
 }
 

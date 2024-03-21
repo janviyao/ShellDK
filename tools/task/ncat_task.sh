@@ -446,6 +446,7 @@ function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
     if ! can_access "${NCAT_PIPE}.run";then
+        echo_debug "ncat task not started but signal EXIT"
         return 0
     fi
 
@@ -574,6 +575,10 @@ function _ncat_thread_main
         fi
 
         mdat_get_var "master_work"
+        if ! can_access "${NCAT_WORK_DIR}";then
+            echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
+            break
+        fi
     done
 }
 

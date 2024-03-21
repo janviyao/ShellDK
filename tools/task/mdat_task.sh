@@ -346,6 +346,7 @@ function _bash_mdat_exit
 { 
     echo_debug "mdat signal exit"
     if ! can_access "${MDAT_PIPE}.run";then
+        echo_debug "mdat task not started but signal EXIT"
         return 0
     fi
 
@@ -501,6 +502,10 @@ function _mdat_thread_main
         fi
 
         echo_file "${LOG_DEBUG}" "mdat wait: [${MDAT_PIPE}]"
+        if ! can_access "${MDAT_WORK_DIR}";then
+            echo_file "${LOG_ERRO}" "because master have exited, mdat will exit"
+            break
+        fi
     done < ${MDAT_PIPE}
 }
 
