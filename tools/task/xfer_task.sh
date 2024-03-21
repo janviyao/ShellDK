@@ -319,17 +319,17 @@ function _xfer_thread_main
     fi
 
     local sync_env=$(cat << EOF
-    echo '*** xfer rsync enter ***' >> ${BASH_LOG}
-    export BTASK_LIST='master'
+    [ test -f ${BASH_LOG} ] && echo '*** xfer rsync enter ***' >> ${BASH_LOG}
+    export BTASK_LIST='master,mdat,ncat'
     export REMOTE_IP=${LOCAL_IP}
     export USR_NAME='${USR_NAME}'
     export USR_PASSWORD='${USR_PASSWORD}'
-    if test -d '$MY_VIM_DIR';then
+    if test -d '${MY_VIM_DIR}';then
         export MY_VIM_DIR='${MY_VIM_DIR}'
-        source $MY_VIM_DIR/include/common.api.sh
+        source ${MY_VIM_DIR}/include/common.api.sh
 
         if ! is_me ${USR_NAME};then
-            source $MY_VIM_DIR/bashrc
+            source ${MY_VIM_DIR}/bashrc
         fi
 
         if ! test -d '<DIR>';then
@@ -347,12 +347,12 @@ function _xfer_thread_main
             fi
         fi
     else
-        if ! which rsync &> /dev/null;then
-            if which nc &> /dev/null;then
+        if ! command -v rsync &> /dev/null;then
+            if command -v nc &> /dev/null;then
                 (echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} <PORT>) &> /dev/null
                 exit 1
             else
-                if which sshpass &> /dev/null;then
+                if command -v sshpass &> /dev/null;then
                     (sshpass -p '${USR_PASSWORD}' ssh ${USR_NAME}@${LOCAL_IP} \"echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ssh msg]: rsync command not install' > ${GBL_LOGR_PIPE}\") &> /dev/null
                     exit 1
                 fi
