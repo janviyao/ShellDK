@@ -300,6 +300,57 @@ function system_decrypt
     fi
 }
 
+function service_do
+{
+    local action=$1
+
+    if [ $# -ne 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: action\n\$2~N: one or more service name"
+        return 1
+    fi
+    
+    shift
+    local services=($@)
+
+    case "${action}" in
+        start)
+            if [[ "${SYSTEM}" == "Linux" ]]; then
+                sudo_it systemctl start ${services[*]}    
+            elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                sudo_it cygrunsrv -S ${services[*]}
+            fi
+            ;;
+        stop)
+            if [[ "${SYSTEM}" == "Linux" ]]; then
+                sudo_it systemctl stop ${services[*]}    
+            elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                sudo_it cygrunsrv -E ${services[*]}
+            fi
+            ;;
+        restart)
+            if [[ "${SYSTEM}" == "Linux" ]]; then
+                sudo_it systemctl restart ${services[*]}    
+            elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                sudo_it cygrunsrv -E ${services[*]}
+                sudo_it cygrunsrv -S ${services[*]}
+            fi
+            ;;
+        status)
+            if [[ "${SYSTEM}" == "Linux" ]]; then
+                sudo_it systemctl status ${services[*]}    
+            elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+                sudo_it cygrunsrv -Q ${services[*]}
+            fi
+            ;;
+        *)
+            echo_erro "unknown action: ${SIGNAL}"
+            return 1
+            ;;
+    esac
+
+    return $?
+}
+
 function account_check
 {
     local bash_options="$-"

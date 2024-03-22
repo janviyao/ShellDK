@@ -313,10 +313,10 @@ function inst_env
     if can_access "${cron_dir}";then
         sudo_it chmod o+x ${cron_dir} 
         if can_access "${cron_dir}/${MY_NAME}";then
-            ${SUDO} file_del "${cron_dir}/${MY_NAME}" "'.+timer\.sh\s+${MY_NAME}'" true
-            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' >> ${cron_dir}/${MY_NAME}"
+            ${SUDO} file_del "${cron_dir}/${MY_NAME}" "\".+timer\.sh\s+${MY_NAME}\"" true
+            sudo_it "echo \"*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}\" >> ${cron_dir}/${MY_NAME}"
         else
-            sudo_it "echo '*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}' > ${cron_dir}/${MY_NAME}"
+            sudo_it "echo \"*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}\" > ${cron_dir}/${MY_NAME}"
         fi
         sudo_it chmod 0644 ${cron_dir}/${MY_NAME} 
     else
