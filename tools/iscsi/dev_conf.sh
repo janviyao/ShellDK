@@ -6,7 +6,7 @@ function conf_sched
 {
     local dev_name="$1"
     local sys_path="/sys/block/${dev_name}"
-    if ! can_access "${sys_path}";then
+    if ! have_file "${sys_path}";then
         echo_erro "invalid: ${sys_path}"
         return 1
     fi
@@ -16,12 +16,12 @@ function conf_sched
     local hdd_sheds=(mq-deadline deadline bfq cfq kyber none noop)
 
     local use_blk_mq="N"
-    if can_access "/sys/module/dm_mod/parameters/use_blk_mq";then
+    if have_file "/sys/module/dm_mod/parameters/use_blk_mq";then
         use_blk_mq=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
     fi
 
     if ! math_bool "${use_blk_mq}";then
-        if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
+        if have_file "/sys/module/scsi_mod/parameters/use_blk_mq";then
             use_blk_mq=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
         fi
     fi
@@ -55,7 +55,7 @@ function conf_sched
         return 1
     fi
 
-    if can_access "${sys_path}/queue/scheduler";then
+    if have_file "${sys_path}/queue/scheduler";then
         write_value ${sys_path}/queue/scheduler ${chose_sched}
         sys_scheds=$(cat ${sys_path}/queue/scheduler)
         echo_info "%-4s %12s %s" "${dev_name}" "scheduler:" "{ ${sys_scheds} }"
@@ -69,12 +69,12 @@ function conf_merge
     local dev_name="$1"
 
     local sys_path="/sys/block/${dev_name}"
-    if ! can_access "${sys_path}";then
+    if ! have_file "${sys_path}";then
         echo_erro "invalid: ${sys_path}"
         return 1
     fi
 
-    if can_access "${sys_path}/queue/nomerges";then
+    if have_file "${sys_path}/queue/nomerges";then
         write_value ${sys_path}/queue/nomerges 2 
         local now_val=$(cat ${sys_path}/queue/nomerges)
         echo_info "%-4s %12s %s" "${dev_name}" "nomerges:" "{ ${now_val} }"
@@ -89,20 +89,20 @@ function conf_qdeep
     local bdq_deep="$2"
 
     local sys_path="/sys/block/${dev_name}"
-    if ! can_access "${sys_path}";then
+    if ! have_file "${sys_path}";then
         echo_erro "invalid: ${sys_path}"
         return 1
     fi
 
-    if can_access "${sys_path}/device/queue_depth";then
+    if have_file "${sys_path}/device/queue_depth";then
         write_value ${sys_path}/device/queue_depth ${bdq_deep} 
         local now_val=$(cat ${sys_path}/device/queue_depth)
         echo_info "%-4s %12s %s" "${dev_name}" "queue_depth:" "{ ${now_val} }"
     fi
 
-    if can_access "${sys_path}/queue/nr_requests";then
+    if have_file "${sys_path}/queue/nr_requests";then
         local new_num=${bdq_deep}
-        if can_access "${sys_path}/device/queue_depth";then
+        if have_file "${sys_path}/device/queue_depth";then
             local now_val=$(cat ${sys_path}/device/queue_depth)
             new_num=$((now_val * 2))
         fi

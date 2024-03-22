@@ -144,7 +144,7 @@ function process_pid2name
             # ps -p 2133 -o args=
             # ps -p 2133 -o cmd=
             # cat /proc/${pid}/status
-            if can_access "/proc/${pid}/exe";then
+            if have_file "/proc/${pid}/exe";then
                 local fname=$(path2fname "/proc/${pid}/exe")
                 if [ -n "${fname}" ];then
                     if [[ ${fname} != 'exe' ]];then
@@ -160,14 +160,14 @@ function process_pid2name
                     local pname=$(ps -eo pid,cmd | grep -P "^\s*${pid}\b\s*" | awk '{ print $2 }')
                 fi
             elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-                if can_access "/proc/${pid}/stat";then
+                if have_file "/proc/${pid}/stat";then
                     local pname=$(cat /proc/${pid}/stat | grep -P "(?<=\().+(?=\))" -o)
                 fi
             fi
  
             if [ -n "${pname}" ];then
                 if [[ "${pname}" =~ '/' ]];then
-                    if can_access "${pname}";then
+                    if have_file "${pname}";then
                         name_list=(${name_list[*]} $(path2fname "${pname}"))
                     else
                         name_list=(${name_list[*]} ${pname})
@@ -316,7 +316,7 @@ function process_cpid
         if [[ "${SYSTEM}" == "Linux" ]]; then
             # ps -p $$ -o ppid=
             local subpro_path="/proc/${pid}/task/${pid}/children"
-            if can_access "${subpro_path}"; then
+            if have_file "${subpro_path}"; then
                 child_pids=(${child_pids[*]} $(cat ${subpro_path} 2>/dev/null))
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -499,7 +499,7 @@ function process_info
 
             if math_bool "${is_header}"; then
                 if [[ "${SYSTEM}" == "Linux" ]]; then
-                    ps -p ${pid} -o ${ps_header}
+                    ps -ww -p ${pid} -o ${ps_header}
                 elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
                     ps -a | grep -w "PID" 
                     ps -a | awk -v pid=${pid} '{ if ($1 == pid) { print $0 } }'
@@ -507,7 +507,7 @@ function process_info
                 local is_header=false
             else
                 if [[ "${SYSTEM}" == "Linux" ]]; then
-                    ps -p ${pid} -o ${ps_header} --no-headers
+                    ps -ww -p ${pid} -o ${ps_header} --no-headers
                 elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
                     ps -a | awk -v pid=${pid} '{ if ($1 == pid) { print $0 } }'
                 fi
@@ -735,7 +735,7 @@ function process_coredump
     fi
 
     sudo_it "echo '/tmp/core-%e-%p-%s-%t' > /proc/sys/kernel/core_pattern" 
-    if can_access "/etc/security/limits.conf";then
+    if have_file "/etc/security/limits.conf";then
         sudo_it "sed -i '\#\s\+core\s\\+#d' /etc/security/limits.conf"
         sudo_it "echo '* hard core unlimited' >> /etc/security/limits.conf" 
         sudo_it "echo '* soft core unlimited' >> /etc/security/limits.conf" 
@@ -745,7 +745,7 @@ function process_coredump
     local -a pid_array=($(process_name2pid "${para_list[*]}"))
     for pid in ${pid_array[*]}
     do
-        if can_access "/proc/${pid}/coredump_filter";then
+        if have_file "/proc/${pid}/coredump_filter";then
             sudo_it "echo 0x7b > /proc/${pid}/coredump_filter"
         fi
         sudo_it "kill -6 ${pid}"

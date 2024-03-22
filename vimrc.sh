@@ -13,7 +13,7 @@ PRJ_DIR="${PRJ_DIR:-.}"
 PRJ_DIR=$(string_trim "${PRJ_DIR}" "/" 2)
 if [ -n "${PRJ_DIR}" ];then
     echo_debug "project-dir: ${PRJ_DIR}"
-    if ! can_access "${PRJ_DIR}"; then
+    if ! have_file "${PRJ_DIR}"; then
         echo_erro "Invalid Dir: ${PRJ_DIR}"
         exit 1
     fi
@@ -23,7 +23,7 @@ OUT_DIR=$(get_options "-o" "--output-dir")
 OUT_DIR=$(string_trim "${OUT_DIR}" "/" 2)
 if [ -n "${OUT_DIR}" ];then
     echo_debug "output-dir: ${OUT_DIR}"
-    if ! can_access "${OUT_DIR}"; then
+    if ! have_file "${OUT_DIR}"; then
         echo_erro "Invalid Dir: ${OUT_DIR}"
         exit 1
     fi
@@ -107,7 +107,7 @@ function create_project
     echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
     cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.sort
 
-    if can_access ".gitignore"; then
+    if have_file ".gitignore"; then
         local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
         local line
         while read line
@@ -195,7 +195,7 @@ function create_project
     echo_debug "build ctags ..."
     ctags -L ${OUT_DIR}/cscope.files -o ${OUT_DIR}/tags
 
-    if ! can_access "${OUT_DIR}/tags";then
+    if ! have_file "${OUT_DIR}/tags";then
         echo_erro "tags create fail"
         return 1
     fi
@@ -203,7 +203,7 @@ function create_project
     echo_debug "build cscope ..."
     cscope -ckbq -i ${OUT_DIR}/cscope.files -f ${OUT_DIR}/cscope.out
 
-    if ! can_access "${OUT_DIR}/cscope.*";then
+    if ! have_file "${OUT_DIR}/cscope.*";then
         echo_erro "cscope.out create fail"
         return 1
     fi

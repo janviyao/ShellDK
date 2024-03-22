@@ -9,19 +9,19 @@ NCAT_PROT_CURR="${NCAT_WORK_DIR}/port.$$"
 NCAT_PORT_USED="${GBL_USER_DIR}/port.used"
 
 NCAT_FD=${NCAT_FD:-9}
-can_access "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
-can_access "${NCAT_PIPE}" || echo_erro "mkfifo: ${NCAT_PIPE} fail"
+have_file "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
+have_file "${NCAT_PIPE}" || echo_erro "mkfifo: ${NCAT_PIPE} fail"
 exec {NCAT_FD}<>${NCAT_PIPE}
 NCAT_MASTER_ADDR=$(get_local_ip)
 
 function update_port_used
 {
     echo > ${NCAT_PORT_USED}
-    if can_access "ss";then
+    if have_cmd "ss";then
         ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
     fi
 
-    if can_access "netstat";then
+    if have_cmd "netstat";then
         #netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
         if [[ "${SYSTEM}" == "Linux" ]]; then
             netstat -tunlp 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
@@ -30,7 +30,7 @@ function update_port_used
         fi
     fi
 
-    if can_access "lsof";then
+    if have_cmd "lsof";then
         lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
     fi
     echo "======" >> ${NCAT_PORT_USED}
@@ -45,16 +45,16 @@ function local_port_available
         return 1
     fi
 
-    if ! can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${BASH_WORK_DIR}";then
         return 1
     fi
 
-    if ! can_access "${NCAT_WORK_DIR}";then
+    if ! have_file "${NCAT_WORK_DIR}";then
         echo_file "${LOG_ERRO}" "already deleted: ${NCAT_WORK_DIR}"
         return 1
     fi
 
-    if can_access "${NCAT_PORT_USED}";then
+    if have_file "${NCAT_PORT_USED}";then
         if grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
             echo_file "${LOG_DEBUG}" "port[${port}] used"
             return 1
@@ -85,7 +85,7 @@ function ncat_port_get
         return 0
     fi
 
-    if can_access "${NCAT_PROT_CURR}";then
+    if have_file "${NCAT_PROT_CURR}";then
         port_val=$(cat ${NCAT_PROT_CURR})
         if local_port_available "${port_val}";then
             echo "${port_val}"
@@ -102,7 +102,7 @@ function ncat_port_get
         fi
     done
 
-    if can_access "${NCAT_WORK_DIR}";then
+    if have_file "${NCAT_WORK_DIR}";then
         echo "${port_val}" > ${NCAT_PROT_CURR}
     fi
     echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] generated"
@@ -131,7 +131,7 @@ function remote_ncat_alive
         fi
     fi
 
-    if can_access "nc";then
+    if have_cmd "nc";then
         if nc -zvw3 ${ncat_addr} ${ncat_port} &> /dev/null;then
             echo_debug "remote[${ncat_addr} ${ncat_port}] online"
             return 0
@@ -158,7 +158,7 @@ function ncat_send_msg
 
     echo_file "${LOG_DEBUG}" "ncat will send: [$@]" 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
-        if ! can_access "${NCAT_PIPE}.run";then
+        if ! have_file "${NCAT_PIPE}.run";then
             echo_erro "ncat task donot run: [${NCAT_PIPE}.run]"
             return 1
         fi
@@ -167,7 +167,7 @@ function ncat_send_msg
         ncat_addr="127.0.0.1"
     fi
 
-    if ! can_access "nc";then
+    if ! have_cmd "nc";then
         echo_file "${LOG_ERRO}" "ncat donot installed"
         return 1
     fi
@@ -185,7 +185,7 @@ function ncat_send_msg
     (echo "${ncat_body}" | nc -w 1 ${ncat_addr} ${ncat_port}) &> /dev/null
     while test $? -ne 0
     do
-        if ! can_access "${NCAT_PIPE}.run";then
+        if ! have_file "${NCAT_PIPE}.run";then
             #echo_file "${LOG_ERRO}" "ncat task have exited: [${NCAT_PIPE}.run]"
             return 1
         fi
@@ -207,7 +207,7 @@ function ncat_recv_msg
     local ncat_port="$1"
 
     echo_file "${LOG_DEBUG}" "ncat will recv: [port ${ncat_port}]"
-    if can_access "nc";then
+    if have_cmd "nc";then
         local ncat_body
         #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
@@ -244,14 +244,14 @@ function ncat_send_file
     echo_debug "ncat send: [$@]"
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
-            if ! can_access "${NCAT_PIPE}.run";then
+            if ! have_file "${NCAT_PIPE}.run";then
                 echo_erro "ncat task donot run"
                 return 1
             fi
         fi
     fi
 
-    if can_access "nc";then
+    if have_cmd "nc";then
         local try_count=0
         nc ${ncat_addr} ${ncat_port} < ${file_name} &> /dev/null
         while test $? -ne 0
@@ -283,8 +283,8 @@ function ncat_recv_file
     fi
 
     local f_path=$(fname2path "${file_name}")
-    if can_access "${f_path}";then
-        if can_access "${file_name}";then
+    if have_file "${f_path}";then
+        if have_file "${file_name}";then
             if test -r ${f_path} && test -w ${f_path} && test -x ${f_path};then
                 rm -f ${file_name}
             else
@@ -295,7 +295,7 @@ function ncat_recv_file
         mkdir -p ${f_path}
     fi
 
-    if can_access "nc";then
+    if have_cmd "nc";then
         timeout ${MAX_TIMEOUT} nc -l -4 ${ncat_port} > ${file_name}
     else
         echo_erro "ncat donot installed"
@@ -310,14 +310,14 @@ function ncat_wait_resp
     local ncat_body="$1"
     local timeout_s="${2:-10}"
 
-    if ! can_access "nc";then
+    if ! have_cmd "nc";then
         echo_file "${LOG_ERRO}" "ncat donot installed"
         return 1
     fi
 
     # the first pid is shell where ppid run
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -331,9 +331,9 @@ function ncat_wait_resp
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
  
     echo_debug "make ack: ${ack_pipe}"
-    #can_access "${ack_pipe}" && rm -f ${ack_pipe}
+    #have_file "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
-    can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+    have_file "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
@@ -345,7 +345,7 @@ function ncat_wait_resp
         run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
         local retcode=$?
 
-        if can_access "${ack_pipe}.result";then
+        if have_file "${ack_pipe}.result";then
             export resp_ack=$(cat ${ack_pipe}.result)
         else
             export resp_ack=""
@@ -452,7 +452,7 @@ function remote_send_file
 function _bash_ncat_exit
 { 
     echo_debug "ncat signal exit"
-    if ! can_access "${NCAT_PIPE}.run";then
+    if ! have_file "${NCAT_PIPE}.run";then
         echo_debug "ncat task not started but signal EXIT"
         return 0
     fi
@@ -482,7 +482,7 @@ function _ncat_thread_main
 {
     local master_work=true
 
-    if ! can_access "${NCAT_WORK_DIR}";then
+    if ! have_file "${NCAT_WORK_DIR}";then
         echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
         return
     fi
@@ -503,7 +503,7 @@ function _ncat_thread_main
                 ncat_port_get ${ncat_port} &> /dev/null
             fi
 
-            if ! can_access "${NCAT_WORK_DIR}";then
+            if ! have_file "${NCAT_WORK_DIR}";then
                 echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
                 break
             fi
@@ -517,11 +517,11 @@ function _ncat_thread_main
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! can_access "${ack_pipe}";then
+            if ! have_file "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
                 mdat_get_var "master_work"
 
-                if ! can_access "${NCAT_WORK_DIR}";then
+                if ! have_file "${NCAT_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
                     break
                 fi
@@ -598,7 +598,7 @@ function _ncat_thread_main
         fi
 
         mdat_get_var "master_work"
-        if ! can_access "${NCAT_WORK_DIR}";then
+        if ! have_file "${NCAT_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
             break
         fi
@@ -610,7 +610,7 @@ function _ncat_thread
     trap "" SIGINT SIGTERM SIGKILL
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -628,7 +628,7 @@ function _ncat_thread
     fi
     #( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
-    if ! can_access "${NCAT_PORT_USED}";then
+    if ! have_file "${NCAT_PORT_USED}";then
         run_lock 1 update_port_used
     else
         if file_expire "${NCAT_PORT_USED}" 60;then
@@ -636,7 +636,7 @@ function _ncat_thread
         fi
     fi
 
-    if ! can_access "${NCAT_WORK_DIR}";then
+    if ! have_file "${NCAT_WORK_DIR}";then
         echo_file "${LOG_DEBUG}" "because master have exited, ncat bg_thread[${self_pid}] exit"
         eval "exec ${NCAT_FD}>&-"
         exit 0

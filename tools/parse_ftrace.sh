@@ -14,7 +14,7 @@ if [ $# -lt 1 ];then
 fi
 
 file=$(real_path $1)
-if ! can_access "${file}";then
+if ! have_file "${file}";then
     echo_erro "file lost: ${file}"
 fi
 tmp_file=$(file_temp "$(pwd)")

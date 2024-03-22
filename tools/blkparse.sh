@@ -46,7 +46,7 @@ if [ -z "${output_dir}" ];then
     output_dir=${CUR_DIR}/blktrace
     try_cnt=0
     tmp_dir=${output_dir}
-    while can_access "${tmp_dir}"
+    while have_file "${tmp_dir}"
     do
         let try_cnt++
         tmp_dir=${output_dir}${try_cnt}
@@ -62,7 +62,7 @@ cd ${output_dir}
 dev_names=($@)
 for dev_name in ${dev_names[*]}
 do
-    if ! can_access "/dev/${dev_name}";then
+    if ! have_file "/dev/${dev_name}";then
         echo_erro "invalid: /dev/${dev_name}"
         exit 1
     fi

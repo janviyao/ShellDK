@@ -36,7 +36,7 @@ function gdb_script
         return 1
     fi
     
-    if ! can_access "${xscript}";then
+    if ! have_file "${xscript}";then
         echo_erro "GDB script { ${xscript} } lost" 
         return 1
     fi

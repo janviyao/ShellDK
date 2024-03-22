@@ -16,7 +16,7 @@ FIO_TEST_MAP["testcase-1"]="fio.r.w 4k 32 32"
 declare -A FIO_HOST_MAP
 for ipaddr in ${CLIENT_IP_ARRAY[*]}
 do
-    if can_access "${WORK_ROOT_DIR}/disk.${ipaddr}";then
+    if have_file "${WORK_ROOT_DIR}/disk.${ipaddr}";then
         device_array=($(cat ${WORK_ROOT_DIR}/disk.${ipaddr}))
         for device in ${device_array[*]}
         do

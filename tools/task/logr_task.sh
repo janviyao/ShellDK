@@ -6,8 +6,8 @@ mkdir -p ${LOGR_WORK_DIR}
 LOGR_TASK="${LOGR_WORK_DIR}/task"
 LOGR_PIPE="${LOGR_WORK_DIR}/pipe"
 LOGR_FD=${LOGR_FD:-8}
-can_access "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
-can_access "${LOGR_PIPE}" || echo_erro "mkfifo: ${LOGR_PIPE} fail"
+have_file "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
+have_file "${LOGR_PIPE}" || echo_erro "mkfifo: ${LOGR_PIPE} fail"
 exec {LOGR_FD}<>${LOGR_PIPE} # 自动分配FD 
 
 function logr_task_ctrl_async
@@ -21,7 +21,7 @@ function logr_task_ctrl_async
     fi
 
     #echo_debug "log to self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
-    if ! can_access "${LOGR_PIPE}.run";then
+    if ! have_file "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
@@ -46,7 +46,7 @@ function logr_task_ctrl_sync
     fi
 
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
-    if ! can_access "${LOGR_PIPE}.run";then
+    if ! have_file "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
@@ -63,7 +63,7 @@ function logr_task_ctrl_sync
 function _bash_logr_exit
 { 
     echo_debug "logr signal exit" 
-    if ! can_access "${LOGR_PIPE}.run";then
+    if ! have_file "${LOGR_PIPE}.run";then
         echo_debug "logr task not started but signal EXIT"
         return 0
     fi
@@ -94,7 +94,7 @@ function _redirect_func
     local log_file="$1"
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -155,9 +155,9 @@ function _logr_thread_main
 
         #echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! can_access "${ack_pipe}";then
+            if ! have_file "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                if ! can_access "${LOGR_WORK_DIR}";then
+                if ! have_file "${LOGR_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
                     break
                 fi
@@ -219,7 +219,7 @@ function _logr_thread_main
         elif [[ "${req_ctrl}" == "PRINT" ]];then
             printf "%s" "${req_body}" 
         elif [[ "${req_ctrl}" == "PRINT_FROM_FILE" ]];then
-            if can_access "${req_body}";then
+            if have_file "${req_body}";then
                 local file_log=$(cat ${req_body}) 
                 printf "%s" "${file_log}" 
             else
@@ -232,7 +232,7 @@ function _logr_thread_main
             run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
         #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"
-        if ! can_access "${LOGR_WORK_DIR}";then
+        if ! have_file "${LOGR_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
             break
         fi
@@ -244,7 +244,7 @@ function _logr_thread
     trap "" SIGINT SIGTERM SIGKILL
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then

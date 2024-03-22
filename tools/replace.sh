@@ -96,7 +96,7 @@ function do_replace
 
 for xfile in ${replace_list[*]}
 do
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo_erro "invalid: ${xfile}"
         continue
     fi

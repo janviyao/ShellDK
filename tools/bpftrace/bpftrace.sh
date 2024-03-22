@@ -22,7 +22,7 @@ STATS_HASH="cpu"
 g_save_dir=$(pwd)/bpftrace
 try_cnt=0
 tmp_dir=${g_save_dir}
-while can_access "${tmp_dir}"
+while have_file "${tmp_dir}"
 do
     let try_cnt++
     tmp_dir=${g_save_dir}${try_cnt}

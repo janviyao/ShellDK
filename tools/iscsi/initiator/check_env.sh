@@ -11,23 +11,23 @@ ${SUDO} "cat /dev/null > /var/log/kern; rm -f /var/log/kern-*"
 
 if math_bool "${APPLY_SYSCTRL}";then
     echo_info "sysctl reload"
-    can_access "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
+    have_file "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} sysctl -p
 fi
 
-can_access "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "iscsi-initiator-utils-.+\.rpm" true; }
-can_access "sg_raw"           || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "sg3_utils-.+\.rpm" true; }
+have_file "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "iscsi-initiator-utils-.+\.rpm" true; }
+have_cmd "sg_raw"             || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "sg3_utils-.+\.rpm" true; }
 
 if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
-    can_access "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-1.+\.rpm" true; }
-    can_access "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-libs-.+\.rpm" true; }
-    can_access "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-libs-.+\.rpm" true; }
-    can_access "/usr/sbin/multipathd"         || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-.+\.rpm" true; }
-    can_access "/usr/lib64/libaio.so.*"       || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libaio-.+\.rpm" true; }
+    have_file "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-1.+\.rpm" true; }
+    have_file "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-libs-.+\.rpm" true; }
+    have_file "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-libs-.+\.rpm" true; }
+    have_file "/usr/sbin/multipathd"         || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-.+\.rpm" true; }
+    have_file "/usr/lib64/libaio.so.*"       || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libaio-.+\.rpm" true; }
 fi
 
-can_access "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
-can_access "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+have_file "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+have_file "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
 if math_bool "${INITIATOR_DEBUG_ON}";then
     echo_info "enable iscsid debug"
@@ -75,7 +75,7 @@ if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";t
         fi
     fi
 
-    can_access "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
+    have_file "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
     if process_exist "multipathd";then
         if math_bool "${ISCSI_MUTLIPATH_RESTART}";then
             echo_info "multipath restart"
@@ -92,14 +92,14 @@ else
     fi
 fi
 
-if can_access "/sys/module/dm_mod/parameters/use_blk_mq";then
+if have_file "/sys/module/dm_mod/parameters/use_blk_mq";then
     para_val=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
     if [[ "${para_val}" != "Y" ]];then
         echo_warn "dm blk_mq feature disable: /sys/module/dm_mod/parameters/use_blk_mq"
     fi
 fi
 
-if can_access "/sys/module/scsi_mod/parameters/use_blk_mq";then
+if have_file "/sys/module/scsi_mod/parameters/use_blk_mq";then
     para_val=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
     if [[ "${para_val}" != "Y" ]];then
         echo_warn "scsi blk_mq feature disable: /sys/module/scsi_mod/parameters/use_blk_mq"

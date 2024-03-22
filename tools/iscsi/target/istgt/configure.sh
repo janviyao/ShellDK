@@ -11,8 +11,8 @@ fi
 ${SUDO} "mkdir -p ${ISCSI_LOG_DIR}; chmod -R 777 ${ISCSI_LOG_DIR}" 
 
 LOCAL_CONF="${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/conf/istgt.conf"
-can_access "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
-can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
+have_file "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
+have_file "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
 ${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
 
 for map_key in ${!ISCSI_INFO_MAP[*]}

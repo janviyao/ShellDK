@@ -11,7 +11,7 @@ fi
 
 if math_bool "${DUMP_SAVE_ON}";then 
     coredump_dir=$(fname2path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
-    if ! can_access "${coredump_dir}";then
+    if ! have_file "${coredump_dir}";then
         coredump_dir=""
     else
         if [[ ${coredump_dir} == "/" ]];then
@@ -20,31 +20,31 @@ if math_bool "${DUMP_SAVE_ON}";then
     fi
 
     have_coredump=false
-    if can_access "${coredump_dir}/core-*";then
+    if have_file "${coredump_dir}/core-*";then
         echo_info "Save: ${coredump_dir}/core-*"
         ${SUDO} mv -f ${coredump_dir}/core-* ${ISCSI_LOG_DIR}
         have_coredump=true
     fi
     
     if math_bool "${have_coredump}";then
-        if can_access "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
+        if have_file "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
             echo_info "Save: ${ISCSI_APP_NAME}"
             cp -f ${ISCSI_APP_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}
         fi
 
-        if can_access "/dev/shm/spdk_iscsi_conns.*";then
+        if have_file "/dev/shm/spdk_iscsi_conns.*";then
             echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
             ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${ISCSI_LOG_DIR}
         fi
 
-        if can_access "/dev/hugepages/";then
+        if have_file "/dev/hugepages/";then
             echo_info "Save: /dev/hugepages/"
             ${SUDO} cp -fr /dev/hugepages ${ISCSI_LOG_DIR}/
         fi
 
         ${SUDO} chmod -R 777 ${ISCSI_LOG_DIR}
-        if can_access "${ISCSI_LOG_DIR}/core-*";then
-            if can_access "gdb";then
+        if have_file "${ISCSI_LOG_DIR}/core-*";then
+            if have_cmd "gdb";then
                 gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
                 cat ${ISCSI_LOG_DIR}/backtrace.txt
             fi
@@ -52,12 +52,12 @@ if math_bool "${DUMP_SAVE_ON}";then
     fi
 fi
 
-if can_access "${BASH_LOG}";then
+if have_file "${BASH_LOG}";then
     echo_info "Save: ${BASH_LOG}"
     ${SUDO} cp -f ${BASH_LOG} ${ISCSI_LOG_DIR}
 fi
 
-if can_access "${TEST_SUIT_ENV}";then
+if have_file "${TEST_SUIT_ENV}";then
     echo_info "Save: ${TEST_SUIT_ENV}"
     ${SUDO} cp -f ${TEST_SUIT_ENV} ${ISCSI_LOG_DIR}
 fi

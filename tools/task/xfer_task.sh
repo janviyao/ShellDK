@@ -7,8 +7,8 @@ XFER_TASK="${XFER_WORK_DIR}/task"
 XFER_WORK="${XFER_WORK_DIR}/work"
 XFER_PIPE="${XFER_WORK_DIR}/pipe"
 XFER_FD=${XFER_FD:-6}
-can_access "${XFER_PIPE}" || mkfifo ${XFER_PIPE}
-can_access "${XFER_PIPE}" || echo_erro "mkfifo: ${XFER_PIPE} fail"
+have_file "${XFER_PIPE}" || mkfifo ${XFER_PIPE}
+have_file "${XFER_PIPE}" || echo_erro "mkfifo: ${XFER_PIPE} fail"
 exec {XFER_FD}<>${XFER_PIPE}
 
 function do_rsync
@@ -32,7 +32,7 @@ function do_rsync
     local sync_des=${xfer_des}
     local sync_cmd="LOCAL${GBL_SPF3}cd ."
 
-    can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
+    have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
         if ! account_check ${MY_NAME};then
             echo_erro "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
@@ -65,7 +65,7 @@ function do_rsync
                         xfer_dir=$(fname2path "${xfer_dir}")
                     fi
 
-                    if ! can_access "${xfer_dir}";then
+                    if ! have_file "${xfer_dir}";then
                         sudo_it "mkdir -p ${xfer_dir}"
                         sudo_it "chmod +w ${xfer_dir}"
                         sudo_it "chown ${USR_NAME} ${xfer_dir}"
@@ -115,7 +115,7 @@ function rsync_to
     #    xfer_ips=($(get_hosts_ip))
     #fi
 
-    if ! can_access "${xfer_src}";then
+    if ! have_file "${xfer_src}";then
         echo_erro "{ ${xfer_src} } not exist"
         return 1
     fi
@@ -188,7 +188,7 @@ function rsync_p2p_to
     #    xfer_ips=($(get_hosts_ip))
     #fi
 
-    if ! can_access "${xfer_src}";then
+    if ! have_file "${xfer_src}";then
         echo_erro "{ ${xfer_src} } not exist"
         return 1
     fi
@@ -245,7 +245,7 @@ function xfer_task_ctrl_async
         one_pipe="${XFER_PIPE}"
     fi
 
-    if ! can_access "${one_pipe}.run";then
+    if ! have_file "${one_pipe}.run";then
         echo_erro "xfer task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
@@ -268,7 +268,7 @@ function xfer_task_ctrl_sync
         one_pipe="${XFER_PIPE}"
     fi
 
-    if ! can_access "${one_pipe}.run";then
+    if ! have_file "${one_pipe}.run";then
         echo_erro "xfer task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
@@ -281,7 +281,7 @@ function xfer_task_ctrl_sync
 function _bash_xfer_exit
 { 
     echo_debug "xfer signal exit"
-    if ! can_access "${XFER_PIPE}.run";then
+    if ! have_file "${XFER_PIPE}.run";then
         echo_debug "xfer task not started but signal EXIT"
         return 0
     fi
@@ -389,9 +389,9 @@ EOF
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! can_access "${ack_pipe}";then
+            if ! have_file "${ack_pipe}";then
                 echo_debug "pipe invalid: [${ack_pipe}]"
-                if ! can_access "${XFER_WORK_DIR}";then
+                if ! have_file "${XFER_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
                     break
                 fi
@@ -458,7 +458,7 @@ EOF
             fi
             #echo_debug "xfer_cmd: [${xfer_cmd}]"
 
-            can_access "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
+            have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
                 if ! math_bool "${check_ok}";then
                     if account_check ${MY_NAME};then
@@ -496,7 +496,7 @@ EOF
                     fi
                 fi
             else
-                #can_access "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
+                #have_file "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
                 rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} &
                 local bgpid=$!
                 echo ${bgpid} > ${XFER_WORK}
@@ -515,7 +515,7 @@ EOF
         fi
 
         echo_file "${LOG_DEBUG}" "xfer wait: [${XFER_PIPE}]"
-        if ! can_access "${XFER_WORK_DIR}";then
+        if ! have_file "${XFER_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
             break
         fi
@@ -524,7 +524,7 @@ EOF
 
 function _xfer_kill_rsync
 {
-    if can_access "${XFER_WORK}";then
+    if have_file "${XFER_WORK}";then
         local work_list=($(cat ${XFER_WORK}))
         echo_file "${LOG_DEBUG}" "kill xfer works[${work_list[*]}]"
 
@@ -564,7 +564,7 @@ function _xfer_thread
     trap 'SIGNAL=KILL; _xfer_handle_signal' SIGKILL
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then

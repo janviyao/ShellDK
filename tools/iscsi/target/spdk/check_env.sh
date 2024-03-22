@@ -2,12 +2,12 @@
 source ${TEST_SUIT_ENV} 
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-can_access "/usr/bin/meson"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "meson-.+\.rpm" true; }
-can_access "/usr/bin/ninja"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "ninja-build-.+\.rpm" true; }
-can_access "/usr/lib64/libuuid.so.*"             || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libuuid-2.+\.rpm" true; }
-can_access "/usr/include/uuid/uuid.h"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libuuid-devel-.+\.rpm" true; }
-can_access "/usr/lib64/libjson-c.so.*"           || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "json-c-0.+\.rpm" true; }
-can_access "/usr/include/json/json_c_version.h"  || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "json-c-devel.+\.rpm" true; }
+have_file "/usr/bin/meson"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "meson-.+\.rpm" true; }
+have_file "/usr/bin/ninja"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "ninja-build-.+\.rpm" true; }
+have_file "/usr/lib64/libuuid.so.*"             || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libuuid-2.+\.rpm" true; }
+have_file "/usr/include/uuid/uuid.h"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libuuid-devel-.+\.rpm" true; }
+have_file "/usr/lib64/libjson-c.so.*"           || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "json-c-0.+\.rpm" true; }
+have_file "/usr/include/json/json_c_version.h"  || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "json-c-devel.+\.rpm" true; }
 
 # configure core-dump path
 ${SUDO} ulimit -c unlimited
@@ -17,7 +17,7 @@ ${SUDO} "echo > /var/log/messages; rm -f /var/log/messages-*"
 ${SUDO} "echo > /var/log/kern; rm -f /var/log/kern-*"
 
 if math_bool "${APPLY_SYSCTRL}";then
-    can_access "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
+    have_file "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} echo_iferror sysctl -p
 fi
 
@@ -41,8 +41,8 @@ ${SUDO} "mkdir -p ${ISCSI_LOG_DIR}; chmod -R 777 ${ISCSI_LOG_DIR}"
 #fi
 
 LOCAL_CONF="${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/conf/iscsi.conf.in"
-can_access "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
-can_access "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
+have_file "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
+have_file "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
 ${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
 
 exit 0

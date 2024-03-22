@@ -28,7 +28,7 @@ function file_privilege
     return 0
 }
 
-function can_access
+function have_file
 {
     local bash_options="$-"
     set +x
@@ -49,7 +49,7 @@ function can_access
                 return 1
             fi
 
-            if can_access "${file}"; then
+            if have_file "${file}"; then
                 [[ "${bash_options}" =~ x ]] && set -x
                 return 0
             fi
@@ -93,11 +93,6 @@ function can_access
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
-
-    if command -v ${xfile} &> /dev/null;then
-        [[ "${bash_options}" =~ x ]] && set -x
-        return 0
-    fi
   
     [[ "${bash_options}" =~ x ]] && set -x
     return 1
@@ -113,7 +108,7 @@ function file_expire
         return 0
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 0
     fi     
 
@@ -137,7 +132,7 @@ function file_has
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
 
@@ -167,7 +162,7 @@ function file_range_has
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
 
@@ -194,7 +189,7 @@ function file_add
         return 1
     fi
      
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo > ${xfile}
     fi 
 
@@ -224,7 +219,7 @@ function file_get
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
     
@@ -283,7 +278,7 @@ function file_range_get
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
 
@@ -327,7 +322,7 @@ function file_del
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo_erro "file lost: ${xfile}"
         return 1
     fi 
@@ -427,7 +422,7 @@ function file_insert
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo > ${xfile}
     fi 
 
@@ -486,7 +481,7 @@ function file_linenr
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
     
@@ -541,7 +536,7 @@ function file_range_linenr
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
      
@@ -581,7 +576,7 @@ function file_range
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         return 1
     fi 
 
@@ -627,7 +622,7 @@ function file_line_num
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo "0"
         return 0
     fi 
@@ -647,7 +642,7 @@ function file_change
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo > ${xfile}
     fi 
 
@@ -691,7 +686,7 @@ function file_replace
         return 1
     fi
 
-    if ! can_access "${xfile}";then
+    if ! have_file "${xfile}";then
         echo_erro "file lost: ${xfile}"
         return 1
     fi 
@@ -722,7 +717,7 @@ function file_count
     local f_array=($@)
     local readable=true
 
-    can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
+    have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
     local -i index=0
     local -a c_array=($(echo ""))
@@ -764,7 +759,7 @@ function file_size
     local f_array=($@)
     local readable=true
 
-    can_access "fstat" || { echo_erro "fstat not exist" ; return 0; }
+    have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
     local -i index=0
     local -a c_array=($(echo ""))
@@ -806,7 +801,7 @@ function file_temp
     local base_dir="${1:-${BASH_WORK_DIR}}"
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -868,11 +863,11 @@ function real_path
         return 1
     fi 
 
-    if ! can_access "${this_path}";then
+    if ! have_file "${this_path}";then
         if ! string_contain "${orig_path}" '/';then
             local path_bk="${this_path}"
             this_path=$(which --skip-alias ${orig_path} 2>/dev/null)
-            if ! can_access "${this_path}";then
+            if ! have_file "${this_path}";then
                 this_path="${path_bk}"
             fi
         fi

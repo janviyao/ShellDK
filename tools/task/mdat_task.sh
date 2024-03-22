@@ -6,13 +6,13 @@ mkdir -p ${MDAT_WORK_DIR}
 MDAT_TASK="${MDAT_WORK_DIR}/task"
 MDAT_PIPE="${MDAT_WORK_DIR}/mdat.pipe"
 MDAT_FD=${MDAT_FD:-7}
-can_access "${MDAT_PIPE}" || mkfifo ${MDAT_PIPE}
-can_access "${MDAT_PIPE}" || echo_erro "mkfifo: ${MDAT_PIPE} fail"
+have_file "${MDAT_PIPE}" || mkfifo ${MDAT_PIPE}
+have_file "${MDAT_PIPE}" || echo_erro "mkfifo: ${MDAT_PIPE} fail"
 exec {MDAT_FD}<>${MDAT_PIPE}
 
 function mdat_task_alive
 {
-    if can_access "${MDAT_PIPE}.run";then
+    if have_file "${MDAT_PIPE}.run";then
         return 0
     else
         return 1
@@ -33,8 +33,8 @@ function mdat_task_ctrl_async
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "pipe invalid: ${_pipe_}"
         fi
         return 1
@@ -58,8 +58,8 @@ function mdat_task_ctrl_sync
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "pipe invalid: [${_pipe_}]"
         fi
         return 1
@@ -130,8 +130,8 @@ function mdat_kv_has_key
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -163,8 +163,8 @@ function mdat_kv_has_val
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -214,8 +214,8 @@ function mdat_kv_unset_key
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -241,8 +241,8 @@ function mdat_kv_unset_val
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -268,8 +268,8 @@ function mdat_kv_append
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -295,8 +295,8 @@ function mdat_kv_set
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -324,8 +324,8 @@ function mdat_kv_get
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! can_access "${_pipe_}.run";then
-        if can_access "${BASH_WORK_DIR}";then
+    if ! have_file "${_pipe_}.run";then
+        if have_file "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
         fi
         return 1
@@ -363,7 +363,7 @@ function mdat_kv_clear
 function _bash_mdat_exit
 { 
     echo_debug "mdat signal exit"
-    if ! can_access "${MDAT_PIPE}.run";then
+    if ! have_file "${MDAT_PIPE}.run";then
         echo_debug "mdat task not started but signal EXIT"
         return 0
     fi
@@ -402,9 +402,9 @@ function _mdat_thread_main
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! can_access "${ack_pipe}";then
+            if ! have_file "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                if ! can_access "${MDAT_WORK_DIR}";then
+                if ! have_file "${MDAT_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, mdat will exit"
                     break
                 fi
@@ -524,7 +524,7 @@ function _mdat_thread_main
         fi
 
         echo_file "${LOG_DEBUG}" "mdat wait: [${MDAT_PIPE}]"
-        if ! can_access "${MDAT_WORK_DIR}";then
+        if ! have_file "${MDAT_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, mdat will exit"
             break
         fi
@@ -536,7 +536,7 @@ function _mdat_thread
     trap "" SIGINT SIGTERM SIGKILL
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -571,7 +571,7 @@ function _mdat_thread
 
 while true
 do
-    if can_access "${MDAT_PIPE}.run";then
+    if have_file "${MDAT_PIPE}.run";then
         break
     else
         sleep 0.1

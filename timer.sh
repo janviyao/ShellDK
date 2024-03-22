@@ -9,7 +9,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     source ${GBL_USER_DIR}/timer/.timerc
     source ${MY_VIM_DIR}/bashrc
 
-    if can_access "${MY_HOME}/.timerc";then
+    if have_file "${MY_HOME}/.timerc";then
         source ${MY_HOME}/.timerc
     else
         exit 0
@@ -21,10 +21,10 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     fi
     process_kill ${pid_list[*]}
 
-    if can_access "${TEST_SUIT_ENV}";then
+    if have_file "${TEST_SUIT_ENV}";then
         source ${TEST_SUIT_ENV} 
 
-        if can_access "${ISCSI_APP_LOG}";then
+        if have_file "${ISCSI_APP_LOG}";then
             logsize=$(file_size "${ISCSI_APP_LOG}")
             if [ -z "${logsize}" ];then
                 logsize=0
@@ -40,7 +40,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
         fi
     fi
 
-    if can_access "${BASH_LOG}";then
+    if have_file "${BASH_LOG}";then
         logsize=$(file_size "${BASH_LOG}")
         if [ -z "${logsize}" ];then
             logsize=0

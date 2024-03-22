@@ -6,8 +6,8 @@ mkdir -p ${CTRL_WORK_DIR}
 CTRL_TASK="${CTRL_WORK_DIR}/task"
 CTRL_PIPE="${CTRL_WORK_DIR}/pipe"
 CTRL_FD=${CTRL_FD:-6}
-can_access "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
-can_access "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
+have_file "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
+have_file "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
 exec {CTRL_FD}<>${CTRL_PIPE}
 
 function ctrl_create_thread
@@ -19,7 +19,7 @@ function ctrl_create_thread
         return 1
     fi
 
-    if ! can_access "${CTRL_PIPE}.run";then
+    if ! have_file "${CTRL_PIPE}.run";then
         echo_erro "ctrl task [${CTRL_PIPE}.run] donot run for [$@]"
         return 1
     fi
@@ -45,7 +45,7 @@ function ctrl_task_ctrl_async
         one_pipe="${CTRL_PIPE}"
     fi
 
-    if ! can_access "${one_pipe}.run";then
+    if ! have_file "${one_pipe}.run";then
         echo_erro "ctrl task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
@@ -68,7 +68,7 @@ function ctrl_task_ctrl_sync
         one_pipe="${CTRL_PIPE}"
     fi
 
-    if ! can_access "${one_pipe}.run";then
+    if ! have_file "${one_pipe}.run";then
         echo_erro "ctrl task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
@@ -80,7 +80,7 @@ function ctrl_task_ctrl_sync
 function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit"
-    if ! can_access "${CTRL_PIPE}.run";then
+    if ! have_file "${CTRL_PIPE}.run";then
         echo_debug "ctrl task not started but signal EXIT"
         return 0
     fi
@@ -124,9 +124,9 @@ function _ctrl_thread_main
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! can_access "${ack_pipe}";then
+            if ! have_file "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                if ! can_access "${CTRL_WORK_DIR}";then
+                if ! have_file "${CTRL_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
                     break
                 fi
@@ -170,7 +170,7 @@ function _ctrl_thread_main
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [${bgpid}] to [${ack_pipe}]"
                 run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
-                if ! can_access "${CTRL_WORK_DIR}";then
+                if ! have_file "${CTRL_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
                     break
                 fi
@@ -185,7 +185,7 @@ function _ctrl_thread_main
 
         echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
 
-        if ! can_access "${CTRL_WORK_DIR}";then
+        if ! have_file "${CTRL_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
             break
         fi
@@ -197,7 +197,7 @@ function _ctrl_thread
     trap "" SIGINT SIGTERM SIGKILL
 
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then

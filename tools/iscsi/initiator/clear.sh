@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
-if ! can_access "iscsiadm" || ! process_exist "iscsid";then
+if ! have_cmd "iscsiadm" || ! process_exist "iscsid";then
     exit 0
 fi
 

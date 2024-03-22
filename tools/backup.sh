@@ -63,7 +63,7 @@ function common_backup
     fi
 
     local real_item=$(real_path ${bak_obj})
-    if ! can_access "${real_item}"; then
+    if ! have_file "${real_item}"; then
         return 1
     fi
 
@@ -134,7 +134,7 @@ function get_from_git
 }
 
 cd ${SRC_DIR}
-if can_access ".git"; then
+if have_file ".git"; then
     ITEM_LIST=($(get_from_git))
     for item in ${ITEM_LIST[*]}
     do
@@ -145,7 +145,7 @@ if can_access ".git"; then
     done
 fi
 
-if can_access "${BAK_CONF}"; then
+if have_file "${BAK_CONF}"; then
     ITEM_LIST=($(get_from_conf))
     for item in ${ITEM_LIST[*]}
     do
@@ -155,7 +155,7 @@ if can_access "${BAK_CONF}"; then
         fi
     done
 else
-    if ! can_access ".git"; then
+    if ! have_file ".git"; then
         echo_erro "conf file lost: ${BAK_CONF}"
         exit 1
     fi

@@ -120,15 +120,15 @@ function clean_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
 
     local TIMER_RUNDIR=${GBL_USER_DIR}/timer
-    can_access "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
-    can_access "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
+    have_file "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
+    have_file "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
@@ -140,19 +140,19 @@ function clean_env
         cron_dir="/var/cron/tabs"
     fi
 
-    if can_access "${cron_dir}";then
+    if have_file "${cron_dir}";then
         ${SUDO} file_del "${cron_dir}/${MY_NAME}" ".+timer\.sh" true
     fi
 
-    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
-    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
-    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
-    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
-    can_access "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
-    #can_access "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
+    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
+    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
+    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
+    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
+    #have_file "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    can_access "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
-    can_access "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
+    have_file "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
+    have_file "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
 
     local spec
     if [[ "${SYSTEM}" == "Linux" ]]; then
@@ -163,7 +163,7 @@ function clean_env
 
     for spec in ${must_deps[*]}
     do
-        can_access "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
+        have_file "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
     done
 }
 
@@ -175,13 +175,13 @@ function inst_env
         fi
     fi
 
-    can_access "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
-    if ! can_access "${GBL_USER_DIR}/.${USR_NAME}";then
+    have_file "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
+    if ! have_file "${GBL_USER_DIR}/.${USR_NAME}";then
         echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_USER_DIR}/.${USR_NAME} 
     fi
 
-    can_access "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
-    if ! can_access "${GBL_USER_DIR}/.askpass.sh";then
+    have_file "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
+    if ! have_file "${GBL_USER_DIR}/.askpass.sh";then
         new_password="$(system_encrypt "${USR_PASSWORD}")"
         echo "#!/bin/bash"                                                 >  ${GBL_USER_DIR}/.askpass.sh
         echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
@@ -223,19 +223,19 @@ function inst_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
             ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
     
-    can_access "${MY_HOME}/.bashrc" || can_access "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc
-    can_access "${MY_HOME}/.bash_profile" || can_access "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile
+    have_file "${MY_HOME}/.bashrc" || have_file "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc
+    have_file "${MY_HOME}/.bash_profile" || have_file "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile
 
-    can_access "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
-    #can_access "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
+    have_file "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
+    #have_file "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
     file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
     file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
@@ -251,17 +251,17 @@ function inst_env
     echo "source ${MY_VIM_DIR}/bashrc" >> ${MY_HOME}/.bashrc
     #echo "source ${MY_VIM_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
     
-    if can_access "${MY_HOME}/.ssh";then
-        can_access "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
-        can_access "${MY_HOME}/.ssh/id_rsa.pub" && rm -f ${MY_HOME}/.ssh/id_rsa.pub
+    if have_file "${MY_HOME}/.ssh";then
+        have_file "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
+        have_file "${MY_HOME}/.ssh/id_rsa.pub" && rm -f ${MY_HOME}/.ssh/id_rsa.pub
     else
         mkdir -p ${MY_HOME}/.ssh
     fi
     cp -f ${MY_VIM_DIR}/ssh_key/* ${MY_HOME}/.ssh
     chmod 600 ${MY_HOME}/.ssh/id_rsa
 
-    can_access "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
-    if ! can_access "${MY_HOME}/.rsync.exclude";then
+    have_file "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
+    if ! have_file "${MY_HOME}/.rsync.exclude";then
         echo "build/*"  >  ${MY_HOME}/.rsync.exclude
         echo ".git/*"   >> ${MY_HOME}/.rsync.exclude
         echo "tags"     >> ${MY_HOME}/.rsync.exclude
@@ -278,18 +278,18 @@ function inst_env
 
     # timer
     local TIMER_RUNDIR=${GBL_USER_DIR}/timer
-    if ! can_access "${TIMER_RUNDIR}";then
+    if ! have_file "${TIMER_RUNDIR}";then
         mkdir -p ${TIMER_RUNDIR}
         chmod 777 ${TIMER_RUNDIR}
     fi
 
-    can_access "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
-    if ! can_access "${TIMER_RUNDIR}/.timerc";then
+    have_file "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
+    if ! have_file "${TIMER_RUNDIR}/.timerc";then
         echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/.timerc
         echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/.timerc
     fi
 
-    if ! can_access "${MY_HOME}/.timerc";then
+    if ! have_file "${MY_HOME}/.timerc";then
         echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
         chmod +x ${MY_HOME}/.timerc 
     fi
@@ -310,9 +310,9 @@ function inst_env
         cron_dir="/var/cron/tabs"
     fi
 
-    if can_access "${cron_dir}";then
+    if have_file "${cron_dir}";then
         sudo_it chmod o+x ${cron_dir} 
-        if can_access "${cron_dir}/${MY_NAME}";then
+        if have_file "${cron_dir}/${MY_NAME}";then
             ${SUDO} file_del "${cron_dir}/${MY_NAME}" "\".+timer\.sh\s+${MY_NAME}\"" true
             sudo_it "echo \"*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}\" >> ${cron_dir}/${MY_NAME}"
         else
@@ -350,7 +350,7 @@ function inst_env
         sudo_it ldconfig
     fi
 
-    if can_access "git";then
+    if have_cmd "git";then
         git config --global credential.helper store
         #git config --global credential.helper cache
         #git config --global credential.helper 'cache --timeout=3600'
@@ -373,12 +373,12 @@ function inst_vim
         local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
         conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
         #conf_paras="${conf_paras} --enable-luainterp=yes"
-        if can_access "python3";then
+        if have_cmd "python3";then
             if ! install_from_net "python3-devel";then
                 install_from_spec "python3-devel"
             fi
             conf_paras="${conf_paras} --enable-python3interp=yes "
-        elif can_access "python";then
+        elif have_cmd "python";then
             if ! install_from_net "python-devel";then
                 install_from_spec "python-devel"
             fi
@@ -406,7 +406,7 @@ function inst_vim
         fi
 
         sudo_it rm -f /usr/local/bin/vim
-        can_access "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
+        have_file "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
     fi
 
@@ -414,10 +414,10 @@ function inst_vim
     local link_file="${MY_VIM_DIR}/vimrc"
     echo_debug "create slink: ${linkf}"
     if [[ ${linkf:0:1} == "." ]];then
-        can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+        have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         ln -s ${link_file} ${MY_HOME}/${linkf}
     else
-        can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+        have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
         ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
     fi
 
@@ -427,7 +427,7 @@ function inst_vim
     cp -fr ${MY_VIM_DIR}/colors ${MY_HOME}/.vim
     cp -fr ${MY_VIM_DIR}/syntax ${MY_HOME}/.vim
 
-    if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
+    if ! have_file "${MY_HOME}/.vim/bundle/vundle"; then
         cd ${MY_VIM_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
@@ -436,7 +436,7 @@ function inst_vim
     fi
 
     if check_net;then
-        if ! can_access "${MY_HOME}/.vim/bundle/vundle"; then
+        if ! have_file "${MY_HOME}/.vim/bundle/vundle"; then
             mygit clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
             vim +BundleInstall +q +q
         else
@@ -499,7 +499,7 @@ function inst_cygwin
         return 1
     fi
     
-    if ! can_access "flock";then
+    if ! have_cmd "flock";then
         install_from_net util-linux
         if [ $? -ne 0 ];then
             return 1
@@ -510,19 +510,19 @@ function inst_cygwin
     $SUDO mkgroup -l \> /etc/group
     $SUDO chmod +rwx /var
 
-    if ! can_access "apt-cyg";then
+    if ! have_cmd "apt-cyg";then
         local link_file=${commandMap["apt-cyg"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            can_access "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            can_access "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
             ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     fi
 
-    if ! can_access "cygrunsrv";then
+    if ! have_cmd "cygrunsrv";then
         install_from_net cygrunsrv
         if [ $? -ne 0 ];then
             return 1
@@ -533,7 +533,7 @@ function inst_cygwin
         #if cygrunsrv -Q cygsshd &> /dev/null;then
         #    $SUDO cygrunsrv -R cygsshd
         #fi
-        if ! can_access "ssh-host-config";then
+        if ! have_cmd "ssh-host-config";then
             install_from_net openssh
             if [ $? -ne 0 ];then
                 return 1
@@ -628,7 +628,7 @@ else
     fi
 fi
 
-#if can_access "git";then
+#if have_cmd "git";then
 #    git config --global user.email "9971289@qq.com"
 #    git config --global user.name "Janvi Yao"
 #    git config --global --unset http.proxy

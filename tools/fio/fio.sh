@@ -3,7 +3,7 @@ source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 g_testcase_file="$1"
-if ! can_access "${g_testcase_file}"; then
+if ! have_file "${g_testcase_file}"; then
     echo_erro "testcase not exist: $1"
     exit 1
 fi

@@ -47,7 +47,7 @@ function gsubmodule_add
         return 1
     fi
     
-    if can_access "${subdir}";then
+    if have_file "${subdir}";then
         echo_erro "sub-directory { ${subdir} } already exists!"
         return 1
     fi

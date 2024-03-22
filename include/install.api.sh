@@ -45,7 +45,7 @@ function mytar
     fi
 
     local iscompress="true"
-    if can_access "${fpath}";then
+    if have_file "${fpath}";then
         iscompress="false"
         if [ ${#flist[*]} -ge 1 ];then
             local realfile=$(real_path "${fpath}")
@@ -71,7 +71,7 @@ function mytar
         xwhat="${flist[*]}"
     else
         options="-xf"
-        if can_access "${flist[0]}";then
+        if have_file "${flist[0]}";then
             xwhat="-C ${flist[0]}"
         fi
     fi
@@ -97,7 +97,7 @@ function mytar
         echo $(real_path "${fpath}")
     else
         local outdir="."
-        if can_access "${flist[0]}";then
+        if have_file "${flist[0]}";then
             outdir="${flist[0]}"
         fi
         
@@ -132,7 +132,7 @@ function install_check
         return 1
     fi
 
-    if can_access "${xbin}";then
+    if have_cmd "${xbin}";then
         local tmp_file=$(file_temp)
         ${xbin} --version &> ${tmp_file}
         if [ $? -ne 0 ];then
@@ -178,7 +178,7 @@ function install_provider
     if math_bool "${isreg}";then
         local fname=$(path2fname ${xfile})
         local fpath=$(fname2path ${xfile})
-        if ! can_access "${fpath}";then
+        if ! have_file "${fpath}";then
             fpath="."
         fi
 
@@ -194,13 +194,13 @@ function install_provider
         fi
         xfile="${select_x}"
     else
-        if ! can_access "${xfile}";then
+        if ! have_file "${xfile}";then
             echo_erro "file { ${xfile} } lost"
             return 1
         fi
     fi
 
-    if can_access "rpm";then
+    if have_cmd "rpm";then
         local rpm_file=$(rpm -qf ${xfile})
         if [ -n "${rpm_file}" ];then
             echo "${rpm_file}"
@@ -208,7 +208,7 @@ function install_provider
         fi
     fi
 
-    if can_access "yum";then
+    if have_cmd "yum";then
         local rpm_file=$(yum provides ${xfile} | grep -w "${xfile}")
         if [ -n "${rpm_file}" ];then
             echo "${rpm_file}"
@@ -238,7 +238,7 @@ function install_from_net
     echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xname}")"
     if check_net; then
         if [[ "${SYSTEM}" == "Linux" ]]; then
-            if can_access "yum";then
+            if have_cmd "yum";then
                 sudo_it yum -y install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
                     echo_erro "$(printf "[%13s]: { %-13s } failure" "yum Install" "${xname}")"
@@ -250,7 +250,7 @@ function install_from_net
             fi
         fi
 
-        if can_access "apt";then
+        if have_cmd "apt";then
             sudo_it apt -y install ${xname} \&\> /dev/null
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: { %-13s } failure" "apt Install" "${xname}")"
@@ -261,7 +261,7 @@ function install_from_net
             fi
         fi
 
-        if can_access "apt-get";then
+        if have_cmd "apt-get";then
             sudo_it apt-get -y install ${xname} \&\> /dev/null
             if [ $? -ne 0 ]; then
                 echo_erro "$(printf "[%13s]: { %-13s } failure" "apt-get Install" "${xname}")"
@@ -273,7 +273,7 @@ function install_from_net
         fi
 
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            if can_access "apt-cyg";then
+            if have_cmd "apt-cyg";then
                 sudo_it apt-cyg -y install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
                     echo_erro "$(printf "[%13s]: { %-13s } failure" "apt-cyg Install" "${xname}")"
@@ -306,7 +306,7 @@ function install_from_rpm
     local local_rpms=(${xfile})
     if math_bool "${isreg}";then
         local fpath=$(fname2path ${xfile})
-        if ! can_access "${fpath}";then
+        if ! have_file "${fpath}";then
             fpath="."
         fi
         local_rpms=($(efind ${fpath} ".*/?${xfile}"))
@@ -413,7 +413,7 @@ function install_from_make
     cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
     echo "${conf_para}" > build.log
 
-    if can_access "contrib/download_prerequisites"; then
+    if have_file "contrib/download_prerequisites"; then
         #GCC installation need this:
         if check_net; then
             echo_info "$(printf "[%13s]: %-50s" "Doing" "download_prerequisites")"
@@ -426,11 +426,11 @@ function install_from_make
         fi
     fi
 
-    can_access "Makefile" || can_access "configure" 
-    [ $? -ne 0 ] && can_access "unix/" && cd unix/
-    [ $? -ne 0 ] && can_access "linux/" && cd linux/
+    have_file "Makefile" || have_file "configure" 
+    [ $? -ne 0 ] && have_file "unix/" && cd unix/
+    [ $? -ne 0 ] && have_file "linux/" && cd linux/
 
-    if can_access "autogen.sh"; then
+    if have_file "autogen.sh"; then
         echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
@@ -440,7 +440,7 @@ function install_from_make
         fi
     fi
 
-    if can_access "configure"; then
+    if have_file "configure"; then
         echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
         ./configure ${conf_para} &>> build.log
         if [ $? -ne 0 ]; then
@@ -452,7 +452,7 @@ function install_from_make
                 return 1
             fi
 
-            if ! can_access "Makefile"; then
+            if ! have_file "Makefile"; then
                 ls --color=never -A | xargs -i cp -fr {} ../
                 cd ..
             fi
@@ -472,7 +472,7 @@ function install_from_make
                     return 1
                 fi
 
-                if ! can_access "Makefile"; then
+                if ! have_file "Makefile"; then
                     ls --color=never -A | xargs -i cp -fr {} ../
                     cd ..
                 fi
@@ -480,7 +480,7 @@ function install_from_make
         fi
     fi
 
-    if can_access "build/gcc"; then
+    if have_file "build/gcc"; then
         #astyle install
         cd build/gcc
     fi
@@ -522,7 +522,7 @@ function install_from_tar
     local local_tars=(${xfile})
     if math_bool "${isreg}";then
         local fpath=$(fname2path ${xfile})
-        if ! can_access "${fpath}";then
+        if ! have_file "${fpath}";then
             fpath="."
         fi
         local_tars=($(efind ${fpath} ".*/?${xfile}"))

@@ -146,7 +146,7 @@ function array_compare
 function export_all
 {
     local local_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -175,7 +175,7 @@ function export_all
 function import_all
 {
     local parent_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -189,7 +189,7 @@ function import_all
     fi
 
     local import_file="/tmp/export.${parent_pid}"
-    if can_access "${import_file}";then 
+    if have_file "${import_file}";then 
         local import_config=$(< "${import_file}")
         source<(echo "${import_config//\?=/=}")
     fi
@@ -216,7 +216,7 @@ function wait_value
 
     # the first pid is shell where ppid run
     local self_pid=$$
-    if can_access "ppid";then
+    if have_cmd "ppid";then
         local ppids=($(ppid))
         local self_pid=${ppids[1]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -229,15 +229,15 @@ function wait_value
     fi
 
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
-    while can_access "${ack_pipe}"
+    while have_file "${ack_pipe}"
     do
         ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
     done
 
     echo_debug "make ack: [${ack_pipe}]"
-    #can_access "${ack_pipe}" && rm -f ${ack_pipe}
+    #have_file "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
-    can_access "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+    have_file "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 
     if have_admin && [[ "${USR_NAME}" != "root" ]];then
         chmod 777 ${ack_pipe}
@@ -256,7 +256,7 @@ function wait_value
         echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
         run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
 
-        if can_access "${ack_pipe}.result";then
+        if have_file "${ack_pipe}.result";then
             export FUNC_RET=$(cat ${ack_pipe}.result)
         else
             export FUNC_RET=""

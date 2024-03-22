@@ -1,6 +1,19 @@
 #!/bin/bash
 : ${INCLUDED_SYSTEM:=1}
 
+function have_cmd
+{
+    local xcmd="$1"
+
+    if [ -n "${xcmd}" ];then
+        if command -v ${xcmd} &> /dev/null;then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 function have_admin
 {
     if [[ "${SYSTEM}" == "Linux" ]]; then
@@ -112,7 +125,7 @@ function run_lock
     local lockid=$1
     shift
 
-    if ! can_access "${GBL_BASE_DIR}/shell.lock.${lockid}";then
+    if ! have_file "${GBL_BASE_DIR}/shell.lock.${lockid}";then
         touch ${GBL_BASE_DIR}/shell.lock.${lockid}
         chmod 777 ${GBL_BASE_DIR}/shell.lock.${lockid}
     fi
@@ -377,7 +390,7 @@ function account_check
     fi
 
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
-        if can_access "${GBL_USER_DIR}/.${usr_name}";then
+        if have_file "${GBL_USER_DIR}/.${usr_name}";then
             export USR_NAME=${usr_name}
             export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_USER_DIR}/.${usr_name})")
             if ! check_passwd "${USR_NAME}" "${USR_PASSWORD}";then
@@ -467,10 +480,10 @@ function dump_system
     local value=""
     local col_width1="15"
 
-    if can_access "/etc/centos-release";then
+    if have_file "/etc/centos-release";then
         value=$(cat /etc/centos-release)
         printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
-    elif can_access "/etc/redhat-release";then
+    elif have_file "/etc/redhat-release";then
         value=$(cat /etc/redhat-release)
         printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     else
@@ -501,7 +514,7 @@ function dump_system
 
     printf "[%${col_width1}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
 
-    if can_access "iscsiadm";then
+    if have_cmd "iscsiadm";then
         printf "[%${col_width1}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
     fi
 }
@@ -526,7 +539,7 @@ function dump_network
         fi
 
         local dev_dir=$(real_path /sys/class/net/${net_dev})
-        if can_access "${dev_dir}/mtu";then
+        if have_file "${dev_dir}/mtu";then
             local mtu_size=$(cat ${dev_dir}/mtu)
         else
             continue
@@ -539,7 +552,7 @@ function dump_network
         dev_dir=$(fname2path ${dev_dir})
         local dirver=$(path2fname ${dev_dir}) 
 
-        if can_access "${dev_dir}/vendor";then
+        if have_file "${dev_dir}/vendor";then
             local vendor_id=$(cat ${dev_dir}/vendor)
             local device_id=$(cat ${dev_dir}/device)
         fi
@@ -621,7 +634,7 @@ function du_find
         return 1
     fi
 
-    if ! can_access "${dpath}";then
+    if ! have_file "${dpath}";then
         echo_erro "path invalid: ${dpath}"
         return 1
     fi
@@ -742,7 +755,7 @@ function efind
         return 1
     fi
 
-    if ! can_access "${xdir}";then
+    if ! have_file "${xdir}";then
         echo_erro "directory invalid: ${xdir}"
         return 1
     fi
@@ -844,7 +857,7 @@ function get_iscsi_device
     local iscsi_sessions=$(sudo_it iscsiadm -m session -P 3 2>/dev/null)
 
     if [ -z "${iscsi_sessions}" ];then
-        if can_access "${return_file}";then
+        if have_file "${return_file}";then
             echo "${iscsi_dev_array[*]}" > ${return_file}
         else
             echo "${iscsi_dev_array[*]}"
@@ -882,7 +895,7 @@ function get_iscsi_device
         fi
     fi
  
-    if can_access "${return_file}";then
+    if have_file "${return_file}";then
         echo "${iscsi_dev_array[*]}" > ${return_file}
     else
         echo "${iscsi_dev_array[*]}"
@@ -966,7 +979,7 @@ function get_local_ip
         local local_iparray=($(ipconfig | grep -a -w "IPv4" | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     fi
 
-    if can_access "/etc/hosts";then
+    if have_file "/etc/hosts";then
         for ipaddr in ${local_iparray[*]}
         do
             if cat /etc/hosts | grep -v -P "^#" | grep -w -F "${ipaddr}" &> /dev/null;then

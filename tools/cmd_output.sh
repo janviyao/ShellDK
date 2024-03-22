@@ -59,7 +59,7 @@ if [ $? -ne 0 ];then
     echo_erro "ssh fail: \"${CMD_EXE}\" @ ${HOST_IP}"
 fi
 
-if can_access "${tmp_file}";then
+if have_file "${tmp_file}";then
     cat ${tmp_file}
     rm -f ${tmp_file}
 fi

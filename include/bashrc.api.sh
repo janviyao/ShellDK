@@ -44,7 +44,7 @@ alias mylsblk='lsblk -o NAME,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,TRAN,WWN,MIN-IO,OPT-IO
 alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
-alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "pid,nlwp=TID-CNT,psr=RUN-CPU,stat,pcpu,pmem,cmd"; }; }; ps_grep'
+alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
 unalias cp &> /dev/null || true
@@ -61,8 +61,8 @@ function __my_bashrc_deps
     local cur_dir=$(pwd)
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
-        if ! can_access "chk_passwd";then
-            if ! can_access "make";then
+        if ! have_cmd "chk_passwd";then
+            if ! have_cmd "make";then
                 install_from_net "make" &> /dev/null
                 if [ $? -ne 0 ];then
                     install_from_spec "make-3.82" &> /dev/null
@@ -73,7 +73,7 @@ function __my_bashrc_deps
                 fi
             fi
 
-            if ! can_access "gcc";then
+            if ! have_cmd "gcc";then
                 install_from_net "gcc" &> /dev/null
                 if [ $? -ne 0 ];then
                     install_from_spec "gcc" &> /dev/null
@@ -104,15 +104,15 @@ function __my_bash_exit
     rm -fr ${BASH_WORK_DIR} 
 }
 
-if can_access "ppid";then
+if have_cmd "ppid";then
     ppinfos=($(ppid -n))
     echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
 fi
 
-if __var_defined "BASH_WORK_DIR" && can_access "${BASH_WORK_DIR}";then
+if __var_defined "BASH_WORK_DIR" && have_file "${BASH_WORK_DIR}";then
     echo_file "${LOG_DEBUG}" "share work: ${BASH_WORK_DIR}"
 else
-    can_access "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
+    have_file "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
 
     if string_contain "${BTASK_LIST}" "master";then
         BASH_WORK_DIR="${GBL_USER_DIR}/bash.master.${ROOT_PID}"
