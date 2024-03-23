@@ -107,10 +107,11 @@ function process_signal
         if [ ${#exclude_pid_array[*]} -gt 0 ];then
             pid_array=($(array_dedup "${pid_array[*]}" "${exclude_pid_array[*]}"))
         fi
-        local child_pids=($(process_cpid ${pid_array[*]}))
 
         echo_info "signal { ${signal} } into { ${pid_array[*]} }"
         if [ ${#pid_array[*]} -gt 0 ];then
+            local child_pids=($(process_cpid ${pid_array[*]}))
+
             if is_integer "${signal}";then
                 sudo_it "kill -${signal} ${pid_array[*]} &> /dev/null"
             else
