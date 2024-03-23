@@ -36,7 +36,7 @@ function process_runwait
 
     echo_file "${LOG_DEBUG}" "runwait[${bgpid}] { $@ }"
     process_wait ${bgpid} 1 &> /dev/null
-
+    
     local retcode=$(cat ${errfile})
     rm -f {errfile}
     echo_file "${LOG_DEBUG}" "runwait[${bgpid}] return { ${retcode} }"

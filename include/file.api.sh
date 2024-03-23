@@ -799,22 +799,14 @@ function file_size
 function file_temp
 {
     local base_dir="${1:-${BASH_WORK_DIR}}"
+    
+    local fpath="${base_dir}/tmp.$$.${RANDOM}"
+    while have_file "${fpath}" 
+    do
+        fpath="${base_dir}/tmp.$$.${RANDOM}"
+    done
 
-    local self_pid=$$
-    if have_cmd "ppid";then
-        local ppids=($(ppid))
-        local self_pid=${ppids[1]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[1]}
-            done
-        fi
-    fi
-
-    echo > ${base_dir}/tmp.${self_pid}
-    echo "${base_dir}/tmp.${self_pid}"
+    echo "${fpath}"
 }
 
 function current_scriptdir

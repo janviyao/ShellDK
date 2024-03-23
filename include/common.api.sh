@@ -328,6 +328,7 @@ function input_prompt
         echo_erro "\nUsage: [$@]\n\$1: check function\n\$2: prompt string\n\$3: default value"
         return 1
     fi
+    touch ${LOG_DISABLE}
 
     local input_val="";
     if [ -n "${dflt_value}" ];then
@@ -369,6 +370,7 @@ function input_prompt
             done
         fi
     fi
+    rm -f ${LOG_DISABLE}
 
     echo "${input_val}"
     return 0

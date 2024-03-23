@@ -125,3 +125,5 @@ else
 
     trap "__my_bash_exit" EXIT
 fi
+
+readonly LOG_DISABLE="${BASH_WORK_DIR}/bash.log.disable"

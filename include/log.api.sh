@@ -146,14 +146,17 @@ function echo_erro
         fi
     fi
 
-    if [ -n "${REMOTE_IP}" ];then
-        # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        # echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
-    else
-        # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
-        echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
+    if ! have_file "${LOG_DISABLE}";then
+        if [ -n "${REMOTE_IP}" ];then
+            # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+            echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+            # echo -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
+        else
+            # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE}"
+            echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE}"
+        fi
     fi
+
     echo_file "${LOG_ERRO}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
 }
@@ -177,12 +180,15 @@ function echo_info
         fi
     fi
 
-    if [ -n "${REMOTE_IP}" ];then
-        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        # echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
-    else
-        echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+    if ! have_file "${LOG_DISABLE}";then
+        if [ -n "${REMOTE_IP}" ];then
+            echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+            # echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+        else
+            echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
+        fi
     fi
+
     echo_file "${LOG_INFO}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
 }
@@ -206,12 +212,15 @@ function echo_warn
         fi
     fi
 
-    if [ -n "${REMOTE_IP}" ];then
-        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        # echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
-    else
-        echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+    if ! have_file "${LOG_DISABLE}";then
+        if [ -n "${REMOTE_IP}" ];then
+            echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+            # echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+        else
+            echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
+        fi
     fi
+
     echo_file "${LOG_WARN}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
 }
@@ -235,12 +244,15 @@ function echo_debug
         fi
     fi
 
-    if [ -n "${REMOTE_IP}" ];then
-        echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
-        # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
-    else
-        echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+    if ! have_file "${LOG_DISABLE}";then
+        if [ -n "${REMOTE_IP}" ];then
+            echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
+            # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+        else
+            echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"
+        fi
     fi
+
     echo_file "${LOG_DEBUG}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
 }

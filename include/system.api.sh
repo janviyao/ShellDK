@@ -527,7 +527,6 @@ function dump_network
 
     local ip_list=($(get_hosts_ip))
     local half_wd=$((col_width1/2 - 3))
-    local tmp_file="$(file_temp)"
     local -a device_list=($(ls /sys/class/net))
 
     printf "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "IFACE" "Dirver" "BSF" "VendorID" "DeviceID" "MTU" "RX-Queue" "TX-Queue" "RX-Buffer" "TX-Buffer"
@@ -569,7 +568,6 @@ function dump_network
 
         printf "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "${net_dev}" "${dirver}" "${bsf}" "${vendor_id}" "${device_id}" "${mtu_size}" "${rx_queue_size}" "${tx_queue_size}" "${buffer_rx}" "${buffer_tx}"
     done
-    rm -f ${tmp_file}
 }
 
 function dump_interrupt
@@ -830,6 +828,9 @@ function check_net
 function cursor_pos
 {
     local pos
+
+    touch ${LOG_DISABLE}
+
     # ask the terminal for the position
     echo -ne "\033[6n" > /dev/tty
 
@@ -839,6 +840,7 @@ function cursor_pos
     # store the position in bash variable 'pos'
     read -s -d R pos < /dev/tty
 
+    rm -f ${LOG_DISABLE}
     # save the position
     #echo "current position: $pos"
     local x_pos=$(string_split "${pos}" ';' 1)
