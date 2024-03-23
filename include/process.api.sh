@@ -21,7 +21,6 @@ function process_wait
         do
             sleep ${stime}
         done
-        echo_debug "note [$(process_pid2name "${xpid}")(${xpid})] exit"
     done
 
     return 0
@@ -40,6 +39,7 @@ function process_runwait
 
     local retcode=$(cat ${errfile})
     rm -f {errfile}
+    echo_file "${LOG_DEBUG}" "runwait[${bgpid}] return { ${retcode} }"
 
     return ${retcode}
 }
