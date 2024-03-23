@@ -320,7 +320,7 @@ function _xfer_thread_main
     fi
 
     local sync_env=$(cat << EOF
-    test -f ${BASH_LOG} && echo '*** xfer rsync enter ***' >> ${BASH_LOG}
+    test -f ${BASH_LOG} && echo "*** ssh[\$$] xfer rsync enter ***" >> ${BASH_LOG}
     export BTASK_LIST='master,mdat,ncat'
     export REMOTE_IP=${LOCAL_IP}
     export USR_NAME='${USR_NAME}'
@@ -376,6 +376,7 @@ function _xfer_thread_main
             fi
         fi
     fi
+    test -f ${BASH_LOG} && echo "*** ssh[\$$] xfer rsync exit ***" >> ${BASH_LOG}
 EOF
     )
     
@@ -485,11 +486,7 @@ EOF
                         fi
                     fi
 
-                    sshpass -p "${password}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} &
-                    local bgpid=$!
-                    echo ${bgpid} > ${XFER_WORK}
-                    wait ${bgpid}
-
+                    process_runwait sshpass -p "${password}" rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} > ${XFER_WORK}
                     local ret=$?
                     if [ ${ret} -ne 0 ];then
                         echo_warn "failed[${ret}] { sshpass -p \"${password}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
@@ -497,11 +494,7 @@ EOF
                 fi
             else
                 #have_file "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
-                rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} &
-                local bgpid=$!
-                echo ${bgpid} > ${XFER_WORK}
-                wait ${bgpid}
-
+                process_runwait rsync -az ${action} --rsync-path="(${xfer_cmd}) && rsync" --exclude-from "${MY_HOME}/.rsync.exclude" --progress ${xfer_src} ${xfer_des} > ${XFER_WORK}
                 local ret=$?
                 if [ ${ret} -ne 0 ];then
                     echo_warn "failed[${ret}] { rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"

@@ -206,6 +206,11 @@ function ncat_recv_msg
 {
     local ncat_port="$1"
 
+    if [ -z "${ncat_port}" ];then
+        echo_file "${LOG_DEBUG}" "ncat_recv_msg port null"
+        return 1
+    fi
+
     echo_file "${LOG_DEBUG}" "ncat will recv: [port ${ncat_port}]"
     if have_cmd "nc";then
         local ncat_body
@@ -498,10 +503,6 @@ function _ncat_thread_main
         local ncat_body=$(ncat_recv_msg "${ncat_port}")
         if [ -z "${ncat_body}" ];then
             mdat_get_var "master_work"
-
-            if ! local_port_available "${ncat_port}";then
-                ncat_port_get ${ncat_port} &> /dev/null
-            fi
 
             if ! have_file "${NCAT_WORK_DIR}";then
                 echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"

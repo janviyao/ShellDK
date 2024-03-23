@@ -143,6 +143,39 @@ function array_compare
     return 0
 }
 
+function array_dedup
+{
+    local array1=($1)
+    local array2=($2)
+
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: array1 to be erased\n\$2: array2"
+        return 1
+    fi
+
+    if [ ${#array2[*]} -eq 0 ];then
+        echo "${array1[*]}"
+        return 0
+    fi
+
+    local total=${#array1[*]}
+
+    local item
+    for item in ${array2[*]}
+    do
+        local index
+        for ((index = 0; index < ${total}; index++))
+        do
+            if [[ "${array1[${index}]}" == "${item}" ]];then
+                unset array1[${index}]
+            fi
+        done
+    done
+
+    echo "${array1[*]}"
+    return 0
+}
+
 function export_all
 {
     local local_pid=$$
