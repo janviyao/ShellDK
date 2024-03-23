@@ -86,10 +86,12 @@ function ncat_port_get
     fi
 
     if have_file "${NCAT_PROT_CURR}";then
-        port_val=$(cat ${NCAT_PROT_CURR})
-        if local_port_available "${port_val}";then
-            echo "${port_val}"
-            return 0
+        local cur_port=$(cat ${NCAT_PROT_CURR})
+        if is_integer "${cur_port}";then
+            if local_port_available "${cur_port}";then
+                echo "${cur_port}"
+                return 0
+            fi
         fi
     fi
 
