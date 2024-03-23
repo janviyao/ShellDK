@@ -110,17 +110,19 @@ function process_signal
         local child_pids=($(process_cpid ${pid_array[*]}))
 
         echo_info "signal { ${signal} } into { ${pid_array[*]} }"
-        if is_integer "${signal}";then
-            sudo_it "kill -${signal} ${pid_array[*]} &> /dev/null"
-        else
-            sudo_it "kill -s ${signal} ${pid_array[*]} &> /dev/null"
-        fi
+        if [ ${#pid_array[*]} -gt 0 ];then
+            if is_integer "${signal}";then
+                sudo_it "kill -${signal} ${pid_array[*]} &> /dev/null"
+            else
+                sudo_it "kill -s ${signal} ${pid_array[*]} &> /dev/null"
+            fi
 
-        echo_debug "[${pid_array[*]}] have childs: ${child_pids[*]}"
-        if [ ${#child_pids[*]} -gt 0 ];then
-            process_signal ${signal} ${child_pids[*]} 
-            if [ $? -ne 0 ];then
-                return 1
+            echo_debug "[${pid_array[*]}] have childs: ${child_pids[*]}"
+            if [ ${#child_pids[*]} -gt 0 ];then
+                process_signal ${signal} ${child_pids[*]} 
+                if [ $? -ne 0 ];then
+                    return 1
+                fi
             fi
         fi
     done
