@@ -279,31 +279,23 @@ function wait_value
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
     
+    local ack_ret
     local try_old=${try_cnt}
     while true
     do
         if [ ${try_old} -eq ${try_cnt} ];then
             echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
+            echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
         fi
 
-        echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
-        run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
-
-        if have_file "${ack_pipe}.result";then
-            export FUNC_RET=$(cat ${ack_pipe}.result)
-        else
-            export FUNC_RET=""
-        fi
-
-        if [ ${try_old} -eq ${try_cnt} ];then
-            echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
-        fi
+        echo_debug "try[${try_cnt}] to read from [${ack_pipe}]"
+        #run_timeout ${timeout_s} read ack_ret \< ${ack_pipe}\; echo "\"\${ack_ret}\"" \> ${ack_pipe}.result
+        read -t ${timeout_s} ack_ret < ${ack_pipe}
+        echo_debug "read [${ack_ret}] from ${ack_pipe}"
 
         let try_cnt--
-        if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 0 ];then
+        if [ -n "${ack_ret}" -o ${try_cnt} -eq 0 ];then
             break;
-        else
-            echo_debug "try[${try_cnt}] to write to [${send_pipe}]"
         fi
     done
     eval "exec ${ack_fhno}>&-"
@@ -329,12 +321,12 @@ function input_prompt
         return 1
     fi
     touch ${LOG_DISABLE}
-
+ 
     local input_val="";
     if [ -n "${dflt_value}" ];then
-        read -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
+        read -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
     else
-        read -p "Please ${prompt_ctn}: " input_val < /dev/tty
+        read -p "Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
     fi
     
     if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -347,7 +339,7 @@ function input_prompt
             if [ -n "${dflt_value}" ];then
                 read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
             else
-                read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty
+                read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
             fi
 
             if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -359,9 +351,9 @@ function input_prompt
             while [ -z "${input_val}" ]
             do
                 if [ -n "${dflt_value}" ];then
-                    read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
+                    read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
                 else
-                    read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty
+                    read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
                 fi
 
                 if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then

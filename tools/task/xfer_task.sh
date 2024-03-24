@@ -20,7 +20,7 @@ function do_rsync
     local xfer_ips=($5)
 
     if [ $# -lt 5 ];then
-        echo_erro "\nUsage: [$@]\n\$1: x_direct\n\$2: xfer_act\$3: xfer_src\$4: xfer_des\n\$5: xfer_ips"
+        echo_erro "\nUsage: [$@]\n\$1: direct: TO/FROM\n\$2: action: UPDATE/EQUAL\$3: src_dir\$4: des_dir\n\$5: ip list"
         return 1
     fi
 
@@ -34,7 +34,7 @@ function do_rsync
 
     have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        if ! account_check ${MY_NAME};then
+        if ! account_check ${USR_NAME};then
             echo_erro "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
             return 1
         fi
@@ -42,33 +42,43 @@ function do_rsync
         for ipaddr in ${xfer_ips[*]}
         do
             if [[ ${ipaddr} != ${LOCAL_IP} ]];then
+                local remote_user="${USR_NAME}"
+                local remote_pswd="${USR_PASSWORD}"
+
+                local try_cnt=3
+                while ! check_remote_passwd "${ipaddr}" "${remote_user}" "${remote_pswd}"
+                do
+                    local input_val=$(input_prompt "" "input remote username" "${remote_user}")
+                    remote_user=${input_val:-${USR_NAME}}
+                    input_val=$(input_prompt "" "input remote password" "")
+                    remote_pswd=${input_val:-${USR_PASSWORD}}
+                    let try_cnt--
+                    if [ ${try_cnt} -eq 0 ];then
+                        break
+                    fi
+                done
+
                 if [[ ${x_direct} == "TO" ]];then
                     local xfer_dir=${xfer_des}
-                    if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-                        xfer_dir=$(echo "${xfer_des}" | awk -F':' '{ print $2 }')
-                    else
-                        sync_des="${USR_NAME}@${ipaddr}:${xfer_des}"
-                    fi
-
                     if [[ $(string_end "${xfer_dir}" 1) != '/' ]]; then
                         xfer_dir=$(fname2path "${xfer_dir}")
                     fi
 
-                    sync_cmd="REMOTE${GBL_SPF3}<DIR>=${xfer_dir}"
+                    sync_des="${remote_user}@${ipaddr}:${xfer_des}"
+                    sync_cmd="REMOTE${GBL_SPF3}${remote_user}${GBL_SPF3}${remote_pswd}${GBL_SPF3}${ipaddr}${GBL_SPF3}${xfer_dir}"
                 elif [[ ${x_direct} == "FROM" ]];then
-                    if ! match_regex "${xfer_src}" "\d+\.\d+\.\d+\.\d+";then
-                        sync_src="${USR_NAME}@${ipaddr}:${xfer_src}"
+                    sync_src="${remote_user}@${ipaddr}:${xfer_src}"
+                    sync_cmd="REMOTE${GBL_SPF3}${remote_user}${GBL_SPF3}${remote_pswd}${GBL_SPF3}${ipaddr}${GBL_SPF3}"
+
+                    local local_dir=${xfer_des}
+                    if [[ $(string_end "${local_dir}" 1) != '/' ]]; then
+                        local_dir=$(fname2path "${local_dir}")
                     fi
 
-                    local xfer_dir=${xfer_des}
-                    if [[ $(string_end "${xfer_dir}" 1) != '/' ]]; then
-                        xfer_dir=$(fname2path "${xfer_dir}")
-                    fi
-
-                    if ! have_file "${xfer_dir}";then
-                        sudo_it "mkdir -p ${xfer_dir}"
-                        sudo_it "chmod +w ${xfer_dir}"
-                        sudo_it "chown ${USR_NAME} ${xfer_dir}"
+                    if ! have_file "${local_dir}";then
+                        sudo_it "mkdir -p ${local_dir}"
+                        sudo_it "chmod +w ${local_dir}"
+                        sudo_it "chown ${USR_NAME} ${local_dir}"
                     fi
                 fi
             fi
@@ -88,13 +98,14 @@ function do_rsync
 function rsync_to
 {
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_src\n\$2: xfer_des\n\$@: xfer_ips"
+        echo_erro "\nUsage: [$@]\n\$1: src_dir\n\$2: des_dir\n\$2~N: ip list"
         return 1
     fi
 
     local xfer_src="$1"
     shift
     local xfer_des="$1"
+
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
         xfer_des=$(fname2path "${xfer_src}")
         if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
@@ -122,6 +133,7 @@ function rsync_to
  
     xfer_src=$(real_path "${xfer_src}")
     xfer_des=$(real_path "${xfer_des}")
+
     do_rsync "TO" "UPDATE" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -129,13 +141,14 @@ function rsync_to
 function rsync_from
 {
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_src\n\$2: xfer_des\n\$@: xfer_ips"
+        echo_erro "\nUsage: [$@]\n\$1: src_dir\n\$2: des_dir\n\$3~N: ip list"
         return 1
     fi
 
     local xfer_src="$1"
     shift
     local xfer_des="$1"
+
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
         xfer_des=$(fname2path "${xfer_src}")
         if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
@@ -154,6 +167,7 @@ function rsync_from
 
     xfer_src=$(real_path "${xfer_src}")
     xfer_des=$(real_path "${xfer_des}")
+
     do_rsync "FROM" "UPDATE" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -161,7 +175,7 @@ function rsync_from
 function rsync_p2p_to
 {
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_src\n\$2: xfer_des\n\$@: xfer_ips"
+        echo_erro "\nUsage: [$@]\n\$1: src_dir\n\$2: des_dir\n\$3~N: ip list"
         return 1
     fi
 
@@ -195,6 +209,7 @@ function rsync_p2p_to
 
     xfer_src=$(real_path "${xfer_src}")
     xfer_des=$(real_path "${xfer_des}")
+
     do_rsync "TO" "EQUAL" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -202,7 +217,7 @@ function rsync_p2p_to
 function rsync_p2p_from
 {
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_src\n\$2: xfer_des\n\$@: xfer_ips"
+        echo_erro "\nUsage: [$@]\n\$1: src_dir\n\$2: des_dir\n\$3~N: ip list"
         return 1
     fi
 
@@ -227,6 +242,7 @@ function rsync_p2p_from
  
     xfer_src=$(real_path "${xfer_src}")
     xfer_des=$(real_path "${xfer_des}")
+
     do_rsync "FROM" "EQUAL" "${xfer_src}" "${xfer_des}" "${xfer_ips[*]}"
     return $?
 }
@@ -313,72 +329,10 @@ function _bash_xfer_exit
 
 function _xfer_thread_main
 {
-    local check_ok=true
-    if ! account_check ${MY_NAME};then
-        echo_file "${LOG_ERRO}" "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
-        check_ok=false
+    if ! account_check ${USR_NAME};then
+        echo_file "${LOG_ERRO}" "xfer Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
+        return 1
     fi
-
-    local sync_env=$(cat << EOF
-    test -f ${BASH_LOG} && echo "*** ssh[\$$] xfer rsync enter ***" >> ${BASH_LOG}
-    export BTASK_LIST='master,mdat,ncat'
-    export REMOTE_IP=${LOCAL_IP}
-    export USR_NAME='${USR_NAME}'
-    export USR_PASSWORD='${USR_PASSWORD}'
-    if test -d '${MY_VIM_DIR}';then
-        export MY_VIM_DIR='${MY_VIM_DIR}'
-        source ${MY_VIM_DIR}/include/common.api.sh
-
-        if ! is_me ${USR_NAME};then
-            source ${MY_VIM_DIR}/bashrc
-        fi
-
-        if ! test -d '<DIR>';then
-            sudo_it mkdir -p '<DIR>'
-            sudo_it chmod +w '<DIR>'
-            if ! file_owner_is '<DIR>' '${USR_NAME}';then
-                sudo_it chown ${USR_NAME} '<DIR>'
-            fi
-        else
-            if ! test -w '<DIR>';then
-                sudo_it chmod +w '<DIR>'
-                if ! file_owner_is '<DIR>' '${USR_NAME}';then
-                    sudo_it chown ${USR_NAME} '<DIR>'
-                fi
-            fi
-        fi
-    else
-        if ! command -v rsync &> /dev/null;then
-            if command -v nc &> /dev/null;then
-                (echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ncat msg]: rsync command not install' | nc ${NCAT_MASTER_ADDR} <PORT>) &> /dev/null
-                exit 1
-            else
-                if command -v sshpass &> /dev/null;then
-                    (sshpass -p '${USR_PASSWORD}' ssh ${USR_NAME}@${LOCAL_IP} \"echo '${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_PRINT${GBL_SPF1}${LOG_ERRO}${GBL_SPF2}[ssh msg]: rsync command not install' > ${GBL_LOGR_PIPE}\") &> /dev/null
-                    exit 1
-                fi
-            fi
-            exit 1
-        fi
-
-        if ! test -d '<DIR>';then
-            echo '${USR_PASSWORD}' | sudo -S -u 'root' mkdir -p '<DIR>' &> /dev/null
-            echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null
-            if [[ \$(ls -l -d '<DIR>' | awk '{ print \$3 }') != '${USR_NAME}' ]];then
-                echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null
-            fi
-        else
-            if ! test -w '<DIR>';then
-                echo '${USR_PASSWORD}' | sudo -S -u 'root' chmod +w '<DIR>' &> /dev/null
-                if [[ \$(ls -l -d <DIR> | awk '{ print \$3 }') != '${USR_NAME}' ]];then
-                    echo '${USR_PASSWORD}' | sudo -S -u 'root' chown ${USR_NAME} '<DIR>' &> /dev/null
-                fi
-            fi
-        fi
-    fi
-    test -f ${BASH_LOG} && echo "*** ssh[\$$] xfer rsync exit ***" >> ${BASH_LOG}
-EOF
-    )
     
     local line
     while read line
@@ -431,73 +385,50 @@ EOF
 
             local cmd_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 1) 
             if [[ "${cmd_act}" == 'REMOTE' ]];then
-                local xfer_env="${sync_env}"
+                local remote_user=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 2) 
+                local remote_pswd=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 3) 
+                local remote_addr=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 4) 
+                local remote_xdir=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 5) 
 
-                local index=2
-                local next_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" ${index}) 
-                while [ -n "${next_act}" ]
-                do
-                    local key=$(string_split "${next_act}" "=" 1) 
-                    local value=$(string_split "${next_act}" "=" 2) 
-                    echo_debug "key: [${key}] value: [${value}]"
-
-                    if [ -n "${key}" ];then
-                        xfer_env=$(string_replace "${xfer_env}" "${key}" "${value}")
-                    fi
-
-                    let index++
-                    next_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" ${index}) 
-                done
-
-                local ncat_port=$(ncat_port_get)
-                if [[ "${xfer_env}" =~ '<PORT>' ]];then
-                    xfer_env=$(string_replace "${xfer_env}" "<PORT>" "${ncat_port}")
+                local cmdstr=$(cat << EOF
+                SYSTEM=\$(uname -s | grep -E '^[A-Za-z_]+' -o)
+                if [[ "\${SYSTEM}" == 'Linux' ]];then
+                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'mkdir -p ${remote_xdir} &> /dev/null'
+                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'chmod +w ${remote_xdir} &> /dev/null'
+                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'chown ${remote_user} ${remote_xdir} &> /dev/null'
+                elif [[ "\${SYSTEM}" == 'CYGWIN_NT' ]];then
+                    mkdir -p ${remote_xdir} &> /dev/null
+                    chmod +w ${remote_xdir} &> /dev/null
+                    chown ${remote_user} ${remote_xdir} &> /dev/null
                 fi
-                xfer_cmd="${xfer_env}"
-            elif [[ "${cmd_act}" == 'LOCAL' ]];then
-                xfer_cmd=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 2-) 
+EOF
+                )
+                
+                if [ -n "${remote_xdir}" ];then
+                    if ! remote_cmd "${remote_user}" "${remote_pswd}" "${remote_addr}" "${cmdstr}";then
+                        echo_erro "remote dir { ${remote_xdir} } not exist"
+                        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
+                            echo_debug "write [ACK] to [${ack_pipe}]"
+                            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                        fi
+                        continue
+                    fi
+                fi
             fi
-            #echo_debug "xfer_cmd: [${xfer_cmd}]"
 
             have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
-            if match_regex "${xfer_src} ${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-                if ! math_bool "${check_ok}";then
-                    if account_check ${MY_NAME};then
-                        check_ok=true
-                    else
-                        echo_file "${LOG_ERRO}" "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
-                    fi
-                fi
-
-                if math_bool "${check_ok}";then
-                    local username="${USR_NAME}"
-                    local password="${USR_PASSWORD}"
-
-                    local remote_ip=$(string_regex "${xfer_des}" "(?<=@)\d+\.\d+\.\d+\.\d+(?=:)")
-                    if [ -n "${remote_ip}" ];then
-                        if ! check_remote_passwd "${remote_ip}" "${USR_NAME}" "${USR_PASSWORD}";then
-                            local input_val=$(input_prompt "" "input remote username" "${USR_NAME}")
-                            username=${input_val:-${USR_NAME}}
-                            input_val=$(input_prompt "" "input remote password" "")
-                            password=${input_val:-${USR_PASSWORD}}
-
-                            local remote_dir=$(string_regex "${xfer_des}" "(?<=:).+$")
-                            xfer_des="${username}@${remote_ip}:${remote_dir}"
-                        fi
-                    fi
-
-                    process_runwait sshpass -p "\"${password}\"" rsync -az ${action} --rsync-path="\"(${xfer_cmd}) && rsync\"" --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} > ${XFER_WORK}
-                    local ret=$?
-                    if [ ${ret} -ne 0 ];then
-                        echo_warn "failed[${ret}] { sshpass -p \"${password}\" rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
-                    fi
+            if [[ "${cmd_act}" == 'REMOTE' ]];then
+                process_runwait sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty > ${XFER_WORK}
+                local ret=$?
+                if [ ${ret} -ne 0 ];then
+                    echo_warn "failed[${ret}] { sshpass -p \"${remote_pswd}\" rsync -az ${action} --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
                 fi
             else
                 #have_file "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
-                process_runwait rsync -az ${action} --rsync-path="\"(${xfer_cmd}) && rsync\"" --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} > ${XFER_WORK}
+                process_runwait rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty > ${XFER_WORK}
                 local ret=$?
                 if [ ${ret} -ne 0 ];then
-                    echo_warn "failed[${ret}] { rsync -az ${action} --rsync-path=\"(${xfer_cmd}) && rsync\" --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
+                    echo_warn "failed[${ret}] { rsync -az ${action} --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
                 fi
             fi
         fi

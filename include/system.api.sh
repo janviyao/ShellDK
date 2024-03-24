@@ -475,6 +475,25 @@ function sudo_it
     return 250
 }
 
+function remote_cmd
+{
+    local usrnam="$1"
+    local passwd="$2"
+    local ipaddr="$3"
+
+    if [ $# -le 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: user name\n\$2: user password\n\$3: ip address\n\$4~N: command"
+        return 1
+    fi
+ 
+    shift 3
+    local cmdstr="$@"
+    echo_file "${LOG_DEBUG}" "push { ${cmdstr} } to { ${usrnam}@${ipaddr} }"
+
+    sshpass -p "${passwd}" ssh ${usrnam}@${ipaddr} "${cmdstr}"
+    return $?
+}
+
 function dump_system
 {
     local value=""
