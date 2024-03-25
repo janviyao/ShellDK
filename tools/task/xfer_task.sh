@@ -506,7 +506,7 @@ function _xfer_thread
     touch ${XFER_PIPE}.run
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] start"
     echo "${self_pid}" >> ${XFER_TASK}
-    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    echo "${self_pid}" >> ${BASH_MASTER}
     _xfer_thread_main
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] exit"
     rm -f ${XFER_PIPE}.run

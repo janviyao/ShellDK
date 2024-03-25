@@ -79,7 +79,7 @@ function process_signal
     shift
 
     local para_list=($@)
-    local exclude_pid_array=($(mdat_kv_get "BASH_TASK"))
+    local exclude_pid_array=($(cat ${BASH_MASTER}))
 
     [ ${#para_list[*]} -eq 0 ] && return 1
 

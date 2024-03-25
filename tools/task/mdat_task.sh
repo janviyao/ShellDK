@@ -558,7 +558,7 @@ function _mdat_thread
     touch ${MDAT_PIPE}.run
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] start"
     echo "${self_pid}" >> ${MDAT_TASK}
-    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    echo "${self_pid}" >> ${BASH_MASTER}
     _mdat_thread_main
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] exit"
     rm -f ${MDAT_PIPE}.run

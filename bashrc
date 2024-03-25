@@ -57,14 +57,13 @@ if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     fi
 fi
 
+echo "${ROOT_PID}" > ${BASH_MASTER}
 if string_contain "${BTASK_LIST}" "mdat";then
     __MY_SOURCE "INCLUDED_MDAT" $MY_VIM_DIR/tools/task/mdat_task.sh
 
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_mdat_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_mdat_exit" EXIT
-
-    mdat_kv_append "BASH_TASK" "${ROOT_PID}"
 fi
 
 if string_contain "${BTASK_LIST}" "ncat";then

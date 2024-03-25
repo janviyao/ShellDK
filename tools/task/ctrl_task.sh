@@ -215,7 +215,7 @@ function _ctrl_thread
     touch ${CTRL_PIPE}.run
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] start"
     echo "${self_pid}" >> ${CTRL_TASK}
-    mdat_kv_append "BASH_TASK" "${self_pid}" &> /dev/null
+    echo "${self_pid}" >> ${BASH_MASTER}
     _ctrl_thread_main
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] exit"
     rm -f ${CTRL_PIPE}.run

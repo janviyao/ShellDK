@@ -127,3 +127,4 @@ else
 fi
 
 readonly LOG_DISABLE="${BASH_WORK_DIR}/bash.log.disable"
+readonly BASH_MASTER="${BASH_WORK_DIR}/taskset"
