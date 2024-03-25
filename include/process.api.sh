@@ -144,7 +144,19 @@ function process_signal
             if ! process_owner_is ${MY_NAME} ${pid_array[*]};then
                 local xselect=$(input_prompt "" "decide if kill someone else's process? (yes/no)" "yes")
                 if ! math_bool "${xselect}";then
-                    return 1
+                    local xpid
+                    local -a ouser_pids
+                    for xpid in ${pid_array[*]}
+                    do
+                        if ! process_owner_is ${MY_NAME} ${xpid};then
+                            ouser_pids[${#ouser_pids[*]}]="${xpid}"
+                        fi
+                    done
+
+                    echo_info "skip pid { ${ouser_pids[*]} }"
+                    if [ ${#ouser_pids[*]} -gt 0 ];then
+                        pid_array=($(array_dedup "${pid_array[*]}" "${ouser_pids[*]}"))
+                    fi
                 fi
             fi
 
@@ -412,11 +424,11 @@ function process_cpid
 
 function thread_info
 {
-    local process="$1"
+    local xproc="$1"
     local show_header=${2:-true}
     
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print header(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: whether to print header(bool)"
         return 1
     fi
 
@@ -425,9 +437,9 @@ function thread_info
     fi
 
     #local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
-    local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "VSZ" "RSS" "CPU")
+    local -a header_array=("COMMAND" "TID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "VSZ" "RSS" "CPU")
     local -A index_map
-    index_map["PID"]="%-10s %-10d 0"
+    index_map["TID"]="%-10s %-10d 0"
     index_map["COMMAND"]="%-20s %-20s 1"
     index_map["STATE"]="%-5s %-5s 2"
     index_map["PPID"]="%-10s %-10d 3"
@@ -459,10 +471,11 @@ function thread_info
     fi
 
     #top -b -n 1 -H -p ${xpid}  | sed -n "7,$ p"
-    local -a pid_array=($(process_name2pid "${process}"))
-    for process in ${pid_array[*]}
+    local -a pid_array=($(process_name2pid "${xproc}"))
+    for xproc in ${pid_array[*]}
     do
-        local -a tid_array=($(process_name2tid ${process}))
+        local -a tid_array=($(process_name2tid ${xproc}))
+
         local tid
         for tid in ${tid_array[*]}
         do
@@ -470,9 +483,9 @@ function thread_info
                 continue
             fi
 
-            local -a xproc=($(cat /proc/${process}/stat))
+            local -a stats=($(cat /proc/${xproc}/stat))
             
-            local tinfo_str=$(cat /proc/${process}/task/${tid}/stat)
+            local tinfo_str=$(cat /proc/${xproc}/task/${tid}/stat)
             if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
                 local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
                 local new_str=$(string_replace "${old_str}" "\s+" "-" true)
@@ -491,17 +504,17 @@ function thread_info
 
             values=(${index_map["UTIME"]})
             local tutime=${tinfo[${values[2]}]}
-            local putime=${xproc[${values[2]}]}
+            local putime=${stats[${values[2]}]}
 
             values=(${index_map["CUTIME"]})
-            local pcutime=${xproc[${values[2]}]}
+            local pcutime=${stats[${values[2]}]}
 
             values=(${index_map["STIME"]})
             local tstime=${tinfo[${values[2]}]}
-            local pstime=${xproc[${values[2]}]}
+            local pstime=${stats[${values[2]}]}
 
             values=(${index_map["CSTIME"]})
-            local pcstime=${xproc[${values[2]}]}
+            local pcstime=${stats[${values[2]}]}
 
             local ttime=$((tutime+tstime))
             local ptime=$((putime+pstime+pcutime+pcstime))
@@ -527,7 +540,7 @@ function process_info
     local out_headers=${4}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid array\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)\n\$4: output headers(string)"
+        echo_erro "\nUsage: [$@]\n\$1: pid list\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)\n\$4: output headers(string)"
         return 1
     fi
     
@@ -535,7 +548,7 @@ function process_info
         local ps_header="${out_headers}"
     else
         #local ps_header="ppid,pid,lwp=TID,nlwp=TID-CNT,psr=RUN-CPU,nice,pri,policy,stat,pcpu,maj_flt,min_flt,flags,sz,vsz,pmem,wchan:15,stackp,eip,esp,cmd"
-        local ps_header="ppid,pid,lwp=TID,nlwp=TID-CNT,psr=RUN-CPU,nice,pri,policy,stat,pcpu,maj_flt:9,min_flt:9,flags,sz,vsz,pmem,wchan:15,cmd"
+        local ps_header="user,ppid,pid,nlwp=THREADS,psr=CUR-CPU,nice,pri,policy,stat,pcpu,maj_flt:9,min_flt:9,flags,sz,vsz,pmem,wchan:15,cmd"
     fi
 
     local hdr_showed=${show_header}
@@ -591,7 +604,7 @@ function process_info
 
 function process_ptree
 {
-    local process="$1"
+    local xproc="$1"
     local show_thread=${2:-false}
     local show_header=${3:-true}
 
@@ -602,7 +615,7 @@ function process_ptree
     
     local xpid
     local cpid
-    local -a pid_array=($(process_name2pid "${process}"))
+    local -a pid_array=($(process_name2pid "${xproc}"))
     for xpid in ${pid_array[*]}
     do
         process_info "${xpid}" "${show_thread}" "${show_header}"
@@ -622,7 +635,7 @@ function process_ptree
 
 function process_pptree
 {
-    local process="$1"
+    local xproc="$1"
     local show_thread=${2:-false}
     local show_header=${3:-true}
 
@@ -633,7 +646,7 @@ function process_pptree
     
     local xpid
     local ppid
-    local -a pid_array=($(process_name2pid "${process}"))
+    local -a pid_array=($(process_name2pid "${xproc}"))
     for xpid in ${pid_array[*]}
     do
         process_info "${xpid}" "${show_thread}" "${show_header}"
