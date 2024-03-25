@@ -610,6 +610,15 @@ function _ncat_thread_main
 
 function _ncat_thread
 {
+    if ! have_cmd "nc";then
+        if ! install_from_net "nc";then
+            if ! install_from_spec "nmap-ncat";then
+                echo_file "${LOG_ERRO}" "because ncat is not installed, ncat task exit"
+                return 1
+            fi
+        fi
+    fi
+
     trap "" SIGINT SIGTERM SIGKILL
 
     local self_pid=$$

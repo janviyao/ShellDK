@@ -483,6 +483,15 @@ function _xfer_handle_signal
 
 function _xfer_thread
 {
+    if ! have_cmd "rsync";then
+        if ! install_from_net "rsync";then
+            if ! install_from_spec "rsync";then
+                echo_file "${LOG_ERRO}" "because rsync is not installed, xfer task exit"
+                return 1
+            fi
+        fi
+    fi
+
     trap 'SIGNAL=INT;  _xfer_handle_signal' SIGINT
     trap 'SIGNAL=TERM; _xfer_handle_signal' SIGTERM
     trap 'SIGNAL=KILL; _xfer_handle_signal' SIGKILL
