@@ -313,11 +313,11 @@ function system_decrypt
     fi
 }
 
-function service_do
+function service_ctrl
 {
     local action=$1
 
-    if [ $# -ne 2 ];then
+    if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: action\n\$2~N: one or more service name"
         return 1
     fi
