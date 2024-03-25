@@ -279,7 +279,6 @@ function wait_value
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
     
-    local ack_ret
     local try_old=${try_cnt}
     while true
     do
@@ -289,12 +288,12 @@ function wait_value
         fi
 
         echo_debug "try[${try_cnt}] to read from [${ack_pipe}]"
-        #run_timeout ${timeout_s} read ack_ret \< ${ack_pipe}\; echo "\"\${ack_ret}\"" \> ${ack_pipe}.result
-        read -t ${timeout_s} ack_ret < ${ack_pipe}
-        echo_debug "read [${ack_ret}] from ${ack_pipe}"
+        #run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
+        read -t ${timeout_s} FUNC_RET < ${ack_pipe}
+        echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
 
         let try_cnt--
-        if [ -n "${ack_ret}" -o ${try_cnt} -eq 0 ];then
+        if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 0 ];then
             break;
         fi
     done

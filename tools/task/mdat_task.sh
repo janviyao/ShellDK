@@ -436,6 +436,7 @@ function _mdat_thread_main
             else
                 _global_map_["${_xkey_}"]="${_xval_}"
             fi
+            echo_debug "map[${_xkey_}]=[${_global_map_[${_xkey_}]}]"
         elif [[ "${req_ctrl}" == "KV_GET" ]];then
             local _xkey_=${req_body}
             echo_debug "write [${_global_map_[${_xkey_}]}] to [${ack_pipe}]"
