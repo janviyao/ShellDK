@@ -408,6 +408,7 @@ function inst_vim
         sudo_it rm -f /usr/local/bin/vim
         have_file "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
+        sudo_it rm -fr ${make_dir}
     fi
 
     local linkf=".vimrc"

@@ -144,6 +144,12 @@ function install_check
         if math_bool "${isreg}";then
             file_list=($(efind ${MY_VIM_DIR}/deps "${xfile}"))
         fi
+        
+        if [ ${#file_list[*]} -eq 0 ];then
+            echo_info "file { ${xfile} } not exist"
+            rm -f ${tmp_file}
+            return 1
+        fi
 
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
         for xfile in ${file_list[*]}    
