@@ -391,12 +391,12 @@ function _xfer_thread_main
                 local remote_xdir=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 5) 
 
                 local cmdstr=$(cat << EOF
-                SYSTEM=\$(uname -s | grep -E '^[A-Za-z_]+' -o)
-                if [[ "\${SYSTEM}" == 'Linux' ]];then
-                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'mkdir -p ${remote_xdir} &> /dev/null'
-                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'chmod +w ${remote_xdir} &> /dev/null'
+                systype=\$(uname -s | grep -E '^[A-Za-z_]+' -o)
+                if [[ "\${systype}" == 'Linux' ]];then
+                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'mkdir -p ${remote_xdir}' &> /dev/null
+                    echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'chmod +w ${remote_xdir}' &> /dev/null
                     echo '${remote_pswd}' | sudo -S -u 'root' bash -c 'chown ${remote_user} ${remote_xdir} &> /dev/null'
-                elif [[ "\${SYSTEM}" == 'CYGWIN_NT' ]];then
+                elif [[ "\${systype}" == 'CYGWIN_NT' ]];then
                     mkdir -p ${remote_xdir} &> /dev/null
                     chmod +w ${remote_xdir} &> /dev/null
                     chown ${remote_user} ${remote_xdir} &> /dev/null

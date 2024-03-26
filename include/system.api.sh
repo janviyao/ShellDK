@@ -86,7 +86,7 @@ function check_remote_passwd
         return 1
     fi
 
-    if sshpass -p "${passwd}" ssh -o StrictHostKeyChecking=no ${usrnam}@${remote} exit &> /dev/null;then
+    if sshpass -p "${passwd}" ssh -o StrictHostKeyChecking=no  -o PasswordAuthentication=yes -o PubkeyAuthentication=no ${usrnam}@${remote} exit &> /dev/null;then
         return 0
     else
         return 1
@@ -463,7 +463,7 @@ function sudo_it
             fi
 
             if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "echo;${cmd}"
+                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "(${cmd}) &> /dev/tty" &> /dev/null
                 return $?
             else
                 sudo bash -c "${cmd}"
