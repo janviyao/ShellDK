@@ -564,7 +564,7 @@ function _mdat_thread
     rm -f ${MDAT_PIPE}.run
 
     eval "exec ${MDAT_FD}>&-"
-    rm -f ${MDAT_PIPE}
+    rm -fr ${MDAT_WORK_DIR}
     exit 0
 }
 

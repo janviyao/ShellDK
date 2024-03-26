@@ -484,10 +484,12 @@ function _xfer_handle_signal
 function _xfer_thread
 {
     if ! have_cmd "rsync";then
-        if ! install_from_net "rsync";then
-            if ! install_from_spec "rsync";then
+        if ! install_from_net "rsync" &> /dev/null;then
+            if ! install_from_spec "rsync" &> /dev/null;then
                 echo_file "${LOG_ERRO}" "because rsync is not installed, xfer task exit"
-                return 1
+                eval "exec ${XFER_FD}>&-"
+                rm -fr ${XFER_WORK_DIR} 
+                exit 1
             fi
         fi
     fi
@@ -521,7 +523,7 @@ function _xfer_thread
     rm -f ${XFER_PIPE}.run
 
     eval "exec ${XFER_FD}>&-"
-    rm -f ${XFER_PIPE} 
+    rm -fr ${XFER_WORK_DIR} 
     exit 0
 }
 

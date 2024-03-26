@@ -268,7 +268,7 @@ function _logr_thread
     rm -f ${LOGR_PIPE}.run
 
     eval "exec ${LOGR_FD}>&-"
-    rm -f ${LOGR_PIPE}
+    rm -fr ${LOGR_WORK_DIR}
     exit 0
 }
 

@@ -221,7 +221,7 @@ function _ctrl_thread
     rm -f ${CTRL_PIPE}.run
 
     eval "exec ${CTRL_FD}>&-"
-    rm -f ${CTRL_PIPE} 
+    rm -fr ${CTRL_WORK_DIR} 
     exit 0
 }
 

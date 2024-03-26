@@ -611,10 +611,12 @@ function _ncat_thread_main
 function _ncat_thread
 {
     if ! have_cmd "nc";then
-        if ! install_from_net "nc";then
-            if ! install_from_spec "nmap-ncat";then
+        if ! install_from_net "nc" &> /dev/null;then
+            if ! install_from_spec "nmap-ncat" &> /dev/null;then
                 echo_file "${LOG_ERRO}" "because ncat is not installed, ncat task exit"
-                return 1
+                eval "exec ${NCAT_FD}>&-"
+                rm -fr ${NCAT_WORK_DIR}
+                exit 1
             fi
         fi
     fi
