@@ -14,6 +14,7 @@ let s:qfix_main_info     = {}
 let s:qfix_list_max      = 5000
 let s:qfix_read_timeout  = 30000
 let s:qfix_open_list     = v:false
+let s:qfix_list          = { 'csfind' : [], 'grep' : [] }
 let s:map_op             = Map_get_ops()
 let s:file_op            = File_get_ops()
 let s:worker_op          = Worker_get_ops()
@@ -332,8 +333,10 @@ endfunction
 function! s:list_all_qfix(module, title)
     call PrintArgs("2file", "quickfix.list_all_qfix", a:module, a:title)
 
-    let value_list = []
-    call s:map_op.get_all_value(a:module, value_list)
+    let value_list = s:qfix_list[a:module] 
+    if empty(value_list)
+        call s:map_op.get_all_value(a:module, value_list)
+    endif
     
     let pick = 1
     let new_list = []
@@ -897,6 +900,8 @@ function! quickfix#ctrl_main(mode)
         "call quickfix#dump_info(s:qfix_module)
     elseif a:mode == "delete"
         "call quickfix#dump_info(s:qfix_module)
+        call filter(s:qfix_list[s:qfix_module], 0)
+
         let delete_index = s:qfix_main_index
         let switch_success = 0
 
@@ -932,6 +937,7 @@ function! quickfix#ctrl_main(mode)
     elseif a:mode == "home"
         "call quickfix#dump_info(s:qfix_module)
         call s:neat_show(s:qfix_module)
+        call filter(s:qfix_list[s:qfix_module], 0)
 
         let title = getqflist({'title' : 1}).title
         let value = s:map_op.get_value(s:qfix_module, title)
