@@ -15,6 +15,7 @@ let s:qfix_list_max      = 5000
 let s:qfix_read_timeout  = 30000
 let s:qfix_open_list     = v:false
 let s:qfix_list          = { 'csfind' : [], 'grep' : [] }
+let s:qfix_list_pick     = 1
 let s:map_op             = Map_get_ops()
 let s:file_op            = File_get_ops()
 let s:worker_op          = Worker_get_ops()
@@ -333,61 +334,62 @@ endfunction
 function! s:list_all_qfix(module, title)
     call PrintArgs("2file", "quickfix.list_all_qfix", a:module, a:title)
 
-    let value_list = s:qfix_list[a:module] 
-    if empty(value_list)
+    let pick = s:qfix_list_pick
+    let new_list = s:qfix_list[a:module]
+    if empty(new_list)
+        let value_list = [] 
         call s:map_op.get_all_value(a:module, value_list)
-    endif
-    
-    let pick = 1
-    let new_list = []
-    for value in value_list 
-        if !has_key(value, "index")
-            call LogPrint("2file", "value invalid: ".string(value))
-            continue
-        endif
 
-        let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".value.index
-        if filereadable(info_file)
-            let info_dic = s:read_dict(a:module, info_file, 'b', 1)
-            let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.value.index
-            if filereadable(list_file)
-                let qflist = s:read_list(a:module, list_file, '', 9999999)
-
-                let line_idx = info_dic.pick - 1
-
-                let item = get(qflist, line_idx, [])
-                if type(item) == v:t_dict
-                    let line_dic = deepcopy(item)
-                else
-                    let line_dic = deepcopy(eval(item))
-                endif
-                
-                let title = info_dic["title"]
-                if title == a:title
-                    let pick = len(new_list) + 1
-                endif
-                
-                let last_str = "["
-                let next_list = info_dic["next"]
-                for tag in next_list
-                    if strlen(last_str) > 1
-                        let last_str .= " , ".tag
-                    else
-                        let last_str .= tag
-                    endif
-                endfor
-                let last_str .= "]"
-
-                if strlen(last_str) > 0
-                    let line_dic["text"] = title." <-> ".last_str
-                else
-                    let line_dic["text"] = title
-                endif
-                call add(new_list, line_dic)
+        for value in value_list 
+            if !has_key(value, "index")
+                call LogPrint("2file", "value invalid: ".string(value))
+                continue
             endif
-        endif
-    endfor
-    
+
+            let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".value.index
+            if filereadable(info_file)
+                let info_dic = s:read_dict(a:module, info_file, 'b', 1)
+                let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.value.index
+                if filereadable(list_file)
+                    let qflist = s:read_list(a:module, list_file, '', 9999999)
+
+                    let line_idx = info_dic.pick - 1
+
+                    let item = get(qflist, line_idx, [])
+                    if type(item) == v:t_dict
+                        let line_dic = deepcopy(item)
+                    else
+                        let line_dic = deepcopy(eval(item))
+                    endif
+
+                    let title = info_dic["title"]
+                    if title == a:title
+                        let pick = len(new_list) + 1
+                        let s:qfix_list_pick = pick
+                    endif
+
+                    let last_str = "["
+                    let next_list = info_dic["next"]
+                    for tag in next_list
+                        if strlen(last_str) > 1
+                            let last_str .= " , ".tag
+                        else
+                            let last_str .= tag
+                        endif
+                    endfor
+                    let last_str .= "]"
+
+                    if strlen(last_str) > 0
+                        let line_dic["text"] = title." <-> ".last_str
+                    else
+                        let line_dic["text"] = title
+                    endif
+                    call add(new_list, line_dic)
+                endif
+            endif
+        endfor
+    endif
+
     "call LogPrint("2file", "list_all_qfix list-size: ".len(new_list))
     if !empty(new_list)
         call setqflist([], "r", {'items' : new_list})
