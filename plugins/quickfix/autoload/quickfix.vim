@@ -167,7 +167,7 @@ function! s:read_list(module, file, mode, line_num) abort
                 endif
             endif
 
-            call PrintDict("2file", "read_list cache-result", data) 
+            call PrintList("2file", "read_list cache-result", data) 
             return data
         endif
     endif

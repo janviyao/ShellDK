@@ -16,7 +16,7 @@ function how_use
         new <session-name>                # create a tmux session
         list|ls                           # list all tmux sessions
         attach|att [session-name]         # attach to the specific session
-        detach|det|leave                  # detach from the current session
+        detach|det|leave                  # detach from the current session or shortcut: <ctrl+b>+d
         delete|del|exit [session-name]    # delete the specific session
 
     OPTIONS

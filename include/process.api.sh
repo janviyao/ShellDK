@@ -295,13 +295,13 @@ function process_name2pid
                 continue
             fi
 
-            res_array=($(ps -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
+            res_array=($(ps -ww -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
             if [ ${#res_array[*]} -gt 0 ];then
                 pid_array=(${pid_array[*]} ${res_array[*]})
                 continue
             fi
 
-            res_array=($(ps -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
+            res_array=($(ps -ww -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
             if [ ${#res_array[*]} -gt 0 ];then
                 pid_array=(${pid_array[*]} ${res_array[*]})
                 continue

@@ -43,7 +43,7 @@ function regex_2str
     return 0
 }
 
-function regex_perl2posix_basic
+function regex_perl2basic
 {
     local regex="$@"
 
@@ -69,7 +69,47 @@ function regex_perl2posix_basic
             fi
 
             if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "regex_perl2posix_basic { $@ }"
+                echo_file "${LOG_ERRO}" "regex_perl2basic { $@ }"
+                return 1
+            fi
+        fi
+    done
+    
+    echo "${result}" 
+    return 0
+}
+
+function regex_perl2extended
+{
+    local regex="$@"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: regex string"
+        return 1
+    fi
+
+    local result="${regex}"
+    local reg_chars=('\\d' '\\D' '\\w' '\\W' '\\s' '\\S')
+    local char
+    for char in ${reg_chars[*]}
+    do
+        if [[ ${regex} =~ ${char} ]];then
+            if [[ ${char} == '\\d' ]];then
+                result=$(echo "${result}" | sed "s/${char}/[0-9]/g" )
+            elif [[ ${char} == '\\D' ]];then
+                result=$(echo "${result}" | sed "s/${char}/[^0-9]/g" )
+            elif [[ ${char} == '\\w' ]];then
+                result=$(echo "${result}" | sed "s/${char}/[0-9a-zA-Z_]/g" )
+            elif [[ ${char} == '\\W' ]];then
+                result=$(echo "${result}" | sed "s/${char}/[^0-9a-zA-Z_]/g" )
+            elif [[ ${char} == '\\s' ]];then
+                result=$(echo "${result}" | sed "s/${char}/[ \\\\t]/g" )
+            elif [[ ${char} == '\\S' ]];then
+                result=$(echo "${result}" | sed "s/${char}/[^ \\\\t]/g" )
+            fi
+
+            if [ $? -ne 0 ];then
+                echo_file "${LOG_ERRO}" "regex_perl2extended { $@ }"
                 return 1
             fi
         fi
