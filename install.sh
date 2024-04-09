@@ -117,7 +117,6 @@ function clean_env
     local linkf
     for linkf in ${!commandMap[*]};
     do
-        local link_file=${commandMap["${linkf}"]}
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
             have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
@@ -125,6 +124,14 @@ function clean_env
             have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
+
+    linkf=".vimrc"
+    echo_debug "remove slink: ${linkf}"
+    if [[ ${linkf:0:1} == "." ]];then
+        have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+    else
+        have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+    fi
 
     local TIMER_RUNDIR=${GBL_USER_DIR}/timer
     have_file "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
