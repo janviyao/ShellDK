@@ -12,24 +12,13 @@ function process_owner_is
     shift
     local xproc=($@)
 
-    local xpid
     local -a pid_array=($(process_name2pid ${xproc[*]}))
-    for xpid in ${pid_array[*]}
-    do
-        if ! process_exist ${xpid};then
-            continue
-        fi
+    local user_pids=($(ps -u ${puser} | awk '{ if ($1 ~ /[0-9]+/) print $1 }'))
 
-        if [[ "${SYSTEM}" == "Linux" ]]; then
-            ps -u ${puser} | grep -E "^\s*${xpid}\s+" &> /dev/null
-        elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            ps -u ${puser} -p "${xpid}" &> /dev/null
-        fi
-
-        if [ $? -ne 0 ]; then
-            return 1
-        fi
-    done 
+    pid_array=($(array_dedup "${pid_array[*]}" "${user_pids[*]}"))
+    if [ ${#pid_array[*]} -gt 0 ];then
+        return 1
+    fi
 
     return 0
 }

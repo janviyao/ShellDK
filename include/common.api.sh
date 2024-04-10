@@ -159,6 +159,7 @@ function array_dedup
     fi
 
     local total=${#array1[*]}
+    local count=0
 
     local item
     for item in ${array2[*]}
@@ -168,6 +169,10 @@ function array_dedup
         do
             if [[ "${array1[${index}]}" == "${item}" ]];then
                 unset array1[${index}]
+                let count++
+                if [ ${count} -eq ${total} ];then
+                    return 0
+                fi
             fi
         done
     done
