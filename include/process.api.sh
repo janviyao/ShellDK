@@ -13,9 +13,13 @@ function process_owner_is
     local xproc=($@)
 
     local xpid
-    local -a pid_array=($(process_name2pid "${xproc[*]}"))
+    local -a pid_array=($(process_name2pid ${xproc[*]}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         if [[ "${SYSTEM}" == "Linux" ]]; then
             ps -u ${puser} | grep -E "^\s*${xpid}\s+" &> /dev/null
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -42,7 +46,7 @@ function process_wait
     [ -z "${xproc}" ] && return 1
 
     local xpid
-    local -a pid_array=($(process_name2pid "${xproc}"))
+    local -a pid_array=($(process_name2pid ${xproc}))
     for xpid in ${pid_array[*]}
     do
         echo_debug "wait [$(process_pid2name "${xpid}")(${xpid})] exit"
@@ -75,31 +79,25 @@ function process_runwait
 
 function process_exist
 {
-    local xproc="$1"
-
-    if [ -z "${xproc}" ];then
+    local xproc_list=($@)
+    if [ ${#xproc_list[*]} -eq 0 ];then
         return 1
     fi
 
-    if is_integer "${xproc}";then
-        local -a pid_array=(${xproc})
-    else
-        local -a pid_array=($(process_name2pid "${xproc}"))
-    fi
-
     local xpid
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
     for xpid in ${pid_array[*]}
     do
         #${SUDO} "kill -s 0 ${xpid} &> /dev/null"
         #if [ $? -eq 0 ]; then
         if ps -p ${xpid} &> /dev/null; then
-            return 0
+            continue
         else
             return 1
         fi
     done
 
-    return 1
+    return 0
 }
 
 function process_signal
@@ -125,12 +123,12 @@ function process_signal
     for xproc in ${xproc_list[*]}
     do
         if is_integer "${xproc}";then
-            if ! process_exist "${xproc}";then
+            if ! process_exist ${xproc};then
                 continue
             fi
             local -a pid_array=(${xproc})
         else
-            local -a pid_array=($(process_name2pid "${xproc}"))
+            local -a pid_array=($(process_name2pid ${xproc}))
         fi
 
         if [ ${#exclude_pids[*]} -gt 0 ];then
@@ -139,8 +137,6 @@ function process_signal
 
         echo_info "signal { ${signal} } into { ${pid_array[*]} }"
         if [ ${#pid_array[*]} -gt 0 ];then
-            local child_pids=($(process_cpid ${pid_array[*]}))
-            
             if ! process_owner_is ${MY_NAME} ${pid_array[*]};then
                 local xselect=$(input_prompt "" "decide if kill someone else's process? (yes/no)" "yes")
                 if ! math_bool "${xselect}";then
@@ -153,7 +149,7 @@ function process_signal
                         fi
                     done
 
-                    echo_info "skip pid { ${ouser_pids[*]} }"
+                    echo_info "skip { ${ouser_pids[*]} }"
                     if [ ${#ouser_pids[*]} -gt 0 ];then
                         pid_array=($(array_dedup "${pid_array[*]}" "${ouser_pids[*]}"))
                     fi
@@ -166,7 +162,9 @@ function process_signal
                 sudo_it "kill -s ${signal} ${pid_array[*]} &> /dev/null"
             fi
 
+            local child_pids=($(process_cpid ${pid_array[*]}))
             echo_debug "[${pid_array[*]}] have childs: ${child_pids[*]}"
+
             if [ ${#child_pids[*]} -gt 0 ];then
                 process_signal ${signal} ${child_pids[*]} 
                 if [ $? -ne 0 ];then
@@ -206,6 +204,10 @@ function process_pid2name
     for xpid in ${xproc_list[*]}
     do
         if is_integer "${xpid}";then
+            if ! process_exist ${xpid};then
+                continue
+            fi
+
             # ps -p 2133 -o args=
             # ps -p 2133 -o cmd=
             # cat /proc/${xpid}/status
@@ -265,7 +267,7 @@ function process_name2pid
     for xproc in ${xproc_list[*]}
     do
         if is_integer "${xproc}";then
-            pid_array=(${pid_array[*]} ${xproc})
+            pid_array[${#pid_array[*]}]=${xproc}
             continue
         fi
 
@@ -330,10 +332,14 @@ function process_name2tid
 
     local xpid
     local -a proc_tids
-    local -a pid_array=($(process_name2pid "${xproc_list[*]}"))
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
     for xpid in ${pid_array[*]}
     do
         if [ ${xpid} -eq 0 ];then
+            continue
+        fi
+
+        if ! process_exist ${xpid};then
             continue
         fi
 
@@ -352,9 +358,13 @@ function process_cmdline
     local xproc_list=($@)
 
     local xpid
-    local -a pid_array=($(process_name2pid "${xproc_list[*]}"))
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         if [[ "${SYSTEM}" == "Linux" ]]; then
             echo "$(ps -eo pid,cmd | grep -P "^\s*${xpid}\b\s*" | awk '{ str=""; for(i=2; i<=NF; i++){ if(str==""){ str=$i } else { str=str" "$i }}; print str }')"
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -375,6 +385,10 @@ function process_ppid
     for xpid in ${pid_array[*]}
     do
         if [ ${xpid} -eq 0 ];then
+            continue
+        fi
+
+        if ! process_exist ${xpid};then
             continue
         fi
 
@@ -399,10 +413,14 @@ function process_cpid
 
     local xpid
     local -a child_pids
-    local -a pid_array=($(process_name2pid "${xproc_list[*]}"))
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
     for xpid in ${pid_array[*]}
     do
         if [ ${xpid} -eq 0 ];then
+            continue
+        fi
+
+        if ! process_exist ${xpid};then
             continue
         fi
 
@@ -471,7 +489,7 @@ function thread_info
     fi
 
     #top -b -n 1 -H -p ${xpid}  | sed -n "7,$ p"
-    local -a pid_array=($(process_name2pid "${xproc}"))
+    local -a pid_array=($(process_name2pid ${xproc}))
     for xproc in ${pid_array[*]}
     do
         local -a tid_array=($(process_name2tid ${xproc}))
@@ -564,6 +582,10 @@ function process_info
                 continue
             fi
 
+            if ! process_exist ${xpid};then
+                continue
+            fi
+
             if [[ "${SYSTEM}" == "Linux" ]]; then
                 if math_bool "${hdr_showed}"; then
                     ps -ww -p ${xpid} -o ${ps_header}
@@ -615,9 +637,13 @@ function process_ptree
     
     local xpid
     local cpid
-    local -a pid_array=($(process_name2pid "${xproc}"))
+    local -a pid_array=($(process_name2pid ${xproc}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         process_info "${xpid}" "${show_thread}" "${show_header}"
         if math_bool "${show_header}"; then
             show_header=false
@@ -646,9 +672,13 @@ function process_pptree
     
     local xpid
     local ppid
-    local -a pid_array=($(process_name2pid "${xproc}"))
+    local -a pid_array=($(process_name2pid ${xproc}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         process_info "${xpid}" "${show_thread}" "${show_header}"
         if math_bool "${show_header}"; then
             show_header=false
@@ -674,9 +704,13 @@ function process_path
     fi
 
     local xpid
-    local -a pid_array=($(process_name2pid "${xproc_list[*]}"))
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         local full_path=$(sudo_it readlink -f /proc/${xpid}/exe)
         if [ -n "${full_path}" ];then
             echo "${full_path}"
@@ -734,7 +768,7 @@ function process_2cpu
     local xproc
     for xproc in ${name_list[*]}
     do
-        local pid_list=($(process_name2pid "${xproc}"))
+        local pid_list=($(process_name2pid ${xproc}))
         if [ ${#pid_list[*]} -eq 0 ];then
             echo_erro "process: { ${xproc} } invalid"
             continue
@@ -763,9 +797,13 @@ function process_setaffinity
 
     local xpid
     local tid
-    local -a pid_array=($(process_name2pid "${xproc}"))
+    local -a pid_array=($(process_name2pid ${xproc}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         sudo_it taskset -pc ${cpu_list} ${xpid}
 
         local -a tid_array=($(process_name2tid ${ppid}))
@@ -804,9 +842,13 @@ function process_coredump
     fi
 
     local xpid
-    local -a pid_array=($(process_name2pid "${xproc_list[*]}"))
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
     for xpid in ${pid_array[*]}
     do
+        if ! process_exist ${xpid};then
+            continue
+        fi
+
         if have_file "/proc/${xpid}/coredump_filter";then
             sudo_it "echo 0x7b > /proc/${xpid}/coredump_filter"
         fi

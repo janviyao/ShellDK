@@ -329,7 +329,7 @@ set autoindent                                             "自动缩进
 set smartindent                                            "智能缩进
 set copyindent                                             "复制之前缩进
 set smarttab                                               "在行和段开始处使用制表符
-"set expandtab                                             "将新增的tab转换为空格，不会对已有的tab进行转换
+set expandtab                                              "将新增的tab转换为空格，不会对已有的tab进行转换
 set tabstop=4                                              "设置一个tab对应4个空格
 set shiftwidth=4                                           "统一缩进为4
 set softtabstop=4                                          "在按退格键时，如果前面有4个空格，则会统一清除
