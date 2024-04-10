@@ -93,14 +93,15 @@ function process_signal
 {
     local signal=$1
     shift
-
     local xproc_list=($@)
-    local exclude_pids=($(cat ${BASH_MASTER}))
 
     [ ${#xproc_list[*]} -eq 0 ] && return 1
 
     if ! is_integer "${signal}";then
-        signal=$(string_trim "${signal^^}" "SIG" 1)
+        if [[ "${signal^^}" =~ 'SIG' ]];then
+            signal=$(string_trim "${signal^^}" "SIG" 1)
+        fi
+
         if ! (trap -l | grep -P "SIG${signal}\s*" &> /dev/null);then
             echo_erro "signal: { $(trap -l | grep -P "SIG${signal}\s*" -o) } invalid: { ${signal} }"
             echo_debug "signal list:\n$(trap -l)"
@@ -108,6 +109,27 @@ function process_signal
         fi
     fi
 
+    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
+    echo_info "signal { ${signal} } into { ${pid_array[*]} }"
+
+    if [ ${#pid_array[*]} -gt 0 ];then
+        if is_integer "${signal}";then
+            sudo_it "kill -${signal} ${pid_array[*]} &> /dev/null"
+        else
+            sudo_it "kill -s ${signal} ${pid_array[*]} &> /dev/null"
+        fi
+    fi
+
+    return 0
+}
+
+function process_kill
+{
+    local xproc_list=($@)
+    local exclude_pids=($(cat ${BASH_MASTER}))
+
+    [ ${#xproc_list[*]} -eq 0 ] && return 1
+    
     local xproc
     for xproc in ${xproc_list[*]}
     do
@@ -124,8 +146,8 @@ function process_signal
             pid_array=($(array_dedup "${pid_array[*]}" "${exclude_pids[*]}"))
         fi
 
-        echo_info "signal { ${signal} } into { ${pid_array[*]} }"
         if [ ${#pid_array[*]} -gt 0 ];then
+            echo_info "will kill { ${pid_array[*]} }"
             if ! process_owner_is ${MY_NAME} ${pid_array[*]};then
                 local xselect=$(input_prompt "" "decide if kill someone else's process? (yes/no)" "yes")
                 if ! math_bool "${xselect}";then
@@ -145,17 +167,13 @@ function process_signal
                 fi
             fi
 
-            if is_integer "${signal}";then
-                sudo_it "kill -${signal} ${pid_array[*]} &> /dev/null"
-            else
-                sudo_it "kill -s ${signal} ${pid_array[*]} &> /dev/null"
-            fi
+            process_signal KILL ${pid_array[*]}
 
             local child_pids=($(process_cpid ${pid_array[*]}))
             echo_debug "[${pid_array[*]}] have childs: ${child_pids[*]}"
 
             if [ ${#child_pids[*]} -gt 0 ];then
-                process_signal ${signal} ${child_pids[*]} 
+                process_signal KILL ${child_pids[*]} 
                 if [ $? -ne 0 ];then
                     return 1
                 fi
@@ -164,19 +182,6 @@ function process_signal
     done
 
     return 0
-}
-
-function process_kill
-{
-    local xproc_list=($@)
-
-    [ ${#xproc_list[*]} -eq 0 ] && return 1
-
-    if process_signal KILL "${xproc_list[*]}"; then
-        return 0
-    fi
-
-    return 1
 }
 
 function process_pid2name

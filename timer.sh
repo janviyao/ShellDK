@@ -19,7 +19,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     if string_contain "${pid_list[*]}" " $$";then
         pid_list=($(string_replace "${pid_list[*]}" " $$" "" false))
     fi
-    process_kill ${pid_list[*]}
+    process_signal KILL ${pid_list[*]} &> /dev/null
 
     if have_file "${TEST_SUIT_ENV}";then
         source ${TEST_SUIT_ENV} 
@@ -45,7 +45,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
         if [ -z "${logsize}" ];then
             logsize=0
         fi
-        echo_info "timer: bash.log size= $((logsize / 1024 / 1024))MB"
+        echo_debug "timer: bash.log size= $((logsize / 1024 / 1024))MB"
 
         maxsize=$((300*1024*1024))
         if (( logsize > maxsize ));then
@@ -64,5 +64,5 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
         fi
     done
 
-    echo_info "timer: finish"
+    echo_debug "timer: finish"
 fi
