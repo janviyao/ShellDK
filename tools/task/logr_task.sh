@@ -110,7 +110,7 @@ function _redirect_func
     local log_pipe="${log_file}.redirect.pipe.${self_pid}"
     local pipe_fd=0
 
-    if ! account_check ${MY_NAME};then
+    if ! account_check ${MY_NAME} false;then
         echo_erro "Username or Password check fail"
         return 1
     fi

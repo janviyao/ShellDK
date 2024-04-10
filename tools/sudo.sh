@@ -13,7 +13,7 @@ if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
 fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    if ! account_check ${MY_NAME};then
+    if ! account_check ${MY_NAME} false;then
         echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
         sudo bash -c "${CMD_STR}"
         exit $?
