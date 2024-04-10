@@ -261,6 +261,18 @@ function process_name2pid
         echo_file "${LOG_ERRO}" "please input [pid/process-name] parameters"
         return 1
     fi
+    
+    if [ ${#xproc_list[*]} -gt 1 ];then
+        if match_regex "${xproc_list[*]}" "^\d+(\s\d+)+$";then
+            echo "${xproc_list[*]}"
+            return 0
+        fi
+    elif [ ${#xproc_list[*]} -eq 1 ];then
+        if is_integer "${xproc_list[*]}";then
+            echo "${xproc_list[*]}"
+            return 0
+        fi
+    fi
 
     local xproc
     local -a pid_array
