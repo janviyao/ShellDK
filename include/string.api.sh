@@ -563,52 +563,21 @@ function string_replace
         echo "${string}"
         return 1
     fi
-
+    
     if math_bool "${is_reg}";then
-        #donot use (), because it fork child shell
-        local oldstr=$(echo "${string}" | grep -P "${oldstr}" -o | head -n 1) 
-        if [ -z "${oldstr}" ];then
-            echo "${string}"
-            return 1
+        if [[ ! "${oldstr}" =~ '\/' ]];then
+            if [[ "${oldstr}" =~ '/' ]];then
+                oldstr="${oldstr//\//\\/}"
+            fi
         fi
 
-        local res_str=""
-        oldstr=$(regex_2str "${oldstr}")
-        if [[ $(string_start "${oldstr}" 1) == '^' ]]; then
-            if [[ "${newstr}" =~ '\' ]];then
-                newstr="${newstr//\\/\\\\}"
-            fi
-
+        if [[ ! "${newstr}" =~ '\/' ]];then
             if [[ "${newstr}" =~ '/' ]];then
                 newstr="${newstr//\//\\/}"
             fi
-
-            res_str=$(echo "${string}" | sed "s/^${oldstr}/${newstr}/g")
-            if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "string_replace { $@ }"
-                return 1
-            fi
-
-            echo "${res_str}"
-        elif [[ $(string_end "${oldstr}" 1) == '$' ]]; then
-            if [[ "${newstr}" =~ '\' ]];then
-                newstr="${newstr//\\/\\\\}"
-            fi
-
-            if [[ "${newstr}" =~ '/' ]];then
-                newstr="${newstr//\//\\/}"
-            fi
-
-            res_str=$(echo "${string}" | sed "s/${oldstr}$/${newstr}/g")
-            if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "string_replace { $@ }"
-                return 1
-            fi
-
-            echo "${res_str}"
-        else
-            echo "${string//${oldstr}/${newstr}}"
         fi
+        
+        echo $(echo "${string}" | perl -pe "s/${oldstr}/${newstr}/g")
     else
         #donot use (), because it fork child shell
         oldstr=$(regex_2str "${oldstr}") 

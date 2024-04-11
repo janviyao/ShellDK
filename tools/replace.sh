@@ -30,24 +30,24 @@ function how_use
 END
 }
 
-sub_opts=($(get_subopt '*'))
+sub_opts=($(get_subcmd '*'))
 if [ ${#sub_opts[*]} -lt 2 ];then
     how_use
     exit 1
 fi
 
-OPT_HELP=$(get_options "-h" "--help")
+OPT_HELP=$(get_optval "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use
     exit 0
 fi
 
-SRC_REGEX=$(get_options "-r" "--src-regex")
-OLD_STR=$(get_subopt 0)
-NEW_STR=$(get_subopt 1)
-del_subopt 0
-del_subopt 1
-replace_list=($(get_subopt '*'))
+SRC_REGEX=$(get_optval "-r" "--src-regex")
+OLD_STR=$(get_subcmd 0)
+NEW_STR=$(get_subcmd 1)
+del_subcmd 0
+del_subcmd 1
+replace_list=($(get_subcmd '*'))
 
 CUR_DIR=$(pwd)
 if [ ${#replace_list[*]} -eq 0 ];then

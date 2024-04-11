@@ -21,12 +21,15 @@ function __var_defined
         return 1
     fi
 
-    # "set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
-    # local check="\$(set -u ;: \$${var_name})"
-    # eval "$check" &> /dev/null
-    local arr="$(eval eval -- echo -n "\$$1")"
-    if [[ -n ${arr[*]} ]]; then
-        # variable exist and its value is not empty
+    ## "set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
+    ## local check="\$(set -u ;: \$${var_name})"
+    ## eval "$check" &> /dev/null
+    #local arr="$(eval eval -- echo -n "\$$1")"
+    #if [[ -n ${arr[*]} ]]; then
+    #    # variable exist and its value is not empty
+    #    return 0
+    #fi
+    if declare -p $1 &> /dev/null;then
         return 0
     fi
 
@@ -44,12 +47,120 @@ function __MY_SOURCE
     fi
 }
 
+function para_pack
+{
+    local bash_options="$-"
+    set +x
+
+    local cmd="$1"
+    shift
+
+    while [ $# -gt 0 ]
+    do
+        if [[ "$1" =~ ' ' ]];then
+            cmd="${cmd} '$1'"
+        else
+            if [[ "$1" =~ '*' ]];then
+                cmd="${cmd} '$1'"
+            else
+                cmd="${cmd} $1"
+            fi
+        fi
+        shift
+    done
+
+    [[ "${bash_options}" =~ x ]] && set -x
+    echo "${cmd}"
+}
+
+function para_fetch
+{
+    if ! __var_defined "$1";then
+        echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map variable reference\n\$3~N: parameters"
+        return 1
+    fi
+
+    if ! __var_defined "$2";then
+        echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: array variable reference\n\$3~N: parameters"
+        return 1
+    fi
+
+    local -n opt_map="$1"
+    local -n surplus="$2"
+    shift 2
+
+    local subcmd=""
+    local option=""
+    local value=""
+
+    while [ $# -gt 0 ]
+    do
+        option=$1
+        if [ -z "${option}" ];then
+            shift
+            continue
+        fi
+        value=$2
+
+        local b_single=false
+        if string_contain "${option}" "=";then
+            value=$(string_split "${option}" '=' 2)
+            option=$(string_split "${option}" '=' 1)
+            b_single=true
+        fi
+
+        if math_bool "${b_single}";then
+            if [[ "${value:0:1}" == "-" ]];then
+                echo_erro "para: ${option}=${value} invalid"
+                exit 0
+            fi
+        fi
+
+        echo_debug "para: ${option} ${value}"
+        if [[ "${option:0:2}" == "--" ]];then
+            if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
+                opt_map[${option}]="true"
+            else
+                if [ -n "${opt_map[${option}]}" ];then
+                    opt_map[${option}]="${opt_map[${option}]} ${value}"
+                else
+                    opt_map[${option}]="${value}"
+                fi
+
+                if ! math_bool "${b_single}";then
+                    shift
+                fi
+            fi
+        elif [[ "${option:0:1}" == "-" ]];then
+            if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
+                opt_map[${option}]="true"
+            else
+                if [ -n "${opt_map[${option}]}" ];then
+                    opt_map[${option}]="${opt_map[${option}]} ${value}"
+                else
+                    opt_map[${option}]="${value}"
+                fi
+
+                if ! math_bool "${b_single}";then
+                    shift
+                fi
+            fi
+        else
+            surplus[${#surplus[*]}]="$1"
+        fi
+
+        shift
+    done
+
+    return 0
+}
+
 function array_have
 {
     local array=($1)
     local value="$2"
 
-    if [ $# -lt 2 ];then
+    if [ $# -ne 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: array\n\$2: value"
         return 1
     fi
@@ -65,12 +176,27 @@ function array_have
     return 1
 }
 
+function array_filter
+{
+    local array=($1)
+    local regex="$2"
+
+    if [ $# -ne 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: array\n\$2: value"
+        return 1
+    fi
+    
+    array=($(string_replace "${array[*]}" "${regex}" "" true))
+    echo "${array[*]}"
+    return 0
+}
+
 function array_index
 {
     local array=($1)
     local value="$2"
 
-    if [ $# -lt 2 ];then
+    if [ $# -ne 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: array\n\$2: value"
         return 1
     fi
@@ -94,7 +220,7 @@ function array_del
     local array=($1)
     local index="$2"
 
-    if [ $# -lt 2 ];then
+    if [ $# -ne 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: array\n\$2: index to be deleted"
         return 1
     fi
@@ -115,7 +241,7 @@ function array_compare
     local array1=($1)
     local array2=($2)
 
-    if [ $# -lt 2 ];then
+    if [ $# -ne 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: array1\n\$2: array2"
         return 1
     fi
@@ -423,32 +549,6 @@ function select_one
     return 0
 }
 
-function para_pack
-{
-    local bash_options="$-"
-    set +x
-
-    local cmd="$1"
-
-    shift
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            if [[ "$1" =~ '*' ]];then
-                cmd="${cmd} '$1'"
-            else
-                cmd="${cmd} $1"
-            fi
-        fi
-        shift
-    done
-
-    [[ "${bash_options}" =~ x ]] && set -x
-    echo "${cmd}"
-}
-
 function loop2success
 {
     local cmd="$@"
@@ -550,6 +650,5 @@ __MY_SOURCE "INCLUDED_PROCESS" $MY_VIM_DIR/include/process.api.sh
 __MY_SOURCE "INCLUDED_INSTALL" $MY_VIM_DIR/include/install.api.sh
 __MY_SOURCE "INCLUDED_MATH"    $MY_VIM_DIR/include/math.api.sh
 __MY_SOURCE "INCLUDED_FILE"    $MY_VIM_DIR/include/file.api.sh
-__MY_SOURCE "INCLUDED_K8S"     $MY_VIM_DIR/include/k8s.api.sh
 __MY_SOURCE "INCLUDED_GIT"     $MY_VIM_DIR/include/git.api.sh
 __MY_SOURCE "INCLUDED_GDB"     $MY_VIM_DIR/include/gdb.api.sh

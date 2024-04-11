@@ -47,16 +47,16 @@ function inst_usage
     done
 }
 
-OPT_HELP=$(get_options "-h" "--help")
+OPT_HELP=$(get_optval "-h" "--help")
 if math_bool "${OPT_HELP}";then
     inst_usage
     exit 0
 fi
 
-NEED_OPT=$(get_options "-o" "--op")
+NEED_OPT=$(get_optval "-o" "--op")
 #NEED_OP="${NEED_OPT:?'Please specify -o option'}"
 if [ -z "${NEED_OPT}" ];then
-    if [ -n "$(get_subopt '*')" ];then
+    if [ -n "$(get_subcmd '*')" ];then
         NEED_OPT="spec"
     fi
 fi
@@ -76,10 +76,10 @@ if [[ ${OPT_MATCH} -eq 0 ]] || [[ ${OPT_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
     exit -1
 fi
 
-REMOTE_INST=$(get_options "-r" "--remote")
+REMOTE_INST=$(get_optval "-r" "--remote")
 REMOTE_INST="${REMOTE_INST:-0}"
 
-COPY_PKG=$(get_options "-c" "--copy")
+COPY_PKG=$(get_optval "-c" "--copy")
 COPY_PKG="${COPY_PKG:-0}"
 
 echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OPT}")"
@@ -89,6 +89,7 @@ echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 CMD_PRE="my"
 declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${MY_VIM_DIR}/tools/sudo.sh"
+commandMap["${CMD_PRE}k8s"]="${MY_VIM_DIR}/tools/k8s.sh"
 commandMap["${CMD_PRE}system"]="${MY_VIM_DIR}/tools/system.sh"
 commandMap["${CMD_PRE}ftrace"]="${MY_VIM_DIR}/tools/ftrace.sh"
 commandMap["${CMD_PRE}bpftrace"]="${MY_VIM_DIR}/tools/bpftrace/bpftrace.sh"
@@ -576,13 +577,13 @@ if ! math_bool "${REMOTE_INST}"; then
             for func in ${FUNC_MAP[${key}]};
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
-                ${func} $(get_subopt '*')
+                ${func} $(get_subcmd '*')
                 echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
             done
         fi
     done
 else
-    declare -a ip_array=($(echo "$(get_subopt '*')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    declare -a ip_array=($(echo "$(get_subcmd '*')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
         ip_array=($(get_hosts_ip))
     fi

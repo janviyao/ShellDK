@@ -1,7 +1,10 @@
 #!/bin/bash
-: ${INCLUDED_K8S:=1}
+. $MY_VIM_DIR/tools/paraparser.sh
+exit 1
 
-function k8s_pod_get
+declare -A func_map
+
+function list_pod
 {
     local namespace="$1"
 
@@ -14,7 +17,23 @@ function k8s_pod_get
     return $?
 }
 
-function k8s_pod_bash
+func_map['list_pod']=$(cat << EOF
+***************************************************************
+list_pod [namespace]
+
+DESCRIPTION
+    list all pods in the specied namespace
+
+OPTIONS
+    -h|--help                         # show this message
+
+EXAMPLES
+    list_pod                          # list all pods of all namespaces
+    list_pod namespace1               # list all pods of namespace1
+EOF
+)
+
+function pod_bash
 {
     local pod_name="$1"
 
@@ -40,7 +59,22 @@ function k8s_pod_bash
     return $?
 }
 
-function k8s_pod_cmd
+func_map['pod_bash']=$(cat << EOF
+***************************************************************
+pod_bash <pod_name>
+
+DESCRIPTION
+    enter into interface of pod bash command line
+
+OPTIONS
+    -h|--help                         # show this message
+
+EXAMPLES
+    pod_bash pod_name1
+EOF
+)
+
+function pod_cmd
 {
     local pod_name="$1"
 
@@ -68,7 +102,22 @@ function k8s_pod_cmd
     return $?
 }
 
-function k8s_pod_describe
+func_map['pod_cmd']=$(cat << EOF
+***************************************************************
+pod_cmd <pod_name> <command>
+
+DESCRIPTION
+    execute <command> in the pod <pod_name>
+
+OPTIONS
+    -h|--help                         # show this message
+
+EXAMPLES
+    pod_cmd pod_name1 ls -al
+EOF
+)
+
+function pod_describe
 {
     local pod_name="$1"
 
@@ -87,7 +136,22 @@ function k8s_pod_describe
     return $?
 }
 
-function k8s_pod_log
+func_map['pod_describe']=$(cat << EOF
+***************************************************************
+pod_describe <pod_name>
+
+DESCRIPTION
+    show <pod_name> descriptor information
+
+OPTIONS
+    -h|--help                         # show this message
+
+EXAMPLES
+    pod_describe pod_name1
+EOF
+)
+
+function pod_log
 {
     local pod_name="$1"
 
@@ -112,3 +176,74 @@ function k8s_pod_log
     kubectl logs -n ${namespace} ${pod_name} ${docker_name}
     return $?
 }
+
+func_map['pod_log']=$(cat << EOF
+***************************************************************
+pod_log <pod_name>
+
+DESCRIPTION
+    show <pod_name> log
+
+OPTIONS
+    -h|--help                         # show this message
+
+EXAMPLES
+    pod_log pod_name1
+EOF
+)
+
+function how_use_func
+{
+    local func="$1"
+    local indent="$2"
+
+    local OLD_IFS="$IFS"
+    while IFS='' read -r line
+    do
+        printf "%s%s\n" "${indent}" "${line}"
+    done <<< ${func_map[${func}]}
+    IFS="${OLD_IFS}"
+}
+
+function how_use_tool
+{
+    local script_name=$(path2fname $0)
+
+	cat <<-END >&2
+    ============================== Usage ==============================
+    ${script_name} <command [options] [sub-parameter]>
+    DESCRIPTION
+        simplify kubectl CLI usage
+
+    COMMANDS
+END
+
+    local func
+    for func in ${!func_map[*]}
+    do
+        how_use_func "${func}" "        "
+        echo
+    done
+}
+
+SUB_CMD=$(get_subcmd 0)
+if [ -n "${SUB_CMD}" ];then
+    if ! array_have "${!func_map[*]}" "${SUB_CMD}";then
+        echo_erro "unkonw command { ${SUB_CMD} } "
+        exit 1
+    fi
+else
+    how_use_tool
+    exit 1
+fi
+
+OPT_HELP=$(get_optval "-h" "--help")
+if math_bool "${OPT_HELP}";then
+    how_use_tool
+    exit 0
+fi
+
+${SUB_CMD} $(get_subcmd_opts ${SUB_CMD})
+if [ $? -ne 0 ];then
+    how_use_func "${SUB_CMD}"
+fi

@@ -1,123 +1,66 @@
 #!/bin/bash
+declare -a _OPTION_ALL=("$@")
 declare -A _OPTION_MAP=()
-declare -a _OPTION_ALL=()
-declare -a _OPTION_SUB=()
+declare -a _COMAND_SUB=()
+declare -A _SUBCMD_MAP=()
 
-while [ $# -gt 0 ]
+para_fetch _OPTION_MAP _COMAND_SUB "$@"
+
+subcmd=""
+for option in ${_OPTION_ALL[*]}
 do
-    option=$1
-    if [ -z "${option}" ];then
-        _OPTION_ALL[${#_OPTION_ALL[*]}]="$1"
-        _OPTION_SUB[${#_OPTION_SUB[*]}]="$1"
-
-        shift
-        continue
-    fi
-    value=$2
-    
-    b_single=false
-    if string_contain "${option}" "=";then
-        value=$(string_split "${option}" '=' 2)
-        option=$(string_split "${option}" '=' 1)
-        b_single=true
-    fi
-
-    if math_bool "${b_single}";then
-        if [[ "${value:0:1}" == "-" ]];then
-            echo_erro "para: ${option}=${value} invalid"
-            exit 0
-        fi
-    fi
-
-    echo_debug "para: ${option} ${value}"
-    if [[ "${option:0:2}" == "--" ]];then
-        if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
-            _OPTION_MAP[${option}]="true"
-        else
-            if [ -n "${_OPTION_MAP[${option}]}" ];then
-                _OPTION_MAP[${option}]="${_OPTION_MAP[${option}]} ${value}"
-            else
-                _OPTION_MAP[${option}]="${value}"
-            fi
-
-            if ! math_bool "${b_single}";then
-                _OPTION_ALL[${#_OPTION_ALL[*]}]="$1"
-                shift
-            fi
-        fi
+    if [[ "${option:0:1}" == "-" ]];then
+        value=${_OPTION_MAP[${option}]}
     else
-        if [[ "${option:0:1}" == "-" ]];then
-            if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
-                _OPTION_MAP[${option}]="true"
-            else
-                if [ -n "${_OPTION_MAP[${option}]}" ];then
-                    _OPTION_MAP[${option}]="${_OPTION_MAP[${option}]} ${value}"
-                else
-                    _OPTION_MAP[${option}]="${value}"
-                fi
-
-                if ! math_bool "${b_single}";then
-                    _OPTION_ALL[${#_OPTION_ALL[*]}]="$1"
-                    shift
-                fi
-            fi
-        else
-            _OPTION_SUB[${#_OPTION_SUB[*]}]="$1"
+        if array_have "${_COMAND_SUB[*]}" "${option}";then
+            subcmd=${option}
         fi
     fi
-
-    _OPTION_ALL[${#_OPTION_ALL[*]}]="$1"
-    shift
+    
+    if [[ -n "${subcmd}" ]] && [[ "${subcmd}" != "${option}" ]];then
+        now_val=${_SUBCMD_MAP[${subcmd}]}
+        if [ -n "${now_val}" ];then
+            _SUBCMD_MAP[${subcmd}]="${_SUBCMD_MAP[${subcmd}]} ${option}"
+        else
+            _SUBCMD_MAP[${subcmd}]="${option}"
+        fi
+    fi
 done
 
-function get_options
+function get_optval
 {
-    local -a results
-
     local arg
     for arg in "$@"
     do
-        if [[ "${arg:0:1}" == "-" ]];then
-            local value="${_OPTION_MAP[${arg}]}"
-            if [ -n "${value}" ];then
-                results[${#results[*]}]="${value}"
-            fi
-        elif array_have "${_OPTION_SUB[*]}" "${arg}";then
-            results[${#results[*]}]="${arg}"
+        local value=${_OPTION_MAP[${arg}]}
+        if [ -n "${value}" ];then
+            echo "${value}"
+            return 0
         fi
     done
 
-    local item
-    for item in ${results[*]}
-    do
-        echo "${item}"
-    done
-
-    if [ ${#results[*]} -eq 0 ];then
-        return 1
-    fi
-
-    return 0
+    return 1
 }
 
-function get_subopt
+function get_subcmd
 {
     local index=$1
     
     if is_integer "${index}";then
-        if [ ${index} -ge ${#_OPTION_SUB[*]} ];then
+        if [ ${index} -ge ${#_COMAND_SUB[*]} ];then
             return 1
         fi
 
-        local value="${_OPTION_SUB[${index}]}"
-        if [ -n "${value}" ];then
-            echo "${value}"
+        local _value="${_COMAND_SUB[${index}]}"
+        if [ -n "${_value}" ];then
+            echo "${_value}"
         fi
     else
-        if [[ "${index}" == "*" ]];then
-            for index in ${_OPTION_SUB[*]}
+        if [[ "${index}" =~ "*" ]];then
+            local subcmd
+            for subcmd in ${_COMAND_SUB[*]}
             do
-                echo "${index}"
+                echo "${subcmd}"
             done
         else
             return 1
@@ -127,24 +70,34 @@ function get_subopt
     return 0
 }
 
-function del_subopt
+function get_subcmd_opts
+{
+    echo "${_SUBCMD_MAP[$1]}" 
+    return 0
+}
+
+function del_subcmd
 {
     local index=$1
-    
+
     # have a hole after unset
-    local indexs=(${!_OPTION_SUB[*]})
+    local indexs=(${!_COMAND_SUB[*]})
     local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
     if is_integer "${index}";then
         if [ ${index} -ge ${total} ];then
             return 1
         fi
 
-        unset _OPTION_SUB[${index}]
+        local subcmd=${_COMAND_SUB[${index}]}
+        unset _COMAND_SUB[${index}]
+        unset _SUBCMD_MAP[${subcmd}]
     else
         if [[ "${index}" == "*" ]];then
             for index in $(seq 0 $((${total} - 1))) 
             do
-                unset _OPTION_SUB[${index}]
+                local subcmd=${_COMAND_SUB[${index}]}
+                unset _COMAND_SUB[${index}]
+                unset _SUBCMD_MAP[${subcmd}]
             done
         else
             return 1
@@ -154,26 +107,26 @@ function del_subopt
     return 0
 }
 
-if math_bool "false";then
-    for key in ${!_OPTION_MAP[*]}
-    do
-        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${_OPTION_MAP[$key]}")"
-    done
-
-    echo
-    printf "%-13s: " "_OPTION_ALL"
+if math_bool "true";then
+    printf "%-13s: \n" "_OPTION_ALL"
     printf "%2d=( " "${#_OPTION_ALL[*]}"
     for ((idx=0; idx < ${#_OPTION_ALL[*]}; idx++)) 
     do
         printf "\"%s\" " "${_OPTION_ALL[${idx}]}" 
     done
     echo ")"
+    echo
 
-    printf "%-13s: " "_OPTION_SUB"
-    printf "%2d=( " "${#_OPTION_SUB[*]}"
-    for ((idx=0; idx < ${#_OPTION_SUB[*]}; idx++)) 
+    printf "%-13s: \n" "_OPTION_MAP"
+    for key in ${!_OPTION_MAP[*]}
     do
-        printf "\"%s\" " "${_OPTION_SUB[${idx}]}" 
+        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${_OPTION_MAP[$key]}")"
     done
-    echo ")"
+    echo
+
+    printf "%-13s: \n" "_SUBCMD_MAP"
+    for ((idx=0; idx < ${#_COMAND_SUB[*]}; idx++)) 
+    do
+        echo "$(printf "Key: %-8s  Value: %s" "${_COMAND_SUB[${idx}]}" "${_SUBCMD_MAP[${_COMAND_SUB[${idx}]}]}")"
+    done
 fi
