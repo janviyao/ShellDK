@@ -3,7 +3,10 @@
 
 function __version_gt
 { 
-    array_compare "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    local versions1=($(echo "$1" | tr '.' ' '))
+    local versions2=($(echo "$2" | tr '.' ' '))
+
+    array_compare versions1 versions2
     if [ $? -eq 1 ];then
         return 0
     else
@@ -13,7 +16,10 @@ function __version_gt
 
 function __version_lt
 { 
-    array_compare "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    local versions1=($(echo "$1" | tr '.' ' '))
+    local versions2=($(echo "$2" | tr '.' ' '))
+
+    array_compare versions1 versions2
     if [ $? -eq 255 ];then
         return 0
     else
@@ -23,7 +29,10 @@ function __version_lt
 
 function __version_eq
 { 
-    array_compare "$(echo "$1" | tr '.' ' ')" "$(echo "$2" | tr '.' ' ')"
+    local versions1=($(echo "$1" | tr '.' ' '))
+    local versions2=($(echo "$2" | tr '.' ' '))
+
+    array_compare versions1 versions2
     if [ $? -eq 0 ];then
         return 0 
     else

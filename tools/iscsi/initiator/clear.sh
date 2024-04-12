@@ -47,7 +47,7 @@ do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
     tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
 
-    if ! array_have "${session_ip_array[*]}" "${tgt_ip}";then
+    if ! array_have session_ip_array "${tgt_ip}";then
         echo_info "other sessions from ${tgt_ip}, but not in { ${session_ip_array[*]} }"
         continue
     fi

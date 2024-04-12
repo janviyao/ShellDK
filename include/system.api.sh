@@ -953,8 +953,9 @@ function get_hosts_ip
         if [[ "${ipaddr}" == "127.0.0.1" ]];then
             continue
         fi
-
-        if ! array_have "${!hostip_map[*]}" "${ipaddr}";then
+        
+        local tmp_list=(${!hostip_map[*]})
+        if ! array_have tmp_list "${ipaddr}";then
             hostip_map[${ipaddr}]="${hostnm}"
         fi
     done < /etc/hosts

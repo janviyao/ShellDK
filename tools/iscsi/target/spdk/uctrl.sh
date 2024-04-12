@@ -25,7 +25,7 @@ do
         continue
     fi
 
-    if ! array_have "${ISCSI_INITIATOR_IP_ARRAY[*]}" "${ini_ip}";then
+    if ! array_have ISCSI_INITIATOR_IP_ARRAY "${ini_ip}";then
         echo_erro "initiator(${ini_ip}) not configed in custom/private.conf"
         exit 1
     fi
@@ -36,7 +36,8 @@ do
     fi
 
     tgt_ip=$(echo "${map_value}" | awk '{ print $1 }')
-    if ! array_have "${ISCSI_TARGET_IP_ARRAY[*]}" "${tgt_ip}";then
+
+    if ! array_have ISCSI_TARGET_IP_ARRAY "${tgt_ip}";then
         echo_erro "iscsi map { ${tgt_ip} } not in { ${ISCSI_TARGET_IP_ARRAY[*]} }, please check { custom/private.conf }"
         exit 1
     fi
@@ -48,7 +49,8 @@ do
     if [[ "${op_mode}" == "create_portal_group" ]];then
         pg_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 1)
         combine_str="${pg_id}${GBL_SPF1}${tgt_ip}:3260"
-        if ! array_have "${create_portal_group_array[*]}" "${combine_str}";then
+
+        if ! array_have create_portal_group_array "${combine_str}";then
             arr_idx=${#create_portal_group_array[*]}
             create_portal_group_array[${arr_idx}]="${combine_str}"
         fi
@@ -59,7 +61,8 @@ do
         netmask=$(echo "${ini_ip}" | grep -P "\d+\.\d+\.\d+" -o)
 
         combine_str="${ig_id}${GBL_SPF1}ANY${GBL_SPF1}${netmask}.0/24"
-        if ! array_have "${create_initiator_group_array[*]}" "${combine_str}";then
+
+        if ! array_have create_initiator_group_array "${combine_str}";then
             arr_idx=${#create_initiator_group_array[*]}
             create_initiator_group_array[${arr_idx}]="${combine_str}"
         fi
@@ -76,7 +79,8 @@ do
         do
             bdev_lun_map=$(echo "${map_value}" | awk "{ print \$${seq} }")
             bdev_name=$(echo "${bdev_lun_map}" | cut -d ":" -f 1)
-            if ! array_have "${create_bdev_array[*]}" "${bdev_name}";then
+
+            if ! array_have create_bdev_array "${bdev_name}";then
                 arr_idx=${#create_bdev_array[*]}
                 create_bdev_array[${arr_idx}]="${bdev_name}"
             fi
@@ -106,7 +110,8 @@ do
 
         combine_str="${ISCSI_NODE_BASE}:${tgt_name}${GBL_SPF1}${tgt_name}_alias${GBL_SPF1}\"${bdev_name_id_pairs[*]}\"${GBL_SPF1}${pg_id}:${ig_id}${GBL_SPF1}256${GBL_SPF1}-d"
         combine_str=$(string_replace "${combine_str}" "\s*" "${GBL_SPF2}" true)
-        if ! array_have "${create_target_node_array[*]}" "${combine_str}";then
+
+        if ! array_have create_target_node_array "${combine_str}";then
             arr_idx=${#create_target_node_array[*]}
             create_target_node_array[${arr_idx}]="${combine_str}"
         fi

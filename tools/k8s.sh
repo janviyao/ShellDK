@@ -1,7 +1,5 @@
 #!/bin/bash
 . $MY_VIM_DIR/tools/paraparser.sh
-exit 1
-
 declare -A func_map
 
 function list_pod
@@ -228,7 +226,8 @@ END
 
 SUB_CMD=$(get_subcmd 0)
 if [ -n "${SUB_CMD}" ];then
-    if ! array_have "${!func_map[*]}" "${SUB_CMD}";then
+    tmp_list=(${!func_map[*]})
+    if ! array_have tmp_list "${SUB_CMD}";then
         echo_erro "unkonw command { ${SUB_CMD} } "
         exit 1
     fi
@@ -240,6 +239,12 @@ fi
 OPT_HELP=$(get_optval "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use_tool
+    exit 0
+fi
+
+OPT_HELP=$(get_subcmd_optval "${SUB_CMD}" "-h" "--help")
+if math_bool "${OPT_HELP}";then
+    how_use_func "${SUB_CMD}"
     exit 0
 fi
 

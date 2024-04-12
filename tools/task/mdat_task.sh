@@ -471,7 +471,7 @@ function _mdat_thread_main
             local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
 
             local _val_arr_=(${_global_map_["${_xkey_}"]})
-            local _index_=$(array_index "${_val_arr_[*]}" "${_xval_}") 
+            local _index_=$(array_index _val_arr_ "${_xval_}") 
 
             echo_debug "unset val: [${_val_arr_[*]}] index${_index_}=${_val_arr_[${_index_}]}"
             if [ ${_index_} -ge 0 ];then

@@ -13,9 +13,9 @@ function process_owner_is
     local xproc=($@)
 
     local -a pid_array=($(process_name2pid ${xproc[*]}))
-    local user_pids=($(ps -u ${puser} | awk '{ if ($1 ~ /[0-9]+/) print $1 }'))
+    local -a user_pids=($(ps -u ${puser} | awk '{ if ($1 ~ /[0-9]+/) print $1 }'))
 
-    pid_array=($(array_dedup "${pid_array[*]}" "${user_pids[*]}"))
+    array_dedup pid_array user_pids
     if [ ${#pid_array[*]} -gt 0 ];then
         return 1
     fi
@@ -143,7 +143,7 @@ function process_kill
         fi
 
         if [ ${#exclude_pids[*]} -gt 0 ];then
-            pid_array=($(array_dedup "${pid_array[*]}" "${exclude_pids[*]}"))
+            array_dedup pid_array exclude_pids
         fi
 
         if [ ${#pid_array[*]} -gt 0 ];then
@@ -162,7 +162,7 @@ function process_kill
 
                     echo_info "skip { ${ouser_pids[*]} }"
                     if [ ${#ouser_pids[*]} -gt 0 ];then
-                        pid_array=($(array_dedup "${pid_array[*]}" "${ouser_pids[*]}"))
+                        array_dedup pid_array ouser_pids
                     fi
                 fi
             fi
