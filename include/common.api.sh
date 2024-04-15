@@ -299,12 +299,17 @@ function input_prompt
         return 1
     fi
     touch ${LOG_DISABLE}
- 
+    
+    local extra_opt=""
+    if [[ "${prompt_ctn,,}" =~ 'password' ]] || [[ "${prompt_ctn,,}" =~ 'passwd' ]];then
+        extra_opt="-s"
+    fi
+
     local input_val="";
     if [ -n "${dflt_value}" ];then
-        read -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
+        read ${extra_opt} -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
     else
-        read -p "Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
+        read ${extra_opt} -p "Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
     fi
     
     if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -315,9 +320,9 @@ function input_prompt
         while ! eval "${check_func} ${input_val}"
         do
             if [ -n "${dflt_value}" ];then
-                read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
+                read ${extra_opt} -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
             else
-                read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
+                read ${extra_opt} -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
             fi
 
             if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -329,9 +334,9 @@ function input_prompt
             while [ -z "${input_val}" ]
             do
                 if [ -n "${dflt_value}" ];then
-                    read -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
+                    read ${extra_opt} -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
                 else
-                    read -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
+                    read ${extra_opt} -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
                 fi
 
                 if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
