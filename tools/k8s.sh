@@ -1,4 +1,11 @@
 #!/bin/bash
+OPTS=$(getopt -o hc: --long help,count: -- "$@")
+if [ $? != 0 ]; then
+    echo_erro "options parsing Error." >&2
+    exit 1
+fi
+eval set -- "$OPTS"
+
 . $MY_VIM_DIR/tools/paraparser.sh
 declare -A func_map
 

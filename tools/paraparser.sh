@@ -10,6 +10,10 @@ option=""
 subcmd=""
 for option in ${_OPTION_ALL[*]}
 do
+    if [[ "${option}" == "--" ]];then
+        continue
+    fi
+
     if [[ "${option:0:1}" == "-" ]];then
         value=${_OPTION_MAP[${option}]}
         if [[ -n "${subcmd}" ]] && [[ "${subcmd}" != "${option}" ]];then

@@ -96,7 +96,7 @@ function para_fetch
     while [ $# -gt 0 ]
     do
         option=$1
-        if [ -z "${option}" ];then
+        if [ -z "${option}" ] || [[ "${option}" == "--" ]];then
             shift
             continue
         fi
