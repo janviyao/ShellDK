@@ -333,7 +333,7 @@ set smarttab                                               "在行和段开始�
 set tabstop=4                                              "设置一个tab对应4个空格
 set shiftwidth=4                                           "统一缩进为4
 set softtabstop=4                                          "在按退格键时，如果前面有4个空格，则会统一清除
-set listchars=tab:»\ ,space:.,trail:·                      "tab和space使用特殊字符替换
+set listchars=tab:».,trail:·                               "tab和space使用特殊字符替换: tab:»\ ,space:.,trail:·
 set list                                                   "使能listchars
 set linebreak                                              "换行不截断单词
 set nowrap                                                 "不自动换行

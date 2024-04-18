@@ -44,7 +44,7 @@ alias mylsblk='lsblk -o NAME,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,TRAN,WWN,MIN-IO,OPT-IO
 alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
-alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,stat,pcpu,pmem,cmd"; }; }; ps_grep'
+alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
 unalias cp &> /dev/null || true
