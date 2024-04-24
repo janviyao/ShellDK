@@ -75,6 +75,10 @@ function process_exist
 
     local xpid
     local -a pid_array=($(process_name2pid ${xproc_list[*]}))
+    if [ ${#pid_array[*]} -eq 0 ];then
+        return 1
+    fi
+
     for xpid in ${pid_array[*]}
     do
         #${SUDO} "kill -s 0 ${xpid} &> /dev/null"
@@ -450,7 +454,7 @@ function thread_info
 {
     local xproc="$1"
     local show_header=${2:-true}
-    
+
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: whether to print header(bool)"
         return 1
@@ -508,7 +512,7 @@ function thread_info
             fi
 
             local -a stats=($(cat /proc/${xproc}/stat))
-            
+
             local tinfo_str=$(cat /proc/${xproc}/task/${tid}/stat)
             if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
                 local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
@@ -542,7 +546,7 @@ function thread_info
 
             local ttime=$((tutime+tstime))
             local ptime=$((putime+pstime+pcutime+pcstime))
-            
+
             #echo_debug "proces utime: ${putime} stime: ${pstime} cpu${cpu_nm}: ${ptime}"
             #echo_debug "thread utime: ${tutime} stime: ${tstime} cpu${cpu_nm}: ${ttime}"
             if [ ${ptime} -gt 0 ];then
