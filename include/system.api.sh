@@ -456,6 +456,7 @@ function sudo_it
             sudo -A bash -c "${cmd}"
             return $?
         else
+            echo_file "${LOG_DEBUG}" "file invalid { ${GBL_USER_DIR}/.askpass.sh }"
             if ! account_check "${MY_NAME}" false;then
                 echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
                 sudo bash -c "${cmd}"
@@ -953,13 +954,13 @@ function get_hosts_ip
         if [[ "${ipaddr}" == "127.0.0.1" ]];then
             continue
         fi
-        
+
         local tmp_list=(${!hostip_map[*]})
         if ! array_have tmp_list "${ipaddr}";then
             hostip_map[${ipaddr}]="${hostnm}"
         fi
     done < /etc/hosts
-    
+
     if string_contain "${ret_guide}" "map";then
         local map_str=$(declare -p hostip_map)
         map_str=$(string_regex "${map_str}" '\(.+\)')

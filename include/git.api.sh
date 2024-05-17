@@ -5,11 +5,30 @@ alias mygit='loop2success git'
 alias gclone='mygit clone --recurse-submodules'
 alias gadd='git add -A'
 alias gpull='mygit pull'
-alias gpush='function git_push { git push origin $(git symbolic-ref --short -q HEAD); return $?; }; git_push'
 alias gcommit='function git_commit { git commit -s -m "$@"; return $?; }; git_commit'
 alias gamend='function git_amend { git commit --amend -s -m "$@"; return $?; }; git_amend'
 alias gall='function git_all { git add -A; git commit -s -m "$@"; git push origin $(git symbolic-ref --short -q HEAD); return $?; }; git_all'
 alias ggrep='function git_grep { git log --grep="$@" --oneline; return $?; }; git_grep'
+
+function gpush
+{
+    local cur_branch=$(git symbolic-ref --short -q HEAD)
+
+    #git fetch &> /dev/null
+    #local diff_str=$(git diff --stat origin/${cur_branch})
+
+    git push origin ${cur_branch}
+    local retcode=$?
+    if [ ${retcode} -ne 0 ];then
+        local xselect=$(input_prompt "" "whether to forcibly push? (yes/no)" "no")
+        if math_bool "${xselect}";then
+            git push origin ${cur_branch} --force
+            retcode=$?
+        fi
+    fi
+
+    return ${retcode}
+}
 
 function glog
 {
@@ -46,7 +65,7 @@ function gsubmodule_add
         echo_erro "\nUsage: [$@]\n\$1: git repository\n\$2: submodule repository directory\n\$3: submodule branch"
         return 1
     fi
-    
+
     if have_file "${subdir}";then
         echo_erro "sub-directory { ${subdir} } already exists!"
         return 1
@@ -71,7 +90,7 @@ function gsubmodule_del
         echo_erro "\nUsage: [$@]\n\$1: submodule repository"
         return 1
     fi
-    
+
     git rm --cached ${repo}
     section_del_section .gitmodules "submodule \"${repo}\""
     rm -rf .git/modules/${repo}
@@ -87,7 +106,7 @@ function gsubmodule_update
     #    echo_erro "\nUsage: [$@]\n\$1: submodule repository"
     #    return 1
     #fi
-    
+
     if [ -n "${repo}" ];then
         git submodule update --remote ${repo} --recursive
     else

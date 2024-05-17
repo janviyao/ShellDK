@@ -23,10 +23,9 @@ function do_rsync
         echo_erro "\nUsage: [$@]\n\$1: direct: TO/FROM\n\$2: action: UPDATE/EQUAL\$3: src_dir\$4: des_dir\n\$5: ip list"
         return 1
     fi
-
-    if [[ $(string_end "${xfer_src}" 1) == '/' ]]; then
-        xfer_src=$(string_trim "${xfer_src}" "/" 2)
-    fi
+    #if [[ $(string_end "${xfer_src}" 1) == '/' ]]; then
+    #    xfer_src=$(string_trim "${xfer_src}" "/" 2)
+    #fi
 
     local sync_src=${xfer_src}
     local sync_des=${xfer_des}
@@ -130,7 +129,7 @@ function rsync_to
         echo_erro "{ ${xfer_src} } not exist"
         return 1
     fi
- 
+
     xfer_src=$(real_path "${xfer_src}")
     xfer_des=$(real_path "${xfer_des}")
 
@@ -319,9 +318,9 @@ function _bash_xfer_exit
         echo_debug "xfer task have exited"
         return 0
     fi
-    
+
     xfer_task_ctrl_sync "EXIT"
- 
+
     if [ -f ${HOME}/.bash_exit ];then
         source ${HOME}/.bash_exit
     fi
@@ -333,7 +332,7 @@ function _xfer_thread_main
         echo_file "${LOG_ERRO}" "xfer Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
         return 1
     fi
-    
+
     local line
     while read line
     do
@@ -353,7 +352,7 @@ function _xfer_thread_main
                 continue
             fi
         fi
-        
+
         local req_xfer=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
         local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
         local req_foot=$(string_split "${ack_body}" "${GBL_SPF1}" 3)
@@ -403,7 +402,7 @@ function _xfer_thread_main
                 fi
 EOF
                 )
-                
+
                 if [ -n "${remote_xdir}" ];then
                     if ! remote_cmd "${remote_user}" "${remote_pswd}" "${remote_addr}" "${cmdstr}";then
                         echo_erro "remote dir { ${remote_xdir} } not exist"

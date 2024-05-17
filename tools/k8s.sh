@@ -23,7 +23,6 @@ function list_pod
 }
 
 func_map['list_pod']=$(cat << EOF
-***************************************************************
 list_pod [namespace]
 
 DESCRIPTION
@@ -46,13 +45,13 @@ function pod_bash
         echo_erro "\nUsage: [$@]\n\$1: pod name"
         return 1
     fi
-    
+
     local namespace=$(kubectl get pod -A -o wide | grep -F "${pod_name}" | awk '{ print $1 }')
     if [ -z "${namespace}" ];then
         echo_erro "pod { ${pod_name} } namespace null"
         return 1
     fi
-    
+
     local dockers=($(kubectl get pods -n ${namespace} ${pod_name} -o jsonpath={.spec.containers[*].name}))
     if [ ${#dockers[*]} -lt 1 ];then
         echo_erro "pod { ${pod_name} } have 0 docker"
@@ -65,7 +64,6 @@ function pod_bash
 }
 
 func_map['pod_bash']=$(cat << EOF
-***************************************************************
 pod_bash <pod_name>
 
 DESCRIPTION
@@ -89,13 +87,13 @@ function pod_cmd
     fi
     shift
     local cmd_str="$@"
-    
+
     local namespace=$(kubectl get pod -A -o wide | grep -F "${pod_name}" | awk '{ print $1 }')
     if [ -z "${namespace}" ];then
         echo_erro "pod { ${pod_name} } namespace null"
         return 1
     fi
-    
+
     local dockers=($(kubectl get pods -n ${namespace} ${pod_name} -o jsonpath={.spec.containers[*].name}))
     if [ ${#dockers[*]} -lt 1 ];then
         echo_erro "pod { ${pod_name} } have 0 docker"
@@ -108,7 +106,6 @@ function pod_cmd
 }
 
 func_map['pod_cmd']=$(cat << EOF
-***************************************************************
 pod_cmd <pod_name> <command>
 
 DESCRIPTION
@@ -130,7 +127,7 @@ function pod_describe
         echo_erro "\nUsage: [$@]\n\$1: pod name"
         return 1
     fi
-    
+
     local namespace=$(kubectl get pod -A -o wide | grep -F "${pod_name}" | awk '{ print $1 }')
     if [ -z "${namespace}" ];then
         echo_erro "pod { ${pod_name} } namespace null"
@@ -142,7 +139,6 @@ function pod_describe
 }
 
 func_map['pod_describe']=$(cat << EOF
-***************************************************************
 pod_describe <pod_name>
 
 DESCRIPTION
@@ -164,13 +160,13 @@ function pod_log
         echo_erro "\nUsage: [$@]\n\$1: pod name"
         return 1
     fi
-    
+
     local namespace=$(kubectl get pod -A -o wide | grep -F "${pod_name}" | awk '{ print $1 }')
     if [ -z "${namespace}" ];then
         echo_erro "pod { ${pod_name} } namespace null"
         return 1
     fi
-    
+
     local dockers=($(kubectl get pods -n ${namespace} ${pod_name} -o jsonpath={.spec.containers[*].name}))
     if [ ${#dockers[*]} -lt 1 ];then
         echo_erro "pod { ${pod_name} } have 0 docker"
@@ -183,7 +179,6 @@ function pod_log
 }
 
 func_map['pod_log']=$(cat << EOF
-***************************************************************
 pod_log <pod_name>
 
 DESCRIPTION
@@ -202,19 +197,19 @@ function how_use_func
     local func="$1"
     local indent="$2"
 
-    local OLD_IFS="$IFS"
-    while IFS='' read -r line
+    local line
+    printf "%s%s\n" "${indent}" "***************************************************************"
+    while read -r line
     do
         printf "%s%s\n" "${indent}" "${line}"
-    done <<< ${func_map[${func}]}
-    IFS="${OLD_IFS}"
+    done <<< "${func_map[${func}]}"
 }
 
 function how_use_tool
 {
     local script_name=$(path2fname $0)
 
-	cat <<-END >&2
+    cat <<-END >&2
     ============================== Usage ==============================
     ${script_name} <command [options] [sub-parameter]>
     DESCRIPTION

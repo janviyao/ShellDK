@@ -582,7 +582,7 @@ function file_range
 
     local line_nrs1=($(file_linenr "${xfile}" "${string1}" "${is_reg}"))
     local line_nrs2=($(file_linenr "${xfile}" "${string2}" "${is_reg}"))
-    
+
     local -a range_array
     local line_nr1
     local line_nr2
@@ -595,7 +595,7 @@ function file_range
             fi
         done
     done
-    
+
     if [ ${#range_array[*]} -gt 0 ];then
         local range
         for range in ${range_array[*]}
@@ -849,11 +849,24 @@ function real_path
         this_path=$(sudo_it readlink -f ${this_path})
     fi
 
+    if [ -z "${this_path}" ];then
+        echo_file "${LOG_DEBUG}" "readlink { ${old_path} } return null"
+        this_path="${old_path}"
+    fi
+
     if [ $? -ne 0 ];then
         echo_file "${LOG_DEBUG}" "readlink fail: ${old_path}"
-        echo "${old_path}"
+        if [[ "${last_char}" == '/' ]];then
+            if [[ $(string_end "${old_path}" 1) == '/' ]]; then
+                echo "${old_path}"
+            else
+                echo "${old_path}/"
+            fi
+        else
+            echo "${old_path}"
+        fi
         return 1
-    fi 
+    fi
 
     if ! have_file "${this_path}";then
         if ! string_contain "${orig_path}" '/';then
@@ -864,7 +877,7 @@ function real_path
             fi
         fi
     fi
-    
+
     if [[ "${last_char}" == '/' ]];then
         if [[ $(string_end "${this_path}" 1) == '/' ]]; then
             echo "${this_path}"

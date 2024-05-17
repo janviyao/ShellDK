@@ -238,7 +238,7 @@ function inst_env
             ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
-    
+
     have_file "${MY_HOME}/.bashrc" || have_file "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc
     have_file "${MY_HOME}/.bash_profile" || have_file "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile
 
@@ -258,7 +258,7 @@ function inst_env
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
     echo "source ${MY_VIM_DIR}/bashrc" >> ${MY_HOME}/.bashrc
     #echo "source ${MY_VIM_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
-    
+
     if have_file "${MY_HOME}/.ssh";then
         have_file "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
         have_file "${MY_HOME}/.ssh/id_rsa.pub" && rm -f ${MY_HOME}/.ssh/id_rsa.pub
@@ -301,7 +301,7 @@ function inst_env
         echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
         chmod +x ${MY_HOME}/.timerc 
     fi
-    
+
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         if ! ( cygrunsrv -L | grep -w "cron" &> /dev/null );then
             install_from_net cron

@@ -237,7 +237,7 @@ function install_provider
             return 0
         fi
     fi
-    
+
     return 0
 }
 
@@ -326,7 +326,7 @@ function install_from_rpm
         fi
         local_rpms=($(efind ${fpath} ".*/?${xfile}"))
     fi
-    
+
     if [ ${#local_rpms[*]} -gt 1 ];then
         local select_x=$(select_one ${local_rpms[*]} "all")
         if [[ "${select_x}" != "all" ]];then
@@ -364,13 +364,19 @@ function install_from_rpm
                 continue
             fi
         fi
-        
+
         if ! math_bool "${force}";then
             local version_new=${versions[0]}
             local version_sys=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
             if __version_gt ${version_sys} ${version_new}; then
                 echo_erro "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
                 return 1
+            fi
+
+            local xselect=$(input_prompt "" "decide if install ${fname} ? (yes/no)" "yes")
+            if ! math_bool "${xselect}";then
+                echo_info "$(printf "[%13s]: { %-13s } skip" "Rpm Install" "${fname}")"
+                continue
             fi
         fi
 
@@ -394,7 +400,7 @@ function install_from_rpm
                 fi
             done
         fi
-        
+
         echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${fname}")"
         if math_bool "${force}";then
             sudo_it rpm -ivh --nodeps --force ${full_name} 
@@ -542,7 +548,7 @@ function install_from_tar
         fi
         local_tars=($(efind ${fpath} ".*/?${xfile}"))
     fi
-    
+
     if [ ${#local_tars[*]} -gt 1 ];then
         local select_x=$(select_one ${local_tars[*]} "all")
         if [[ "${select_x}" != "all" ]];then
@@ -557,7 +563,7 @@ function install_from_tar
         local file_name=$(path2fname ${tar_file})
         echo_file "${LOG_DEBUG}" "tar: { ${tar_file} } path: { ${file_dir} } name: { ${file_name} }"
         echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${file_name}")"
-        
+
         local cur_dir=$(pwd)
         cd ${file_dir}
 
@@ -579,7 +585,7 @@ function install_from_tar
 }
 
 function install_from_spec
-{     
+{
     local xspec="$1"
     local force="${2:-false}"
 
