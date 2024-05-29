@@ -309,7 +309,7 @@ set viminfo=!,'1000,<1000,s1024,:100,f1                    "viminfo文件保存�
 "autocmd CursorHoldI * silent w
 
 "持久化的undo机制：保存文件修改的撤消/重做
-set undodir=~/.vimSession/undodir
+silent! execute 'set undodir='.GetVimDir(0, "undodir")
 set undofile
 set undolevels=10000 "maximum number of changes that can be undone
 set undoreload=10000 "maximum number lines to save for undo on a buffer reload
@@ -1026,9 +1026,6 @@ function! RestoreLoad()
         "防止多次加载                                                                                            
         let autocommands_loaded = 1
 
-        "创建文件修改回退目录
-        let dirStr=GetVimDir(0, "undodir")
- 
         call Quickfix_ctrl("load")
 
         let bufnr = bufnr('%')
