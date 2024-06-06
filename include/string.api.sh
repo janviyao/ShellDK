@@ -74,7 +74,7 @@ function regex_perl2basic
             fi
         fi
     done
-    
+
     echo "${result}" 
     return 0
 }
@@ -114,7 +114,7 @@ function regex_perl2extended
             fi
         fi
     done
-    
+
     echo "${result}" 
     return 0
 }

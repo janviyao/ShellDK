@@ -7,6 +7,8 @@ function is_integer
     local re='^-?[0-9]+$'
     if [[ -n $1 ]]; then
         [[ $1 =~ $re ]] && return 0
+        re='^(0[xX])?[0-9a-fA-F]+$'
+        [[ $1 =~ $re ]] && return 0
         return 1
     else
         return 2
@@ -219,7 +221,7 @@ function math_hex2dec
         echo_erro "\nUsage: [$@]\n\$1: one hex-number"
         return 1
     fi
-    
+
     local prestr=$(string_start "${value}" 2)
     if [[ ${prestr,,} != '0x' ]]; then
         value="0x${value}"
@@ -258,7 +260,7 @@ function math_hex2bin
 function math_lshift
 {
     local value="$1"
-    local leftv="$2"
+    local shiftv="$2"
 
     if [[ $# -lt 2 ]];then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
@@ -270,31 +272,19 @@ function math_lshift
         return 1
     fi
 
-    if ! is_integer "${leftv}";then
+    if ! is_integer "${shiftv}";then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
         return 1
     fi
-    
-    if [ ${value} -eq 0 ];then
-        echo "0"
-        return 0
-    fi
 
-    local result=$(math_dec2bin ${value})
-    while [ ${leftv} -gt 0 ]
-    do
-        result="${result}0"
-        let leftv--
-    done
-    [ -n "${result}" ] && echo "${result}"
-
+    echo $((value << shiftv))
     return 0
 }
 
 function math_rshift
 {
     local value="$1"
-    local rightv="$2"
+    local shiftv="$2"
 
     if [[ $# -lt 2 ]];then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
@@ -306,28 +296,12 @@ function math_rshift
         return 1
     fi
 
-    if ! is_integer "${rightv}";then
+    if ! is_integer "${shiftv}";then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
         return 1
     fi
 
-    if [ ${value} -eq 0 ];then
-        echo "0"
-        return 0
-    fi
-
-    local result=$(math_dec2bin ${value})
-    while [ ${rightv} -gt 0 ]
-    do
-        result=${result%?}
-        if [ -z "${result}" ];then
-            result="0"
-            break
-        fi
-        let rightv--
-    done
-    [ -n "${result}" ] && echo "${result}"
-
+    echo $((value >> shiftv))
     return 0
 }
 

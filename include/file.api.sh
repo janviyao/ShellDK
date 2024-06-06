@@ -332,12 +332,12 @@ function file_del
     fi
 
     if math_bool "${is_reg}";then
-        local posix_reg=$(regex_perl2basic "${string}")
+        local posix_reg=$(regex_perl2extended "${string}")
         if [[ "${posix_reg}" =~ '#' ]];then
             posix_reg=$(string_replace "${posix_reg}" '#' '\#')
         fi
 
-        eval "sed -i '\#${posix_reg}#d' ${xfile}"
+        eval "sed -r -i '\#${posix_reg}#d' ${xfile}"
         if [ $? -ne 0 ];then
             echo_erro "file_del { $@ } posix_reg { ${posix_reg} }"
             return 1
@@ -689,10 +689,10 @@ function file_replace
     if ! have_file "${xfile}";then
         echo_erro "file lost: ${xfile}"
         return 1
-    fi 
+    fi
 
     if math_bool "${is_reg}";then
-        string=$(regex_perl2basic "${string}")
+        string=$(regex_perl2extended "${string}")
     fi
 
     if [[ "${string}" =~ '/' ]];then
@@ -703,12 +703,57 @@ function file_replace
         new_str=$(string_replace "${new_str}" '/' '\/')
     fi
 
-    eval "sed -i '1,$ s/${string}/${new_str}/g' ${xfile}"
+    eval "sed -r -i '1,$ s/${string}/${new_str}/g' ${xfile}"
     if [ $? -ne 0 ];then
         echo_erro "file_replace { $@ }"
         return 1
     fi
-    
+
+    return 0
+}
+
+function file_replace_with_expr
+{
+    local xfile="$1"
+    local string="$2"
+    local new_exp="$3"
+    local is_reg="${4:-false}"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new expresion\n\$4: \$1 whether regex(default: false)"
+        return 1
+    fi
+
+    if ! have_file "${xfile}";then
+        echo_erro "file lost: ${xfile}"
+        return 1
+    fi
+
+    local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
+
+    if math_bool "${is_reg}";then
+        string=$(regex_perl2extended "${string}")
+    fi
+
+    if [[ "${string}" =~ '/' ]];then
+        string=$(string_replace "${string}" '/' '\/')
+    fi
+
+    local tmp_file="$(file_temp)"
+    local line_nr
+    for line_nr in ${line_nrs[*]}
+    do
+        eval "${new_exp}" > ${tmp_file}
+        local new_str=$(cat ${tmp_file})
+        eval "sed -r -i '${line_nr} s/${string}/${new_str}/g' ${xfile}"
+        if [ $? -ne 0 ];then
+            echo_erro "file_replace_with_expr { $@ }"
+            rm -f ${tmp_file}
+            return 1
+        fi
+    done
+
+    rm -f ${tmp_file}
     return 0
 }
 
@@ -799,7 +844,7 @@ function file_size
 function file_temp
 {
     local base_dir="${1:-${BASH_WORK_DIR}}"
-    
+
     local fpath="${base_dir}/tmp.$$.${RANDOM}"
     while have_file "${fpath}" 
     do
