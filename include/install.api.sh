@@ -188,7 +188,7 @@ function install_provider
         echo_erro "\nUsage: [$@]\n\$1: file-name or regex-string\n\$2: whether regex(default: false)"
         return 1
     fi
-    
+
     local -a files
     if math_bool "${isreg}";then
         local fname=$(path2fname ${xfile})
@@ -582,6 +582,8 @@ function install_from_tar
         done
         cd ${cur_dir}
     done
+
+    return 0
 }
 
 function install_from_spec

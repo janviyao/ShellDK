@@ -180,7 +180,7 @@ function string_contain
     if [[ -z "${string}" ]] || [[ -z "${substr}" ]];then
         return 1
     fi
-    
+
     if [ -n "${separator}" ];then
         local column_nr=$(echo "${string}" | awk -F "${separator}" "{ print NF }")
         local index=1
@@ -288,7 +288,7 @@ function string_split
             return 1
         fi
     fi
-    
+
     #echo_file "${LOG_DEBUG}" "SUB [${substr}] [$@]"
     echo "${substr}"
     return 0

@@ -411,10 +411,10 @@ function _mdat_thread_main
                 continue
             fi
         fi
-        
+
         local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
         local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
-        
+
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"

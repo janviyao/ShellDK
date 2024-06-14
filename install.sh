@@ -8,9 +8,12 @@ export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc
 . ${MY_VIM_DIR}/tools/paraparser.sh
-if ! account_check "${MY_NAME}";then
-    echo_erro "Username or Password check fail"
-    exit 1
+
+if ! have_admin; then
+    if ! account_check "${MY_NAME}";then
+        echo_erro "Username or Password check fail"
+        exit 1
+    fi
 fi
 
 declare -A FUNC_MAP
@@ -18,8 +21,9 @@ FUNC_MAP["env"]="inst_env"
 FUNC_MAP["clean"]="clean_env"
 FUNC_MAP["vim"]="inst_vim"
 FUNC_MAP["spec"]="inst_spec"
-FUNC_MAP["all"]="clean_env inst_env inst_vim"
-FUNC_MAP["glibc2.28"]="inst_glibc"
+FUNC_MAP["all"]="clean_env; inst_env; inst_vim"
+FUNC_MAP["glibc2.27"]="inst_glibc glibc-2.27"
+FUNC_MAP["glibc2.28"]="inst_glibc glibc-2.28"
 FUNC_MAP["cygwin"]="inst_cygwin"
 FUNC_MAP["hostname"]="inst_hostname"
 
@@ -35,6 +39,7 @@ function inst_usage
     echo "install.sh -o vim        @install vim package"
     echo "install.sh -o spec       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
+    echo "install.sh -o glibc2.27  @install glibc2.27 package"
     echo "install.sh -o glibc2.28  @install glibc2.28 package"
     echo "install.sh -o cygwin     @install cygwin environment packages"
     echo "install.sh -o hostname   @set hostname"
@@ -447,9 +452,9 @@ function inst_vim
     if check_net;then
         if ! have_file "${MY_HOME}/.vim/bundle/vundle"; then
             mygit clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
-            vim +BundleInstall +q +q
-        else
-            vim +BundleUpdate +q +q
+            #vim +BundleInstall +q +q
+        #else
+            #vim +BundleUpdate +q +q
         fi
     fi
 
@@ -471,13 +476,15 @@ function inst_vim
 
 function inst_glibc
 {
+    local glibc_spec="$1"
+
     local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
-    local version_new=2.28
+    local version_new=($(string_regex "${glibc_spec}" "\d+\.\d+(\.\d+)?"))
 
     if __version_lt ${version_cur} ${version_new}; then
         # Install glibc
         install_from_spec "make-4.3" true
-        install_from_spec "glibc-2.28" true
+        install_from_spec "${glibc_spec}" true
         #install_from_spec "glibc-common"
 
         sudo_it "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"
@@ -574,11 +581,16 @@ if ! math_bool "${REMOTE_INST}"; then
         if string_contain "${NEED_OPT}" "${key}"; then
             echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
             echo_info "$(printf "[%13s]: %-6s" "Funcs" "${FUNC_MAP[${key}]}")"
-            for func in ${FUNC_MAP[${key}]};
+
+            func_index=1
+            func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")
+            while test -n "${func}"
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
                 ${func} $(get_subcmd '*')
                 echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
+                let func_index++
+                func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")
             done
         fi
     done
