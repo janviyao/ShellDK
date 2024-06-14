@@ -39,7 +39,7 @@ function update_port_used
 function local_port_available
 {
     local port="$1"
-    
+
     if [ -z "${port}" ];then
         echo_file "${LOG_ERRO}" "port null"
         return 1
@@ -60,7 +60,7 @@ function local_port_available
             return 1
         fi
     fi
-   
+
     #if nc -zv 127.0.0.1 ${port} &> /dev/null;then
     #    echo_file "${LOG_DEBUG}" "port[${port}] avalible"
     #    if ! grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
@@ -68,7 +68,7 @@ function local_port_available
     #    fi
     #    return 0
     #fi
-     
+
     #echo_file "${LOG_DEBUG}" "port[${port}] avalible"
     if ! grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
         run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
@@ -77,6 +77,20 @@ function local_port_available
 }
 
 function ncat_port_get
+{
+    local ncat_port=$(cat ${NCAT_PROT_CURR})
+    while test -z "${ncat_port}"
+    do
+        echo_file "${LOG_DEBUG}" "wait for port generate: [${NCAT_PROT_CURR}]"
+        sleep 1
+        ncat_port=$(cat ${NCAT_PROT_CURR})
+    done
+
+    echo "${ncat_port}"
+    return 0
+}
+
+function ncat_generate_port
 {
     local port_val=${1:-32767}
 
@@ -95,6 +109,7 @@ function ncat_port_get
         fi
     fi
 
+    echo "" > ${NCAT_PROT_CURR}
     while ! local_port_available "${port_val}"
     do
         #port_val=$(($RANDOM + ${start}))
@@ -345,7 +360,7 @@ function ncat_wait_resp
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
 
-    local ncat_port=$(cat ${NCAT_PROT_CURR})
+    local ncat_port=$(ncat_port_get)
     echo_debug "wait ncat's response: ${ack_pipe}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
     if [ $? -eq 0 ];then
@@ -372,7 +387,8 @@ function ncat_wait_resp
 function ncat_task_ctrl_async
 {
     local ncat_body="$1"
-    local ncat_port=$(cat ${NCAT_PROT_CURR})
+
+    local ncat_port=$(ncat_port_get)
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${ncat_body}" 
     return $?
 }
@@ -392,7 +408,7 @@ function wait_event
         echo_erro "\nUsage: [$@]\n\$1: event_uid\n\$2: event_msg"
         return 1
     fi
-    
+
     local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
     ncat_wait_resp "${event_body}" "${MAX_TIMEOUT}"
 
@@ -413,7 +429,7 @@ function notify_event
         return 1
     fi
 
-    local ncat_port=$(cat ${NCAT_PROT_CURR})
+    local ncat_port=$(ncat_port_get)
     local event_body="NOTIFY_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
 }
@@ -457,7 +473,7 @@ function remote_send_file
 }
 
 function _bash_ncat_exit
-{ 
+{
     echo_debug "ncat signal exit"
     if ! have_file "${NCAT_PIPE}.run";then
         echo_debug "ncat task not started but signal EXIT"
@@ -481,7 +497,7 @@ function _bash_ncat_exit
         echo_debug "ncat task have exited"
         return 0
     fi
-    
+
     ncat_task_ctrl_sync "EXIT${GBL_SPF1}$$"
 }
 
@@ -494,12 +510,12 @@ function _ncat_thread_main
         return
     fi
 
-    local ncat_port=$(ncat_port_get)
+    local ncat_port=$(ncat_generate_port)
 
     mdat_set_var "master_work"
     while math_bool "${master_work}" 
     do
-        ncat_port=$(ncat_port_get ${ncat_port})
+        ncat_port=$(ncat_generate_port ${ncat_port})
         #echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
 
         local ncat_body=$(ncat_recv_msg "${ncat_port}")
@@ -581,7 +597,7 @@ function _ncat_thread_main
                 fi
                 sleep 1
 
-                ncat_port=$(ncat_port_get ${ncat_port})
+                ncat_port=$(ncat_generate_port ${ncat_port})
                 local event_body="WAIT_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
                 ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
             }&
