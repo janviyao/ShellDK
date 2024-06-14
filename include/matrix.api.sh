@@ -156,7 +156,7 @@ function mmap_set_val
     local -n var_refer="$1"
     local dimension="$2"
 
-    if [[ $# -le 2 ]] || [[ ! "$(declare -p $1)" =~ "declare -A" ]] || ! __var_defined "$1" || ! is_integer "${dimension}";then
+    if [[ $# -le 2 ]] || [[ ! "$(declare -p $1)" =~ "declare -A" ]] || ! __var_defined "$1" || ! math_is_int "${dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: values"
         return 1
     fi
@@ -183,7 +183,7 @@ function mmap_get_val
     local -n var_refer="$1"
     local dimension="$2"
 
-    if [[ $# -le 2 ]] || [[ ! "$(declare -p $1)" =~ "declare -A" ]] || ! __var_defined "$1" || ! is_integer "${dimension}";then
+    if [[ $# -le 2 ]] || [[ ! "$(declare -p $1)" =~ "declare -A" ]] || ! __var_defined "$1" || ! math_is_int "${dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: values"
         return 1
     fi

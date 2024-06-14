@@ -25,6 +25,7 @@ function have_admin
             return 0
         fi
     fi
+
     return 1
 }
 
@@ -200,7 +201,7 @@ function sshto
         fi
     fi
 
-    if is_integer "${des_key}";then
+    if math_is_int "${des_key}";then
         local ip_array=($(echo ${!ip_map[*]} | grep -P "(\.?\d+\.?)*${des_key}(\.?\d+\.?)*" -o))
         if [ ${#ip_array[*]} -eq 1 ];then
             if [ -z "${USR_PASSWORD}" ]; then
@@ -620,7 +621,7 @@ function dump_interrupt
             while [ ${index} -le $((cpu_num + 1)) ]
             do
                 local irq_cnt=$(echo "${line}" | awk "{ print \$${index} }")
-                if is_integer "${irq_cnt}";then
+                if math_is_int "${irq_cnt}";then
                     if [ ${irq_cnt} -gt 0 ];then
                         irq_total=$((irq_total + irq_cnt))
                         if [ -n "${cpu_list}" ];then
@@ -659,28 +660,28 @@ function du_find
 
     local size="${limit}"
     local unit=""
-    if ! is_integer "${size}" && ! is_float "${size}";then
+    if ! math_is_int "${size}" && ! math_is_float "${size}";then
         if match_regex "${size^^}" "^\d+(\.\d+)?KB?$";then
             size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
-            if is_integer "${size}";then
+            if math_is_int "${size}";then
                 size=$((size*1024))
-            elif is_float "${size}";then
+            elif math_is_float "${size}";then
                 size=$(math_float "${size}*1024" 0)
             fi
             unit="KB"
         elif match_regex "${size^^}" "^\d+(\.\d+)?MB?$";then
             size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
-            if is_integer "${size}";then
+            if math_is_int "${size}";then
                 size=$((size*1024*1024))
-            elif is_float "${size}";then
+            elif math_is_float "${size}";then
                 size=$(math_float "${size}*1024*10244" 0)
             fi
             unit="MB"
         elif match_regex "${size^^}" "^\d+(\.\d+)?GB?$";then
             size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
-            if is_integer "${size}";then
+            if math_is_int "${size}";then
                 size=$((size*1024*1024*1024))
-            elif is_float "${size}";then
+            elif math_is_float "${size}";then
                 size=$(math_float "${size}*1024*1024*1024" 0)
             fi
             unit="GB"
@@ -700,7 +701,7 @@ function du_find
         fi
 
         local dir_size=$(sudo_it "du -b -t ${size} -s ${sub_dir} 2>/dev/null" | awk '{ print $1 }')
-        if is_integer "${dir_size}";then
+        if math_is_int "${dir_size}";then
             size_map["${sub_dir}"]=${dir_size}
         fi
     done
@@ -744,7 +745,7 @@ function du_find
         fi
 
         local obj_size=$(echo "${line}" | awk '{ print $1 }')
-        if is_integer "${obj_size}" || is_float "${obj_size}";then
+        if math_is_int "${obj_size}" || math_is_float "${obj_size}";then
             if [ ${obj_size} -ge ${size} ];then
                 if [[ ${unit} == "KB" ]];then
                     echo "$(printf "%-10s %s" "$(math_float "${obj_size}/1024" 1)KB" "${obj_info}")"

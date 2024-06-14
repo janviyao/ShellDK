@@ -221,8 +221,8 @@ function file_get
 
     if ! have_file "${xfile}";then
         return 1
-    fi 
-    
+    fi
+
     if math_bool "${is_reg}";then
         local line_nrs=($(file_linenr "${xfile}" "${string}" true))
         local line_nr
@@ -236,7 +236,7 @@ function file_get
             fi
         done
     else
-        if is_integer "${string}";then
+        if math_is_int "${string}";then
             local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
                 local content=$(sed -n "${string}p" ${xfile})
@@ -353,7 +353,7 @@ function file_del
         #    line_nrs=($(file_linenr "${xfile}" "${string}" true))
         #done
     else
-        if is_integer "${string}";then
+        if math_is_int "${string}";then
             local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
                 eval "sed -i '${string}d' ${xfile}"
@@ -368,8 +368,8 @@ function file_del
                 local index_s=$(string_split "${string}" "-" 1)
                 local index_e=$(string_split "${string}" "-" 2)
 
-                if is_integer "${index_s}";then
-                    if ! is_integer "${index_e}";then
+                if math_is_int "${index_s}";then
+                    if ! math_is_int "${index_e}";then
                         if [[ "${index_e}" != "$" ]];then
                             echo_erro "file_del { $@ }: para \$2 invalid"
                             return 1
@@ -426,7 +426,7 @@ function file_insert
         echo > ${xfile}
     fi 
 
-    if is_integer "${line_nr}";then
+    if math_is_int "${line_nr}";then
         local total_nr=$(sed -n '$=' ${xfile})
         if [ ${line_nr} -gt ${total_nr} ];then
             local cur_line=${total_nr}
@@ -511,7 +511,7 @@ function file_linenr
         local line_nr
         for line_nr in ${line_nrs[*]}
         do
-            if is_integer "${line_nr}" || [[ "${line_nr}" == "$" ]];then
+            if math_is_int "${line_nr}" || [[ "${line_nr}" == "$" ]];then
                 echo "${line_nr}"
             else
                 echo_file "${LOG_ERRO}" "file_get { $@ } linenr invalid: ${line_nr}"
@@ -538,8 +538,8 @@ function file_range_linenr
 
     if ! have_file "${xfile}";then
         return 1
-    fi 
-     
+    fi
+
     local -a line_nrs
     if math_bool "${is_reg}";then
         if [[ $(string_start "${string}" 1) == '^' ]]; then
@@ -560,7 +560,7 @@ function file_range_linenr
         done
         return 0
     fi
-    
+
     return 1
 }
 
@@ -646,7 +646,7 @@ function file_change
         echo > ${xfile}
     fi 
 
-    if is_integer "${line_nr}";then
+    if math_is_int "${line_nr}";then
         local total_nr=$(sed -n '$=' ${xfile})
         if [ ${line_nr} -le ${total_nr} ];then
             eval "sed -i '${line_nr} c\\${content}' ${xfile}"

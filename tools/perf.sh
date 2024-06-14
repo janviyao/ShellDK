@@ -68,7 +68,7 @@ function construct_pid
         fi
     else
         if [ ${para_cnt} -eq 1 ];then
-            if is_integer "${para_str}";then
+            if math_is_int "${para_str}";then
                 if process_exist "${para_str}";then
                     echo "${para_str}"
                     return 0
@@ -111,7 +111,7 @@ function perf_trace
     local perf_pid=$(construct_pid ${process_x})
 
     local perf_para=""
-    if is_integer "${perf_pid}";then
+    if math_is_int "${perf_pid}";then
         perf_para="-a -o ${perf_save}/perf.trace.log -p ${perf_pid}" 
     else
         if [ -n "${perf_pid}" ];then
@@ -138,7 +138,7 @@ function perf_record
     local perf_pid=$(construct_pid ${process_x})
 
     local perf_para=""
-    if is_integer "${perf_pid}";then
+    if math_is_int "${perf_pid}";then
         perf_para="-a -g -o ${perf_save}/perf.record.data -p ${perf_pid}" 
     else
         if [ -n "${process_x}" ];then
@@ -171,7 +171,7 @@ function perf_top
     local perf_pid=$(construct_pid ${process_x})
 
     local perf_para=""
-    if is_integer "${perf_pid}";then
+    if math_is_int "${perf_pid}";then
         #perf_para="-a -g --sort cpu --all-cgroups --namespaces -p ${perf_pid}" 
         perf_para="-a -g -p ${perf_pid}" 
     else
@@ -216,7 +216,7 @@ function perf_stat
         fi
     elif [[ "${select_x}" == "record" ]];then
         local perf_pid=$(construct_pid ${process_x})
-        if is_integer "${perf_pid}";then
+        if math_is_int "${perf_pid}";then
             perf_para="-a -A -d -o ${perf_save}/perf.stat.data record -p ${perf_pid}" 
         else
             if [ -n "${process_x}" ];then
@@ -419,7 +419,7 @@ function perf_sched
         perf_para="-v ${select_x} ${process_x}" 
     fi
 
-    if is_integer "${perf_pid}";then
+    if math_is_int "${perf_pid}";then
         echo_info "perf sched ${perf_para} for [$(process_pid2name "${perf_pid}")]"
     else
         echo_info "perf sched ${perf_para}"

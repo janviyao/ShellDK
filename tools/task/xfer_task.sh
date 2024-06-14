@@ -33,7 +33,7 @@ function do_rsync
 
     have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        if ! account_check ${USR_NAME} false;then
+        if ! account_check "${USR_NAME}" false;then
             echo_erro "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
             return 1
         fi
@@ -328,7 +328,7 @@ function _bash_xfer_exit
 
 function _xfer_thread_main
 {
-    if ! account_check ${USR_NAME} false;then
+    if ! account_check "${USR_NAME}" false;then
         echo_file "${LOG_ERRO}" "xfer Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
         return 1
     fi

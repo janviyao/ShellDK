@@ -78,7 +78,7 @@ function cpu_statistics
     select_x=$(string_trim "${select_x}" " ")
 
     if string_contain "${select_x}" "<CPU>";then
-        local input_val=$(input_prompt "is_integer" "input one cpu id" "0")
+        local input_val=$(input_prompt "math_is_int" "input one cpu id" "0")
         select_x=$(string_replace "${select_x}" "<CPU>" "${input_val}")
     fi
 
@@ -140,7 +140,7 @@ function net_statistics
         local expression=$(tcpdump_expr)
 
         local input_val=$(input_prompt "" "input dump's record number" "")
-        if is_integer "${input_val}";then
+        if math_is_int "${input_val}";then
             select_x=$(string_insert "${select_x}" " -c ${input_val}" 7)
         fi
 
@@ -184,7 +184,7 @@ function interrupt_statistics
     select_x=$(string_trim "${select_x}" " ")
     
     if string_contain "${select_x}" "<INTR>";then
-        local input_val=$(input_prompt "is_integer" "input one interrupt number" "16")
+        local input_val=$(input_prompt "math_is_int" "input one interrupt number" "16")
         select_x=$(string_replace "${select_x}" "<INTR>" "${input_val}")
     fi
 
@@ -231,7 +231,7 @@ function software_statistics
 
     if string_contain "${select_x}" "<PID>";then
         local process_x=$(input_prompt "" "specify one app with parameters or one running-app's pid" "")
-        if is_integer "${process_x}";then
+        if math_is_int "${process_x}";then
             select_x=$(string_replace "${select_x}" "<PID>" "${process_x}")
         else
             select_x=$(string_replace "${select_x}" "-p <PID>" "${process_x}")

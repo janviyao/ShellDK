@@ -101,7 +101,7 @@ function process_signal
 
     [ ${#xproc_list[*]} -eq 0 ] && return 1
 
-    if ! is_integer "${signal}";then
+    if ! math_is_int "${signal}";then
         if [[ "${signal^^}" =~ 'SIG' ]];then
             signal=$(string_trim "${signal^^}" "SIG" 1)
         fi
@@ -117,7 +117,7 @@ function process_signal
     echo_info "signal { ${signal} } into { ${pid_array[*]} }"
 
     if [ ${#pid_array[*]} -gt 0 ];then
-        if is_integer "${signal}";then
+        if math_is_int "${signal}";then
             sudo_it "kill -${signal} ${pid_array[*]} &> /dev/null"
         else
             sudo_it "kill -s ${signal} ${pid_array[*]} &> /dev/null"
@@ -137,7 +137,7 @@ function process_kill
     local xproc
     for xproc in ${xproc_list[*]}
     do
-        if is_integer "${xproc}";then
+        if math_is_int "${xproc}";then
             if ! process_exist ${xproc};then
                 continue
             fi
@@ -201,7 +201,7 @@ function process_pid2name
     local -a name_list
     for xpid in ${xproc_list[*]}
     do
-        if is_integer "${xpid}";then
+        if math_is_int "${xpid}";then
             if ! process_exist ${xpid};then
                 continue
             fi
@@ -266,7 +266,7 @@ function process_name2pid
             return 0
         fi
     elif [ ${#xproc_list[*]} -eq 1 ];then
-        if is_integer "${xproc_list[*]}";then
+        if math_is_int "${xproc_list[*]}";then
             echo "${xproc_list[*]}"
             return 0
         fi
@@ -276,7 +276,7 @@ function process_name2pid
     local -a pid_array
     for xproc in ${xproc_list[*]}
     do
-        if is_integer "${xproc}";then
+        if math_is_int "${xproc}";then
             pid_array[${#pid_array[*]}]=${xproc}
             continue
         fi
@@ -747,7 +747,7 @@ function process_cpu2
     local cpu
     for cpu in ${cpu_list[*]}
     do
-        if is_integer "${cpu}";then
+        if math_is_int "${cpu}";then
             local pid_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk -v cid=${cpu} '{ if ($2 == cid) print $1 }')
             local xpid
             for xpid in ${pid_list[*]}
@@ -888,7 +888,7 @@ function process_winpid2pid
     local -a pid_list
     for xpid in ${xproc_list[*]}
     do
-        if is_integer "${xpid}";then
+        if math_is_int "${xpid}";then
             local pids=($(ps -a | awk -v wpid=${xpid} '{ if ($4 == wpid) { print $1 } }'))
             pid_list=(${pid_list[*]} ${pids[*]})
         fi

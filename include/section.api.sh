@@ -28,7 +28,7 @@ function section_line_range
             local nr_start=$(string_split "${range}" "${GBL_COL_SPF}" 1)
             local nr_end=$(string_split "${range}" "${GBL_COL_SPF}" 2)
 
-            if is_integer "${nr_end}";then
+            if math_is_int "${nr_end}";then
                 nr_end=$((nr_end - 1))
             else
                 if [[ "${nr_end}" == "$" ]];then

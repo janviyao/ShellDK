@@ -60,7 +60,7 @@ function get_subcmd
 {
     local index=$1
     
-    if is_integer "${index}";then
+    if math_is_int "${index}";then
         if [ ${index} -ge ${#_SUBCMD_ALL[*]} ];then
             return 1
         fi
@@ -115,7 +115,7 @@ function del_subcmd
     # have a hole after unset
     local indexs=(${!_SUBCMD_ALL[*]})
     local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
-    if is_integer "${index}";then
+    if math_is_int "${index}";then
         if [ ${index} -ge ${total} ];then
             return 1
         fi

@@ -1,7 +1,7 @@
 #!/bin/bash
 : ${INCLUDED_MATH:=1}
 
-function is_integer
+function math_is_int
 {
     # is argument an integer?
     local re='^-?[0-9]+$'
@@ -15,7 +15,7 @@ function is_integer
     fi
 }
 
-function is_float
+function math_is_float
 {
     # is argument an integer?
     local re='^-?[0-9]+\.?[0-9]+$'
@@ -25,6 +25,16 @@ function is_float
     else
         return 2
     fi
+}
+
+function math_char2ascii
+{
+	printf "%d\n" "'$1"
+}
+
+function math_ascii2char
+{
+	printf "\\$(printf '%03o' "$1")"
 }
 
 function math_bool
@@ -93,7 +103,7 @@ function math_mod
         return 1
     fi
 
-    if ! is_integer "${divisor}";then
+    if ! math_is_int "${divisor}";then
         echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
         return 1
     fi
@@ -112,7 +122,7 @@ function math_round
         return 1
     fi
 
-    if ! is_integer "${divisor}";then
+    if ! math_is_int "${divisor}";then
         echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
         return 1
     fi
@@ -130,7 +140,7 @@ function math_dec2bin
         return 1
     fi
 
-    if ! is_integer "${value}";then
+    if ! math_is_int "${value}";then
         echo_erro "\nUsage: [$@]\n\$1: one integer"
         return 1
     fi
@@ -161,7 +171,7 @@ function math_dec2hex
         return 1
     fi
 
-    if ! is_integer "${value}";then
+    if ! math_is_int "${value}";then
         echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
         return 1
     fi
@@ -267,12 +277,12 @@ function math_lshift
         return 1
     fi
 
-    if ! is_integer "${value}";then
+    if ! math_is_int "${value}";then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
         return 1
     fi
 
-    if ! is_integer "${shiftv}";then
+    if ! math_is_int "${shiftv}";then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: left shift count"
         return 1
     fi
@@ -291,12 +301,12 @@ function math_rshift
         return 1
     fi
 
-    if ! is_integer "${value}";then
+    if ! math_is_int "${value}";then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
         return 1
     fi
 
-    if ! is_integer "${shiftv}";then
+    if ! math_is_int "${shiftv}";then
         echo_erro "\nUsage: [$@]\n\$1: one decimal integer\n\$2: right shift count"
         return 1
     fi

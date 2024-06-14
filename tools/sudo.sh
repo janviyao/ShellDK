@@ -13,7 +13,7 @@ if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
 fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
-    if ! account_check ${MY_NAME} false;then
+    if ! account_check "${MY_NAME}" false;then
         echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
         sudo bash -c "${CMD_STR}"
         exit $?
@@ -109,7 +109,7 @@ exit $?
 #mdat_kv_unset_key ${RET_VAR}
 #
 #eval "exit_code=\$${RET_VAR}"
-#if is_integer "${exit_code}";then
+#if math_is_int "${exit_code}";then
 #    exit ${exit_code}
 #else
 #    echo_erro "exit code no-integer: ${exit_code}"

@@ -257,7 +257,7 @@ function wait_value
 
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
-    
+
     local try_old=${try_cnt}
     while true
     do
@@ -277,7 +277,7 @@ function wait_value
         fi
     done
     eval "exec ${ack_fhno}>&-"
-    
+
     if [ ${try_cnt} -eq 0 ];then
         echo_debug "write [${send_pipe}] failed"
     fi
@@ -299,7 +299,7 @@ function input_prompt
         return 1
     fi
     touch ${LOG_DISABLE}
-    
+
     local extra_opt=""
     if [[ "${prompt_ctn,,}" =~ 'password' ]] || [[ "${prompt_ctn,,}" =~ 'passwd' ]];then
         extra_opt="-s"
@@ -311,11 +311,11 @@ function input_prompt
     else
         read ${extra_opt} -p "Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
     fi
-    
+
     if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
         input_val="${dflt_value}"
     fi
-    
+
     if [ -n "${check_func}" ];then
         while ! eval "${check_func} ${input_val}"
         do

@@ -160,7 +160,7 @@ function string_char
         return 1
     fi
 
-    is_integer "${posstr}" || { return 1; }
+    math_is_int "${posstr}" || { return 1; }
 
     echo "${string:${posstr}:1}"
     return 0
@@ -225,7 +225,7 @@ function string_split
     fi
 
     local substr=""
-    if is_integer "${sub_index}";then
+    if math_is_int "${sub_index}";then
         if [ ${sub_index} -eq 0 ];then
             local index=1
             local -a sub_array
@@ -250,14 +250,14 @@ function string_split
     else
         if [[ "${sub_index}" =~ '-' ]];then
             local index_s=$(echo "${sub_index}" | awk -F '-' '{ print $1 }')
-            if ! is_integer "${index_s}";then
+            if ! math_is_int "${index_s}";then
                 echo "${string}"
                 return 1
             fi
             local index_e=$(echo "${sub_index}" | awk -F '-' '{ print $2 }')
 
             local -a sub_array
-            if is_integer "${index_e}";then
+            if math_is_int "${index_e}";then
                 local index=0
                 for ((index=index_s; index<=index_e; index++))
                 do
@@ -304,7 +304,7 @@ function string_start
         return 1
     fi
 
-    is_integer "${length}" || { echo "${string}"; return 1; }
+    math_is_int "${length}" || { echo "${string}"; return 1; }
 
     #local chars="$(echo "${string}" | cut -c 1-${length})"
     echo "${string:0:${length}}"
@@ -321,7 +321,7 @@ function string_end
         return 1
     fi
 
-    is_integer "${length}" || { echo "${string}"; return 1; }
+    math_is_int "${length}" || { echo "${string}"; return 1; }
 
     #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
     echo "${string:0-${length}:${length}}"
@@ -339,8 +339,8 @@ function string_sub
         return 1
     fi
 
-    is_integer "${start}" || { echo "${string}"; return 1; }
-    is_integer "${length}" || { echo "${string:${start}}"; return 1; }
+    math_is_int "${start}" || { echo "${string}"; return 1; }
+    math_is_int "${length}" || { echo "${string:${start}}"; return 1; }
 
     #local chars="`echo "${string}" | cut -c 1-${length}`"
     echo "${string:${start}:${length}}"
@@ -380,7 +380,7 @@ function string_match
         return 1
     fi
 
-    if ! is_integer "${posstr}";then
+    if ! math_is_int "${posstr}";then
         echo_erro "match position { ${posstr} } invalid"
         return 1
     fi
@@ -420,7 +420,7 @@ function string_same
         return 1
     fi
 
-    if ! is_integer "${posstr}";then
+    if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "trim position { ${posstr} } invalid"
         return 1
     fi
@@ -478,7 +478,7 @@ function string_insert
         return 1
     fi
 
-    if ! is_integer "${posstr}";then
+    if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "insert index { ${posstr} } invalid"
         echo "${string}"
         return 1
@@ -500,7 +500,7 @@ function string_trim
         return 1
     fi
 
-    if ! is_integer "${posstr}";then
+    if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "trim position { ${posstr} } invalid"
         return 1
     fi

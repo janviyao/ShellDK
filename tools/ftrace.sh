@@ -37,7 +37,7 @@ else
 fi
 
 if [ $# -eq 1 ];then
-    if is_integer "$1";then
+    if math_is_int "$1";then
         ftrace_pid=$1
         if process_exist "${ftrace_pid}";then
             echo_erro "$(process_pid2name "${ftrace_pid}")[${ftrace_pid}] process donot running"

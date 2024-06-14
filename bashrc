@@ -29,13 +29,12 @@ shopt -s expand_aliases
 #set -o errexit # when error, then exit
 #set -o nounset # variable not exist, then exit
 if [ -z "${MY_NAME}" ];then
-    if declare -p USERNAME &>/dev/null;then
-        readonly MY_NAME=${USERNAME}
-    elif declare -p USER &>/dev/null;then
-        readonly MY_NAME=${USER}
-    else
-        readonly MY_NAME=$(whoami)
-    fi
+    readonly MY_NAME=$(whoami)
+    #if declare -p USERNAME &>/dev/null;then
+    #    readonly MY_NAME=${USERNAME}
+    #elif declare -p USER &>/dev/null;then
+    #    readonly MY_NAME=${USER}
+    #fi
 fi
 
 if [ -z "${MY_HOME}" ];then

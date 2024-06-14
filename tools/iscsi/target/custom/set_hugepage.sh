@@ -26,7 +26,7 @@ fi
 #sleep 5
 
 HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_pid_*"
-if is_integer "${HP_SHM_ID}";then
+if math_is_int "${HP_SHM_ID}";then
     if [ ${HP_SHM_ID} -ge 0 ];then
         HP_MAP_FILE="/dev/hugepages/fusion_target_iscsi_${HP_SHM_ID}map_*"
     fi

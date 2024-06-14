@@ -8,7 +8,7 @@ export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc
 . ${MY_VIM_DIR}/tools/paraparser.sh
-if ! account_check ${MY_NAME};then
+if ! account_check "${MY_NAME}";then
     echo_erro "Username or Password check fail"
     exit 1
 fi

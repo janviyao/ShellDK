@@ -87,7 +87,7 @@ function ncat_port_get
 
     if have_file "${NCAT_PROT_CURR}";then
         local cur_port=$(cat ${NCAT_PROT_CURR})
-        if is_integer "${cur_port}";then
+        if math_is_int "${cur_port}";then
             if local_port_available "${cur_port}";then
                 echo "${cur_port}"
                 return 0

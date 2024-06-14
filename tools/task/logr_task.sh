@@ -61,7 +61,7 @@ function logr_task_ctrl_sync
 }
 
 function _bash_logr_exit
-{ 
+{
     echo_debug "logr signal exit" 
     if ! have_file "${LOGR_PIPE}.run";then
         echo_debug "logr task not started but signal EXIT"
@@ -110,7 +110,7 @@ function _redirect_func
     local log_pipe="${log_file}.redirect.pipe.${self_pid}"
     local pipe_fd=0
 
-    if ! account_check ${MY_NAME} false;then
+    if ! account_check "${MY_NAME}" false;then
         echo_erro "Username or Password check fail"
         return 1
     fi
