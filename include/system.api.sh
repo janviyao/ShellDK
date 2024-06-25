@@ -400,6 +400,7 @@ function account_check
         fi
     fi
 
+    local retval=0
     if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
         if math_bool "${can_input}";then
             USR_NAME=${MY_NAME}
@@ -408,30 +409,28 @@ function account_check
             export USR_NAME=${input_val:-${USR_NAME}}
 
             local input_val=$(input_prompt "" "input password" "")
-            #echo ""
-
-            if [ -n "${input_val}" ];then
-                export USR_PASSWORD="${input_val}"
-                new_password=$(system_encrypt "${USR_PASSWORD}")
-                echo "${new_password}"                                             >  ${GBL_USER_DIR}/.${USR_NAME} 
-                echo "#!/bin/bash"                                                 >  ${GBL_USER_DIR}/.askpass.sh
-                echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
-                echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
-                echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
-                echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
-                chmod +x ${GBL_USER_DIR}/.askpass.sh 
-
-                [[ "${bash_options}" =~ x ]] && set -x
-                return 0
-            fi
+            export USR_PASSWORD="${input_val}"
+        else
+            retval=1
         fi
+    fi
 
-        [[ "${bash_options}" =~ x ]] && set -x
-        return 1
+    if ! test -x ${GBL_USER_DIR}/.askpass.sh;then
+        if [ -n "${USR_NAME}" -a -n "${USR_PASSWORD}" ]; then
+            local new_password=$(system_encrypt "${USR_PASSWORD}")
+            echo "${new_password}"                                             >  ${GBL_USER_DIR}/.${USR_NAME} 
+            echo "#!/bin/bash"                                                 >  ${GBL_USER_DIR}/.askpass.sh
+            echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
+            echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
+            echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
+            echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
+            chmod +x ${GBL_USER_DIR}/.askpass.sh 
+            retval=0
+        fi
     fi
 
     [[ "${bash_options}" =~ x ]] && set -x
-    return 0
+    return ${retval}
 }
 
 function sudo_it
