@@ -3,42 +3,22 @@ set -o allexport
 declare -a _OPTION_ALL=()
 declare -A _OPTION_MAP=()
 declare -a _SUBCMD_ALL=()
-declare -A _SUBCMD_MAP=()
 
 declare -n _OPTION_ALL_REF="_OPTION_ALL"
 declare -n _OPTION_MAP_REF="_OPTION_MAP"
 declare -n _SUBCMD_ALL_REF="_SUBCMD_ALL"
-declare -n _SUBCMD_MAP_REF="_SUBCMD_MAP"
 
 shortopts="$1"
 shift
-para_fetch_l2 "${shortopts}" _OPTION_MAP_REF _SUBCMD_ALL_REF _SUBCMD_MAP_REF "$@"
-for option in "$@"
-do
-	if [[ "${option}" =~ " " ]];then
-		option=$(string_replace "${option}" " " "${GBL_SPACE}")
-	fi
-	_OPTION_ALL_REF[${#_OPTION_ALL_REF[*]}]="${option}"
-done
+para_fetch "${shortopts}" _OPTION_ALL_REF _OPTION_MAP_REF _SUBCMD_ALL_REF "$@"
 
 function get_all_opts
 {
-	local all_opts=""
-    local option
-    for option in ${_OPTION_ALL_REF[*]}
-    do
-        if [[ "${option:0:1}" == "-" ]];then
-        	if [ -z "${all_opts}" ];then
-				all_opts="${option}"
-			else
-				all_opts="${all_opts} ${option}"
-			fi
-		fi
-    done
-
+	local all_opts="${!_OPTION_MAP[*]}"
 	if [[ "${all_opts}" =~ "${GBL_SPACE}" ]];then
 		all_opts=$(string_replace "${all_opts}" "${GBL_SPACE}" " ")
 	fi
+
 	printf -- "${all_opts}\n"
     return 0
 }
@@ -97,15 +77,13 @@ function get_subcmd
 		fi
     fi
 
-	local subcmd="${_SUBCMD_ALL_REF[0]}"
-	local -a subcmd_list=(${_SUBCMD_MAP_REF[${subcmd}]})
 	if [[ "${index_e}" == '$' ]];then
-		index_e=$((${#subcmd_list[*]} - 1))
+		index_e=$((${#_SUBCMD_ALL_REF[*]} - 1))
 	fi
 
 	for ((index=index_s; index<=index_e; index++))
 	do
-		local value=${subcmd_list[${index}]}
+		local value=${_SUBCMD_ALL_REF[${index}]}
 		if [ -n "${value}" ];then
 			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
 				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
@@ -119,97 +97,40 @@ function get_subcmd
 
 function get_subcmd_all
 {
-	local subcmd="${_SUBCMD_ALL_REF[0]}"
+	local subcmd="$1"
 	
-	local subcmd_opts="${_SUBCMD_ALL_REF[*]}"
-	if [[ "${subcmd_opts}" =~ "${GBL_SPACE}" ]];then
-		subcmd_opts=$(string_replace "${subcmd_opts}" "${GBL_SPACE}" " ")
-	fi
-    printf -- "${subcmd_opts}\n"
-
-    return 0
-}
-
-function get_subcmd_opts
-{
-	local subcmd_opts=""
-    local option
-    for option in ${_SUBCMD_ALL_REF[*]}
-    do
-        if [[ "${option:0:1}" == "-" ]];then
-        	if [ -z "${subcmd_opts}" ];then
-				subcmd_opts="${option}"
-			else
-				subcmd_opts="${subcmd_opts} ${option}"
+	local next_cmd=""
+	local index total=${#_SUBCMD_ALL_REF[*]}
+	for ((index= 0; index < ${total}; index++))
+	do
+		if [[ "${_SUBCMD_ALL_REF[${index}]}" == "${subcmd}" ]];then
+			if [ $((index + 1)) -lt ${total} ];then
+				next_cmd="${_SUBCMD_ALL_REF[$((index + 1))]}"
+				break
 			fi
 		fi
-    done
-
-	if [[ "${subcmd_opts}" =~ "${GBL_SPACE}" ]];then
-		subcmd_opts=$(string_replace "${subcmd_opts}" "${GBL_SPACE}" " ")
-	fi
-    printf -- "${subcmd_opts}\n"
-    return 0
-}
-
-function get_subcmd_optval
-{
-    local key
-    for key in "$@"
+	done
+	
+	local sub_found=0
+    local elem
+    for elem in ${_OPTION_ALL_REF[*]}
     do
-        local value="${_SUBCMD_MAP_REF[${key}]}"
-		#echo "key: ${key} value: ${value}"
-        if [ -n "${value}" ];then
-			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
-				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
-			fi
-            printf -- "${value}\n"
-            return 0
+        if [[ "${elem}" == "${subcmd}" ]];then
+        	let sub_found++
         fi
-    done
 
-    return 1
-}
-
-function remove_opts
-{
-	local shortopts="$1"
-	local option_all=($2)
-	shift 2
-	local rm_opts=("$@")
-
-    local option
-    for option in ${rm_opts[*]}
-    do
-        if [[ "${option:0:1}" == "-" ]];then
-        	if [[ "${option_all[*]}" =~ "${option}" ]];then
-				local opt_char=""
-				if [[ "${option:0:2}" == "--" ]];then
-					opt_char="${option#--}"
-				elif [[ "${option:0:1}" == "-" ]];then
-					opt_char="${option#-}"
-				fi
-
-				local index=$(array_index option_all ${option})
-				while math_is_int "${index}"
-				do
-					array_del option_all ${index}
-					if [[ ! "${option}" =~ "=" ]];then
-						if [[ -z "${shortopts}" ]] || [[ -z "${opt_char}" ]] || string_contain "${shortopts}" "${opt_char}:";then
-							index=$((index + 1))
-							local next="${option_all[${index}]}"
-							if [[ "${next:0:1}" != "-" ]];then
-								array_del option_all ${index}
-							fi
-						fi
-					fi
-					index=$(array_index option_all ${option})
-				done
+		if [[ "${elem}" == "${next_cmd}" ]];then
+			break
+		fi
+		
+		if [ ${sub_found} -gt 0 ];then
+			if [[ "${elem}" =~ "${GBL_SPACE}" ]];then
+				elem=$(string_replace "${elem}" "${GBL_SPACE}" " ")
 			fi
+			printf -- "${elem}\n"
 		fi
     done
 
-    printf -- "${option_all[*]}\n"
     return 0
 }
 
@@ -218,10 +139,10 @@ function para_import
     local -n option_all_ref="$1"
     local -n option_map_ref="$2"
     local -n subcmd_all_ref="$3"
-    local -n subcmd_map_ref="$4"
 	local key value
 
 	_OPTION_ALL_REF=(${option_all_ref[*]})
+
 	unset _OPTION_MAP_REF
 	for key in ${!option_map_ref[*]}
 	do
@@ -230,12 +151,6 @@ function para_import
 	done
 
 	_SUBCMD_ALL_REF=(${subcmd_all_ref[*]})
-	unset _SUBCMD_MAP_REF
-	for key in ${!subcmd_map_ref[*]}
-	do
-		value=${subcmd_map_ref[${key}]}
-		_SUBCMD_MAP_REF[${key}]="${value}"
-	done
 }
 
 function para_debug
@@ -243,7 +158,6 @@ function para_debug
     local -n option_all_ref="${1:-_OPTION_ALL_REF}"
     local -n option_map_ref="${2:-_OPTION_MAP_REF}"
     local -n subcmd_all_ref="${3:-_SUBCMD_ALL_REF}"
-    local -n subcmd_map_ref="${4:-_SUBCMD_MAP_REF}"
 	local idx key
 
     printf "%-15s= ( " "option_all[${#option_all_ref[*]}]"
@@ -262,10 +176,10 @@ function para_debug
     echo
 
     printf "%s\n" "subcmd_all[${subcmd_all_ref[*]}]"
-    for key in ${!subcmd_map_ref[*]} 
+    for key in ${_SUBCMD_ALL_REF[*]}
     do
-		value=${subcmd_map_ref[${key}]}
-        echo "$(printf "Key: %-16s  Value: %s" "${key}" "${value}")"
+		local options=($(get_subcmd_all ${key}))
+		echo "$(printf "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
     done
 }
 

@@ -22,16 +22,16 @@ function clone
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "hr" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "hr" "option_all" "option_map" "subcmd_all" "$@"
 
 	local options=""
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -83,19 +83,19 @@ function log
 	local subcmd="$1"
 	shift 
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "ha:author:c:committer:t:time:" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "ha:author:c:committer:t:time:" "option_all" "option_map" "subcmd_all" "$@"
 
-	if [ ${#subcmd_map[*]} -le 0 ];then
+	if [ ${#option_map[*]} -le 0 ];then
 		return 1
 	fi
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -141,15 +141,15 @@ function add
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -185,15 +185,15 @@ function commit
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -239,15 +239,15 @@ function push
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -297,15 +297,15 @@ function amend
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -351,15 +351,15 @@ function grep
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -407,15 +407,15 @@ function all
 	local subcmd="$1"
 	shift
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -474,15 +474,15 @@ function submodule_add
 	local subcmd="$1"
 	shift 
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -537,15 +537,15 @@ function submodule_del
 	local subcmd="$1"
 	shift 
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -598,15 +598,15 @@ function submodule_update
 	local subcmd="$1"
 	shift 
 
-	local -a option_all=("$@")
+	local -a option_all=()
+	local -A option_map=()
 	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!subcmd_map[*]}
+	for key in ${!option_map[*]}
 	do
-		local value="${subcmd_map[${key}]}"
+		local value="${option_map[${key}]}"
 		case "${key}" in
 			"-h"|"--help")
 				how_use_func "${subcmd}"
@@ -670,12 +670,22 @@ END
 
 func_list=(${!subcmd_func_map[*]})
 SUB_CMD=$(get_subcmd 0)
-SUB_OPTS=$(get_subcmd_all)
 if [ -n "${SUB_CMD}" ];then
     if ! array_have func_list "${SUB_CMD}";then
         echo_erro "unkonw command { ${SUB_CMD} } "
         exit 1
     fi
+
+	SUB_OPTS="${SUB_CMD}"
+	SUB_LIST=($(get_subcmd "0-$"))
+	for subcmd in ${SUB_LIST[*]}
+	do
+		if [ -n "${SUB_OPTS}" ];then
+			SUB_OPTS="${SUB_OPTS} $(get_subcmd_all ${subcmd})"
+		else
+			SUB_OPTS=$(get_subcmd_all ${subcmd})
+		fi
+	done
 else
 	SUB_CMD=$(select_one ${func_list[*]})
 	if [ -z "${SUB_CMD}" ];then
@@ -695,6 +705,7 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
+echo "===${SUB_CMD} ${SUB_OPTS}"
 ${SUB_CMD} ${SUB_OPTS}
 if [ $? -ne 0 ];then
     how_use_func "${SUB_CMD}"

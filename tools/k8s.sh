@@ -244,13 +244,17 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
-OPT_HELP=$(get_subcmd_optval "-h" "--help")
-if math_bool "${OPT_HELP}";then
-    how_use_func "${SUB_CMD}"
-    exit 0
-fi
+SUB_LIST=($(get_subcmd "0-$"))
+for subcmd in ${SUB_LIST[*]}
+do
+	if [ -n "${SUB_OPTS}" ];then
+		SUB_OPTS="${SUB_OPTS} $(get_subcmd_all ${subcmd})"
+	else
+		SUB_OPTS=$(get_subcmd_all ${subcmd})
+	fi
+done
 
-${SUB_CMD} $(get_subcmd_all)
+${SUB_CMD} ${SUB_OPTS}
 if [ $? -ne 0 ];then
     how_use_func "${SUB_CMD}"
 fi

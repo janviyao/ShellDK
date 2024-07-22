@@ -73,136 +73,28 @@ function para_pack
     echo "${cmd}"
 }
 
-function para_fetch_l1
+function para_fetch
 {
     local shortopts="$1"
 
     if ! __var_defined "$2";then
-        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4~N: parameters"
+        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
         return 1
     fi
 
     if ! __var_defined "$3";then
-        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4~N: parameters"
-        return 1
-    fi
-
-    local -n comand_all_ref="$2"
-    local -n option_map_ref="$3"
-    shift 3
-
-    local option=""
-    local subcmd=""
-    local value=""
-
-    while [ $# -gt 0 ]
-    do
-        option=$1
-        if [ -z "${option}" ] || [[ "${option}" == "--" ]];then
-            shift
-            continue
-        fi
-        value=$2
-
-		local value_used=false
-		local with_equal=false
-		if [[ "${option}" =~ "=" ]];then
-			with_equal=true
-            value=$(string_split "${option}" '=' 2)
-            option=$(string_split "${option}" '=' 1)
-            if [[ "${value:0:1}" == "-" ]];then
-                echo_erro "para invalid: ${option}=${value}"
-                return 1
-            fi
-        fi
-
-		local opt_char=""
-        if [[ "${option:0:2}" == "--" ]];then
-			opt_char="${option#--}"
-        elif [[ "${option:0:1}" == "-" ]];then
-			opt_char="${option#-}"
-		fi
-
-		if [[ "${option}" =~ " " ]];then
-			option=$(string_replace "${option}" " " "${GBL_SPACE}")
-		fi
-
-		if [[ "${value}" =~ " " ]];then
-			value=$(string_replace "${value}" " " "${GBL_SPACE}")
-		fi
-
-        echo_debug "para: ${option} ${value}"
-        if [[ "${option:0:2}" == "--" ]];then
-            if [[ -z "${subcmd}" ]];then
-                if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
-                    option_map_ref[${option}]="true"
-                else
-					if [[ -z "${shortopts}" ]] || [[ -z "${opt_char}" ]] ||  [[ "${shortopts}" =~ "${opt_char}:" ]];then
-						value_used=true
-						if [ -n "${option_map_ref[${option}]}" ];then
-							option_map_ref[${option}]="${option_map_ref[${option}]} ${value}"
-						else
-							option_map_ref[${option}]="${value}"
-						fi
-					else
-						option_map_ref[${option}]="true"
-					fi
-                fi
-            fi	
-        elif [[ "${option:0:1}" == "-" ]];then
-            if [[ -z "${subcmd}" ]];then
-                if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
-                    option_map_ref[${option}]="true"
-                else
-					if [[ -z "${shortopts}" ]] || [[ -z "${opt_char}" ]] || [[ "${shortopts}" =~ "${opt_char}:" ]];then
-						value_used=true
-						if [ -n "${option_map_ref[${option}]}" ];then
-							option_map_ref[${option}]="${option_map_ref[${option}]} ${value}"
-						else
-							option_map_ref[${option}]="${value}"
-						fi
-					else
-						option_map_ref[${option}]="true"
-					fi
-                fi
-            fi
-		else
-			comand_all_ref[${#comand_all_ref[*]}]="${option}"
-		fi
-
-		if math_bool "${value_used}";then
-			if ! math_bool "${with_equal}";then
-				shift
-			fi
-		fi
-        shift
-    done
-
-    return 0
-}
-
-function para_fetch_l2
-{
-    local shortopts="$1"
-
-    if ! __var_defined "$2";then
-        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: map variable reference\n\$3: array variable reference\n\$4: map variable reference\n\$5~N: parameters"
-        return 1
-    fi
-
-    if ! __var_defined "$3";then
-        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: map variable reference\n\$3: array variable reference\n\$4: map variable reference\n\$5~N: parameters"
+        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
         return 1
     fi
 
     if ! __var_defined "$4";then
-        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: map variable reference\n\$3: array variable reference\n\$4: map variable reference\n\$5~N: parameters"
+        echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
         return 1
     fi
 
-    local -n option_map_ref="$2"
-    local -n subcmd_all_ref="$3"
-    local -n subcmd_map_ref="$4"
+    local -n option_all_ref="$2"
+    local -n option_map_ref="$3"
+    local -n subcmd_all_ref="$4"
     shift 4
 
     local option=""
@@ -259,7 +151,15 @@ function para_fetch_l2
 							option_map_ref[${option}]="${value}"
 						fi
 					else
-						option_map_ref[${option}]="true"
+						if math_bool "${with_equal}";then
+							if [ -n "${option_map_ref[${option}]}" ];then
+								option_map_ref[${option}]="${option_map_ref[${option}]} ${value}"
+							else
+								option_map_ref[${option}]="${value}"
+							fi
+						else
+							option_map_ref[${option}]="true"
+						fi
 					fi
                 fi
             fi	
@@ -276,46 +176,31 @@ function para_fetch_l2
 							option_map_ref[${option}]="${value}"
 						fi
 					else
-						option_map_ref[${option}]="true"
+						if math_bool "${with_equal}";then
+							if [ -n "${option_map_ref[${option}]}" ];then
+								option_map_ref[${option}]="${option_map_ref[${option}]} ${value}"
+							else
+								option_map_ref[${option}]="${value}"
+							fi
+						else
+							option_map_ref[${option}]="true"
+						fi
 					fi
                 fi
             fi
 		else
-			if [[ -z "${subcmd}" ]];then
-				subcmd=${option}
-			fi
+			subcmd_all_ref[${#subcmd_all_ref[*]}]="${option}"
 		fi
 
-        if [[ -n "${subcmd}" ]];then
-			subcmd_all_ref[${#subcmd_all_ref[*]}]="${option}"
-            if [[ "${option:0:1}" == "-" ]];then
-                if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
-					subcmd_map_ref[${option}]="true"
-				else
-					if [[ -z "${shortopts}" ]] || [[ -z "${opt_char}" ]] || [[ "${shortopts}" =~ "${opt_char}:" ]];then
-						value_used=true
-						subcmd_all_ref[${#subcmd_all_ref[*]}]="${value}"
-						if [ -n "${subcmd_map_ref[${option}]}" ];then
-							subcmd_map_ref[${option}]="${subcmd_map_ref[${option}]} ${value}"
-						else
-							subcmd_map_ref[${option}]="${value}"
-						fi
-					else
-						subcmd_map_ref[${option}]="true"
-					fi
-				fi
-			else
-				if [ -n "${subcmd_map_ref[${subcmd}]}" ];then
-					subcmd_map_ref[${subcmd}]="${subcmd_map_ref[${subcmd}]} ${option}"
-				else
-					subcmd_map_ref[${subcmd}]="${option}"
-				fi
-            fi
-        fi
-
+		option_all_ref[${#option_all_ref[*]}]="${option}"
 		if math_bool "${value_used}";then
 			if ! math_bool "${with_equal}";then
+				option_all_ref[${#option_all_ref[*]}]="${value}"
 				shift
+			fi
+		else
+			if math_bool "${with_equal}";then
+				option_all_ref[${#option_all_ref[*]}]="${value}"
 			fi
 		fi
         shift

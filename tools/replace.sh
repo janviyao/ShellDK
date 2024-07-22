@@ -1,5 +1,5 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/paraparser.sh "hr" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "l1" "hr" "$@"
 
 function how_use
 {
