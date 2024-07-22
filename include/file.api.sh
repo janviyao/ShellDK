@@ -325,8 +325,8 @@ function file_del
     if ! have_file "${xfile}";then
         echo_erro "file lost: ${xfile}"
         return 1
-    fi 
-    
+    fi
+
     if [ -z "${string}" ];then
         return 1
     fi

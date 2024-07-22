@@ -1,5 +1,5 @@
 #!/bin/bash
-. $MY_VIM_DIR/tools/paraparser.sh
+source $MY_VIM_DIR/tools/paraparser.sh "hr" "$@"
 
 function how_use
 {
@@ -30,7 +30,7 @@ function how_use
 END
 }
 
-sub_opts=($(get_subcmd '*'))
+sub_opts=($(get_subcmd '0'))
 if [ ${#sub_opts[*]} -lt 2 ];then
     how_use
     exit 1
@@ -45,9 +45,7 @@ fi
 SRC_REGEX=$(get_optval "-r" "--src-regex")
 OLD_STR=$(get_subcmd 0)
 NEW_STR=$(get_subcmd 1)
-del_subcmd 0
-del_subcmd 1
-replace_list=($(get_subcmd '*'))
+replace_list=($(get_subcmd '2-'))
 
 CUR_DIR=$(pwd)
 if [ ${#replace_list[*]} -eq 0 ];then
@@ -100,7 +98,7 @@ do
         echo_erro "invalid: ${xfile}"
         continue
     fi
-    
+
     do_replace "${xfile}" "${OLD_STR}" "${NEW_STR}" "${SRC_REGEX}"
 done
 cd ${CUR_DIR}

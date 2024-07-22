@@ -1,6 +1,6 @@
 #!/bin/bash
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
-source $MY_VIM_DIR/tools/paraparser.sh
+source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 source ${TEST_SUIT_ENV}
 
 g_read_pct=$(get_optval "-r" "--read-percent")
@@ -9,7 +9,7 @@ g_read_pct=$(get_optval "-r" "--read-percent")
 g_return_file=$(get_optval "-o" "--output")
 have_file "${g_return_file}" || { echo_erro "invalid return file: ${g_return_file}"; exit 1; } 
 
-g_output_arr=($(get_subcmd '*'))
+g_output_arr=($(get_subcmd '0-'))
 
 g_start_time=""
 g_run_time=0

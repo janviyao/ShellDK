@@ -22,13 +22,13 @@ function regex_2str
         if [[ ${regex} =~ ${char} ]];then
             #eval "result=${result//${char}/\\${char}}"
             if [[ ${char} == '\{' ]];then
-                result=$(echo "${result}" | sed "s/{/\\\\${char}/g" )
+                result=$(sed "s/{/\\\\${char}/g" <<< "${result}")
             elif [[ ${char} == '\(' ]];then
-                result=$(echo "${result}" | sed "s/(/\\\\${char}/g" )
+                result=$(sed "s/(/\\\\${char}/g" <<< "${result}")
             elif [[ ${char} == '\)' ]];then
-                result=$(echo "${result}" | sed "s/)/\\\\${char}/g" )
+                result=$(sed "s/)/\\\\${char}/g" <<< "${result}")
             else
-                result=$(echo "${result}" | sed "s/${char}/\\\\${char}/g" )
+                result=$(sed "s/${char}/\\\\${char}/g" <<< "${result}")
             fi
 
             if [ $? -ne 0 ];then
@@ -39,7 +39,7 @@ function regex_2str
         fi
     done
 
-    echo "${result}" 
+    printf -- "${result}\n" 
     return 0
 }
 
@@ -59,13 +59,13 @@ function regex_perl2basic
     do
         if [[ ${regex} =~ ${char} ]];then
             if [[ ${char} == '\{' ]];then
-                result=$(echo "${result}" | sed "s/{/\\\\${char}/g" )
+                result=$(sed "s/{/\\\\${char}/g" <<< "${result}")
             elif [[ ${char} == '\(' ]];then
-                result=$(echo "${result}" | sed "s/(/\\\\${char}/g" )
+                result=$(sed "s/(/\\\\${char}/g" <<< "${result}")
             elif [[ ${char} == '\)' ]];then
-                result=$(echo "${result}" | sed "s/)/\\\\${char}/g" )
+                result=$(sed "s/)/\\\\${char}/g" <<< "${result}")
             else
-                result=$(echo "${result}" | sed "s/${char}/\\\\${char}/g" )
+                result=$(sed "s/${char}/\\\\${char}/g" <<< "${result}")
             fi
 
             if [ $? -ne 0 ];then
@@ -75,7 +75,7 @@ function regex_perl2basic
         fi
     done
 
-    echo "${result}" 
+    printf -- "${result}\n" 
     return 0
 }
 
@@ -95,17 +95,17 @@ function regex_perl2extended
     do
         if [[ ${regex} =~ ${char} ]];then
             if [[ ${char} == '\\d' ]];then
-                result=$(echo "${result}" | sed "s/${char}/[0-9]/g" )
+                result=$(sed "s/${char}/[0-9]/g" <<< "${result}")
             elif [[ ${char} == '\\D' ]];then
-                result=$(echo "${result}" | sed "s/${char}/[^0-9]/g" )
+                result=$(sed "s/${char}/[^0-9]/g" <<< "${result}")
             elif [[ ${char} == '\\w' ]];then
-                result=$(echo "${result}" | sed "s/${char}/[0-9a-zA-Z_]/g" )
+                result=$(sed "s/${char}/[0-9a-zA-Z_]/g" <<< "${result}")
             elif [[ ${char} == '\\W' ]];then
-                result=$(echo "${result}" | sed "s/${char}/[^0-9a-zA-Z_]/g" )
+                result=$(sed "s/${char}/[^0-9a-zA-Z_]/g" <<< "${result}")
             elif [[ ${char} == '\\s' ]];then
-                result=$(echo "${result}" | sed "s/${char}/[ \\\\t]/g" )
+                result=$(sed "s/${char}/[ \\\\t]/g" <<< "${result}")
             elif [[ ${char} == '\\S' ]];then
-                result=$(echo "${result}" | sed "s/${char}/[^ \\\\t]/g" )
+                result=$(sed "s/${char}/[^ \\\\t]/g" <<< "${result}")
             fi
 
             if [ $? -ne 0 ];then
@@ -115,7 +115,7 @@ function regex_perl2extended
         fi
     done
 
-    echo "${result}" 
+    printf -- "${result}\n" 
     return 0
 }
 
@@ -131,7 +131,7 @@ function match_regex
 
     [ -z "${regstr}" ] && return 1 
 
-    if echo "${string}" | grep -P "${regstr}" &> /dev/null;then
+    if grep -P "${regstr}" <<< "${string}" &> /dev/null;then
         return 0
     else
         return 1
@@ -162,7 +162,7 @@ function string_char
 
     math_is_int "${posstr}" || { return 1; }
 
-    echo "${string:${posstr}:1}"
+    printf -- "${string:${posstr}:1}\n"
     return 0
 }
 
@@ -182,7 +182,7 @@ function string_contain
     fi
 
     if [ -n "${separator}" ];then
-        local column_nr=$(echo "${string}" | awk -F "${separator}" "{ print NF }")
+        local column_nr=$(awk -F "${separator}" "{ print NF }" <<< "${string}")
         local index=1
         for ((; index<=column_nr; index++))
         do
@@ -231,7 +231,7 @@ function string_split
             local -a sub_array
             while true
             do
-                substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index}}")
+                substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
                 if [ -z "${substr}" ];then
                     break
                 fi
@@ -245,23 +245,23 @@ function string_split
             done
             substr="${sub_array[*]}"
         else
-            substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${sub_index}}")
+            substr=$(awk -F "${separator}" "{ print \$${sub_index}}" <<< "${string}")
         fi
     else
         if [[ "${sub_index}" =~ '-' ]];then
-            local index_s=$(echo "${sub_index}" | awk -F '-' '{ print $1 }')
+            local index_s=$(awk -F '-' '{ print $1 }' <<< "${sub_index}")
             if ! math_is_int "${index_s}";then
-                echo "${string}"
+                printf -- "${string}\n"
                 return 1
             fi
-            local index_e=$(echo "${sub_index}" | awk -F '-' '{ print $2 }')
+            local index_e=$(awk -F '-' '{ print $2 }' <<< "${sub_index}")
 
             local -a sub_array
             if math_is_int "${index_e}";then
                 local index=0
                 for ((index=index_s; index<=index_e; index++))
                 do
-                    substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index}}")
+                    substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
                     if [[ "${substr}" =~ ' ' ]];then
                         substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
                     fi
@@ -270,7 +270,7 @@ function string_split
             else
                 while true
                 do
-                    substr=$(echo "${string}" | awk -F "${separator}" "{ print \$${index_s}}")
+                    substr=$(awk -F "${separator}" "{ print \$${index_s}}" <<< "${string}")
                     if [ -z "${substr}" ];then
                         break
                     fi
@@ -284,13 +284,13 @@ function string_split
             fi
             substr="${sub_array[*]}"
         else
-            echo "${string}"
+            printf -- "${string}\n"
             return 1
         fi
     fi
 
     #echo_file "${LOG_DEBUG}" "SUB [${substr}] [$@]"
-    echo "${substr}"
+    printf -- "${substr}\n"
     return 0
 }
 
@@ -304,10 +304,9 @@ function string_start
         return 1
     fi
 
-    math_is_int "${length}" || { echo "${string}"; return 1; }
+    math_is_int "${length}" || { printf -- "${string}\n"; return 1; }
 
-    #local chars="$(echo "${string}" | cut -c 1-${length})"
-    echo "${string:0:${length}}"
+    printf -- "${string:0:${length}}\n"
     return 0
 }
 
@@ -321,10 +320,9 @@ function string_end
         return 1
     fi
 
-    math_is_int "${length}" || { echo "${string}"; return 1; }
+    math_is_int "${length}" || { printf -- "${string}\n"; return 1; }
 
-    #local chars="`echo "${string}" | rev | cut -c 1-${length} | rev`"
-    echo "${string:0-${length}:${length}}"
+    printf -- "${string:0-${length}:${length}}\n"
     return 0
 }
 
@@ -339,11 +337,10 @@ function string_sub
         return 1
     fi
 
-    math_is_int "${start}" || { echo "${string}"; return 1; }
-    math_is_int "${length}" || { echo "${string:${start}}"; return 1; }
+    math_is_int "${start}" || { printf -- "${string}\n"; return 1; }
+    math_is_int "${length}" || { printf -- "${string:${start}}\n"; return 1; }
 
-    #local chars="`echo "${string}" | cut -c 1-${length}`"
-    echo "${string:${start}:${length}}"
+    printf -- "${string:${start}:${length}}\n"
     return 0
 }
 
@@ -357,14 +354,14 @@ function string_regex
         return 1
     fi
 
-    [ -z "${regstr}" ] && { echo "${string}"; return 1; } 
-
-    string=$(echo "${string}" | grep -P "${regstr}" -o)
+    [ -z "${regstr}" ] && { printf -- "${string}\n"; return 1; } 
+	
+	local result
+    result=$(grep -P "${regstr}" -o <<< "${string}")
     if [ $? -eq 0 ];then
-        echo "${string}"
+        printf -- "${result}\n"
         return 0
     else
-        echo "${string}"
         return 1
     fi
 }
@@ -439,7 +436,7 @@ function string_same
         let index--
         if [ ${index} -gt 0 ];then
             local same=$(string_sub "${string}" 0 ${index})
-            echo "${same}"
+            printf -- "${same}\n"
             return 0
         fi
     fi
@@ -459,7 +456,7 @@ function string_same
         if [ ${index} -gt 0 ];then
             let index=${#string}-${index} 
             local same=$(string_sub "${string}" ${index} ${#string})
-            echo "${same}"
+            printf -- "${same}\n"
             return 0
         fi
     fi
@@ -480,12 +477,12 @@ function string_insert
 
     if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "insert index { ${posstr} } invalid"
-        echo "${string}"
+        printf -- "${string}\n"
         return 1
     fi
 
     string="${string:0:posstr}${substr}${string:posstr}"
-    echo "${string}"
+    printf -- "${string}\n"
     return 0
 }
 
@@ -509,16 +506,21 @@ function string_trim
         substr=$(regex_2str "${substr}")
     fi
 
+	if [ -z "${substr}" ];then
+		printf -- "${string}\n"
+		return 0
+	fi
+
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then 
         if [ -n "${substr}" ];then
             local newsub=$(string_regex "${string}" "^(${substr})+")
             if [ -n "${newsub}" ]; then
-                #local sublen=${#substr}
-                #let sublen++
-                #local new_str="`echo "${string}" | cut -c ${sublen}-`" 
                 newsub=$(regex_2str "${newsub}")
                 string="${string#${newsub}}"
-            fi
+			else
+				printf -- "${string}\n"
+				return 0
+			fi
         else
             string="${string#?}"
         fi
@@ -528,22 +530,22 @@ function string_trim
         if [ -n "${substr}" ];then
             local newsub=$(string_regex "${string}" "(${substr})+$")
             if [ -n "${newsub}" ]; then
-                #local total=${#string}
-                #local sublen=${#substr}
-                #local new_str="`echo "${string}" | cut -c 1-$((total-sublen))`" 
                 if [[ "${string}" =~ '\*' ]];then
                     string=$(string_replace "${string}" '\*' '\*' true)
                 fi
 
                 newsub=$(regex_2str "${newsub}")
                 string="${string%${newsub}}"
-            fi
+			else
+				printf -- "${string}\n"
+				return 0
+			fi
         else
             string="${string%?}"
         fi
     fi
 
-    echo "${string}"
+    printf -- "${string}\n"
     return 0
 }
 
@@ -560,7 +562,7 @@ function string_replace
     fi
 
     if [ -z "${oldstr}" ];then
-        echo "${string}"
+        printf -- "${string}\n"
         return 1
     fi
     
@@ -577,11 +579,11 @@ function string_replace
             fi
         fi
         
-        echo $(echo "${string}" | perl -pe "s/${oldstr}/${newstr}/g")
+        printf -- "$(perl -pe "s/${oldstr}/${newstr}/g" <<< "${string}")\n"
     else
         #donot use (), because it fork child shell
         oldstr=$(regex_2str "${oldstr}") 
-        echo "${string//${oldstr}/${newstr}}"
+        printf -- "${string//${oldstr}/${newstr}}\n"
     fi
 
     return 0

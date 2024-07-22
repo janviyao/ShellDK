@@ -396,6 +396,8 @@ function account_check
             export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_USER_DIR}/.${usr_name})")
             if ! check_passwd "${USR_NAME}" "${USR_PASSWORD}";then
                 export USR_PASSWORD=""
+                rm -f ${GBL_USER_DIR}/.${usr_name}
+                rm -f ${GBL_USER_DIR}/.askpass.sh
             fi
         fi
     fi
@@ -410,6 +412,15 @@ function account_check
 
             local input_val=$(input_prompt "" "input password" "")
             export USR_PASSWORD="${input_val}"
+
+            while ! check_passwd "${USR_NAME}" "${USR_PASSWORD}"
+            do
+                local input_val=$(input_prompt "" "input username" "${USR_NAME}")
+                export USR_NAME=${input_val:-${USR_NAME}}
+
+                local input_val=$(input_prompt "" "input password" "")
+                export USR_PASSWORD="${input_val}"
+            done
         else
             retval=1
         fi
@@ -464,7 +475,7 @@ function sudo_it
             fi
 
             if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "(${cmd}) &> /dev/tty" &> /dev/null
+                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
                 return $?
             else
                 sudo bash -c "${cmd}"

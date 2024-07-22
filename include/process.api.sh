@@ -48,6 +48,20 @@ function process_wait
     return 0
 }
 
+function process_run
+{
+	local cmd_str="$@"
+
+	echo_info "${cmd_str}"
+	eval "${cmd_str}" 
+	local retcode=$?
+	if [ ${retcode} -ne 0 ];then
+		echo_erro "cmd errono: ${retcode}"
+	fi
+
+    return ${retcode}
+}
+
 function process_runwait
 {
     local errfile="$(file_temp)"

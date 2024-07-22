@@ -1,6 +1,6 @@
 #!/bin/bash
 echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
-. $MY_VIM_DIR/tools/paraparser.sh
+source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 
 function how_use
 {
@@ -13,7 +13,7 @@ function how_use
     echo "============================================="
 }
 
-if [ -z "$(get_subcmd '*')" ];then
+if [ -z "$(get_subcmd '0')" ];then
     how_use
     exit 1
 fi
@@ -25,6 +25,7 @@ if [ ! -d ${SRC_DIR} ]; then
 fi
 SRC_DIR=$(real_path ${SRC_DIR})
 
+regex_index=0
 DES_DIR="$(get_subcmd 1)"
 if [ -n "${DES_DIR}" ];then
     if [ ! -d ${DES_DIR} ]; then
@@ -32,27 +33,18 @@ if [ -n "${DES_DIR}" ];then
         exit 1
     fi
     
-    # remove the first two item
-    del_subcmd 0
-    del_subcmd 1
+	regex_index=2
 else
     suffix=$(date '+%Y%m%d-%H%M%S')
     DES_DIR=~/${suffix}
 
-    if [ ${#paras_list[*]} -ge 2 ];then
-        # remove the first two item
-        del_subcmd 0
-        del_subcmd 1
-    else
-        # remove the first item
-        del_subcmd 0
-    fi
+	regex_index=1
 fi
 DES_DIR=$(real_path ${DES_DIR})
 
 BAK_CONF=$(pwd)/.bak.conf
-EXCLUDE_FILS=($(get_subcmd '*') "\w+\.d" "\w+\.o" "\w+\.gcno")
-EXCLUDE_DIRS=($(get_subcmd '*') "build")
+EXCLUDE_FILS=($(get_subcmd "${regex_index}-") "\w+\.d" "\w+\.o" "\w+\.gcno")
+EXCLUDE_DIRS=($(get_subcmd "${regex_index}-")) "build")
 
 function common_backup
 {

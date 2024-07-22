@@ -6,7 +6,7 @@ if [ $? != 0 ]; then
 fi
 eval set -- "$OPTS"
 
-. $MY_VIM_DIR/tools/paraparser.sh
+source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 declare -A func_map
 
 function list_pod
@@ -244,13 +244,13 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
-OPT_HELP=$(get_subcmd_optval "${SUB_CMD}" "-h" "--help")
+OPT_HELP=$(get_subcmd_optval "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use_func "${SUB_CMD}"
     exit 0
 fi
 
-${SUB_CMD} $(get_subcmd_opts ${SUB_CMD})
+${SUB_CMD} $(get_subcmd_all)
 if [ $? -ne 0 ];then
     how_use_func "${SUB_CMD}"
 fi

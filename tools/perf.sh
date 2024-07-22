@@ -46,7 +46,7 @@ function acquire_result
     if [ -z "${val_str}" ];then
         val_str="$(pwd)/perf.data"
     fi
-    
+
     echo "${val_str}"
 }
 

@@ -7,7 +7,7 @@ export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc
-. ${MY_VIM_DIR}/tools/paraparser.sh
+source ${MY_VIM_DIR}/tools/paraparser.sh "nrcfo:" "$@"
 
 if ! have_admin; then
     if ! account_check "${MY_NAME}";then
@@ -61,7 +61,7 @@ fi
 NEED_OPT=$(get_optval "-o" "--op")
 #NEED_OP="${NEED_OPT:?'Please specify -o option'}"
 if [ -z "${NEED_OPT}" ];then
-    if [ -n "$(get_subcmd '*')" ];then
+    if [ -n "$(get_subcmd '0')" ];then
         NEED_OPT="spec"
     fi
 fi
@@ -99,6 +99,7 @@ commandMap["${CMD_PRE}system"]="${MY_VIM_DIR}/tools/system.sh"
 commandMap["${CMD_PRE}ftrace"]="${MY_VIM_DIR}/tools/ftrace.sh"
 commandMap["${CMD_PRE}bpftrace"]="${MY_VIM_DIR}/tools/bpftrace/bpftrace.sh"
 commandMap["${CMD_PRE}tmux"]="${MY_VIM_DIR}/tools/tmux.sh"
+commandMap["${CMD_PRE}git"]="${MY_VIM_DIR}/tools/git.sh"
 commandMap["${CMD_PRE}output"]="${MY_VIM_DIR}/tools/cmd_output.sh"
 commandMap["${CMD_PRE}collect"]="${MY_VIM_DIR}/tools/collect.sh"
 commandMap["${CMD_PRE}scplogin"]="${MY_VIM_DIR}/tools/scplogin.sh"
@@ -587,7 +588,7 @@ if ! math_bool "${REMOTE_INST}"; then
             while test -n "${func}"
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
-                ${func} $(get_subcmd '*')
+                ${func} $(get_subcmd '1-')
                 echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
                 let func_index++
                 func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")

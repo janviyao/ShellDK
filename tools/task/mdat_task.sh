@@ -474,7 +474,7 @@ function _mdat_thread_main
             local _index_=$(array_index _val_arr_ "${_xval_}") 
 
             echo_debug "unset val: [${_val_arr_[*]}] index${_index_}=${_val_arr_[${_index_}]}"
-            if [ ${_index_} -ge 0 ];then
+            if [[ -n "${_index_}" ]] && [[ ${_index_} -ge 0 ]];then
                 unset _val_arr_[${_index_}]
             fi
 

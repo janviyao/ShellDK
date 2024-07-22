@@ -1,11 +1,11 @@
 #!/bin/bash
-. $MY_VIM_DIR/tools/paraparser.sh
+source $MY_VIM_DIR/tools/paraparser.sh "h" "$@"
 
 function how_use
 {
     local script_name=$(path2fname $0)
 
-	cat <<-END >&2
+    cat <<-END >&2
     ============================== Usage ==============================
     ${script_name} [options] <command [sub-parameter]>
     DESCRIPTION
@@ -31,7 +31,7 @@ function how_use
 END
 }
 
-if [ -z "$(get_subcmd '*')" ];then
+if [ -z "$(get_subcmd '0')" ];then
     how_use
     exit 1
 fi
