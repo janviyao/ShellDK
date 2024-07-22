@@ -278,64 +278,6 @@ function push
     return ${retcode}
 }
 
-subcmd_func_map['all']=$(cat << EOF
-mygit all ["messages"]
-
-DESCRIPTION
-	1) add the changes to the index
-	2) record the changes of then index into local repo
-	3) push the changes of local repo into remote repo
-
-OPTIONS
-    -h|--help		          # show this message
-
-EXAMPLES
-    mygit all "fix: xxx"      # record current changes of then index into local repo
-EOF
-)
-
-function all
-{
-	local subcmd="$1"
-	shift
-
-	local -a option_all=("$@")
-	local -a subcmd_all=()
-	local -A subcmd_map=()
-	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
-
-	local key
-	for key in ${!subcmd_map[*]}
-	do
-		local value="${subcmd_map[${key}]}"
-		case "${key}" in
-			"-h"|"--help")
-				how_use_func "${subcmd}"
-				return 0
-				;;
-			*)
-				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
-				;;
-		esac
-	done
-
-	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
-	fi
-	
-	if [ -n "${msg}" ];then
-		git add -A
-		git commit -s -m "${msg}"
-		git push origin $(git symbolic-ref --short -q HEAD)
-	else
-		return 1
-	fi
-
-    return $?
-}
-
 subcmd_func_map['amend']=$(cat << EOF
 mygit amend
 
@@ -437,6 +379,75 @@ function grep
 	
 	if [ -n "${pattern}" ];then
 		git log --grep="${pattern}" --oneline
+	else
+		return 1
+	fi
+
+    return $?
+}
+
+subcmd_func_map['all']=$(cat << EOF
+mygit all ["messages"]
+
+DESCRIPTION
+	1) add the changes to the index
+	2) record the changes of then index into local repo
+	3) push the changes of local repo into remote repo
+
+OPTIONS
+    -h|--help		          # show this message
+
+EXAMPLES
+    mygit all "fix: xxx"      # record current changes of then index into local repo
+EOF
+)
+
+function all
+{
+	local subcmd="$1"
+	shift
+
+	local -a option_all=("$@")
+	local -a subcmd_all=()
+	local -A subcmd_map=()
+	para_fetch_l1 "h" "subcmd_all" "subcmd_map" ${option_all[*]}
+
+	local key
+	for key in ${!subcmd_map[*]}
+	do
+		local value="${subcmd_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local msg="${subcmd_all[*]}"
+	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
+		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
+	fi
+	
+	if [ -n "${msg}" ];then
+		git add -A
+		if [ $? -ne 0 ];then
+			echo_erro "git add -A"
+			return 1
+		fi
+
+		git commit -s -m "${msg}"
+		if [ $? -ne 0 ];then
+			echo_erro "git commit -s -m '${msg}'"
+			return 1
+		fi
+
+		local cur_branch=$(git symbolic-ref --short -q HEAD)
+		git push origin ${cur_branch}
 	else
 		return 1
 	fi
