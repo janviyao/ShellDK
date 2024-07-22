@@ -27,11 +27,15 @@ function get_optval
 {
 	local options=("$@")
 
-    local key
-    for key in ${options[*]}
+    local opt
+    for opt in ${options[*]}
     do
-        local value=${_OPTION_MAP_REF[${key}]}
-        echo_debug "key: ${key} value: ${value}"
+		if [[ "${opt}" =~ " " ]];then
+			opt=$(string_replace "${opt}" " " "${GBL_SPACE}")
+		fi
+
+        local value=${_OPTION_MAP_REF[${opt}]}
+        #echo_debug "key: ${opt} value: ${value}"
         if [ -n "${value}" ];then
 			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
 				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
@@ -98,7 +102,11 @@ function get_subcmd
 function get_subcmd_all
 {
 	local subcmd="$1"
-	
+
+	if [[ "${subcmd}" =~ " " ]];then
+		subcmd=$(string_replace "${subcmd}" " " "${GBL_SPACE}")
+	fi
+
 	local next_cmd=""
 	local index total=${#_SUBCMD_ALL_REF[*]}
 	for ((index= 0; index < ${total}; index++))

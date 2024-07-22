@@ -676,14 +676,14 @@ if [ -n "${SUB_CMD}" ];then
         exit 1
     fi
 
-	SUB_OPTS="${SUB_CMD}"
 	SUB_LIST=($(get_subcmd "0-$"))
 	for subcmd in ${SUB_LIST[*]}
 	do
+		sub_all=($(get_subcmd_all ${subcmd}))
 		if [ -n "${SUB_OPTS}" ];then
-			SUB_OPTS="${SUB_OPTS} $(get_subcmd_all ${subcmd})"
+			SUB_OPTS="${SUB_OPTS} ${subcmd} ${sub_all[*]}"
 		else
-			SUB_OPTS=$(get_subcmd_all ${subcmd})
+			SUB_OPTS="${subcmd} ${sub_all[*]}"
 		fi
 	done
 else
