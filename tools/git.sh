@@ -676,14 +676,20 @@ if [ -n "${SUB_CMD}" ];then
         exit 1
     fi
 
+	SUB_ALL=($(get_subcmd_all "${subcmd}"))
+	SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
 	SUB_LIST=($(get_subcmd "0-$"))
 	for subcmd in ${SUB_LIST[*]}
 	do
-		sub_all=($(get_subcmd_all ${subcmd}))
+		if [ "${subcmd}" == "${SUB_CMD}" ];then
+			continue
+		fi
+
+		SUB_ALL=($(get_subcmd_all "${subcmd}"))
 		if [ -n "${SUB_OPTS}" ];then
-			SUB_OPTS="${SUB_OPTS} ${subcmd} ${sub_all[*]}"
+			SUB_OPTS="${SUB_OPTS} ${subcmd} ${SUB_ALL[*]}"
 		else
-			SUB_OPTS="${subcmd} ${sub_all[*]}"
+			SUB_OPTS="${subcmd} ${SUB_ALL[*]}"
 		fi
 	done
 else
@@ -705,7 +711,6 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
-echo "===${SUB_CMD} ${SUB_OPTS}"
 ${SUB_CMD} ${SUB_OPTS}
 if [ $? -ne 0 ];then
     how_use_func "${SUB_CMD}"

@@ -244,13 +244,20 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
+SUB_ALL=($(get_subcmd_all "${subcmd}"))
+SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
 SUB_LIST=($(get_subcmd "0-$"))
 for subcmd in ${SUB_LIST[*]}
 do
+	if [ "${subcmd}" == "${SUB_CMD}" ];then
+		continue
+	fi
+
+	SUB_ALL=($(get_subcmd_all "${subcmd}"))
 	if [ -n "${SUB_OPTS}" ];then
-		SUB_OPTS="${SUB_OPTS} $(get_subcmd_all ${subcmd})"
+		SUB_OPTS="${SUB_OPTS} ${subcmd} ${SUB_ALL[*]}"
 	else
-		SUB_OPTS=$(get_subcmd_all ${subcmd})
+		SUB_OPTS="${subcmd} ${SUB_ALL[*]}"
 	fi
 done
 
