@@ -668,10 +668,10 @@ END
     done
 }
 
-func_list=(${!subcmd_func_map[*]})
+FUNC_LIST=(${!subcmd_func_map[*]})
 SUB_CMD=$(get_subcmd 0)
 if [ -n "${SUB_CMD}" ];then
-    if ! array_have func_list "${SUB_CMD}";then
+    if ! array_have FUNC_LIST "${SUB_CMD}";then
         echo_erro "unkonw command { ${SUB_CMD} } "
         exit 1
     fi
@@ -679,21 +679,21 @@ if [ -n "${SUB_CMD}" ];then
 	SUB_ALL=($(get_subcmd_all "${subcmd}"))
 	SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
 	SUB_LIST=($(get_subcmd "0-$"))
-	for subcmd in ${SUB_LIST[*]}
+	for next_cmd in ${SUB_LIST[*]}
 	do
-		if [ "${subcmd}" == "${SUB_CMD}" ];then
+		if [ "${next_cmd}" == "${SUB_CMD}" ];then
 			continue
 		fi
 
-		SUB_ALL=($(get_subcmd_all "${subcmd}"))
+		SUB_ALL=($(get_subcmd_all "${next_cmd}"))
 		if [ -n "${SUB_OPTS}" ];then
-			SUB_OPTS="${SUB_OPTS} ${subcmd} ${SUB_ALL[*]}"
+			SUB_OPTS="${SUB_OPTS} ${next_cmd} ${SUB_ALL[*]}"
 		else
-			SUB_OPTS="${subcmd} ${SUB_ALL[*]}"
+			SUB_OPTS="${next_cmd} ${SUB_ALL[*]}"
 		fi
 	done
 else
-	SUB_CMD=$(select_one ${func_list[*]})
+	SUB_CMD=$(select_one ${FUNC_LIST[*]})
 	if [ -z "${SUB_CMD}" ];then
 		how_use_tool
 		exit 1

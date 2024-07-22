@@ -247,17 +247,17 @@ fi
 SUB_ALL=($(get_subcmd_all "${subcmd}"))
 SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
 SUB_LIST=($(get_subcmd "0-$"))
-for subcmd in ${SUB_LIST[*]}
+for next_cmd in ${SUB_LIST[*]}
 do
-	if [ "${subcmd}" == "${SUB_CMD}" ];then
+	if [ "${next_cmd}" == "${SUB_CMD}" ];then
 		continue
 	fi
 
-	SUB_ALL=($(get_subcmd_all "${subcmd}"))
+	SUB_ALL=($(get_subcmd_all "${next_cmd}"))
 	if [ -n "${SUB_OPTS}" ];then
-		SUB_OPTS="${SUB_OPTS} ${subcmd} ${SUB_ALL[*]}"
+		SUB_OPTS="${SUB_OPTS} ${next_cmd} ${SUB_ALL[*]}"
 	else
-		SUB_OPTS="${subcmd} ${SUB_ALL[*]}"
+		SUB_OPTS="${next_cmd} ${SUB_ALL[*]}"
 	fi
 done
 
