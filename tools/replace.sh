@@ -1,5 +1,5 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/paraparser.sh "l1" "hr" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "hr" "$@"
 
 function how_use
 {
@@ -30,8 +30,8 @@ function how_use
 END
 }
 
-sub_opts=($(get_subcmd '0'))
-if [ ${#sub_opts[*]} -lt 2 ];then
+SUB_LIST=($(get_subcmd '0-$'))
+if [ ${#SUB_LIST[*]} -lt 2 ];then
     how_use
     exit 1
 fi
@@ -45,14 +45,14 @@ fi
 SRC_REGEX=$(get_optval "-r" "--src-regex")
 OLD_STR=$(get_subcmd 0)
 NEW_STR=$(get_subcmd 1)
-replace_list=($(get_subcmd '2-'))
+FILE_LIST=($(get_subcmd '2-'))
 
 CUR_DIR=$(pwd)
-if [ ${#replace_list[*]} -eq 0 ];then
+if [ ${#FILE_LIST[*]} -eq 0 ];then
     echo_warn "WARNNING ......"
     xselect=$(input_prompt "" "check whether to replace { ${CUR_DIR} } all files ? (yes/no)" "yes")
     if math_bool "${xselect}";then
-        replace_list=($(efind ${CUR_DIR} ".*" -maxdepth 1))
+        FILE_LIST=($(efind ${CUR_DIR} ".*" -maxdepth 1))
     else
         exit 0
     fi
@@ -92,7 +92,7 @@ function do_replace
     done
 }
 
-for xfile in ${replace_list[*]}
+for xfile in ${FILE_LIST[*]}
 do
     if ! have_file "${xfile}";then
         echo_erro "invalid: ${xfile}"
