@@ -92,6 +92,7 @@ function para_fetch
         return 1
     fi
 
+	echo_debug "para_fetch $@"
     local -n option_all_ref="$2"
     local -n option_map_ref="$3"
     local -n subcmd_all_ref="$4"
@@ -444,6 +445,14 @@ function select_one
         return 0
     fi
 
+	while ! math_is_int "${input_val}"
+	do
+		local input_val=$(input_prompt "" "input number" "")
+		if [ -z "${input_val}" ];then
+			return 0
+		fi
+	done
+
     selected=${input_val:-${selected}}
     selected=$((selected - 1))
 
@@ -453,6 +462,7 @@ function select_one
     else
         echo "${item}"
     fi
+
     return 0
 }
 

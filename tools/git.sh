@@ -102,15 +102,15 @@ function log
 				return 0
 				;;
 			"-a"|"--author")
-				git log --author="${value}"
+				process_run git log --author="${value}"
 				;;
 			"-c"|"--committer")
-				git log --committer="${value}"
+				process_run git log --committer="${value}"
 				;;
 			"-t"|"--time")
 				local tm_s=$(input_prompt "" "input start time" "$(date '+%Y-%m-%d')")
 				local tm_e=$(input_prompt "" "input end time" "$(date '+%Y-%m-%d')")
-				git log --since="${tm_s}" --until="${tm_e}"
+				process_run git log --since="${tm_s}" --until="${tm_e}"
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
@@ -162,7 +162,7 @@ function add
 		esac
 	done
 	
-	git add -A
+	process_run git add -A
     return $?
 }
 
@@ -212,7 +212,7 @@ function commit
 	fi
 	
 	if [ -n "${msg}" ];then
-		git commit -s -m "${msg}"
+		process_run git commit -s -m "${msg}"
 	else
 		return 1
 	fi
@@ -265,12 +265,12 @@ function push
     #git fetch &> /dev/null
     #local diff_str=$(git diff --stat origin/${cur_branch})
 
-    git push origin ${cur_branch}
+    process_run git push origin ${cur_branch}
     local retcode=$?
     if [ ${retcode} -ne 0 ];then
         local xselect=$(input_prompt "" "whether to forcibly push? (yes/no)" "no")
         if math_bool "${xselect}";then
-            git push origin ${cur_branch} --force
+            process_run git push origin ${cur_branch} --force
             retcode=$?
         fi
     fi
@@ -324,7 +324,7 @@ function amend
 	fi
 	
 	if [ -n "${msg}" ];then
-		git commit --amend -s -m "${msg}"
+		process_run git commit --amend -s -m "${msg}"
 	else
 		return 1
 	fi
@@ -378,7 +378,7 @@ function grep
 	fi
 	
 	if [ -n "${pattern}" ];then
-		git log --grep="${pattern}" --oneline
+		process_run git log --grep="${pattern}" --oneline
 	else
 		return 1
 	fi
@@ -434,20 +434,20 @@ function all
 	fi
 	
 	if [ -n "${msg}" ];then
-		git add -A
+		process_run git add -A
 		if [ $? -ne 0 ];then
 			echo_erro "git add -A"
 			return 1
 		fi
 
-		git commit -s -m "${msg}"
+		process_run git commit -s -m "${msg}"
 		if [ $? -ne 0 ];then
 			echo_erro "git commit -s -m '${msg}'"
 			return 1
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
-		git push origin ${cur_branch}
+		process_run git push origin ${cur_branch}
 	else
 		return 1
 	fi
@@ -508,7 +508,7 @@ function submodule_add
         return 1
     fi
 
-    git submodule add ${repo} ${subdir}
+    process_run git submodule add ${repo} ${subdir}
     local retcode=$?
     if [ ${retcode} -eq 0 ];then
         git config -f .gitmodules submodule.${repo}.branch ${branch}
@@ -563,7 +563,7 @@ function submodule_del
         return 1
     fi
     
-    git rm --cached ${repo}
+    process_run git rm --cached ${repo}
     if [ $? -ne 0 ];then
         echo_erro "failed { git rm --cached ${repo} }"
 		return 1
@@ -625,10 +625,9 @@ function submodule_update
     fi
     
     if [ -n "${repo}" ];then
-        git submodule update --remote ${repo} --recursive
+        process_run git submodule update --remote ${repo} --recursive
     else
-
-        git submodule update --init --recursive
+        process_run git submodule update --init --recursive
     fi
 
     return $?

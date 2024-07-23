@@ -50,10 +50,9 @@ function process_wait
 
 function process_run
 {
-	local cmd_str="$@"
+	echo_info "$@"
+	bash -c "$@" 
 
-	echo_info "${cmd_str}"
-	eval "${cmd_str}" 
 	local retcode=$?
 	if [ ${retcode} -ne 0 ];then
 		echo_erro "cmd errono: ${retcode}"
