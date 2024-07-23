@@ -668,7 +668,7 @@ END
     done
 }
 
-FUNC_LIST=(${!subcmd_func_map[*]})
+FUNC_LIST=($(printf "%s\n" ${!subcmd_func_map[*]} | sort))
 SUB_CMD=$(get_subcmd 0)
 if [ -n "${SUB_CMD}" ];then
     if ! array_have FUNC_LIST "${SUB_CMD}";then
