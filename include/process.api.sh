@@ -50,8 +50,10 @@ function process_wait
 
 function process_run
 {
-	echo_info "$@"
-	bash -c "$@" 
+	local cmd_str=$(para_pack "$@")
+
+	echo_info "${cmd_str}"
+	eval "${cmd_str}" 
 
 	local retcode=$?
 	if [ ${retcode} -ne 0 ];then
