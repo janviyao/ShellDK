@@ -52,22 +52,32 @@ function para_pack
     local bash_options="$-"
     set +x
 
-    local cmd="$1"
-    shift
-
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            cmd="${cmd} '$1'"
-        else
-            if [[ "$1" =~ '*' ]];then
-                cmd="${cmd} '$1'"
-            else
-                cmd="${cmd} $1"
-            fi
-        fi
-        shift
-    done
+	local cmd=""
+	while [ $# -gt 0 ]
+	do
+		if [[ "$1" =~ ' ' ]];then
+			if [ -n "${cmd}" ];then
+				cmd="${cmd} '$1'"
+			else
+				cmd="'$1'"
+			fi
+		else
+			if [[ "$1" =~ '*' ]];then
+				if [ -n "${cmd}" ];then
+					cmd="${cmd} '$1'"
+				else
+					cmd="'$1'"
+				fi
+			else
+				if [ -n "${cmd}" ];then
+					cmd="${cmd} $1"
+				else
+					cmd="$1"
+				fi
+			fi
+		fi
+		shift
+	done
 
     [[ "${bash_options}" =~ x ]] && set -x
     echo "${cmd}"
