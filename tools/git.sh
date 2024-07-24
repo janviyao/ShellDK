@@ -65,13 +65,14 @@ subcmd_func_map['log']=$(cat << EOF
 mygit log
 
 DESCRIPTION
-    show log by Author, Committer or Time
+    show commit logs by Author, Committer or Time
 
 OPTIONS
     -h|--help                         # show this message
     -a|--author                       # show log by Author
     -c|--committer                    # show log by Committer
     -t|--time                         # show log by Time
+    -g|--grep                         # grep log by pattern
 
 EXAMPLES
     mygit log -a zhangsan                   # show zhangsan's log
@@ -86,7 +87,7 @@ function log
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "ha:author:c:committer:t:time:" "option_all" "option_map" "subcmd_all" "$@"
+	para_fetch "ha:author:c:committer:t:time:g:grep:" "option_all" "option_map" "subcmd_all" "$@"
 
 	if [ ${#option_map[*]} -le 0 ];then
 		return 1
@@ -111,6 +112,18 @@ function log
 				local tm_s=$(input_prompt "" "input start time" "$(date '+%Y-%m-%d')")
 				local tm_e=$(input_prompt "" "input end time" "$(date '+%Y-%m-%d')")
 				process_run git log --since="${tm_s}" --until="${tm_e}"
+				;;
+			"-g"|"--grep")
+				local pattern="${value}"
+				if [[ "${pattern}" =~ "${GBL_SPACE}" ]];then
+					pattern=$(string_replace "${pattern}" "${GBL_SPACE}" " ")
+				fi
+
+				if [ -n "${pattern}" ];then
+					process_run git log --grep="${pattern}" --oneline
+				else
+					return 1
+				fi
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
@@ -217,6 +230,50 @@ function commit
 		return 1
 	fi
 
+    return $?
+}
+
+subcmd_func_map['pull']=$(cat << EOF
+mygit pull
+
+DESCRIPTION
+    fetch from and integrate with another repository or a local branch
+
+OPTIONS
+    -h|--help		# show this message
+
+EXAMPLES
+    mygit pull      # fetch another repository to a local branch
+EOF
+)
+
+function pull
+{
+	local subcmd="$1"
+	shift
+
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+
+	local key
+	for key in ${!option_map[*]}
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+	
+	process_run git pull
     return $?
 }
 
@@ -336,10 +393,13 @@ subcmd_func_map['grep']=$(cat << EOF
 mygit grep ["pattern"]
 
 DESCRIPTION
-    grep some contents from log
+    print lines matching a pattern
 
 OPTIONS
     -h|--help		          # show this message
+    -E|--extended-regexp	  # Use POSIX extended/basic regexp for patterns. Default is to use basic regexp.
+    -P|--perl-regexp	      # Use Perl-compatible regular expressions for patterns.
+    -F|--fixed-strings        # Use fixed strings for patterns (don’t interpret pattern as a regex).
 
 EXAMPLES
     mygit grep "xxx"          # grep 'xxx' from log
@@ -354,8 +414,9 @@ function grep
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	para_fetch "hEPF" "option_all" "option_map" "subcmd_all" "$@"
 
+	local options=""
 	local key
 	for key in ${!option_map[*]}
 	do
@@ -364,6 +425,15 @@ function grep
 			"-h"|"--help")
 				how_use_func "${subcmd}"
 				return 0
+				;;
+			"-E"|"--extended-regexp")
+				options="${options} ${key}"
+				;;
+			"-P"|"--perl-regexp")
+				options="${options} ${key}"
+				;;
+			"-F"|"--fixed-strings")
+				options="${options} ${key}"
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
@@ -378,7 +448,7 @@ function grep
 	fi
 	
 	if [ -n "${pattern}" ];then
-		process_run git log --grep="${pattern}" --oneline
+		process_run git grep ${options} "${pattern}"
 	else
 		return 1
 	fi
@@ -675,20 +745,17 @@ if [ -n "${SUB_CMD}" ];then
         exit 1
     fi
 
-	SUB_ALL=($(get_subcmd_all "${subcmd}"))
-	SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
-	SUB_LIST=($(get_subcmd "0-$"))
+	SUB_ALL=($(get_subcmd_all "${SUB_CMD}"))
+	SUB_OPTS="${SUB_ALL[*]}"
+
+	SUB_LIST=($(get_subcmd "1-$" true))
 	for next_cmd in ${SUB_LIST[*]}
 	do
-		if [ "${next_cmd}" == "${SUB_CMD}" ];then
-			continue
-		fi
-
 		SUB_ALL=($(get_subcmd_all "${next_cmd}"))
 		if [ -n "${SUB_OPTS}" ];then
-			SUB_OPTS="${SUB_OPTS} ${next_cmd} ${SUB_ALL[*]}"
+			SUB_OPTS="${SUB_OPTS} ${SUB_ALL[*]}"
 		else
-			SUB_OPTS="${next_cmd} ${SUB_ALL[*]}"
+			SUB_OPTS="${SUB_ALL[*]}"
 		fi
 	done
 else

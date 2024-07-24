@@ -15,6 +15,7 @@ para_fetch "${shortopts}" _OPTION_ALL_REF _OPTION_MAP_REF _SUBCMD_ALL_REF "$@"
 function get_all_opts
 {
 	local all_opts="${!_OPTION_MAP[*]}"
+
 	if [[ "${all_opts}" =~ "${GBL_SPACE}" ]];then
 		all_opts=$(string_replace "${all_opts}" "${GBL_SPACE}" " ")
 	fi
@@ -50,7 +51,9 @@ function get_optval
 
 function get_subcmd
 {
-    local index=$1
+    local index="$1"
+    local is_inner="${2:-false}"
+
 	local index_s="0"
 	local index_e="$"
 	
@@ -90,7 +93,9 @@ function get_subcmd
 		local value=${_SUBCMD_ALL_REF[${index}]}
 		if [ -n "${value}" ];then
 			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
-				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
+				if ! math_bool "${is_inner}";then
+					value=$(string_replace "${value}" "${GBL_SPACE}" " ")
+				fi
 			fi
 			echo "${value}"
 		fi
@@ -102,6 +107,7 @@ function get_subcmd
 function get_subcmd_all
 {
 	local subcmd="$1"
+    local is_inner="${2:-false}"
 
 	if [[ "${subcmd}" =~ " " ]];then
 		subcmd=$(string_replace "${subcmd}" " " "${GBL_SPACE}")
@@ -133,7 +139,9 @@ function get_subcmd_all
 		
 		if [ ${sub_found} -gt 0 ];then
 			if [[ "${elem}" =~ "${GBL_SPACE}" ]];then
-				elem=$(string_replace "${elem}" "${GBL_SPACE}" " ")
+				if ! math_bool "${is_inner}";then
+					elem=$(string_replace "${elem}" "${GBL_SPACE}" " ")
+				fi
 			fi
 			printf -- "${elem}\n"
 		fi
@@ -186,7 +194,7 @@ function para_debug
     printf "%s\n" "subcmd_all[${subcmd_all_ref[*]}]"
     for key in ${_SUBCMD_ALL_REF[*]}
     do
-		local options=($(get_subcmd_all ${key}))
+		local options=($(get_subcmd_all "${key}"))
 		echo "$(printf "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
     done
 }

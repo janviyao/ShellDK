@@ -31,12 +31,12 @@ function file_privilege
 function have_file
 {
     local bash_options="$-"
-    set +x
+    #set +x
 
     local xfile="$1"
 
     if [ -z "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
@@ -45,12 +45,12 @@ function have_file
         for file in ${xfile}
         do
             if match_regex "${file}" "\*$";then
-                [[ "${bash_options}" =~ x ]] && set -x
+                #[[ "${bash_options}" =~ x ]] && set -x
                 return 1
             fi
 
             if have_file "${file}"; then
-                [[ "${bash_options}" =~ x ]] && set -x
+                #[[ "${bash_options}" =~ x ]] && set -x
                 return 0
             fi
         done
@@ -61,40 +61,40 @@ function have_file
     fi
 
     if [ -e ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -f ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -d ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -r ${xfile} -o -w ${xfile} -o -x ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -h ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -L ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -b ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -c ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     elif [ -s ${xfile} ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
 
     if ls --color=never ${xfile} &> /dev/null;then
-        [[ "${bash_options}" =~ x ]] && set -x
+        #[[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
   
-    [[ "${bash_options}" =~ x ]] && set -x
+    #[[ "${bash_options}" =~ x ]] && set -x
     return 1
 }
 

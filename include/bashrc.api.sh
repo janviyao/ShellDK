@@ -47,6 +47,17 @@ alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
+alias gcommit='mygit commit'
+alias gclone='mygit clone'
+alias gamend='mygit amend'
+alias gpull='mygit pull'
+alias gpush='mygit push'
+alias ggrep='mygit grep'
+alias gadd='mygit add'
+alias glog='mygit log'
+alias gall='mygit all'
+
+unalias grep &> /dev/null || true
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 

@@ -131,7 +131,7 @@ function match_regex
 
     [ -z "${regstr}" ] && return 1 
 
-    if grep -P "${regstr}" <<< "${string}" &> /dev/null;then
+	if perl -ne "print if /${regstr}/ or die '\n'" <<< "${string}" &> /dev/null;then
         return 0
     else
         return 1
@@ -357,7 +357,8 @@ function string_regex
     [ -z "${regstr}" ] && { printf -- "${string}\n"; return 1; } 
 	
 	local result
-    result=$(grep -P "${regstr}" -o <<< "${string}")
+    #result=$(grep -P "${regstr}" -o <<< "${string}")
+    result=$(perl -ne "print \$1 if /(${regstr})/" <<< "${string}")
     if [ $? -eq 0 ];then
         printf -- "${result}\n"
         return 0
