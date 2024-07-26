@@ -78,10 +78,32 @@ function math_expr_if
 
 function math_expr_val
 {
-    local expre="$@"
+	local bash_options="$-"
+	set +x
 
-    echo $(echo "scale=2;${expre}" | bc -l)
-    return 0
+	local expre="$1"
+	local scale=${2:-4}
+	local ibase=${3:-10}
+	
+	if [ ${ibase} -eq 16 ];then
+		expre=${expre^^}
+	fi
+
+	local value=$(bc -l <<< "ibase=${ibase};scale=$((scale+2));(${expre})/1")
+	if [[ ${value} =~ ^\.[0-9]+$ ]];then
+		value="0${value}"
+	fi
+
+	if [[ ${value} =~ ^[0-9]+(\.[0-9]+)?$ ]];then
+		value=$(awk "BEGIN {printf \"%.${scale}f\n\", ${value}}")
+		if [[ ${value} =~ ^\.[0-9]+$ ]];then
+			value="0${value}"
+		fi
+	fi
+
+	echo "${value}"
+	[[ "${bash_options}" =~ x ]] && set -x
+	return 0
 }
 
 function math_float
@@ -232,16 +254,19 @@ function math_hex2dec
         return 1
     fi
 
-    local prestr=$(string_start "${value}" 2)
-    if [[ ${prestr,,} != '0x' ]]; then
-        value="0x${value}"
-    fi
+	local prestr=$(string_start "${value}" 2)
+	if [[ ${prestr,,} == '0x' ]];then
+		result=$(printf "%lld" ${value})
+		if [ $? -ne 0 ];then
+			result=""
+		fi
 
-    result=$(printf "%lld" ${value})
-    if [ $? -ne 0 ];then
-        result=""
-    fi
-    [ -n "${result}" ] && echo "${result}"
+		if [ -n "${result}" ];then
+			echo "${result}"
+		fi
+	else
+		echo $((16#${value}))
+	fi
 
     return 0
 }
