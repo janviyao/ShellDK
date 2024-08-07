@@ -57,7 +57,7 @@ function process_run
 
 	local retcode=$?
 	if [ ${retcode} -ne 0 ];then
-		echo_erro "cmd errono: ${retcode}"
+		echo_erro "failed: ${cmd_str} errono: ${retcode}"
 	fi
 
     return ${retcode}

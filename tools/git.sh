@@ -53,12 +53,12 @@ function clone
 	fi
 	
 	if [ -n "${msg}" ];then
-		process_run git clone ${options} "${msg}"
+		process_run git clone ${options} ${msg}
 	else
 		return 1
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['log']=$(cat << EOF
@@ -132,7 +132,7 @@ function log
 		esac
 	done
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['add']=$(cat << EOF
@@ -176,7 +176,7 @@ function add
 	done
 	
 	process_run git add -A
-    return $?
+    return 0
 }
 
 subcmd_func_map['commit']=$(cat << EOF
@@ -230,7 +230,7 @@ function commit
 		return 1
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['pull']=$(cat << EOF
@@ -274,7 +274,7 @@ function pull
 	done
 	
 	process_run git pull
-    return $?
+    return 0
 }
 
 subcmd_func_map['push']=$(cat << EOF
@@ -323,16 +323,14 @@ function push
     #local diff_str=$(git diff --stat origin/${cur_branch})
 
     process_run git push origin ${cur_branch}
-    local retcode=$?
-    if [ ${retcode} -ne 0 ];then
+    if [ $? -ne 0 ];then
         local xselect=$(input_prompt "" "whether to forcibly push? (yes/no)" "no")
         if math_bool "${xselect}";then
             process_run git push origin ${cur_branch} --force
-            retcode=$?
         fi
     fi
 
-    return ${retcode}
+    return 0
 }
 
 subcmd_func_map['amend']=$(cat << EOF
@@ -386,7 +384,7 @@ function amend
 		return 1
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['grep']=$(cat << EOF
@@ -453,7 +451,7 @@ function grep
 		return 1
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['all']=$(cat << EOF
@@ -506,14 +504,12 @@ function all
 	if [ -n "${msg}" ];then
 		process_run git add -A
 		if [ $? -ne 0 ];then
-			echo_erro "git add -A"
-			return 1
+			return 0
 		fi
 
 		process_run git commit -s -m "${msg}"
 		if [ $? -ne 0 ];then
-			echo_erro "git commit -s -m '${msg}'"
-			return 1
+			return 0
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
@@ -522,7 +518,7 @@ function all
 		return 1
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['submodule_add']=$(cat << EOF
@@ -579,13 +575,11 @@ function submodule_add
     fi
 
     process_run git submodule add ${repo} ${subdir}
-    local retcode=$?
-    if [ ${retcode} -eq 0 ];then
+    if [ $? -eq 0 ];then
         git config -f .gitmodules submodule.${repo}.branch ${branch}
-        local retcode=$?
     fi
 
-    return ${retcode}
+    return 0
 }
 
 subcmd_func_map['submodule_del']=$(cat << EOF
@@ -635,8 +629,7 @@ function submodule_del
     
     process_run git rm --cached ${repo}
     if [ $? -ne 0 ];then
-        echo_erro "failed { git rm --cached ${repo} }"
-		return 1
+		return 0
 	fi
 
     section_del_section .gitmodules "submodule \"${repo}\""
@@ -700,7 +693,7 @@ function submodule_update
         process_run git submodule update --init --recursive
     fi
 
-    return $?
+    return 0
 }
 
 function how_use_func
