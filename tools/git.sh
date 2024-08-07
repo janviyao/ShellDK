@@ -29,7 +29,7 @@ function clone
 
 	local options=""
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -94,7 +94,7 @@ function log
 	fi
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -160,7 +160,7 @@ function add
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -204,7 +204,7 @@ function commit
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -258,7 +258,7 @@ function pull
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -302,7 +302,7 @@ function push
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -358,7 +358,7 @@ function amend
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -416,7 +416,7 @@ function grep
 
 	local options=""
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -481,7 +481,7 @@ function all
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -546,7 +546,7 @@ function submodule_add
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -607,7 +607,7 @@ function submodule_del
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -667,7 +667,7 @@ function submodule_update
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
 	local key
-	for key in ${!option_map[*]}
+	for key in "${!option_map[@]}"
 	do
 		local value="${option_map[${key}]}"
 		case "${key}" in
@@ -723,7 +723,7 @@ function how_use_tool
 END
 
     local func
-    for func in ${!subcmd_func_map[*]}
+    for func in "${!subcmd_func_map[@]}"
     do
         how_use_func "${func}" "        "
         echo
@@ -742,7 +742,7 @@ if [ -n "${SUB_CMD}" ];then
 	SUB_OPTS="${SUB_ALL[*]}"
 
 	SUB_LIST=($(get_subcmd "1-$" true))
-	for next_cmd in ${SUB_LIST[*]}
+	for next_cmd in "${SUB_LIST[@]}"
 	do
 		SUB_ALL=($(get_subcmd_all "${next_cmd}"))
 		if [ -n "${SUB_OPTS}" ];then

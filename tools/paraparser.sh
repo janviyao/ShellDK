@@ -29,7 +29,7 @@ function get_optval
 	local options=("$@")
 
     local opt
-    for opt in ${options[*]}
+    for opt in "${options[@]}"
     do
 		if [[ "${opt}" =~ " " ]];then
 			opt=$(string_replace "${opt}" " " "${GBL_SPACE}")
@@ -160,7 +160,7 @@ function para_import
 	_OPTION_ALL_REF=(${option_all_ref[*]})
 
 	unset _OPTION_MAP_REF
-	for key in ${!option_map_ref[*]}
+	for key in "${!option_map_ref[@]}"
 	do
 		value=${option_map_ref[${key}]}
 		_OPTION_MAP_REF[${key}]="${value}"
@@ -185,14 +185,14 @@ function para_debug
     echo
 
     printf "%-15s:\n" "option_map[${#option_map_ref[*]}]"
-    for key in ${!option_map_ref[*]}
+    for key in "${!option_map_ref[@]}"
     do
         echo "$(printf "Key: %-8s  Value: %s" "${key}" "${option_map_ref[$key]}")"
     done
     echo
 
     printf "%s\n" "subcmd_all[${subcmd_all_ref[*]}]"
-    for key in ${_SUBCMD_ALL_REF[*]}
+    for key in "${_SUBCMD_ALL_REF[@]}"
     do
 		local options=($(get_subcmd_all "${key}"))
 		echo "$(printf "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
