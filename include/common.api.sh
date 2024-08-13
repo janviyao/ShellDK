@@ -86,19 +86,24 @@ function para_pack
 function para_fetch
 {
     local shortopts="$1"
+    local bash_options="$-"
+    set +x
 
     if ! __var_defined "$2";then
         echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
+		[[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
     if ! __var_defined "$3";then
         echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
+		[[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
     if ! __var_defined "$4";then
         echo_erro "\nUsage: [$@]\n\$1: shortopts\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
+		[[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
@@ -129,6 +134,7 @@ function para_fetch
             option=$(string_split "${option}" '=' 1)
             if [[ "${value:0:1}" == "-" ]];then
                 echo_erro "para invalid: ${option}=${value}"
+				[[ "${bash_options}" =~ x ]] && set -x
                 return 1
             fi
         fi
@@ -217,6 +223,7 @@ function para_fetch
         shift
     done
 
+	[[ "${bash_options}" =~ x ]] && set -x
     return 0
 }
 

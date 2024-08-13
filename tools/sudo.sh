@@ -1,5 +1,4 @@
 #!/bin/bash
-#echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 CMD_STR="$@"
 
 if ! test -d "$MY_VIM_DIR";then
@@ -14,7 +13,7 @@ fi
 
 if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
     if ! account_check "${MY_NAME}" false;then
-        echo_file "${LOG_ERRO}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
+        echo_file "${LOG_ERRO}" "[sudo.sh] Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } account_check fail"
         sudo bash -c "${CMD_STR}"
         exit $?
     fi
@@ -68,8 +67,6 @@ if test -x ${GBL_USER_DIR}/.askpass.sh;then
     exit $?
 fi
 
-#RET_VAR="sudo_ret$$"
-#GET_RET="${RET_VAR}=\$?; mdat_set_var '${RET_VAR}' '${GBL_MDAT_PIPE}'"
 EXP_CMD="${ENV_CMD}; exit \\\$BASH_EXIT;"
 
 trap "exit 1" SIGINT SIGTERM SIGKILL
@@ -105,13 +102,3 @@ expect << EOF
 EOF
 
 exit $?
-#mdat_get_var ${RET_VAR}
-#mdat_kv_unset_key ${RET_VAR}
-#
-#eval "exit_code=\$${RET_VAR}"
-#if math_is_int "${exit_code}";then
-#    exit ${exit_code}
-#else
-#    echo_erro "exit code no-integer: ${exit_code}"
-#    exit -1
-#fi

@@ -68,8 +68,13 @@ function check_passwd
                 return 1
             fi
         else
-            echo_file "${LOG_WARN}" "not readable [/etc/shadow]"
-            return 1
+			if have_file /etc/shadow;then
+				echo_file "${LOG_WARN}" "file[/etc/shadow] not readable"
+				return 1
+			else
+				echo_file "${LOG_WARN}" "file[/etc/shadow] not exist"
+				return 1
+			fi
         fi
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
         return 0

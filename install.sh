@@ -10,6 +10,10 @@ source $MY_VIM_DIR/bashrc
 source ${MY_VIM_DIR}/tools/paraparser.sh "nrcfo:" "$@"
 
 if ! have_admin; then
+	if ! test -r /etc/shadow;then
+		$SUDO chmod +r /etc/shadow 
+	fi
+
     if ! account_check "${MY_NAME}";then
         echo_erro "Username or Password check fail"
         exit 1
@@ -183,12 +187,6 @@ function clean_env
 
 function inst_env
 {
-    if [[ "${SYSTEM}" == "Linux" ]]; then
-        if ! test -r /etc/shadow;then
-            $SUDO chmod +r /etc/shadow 
-        fi
-    fi
-
     have_file "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
     if ! have_file "${GBL_USER_DIR}/.${USR_NAME}";then
         echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_USER_DIR}/.${USR_NAME} 
