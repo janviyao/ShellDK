@@ -47,6 +47,8 @@ alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 alias psgrep='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
+alias mykill='sudo pkill -e -x -9'
+
 alias gcommit='mygit commit'
 alias gclone='mygit clone'
 alias gamend='mygit amend'

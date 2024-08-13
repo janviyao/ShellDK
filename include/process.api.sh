@@ -301,7 +301,7 @@ function process_name2pid
         fi
 
         if [[ "${SYSTEM}" == "Linux" ]]; then
-            local -a res_array=($(ps -C ${xproc} -o pid=))
+            local -a res_array=($(pgrep -x ${xproc}))
             if [ ${#res_array[*]} -gt 0 ];then
                 pid_array=(${pid_array[*]} ${res_array[*]})
                 continue
@@ -312,31 +312,30 @@ function process_name2pid
                 pid_array=(${pid_array[*]} ${res_array[*]})
                 continue
             fi
-
-            #res_array=($(pgrep ${xproc}))
+            #res_array=($(ps -C ${xproc} -o pid=))
             #if [ ${#res_array[*]} -gt 0 ];then
             #    pid_array=(${pid_array[*]} ${res_array[*]})
             #    continue
             #fi
 
-            local none_regex=$(regex_2str "${xproc}")
-            res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
-            if [ ${#res_array[*]} -gt 0 ];then
-                pid_array=(${pid_array[*]} ${res_array[*]})
-                continue
-            fi
+            #local none_regex=$(regex_2str "${xproc}")
+            #res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
+            #if [ ${#res_array[*]} -gt 0 ];then
+            #    pid_array=(${pid_array[*]} ${res_array[*]})
+            #    continue
+            #fi
 
-            res_array=($(ps -ww -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
-            if [ ${#res_array[*]} -gt 0 ];then
-                pid_array=(${pid_array[*]} ${res_array[*]})
-                continue
-            fi
+            #res_array=($(ps -ww -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
+            #if [ ${#res_array[*]} -gt 0 ];then
+            #    pid_array=(${pid_array[*]} ${res_array[*]})
+            #    continue
+            #fi
 
-            res_array=($(ps -ww -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
-            if [ ${#res_array[*]} -gt 0 ];then
-                pid_array=(${pid_array[*]} ${res_array[*]})
-                continue
-            fi
+            #res_array=($(ps -ww -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
+            #if [ ${#res_array[*]} -gt 0 ];then
+            #    pid_array=(${pid_array[*]} ${res_array[*]})
+            #    continue
+            #fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             local none_regex=$(regex_2str "${xproc}")
             local -a res_array=($(ps -s | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
