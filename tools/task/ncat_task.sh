@@ -78,6 +78,11 @@ function local_port_available
 
 function ncat_port_get
 {
+    if ! have_file "${NCAT_PROT_CURR}";then
+		echo_file "${LOG_ERRO}" "ncat [${NCAT_PROT_CURR}] donot generated"
+		return 1
+    fi
+
     local ncat_port=$(cat ${NCAT_PROT_CURR})
     while test -z "${ncat_port}"
     do

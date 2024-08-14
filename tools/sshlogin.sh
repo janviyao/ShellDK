@@ -56,24 +56,16 @@ if have_admin; then
     EXPECT_EOF="expect eof"
 fi
 
-TERM_ENV="export BTASK_LIST='mdat,ncat,xfer,logr';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';"
-PASS_ENV="\
-if test -d '$MY_VIM_DIR';then \
-    export MY_VIM_DIR='$MY_VIM_DIR'; \
-    source $MY_VIM_DIR/include/common.api.sh; \
-    if ! is_me ${USR_NAME};then \
-        source $MY_VIM_DIR/bashrc; \
-    fi;\
-else \
-    export SUDO_ASKPASS='${GBL_USER_DIR}/.askpass.sh';\
-    export SUDO='sudo -A';\
-fi\
-"
+NCAT_PORT=$(ncat_port_get)
+if [ -z "${NCAT_PORT}" ];then
+	echo_erro "ncat port not generated"
+	exit 1
+fi
 
-ncat_port=$(ncat_port_get)
-RET_VAR="sudo_ret$$"
-SRV_MSG="${RET_VAR}=\$?;if declare -F remote_set_var &>/dev/null;then remote_set_var ${NCAT_MASTER_ADDR} ${ncat_port} ${RET_VAR}; fi"
-SSH_CMD="${PASS_ENV}; (${CMD_EXE}); ${SRV_MSG}; exit 0"
+LOC_ENV="export BTASK_LIST='mdat';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};"
+RET_VAR="sshlogin_ret$$"
+RET_MSG="${RET_VAR}=\$?;(echo \\\"${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${RET_VAR}=\\\$${RET_VAR}\\\" | nc -w 1 ${NCAT_MASTER_ADDR} ${NCAT_PORT}) &> /dev/null"
+SSH_CMD="(${CMD_EXE}); ${RET_MSG}; exit 0"
 
 trap "exit 1" SIGINT SIGTERM SIGKILL
 expect << EOF
@@ -86,7 +78,7 @@ expect << EOF
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -S echo '\r' && sudo -S ${SSH_CMD}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "echo '${USR_PASSWORD}' | sudo -l -S -u ${USR_NAME} ${SSH_CMD}"
     #spawn -noecho ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
-    spawn -noecho env "TERM=${TERM_ENV}:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
+    spawn -noecho env "TERM=${LOC_ENV}:$TERM" ssh -t ${USR_NAME}@${HOST_IP} "${SSH_CMD}"
 
     expect {
         "*yes/no*?" { send "yes\r"; exp_continue }
