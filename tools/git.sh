@@ -2,6 +2,19 @@
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 declare -A subcmd_func_map
 
+function get_status_file
+{
+	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" || $1 == "??" ) print $2 }'))
+	printf "%s\n" ${file_list[*]}
+}
+
+function get_commit_file
+{
+	local commit_id="$1"
+	local file_list=($(git show --name-status ${commit_id} | awk '{ if($1 == "M" || $1 == "A") print $2 }'))
+	printf "%s\n" ${file_list[*]}
+}
+
 subcmd_func_map['clone']=$(cat << EOF
 mygit clone <repo-url>
 
@@ -17,7 +30,7 @@ EXAMPLES
 EOF
 )
 
-function clone
+function func_clone
 {
 	local subcmd="$1"
 	shift
@@ -79,7 +92,7 @@ EXAMPLES
 EOF
 )
 
-function log
+function func_log
 {
 	local subcmd="$1"
 	shift 
@@ -149,7 +162,7 @@ EXAMPLES
 EOF
 )
 
-function add
+function func_add
 {
 	local subcmd="$1"
 	shift
@@ -193,7 +206,7 @@ EXAMPLES
 EOF
 )
 
-function commit
+function func_commit
 {
 	local subcmd="$1"
 	shift
@@ -247,7 +260,56 @@ EXAMPLES
 EOF
 )
 
-function pull
+subcmd_func_map['patch']=$(cat << EOF
+mygit patch <commit-id>
+
+DESCRIPTION
+    prepare each non-merge commit with its "patch" in one "message" per commit
+
+OPTIONS
+    -h|--help		          # show this message
+
+EXAMPLES
+    mygit patch <commit-id>   # record current changes of then index into local repo
+EOF
+)
+
+function func_patch
+{
+	local subcmd="$1"
+	shift
+
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local msg="${subcmd_all[0]}"
+	if [ -n "${msg}" ];then
+		process_run git format-patch "${msg}~1..${msg}"
+	else
+		return 1
+	fi
+
+    return 0
+}
+function func_pull
 {
 	local subcmd="$1"
 	shift
@@ -291,7 +353,7 @@ EXAMPLES
 EOF
 )
 
-function push
+function func_push
 {
 	local subcmd="$1"
 	shift
@@ -333,6 +395,84 @@ function push
     return 0
 }
 
+subcmd_func_map['checkout']=$(cat << EOF
+mygit checkout <branch>
+
+DESCRIPTION
+    switch branches of the index
+
+OPTIONS
+    -h|--help		          # show this message
+
+EXAMPLES
+    mygit checkout <branch>   # switch into the <branch>
+EOF
+)
+
+function func_checkout
+{
+	local subcmd="$1"
+	shift
+
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local msg="${subcmd_all[*]}"
+	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
+		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
+	fi
+	
+	if [ -n "${msg}" ];then
+		local status_files=($(get_status_file))
+		if [ ${#status_files[*]} -gt 0 ];then
+			process_run git stash -a
+		fi
+
+		if git branch | grep -F "${msg}" &> /dev/null;then
+			process_run git checkout "${msg}"
+		else
+			process_run git checkout -b "${msg}"
+		fi
+
+		local cur_branch=$(git symbolic-ref --short -q HEAD)
+		local short_name=$(awk -F'/' '{ print $NF }' <<< "${cur_branch}")
+
+		local stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ print $1 }' | grep -P '(?<=stash@{)\d+(?=})' -o))
+		while [ ${#stash_indexs[*]} -gt 0 ]
+		do
+			if ! math_is_int "${stash_indexs[0]}";then
+				echo_erro "invalid index: ${index_str}"
+				break
+			fi
+
+			process_run git stash pop --index ${stash_indexs[0]}
+			stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ print $1 }' | grep -P '(?<=stash@{)\d+(?=})' -o))
+		done
+	else
+		return 1
+	fi
+
+    return 0
+}
+
 subcmd_func_map['amend']=$(cat << EOF
 mygit amend
 
@@ -347,7 +487,7 @@ EXAMPLES
 EOF
 )
 
-function amend
+function func_amend
 {
 	local subcmd="$1"
 	shift
@@ -404,7 +544,7 @@ EXAMPLES
 EOF
 )
 
-function grep
+function func_grep
 {
 	local subcmd="$1"
 	shift
@@ -470,7 +610,7 @@ EXAMPLES
 EOF
 )
 
-function all
+function func_all
 {
 	local subcmd="$1"
 	shift
@@ -502,6 +642,8 @@ function all
 	fi
 	
 	if [ -n "${msg}" ];then
+		local status_files=($(get_status_file))
+
 		process_run git add -A
 		if [ $? -ne 0 ];then
 			return 0
@@ -509,11 +651,16 @@ function all
 
 		process_run git commit -s -m "${msg}"
 		if [ $? -ne 0 ];then
+			process_run git restore --staged ${status_files[*]}
 			return 0
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
 		process_run git push origin ${cur_branch}
+		if [ $? -ne 0 ];then
+			process_run git git reset --soft HEAD^
+			process_run git restore --staged ${status_files[*]}
+		fi
 	else
 		return 1
 	fi
@@ -535,7 +682,7 @@ EXAMPLES
 EOF
 )
 
-function submodule_add
+function func_submodule_add
 {
 	local subcmd="$1"
 	shift 
@@ -596,7 +743,7 @@ EXAMPLES
 EOF
 )
 
-function submodule_del
+function func_submodule_del
 {
 	local subcmd="$1"
 	shift 
@@ -656,7 +803,7 @@ EXAMPLES
 EOF
 )
 
-function submodule_update
+function func_submodule_update
 {
 	local subcmd="$1"
 	shift 
@@ -770,7 +917,7 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
-${SUB_CMD} ${SUB_OPTS}
+bash -c "func_${SUB_CMD} ${SUB_OPTS}"
 if [ $? -ne 0 ];then
     how_use_func "${SUB_CMD}"
 fi

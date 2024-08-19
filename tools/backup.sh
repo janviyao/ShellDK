@@ -118,7 +118,7 @@ function get_from_conf
 
 function get_from_git
 {
-    local list=($(git status -s | awk '{ print $2 }'))
+    local list=($(git status --porcelain | awk '{ print $2 }'))
     for item in ${list[*]}
     do
         echo ${item}

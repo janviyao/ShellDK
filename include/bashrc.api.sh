@@ -49,6 +49,7 @@ alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompres
 
 alias mykill='sudo pkill -e -x -9'
 
+alias gcheckout='mygit checkout'
 alias gcommit='mygit commit'
 alias gclone='mygit clone'
 alias gamend='mygit amend'

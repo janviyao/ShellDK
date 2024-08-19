@@ -610,7 +610,7 @@ else
         if [ -n "${inst_paras}" ];then
             inst_paras="${inst_paras} ${key} ${_OPTION_MAP[$key]}"
         else
-            inst_paras="${inst_paras} ${key} ${_OPTION_MAP[$key]}"
+            inst_paras="${key} ${_OPTION_MAP[$key]}"
         fi
     done
 
