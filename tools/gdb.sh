@@ -44,17 +44,17 @@ function func_eval
 	local xproc="${subcmd_all[0]}"
 	unset subcmd_all[0]
 
-	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
+	local cmd_str="${subcmd_all[*]}"
+	if [[ "${cmd_str}" =~ "${GBL_SPACE}" ]];then
+		cmd_str=$(string_replace "${cmd_str}" "${GBL_SPACE}" " ")
 	fi
 	
     local -a pid_array=($(process_name2pid "${xproc}"))
     for xproc in ${pid_array[*]}
     do
-        sudo_it gdb --batch --eval-command "${msg}" -p ${xproc}
+        sudo_it gdb --batch --eval-command "${cmd_str}" -p ${xproc}
         if [ $? -ne 0 ];then
-            echo_erro "GDB { ${msg} } into { PID ${xproc} } failed"
+            echo_erro "GDB { ${cmd_str} } into { PID ${xproc} } failed"
             return 0
         fi
     done
@@ -119,7 +119,7 @@ function func_script
     do
         sudo_it gdb --batch --command "${xscript}" -p ${xproc}
         if [ $? -ne 0 ];then
-            echo_erro "GDB { ${msg} } into { PID ${xproc} } failed"
+            echo_erro "GDB { ${xscript} } into { PID ${xproc} } failed"
             return 0
         fi
     done

@@ -451,7 +451,7 @@ function account_check
 
 function sudo_it
 {
-    local cmd="$@"
+	local cmd=$(para_pack "$@")
 
     echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
