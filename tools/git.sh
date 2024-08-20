@@ -641,7 +641,9 @@ function func_all
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
 		process_run git push origin ${cur_branch}
 		if [ $? -ne 0 ];then
-			process_run git git reset --soft HEAD^
+			# rollback commit
+			process_run git reset --soft HEAD^
+			# rollback add
 			process_run git restore --staged ${status_files[*]}
 		fi
 	else
