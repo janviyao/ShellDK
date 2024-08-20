@@ -32,14 +32,12 @@ EOF
 
 function func_clone
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "hr" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="clone"
 	local options=""
 	local key
 	for key in "${!option_map[@]}"
@@ -94,9 +92,6 @@ EOF
 
 function func_log
 {
-	local subcmd="$1"
-	shift 
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
@@ -106,6 +101,7 @@ function func_log
 		return 1
 	fi
 
+	local subcmd="log"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -164,14 +160,12 @@ EOF
 
 function func_add
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="add"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -208,14 +202,12 @@ EOF
 
 function func_commit
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="commit"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -276,14 +268,12 @@ EOF
 
 function func_patch
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="patch"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -309,16 +299,15 @@ function func_patch
 
     return 0
 }
+
 function func_pull
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="pull"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -355,14 +344,12 @@ EOF
 
 function func_push
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="push"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -411,14 +398,12 @@ EOF
 
 function func_checkout
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="checkout"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -493,14 +478,12 @@ EOF
 
 function func_amend
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="amend"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -550,14 +533,12 @@ EOF
 
 function func_grep
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "hEPF" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="grep"
 	local options=""
 	local key
 	for key in "${!option_map[@]}"
@@ -616,14 +597,12 @@ EOF
 
 function func_all
 {
-	local subcmd="$1"
-	shift
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="all"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -688,14 +667,12 @@ EOF
 
 function func_submodule_add
 {
-	local subcmd="$1"
-	shift 
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="submodule_add"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -749,14 +726,12 @@ EOF
 
 function func_submodule_del
 {
-	local subcmd="$1"
-	shift 
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="submodule_del"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -809,14 +784,12 @@ EOF
 
 function func_submodule_update
 {
-	local subcmd="$1"
-	shift 
-
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
 	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
 
+	local subcmd="submodule_update"
 	local key
 	for key in "${!option_map[@]}"
 	do
@@ -911,7 +884,7 @@ if [ -n "${SUB_CMD}" ];then
 	SUB_LIST=($(get_subcmd "1-$" true))
 	for next_cmd in "${SUB_LIST[@]}"
 	do
-		SUB_ALL=($(get_subcmd_all "${next_cmd}"))
+		SUB_ALL=(${next_cmd} $(get_subcmd_all "${next_cmd}"))
 		if [ -n "${SUB_OPTS}" ];then
 			SUB_OPTS="${SUB_OPTS} ${SUB_ALL[*]}"
 		else
@@ -926,9 +899,6 @@ else
 	fi
 
 	SUB_OPTS=$(input_prompt "" "input sub-command parameters" "")
-	if [ -n "${SUB_OPTS}" ];then
-		SUB_OPTS="${SUB_CMD} ${SUB_OPTS}"
-	fi
 fi
 
 func_${SUB_CMD} ${SUB_OPTS}

@@ -60,36 +60,36 @@ function have_file
         xfile=$(string_replace "${xfile}" '^~' "${HOME}" true)
     fi
 
-    if [ -e ${xfile} ];then
+    if [ -e "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -f ${xfile} ];then
+    elif [ -f "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -d ${xfile} ];then
+    elif [ -d "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -r ${xfile} -o -w ${xfile} -o -x ${xfile} ];then
+    elif [ -r "${xfile}" -o -w "${xfile}" -o -x "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -h ${xfile} ];then
+    elif [ -h "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -L ${xfile} ];then
+    elif [ -L "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -b ${xfile} ];then
+    elif [ -b "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -c ${xfile} ];then
+    elif [ -c "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
-    elif [ -s ${xfile} ];then
+    elif [ -s "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
 
-    if ls --color=never ${xfile} &> /dev/null;then
+    if ls --color=never "${xfile}" &> /dev/null;then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi

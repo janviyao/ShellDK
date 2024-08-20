@@ -160,7 +160,7 @@ function para_fetch
                 if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
                     option_map_ref[${option}]="true"
                 else
-					if [[ -z "${shortopts}" ]] || [[ -z "${opt_char}" ]] ||  [[ "${shortopts}" =~ "${opt_char}:" ]];then
+					if [[ -n "${opt_char}" ]] && [[ "${shortopts}" =~ "${opt_char}:" ]];then
 						value_used=true
 						if [ -n "${option_map_ref[${option}]}" ];then
 							option_map_ref[${option}]="${option_map_ref[${option}]} ${value}"
@@ -185,7 +185,7 @@ function para_fetch
                 if [[ "${value:0:1}" == "-" ]] || [[ $# -eq 1 ]];then
                     option_map_ref[${option}]="true"
                 else
-					if [[ -z "${shortopts}" ]] || [[ -z "${opt_char}" ]] || [[ "${shortopts}" =~ "${opt_char}:" ]];then
+					if [[ -n "${opt_char}" ]] && [[ "${shortopts}" =~ "${opt_char}:" ]];then
 						value_used=true
 						if [ -n "${option_map_ref[${option}]}" ];then
 							option_map_ref[${option}]="${option_map_ref[${option}]} ${value}"
@@ -585,5 +585,4 @@ __MY_SOURCE "INCLUDED_PROCESS"   $MY_VIM_DIR/include/process.api.sh
 __MY_SOURCE "INCLUDED_INSTALL"   $MY_VIM_DIR/include/install.api.sh
 __MY_SOURCE "INCLUDED_MATH"      $MY_VIM_DIR/include/math.api.sh
 __MY_SOURCE "INCLUDED_FILE"      $MY_VIM_DIR/include/file.api.sh
-__MY_SOURCE "INCLUDED_GDB"       $MY_VIM_DIR/include/gdb.api.sh
 __MY_SOURCE "INCLUDED_COMPLETE"  $MY_VIM_DIR/include/complete.api.sh

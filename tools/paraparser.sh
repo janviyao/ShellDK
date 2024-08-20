@@ -131,6 +131,7 @@ function get_subcmd_all
     do
         if [[ "${elem}" == "${subcmd}" ]];then
         	let sub_found++
+        	continue
         fi
 
 		if [[ "${elem}" == "${next_cmd}" ]];then
@@ -160,7 +161,7 @@ function get_subcmd_optval
 	local -a subcmd_option_all=()
 	local -A subcmd_option_map=()
 	local -a subcmd_subcmd_all=()
-	para_fetch "${shortopts}" subcmd_option_all subcmd_option_map subcmd_subcmd_all ${subcmd_options[*]}
+	para_fetch "${shortopts}" subcmd_option_all subcmd_option_map subcmd_subcmd_all "${subcmd_options[@]}"
 
     local opt
     for opt in "${options[@]}"
@@ -209,39 +210,43 @@ function para_debug
     local -n subcmd_all_ref="${3:-_SUBCMD_ALL_REF}"
 	local idx key opt
 
-    printf "%-15s= ( " "option_all[${#option_all_ref[*]}]"
+    printf "%s:\n" "option_all[${#option_all_ref[*]}]"
+	printf "[ " 
     for ((idx=0; idx < ${#option_all_ref[*]}; idx++)) 
     do
         printf "\"%s\" " "${option_all_ref[${idx}]}" 
     done
-    echo ")"
+	printf "]\n" 
     echo
 
-    printf "%-15s:\n" "option_map[${#option_map_ref[*]}]"
+    printf "%s:\n" "option_map[${#option_map_ref[*]}]"
     for key in "${!option_map_ref[@]}"
     do
         echo "$(printf "Key: %-8s  Value: %s" "${key}" "${option_map_ref[$key]}")"
     done
     echo
 	
-	printf "%s\n" "all subcmd[${subcmd_all_ref[*]}]"
 	for key in "${subcmd_all_ref[@]}"
 	do
 		local options=($(get_subcmd_all "${key}"))
 		echo "$(printf "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
 		
 		if [ ${#options[*]} -gt 0 ];then
-			unset options[0]
 			for opt in "${options[@]}"
 			do
 				local value=$(get_subcmd_optval "${key}" "${opt}")
-				echo "$(printf "    Key: %-4s  Value: %s" "${opt}" "${value}")"
+				echo "$(printf "Key: %-8s  Value: %s" "${opt}" "${value}")"
 			done
 		fi
 	done
 }
 
 if math_bool "false";then
+	declare -p _OPTION_ALL
+	declare -p _OPTION_MAP
+	declare -p _SUBCMD_ALL
+	echo
+
 	para_debug
 	echo
 fi
