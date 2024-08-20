@@ -150,6 +150,39 @@ function get_subcmd_all
     return 0
 }
 
+function get_subcmd_optval
+{
+	local subcmd="$1"
+	shift
+	local options=("$@")
+
+	local subcmd_options=($(get_subcmd_all "${subcmd}"))
+	local -a subcmd_option_all=()
+	local -A subcmd_option_map=()
+	local -a subcmd_subcmd_all=()
+	para_fetch "${shortopts}" subcmd_option_all subcmd_option_map subcmd_subcmd_all ${subcmd_options[*]}
+
+    local opt
+    for opt in "${options[@]}"
+    do
+		if [[ "${opt}" =~ " " ]];then
+			opt=$(string_replace "${opt}" " " "${GBL_SPACE}")
+		fi
+
+        local value=${subcmd_option_map[${opt}]}
+        #echo_debug "key: ${opt} value: ${value}"
+        if [ -n "${value}" ];then
+			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
+				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
+			fi
+            printf -- "${value}\n"
+            return 0
+        fi
+    done
+
+    return 0
+}
+
 function para_import
 {
     local -n option_all_ref="$1"
@@ -174,7 +207,7 @@ function para_debug
     local -n option_all_ref="${1:-_OPTION_ALL_REF}"
     local -n option_map_ref="${2:-_OPTION_MAP_REF}"
     local -n subcmd_all_ref="${3:-_SUBCMD_ALL_REF}"
-	local idx key
+	local idx key opt
 
     printf "%-15s= ( " "option_all[${#option_all_ref[*]}]"
     for ((idx=0; idx < ${#option_all_ref[*]}; idx++)) 
@@ -190,13 +223,22 @@ function para_debug
         echo "$(printf "Key: %-8s  Value: %s" "${key}" "${option_map_ref[$key]}")"
     done
     echo
-
-    printf "%s\n" "subcmd_all[${subcmd_all_ref[*]}]"
-    for key in "${_SUBCMD_ALL_REF[@]}"
-    do
+	
+	printf "%s\n" "all subcmd[${subcmd_all_ref[*]}]"
+	for key in "${subcmd_all_ref[@]}"
+	do
 		local options=($(get_subcmd_all "${key}"))
 		echo "$(printf "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
-    done
+		
+		if [ ${#options[*]} -gt 0 ];then
+			unset options[0]
+			for opt in "${options[@]}"
+			do
+				local value=$(get_subcmd_optval "${key}" "${opt}")
+				echo "$(printf "    Key: %-4s  Value: %s" "${opt}" "${value}")"
+			done
+		fi
+	done
 }
 
 if math_bool "false";then

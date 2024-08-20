@@ -574,15 +574,16 @@ function progress_bar
     echo_debug "progress_bar finish"
 }
 
-__MY_SOURCE "INCLUDED_LOG"     $MY_VIM_DIR/include/log.api.sh
-__MY_SOURCE "INCLUDED_MATRIX"  $MY_VIM_DIR/include/matrix.api.sh
-__MY_SOURCE "INCLUDED_STRING"  $MY_VIM_DIR/include/string.api.sh
-__MY_SOURCE "INCLUDED_SYSTEM"  $MY_VIM_DIR/include/system.api.sh
-__MY_SOURCE "INCLUDED_TRACE"   $MY_VIM_DIR/include/trace.api.sh
-__MY_SOURCE "INCLUDED_KVCONF"  $MY_VIM_DIR/include/kvconf.api.sh
-__MY_SOURCE "INCLUDED_SECTION" $MY_VIM_DIR/include/section.api.sh
-__MY_SOURCE "INCLUDED_PROCESS" $MY_VIM_DIR/include/process.api.sh
-__MY_SOURCE "INCLUDED_INSTALL" $MY_VIM_DIR/include/install.api.sh
-__MY_SOURCE "INCLUDED_MATH"    $MY_VIM_DIR/include/math.api.sh
-__MY_SOURCE "INCLUDED_FILE"    $MY_VIM_DIR/include/file.api.sh
-__MY_SOURCE "INCLUDED_GDB"     $MY_VIM_DIR/include/gdb.api.sh
+__MY_SOURCE "INCLUDED_LOG"       $MY_VIM_DIR/include/log.api.sh
+__MY_SOURCE "INCLUDED_MATRIX"    $MY_VIM_DIR/include/matrix.api.sh
+__MY_SOURCE "INCLUDED_STRING"    $MY_VIM_DIR/include/string.api.sh
+__MY_SOURCE "INCLUDED_SYSTEM"    $MY_VIM_DIR/include/system.api.sh
+__MY_SOURCE "INCLUDED_TRACE"     $MY_VIM_DIR/include/trace.api.sh
+__MY_SOURCE "INCLUDED_KVCONF"    $MY_VIM_DIR/include/kvconf.api.sh
+__MY_SOURCE "INCLUDED_SECTION"   $MY_VIM_DIR/include/section.api.sh
+__MY_SOURCE "INCLUDED_PROCESS"   $MY_VIM_DIR/include/process.api.sh
+__MY_SOURCE "INCLUDED_INSTALL"   $MY_VIM_DIR/include/install.api.sh
+__MY_SOURCE "INCLUDED_MATH"      $MY_VIM_DIR/include/math.api.sh
+__MY_SOURCE "INCLUDED_FILE"      $MY_VIM_DIR/include/file.api.sh
+__MY_SOURCE "INCLUDED_GDB"       $MY_VIM_DIR/include/gdb.api.sh
+__MY_SOURCE "INCLUDED_COMPLETE"  $MY_VIM_DIR/include/complete.api.sh

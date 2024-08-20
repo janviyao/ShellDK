@@ -402,10 +402,10 @@ DESCRIPTION
     switch branches of the index
 
 OPTIONS
-    -h|--help		          # show this message
+	-h|--help               # show this message
 
 EXAMPLES
-    mygit checkout <branch>   # switch into the <branch>
+	mygit checkout <branch> # switch into the <branch>
 EOF
 )
 
@@ -449,7 +449,11 @@ function func_checkout
 		if git branch | grep -F "${msg}" &> /dev/null;then
 			process_run git checkout "${msg}"
 		else
-			process_run git checkout -b "${msg}"
+			if git cat-file -e "${msg}" &> /dev/null;then
+				process_run git checkout "${msg}" -b "${msg:0:6}"
+			else
+				process_run git checkout -b "${msg}"
+			fi
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
@@ -879,6 +883,22 @@ END
 
 FUNC_LIST=($(printf "%s\n" ${!subcmd_func_map[*]} | sort))
 SUB_CMD=$(get_subcmd 0)
+
+OPT_LIST=$(get_optval "-l" "--list")
+if math_bool "${OPT_LIST}";then
+    printf "%s\n" ${!subcmd_func_map[*]}
+    exit 0
+fi
+
+OPT_HELP=$(get_optval "-h" "--help")
+if math_bool "${OPT_HELP}";then
+	OPT_HELP=$(get_subcmd_optval "${SUB_CMD}" "-h" "--help")
+	if ! math_bool "${OPT_HELP}";then
+		how_use_tool
+		exit 0
+	fi
+fi
+
 if [ -n "${SUB_CMD}" ];then
     if ! array_have FUNC_LIST "${SUB_CMD}";then
         echo_erro "unkonw command { ${SUB_CMD} } "
@@ -911,13 +931,7 @@ else
 	fi
 fi
 
-OPT_HELP=$(get_optval "-h" "--help")
-if math_bool "${OPT_HELP}";then
-    how_use_tool
-    exit 0
-fi
-
-bash -c "func_${SUB_CMD} ${SUB_OPTS}"
+func_${SUB_CMD} ${SUB_OPTS}
 if [ $? -ne 0 ];then
     how_use_func "${SUB_CMD}"
 fi

@@ -25,7 +25,6 @@ function gdb_eval
     return 0
 }
 
-
 function gdb_script
 {
     local process="$1"
