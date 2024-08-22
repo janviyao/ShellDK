@@ -57,16 +57,32 @@ function para_pack
 	do
 		if [[ "$1" =~ ' ' ]];then
 			if [ -n "${cmd}" ];then
-				cmd="${cmd} '$1'"
+				if [[ ! "$1" =~ '>' ]];then
+					cmd="${cmd} '$1'"
+				else
+					cmd="${cmd} $1"
+				fi
 			else
-				cmd="'$1'"
+				if [[ ! "$1" =~ '>' ]];then
+					cmd="'$1'"
+				else
+					cmd="$1"
+				fi
 			fi
 		else
 			if [[ "$1" =~ '*' ]];then
 				if [ -n "${cmd}" ];then
-					cmd="${cmd} '$1'"
+					if [[ ! "$1" =~ '>' ]];then
+						cmd="${cmd} '$1'"
+					else
+						cmd="${cmd} $1"
+					fi
 				else
-					cmd="'$1'"
+					if [[ ! "$1" =~ '>' ]];then
+						cmd="'$1'"
+					else
+						cmd="$1"
+					fi
 				fi
 			else
 				if [ -n "${cmd}" ];then
