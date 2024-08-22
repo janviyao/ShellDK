@@ -451,39 +451,39 @@ function account_check
 
 function sudo_it
 {
-	local cmd=$(para_pack "$@")
+	local cmd=("$@")
 
-    echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
+    echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd[@]}"
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        bash -c "${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c '${cmd}'"
+        bash -c "${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c '${cmd[@]}'"
         return $?
     fi
 
     if have_admin; then
-        bash -c "${cmd}"
+        sudo "${cmd[@]}"
         return $?
     else
         if have_sudoed;then
-            sudo bash -c "${cmd}"
+            sudo "${cmd[@]}"
             return $?
         fi
 
         if test -x ${GBL_USER_DIR}/.askpass.sh;then
-            sudo -A bash -c "${cmd}"
+            sudo -A "${cmd[@]}"
             return $?
         else
             echo_file "${LOG_DEBUG}" "file invalid { ${GBL_USER_DIR}/.askpass.sh }"
             if ! account_check "${MY_NAME}" false;then
                 echo_file "${LOG_DEBUG}" "Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check fail"
-                sudo bash -c "${cmd}"
+                sudo "${cmd[@]}"
                 return $?
             fi
 
             if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
+                echo "${USR_PASSWORD}" | sudo -S -u 'root' "${cmd[@]}"
                 return $?
             else
-                sudo bash -c "${cmd}"
+                sudo "${cmd[@]}"
                 return $?
             fi
         fi
