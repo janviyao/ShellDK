@@ -31,7 +31,7 @@ export MY_VIM_DIR=$MY_VIM_DIR; \
 if test -d '$MY_VIM_DIR';then \
     source $MY_VIM_DIR/bashrc; \
     if is_me '${USR_NAME}';then \
-        sudo_it '${CMD_STR}'; \
+        sudo_it ${CMD_STR}; \
         exit \$?; \
     fi;\
 fi\
@@ -57,13 +57,13 @@ else
 
     if ! which expect &> /dev/null; then
         echo_debug "expect not supported"
-        sudo_it "${ENV_CMD}"
+        sudo_it ${ENV_CMD}
         exit $?
     fi
 fi
 
 if test -x ${GBL_USER_DIR}/.askpass.sh;then
-    sudo_it "${ENV_CMD}"
+    sudo_it ${ENV_CMD}
     exit $?
 fi
 
