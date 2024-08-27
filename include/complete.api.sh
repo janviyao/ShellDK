@@ -49,3 +49,23 @@ function _mygdb_completion()
 	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/gdb.sh -l)" -- "$cur"))
 } &&
 complete -F _mygdb_completion mygdb
+
+function _mydocker_completion()
+{
+	local cur prev words cword
+
+	_init_completion || return
+
+	#echo "<$cur | $prev | ${words[*]} | $cword>"
+	# don't complete past 2nd token
+	[[ $cword -gt 2 ]] && return 0
+
+	# define custom completions here
+	if [[ $cword -eq 2 ]]; then
+		COMPREPLY=($(compgen -W "$(docker ps | grep -v 'NAMES' | awk '{ print $NF }')" -- "$cur"))
+		return 0
+	fi
+
+	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/docker.sh -l)" -- "$cur"))
+} &&
+complete -F _mydocker_completion mydocker
