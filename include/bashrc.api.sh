@@ -52,6 +52,7 @@ alias mykill='sudo pkill -e -x -9'
 
 alias gbranch='git branch'
 alias gstatus='git status'
+alias gclear='git clean -df; git reset --hard HEAD'
 alias gdiff='git diff'
 alias gadd='mygit add'
 alias gcheckout='mygit checkout'

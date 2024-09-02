@@ -428,10 +428,10 @@ function func_checkout
 	if [ -n "${msg}" ];then
 		local status_files=($(get_status_file))
 		if [ ${#status_files[*]} -gt 0 ];then
-			process_run git stash -a
+			process_run git stash push -a
 		fi
 
-		if git branch | grep -F "${msg}" &> /dev/null;then
+		if git branch -a | grep -F "${msg}" &> /dev/null;then
 			process_run git checkout "${msg}"
 		else
 			if git cat-file -e "${msg}" &> /dev/null;then
