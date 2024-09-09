@@ -48,7 +48,7 @@ alias myps='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
 alias psgrep='sudo pgrep -fa'
-alias mykill='sudo pkill -e -x -9'
+alias mykill='function mykill { if [[ $1 =~ ^[0-9]+$ ]];then sudo kill -9 $1; else sudo pkill -e -x -9 $1; fi }; mykill'
 
 alias gbranch='git branch'
 alias gstatus='git status'
