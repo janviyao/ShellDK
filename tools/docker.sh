@@ -2,18 +2,18 @@
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 declare -A subcmd_func_map
 
-subcmd_func_map['bash']=$(cat << EOF
-mydocker bash <container-name|container-id>
+subcmd_func_map['create']=$(cat << EOF
+mydocker create <container-name> <IMAGE>
 
 DESCRIPTION
-    run a bash in a running container
+    create a new container <container-name> with <IMAGE> and start it in the backgroud
 
 OPTIONS
     -h|--help                # show this message
 EOF
 )
 
-function func_bash
+function func_create
 {
 	local -a option_all=()
 	local -A option_map=()
@@ -38,9 +38,148 @@ function func_bash
 		esac
 	done
 
-	local mydocker="${subcmd_all[0]}"
-	if [ -n "${mydocker}" ];then
-		process_run docker exec -it ${mydocker} /bin/bash
+	local name="${subcmd_all[0]}"
+	local image="${subcmd_all[1]}"
+	if [[ -n "${name}" ]] && [[ -n "${image}" ]];then
+		process_run docker run -d -v ${HOME}:${HOME} --net=host --name ${name} -it ${image} /bin/bash 
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['enter']=$(cat << EOF
+mydocker enter <container-name|container-id>
+
+DESCRIPTION
+    enter into a running container
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_enter
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	if [ -n "${name}" ];then
+		process_run docker exec -it ${name} /bin/bash
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['start']=$(cat << EOF
+mydocker start <container-name|container-id>
+
+DESCRIPTION
+    restart the container that has stopped
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_start
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	if [ -n "${name}" ];then
+		process_run docker start ${name}
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['stop']=$(cat << EOF
+mydocker stop <container-name|container-id>
+
+DESCRIPTION
+    stop a container
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_stop
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	if [ -n "${name}" ];then
+		process_run docker stop ${name}
 	else
 		return 1
 	fi
