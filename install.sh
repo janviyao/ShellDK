@@ -26,8 +26,7 @@ FUNC_MAP["clean"]="clean_env"
 FUNC_MAP["vim"]="inst_vim"
 FUNC_MAP["spec"]="inst_spec"
 FUNC_MAP["all"]="clean_env; inst_env; inst_vim"
-FUNC_MAP["glibc2.27"]="inst_glibc glibc-2.27"
-FUNC_MAP["glibc2.28"]="inst_glibc glibc-2.28"
+FUNC_MAP["glibc"]="inst_glibc"
 FUNC_MAP["cygwin"]="inst_cygwin"
 FUNC_MAP["hostname"]="inst_hostname"
 
@@ -43,8 +42,7 @@ function inst_usage
     echo "install.sh -o vim        @install vim package"
     echo "install.sh -o spec       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
-    echo "install.sh -o glibc2.27  @install glibc2.27 package"
-    echo "install.sh -o glibc2.28  @install glibc2.28 package"
+    echo "install.sh -o glibc      @install glibc package by selection"
     echo "install.sh -o cygwin     @install cygwin environment packages"
     echo "install.sh -o hostname   @set hostname"
 
@@ -71,9 +69,9 @@ if [ -z "${NEED_OPT}" ];then
 fi
 
 OPT_MATCH=0
-for func in ${!FUNC_MAP[*]};
+for key in ${!FUNC_MAP[*]};
 do
-    if string_contain "${NEED_OPT}" "${func}"; then
+    if string_contain "${NEED_OPT}" "${key}"; then
         let OPT_MATCH=OPT_MATCH+1
     fi
 done
@@ -477,23 +475,42 @@ function inst_vim
 
 function inst_glibc
 {
-    local glibc_spec="$1"
+    local version="$1"
 
-    local version_cur=$(getconf GNU_LIBC_VERSION | grep -P "\d+\.\d+" -o)
-    local version_new=($(string_regex "${glibc_spec}" "\d+\.\d+(\.\d+)?"))
+    local version_cur=$(getconf -a | grep 'GNU_LIBC_VERSION' | grep -P "\d+\.\d+" -o)
+    local version_new=($(string_regex "${version}" "\d+\.\d+(\.\d+)?"))
 
     if __version_lt ${version_cur} ${version_new}; then
-        # Install glibc
-        install_from_spec "make-4.3" true
-        install_from_spec "${glibc_spec}" true
-        #install_from_spec "glibc-common"
+		if ! have_file "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
+			wget -c https://mirrors.aliyun.com/gnu/glibc/glibc-${version_new}.tar.gz -O ${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz
+			if ! have_file "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
+				echo_erro "download failed: https://mirrors.aliyun.com/gnu/glibc/glibc-${version_new}.tar.gz"
+				return 1
+			fi
+		fi
 
+		install_from_tar "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz" false '--prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin'
+		if [ $? -eq 0 ];then
+			rm -fr ${MY_VIM_DIR}/deps/glibc-${version_new}*
+		fi
+        ## Install glibc
+        #install_from_spec "make-4.3" true
+        #install_from_spec "${glibc_spec}" true
+        ##install_from_spec "glibc-common"
+        sudo_it "rm -f /etc/environment"
         sudo_it "echo 'LANGUAGE=en_US.UTF-8' >> /etc/environment"
         sudo_it "echo 'LC_ALL=en_US.UTF-8'   >> /etc/environment"
         sudo_it "echo 'LANG=en_US.UTF-8'     >> /etc/environment"
         sudo_it "echo 'LC_CTYPE=en_US.UTF-8' >> /etc/environment"
-
-        sudo_it "localedef -v -c -i en_US -f UTF-8 en_US.UTF-8 &> /dev/null"
+		
+		sudo_it mkdir -p /usr/lib/locale
+		sudo_it mkdir -p /usr/lib64/locale
+        sudo_it "localedef -i en_US -f UTF-8 en_US.UTF-8"
+		if [ $? -ne 0 ];then
+			if ! install_from_net "language-pack-en";then
+				sudo_it "localedef -i en_US -f UTF-8 en_US.UTF-8"
+			fi
+		fi
     fi
 }
 
@@ -588,7 +605,7 @@ if ! math_bool "${REMOTE_INST}"; then
             while test -n "${func}"
             do
                 echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
-                ${func} $(get_subcmd '1-')
+                ${func} $(get_subcmd '0-')
                 echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
                 let func_index++
                 func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")
@@ -596,7 +613,7 @@ if ! math_bool "${REMOTE_INST}"; then
         fi
     done
 else
-    declare -a ip_array=($(echo "$(get_subcmd '*')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    declare -a ip_array=($(echo "$(get_subcmd '0-$')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
         ip_array=($(get_hosts_ip))
     fi
