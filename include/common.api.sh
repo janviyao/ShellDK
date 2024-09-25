@@ -51,37 +51,26 @@ function para_pack
 {
     local bash_options="$-"
     set +x
-
+	
 	local cmd=""
+	if [ $# -eq 1 ];then
+		cmd="$1"
+		shift
+	fi
+
 	while [ $# -gt 0 ]
 	do
-		if [[ "$1" =~ ' ' ]];then
-			if [[ "$1" =~ '-' ]];then
-				if [ -n "${cmd}" ];then
-					cmd="${cmd} $1"
-				else
-					cmd="$1"
-				fi
+		if [[ "$1" =~ ' ' ]] || [[ "$1" =~ '*' ]];then
+			if [ -n "${cmd}" ];then
+				[[ ! "$1" =~ '>' ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
 			else
-				if [ -n "${cmd}" ];then
-					[[ ! "$1" =~ '>' ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
-				else
-					[[ ! "$1" =~ '>' ]] && cmd="'$1'" || cmd="$1"
-				fi
+				[[ ! "$1" =~ '>' ]] && cmd="'$1'" || cmd="$1"
 			fi
 		else
-			if [[ "$1" =~ '*' ]];then
-				if [ -n "${cmd}" ];then
-					[[ ! "$1" =~ '>' ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
-				else
-					[[ ! "$1" =~ '>' ]] && cmd="'$1'" || cmd="$1"
-				fi
+			if [ -n "${cmd}" ];then
+				cmd="${cmd} $1"
 			else
-				if [ -n "${cmd}" ];then
-					cmd="${cmd} $1"
-				else
-					cmd="$1"
-				fi
+				cmd="$1"
 			fi
 		fi
 		shift
