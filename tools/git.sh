@@ -435,10 +435,14 @@ function func_checkout
 			process_run git checkout "${msg}"
 		else
 			if git cat-file -e "${msg}" &> /dev/null;then
-				process_run git checkout "${msg}" -b "${msg:0:6}"
+				process_run git checkout "${msg}" -b "${msg}"
 			else
 				process_run git checkout -b "${msg}"
 			fi
+		fi
+		
+		if [ $? -ne 0 ];then
+			return 0
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
