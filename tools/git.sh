@@ -83,10 +83,9 @@ OPTIONS
     -a|--author                       # show log by Author
     -c|--committer                    # show log by Committer
     -t|--time                         # show log by Time
-    -g|--grep                         # grep log by pattern
 
 EXAMPLES
-    mygit log -a zhangsan                   # show zhangsan's log
+    mygit log -a zhangsan             # show zhangsan's log
 EOF
 )
 
@@ -121,18 +120,6 @@ function func_log
 				local tm_s=$(input_prompt "" "input start time" "$(date '+%Y-%m-%d')")
 				local tm_e=$(input_prompt "" "input end time" "$(date '+%Y-%m-%d')")
 				process_run git log --since="${tm_s}" --until="${tm_e}"
-				;;
-			"-g"|"--grep")
-				local pattern="${value}"
-				if [[ "${pattern}" =~ "${GBL_SPACE}" ]];then
-					pattern=$(string_replace "${pattern}" "${GBL_SPACE}" " ")
-				fi
-
-				if [ -n "${pattern}" ];then
-					process_run git log --grep="${pattern}" --oneline
-				else
-					return 1
-				fi
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
@@ -324,7 +311,13 @@ function func_pull
 		esac
 	done
 	
-	process_run git pull
+	local cur_branch=$(git symbolic-ref --short -q HEAD)
+	if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
+		process_run git pull
+	else
+		echo "There is no tracking information for the current branch."
+	fi
+
     return 0
 }
 
@@ -367,10 +360,6 @@ function func_push
 	done
 
     local cur_branch=$(git symbolic-ref --short -q HEAD)
-
-    #git fetch &> /dev/null
-    #local diff_str=$(git diff --stat origin/${cur_branch})
-
     process_run git push origin ${cur_branch}
     if [ $? -ne 0 ];then
         local xselect=$(input_prompt "" "whether to forcibly push? (yes/no)" "no")
@@ -522,16 +511,18 @@ subcmd_func_map['grep']=$(cat << EOF
 mygit grep ["pattern"]
 
 DESCRIPTION
-    print lines matching a pattern
+    look for specified patterns in the commit logs or in the tracked files in the work tree
 
 OPTIONS
     -h|--help		          # show this message
+    -l|--log		          # default option. search from the commit logs
+    -f|--file		          # search from the tracked files
     -E|--extended-regexp	  # Use POSIX extended/basic regexp for patterns. Default is to use basic regexp.
     -P|--perl-regexp	      # Use Perl-compatible regular expressions for patterns.
     -F|--fixed-strings        # Use fixed strings for patterns (don’t interpret pattern as a regex).
 
 EXAMPLES
-    mygit grep "xxx"          # grep 'xxx' from log
+    mygit grep "xxx"          # grep 'xxx' from the tracked files
 EOF
 )
 
@@ -540,8 +531,9 @@ function func_grep
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "hEPF" "option_all" "option_map" "subcmd_all" "$@"
+	para_fetch "hlfiEPF" "option_all" "option_map" "subcmd_all" "$@"
 
+	local look_mode="log"
 	local subcmd="grep"
 	local options=""
 	local key
@@ -552,6 +544,15 @@ function func_grep
 			"-h"|"--help")
 				how_use_func "${subcmd}"
 				return 0
+				;;
+			"-l"|"--log")
+				look_mode="log"
+				;;
+			"-f"|"--file")
+				look_mode="file"
+				;;
+			"-i"|"--ignore-case")
+				options="${options} -i"
 				;;
 			"-E"|"--extended-regexp")
 				options="${options} ${key}"
@@ -575,7 +576,13 @@ function func_grep
 	fi
 	
 	if [ -n "${pattern}" ];then
-		process_run git grep ${options} "${pattern}"
+		if [[ "${look_mode}" == "file" ]];then
+			process_run git grep ${options} "${pattern}"
+		elif [[ "${look_mode}" == "log" ]];then
+			process_run git log --grep "${pattern}" ${options}
+		else
+			echo_erro "look_mode { ${look_mode} } invalid!"
+		fi
 	else
 		return 1
 	fi
@@ -863,9 +870,9 @@ END
 FUNC_LIST=($(printf "%s\n" ${!subcmd_func_map[*]} | sort))
 SUB_CMD=$(get_subcmd 0)
 
-OPT_LIST=$(get_optval "-l" "--list")
+OPT_LIST=$(get_optval "--func-list")
 if math_bool "${OPT_LIST}";then
-    printf "%s\n" ${!subcmd_func_map[*]}
+    printf "%s\n" ${FUNC_LIST[*]}
     exit 0
 fi
 

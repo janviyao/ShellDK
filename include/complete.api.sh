@@ -18,7 +18,7 @@ function _mygit_completion()
 		fi
 	fi
 
-	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/git.sh -l)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/git.sh --func-list)" -- "$cur"))
 } &&
 complete -F _mygit_completion mygit
 
@@ -56,7 +56,7 @@ function _mygdb_completion()
 		return 0
 	fi
 
-	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/gdb.sh -l)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/gdb.sh --func-list)" -- "$cur"))
 } &&
 complete -F _mygdb_completion mygdb
 
@@ -76,6 +76,6 @@ function _mydocker_completion()
 		return 0
 	fi
 
-	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/docker.sh -l)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/docker.sh --func-list)" -- "$cur"))
 } &&
 complete -F _mydocker_completion mydocker

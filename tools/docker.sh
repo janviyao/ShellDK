@@ -322,9 +322,9 @@ END
 FUNC_LIST=($(printf "%s\n" ${!subcmd_func_map[*]} | sort))
 SUB_CMD=$(get_subcmd 0)
 
-OPT_LIST=$(get_optval "-l" "--list")
+OPT_LIST=$(get_optval "--func-list")
 if math_bool "${OPT_LIST}";then
-    printf "%s\n" ${!subcmd_func_map[*]}
+    printf "%s\n" ${FUNC_LIST[*]}
     exit 0
 fi
 

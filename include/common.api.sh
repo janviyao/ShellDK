@@ -57,9 +57,32 @@ function para_pack
 		cmd="$1"
 		shift
 	fi
-
+	
+	local have_opt=0
 	while [ $# -gt 0 ]
 	do
+		if [[ "${1:0:1}" == "-" ]];then
+			if [ -n "${cmd}" ];then
+				cmd="${cmd} $1"
+			else
+				cmd="$1"
+			fi
+			have_opt=1
+			shift
+			continue
+		else
+			if [ ${have_opt} -eq 1 ];then
+				if [ -n "${cmd}" ];then
+					cmd="${cmd} '$1'"
+				else
+					cmd="'$1'"
+				fi
+				have_opt=0
+				shift
+				continue
+			fi
+		fi
+
 		if [[ "$1" =~ ' ' ]] || [[ "$1" =~ '*' ]];then
 			if [ -n "${cmd}" ];then
 				[[ ! "$1" =~ '>' ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
