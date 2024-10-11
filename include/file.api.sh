@@ -841,6 +841,58 @@ function file_size
     done
 }
 
+function file_list
+{
+    local xfile="$1"
+    local string="${2}"
+    local is_reg="${3:-false}"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(default: false)"
+        return 1
+    fi
+
+    if ! have_file "${xfile}";then
+        return 1
+    fi
+	
+	if [ -d "${xfile}" ];then
+		if [[ "${xfile:0-1:1}" == '/' ]]; then
+			xfile="${xfile::-1}"
+		fi
+
+		local target
+		for target in $(ls ${xfile})
+		do
+			if [ -f "${xfile}/${target}" ];then
+				if math_bool "${is_reg}";then
+					if match_regex "${xfile}/${target}" "${string}";then
+						echo "${xfile}/${target}"
+					fi
+				else
+					echo "${xfile}/${target}"
+				fi
+			elif [ -d "${xfile}/${target}" ];then
+				file_list "${xfile}/${target}" "${string}" "${is_reg}"
+				if [ $? -ne 0 ];then
+					echo_erro "file_list '${xfile}/${target}' '${string}' '${is_reg}'"
+					return 1
+				fi
+			fi
+		done
+	fi
+
+	if math_bool "${is_reg}";then
+		if match_regex "${xfile}" "${string}";then
+			echo "${xfile}"
+		fi
+	else
+		echo "${xfile}"
+	fi
+
+    return 0
+}
+
 function file_temp
 {
     local base_dir="${1:-${BASH_WORK_DIR}}"

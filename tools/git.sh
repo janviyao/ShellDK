@@ -2,7 +2,19 @@
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 declare -A subcmd_func_map
 
-function get_status_file
+function get_modify_list
+{
+	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" ) print $2 }'))
+	printf "%s\n" ${file_list[*]}
+}
+
+function get_add_list
+{
+	local file_list=($(git status --porcelain | awk '{ if( $1 == "??" ) print $2 }'))
+	printf "%s\n" ${file_list[*]}
+}
+
+function get_change_list
 {
 	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" || $1 == "??" ) print $2 }'))
 	printf "%s\n" ${file_list[*]}
@@ -225,22 +237,8 @@ function func_commit
     return 0
 }
 
-subcmd_func_map['pull']=$(cat << EOF
-mygit pull
-
-DESCRIPTION
-    fetch from and integrate with another repository or a local branch
-
-OPTIONS
-    -h|--help		# show this message
-
-EXAMPLES
-    mygit pull      # fetch another repository to a local branch
-EOF
-)
-
 subcmd_func_map['patch']=$(cat << EOF
-mygit patch <commit-id>
+mygit patch [commit-id]
 
 DESCRIPTION
     prepare each non-merge commit with its "patch" in one "message" per commit
@@ -249,7 +247,8 @@ OPTIONS
     -h|--help		          # show this message
 
 EXAMPLES
-    mygit patch <commit-id>   # record current changes of then index into local repo
+    mygit patch               # patch current changes of the index into file
+    mygit patch [commit-id]   # patch the changes of the [commit-id] into file
 EOF
 )
 
@@ -279,13 +278,121 @@ function func_patch
 
 	local msg="${subcmd_all[0]}"
 	if [ -n "${msg}" ];then
-		process_run git format-patch "${msg}~1..${msg}"
+		#process_run git format-patch "${msg}~1..${msg}"
+		process_run git format-patch -1 "${msg}"
 	else
-		return 1
+		local patch_dir="$(date '+%Y%m%d-%H%M%S').patch"
+		mkdir -p ${patch_dir}	
+
+		local modify_files=($(get_modify_list))
+		if [ ${#modify_files[*]} -gt 0 ];then
+			git diff ${modify_files[*]} > ${patch_dir}/M.patch
+		fi
+
+		local add_files=($(get_add_list))
+		if [ ${#add_files[*]} -gt 0 ];then
+			for msg in ${add_files[*]}
+			do
+				if [ -f "${msg}" ];then
+					local dir_path=$(dirname ${msg})
+					mkdir -p ${patch_dir}/${dir_path}
+					mv -f ${msg} ${patch_dir}/${msg}
+				else
+					mkdir -p ${patch_dir}/${msg}
+				fi
+			done
+		fi
 	fi
 
     return 0
 }
+
+subcmd_func_map['apply']=$(cat << EOF
+mygit apply [patch file | patch dir]
+
+DESCRIPTION
+    reads the supplied diff output and applies it to files
+
+OPTIONS
+    -h|--help		          # show this message
+
+EXAMPLES
+    mygit apply xxx.path/     # apply current patch of the directory into local repo
+EOF
+)
+
+function func_apply
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+
+	local subcmd="apply"
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local msg="${subcmd_all[0]}"
+	if [ -f "${msg}" ];then
+		process_run git apply --reject "${msg}"
+	elif [ -d "${msg}" ];then
+		if [ -f "${msg}/M.patch" ];then
+			process_run git apply --reject "${msg}/M.patch"
+		fi
+
+		local add_files=($(file_list "${msg}"))
+		if [ ${#add_files[*]} -gt 0 ];then
+			local cur_dir=$(real_path ${msg})
+			for msg in ${add_files[*]}
+			do
+				if [[ "${msg}" =~ "/M.patch" ]];then
+					continue
+				fi
+
+				local real_path=$(real_path ${msg})
+				local upper_path=$(string_trim "${real_path}" "${cur_dir}/" 1)	
+				local dir_path=$(dirname ${upper_path})
+				mkdir -p ${dir_path}
+
+				if [ -f "${msg}" ];then
+					echo "Restore file: ${upper_path}"
+					cp -f ${msg} ${upper_path}
+				else
+					mkdir -p ${upper_path}
+				fi
+			done
+		fi
+	fi
+
+    return 0
+}
+
+subcmd_func_map['pull']=$(cat << EOF
+mygit pull
+
+DESCRIPTION
+    incorporates changes from a remote repository into the current branch
+
+OPTIONS
+    -h|--help		# show this message
+
+EXAMPLES
+    mygit pull      # fetch another repository to a local branch
+EOF
+)
 
 function func_pull
 {
@@ -311,9 +418,17 @@ function func_pull
 		esac
 	done
 	
-	local cur_branch=$(git symbolic-ref --short -q HEAD)
+	local cur_branch="${subcmd_all[*]}"
+	if [[ "${cur_branch}" =~ "${GBL_SPACE}" ]];then
+		cur_branch=$(string_replace "${cur_branch}" "${GBL_SPACE}" " ")
+	fi
+
+	if [ -z "${cur_branch}" ];then
+		cur_branch=$(git symbolic-ref --short -q HEAD)
+	fi
+
 	if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
-		process_run git pull
+		process_run git pull origin ${cur_branch}
 	else
 		echo "There is no tracking information for the current branch."
 	fi
@@ -415,8 +530,8 @@ function func_checkout
 	fi
 	
 	if [ -n "${msg}" ];then
-		local status_files=($(get_status_file))
-		if [ ${#status_files[*]} -gt 0 ];then
+		local change_files=($(get_change_list))
+		if [ ${#change_files[*]} -gt 0 ];then
 			process_run git stash push -a
 		fi
 
@@ -579,7 +694,7 @@ function func_grep
 		if [[ "${look_mode}" == "file" ]];then
 			process_run git grep ${options} "${pattern}"
 		elif [[ "${look_mode}" == "log" ]];then
-			process_run git log --grep "${pattern}" ${options}
+			process_run git log --grep "${pattern}" ${options} --oneline
 		else
 			echo_erro "look_mode { ${look_mode} } invalid!"
 		fi
@@ -636,7 +751,7 @@ function func_all
 	fi
 	
 	if [ -n "${msg}" ];then
-		local status_files=($(get_status_file))
+		local change_files=($(get_change_list))
 
 		process_run git add -A
 		if [ $? -ne 0 ];then
@@ -645,17 +760,17 @@ function func_all
 
 		process_run git commit -s -m "${msg}"
 		if [ $? -ne 0 ];then
-			process_run git restore --staged ${status_files[*]}
+			process_run git restore --staged ${change_files[*]}
 			return 0
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
-		process_run git push origin ${cur_branch}
+		process_run git push origin ${cur_branch} --force
 		if [ $? -ne 0 ];then
 			# rollback commit
 			process_run git reset --soft HEAD^
 			# rollback add
-			process_run git restore --staged ${status_files[*]}
+			process_run git restore --staged ${change_files[*]}
 		fi
 	else
 		return 1
