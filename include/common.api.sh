@@ -365,8 +365,13 @@ function wait_value
 
         let try_cnt--
         if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 0 ];then
-            break;
+            break
         fi
+
+		if ! have_file "${send_pipe}.run";then
+			echo_erro "pipe [${send_pipe}] dead"
+			break
+		fi
     done
     eval "exec ${ack_fhno}>&-"
 

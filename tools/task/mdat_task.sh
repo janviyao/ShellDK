@@ -58,7 +58,7 @@ function mdat_task_ctrl_sync
         _pipe_="${MDAT_PIPE}"
     fi
 
-    if ! have_file "${_pipe_}";then
+    if ! have_file "${_pipe_}.run";then
         if have_file "${BASH_WORK_DIR}";then
             echo_erro "pipe invalid: [${_pipe_}]"
         fi
