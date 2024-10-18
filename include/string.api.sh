@@ -3,14 +3,18 @@
 
 function regex_2str
 {
+    local bash_options="$-"
+    set +x
     local regex="$@"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
+		[[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
     if [ -z "${regex}" ];then
+		[[ "${bash_options}" =~ x ]] && set -x
         return 0
     fi
 
@@ -33,6 +37,7 @@ function regex_2str
 
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "regex_2str { $@ }"
+				[[ "${bash_options}" =~ x ]] && set -x
                 return 1
             fi
             #regex=$(string_replace "${regex}" "${char}" "\\${char}")
@@ -40,15 +45,19 @@ function regex_2str
     done
 
     printf -- "${result}\n" 
+	[[ "${bash_options}" =~ x ]] && set -x
     return 0
 }
 
 function regex_perl2basic
 {
+    local bash_options="$-"
+    set +x
     local regex="$@"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
+		[[ "${bash_options}" =~ x ]] && set -x
         return 1
     fi
 
@@ -70,12 +79,14 @@ function regex_perl2basic
 
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "regex_perl2basic { $@ }"
+				[[ "${bash_options}" =~ x ]] && set -x
                 return 1
             fi
         fi
     done
 
     printf -- "${result}\n" 
+	[[ "${bash_options}" =~ x ]] && set -x
     return 0
 }
 
@@ -358,7 +369,7 @@ function string_regex
 	
 	local result
     #result=$(grep -P "${regstr}" -o <<< "${string}")
-    result=$(perl -ne "print \$1 if /(${regstr})/" <<< "${string}")
+	result=$(perl -ne "print \$1 if /(${regstr})/ or die" <<< "${string}" 2> /dev/null)
     if [ $? -eq 0 ];then
         printf -- "${result}\n"
         return 0
@@ -518,9 +529,6 @@ function string_trim
             if [ -n "${newsub}" ]; then
                 newsub=$(regex_2str "${newsub}")
                 string="${string#${newsub}}"
-			else
-				printf -- "${string}\n"
-				return 0
 			fi
         else
             string="${string#?}"
@@ -537,9 +545,6 @@ function string_trim
 
                 newsub=$(regex_2str "${newsub}")
                 string="${string%${newsub}}"
-			else
-				printf -- "${string}\n"
-				return 0
 			fi
         else
             string="${string%?}"
