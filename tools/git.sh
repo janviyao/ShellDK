@@ -824,7 +824,7 @@ function func_submodule_add
     local subdir="${subcmd_all[1]}"
     local branch="${subcmd_all[2]:-master}"
 
-    if [ ${#subcmd_all[*]} -lt 2 ];then
+    if [ ${#subcmd_all[*]} -ne 3 ];then
         return 1
     fi
 
@@ -839,6 +839,60 @@ function func_submodule_add
     fi
 
     return 0
+}
+
+subcmd_func_map['submodule_deinit']=$(cat << EOF
+mygit submodule_deinit <repo-module>
+
+DESCRIPTION
+    deinit a submodule
+
+OPTIONS
+    -h|--help                                            # show this message
+
+EXAMPLES
+    mygit submodule_deinit 'repo-module'                 # deinit a submodule with [repo-module]
+EOF
+)
+
+function func_submodule_deinit
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+
+	local subcmd="submodule_deinit"
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local repo="${subcmd_all[0]}"
+	if [ -z "${repo}" ];then
+		local submodules=($(git submodule status | awk '{ print $2 }'))
+		if [ ${#submodules[*]} -gt 0 ];then
+			repo=$(select_one ${submodules[*]})
+		fi
+	fi
+
+	if [ -z "${repo}" ];then
+		return 0
+	fi
+
+	process_run git submodule deinit --force ${repo}
+	return 0
 }
 
 subcmd_func_map['submodule_del']=$(cat << EOF
@@ -880,10 +934,17 @@ function func_submodule_del
 	done
 
     local repo="${subcmd_all[0]}"
-    if [ ${#subcmd_all[*]} -ne 1 ];then
-        return 1
+    if [ -z "${repo}" ];then
+		local submodules=($(git submodule status | awk '{ print $2 }'))
+		if [ ${#submodules[*]} -gt 0 ];then
+			repo=$(select_one ${submodules[*]})
+		fi
     fi
     
+	if [ -z "${repo}" ];then
+		return 0
+	fi
+
     process_run git rm --cached ${repo}
     if [ $? -ne 0 ];then
 		return 0
@@ -894,7 +955,10 @@ function func_submodule_del
         echo_erro "failed { section_del_section .gitmodules 'submodule \"${repo}\"' }"
 		return 1
 	fi
-    rm -rf .git/modules/${repo}
+
+	if have_file ".git/modules/${repo}";then
+		rm -rf .git/modules/${repo}
+	fi
 
     return 0
 }
@@ -939,7 +1003,7 @@ function func_submodule_update
 
     local repo="${subcmd_all[0]}"
     if [ -n "${repo}" ];then
-        process_run git submodule update --recursive --remote ${repo}
+        process_run git submodule update --init --recursive --remote ${repo}
     else
 		local submodules=($(git submodule status | awk '{ print $2 }'))
 		if [ ${#submodules[*]} -gt 0 ];then
@@ -951,7 +1015,7 @@ function func_submodule_update
 			if [[ "${repo}" == "all" ]];then
 				process_run git submodule update --init --recursive
 			else
-				process_run git submodule update --recursive --remote ${repo}
+				process_run git submodule update --init --recursive --remote ${repo}
 			fi
 		fi
     fi
