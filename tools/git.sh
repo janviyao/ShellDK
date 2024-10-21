@@ -429,6 +429,9 @@ function func_pull
 
 	if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
 		process_run git pull origin ${cur_branch}
+		if [ $? -eq 0 ];then
+			func_submodule_update
+		fi
 	else
 		echo "There is no tracking information for the current branch."
 	fi
@@ -935,14 +938,22 @@ function func_submodule_update
 	done
 
     local repo="${subcmd_all[0]}"
-    if [ ${#subcmd_all[*]} -ne 1 ];then
-        return 1
-    fi
-    
     if [ -n "${repo}" ];then
-        process_run git submodule update --remote ${repo} --recursive
+        process_run git submodule update --recursive --remote ${repo}
     else
-        process_run git submodule update --init --recursive
+		local submodules=($(git submodule status | awk '{ print $2 }'))
+		if [ ${#submodules[*]} -gt 0 ];then
+			repo=$(select_one ${submodules[*]} 'all')
+			if [ -z "${repo}" ];then
+				return 0
+			fi
+
+			if [[ "${repo}" == "all" ]];then
+				process_run git submodule update --init --recursive
+			else
+				process_run git submodule update --recursive --remote ${repo}
+			fi
+		fi
     fi
 
     return 0
