@@ -883,6 +883,7 @@ function func_submodule_deinit
 	if [ -z "${repo}" ];then
 		local submodules=($(git submodule status | awk '{ print $2 }'))
 		if [ ${#submodules[*]} -gt 0 ];then
+			echo_info "please select submodule to deinit:"
 			repo=$(select_one ${submodules[*]})
 		fi
 	fi
@@ -937,6 +938,7 @@ function func_submodule_del
     if [ -z "${repo}" ];then
 		local submodules=($(git submodule status | awk '{ print $2 }'))
 		if [ ${#submodules[*]} -gt 0 ];then
+			echo_info "please select submodule to delete:"
 			repo=$(select_one ${submodules[*]})
 		fi
     fi
@@ -1007,6 +1009,7 @@ function func_submodule_update
     else
 		local submodules=($(git submodule status | awk '{ print $2 }'))
 		if [ ${#submodules[*]} -gt 0 ];then
+			echo_info "please select submodule to update:"
 			repo=$(select_one ${submodules[*]} 'all')
 			if [ -z "${repo}" ];then
 				return 0
