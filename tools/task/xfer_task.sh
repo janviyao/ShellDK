@@ -9,6 +9,13 @@ XFER_PIPE="${XFER_WORK_DIR}/pipe"
 XFER_FD=${XFER_FD:-6}
 have_file "${XFER_PIPE}" || mkfifo ${XFER_PIPE}
 have_file "${XFER_PIPE}" || echo_erro "mkfifo: ${XFER_PIPE} fail"
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
 exec {XFER_FD}<>${XFER_PIPE}
 
 function do_rsync

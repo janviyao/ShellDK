@@ -85,7 +85,7 @@ function do_replace
                 if [ $? -eq 0 ];then
                     echo_info "Success [${next}]"
                 else
-                    echo_info "Failed  [${next}]"
+                    echo_info "Failure [${next}]"
                 fi
             fi
         fi

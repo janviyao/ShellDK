@@ -8,6 +8,13 @@ MDAT_PIPE="${MDAT_WORK_DIR}/mdat.pipe"
 MDAT_FD=${MDAT_FD:-7}
 have_file "${MDAT_PIPE}" || mkfifo ${MDAT_PIPE}
 have_file "${MDAT_PIPE}" || echo_erro "mkfifo: ${MDAT_PIPE} fail"
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
 exec {MDAT_FD}<>${MDAT_PIPE}
 
 function mdat_task_alive

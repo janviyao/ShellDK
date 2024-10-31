@@ -8,6 +8,13 @@ LOGR_PIPE="${LOGR_WORK_DIR}/pipe"
 LOGR_FD=${LOGR_FD:-8}
 have_file "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
 have_file "${LOGR_PIPE}" || echo_erro "mkfifo: ${LOGR_PIPE} fail"
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
 exec {LOGR_FD}<>${LOGR_PIPE} # 自动分配FD 
 
 function logr_task_ctrl_async

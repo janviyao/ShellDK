@@ -44,7 +44,12 @@ function __MY_SOURCE
     #__var_defined "${flag}" || source ${file} 
     if ! __var_defined "${flag}" && test -f ${file};then
         source ${file} 
+		if [ $? -ne 0 ];then
+			return 1
+		fi
     fi
+
+    return 0
 }
 
 function para_pack
@@ -600,14 +605,109 @@ function progress_bar
 }
 
 __MY_SOURCE "INCLUDED_LOG"       $MY_VIM_DIR/include/log.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_MATRIX"    $MY_VIM_DIR/include/matrix.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_STRING"    $MY_VIM_DIR/include/string.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_SYSTEM"    $MY_VIM_DIR/include/system.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_TRACE"     $MY_VIM_DIR/include/trace.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_KVCONF"    $MY_VIM_DIR/include/kvconf.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_SECTION"   $MY_VIM_DIR/include/section.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_PROCESS"   $MY_VIM_DIR/include/process.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_INSTALL"   $MY_VIM_DIR/include/install.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_MATH"      $MY_VIM_DIR/include/math.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_FILE"      $MY_VIM_DIR/include/file.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_COMPLETE"  $MY_VIM_DIR/include/complete.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi

@@ -11,6 +11,13 @@ NCAT_PORT_USED="${GBL_USER_DIR}/port.used"
 NCAT_FD=${NCAT_FD:-9}
 have_file "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
 have_file "${NCAT_PIPE}" || echo_erro "mkfifo: ${NCAT_PIPE} fail"
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
 exec {NCAT_FD}<>${NCAT_PIPE}
 NCAT_MASTER_ADDR=$(get_local_ip)
 

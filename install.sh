@@ -7,7 +7,16 @@ export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
 
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc
+if [ $? -ne 0 ];then
+	echo "failed: source $MY_VIM_DIR/bashrc"
+	exit 1
+fi
+
 source ${MY_VIM_DIR}/tools/paraparser.sh "nrcfo:" "$@"
+if [ $? -ne 0 ];then
+	echo "failed: source ${MY_VIM_DIR}/tools/paraparser.sh \"nrcfo:\" \"$@\""
+	exit 1
+fi
 
 if ! have_admin; then
 	if ! test -r /etc/shadow;then

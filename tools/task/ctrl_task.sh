@@ -6,8 +6,16 @@ mkdir -p ${CTRL_WORK_DIR}
 CTRL_TASK="${CTRL_WORK_DIR}/task"
 CTRL_PIPE="${CTRL_WORK_DIR}/pipe"
 CTRL_FD=${CTRL_FD:-6}
+
 have_file "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
 have_file "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
 exec {CTRL_FD}<>${CTRL_PIPE}
 
 function ctrl_create_thread

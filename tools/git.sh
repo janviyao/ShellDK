@@ -447,6 +447,7 @@ DESCRIPTION
 
 OPTIONS
     -h|--help		          # show this message
+    -f|--force                # force to push
 
 EXAMPLES
     mygit push                # push the changes of local repo into remote repo
@@ -458,8 +459,9 @@ function func_push
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	para_fetch "hhelpfforce" "option_all" "option_map" "subcmd_all" "$@"
 
+	local force_opt=""
 	local subcmd="push"
 	local key
 	for key in "${!option_map[@]}"
@@ -470,6 +472,9 @@ function func_push
 				how_use_func "${subcmd}"
 				return 0
 				;;
+			"-f"|"--force")
+				force_opt="--force"
+				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
 				return 1
@@ -478,14 +483,7 @@ function func_push
 	done
 
     local cur_branch=$(git symbolic-ref --short -q HEAD)
-    process_run git push origin ${cur_branch}
-    if [ $? -ne 0 ];then
-        local xselect=$(input_prompt "" "whether to forcibly push? (yes/no)" "no")
-        if math_bool "${xselect}";then
-            process_run git push origin ${cur_branch} --force
-        fi
-    fi
-
+    process_run git push origin ${cur_branch} ${force_opt}
     return 0
 }
 
@@ -768,7 +766,7 @@ function func_all
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
-		process_run git push origin ${cur_branch} --force
+		process_run git push origin ${cur_branch}
 		if [ $? -ne 0 ];then
 			# rollback commit
 			process_run git reset --soft HEAD^

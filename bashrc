@@ -46,7 +46,23 @@ if [ -z "${MY_HOME}" ];then
 fi
 
 source $MY_VIM_DIR/include/common.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 source $MY_VIM_DIR/include/bashrc.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
 echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
@@ -59,6 +75,13 @@ fi
 echo "${ROOT_PID}" > ${BASH_MASTER}
 if string_contain "${BTASK_LIST}" "mdat";then
     __MY_SOURCE "INCLUDED_MDAT" $MY_VIM_DIR/tools/task/mdat_task.sh
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
 
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_mdat_exit; ${old_spec}" EXIT
@@ -67,6 +90,13 @@ fi
 
 if string_contain "${BTASK_LIST}" "ncat";then
     __MY_SOURCE "INCLUDED_NCAT" $MY_VIM_DIR/tools/task/ncat_task.sh
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
 
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_ncat_exit; ${old_spec}" EXIT
@@ -75,6 +105,13 @@ fi
 
 if string_contain "${BTASK_LIST}" "logr";then
     __MY_SOURCE "INCLUDED_LOGR" $MY_VIM_DIR/tools/task/logr_task.sh
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
 
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_logr_exit; ${old_spec}" EXIT
@@ -83,6 +120,13 @@ fi
 
 if string_contain "${BTASK_LIST}" "xfer";then
     __MY_SOURCE "INCLUDED_XFER" $MY_VIM_DIR/tools/task/xfer_task.sh
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
 
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_xfer_exit; ${old_spec}" EXIT
@@ -91,6 +135,13 @@ fi
 
 if string_contain "${BTASK_LIST}" "ctrl";then
     __MY_SOURCE "INCLUDED_CTRL" $MY_VIM_DIR/tools/task/ctrl_task.sh
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
 
     old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_ctrl_exit; ${old_spec}" EXIT

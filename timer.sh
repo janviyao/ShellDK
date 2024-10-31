@@ -7,10 +7,31 @@ export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
 
 if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     source ${GBL_USER_DIR}/timer/.timerc
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
     source ${MY_VIM_DIR}/bashrc
+	if [ $? -ne 0 ];then
+		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+			return 1
+		else
+			exit 1
+		fi
+	fi
 
     if have_file "${MY_HOME}/.timerc";then
-        source ${MY_HOME}/.timerc
+		source ${MY_HOME}/.timerc
+		if [ $? -ne 0 ];then
+			if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+				return 1
+			else
+				exit 1
+			fi
+		fi
     else
         exit 0
     fi
@@ -23,6 +44,13 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 
     if have_file "${TEST_SUIT_ENV}";then
         source ${TEST_SUIT_ENV} 
+		if [ $? -ne 0 ];then
+			if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+				return 1
+			else
+				exit 1
+			fi
+		fi
 
         if have_file "${ISCSI_APP_LOG}";then
             logsize=$(file_size "${ISCSI_APP_LOG}")

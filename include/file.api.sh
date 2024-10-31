@@ -651,7 +651,7 @@ function file_change
         if [ ${line_nr} -le ${total_nr} ];then
             eval "sed -i '${line_nr} c\\${content}' ${xfile}"
             if [ $? -ne 0 ];then
-                echo_erro "file_insert { $@ }"
+                echo_erro "file_change { $@ }"
                 return 1
             fi
         else
@@ -662,7 +662,7 @@ function file_change
         if [[ "${line_nr}" == "$" ]];then
             eval "sed -i '${line_nr} c\\${content}' ${xfile}"
             if [ $? -ne 0 ];then
-                echo_erro "file_insert { $@ }"
+                echo_erro "file_change { $@ }"
                 return 1
             fi
         else
@@ -680,9 +680,10 @@ function file_replace
     local string="$2"
     local new_str="$3"
     local is_reg="${4:-false}"
+    local line_nr="${5:-'1,$'}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(default: false)"
+        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(default: false)\n\$5: line-number or line-range(default range: 1,$)"
         return 1
     fi
 
@@ -703,7 +704,7 @@ function file_replace
         new_str=$(string_replace "${new_str}" '/' '\/')
     fi
 
-    eval "sed -r -i '1,$ s/${string}/${new_str}/g' ${xfile}"
+    eval "sed -r -i '${line_nr} s/${string}/${new_str}/g' ${xfile}"
     if [ $? -ne 0 ];then
         echo_erro "file_replace { $@ }"
         return 1
@@ -720,7 +721,7 @@ function file_replace_with_expr
     local is_reg="${4:-false}"
 
     if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new expresion\n\$4: \$1 whether regex(default: false)"
+		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string(one expresion)\n\$4: \$2 whether regex(default: false)"
         return 1
     fi
 
@@ -751,6 +752,46 @@ function file_replace_with_expr
             rm -f ${tmp_file}
             return 1
         fi
+    done
+
+    rm -f ${tmp_file}
+    return 0
+}
+
+function file_handle_with_cmd
+{
+    local xfile="$1"
+    local string="$2"
+    local run_cmd="$3"
+    local is_reg="${4:-false}"
+
+    if [ $# -lt 3 ];then
+		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: lookup string\n\$3: command with default input(current line)\n\$4: \$2 whether regex(default: false)\n
+		\r**Inner Variables**: \n\$xfile  : file path\n\$line_nr: line number\n\$content: line content"
+        return 1
+    fi
+
+    if ! have_file "${xfile}";then
+        echo_erro "file lost: ${xfile}"
+        return 1
+    fi
+
+    local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
+
+    if math_bool "${is_reg}";then
+        string=$(regex_perl2extended "${string}")
+    fi
+
+    if [[ "${string}" =~ '/' ]];then
+        string=$(string_replace "${string}" '/' '\/')
+    fi
+
+    local tmp_file="$(file_temp)"
+    local line_nr
+    for line_nr in ${line_nrs[*]}
+    do
+		local content=$(sed -n "${line_nr}p" ${xfile})
+        eval "${run_cmd}" <<< "${content}"
     done
 
     rm -f ${tmp_file}

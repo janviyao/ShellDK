@@ -59,7 +59,7 @@ function echo_file
             echo -e "$(print_backtrace)" >> ${BASH_LOG}
         fi
         [[ "${bash_options}" =~ x ]] && set -x
-        return
+        return 0
     fi
 
     local para="$@"
@@ -98,6 +98,11 @@ function echo_file
         echo -e "$(print_backtrace)" >> ${BASH_LOG}
     fi
     [[ "${bash_options}" =~ x ]] && set -x
+
+    if [ ${echo_level} -eq ${LOG_ERRO} ];then
+		return 1 
+    fi
+    return 0
 }
 
 function echo_header
@@ -136,7 +141,7 @@ function echo_erro
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_ERRO} ];then
         echo_file "${LOG_ERRO}" "$@"
         [[ "${bash_options}" =~ x ]] && set -x
-        return
+        return 1
     fi
 
     local para="$@"
@@ -159,6 +164,7 @@ function echo_erro
 
     echo_file "${LOG_ERRO}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
+    return 1
 }
 
 function echo_info
@@ -169,7 +175,7 @@ function echo_info
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_INFO} ];then
         echo_file "${LOG_INFO}" "$@"
         [[ "${bash_options}" =~ x ]] && set -x
-        return
+        return 0
     fi
 
     #local para=$(string_replace "$@" "${MY_HOME}/" "")
@@ -191,6 +197,7 @@ function echo_info
 
     echo_file "${LOG_INFO}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
+    return 0
 }
 
 function echo_warn
@@ -201,7 +208,7 @@ function echo_warn
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_WARN} ];then
         echo_file "${LOG_WARN}" "$@"
         [[ "${bash_options}" =~ x ]] && set -x
-        return
+        return 0
     fi
 
     #local para=$(string_replace "$@" "${MY_HOME}/" "")
@@ -223,6 +230,7 @@ function echo_warn
 
     echo_file "${LOG_WARN}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
+    return 0
 }
 
 function echo_debug
@@ -233,7 +241,7 @@ function echo_debug
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_DEBUG} ];then
         echo_file "${LOG_DEBUG}" "$@"
         [[ "${bash_options}" =~ x ]] && set -x
-        return
+        return 0
     fi
 
     #local para=$(string_replace "$@" "${MY_HOME}/" "")
@@ -255,6 +263,7 @@ function echo_debug
 
     echo_file "${LOG_DEBUG}" "$@"
     [[ "${bash_options}" =~ x ]] && set -x
+    return 0
 }
 
 function echo_iferror
