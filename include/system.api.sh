@@ -472,9 +472,9 @@ function sudo_it
             sudo -A bash -c "${cmd}"
             return $?
         else
-            echo_file "${LOG_DEBUG}" "sudo_it: { ${GBL_USER_DIR}/.askpass.sh } non-executable"
+            echo_file "${LOG_WARN}" "sudo_it: { ${GBL_USER_DIR}/.askpass.sh } non-executable"
             if ! account_check "${MY_NAME}" false;then
-                echo_file "${LOG_DEBUG}" "sudo_it: Username{ ${usr_name} } Password{ ${USR_PASSWORD} } check failed"
+                echo_file "${LOG_ERRO}" "sudo_it: Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
                 sudo bash -c "${cmd}"
                 return $?
             fi
