@@ -40,11 +40,6 @@ function do_rsync
 
     have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        if ! account_check "${USR_NAME}" false;then
-            echo_erro "Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
-            return 1
-        fi
-
         for ipaddr in ${xfer_ips[*]}
         do
             if [[ ${ipaddr} != ${LOCAL_IP} ]];then
@@ -63,6 +58,11 @@ function do_rsync
                         break
                     fi
                 done
+
+				if [ ${try_cnt} -eq 0 ];then
+					echo_erro "connection { ${ipaddr} } failed"
+					return 1
+				fi
 
                 if [[ ${x_direct} == "TO" ]];then
                     local xfer_dir=${xfer_des}
@@ -84,7 +84,7 @@ function do_rsync
                     if ! have_file "${local_dir}";then
                         sudo_it "mkdir -p ${local_dir}"
                         sudo_it "chmod +w ${local_dir}"
-                        sudo_it "chown ${USR_NAME} ${local_dir}"
+                        sudo_it "chown ${remote_user} ${local_dir}"
                     fi
                 fi
             fi
@@ -99,7 +99,6 @@ function do_rsync
 
     return 0
 }
-
 
 function rsync_to
 {
@@ -335,11 +334,6 @@ function _bash_xfer_exit
 
 function _xfer_thread_main
 {
-    if ! account_check "${USR_NAME}" false;then
-        echo_file "${LOG_ERRO}" "xfer Username{ ${USR_NAME} } Password{ ${USR_PASSWORD} } check fail"
-        return 1
-    fi
-
     local line
     while read line
     do
