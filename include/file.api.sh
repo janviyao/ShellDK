@@ -680,7 +680,7 @@ function file_replace
     local string="$2"
     local new_str="$3"
     local is_reg="${4:-false}"
-    local line_nr="${5:-'1,$'}"
+    local line_nr="${5:-'1,\\$'}"
 
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(default: false)\n\$5: line-number or line-range(default range: 1,$)"
