@@ -8,14 +8,17 @@ export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
 if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     source ${GBL_USER_DIR}/timer/.timerc
 	if [ $? -ne 0 ];then
+		echo_debug "timer: exception exit"
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 			return 1
 		else
 			exit 1
 		fi
 	fi
+
     source ${MY_VIM_DIR}/bashrc
 	if [ $? -ne 0 ];then
+		echo_debug "timer: exception exit"
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 			return 1
 		else
@@ -26,6 +29,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     if have_file "${MY_HOME}/.timerc";then
 		source ${MY_HOME}/.timerc
 		if [ $? -ne 0 ];then
+			echo_debug "timer: exception exit"
 			if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 				return 1
 			else
