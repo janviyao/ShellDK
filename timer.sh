@@ -41,8 +41,8 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     fi
 
     pid_list=($(process_name2pid timer.sh))
-    if string_contain "${pid_list[*]}" " $$";then
-        pid_list=($(string_replace "${pid_list[*]}" " $$" "" false))
+    if string_contain "${pid_list[*]}" "$$";then
+        pid_list=($(string_replace "${pid_list[*]}" "\b$$\b" "" true))
     fi
     process_signal KILL ${pid_list[*]} &> /dev/null
 
