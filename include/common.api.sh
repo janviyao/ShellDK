@@ -515,12 +515,9 @@ function select_one
 
 function loop2success
 {
-    local cmd="$@"
-    echo_debug "${cmd}"
-
     while true
     do
-        bash -c "${cmd}"
+		process_run "$@"
         if [ $? -eq 0 ]; then
             return 0
         fi
@@ -531,13 +528,9 @@ function loop2success
 
 function loop2fail
 {
-    local cmd="$@"
-    echo_debug "${cmd}"
-
     while true
     do
-        bash -c "${cmd}"
-
+		process_run "$@"
         local retcode=$?
         if [ ${retcode} -ne 0 ]; then
             return ${retcode}
