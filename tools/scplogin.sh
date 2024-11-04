@@ -70,7 +70,7 @@ expect << EOF
         "*Connection*closed*" { }
         "\r\n" { exp_continue }
     }
-    expect eof
+    ${EXPECT_EOF}
 EOF
 
 exit 0

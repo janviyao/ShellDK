@@ -21,22 +21,21 @@ fi
 
 # trap - EXIT : prevent from removing global directory
 PASS_ENV="\
-export BTASK_LIST='master'; \
-export REMOTE_IP=127.0.0.1; \
-export BASH_WORK_DIR='${BASH_WORK_DIR}'; \
-export NCAT_MASTER_ADDR='${NCAT_MASTER_ADDR}'; \
-export USR_NAME='${USR_NAME}'; \
-export USR_PASSWORD='${USR_PASSWORD}'; \
-export MY_VIM_DIR=$MY_VIM_DIR; \
-if test -d '$MY_VIM_DIR';then \
-    source $MY_VIM_DIR/bashrc; \
-    if is_me '${USR_NAME}';then \
-        sudo_it ${CMD_STR}; \
-        exit \$?; \
+export BTASK_LIST='master';\
+export REMOTE_IP='127.0.0.1';\
+export BASH_WORK_DIR='${BASH_WORK_DIR}';\
+export NCAT_MASTER_ADDR='${NCAT_MASTER_ADDR}';\
+export USR_NAME='${USR_NAME}';\
+export USR_PASSWORD='${USR_PASSWORD}';\
+export MY_VIM_DIR='$MY_VIM_DIR';\
+if test -d '$MY_VIM_DIR';then\
+    source $MY_VIM_DIR/bashrc;\
+    if is_me '${USR_NAME}';then\
+        sudo_it ${CMD_STR};\
+        exit \$?;\
     fi;\
 fi\
 "
-
 ENV_CMD="${PASS_ENV}; (${CMD_STR}); export BASH_EXIT=\$?"
 
 echo_debug "[sudo.sh] ${CMD_STR}"

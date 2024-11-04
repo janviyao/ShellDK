@@ -1,9 +1,9 @@
 #!/bin/bash
 #set -e # when error, then exit
 #set -u # variable not exist, then exit
+unset $(printenv | grep -E '^(INCLUDED_|USR_NAME|USR_PASSWORD|BASH_WORK_DIR|MY_VIM_DIR)' | awk -F= '{ print $1 }')
 export MY_VIM_DIR=$(cd $(dirname $0);pwd)
 export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
-#export REMOTE_IP=${REMOTE_IP:-"127.0.0.1"}
 
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc

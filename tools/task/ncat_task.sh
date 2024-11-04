@@ -85,21 +85,26 @@ function local_port_available
 
 function ncat_port_get
 {
-    if ! have_file "${NCAT_PROT_CURR}";then
+	if ! have_file "${NCAT_PIPE}.run";then
+		echo_file "${LOG_ERRO}" "ncat task donot run: [${NCAT_PIPE}.run]"
+		return 1
+	fi
+
+	if ! have_file "${NCAT_PROT_CURR}";then
 		echo_file "${LOG_ERRO}" "ncat [${NCAT_PROT_CURR}] donot generated"
 		return 1
-    fi
+	fi
 
-    local ncat_port=$(cat ${NCAT_PROT_CURR})
-    while test -z "${ncat_port}"
-    do
-        echo_file "${LOG_DEBUG}" "wait for port generate: [${NCAT_PROT_CURR}]"
-        sleep 1
-        ncat_port=$(cat ${NCAT_PROT_CURR})
-    done
+	local ncat_port=$(cat ${NCAT_PROT_CURR})
+	while test -z "${ncat_port}"
+	do
+		echo_file "${LOG_DEBUG}" "wait for port generate: [${NCAT_PROT_CURR}]"
+		sleep 1
+		ncat_port=$(cat ${NCAT_PROT_CURR})
+	done
 
-    echo "${ncat_port}"
-    return 0
+	echo "${ncat_port}"
+	return 0
 }
 
 function ncat_generate_port

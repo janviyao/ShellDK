@@ -140,7 +140,7 @@ function install_check
         echo_erro "\nUsage: [$@]\n\$1: executable bin\n\$2: file-name or regex-string\n\$3: whether regex(default: false)"
         return 1
     fi
-
+	
     if have_cmd "${xbin}";then
         local tmp_file=$(file_temp)
         ${xbin} --version &> ${tmp_file}
@@ -327,12 +327,16 @@ function install_from_rpm
         local_rpms=($(efind ${fpath} ".*/?${xfile}"))
     fi
 
-    if [ ${#local_rpms[*]} -gt 1 ];then
-        local select_x=$(select_one ${local_rpms[*]} "all")
-        if [[ "${select_x}" != "all" ]];then
-            local_rpms=(${select_x})
-        fi
-    fi
+	if [ ${#local_rpms[*]} -gt 1 ];then
+		if [ -z "${REMOTE_IP}" ];then
+			local select_x=$(select_one ${local_rpms[*]} "all")
+			if [[ "${select_x}" != "all" ]];then
+				local_rpms=(${select_x})
+			fi
+		else
+			local_rpms=()
+		fi
+	fi
 
     local rpm_file
     for rpm_file in ${local_rpms[*]}    
@@ -381,12 +385,16 @@ function install_from_rpm
         fi
 
         if [ ${#system_rpms[*]} -ge 1 ];then
-            if [ ${#system_rpms[*]} -gt 1 ];then
-                local select_x=$(select_one "all" ${system_rpms[*]})
-                if [[ "${select_x}" != "all" ]];then
-                    system_rpms=(${select_x})
-                fi
-            fi
+			if [ ${#system_rpms[*]} -gt 1 ];then
+				if [ -z "${REMOTE_IP}" ];then
+					local select_x=$(select_one "all" ${system_rpms[*]})
+					if [[ "${select_x}" != "all" ]];then
+						system_rpms=(${select_x})
+					fi
+				else
+					system_rpms=()
+				fi
+			fi
 
             local sys_rpm
             for sys_rpm in ${system_rpms[*]}
@@ -549,12 +557,16 @@ function install_from_tar
         local_tars=($(efind ${fpath} ".*/?${xfile}"))
     fi
 
-    if [ ${#local_tars[*]} -gt 1 ];then
-        local select_x=$(select_one ${local_tars[*]} "all")
-        if [[ "${select_x}" != "all" ]];then
-            local_tars=(${select_x})
-        fi
-    fi
+	if [ ${#local_tars[*]} -gt 1 ];then
+		if [ -z "${REMOTE_IP}" ];then
+			local select_x=$(select_one ${local_tars[*]} "all")
+			if [[ "${select_x}" != "all" ]];then
+				local_tars=(${select_x})
+			fi
+		else
+			local_tars=()
+		fi
+	fi
 
     local tar_file
     for tar_file in ${local_tars[*]}    

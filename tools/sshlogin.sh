@@ -62,7 +62,7 @@ if [ -z "${NCAT_PORT}" ];then
 	exit 1
 fi
 
-LOC_ENV="export BTASK_LIST='mdat';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};"
+LOC_ENV="export BTASK_LIST='mdat';export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};"
 RET_VAR="sshlogin_ret$$"
 RET_MSG="${RET_VAR}=\$?;(echo \\\"${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${RET_VAR}=\\\$${RET_VAR}\\\" | nc -w 1 ${NCAT_MASTER_ADDR} ${NCAT_PORT}) &> /dev/null"
 SSH_CMD="(${CMD_EXE}); ${RET_MSG}; exit 0"
