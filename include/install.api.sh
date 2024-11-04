@@ -328,13 +328,9 @@ function install_from_rpm
     fi
 
 	if [ ${#local_rpms[*]} -gt 1 ];then
-		if [ -z "${REMOTE_IP}" ];then
-			local select_x=$(select_one ${local_rpms[*]} "all")
-			if [[ "${select_x}" != "all" ]];then
-				local_rpms=(${select_x})
-			fi
-		else
-			local_rpms=()
+		local select_x=$(select_one ${local_rpms[*]} "all")
+		if [[ "${select_x}" != "all" ]];then
+			local_rpms=(${select_x})
 		fi
 	fi
 
@@ -386,13 +382,9 @@ function install_from_rpm
 
         if [ ${#system_rpms[*]} -ge 1 ];then
 			if [ ${#system_rpms[*]} -gt 1 ];then
-				if [ -z "${REMOTE_IP}" ];then
-					local select_x=$(select_one "all" ${system_rpms[*]})
-					if [[ "${select_x}" != "all" ]];then
-						system_rpms=(${select_x})
-					fi
-				else
-					system_rpms=()
+				local select_x=$(select_one "all" ${system_rpms[*]})
+				if [[ "${select_x}" != "all" ]];then
+					system_rpms=(${select_x})
 				fi
 			fi
 
@@ -554,17 +546,13 @@ function install_from_tar
         if ! have_file "${fpath}";then
             fpath="."
         fi
-        local_tars=($(efind ${fpath} ".*/?${xfile}"))
+        local_tars=($(efind ${fpath} "${xfile}"))
     fi
 
 	if [ ${#local_tars[*]} -gt 1 ];then
-		if [ -z "${REMOTE_IP}" ];then
-			local select_x=$(select_one ${local_tars[*]} "all")
-			if [[ "${select_x}" != "all" ]];then
-				local_tars=(${select_x})
-			fi
-		else
-			local_tars=()
+		local select_x=$(select_one ${local_tars[*]} "all")
+		if [[ "${select_x}" != "all" ]];then
+			local_tars=(${select_x})
 		fi
 	fi
 

@@ -78,9 +78,9 @@ function para_pack
 		else
 			if [ ${have_opt} -eq 1 ];then
 				if [ -n "${cmd}" ];then
-					cmd="${cmd} '$1'"
+					[[ ! "$1" =~ "'" ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
 				else
-					cmd="'$1'"
+					[[ ! "$1" =~ "'" ]] && cmd="'$1'" || cmd="$1"
 				fi
 				have_opt=0
 				shift
@@ -90,9 +90,9 @@ function para_pack
 
 		if [[ "$1" =~ ' ' ]] || [[ "$1" =~ '*' ]];then
 			if [ -n "${cmd}" ];then
-				[[ ! "$1" =~ '>' ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
+				[[ ! "$1" =~ ">" ]] && cmd="${cmd} '$1'" || cmd="${cmd} $1"
 			else
-				[[ ! "$1" =~ '>' ]] && cmd="'$1'" || cmd="$1"
+				[[ ! "$1" =~ ">" ]] && cmd="'$1'" || cmd="$1"
 			fi
 		else
 			if [ -n "${cmd}" ];then

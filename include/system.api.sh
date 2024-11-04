@@ -793,6 +793,10 @@ function efind
         echo_erro "directory invalid: ${xdir}"
         return 1
     fi
+	
+	if [[ "${regstr:0:1}" == "^" ]];then
+		regstr="${regstr#^}"
+	fi
 
     shift 2
     local opts="$@"
