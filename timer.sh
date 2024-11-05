@@ -5,6 +5,12 @@ export LOCAL_IP="127.0.0.1"
 export BTASK_LIST="master,mdat"
 export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
 
+function git_modify_list
+{
+	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" ) print $2 }'))
+	printf "%s\n" ${file_list[*]}
+}
+
 if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     source ${GBL_USER_DIR}/timer/.timerc
 	if [ $? -ne 0 ];then
@@ -95,6 +101,12 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
             fi
         fi
     done
+	
+	cd ${MY_VIM_DIR}
+	file_list=($(git_modify_list))
+	if [ ${#file_list[*]} -eq 0 ];then
+		process_runwait timeout 60 git pull	
+	fi
 
     echo_debug "timer: finish"
 fi

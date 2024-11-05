@@ -23,8 +23,10 @@ function get_change_list
 function get_commit_file
 {
 	local commit_id="$1"
-	local file_list=($(git show --name-status ${commit_id} | awk '{ if($1 == "M" || $1 == "A") print $2 }'))
-	printf "%s\n" ${file_list[*]}
+	if [ -n "${commit_id}" ];then
+		local file_list=($(git show --name-status ${commit_id} | awk '{ if($1 == "M" || $1 == "A") print $2 }'))
+		printf "%s\n" ${file_list[*]}
+	fi
 }
 
 subcmd_func_map['clone']=$(cat << EOF
