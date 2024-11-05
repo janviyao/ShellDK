@@ -10,7 +10,16 @@ declare -n _SUBCMD_ALL_REF="_SUBCMD_ALL"
 
 shortopts="$1"
 shift
+
 para_fetch "${shortopts}" _OPTION_ALL_REF _OPTION_MAP_REF _SUBCMD_ALL_REF "$@"
+if [ $? -ne 0 ];then
+	echo_erro "failed: para_fetch \"${shortopts}\" _OPTION_ALL_REF _OPTION_MAP_REF _SUBCMD_ALL_REF \"$@\""
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
 
 function get_all_opts
 {

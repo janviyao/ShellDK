@@ -12,9 +12,9 @@ if [ $? -ne 0 ];then
 	exit 1
 fi
 
-source ${MY_VIM_DIR}/tools/paraparser.sh "nrcfo:" "$@"
+source ${MY_VIM_DIR}/tools/paraparser.sh "n:r:c:f:o:" "$@"
 if [ $? -ne 0 ];then
-	echo "failed: source ${MY_VIM_DIR}/tools/paraparser.sh \"nrcfo:\" \"$@\""
+	echo_erro "failed: paraparser.sh \"n:r:c:f:o:\" \"$@\""
 	exit 1
 fi
 
@@ -213,7 +213,14 @@ function inst_env
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
-        local -a must_deps=("make-4.3" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+		local -a must_deps=("make-4.3" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+		if [ -z "${REMOTE_IP}" ];then
+			local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "yes")
+			if ! math_bool "${xselect}";then
+				must_deps=()
+			fi
+		fi
+
         local spec
         for spec in ${must_deps[*]}
         do
