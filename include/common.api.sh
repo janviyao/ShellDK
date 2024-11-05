@@ -364,7 +364,7 @@ function wait_value
         fi
 
         echo_debug "try[${try_cnt}] to read from [${ack_pipe}]"
-        #run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
+        #process_run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
         read -t ${timeout_s} FUNC_RET < ${ack_pipe}
         echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
 

@@ -43,7 +43,7 @@ do
         logr_task_ctrl_async "PRINT" "${prefix}"
         sleep 1
 
-        thread_pid=$(ctrl_create_thread "cd $(pwd);run_timeout ${OP_TIMEOUT} ${CMD_STR} \&\> ${tmp_file}") 
+        thread_pid=$(ctrl_create_thread "cd $(pwd);process_run_timeout ${OP_TIMEOUT} ${CMD_STR} \&\> ${tmp_file}") 
         progress_bar 1 ${PROGRESS_TIME} "mdat_kv_has_key thread-${thread_pid}-return"
 
         thread_ret=$(mdat_kv_get "thread-${thread_pid}-return")

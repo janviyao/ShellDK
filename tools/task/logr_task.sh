@@ -179,7 +179,7 @@ function _logr_thread_main
             if [[ "${req_body}" == "EXIT" ]];then
                 if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                     echo_debug "write [ACK] to [${ack_pipe}]"
-                    run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                    process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
                 fi
                 echo_debug "logr main exit"
                 return
@@ -236,7 +236,7 @@ function _logr_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
         #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"
         if ! have_file "${LOGR_WORK_DIR}";then

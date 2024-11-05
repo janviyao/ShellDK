@@ -425,7 +425,7 @@ function _mdat_thread_main
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
-                run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
             fi
             echo_debug "mdat main exit"
             return 
@@ -447,16 +447,16 @@ function _mdat_thread_main
         elif [[ "${req_ctrl}" == "KV_GET" ]];then
             local _xkey_=${req_body}
             echo_debug "write [${_global_map_[${_xkey_}]}] to [${ack_pipe}]"
-            run_timeout 2 echo \"${_global_map_[${_xkey_}]}\" \> ${ack_pipe}
+            process_run_timeout 2 echo \"${_global_map_[${_xkey_}]}\" \> ${ack_pipe}
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "KEY_HAS" ]];then
             local _xkey_=${req_body}
             if string_contain "${!_global_map_[*]}" "${_xkey_}";then
                 echo_debug "mdat key: [${_xkey_}] exist for [${ack_pipe}]"
-                run_timeout 2 echo \"true\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"true\" \> ${ack_pipe}
             else
                 echo_debug "mdat key: [${_xkey_}] absent for [${ack_pipe}]"
-                run_timeout 2 echo \"false\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"false\" \> ${ack_pipe}
             fi
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "VAL_HAS" ]];then
@@ -464,10 +464,10 @@ function _mdat_thread_main
             local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
             if string_contain "${_global_map_[${_xkey_}]}" "${_xval_}";then
                 echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] exist for [${ack_pipe}]"
-                run_timeout 2 echo \"true\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"true\" \> ${ack_pipe}
             else
                 echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] absent for [${ack_pipe}]"
-                run_timeout 2 echo \"false\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"false\" \> ${ack_pipe}
             fi
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "KV_UNSET_KEY" ]];then
@@ -528,7 +528,7 @@ function _mdat_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
 
         echo_file "${LOG_DEBUG}" "mdat wait: [${MDAT_PIPE}]"

@@ -52,7 +52,7 @@ function process_run
 {
 	local cmd_str=$(para_pack "$@")
 
-	echo_info "${cmd_str}"
+	echo_file "${LOG_DEBUG}" "[process_run] ${cmd_str}"
 	eval "${cmd_str}" 
 
 	local retcode=$?
@@ -83,6 +83,49 @@ function process_runwait
     echo_file "${LOG_DEBUG}" "runwait[${bgpid}] return { ${retcode} }"
 
     return ${retcode}
+}
+
+function process_run_timeout
+{
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: time(s)\n\$2~N: one command with its parameters"
+        return 1
+    fi
+
+    local time_s="${1:-60}"
+    shift
+
+    if [ $# -gt 0 ];then
+        echo_debug "timeout(${time_s}s): $@"
+        process_run timeout ${time_s} "$@"
+        return $?
+    else
+        echo_erro "timeout(${time_s}s): $@ cmd empty"
+    fi
+
+    return 1
+}
+
+function process_run_lock
+{
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: lock id\n\$2~N: one command with its parameters"
+        return 1
+    fi
+
+    local lockid=$1
+    shift
+
+    if ! have_file "${GBL_BASE_DIR}/shell.lock.${lockid}";then
+        touch ${GBL_BASE_DIR}/shell.lock.${lockid}
+        chmod 777 ${GBL_BASE_DIR}/shell.lock.${lockid}
+    fi
+
+    (
+        flock -x ${lockid}  #flock文件锁，-x表示独享锁
+        echo_file "${LOG_DEBUG}" "[process_run_lock] $@"
+        process_run "$@"
+    ) {lockid}<>${GBL_BASE_DIR}/shell.lock.${lockid}
 }
 
 function process_exist

@@ -71,14 +71,14 @@ function local_port_available
     #if nc -zv 127.0.0.1 ${port} &> /dev/null;then
     #    echo_file "${LOG_DEBUG}" "port[${port}] avalible"
     #    if ! grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
-    #        run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
+    #        process_run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
     #    fi
     #    return 0
     #fi
 
     #echo_file "${LOG_DEBUG}" "port[${port}] avalible"
     if ! grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
-        run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
+        process_run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
     fi
     return 0
 }
@@ -126,6 +126,10 @@ function ncat_generate_port
         fi
     fi
 
+	if file_expire "${NCAT_PORT_USED}" 60;then
+		process_run_lock 1 update_port_used
+	fi
+
     echo "" > ${NCAT_PROT_CURR}
     while ! local_port_available "${port_val}"
     do
@@ -133,6 +137,7 @@ function ncat_generate_port
         port_val=$((${port_val} + 1))
         if [ ${port_val} -ge 65535 ];then
             port_val=32767
+			echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR}] port reach to max"
         fi
     done
 
@@ -381,7 +386,7 @@ function ncat_wait_resp
     echo_debug "wait ncat's response: ${ack_pipe}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
     if [ $? -eq 0 ];then
-        run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
+        process_run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
         local retcode=$?
 
         if have_file "${ack_pipe}.result";then
@@ -528,8 +533,8 @@ function _ncat_thread_main
     fi
 
     local ncat_port=$(ncat_generate_port)
-
     mdat_set_var "master_work"
+
     while math_bool "${master_work}" 
     do
         ncat_port=$(ncat_generate_port ${ncat_port})
@@ -573,7 +578,7 @@ function _ncat_thread_main
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
-                run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
             fi
             #mdat_set_var "master_work=false"
             echo_debug "ncat main exit"
@@ -625,12 +630,12 @@ function _ncat_thread_main
             local ack_pipe=$(mdat_kv_get "${event_uid}.pipe")
             mdat_kv_unset_key "${event_uid}.pipe"
             echo_debug "notify to [${ack_pipe}]"
-            run_timeout 2 echo \"${event_msg}\" \> ${ack_pipe}
+            process_run_timeout 2 echo \"${event_msg}\" \> ${ack_pipe}
         fi
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
 
         mdat_get_var "master_work"
@@ -675,13 +680,9 @@ function _ncat_thread
     fi
     #( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
-    if ! have_file "${NCAT_PORT_USED}";then
-        run_lock 1 update_port_used
-    else
-        if file_expire "${NCAT_PORT_USED}" 60;then
-            run_lock 1 update_port_used
-        fi
-    fi
+	if file_expire "${NCAT_PORT_USED}" 60;then
+		process_run_lock 1 update_port_used
+	fi
 
     if ! have_file "${NCAT_WORK_DIR}";then
         echo_file "${LOG_DEBUG}" "because master have exited, ncat bg_thread[${self_pid}] exit"

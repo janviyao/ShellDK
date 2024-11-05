@@ -148,7 +148,7 @@ function _ctrl_thread_main
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
-                run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
             fi
             echo_debug "ctrl main exit"
             return 
@@ -177,7 +177,7 @@ function _ctrl_thread_main
             local bgpid=$!
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [${bgpid}] to [${ack_pipe}]"
-                run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
+                process_run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
                 if ! have_file "${CTRL_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
                     break
@@ -188,7 +188,7 @@ function _ctrl_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
 
         echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
