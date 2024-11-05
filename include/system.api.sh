@@ -36,7 +36,7 @@ function have_sudoed
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
-        if echo | sudo -S -u 'root' echo &> /dev/null; then
+        if sudo -n true &> /dev/null; then
             return 0
         else
             return 1
