@@ -34,6 +34,7 @@ function do_rsync
     #    xfer_src=$(string_trim "${xfer_src}" "/" 2)
     #fi
 
+	echo_file "${LOG_DEBUG}" "do_rsync: [$@]"
     local sync_src=${xfer_src}
     local sync_des=${xfer_des}
     local sync_cmd="LOCAL${GBL_SPF3}cd ."
@@ -332,6 +333,23 @@ function _bash_xfer_exit
     fi
 }
 
+function _rsync_callback1
+{
+	local cmd_str="$1"
+	local retcode="$2"
+	local outfile="$3"
+
+	echo_debug "_rsync_callback1: { $@ }"
+	if [ ${retcode} -ne 0 ];then
+		echo_warn "failed[${retcode}] { ${cmd_str} }"
+	fi
+
+	if have_file "${outfile}";then
+		cat ${outfile}
+		rm -f ${outfile}
+	fi
+}
+
 function _xfer_thread_main
 {
     local line
@@ -418,18 +436,14 @@ EOF
 
             have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if [[ "${cmd_act}" == 'REMOTE' ]];then
-                process_runwait sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty > ${XFER_WORK}
-                local ret=$?
-                if [ ${ret} -ne 0 ];then
-                    echo_warn "failed[${ret}] { sshpass -p \"${remote_pswd}\" rsync -az ${action} --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
-                fi
+				local pid=$(process_run_callback _rsync_callback1 sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
+				echo "${pid}" > ${XFER_WORK}
+				process_wait ${pid} 1
             else
                 #have_file "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
-                process_runwait rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty > ${XFER_WORK}
-                local ret=$?
-                if [ ${ret} -ne 0 ];then
-                    echo_warn "failed[${ret}] { rsync -az ${action} --exclude-from \"${MY_HOME}/.rsync.exclude\" --progress ${xfer_src} ${xfer_des} }"
-                fi
+				local pid=$(process_run_callback _rsync_callback1 rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
+				echo "${pid}" > ${XFER_WORK}
+				process_wait ${pid} 1
             fi
         fi
 

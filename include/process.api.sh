@@ -29,7 +29,7 @@ function process_wait
     local stime="${2:-0.01}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: stime(default: 0.01s)"
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: check period(default: 0.01s)"
         return 1
     fi
     [ -z "${xproc}" ] && return 1
@@ -67,33 +67,35 @@ function process_run
     return ${retcode}
 }
 
-function process_runwait
+function process_run_callback
 {
-    local errfile="$(file_temp)"
+    local cb_func="$1"
+    shift
 
-    eval "$@;erro=\$?;echo \$erro > ${errfile}; exit \$erro" &
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: callback function with command retcode and command output file\n\$2~N: command sequence"
+        return 1
+    fi
+
+    local outfile="$(file_temp)"
+
+	eval "( $@ ) &> ${outfile};erro=\$?; ${cb_func} '$@' \"\${erro}\" \"${outfile}\"" &
     local bgpid=$!
     echo "${bgpid}"
+    echo_file "${LOG_DEBUG}" "run_callback[${bgpid}] { ${cb_func} } { $@ }"
 
-    echo_file "${LOG_DEBUG}" "runwait[${bgpid}] { $@ }"
-    process_wait ${bgpid} 1 &> /dev/null
-    
-    local retcode=$(cat ${errfile})
-    rm -f {errfile}
-    echo_file "${LOG_DEBUG}" "runwait[${bgpid}] return { ${retcode} }"
-
-    return ${retcode}
+    return 0 
 }
 
 function process_run_timeout
 {
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: time(s)\n\$2~N: one command with its parameters"
-        return 1
-    fi
-
     local time_s="${1:-60}"
     shift
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: time(s)\n\$2~N: command sequence"
+        return 1
+    fi
 
     if [ $# -gt 0 ];then
         echo_debug "timeout(${time_s}s): $@"
@@ -109,7 +111,7 @@ function process_run_timeout
 function process_run_lock
 {
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: lock id\n\$2~N: one command with its parameters"
+        echo_erro "\nUsage: [$@]\n\$1: lock id\n\$2~N: command sequence"
         return 1
     fi
 

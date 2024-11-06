@@ -105,7 +105,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 	cd ${MY_VIM_DIR}
 	file_list=($(git_modify_list))
 	if [ ${#file_list[*]} -eq 0 ];then
-		process_runwait timeout 60 git pull	
+		process_run_timeout 60 git pull	
 	fi
 
     echo_debug "timer: finish"
