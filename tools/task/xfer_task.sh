@@ -328,8 +328,8 @@ function _bash_xfer_exit
 
     xfer_task_ctrl_sync "EXIT"
 
-    if [ -f ${HOME}/.bash_exit ];then
-        source ${HOME}/.bash_exit
+    if [ -f ${MY_HOME}/.bash_exit ];then
+        source ${MY_HOME}/.bash_exit
     fi
 }
 

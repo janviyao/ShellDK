@@ -41,7 +41,7 @@ function func_create
 	local name="${subcmd_all[0]}"
 	local image="${subcmd_all[1]}"
 	if [[ -n "${name}" ]] && [[ -n "${image}" ]];then
-		process_run docker run -d -v ${HOME}:${HOME} --net=host --name ${name} -it ${image} /bin/bash 
+		process_run docker run -d -v ${MY_HOME}:${MY_HOME} --net=host --name ${name} -it ${image} /bin/bash 
 	else
 		return 1
 	fi

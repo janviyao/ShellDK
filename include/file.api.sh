@@ -57,7 +57,7 @@ function have_file
     fi
 
     if match_regex "${xfile}" "^~";then
-        xfile=$(string_replace "${xfile}" '^~' "${HOME}" true)
+        xfile=$(string_replace "${xfile}" '^~' "${MY_HOME}" true)
     fi
 
     if [ -e "${xfile}" ];then

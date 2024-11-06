@@ -2,9 +2,9 @@
 #export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 export PS1='\n\e[1;37m[\e[m\e[1;32m\u\e[m\e[1;33m@\e[m\e[1;35m\H\e[m \e[4m`pwd`\e[m\e[1;37m]\e[m\e[1;36m\e[m\n\$'
 
-export GOPATH=${HOME}/.local
+export GOPATH=${MY_HOME}/.local
 export GOROOT=${GOPATH}/go
-export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${HOME}/.local/bin:${GOROOT}/bin:/usr/lib/udev
+export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${MY_HOME}/.local/bin:${GOROOT}/bin:/usr/lib/udev
 
 readonly ROOT_PID=$$
 readonly SYSTEM=$(uname -s | grep -E '^[A-Za-z_]+' -o)
@@ -78,7 +78,7 @@ mkdir -p ${GBL_USER_DIR}
 
 function __my_bashrc_deps
 {
-    local bin_dir="${HOME}/.local/bin"
+    local bin_dir="${MY_HOME}/.local/bin"
     local app_dir="${MY_VIM_DIR}/tools/app"
     local cur_dir=$(pwd)
 
@@ -118,8 +118,8 @@ __my_bashrc_deps
 
 function __my_bash_exit
 { 
-    if [ -f ${HOME}/.bash_exit ];then
-        source ${HOME}/.bash_exit
+    if [ -f ${MY_HOME}/.bash_exit ];then
+        source ${MY_HOME}/.bash_exit
     fi
 
     echo_file "${LOG_DEBUG}" "rm -fr ${BASH_WORK_DIR}"
