@@ -338,13 +338,18 @@ function inst_env
         cron_dir="/var/cron/tabs"
     fi
 
+	local cmd_pre="sudo -u ${MY_NAME} "
+	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		cmd_pre=""
+	fi
+
     if have_file "${cron_dir}";then
         sudo_it chmod o+x ${cron_dir} 
         if have_file "${cron_dir}/${MY_NAME}";then
             ${SUDO} file_del "${cron_dir}/${MY_NAME}" "\".+timer\.sh\s+${MY_NAME}\"" true
-            sudo_it "echo \"*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}\" >> ${cron_dir}/${MY_NAME}"
+            sudo_it "echo \"*/5 * * * * ${cmd_pre}${MY_VIM_DIR}/timer.sh ${MY_NAME}\" >> ${cron_dir}/${MY_NAME}"
         else
-            sudo_it "echo \"*/5 * * * * ${MY_VIM_DIR}/timer.sh ${MY_NAME}\" > ${cron_dir}/${MY_NAME}"
+            sudo_it "echo \"*/5 * * * * ${cmd_pre}${MY_VIM_DIR}/timer.sh ${MY_NAME}\" > ${cron_dir}/${MY_NAME}"
         fi
         sudo_it chmod 0644 ${cron_dir}/${MY_NAME} 
     else
