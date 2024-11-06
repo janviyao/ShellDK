@@ -104,7 +104,11 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 	
 	file_list=($(cd ${MY_VIM_DIR}; git_modify_list))
 	if [ ${#file_list[*]} -eq 0 ];then
-		process_run_timeout 60 sudo -u ${MY_NAME} git pull --rebase
+		if [[ "${SYSTEM}" == "Linux" ]]; then
+			process_run_timeout 60 sudo -u ${MY_NAME} git pull --rebase \&\>\> ${BASH_LOG}
+		elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+			process_run_timeout 60 git pull --rebase \&\>\> ${BASH_LOG}
+		fi
 	fi
 
     echo_debug "timer: finish"

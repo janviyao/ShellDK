@@ -303,21 +303,22 @@ class UnprivilegedClient:
 
 def main():
     parser = argparse.ArgumentParser(description="Run a command in elevated user mode")
+
     window_group = parser.add_mutually_exclusive_group()
     window_group.set_defaults(visibility=0)
-    window_group.add_argument('--minimized', action='store_const', dest='visibility', const=1,
-                              help="show the elevated console window as a minimized window")
-    window_group.add_argument('--visible', action='store_const', dest='visibility', const=2,
-                              help="show the elevated console window")
+    window_group.add_argument('--minimized', action='store_const', dest='visibility', const=1, help="show the elevated console window as a minimized window")
+    window_group.add_argument('--visible', action='store_const', dest='visibility', const=2, help="show the elevated console window")
+
     parser.add_argument('--elevated', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('command', nargs=argparse.PARSER)
-    args = parser.parse_args()
+
+    #args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     if args.elevated:
         ElevatedServer().main(args.command)
     else:
         UnprivilegedClient().main(**vars(args))
-
 
 if __name__ == '__main__':
     main()
