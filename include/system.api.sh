@@ -419,26 +419,26 @@ function sudo_it
         return $?
     else
         if have_sudoed;then
-            sudo bash -c "${cmd}"
+			sudo -u ${MY_NAME} bash -c "${cmd}"
             return $?
         fi
 
         if test -x ${GBL_USER_DIR}/.askpass.sh;then
-            sudo -A bash -c "${cmd}"
+            sudo -u ${MY_NAME} -A bash -c "${cmd}"
             return $?
         else
             echo_file "${LOG_WARN}" "sudo_it: { ${GBL_USER_DIR}/.askpass.sh } non-executable"
             if ! account_check "${MY_NAME}" false;then
                 echo_file "${LOG_ERRO}" "sudo_it: Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
-                sudo bash -c "${cmd}"
+                sudo -u ${MY_NAME} bash -c "${cmd}"
                 return $?
             fi
 
             if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -S -u 'root' bash -c "${cmd}"
+                echo "${USR_PASSWORD}" | sudo -u 'root' -S bash -c "${cmd}"
                 return $?
             else
-                sudo bash -c "${cmd}"
+                sudo -u ${MY_NAME} bash -c "${cmd}"
                 return $?
             fi
         fi
