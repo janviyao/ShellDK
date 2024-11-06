@@ -101,8 +101,9 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
             fi
         fi
     done
-	
-	file_list=($(cd ${MY_VIM_DIR}; git_modify_list))
+
+	cd ${MY_VIM_DIR}
+	file_list=($(git_modify_list))
 	if [ ${#file_list[*]} -eq 0 ];then
 		if [[ "${SYSTEM}" == "Linux" ]]; then
 			process_run_timeout 60 su - ${MY_NAME} -c "git pull --rebase &> /dev/null"
