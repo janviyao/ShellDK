@@ -105,9 +105,9 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 	file_list=($(cd ${MY_VIM_DIR}; git_modify_list))
 	if [ ${#file_list[*]} -eq 0 ];then
 		if [[ "${SYSTEM}" == "Linux" ]]; then
-			process_run_timeout 60 su - ${MY_NAME} -c "cd ${MY_VIM_DIR}; git pull --rebase &> /dev/null"
+			process_run_timeout 60 su - ${MY_NAME} -c "cd ${MY_VIM_DIR} && git pull --rebase &> /dev/null || exit 0"
 		elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-			process_run_timeout 60 cd ${MY_VIM_DIR}\; git pull --rebase \&\> /dev/null
+			process_run_timeout 60 cd ${MY_VIM_DIR} \&\& git pull --rebase \&\> /dev/null \|\| exit 0
 		fi
 	fi
 
