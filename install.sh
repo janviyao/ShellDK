@@ -19,8 +19,10 @@ if [ $? -ne 0 ];then
 fi
 
 if ! have_admin; then
-	if ! test -r /etc/shadow;then
-		$SUDO chmod +r /etc/shadow 
+	if [[ "${SYSTEM}" == "Linux" ]]; then
+		if ! test -r /etc/shadow;then
+			$SUDO chmod +r /etc/shadow 
+		fi
 	fi
 
     if ! account_check "${MY_NAME}";then
