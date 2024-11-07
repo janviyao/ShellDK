@@ -340,11 +340,7 @@ function inst_env
         cron_dir="/var/cron/tabs"
     fi
 
-	local cmd_pre="sudo -u ${MY_NAME} "
-	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-		cmd_pre=""
-	fi
-
+	local cmd_pre=""
     if have_file "${cron_dir}";then
         sudo_it chmod o+x ${cron_dir} 
         if have_file "${cron_dir}/${MY_NAME}";then
