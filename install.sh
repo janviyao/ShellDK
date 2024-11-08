@@ -261,8 +261,8 @@ function inst_env
         fi
     done
 
-    have_file "${MY_HOME}/.bashrc" || have_file "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc
-    have_file "${MY_HOME}/.bash_profile" || have_file "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile
+	have_file "${MY_HOME}/.bashrc" || ( have_file "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc )
+	have_file "${MY_HOME}/.bash_profile" || ( have_file "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile )
 
     have_file "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
     #have_file "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
