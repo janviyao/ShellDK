@@ -822,7 +822,7 @@ function check_net
 
 function cursor_pos
 {
-    local pos
+    local pos xpos ypos xmax ymax
 
     touch ${LOG_DISABLE}
 
@@ -834,14 +834,35 @@ function cursor_pos
 
     # store the position in bash variable 'pos'
     read -s -d R pos < /dev/tty
+	
+	read ymax xmax < <(stty size)
 
     rm -f ${LOG_DISABLE}
+
     # save the position
     #echo "current position: $pos"
-    local x_pos=$(string_split "${pos}" ';' 1)
-    local y_pos=$(string_split "${pos}" ';' 2)
+    ypos=$(string_split "${pos}" ';' 1)
+    xpos=$(string_split "${pos}" ';' 2)
+    #echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
 
-    echo "$((x_pos-1)),$((y_pos-1))"
+	if [ ${xpos} -le ${xmax} ];then
+		if [ ${xpos} -gt 0 ];then
+			xpos=$((xpos - 1))
+		fi
+	fi
+
+	if [ ${ypos} -lt ${ymax} ];then
+		if [ ${ypos} -gt 1 ];then
+			ypos=$((ypos - 1))
+		fi
+	elif [ ${ypos} -eq ${ymax} ];then
+		ypos=$((ypos - 2))
+	fi
+
+	local cur_pos="${xpos},${ypos}"
+    echo_file "${LOG_DEBUG}" "[cursor_pos] ${cur_pos}"
+
+    echo "${cur_pos}"
     return 0
 }
 
@@ -997,3 +1018,56 @@ function get_local_ip
 
     echo "127.0.0.1"
 }
+
+function bin_info
+{
+    local xbin="$1"
+
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: bin-name or running-pid"
+        return 1
+    fi
+
+	local xfile="${xbin}"
+	if math_is_int "${xbin}";then
+		xfile=$(process_path ${xbin})
+	else
+		if have_cmd "${xbin}";then
+			xfile=$(whereis ${xbin} | awk '{ print $2 }')
+		fi
+	fi
+
+	if ! have_file "${xfile}";then
+        echo_erro "bin { ${xfile} } invalid"
+        return 1
+	fi
+
+	local pkg_name=$(rpm -qf ${xfile})
+	cecho blue "$(printf "[%26s package]: %-50s" ${xfile} ${pkg_name})"
+
+	local sel_val=$(input_prompt "" "Display the dynamic section ? (yes/no)" "yes" true)
+	if math_bool "${sel_val}";then
+		cecho blue "$(printf "[%34s]: " "dynamic section")"
+		readelf -d -W ${xfile}
+	fi
+
+	sel_val=$(input_prompt "" "Display the contents of the dynamic symbol table ? (yes/no)" "no" true)
+	if math_bool "${sel_val}";then
+		objdump -T -w ${xfile}
+	fi
+
+	sel_val=$(input_prompt "" "Display assembler contents of all sections ? (yes/no)" "no" true)
+	if math_bool "${sel_val}";then
+		objdump -S -D -w ${xfile}
+	fi
+
+	if math_is_int "${xbin}";then
+		sel_val=$(input_prompt "" "Display app memory map ? (yes/no)" "yes" true)
+		if math_bool "${sel_val}";then
+			sudo_it cat /proc/${xbin}/maps
+		fi
+	fi
+
+	return 0
+}
+

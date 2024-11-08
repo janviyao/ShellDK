@@ -24,7 +24,7 @@ ${SUDO} "echo > /var/log/kern; rm -f /var/log/kern-*"
 
 if math_bool "${APPLY_SYSCTRL}";then
     have_file "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
-    ${SUDO} echo_iferror sysctl -p
+    ${SUDO} process_run sysctl -p
 fi
 
 #if process_exist "iscsid";then

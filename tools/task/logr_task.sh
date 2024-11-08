@@ -202,7 +202,7 @@ function _logr_thread_main
         elif [[ "${req_ctrl}" == "CURSOR_MOVE" ]];then
             local x_val=$(string_split "${req_body}" "${GBL_SPF2}" 1)
             local y_val=$(string_split "${req_body}" "${GBL_SPF2}" 2)
-            tput cup ${x_val} ${y_val}
+            tput cup ${y_val} ${x_val}
         elif [[ "${req_ctrl}" == "CURSOR_HIDE" ]];then
             tput civis
         elif [[ "${req_ctrl}" == "CURSOR_SHOW" ]];then

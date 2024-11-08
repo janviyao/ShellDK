@@ -46,7 +46,7 @@ if have_file "/dev/hugepages/fusion_target_iscsi*";then
         if ! string_match "${hugefile}" "${HP_FILE_PREFIX}" 1;then
             let CAN_FREE_SIZE=CAN_FREE_SIZE+cur_size
             #echo_info "rm -f ${hugefile}"
-            #echo_iferror rm -f ${hugefile} 
+            #process_run rm -f ${hugefile} 
         else
             let HP_FILE_SIZE=HP_FILE_SIZE+cur_size
             #echo_info "hm size: ${HP_FILE_SIZE} cursize: ${cur_size} ${hugefile}"
@@ -102,7 +102,7 @@ do
                         cur_size=$(file_size ${hugefile} | tail -n 1)
                         cur_size=$(( cur_size / 1024 / 1024 ))
 
-                        echo_iferror rm -f ${hugefile} 
+                        process_run rm -f ${hugefile} 
                         let LEFT_NR=LEFT_NR-cur_size
 
                         echo_info "left: ${LEFT_NR}, rm -f ${hugefile}"

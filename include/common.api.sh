@@ -383,6 +383,7 @@ function input_prompt
     local check_func="$1"
     local prompt_ctn="$2"
     local dflt_value="$3"
+    local hide_hint="${4:-false}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: check function\n\$2: prompt string\n\$3: default value"
@@ -395,12 +396,23 @@ function input_prompt
         extra_opt="-s"
     fi
 
+	if math_bool "${hide_hint}";then
+		local coordinate=$(cursor_pos)
+		local x_coord=$(string_split "${coordinate}" ',' 1)
+		local y_coord=$(string_split "${coordinate}" ',' 2)
+	fi
+
     local input_val="";
     if [ -n "${dflt_value}" ];then
         read ${extra_opt} -p "Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
     else
         read ${extra_opt} -p "Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
     fi
+
+	if math_bool "${hide_hint}";then
+		logr_task_ctrl_sync "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
+		logr_task_ctrl_sync "ERASE_LINE"
+	fi
 
     if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
         input_val="${dflt_value}"
@@ -409,11 +421,22 @@ function input_prompt
     if [ -n "${check_func}" ];then
         while ! eval "${check_func} ${input_val}"
         do
+			if math_bool "${hide_hint}";then
+				coordinate=$(cursor_pos)
+				x_coord=$(string_split "${coordinate}" ',' 1)
+				y_coord=$(string_split "${coordinate}" ',' 2)
+			fi
+
             if [ -n "${dflt_value}" ];then
                 read ${extra_opt} -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty
             else
                 read ${extra_opt} -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
             fi
+
+			if math_bool "${hide_hint}";then
+				logr_task_ctrl_sync "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
+				logr_task_ctrl_sync "ERASE_LINE"
+			fi
 
             if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
                 input_val="${dflt_value}"
@@ -423,11 +446,22 @@ function input_prompt
         if [ -n "${dflt_value}" ];then
             while [ -z "${input_val}" ]
             do
+				if math_bool "${hide_hint}";then
+					coordinate=$(cursor_pos)
+					x_coord=$(string_split "${coordinate}" ',' 1)
+					y_coord=$(string_split "${coordinate}" ',' 2)
+				fi
+
                 if [ -n "${dflt_value}" ];then
                     read ${extra_opt} -p "check fail, Please ${prompt_ctn}(default ${dflt_value}): " input_val < /dev/tty &> /dev/tty
                 else
                     read ${extra_opt} -p "check fail, Please ${prompt_ctn}: " input_val < /dev/tty &> /dev/tty
                 fi
+
+				if math_bool "${hide_hint}";then
+					logr_task_ctrl_sync "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
+					logr_task_ctrl_sync "ERASE_LINE"
+				fi
 
                 if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
                     input_val="${dflt_value}"
