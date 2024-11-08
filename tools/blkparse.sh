@@ -63,7 +63,7 @@ dev_names=($@)
 for dev_name in ${dev_names[*]}
 do
     if ! have_file "/dev/${dev_name}";then
-        echo_erro "invalid: /dev/${dev_name}"
+		echo_erro "file { /dev/${dev_name} } not accessed"
         exit 1
     fi
 

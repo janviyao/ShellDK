@@ -4,7 +4,7 @@ echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
 
 g_testcase_file="$1"
 if ! have_file "${g_testcase_file}"; then
-    echo_erro "testcase not exist: $1"
+	echo_erro "file { $1 } not accessed"
     exit 1
 fi
 

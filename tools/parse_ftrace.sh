@@ -15,7 +15,7 @@ fi
 
 file=$(real_path $1)
 if ! have_file "${file}";then
-    echo_erro "file lost: ${file}"
+	echo_erro "file { ${file} } not accessed"
 fi
 tmp_file=$(file_temp "$(pwd)")
 

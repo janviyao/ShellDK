@@ -95,7 +95,7 @@ function do_replace
 for xfile in ${FILE_LIST[*]}
 do
     if ! have_file "${xfile}";then
-        echo_erro "invalid: ${xfile}"
+		echo_erro "file { ${xfile} } not accessed"
         continue
     fi
 

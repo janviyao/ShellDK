@@ -210,7 +210,7 @@ function install_provider
         xfile="${select_x}"
     else
         if ! have_file "${xfile}";then
-            echo_erro "file { ${xfile} } lost"
+			echo_erro "file { ${xfile} } not accessed"
             return 1
         fi
     fi

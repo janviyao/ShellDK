@@ -69,10 +69,10 @@ function check_passwd
             fi
         else
 			if have_file /etc/shadow;then
-				echo_file "${LOG_WARN}" "file[/etc/shadow] not readable"
+				echo_file "${LOG_WARN}" "file { /etc/shadow } not readable"
 				return 1
 			else
-				echo_file "${LOG_WARN}" "file[/etc/shadow] not exist"
+				echo_file "${LOG_WARN}" "file { /etc/shadow } not accessed"
 				return 1
 			fi
         fi
@@ -624,7 +624,7 @@ function du_find
     fi
 
     if ! have_file "${dpath}";then
-        echo_erro "path invalid: ${dpath}"
+		echo_erro "file { ${dpath} } not accessed"
         return 1
     fi
 
@@ -745,7 +745,7 @@ function efind
     fi
 
     if ! have_file "${xdir}";then
-        echo_erro "directory invalid: ${xdir}"
+		echo_erro "file { ${xdir} } not accessed"
         return 1
     fi
 	
@@ -1038,7 +1038,7 @@ function bin_info
 	fi
 
 	if ! have_file "${xfile}";then
-        echo_erro "bin { ${xfile} } invalid"
+        echo_erro "file { ${xfile} } not accessed"
         return 1
 	fi
 

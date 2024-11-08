@@ -7,7 +7,7 @@ function conf_sched
     local dev_name="$1"
     local sys_path="/sys/block/${dev_name}"
     if ! have_file "${sys_path}";then
-        echo_erro "invalid: ${sys_path}"
+		echo_erro "file { ${sys_path} } not accessed"
         return 1
     fi
 
@@ -70,7 +70,7 @@ function conf_merge
 
     local sys_path="/sys/block/${dev_name}"
     if ! have_file "${sys_path}";then
-        echo_erro "invalid: ${sys_path}"
+		echo_erro "file { ${sys_path} } not accessed"
         return 1
     fi
 
@@ -90,7 +90,7 @@ function conf_qdeep
 
     local sys_path="/sys/block/${dev_name}"
     if ! have_file "${sys_path}";then
-        echo_erro "invalid: ${sys_path}"
+		echo_erro "file { ${sys_path} } not accessed"
         return 1
     fi
 

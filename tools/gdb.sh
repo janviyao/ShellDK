@@ -110,7 +110,7 @@ function func_script
 	fi
 	
     if ! have_file "${xscript}";then
-        echo_erro "GDB script { ${xscript} } lost" 
+		echo_erro "file { ${xscript} } not accessed"
         return 0
     fi
 

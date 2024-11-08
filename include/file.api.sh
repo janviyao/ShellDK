@@ -323,7 +323,7 @@ function file_del
     fi
 
     if ! have_file "${xfile}";then
-        echo_erro "file lost: ${xfile}"
+        echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
 
@@ -688,7 +688,7 @@ function file_replace
     fi
 
     if ! have_file "${xfile}";then
-        echo_erro "file lost: ${xfile}"
+        echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
 
@@ -726,7 +726,7 @@ function file_replace_with_expr
     fi
 
     if ! have_file "${xfile}";then
-        echo_erro "file lost: ${xfile}"
+        echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
 
@@ -772,7 +772,7 @@ function file_handle_with_cmd
     fi
 
     if ! have_file "${xfile}";then
-        echo_erro "file lost: ${xfile}"
+        echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
 

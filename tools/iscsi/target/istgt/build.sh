@@ -14,7 +14,7 @@ if ! have_file "${ISCSI_APP_SRC}";then
 fi
 
 have_file "/usr/lib64/libevent_core-*" || install_from_net "libevent" 
-have_file "/usr/lib64/libevent.so*" || install_from_net "libevent-devel" 
+have_file "/usr/lib64/libevent.so*"    || install_from_net "libevent-devel" 
 
 cd ${ISCSI_APP_SRC}
 

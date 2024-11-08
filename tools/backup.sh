@@ -148,7 +148,7 @@ if have_file "${BAK_CONF}"; then
     done
 else
     if ! have_file ".git"; then
-        echo_erro "conf file lost: ${BAK_CONF}"
+		echo_erro "file { ${BAK_CONF} } not accessed"
         exit 1
     fi
 fi
