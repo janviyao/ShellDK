@@ -721,7 +721,8 @@ function file_replace_with_expr
     local is_reg="${4:-false}"
 
     if [ $# -lt 3 ];then
-		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string(one expresion)\n\$4: \$2 whether regex(default: false)"
+		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string(one expresion)\n\$4: \$2 whether regex(default: false)\n
+		\r**Inner Variables**: \n\$xfile  : file path\n\$line_nr: line number"
         return 1
     fi
 
@@ -740,21 +741,17 @@ function file_replace_with_expr
         string=$(string_replace "${string}" '/' '\/')
     fi
 
-    local tmp_file="$(file_temp)"
     local line_nr
     for line_nr in ${line_nrs[*]}
     do
-        eval "${new_exp}" > ${tmp_file}
-        local new_str=$(cat ${tmp_file})
+		local new_str=$(cat < <(eval "${new_exp}"))
         eval "sed -r -i '${line_nr} s/${string}/${new_str}/g' ${xfile}"
         if [ $? -ne 0 ];then
             echo_erro "file_replace_with_expr { $@ }"
-            rm -f ${tmp_file}
             return 1
         fi
     done
 
-    rm -f ${tmp_file}
     return 0
 }
 
@@ -786,7 +783,6 @@ function file_handle_with_cmd
         string=$(string_replace "${string}" '/' '\/')
     fi
 
-    local tmp_file="$(file_temp)"
     local line_nr
     for line_nr in ${line_nrs[*]}
     do
@@ -794,7 +790,6 @@ function file_handle_with_cmd
         eval "${run_cmd}" <<< "${content}"
     done
 
-    rm -f ${tmp_file}
     return 0
 }
 
@@ -806,7 +801,7 @@ function file_count
     have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
     local -i index=0
-    local -a c_array=($(echo ""))
+    local -a c_array
     local file
     for file in ${f_array[*]}
     do
@@ -822,13 +817,11 @@ function file_count
         fi
     done
 
+	readable=false
     if math_bool "${readable}";then
-        echo $(fstat "${f_array[*]}" | awk '{ print $1 }')
+        echo $(fstat ${f_array[*]} | awk '{ print $1 }')
     else
-        local tmp_file="$(file_temp)"
-        sudo_it "fstat '${f_array[*]}' &> ${tmp_file}"
-        local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $1 }')
-        rm -f ${tmp_file}
+		local fcount=$(tail -n 1 < <(sudo_it "${LOCAL_BIN_DIR}/fstat ${f_array[*]}") | awk '{ print $1 }')
         echo "${fcount}"
     fi
 
@@ -848,7 +841,7 @@ function file_size
     have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
     local -i index=0
-    local -a c_array=($(echo ""))
+    local -a c_array
     local file
     for file in ${f_array[*]}
     do
@@ -867,10 +860,7 @@ function file_size
     if math_bool "${readable}";then
         echo $(fstat "${f_array[*]}" | awk '{ print $2 }')
     else
-        local tmp_file="$(file_temp)"
-        sudo_it "fstat '${f_array[*]}' &> ${tmp_file}"
-        local fcount=$(tail -n 1 ${tmp_file} | awk '{ print $2 }')
-        rm -f ${tmp_file}
+		local fcount=$(tail -n 1 < <(sudo_it "${LOCAL_BIN_DIR}/fstat ${f_array[*]}") | awk '{ print $2 }')
         echo "${fcount}"
     fi
 

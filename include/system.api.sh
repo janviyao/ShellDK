@@ -822,28 +822,28 @@ function check_net
 
 function cursor_pos
 {
-    local pos xpos ypos xmax ymax
+	local pos xpos ypos xmax ymax
 
-    touch ${LOG_DISABLE}
+	touch ${LOG_DISABLE}
 
-    # ask the terminal for the position
-    echo -ne "\033[6n" > /dev/tty
+	# ask the terminal for the position
+	echo -ne "\033[6n" > /dev/tty
 
-    # discard the first part of the response
-    read -s -d\[ garbage < /dev/tty
+	# discard the first part of the response
+	read -s -d\[ garbage < /dev/tty
 
-    # store the position in bash variable 'pos'
-    read -s -d R pos < /dev/tty
-	
+	# store the position in bash variable 'pos'
+	read -s -d R pos < /dev/tty
+
 	read ymax xmax < <(stty size)
 
-    rm -f ${LOG_DISABLE}
+	rm -f ${LOG_DISABLE}
 
-    # save the position
-    #echo "current position: $pos"
-    ypos=$(string_split "${pos}" ';' 1)
-    xpos=$(string_split "${pos}" ';' 2)
-    #echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
+	# save the position
+	#echo "current position: $pos"
+	ypos=$(string_split "${pos}" ';' 1)
+	xpos=$(string_split "${pos}" ';' 2)
+	#echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
 
 	if [ ${xpos} -le ${xmax} ];then
 		if [ ${xpos} -gt 0 ];then
@@ -860,10 +860,10 @@ function cursor_pos
 	fi
 
 	local cur_pos="${xpos},${ypos}"
-    echo_file "${LOG_DEBUG}" "[cursor_pos] ${cur_pos}"
+	echo_file "${LOG_DEBUG}" "[cursor_pos] ${cur_pos}"
 
-    echo "${cur_pos}"
-    return 0
+	echo "${cur_pos}"
+	return 0
 }
 
 function get_iscsi_device
