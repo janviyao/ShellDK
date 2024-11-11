@@ -118,7 +118,10 @@ function regex_perl2extended
             elif [[ ${char} == '\\S' ]];then
                 result=$(sed "s/${char}/[^ \\\\\\\\t]/g" <<< "${result}")
             elif [[ ${char} == '\$' ]];then
-                result=$(sed "s/${char}/\\\\\\\\$/g" <<< "${result}")
+				result=$(sed "s/${char}/\\\\\\\\$/g" <<< "${result}")
+				if [[ ${result} =~ \$$ ]];then
+					result=$(sed "s/\\\\\\\\\$$/$/" <<< "${result}")
+				fi
             fi
 
             if [ $? -ne 0 ];then
