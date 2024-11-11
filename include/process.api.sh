@@ -850,8 +850,11 @@ function process_2cpu
         local xpid
         for xpid in ${pid_list[*]}
         do
-            local cpu_list=$(ps -eLo pid,psr | sort -n -k 2 | uniq | awk -v var=${xpid} '{ if ($1 == var) print $2 }')
-            [ ${#cpu_list[*]} -gt 0 ] && echo ${cpu_list[*]}
+			printf "%-5s %s\n" "HT" "%CPU"
+			ps -eLo pid,psr,%cpu | sort -n -k 3 -r | uniq | awk -v var=${xpid} '{ if ($1 == var) printf "%-5d %s\n", $2, $3 }'
+			if [[ "${xpid}" != "${pid_list[$((${#pid_list[*]} - 1))]}" ]];then
+				echo
+			fi
         done
     done
  
