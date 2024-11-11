@@ -1034,6 +1034,9 @@ function bin_info
 	else
 		if have_cmd "${xbin}";then
 			xfile=$(whereis ${xbin} | awk '{ print $2 }')
+			if [ -z "${xfile}" ];then
+				xfile="${xbin}"
+			fi
 		fi
 	fi
 
