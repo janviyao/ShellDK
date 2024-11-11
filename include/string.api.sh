@@ -100,7 +100,7 @@ function regex_perl2extended
     fi
 
     local result="${regex}"
-    local reg_chars=('\\d' '\\D' '\\w' '\\W' '\\s' '\\S')
+    local reg_chars=('\\d' '\\D' '\\w' '\\W' '\\s' '\\S' '\$')
     local char
     for char in ${reg_chars[*]}
     do
@@ -114,9 +114,11 @@ function regex_perl2extended
             elif [[ ${char} == '\\W' ]];then
                 result=$(sed "s/${char}/[^0-9a-zA-Z_]/g" <<< "${result}")
             elif [[ ${char} == '\\s' ]];then
-                result=$(sed "s/${char}/[ \\\\t]/g" <<< "${result}")
+                result=$(sed "s/${char}/[ \\\\\\\\t]/g" <<< "${result}")
             elif [[ ${char} == '\\S' ]];then
-                result=$(sed "s/${char}/[^ \\\\t]/g" <<< "${result}")
+                result=$(sed "s/${char}/[^ \\\\\\\\t]/g" <<< "${result}")
+            elif [[ ${char} == '\$' ]];then
+                result=$(sed "s/${char}/\\\\\\\\$/g" <<< "${result}")
             fi
 
             if [ $? -ne 0 ];then

@@ -835,7 +835,7 @@ function cursor_pos
 	# store the position in bash variable 'pos'
 	read -s -d R pos < /dev/tty
 
-	read ymax xmax < <(stty size)
+	read ymax xmax <<< $(stty size)
 
 	rm -f ${LOG_DISABLE}
 
