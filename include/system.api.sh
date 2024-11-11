@@ -1046,7 +1046,7 @@ function bin_info
 	fi
 
 	local pkg_name=$(rpm -qf ${xfile})
-	cecho blue "$(printf "[%26s package]: %-50s" ${xfile} ${pkg_name})"
+	cecho blue "$(printf "[%26s package]: %-50s" ${xfile} "${pkg_name}")"
 
 	local sel_val=$(input_prompt "" "Display the dynamic section ? (yes/no)" "yes" true)
 	if math_bool "${sel_val}";then
