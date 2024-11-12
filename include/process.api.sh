@@ -556,9 +556,9 @@ function thread_info
         for header in ${header_array[*]}
         do
             local -a values=(${index_map[${header}]})
-            printf "${values[0]} " "${header}"
+            printf -- "${values[0]} " "${header}"
         done
-        printf "%5s \n" "%CPU"
+        printf -- "%5s \n" "%CPU"
     fi
 
     #top -b -n 1 -H -p ${xpid}  | sed -n "7,$ p"
@@ -587,7 +587,7 @@ function thread_info
             for header in ${header_array[*]}
             do
                 local -a values=(${index_map[${header}]})
-                printf "${values[1]} " "${tinfo[${values[2]}]}"
+                printf -- "${values[1]} " "${tinfo[${values[2]}]}"
             done
 
             local -a values=(${index_map["CPU"]})
@@ -614,9 +614,9 @@ function thread_info
             #echo_debug "thread utime: ${tutime} stime: ${tstime} cpu${cpu_nm}: ${ttime}"
             if [ ${ptime} -gt 0 ];then
                 values=(${index_map["CPU-U"]})
-                printf "${values[1]}%% \n" "$((100*ttime/ptime))"
+                printf -- "${values[1]}%% \n" "$((100*ttime/ptime))"
             else
-                printf "\n"
+                printf -- "\n"
             fi
         done
     done
@@ -684,11 +684,11 @@ function process_info
         do
             local -a tid_array=($(process_name2tid ${xpid}))
             if [ ${#tid_array[*]} -gt 0 ];then
-                printf "************************************ PID[%d] have { %d } threads************************************\n" ${xpid} ${#tid_array[*]}
+                printf -- "************************************ PID[%d] have { %d } threads************************************\n" ${xpid} ${#tid_array[*]}
                 thread_info "${xpid}" true
 
                 if math_bool "${show_header}" || math_bool "${show_thread}"; then
-                    printf "\n"
+                    printf -- "\n"
                 fi
             fi
         done 
@@ -806,7 +806,7 @@ function process_cpu2
         return 0
     fi
 
-    printf "%-8s %s\n" "PID" "Process"
+    printf -- "%-8s %s\n" "PID" "Process"
     local cpu
     for cpu in ${cpu_list[*]}
     do
@@ -815,7 +815,7 @@ function process_cpu2
             local xpid
             for xpid in ${pid_list[*]}
             do
-                printf "%-8d %s\n" "${xpid}" "$(process_pid2name "${xpid}")"
+                printf -- "%-8d %s\n" "${xpid}" "$(process_pid2name "${xpid}")"
             done
         else
             echo_erro "cpu-id: { ${cpu} } invalid number"
@@ -850,7 +850,7 @@ function process_2cpu
         local xpid
         for xpid in ${pid_list[*]}
         do
-			printf "%-5s %s\n" "HT" "%CPU"
+			printf -- "%-5s %s\n" "HT" "%CPU"
 			ps -eLo pid,psr,%cpu | sort -n -k 3 -r | uniq | awk -v var=${xpid} '{ if ($1 == var) printf "%-5d %s\n", $2, $3 }'
 			if [[ "${xpid}" != "${pid_list[$((${#pid_list[*]} - 1))]}" ]];then
 				echo

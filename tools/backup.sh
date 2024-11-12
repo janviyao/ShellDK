@@ -6,10 +6,10 @@ function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
-    printf "%-20s <source-dir> <destination-dir> [<exclude-regex> ...]\n" "${script_name}"
-    printf "%-20s @ %s\n" "<source-dir>"      "where all will be copied from"
-    printf "%-20s @ %s\n" "<destination-dir>" "where all will be saved into"
-    printf "%-20s @ %s\n" "<exclude-regex>"   "all matches will be eliminated"
+    printf -- "%-20s <source-dir> <destination-dir> [<exclude-regex> ...]\n" "${script_name}"
+    printf -- "%-20s @ %s\n" "<source-dir>"      "where all will be copied from"
+    printf -- "%-20s @ %s\n" "<destination-dir>" "where all will be saved into"
+    printf -- "%-20s @ %s\n" "<exclude-regex>"   "all matches will be eliminated"
     echo "============================================="
 }
 

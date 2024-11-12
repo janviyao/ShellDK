@@ -27,7 +27,7 @@ function logr_task_ctrl_async
         return 1
     fi
 
-    #echo_debug "log to self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
+    #echo_debug "logr_task_ctrl_async: [ctrl: ${req_ctrl} msg: ${req_body}]" 
     if ! have_file "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
@@ -218,19 +218,19 @@ function _logr_thread_main
         elif [[ "${req_ctrl}" == "ERASE_ALL" ]];then
             tput clear
         elif [[ "${req_ctrl}" == "RETURN" ]];then
-            printf "\r"
+            printf -- "\r"
         elif [[ "${req_ctrl}" == "NEWLINE" ]];then
-            printf "\n"
+            printf -- "\n"
         elif [[ "${req_ctrl}" == "BACKSPACE" ]];then
-            printf "\b"
+            printf -- "\b"
         elif [[ "${req_ctrl}" == "PRINT" ]];then
-            printf "%s" "${req_body}" 
+            printf -- "%s" "${req_body}" 
         elif [[ "${req_ctrl}" == "PRINT_FROM_FILE" ]];then
             if have_file "${req_body}";then
                 local file_log=$(cat ${req_body}) 
-                printf "%s" "${file_log}" 
+                printf -- "%s" "${file_log}"
             else
-                printf "%s" "print fails: ${req_body} not exist" 
+                printf -- "%s" "print fails: ${req_body} not exist" 
             fi
         fi
 
@@ -238,6 +238,7 @@ function _logr_thread_main
             echo_debug "write [ACK] to [${ack_pipe}]"
             process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
         fi
+
         #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"
         if ! have_file "${LOGR_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, logr will exit"

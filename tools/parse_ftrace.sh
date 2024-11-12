@@ -3,8 +3,8 @@ function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
-    printf "%-15s <file-name>\n" "${script_name}"
-    printf "%-15s @%s\n" "<file-name>" "file name where ftrace into"
+    printf -- "%-15s <file-name>\n" "${script_name}"
+    printf -- "%-15s @%s\n" "<file-name>" "file name where ftrace into"
     echo "============================================="
 }
 

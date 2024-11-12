@@ -165,7 +165,7 @@ function install_check
         do
             local file_name=$(path2fname "${xfile}")
             local new_version=$(string_regex "${file_name}" "\d+\.\d+(\.\d+)?")
-            echo_info "$(printf "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
+            echo_info "$(printf -- "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
                 rm -f ${tmp_file}
                 return 0
@@ -250,16 +250,16 @@ function install_from_net
         return 1
     fi
 
-    echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xname}")"
+    echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${xname}")"
     if check_net; then
         if [[ "${SYSTEM}" == "Linux" ]]; then
             if have_cmd "yum";then
                 sudo_it yum -y install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "yum Install" "${xname}")"
+                    echo_erro "$(printf -- "[%13s]: { %-13s } failure" "yum Install" "${xname}")"
                     return 1
                 else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "yum Install" "${xname}")"
+                    echo_info "$(printf -- "[%13s]: { %-13s } success" "yum Install" "${xname}")"
                     return 0
                 fi
             fi
@@ -268,10 +268,10 @@ function install_from_net
         if have_cmd "apt";then
             sudo_it apt -y install ${xname} \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "apt Install" "${xname}")"
+                echo_erro "$(printf -- "[%13s]: { %-13s } failure" "apt Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "apt Install" "${xname}")"
+                echo_info "$(printf -- "[%13s]: { %-13s } success" "apt Install" "${xname}")"
                 return 0
             fi
         fi
@@ -279,10 +279,10 @@ function install_from_net
         if have_cmd "apt-get";then
             sudo_it apt-get -y install ${xname} \&\> /dev/null
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "apt-get Install" "${xname}")"
+                echo_erro "$(printf -- "[%13s]: { %-13s } failure" "apt-get Install" "${xname}")"
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "apt-get Install" "${xname}")"
+                echo_info "$(printf -- "[%13s]: { %-13s } success" "apt-get Install" "${xname}")"
                 return 0
             fi
         fi
@@ -291,17 +291,17 @@ function install_from_net
             if have_cmd "apt-cyg";then
                 sudo_it apt-cyg -y install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "apt-cyg Install" "${xname}")"
+                    echo_erro "$(printf -- "[%13s]: { %-13s } failure" "apt-cyg Install" "${xname}")"
                     return 1
                 else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "apt-cyg Install" "${xname}")"
+                    echo_info "$(printf -- "[%13s]: { %-13s } success" "apt-cyg Install" "${xname}")"
                     return 0
                 fi
             fi
         fi
     fi
 
-    echo_erro "$(printf "[%13s]: { %-13s } failure" "Install" "${xname}")"
+    echo_erro "$(printf -- "[%13s]: { %-13s } failure" "Install" "${xname}")"
     return 1
 }
 
@@ -342,14 +342,14 @@ function install_from_rpm
 
         local versions=($(string_regex "${fname}" "\d+\.\d+(\.\d+)?"))
         if [ -z "${versions[*]}" ];then
-            echo_erro "$(printf "[%13s]: { %-13s } failure, version invalid" "Rpm Install" "${full_name}")"
+            echo_erro "$(printf -- "[%13s]: { %-13s } failure, version invalid" "Rpm Install" "${full_name}")"
             return 1
         fi
         echo_debug "rpm: { ${full_name} } versions: ${versions[*]}"
 
         local split_names=($(string_split "${fname}" "${versions[0]}"))
         if [ -z "${split_names[*]}" ];then
-            echo_erro "$(printf "[%13s]: { %-13s } failure, version split fail" "Rpm Install" "${full_name}")"
+            echo_erro "$(printf -- "[%13s]: { %-13s } failure, version split fail" "Rpm Install" "${full_name}")"
             return 1
         fi
         echo_debug "rpm: { ${full_name} } split_names: ${split_names[*]}"
@@ -358,9 +358,9 @@ function install_from_rpm
         local system_rpms=($(rpm -qa | grep -P "${app_name}\d+"))
         if [ ${#system_rpms[*]} -gt 1 ];then
             if math_bool "${force}";then
-                echo_warn "$(printf "[%13s]: { %-13s } forced, but system multi-installed" "Rpm Install" "${fname}")"
+                echo_warn "$(printf -- "[%13s]: { %-13s } forced, but system multi-installed" "Rpm Install" "${fname}")"
             else
-                echo_warn "$(printf "[%13s]: { %-13s } skiped, system multi-installed" "Rpm Install" "${fname}")"
+                echo_warn "$(printf -- "[%13s]: { %-13s } skiped, system multi-installed" "Rpm Install" "${fname}")"
                 continue
             fi
         fi
@@ -369,13 +369,13 @@ function install_from_rpm
             local version_new=${versions[0]}
             local version_sys=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
             if __version_gt ${version_sys} ${version_new}; then
-                echo_erro "$(printf "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
+                echo_erro "$(printf -- "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
                 return 1
             fi
 
             local xselect=$(input_prompt "" "decide if install ${fname} ? (yes/no)" "yes")
             if ! math_bool "${xselect}";then
-                echo_info "$(printf "[%13s]: { %-13s } skip" "Rpm Install" "${fname}")"
+                echo_info "$(printf -- "[%13s]: { %-13s } skip" "Rpm Install" "${fname}")"
                 continue
             fi
         fi
@@ -393,15 +393,15 @@ function install_from_rpm
             do
                 sudo_it rpm -e --nodeps ${sys_rpm} 
                 if [ $? -ne 0 ]; then
-                    echo_erro "$(printf "[%13s]: { %-13s } failure" "Uninstall" "${sys_rpm}")"
+                    echo_erro "$(printf -- "[%13s]: { %-13s } failure" "Uninstall" "${sys_rpm}")"
                     return 1
                 else
-                    echo_info "$(printf "[%13s]: { %-13s } success" "Uninstall" "${sys_rpm}")"
+                    echo_info "$(printf -- "[%13s]: { %-13s } success" "Uninstall" "${sys_rpm}")"
                 fi
             done
         fi
 
-        echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${fname}")"
+        echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${fname}")"
         if math_bool "${force}";then
             sudo_it rpm -ivh --nodeps --force ${full_name} 
         else
@@ -409,10 +409,10 @@ function install_from_rpm
         fi
 
         if [ $? -ne 0 ]; then
-            echo_erro "$(printf "[%13s]: { %-13s } failure" "Rpm Install" "${fname}")"
+            echo_erro "$(printf -- "[%13s]: { %-13s } failure" "Rpm Install" "${fname}")"
             return 1
         else
-            echo_info "$(printf "[%13s]: { %-13s } success" "Rpm Install" "${fname}")"
+            echo_info "$(printf -- "[%13s]: { %-13s } success" "Rpm Install" "${fname}")"
         fi
     done
 
@@ -437,7 +437,7 @@ function install_from_make
     if have_file "contrib/download_prerequisites"; then
         #GCC installation need this:
         if check_net; then
-            echo_info "$(printf "[%13s]: %-50s" "Doing" "download_prerequisites")"
+            echo_info "$(printf -- "[%13s]: %-50s" "Doing" "download_prerequisites")"
             ./contrib/download_prerequisites &>> build.log
             if [ $? -ne 0 ]; then
                 echo_erro " Download_prerequisites: ${makedir} failed, check: $(real_path build.log)"
@@ -452,7 +452,7 @@ function install_from_make
     [ $? -ne 0 ] && have_file "linux/" && cd linux/
 
     if have_file "autogen.sh"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "autogen")"
+        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
             echo_erro " Autogen: ${makedir} failed, check: $(real_path build.log)"
@@ -462,7 +462,7 @@ function install_from_make
     fi
 
     if have_file "configure"; then
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
         ./configure ${conf_para} &>> build.log
         if [ $? -ne 0 ]; then
             mkdir -p build && cd build
@@ -479,10 +479,10 @@ function install_from_make
             fi
         fi
     else
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "make configure")"
+        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make configure")"
         make configure &>> build.log
         if [ $? -eq 0 ]; then
-            echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+            echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
             ./configure ${conf_para} &>> build.log
             if [ $? -ne 0 ]; then
                 mkdir -p build && cd build
@@ -506,7 +506,7 @@ function install_from_make
         cd build/gcc
     fi
 
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make -j 32")"
+    echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make -j 32")"
     local cflags_bk="${CFLAGS}"
     export CFLAGS="-fcommon"
     make -j 32 &>> build.log
@@ -517,7 +517,7 @@ function install_from_make
     fi
     export CFLAGS="${cflags_bk}"
 
-    echo_info "$(printf "[%13s]: %-50s" "Doing" "make install")"
+    echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make install")"
     sudo_it "make install &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${makedir} failed, check: $(real_path build.log)"
@@ -562,7 +562,7 @@ function install_from_tar
         local file_dir=$(fname2path ${tar_file})
         local file_name=$(path2fname ${tar_file})
         echo_file "${LOG_DEBUG}" "tar: { ${tar_file} } path: { ${file_dir} } name: { ${file_name} }"
-        echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${file_name}")"
+        echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${file_name}")"
 
         local cur_dir=$(pwd)
         cd ${file_dir}
@@ -573,11 +573,11 @@ function install_from_tar
         do
             install_from_make "${tar_dir}" "${conf_para}"
             if [ $? -ne 0 ]; then
-                echo_erro "$(printf "[%13s]: { %-13s } failure" "Tar Install" "${file_name}")"
+                echo_erro "$(printf -- "[%13s]: { %-13s } failure" "Tar Install" "${file_name}")"
                 cd ${cur_dir}
                 return 1
             else
-                echo_info "$(printf "[%13s]: { %-13s } success" "Tar Install" "${file_name}")"
+                echo_info "$(printf -- "[%13s]: { %-13s } success" "Tar Install" "${file_name}")"
             fi
         done
         cd ${cur_dir}
@@ -596,11 +596,11 @@ function install_from_spec
         return 1
     fi
 
-    echo_info "$(printf "[%13s]: { %-13s }" "Will install" "${xspec}")"
+    echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${xspec}")"
     local key_str=$(regex_2str "${xspec}")
     local spec_lines=($(file_get ${MY_VIM_DIR}/install.spec "^${key_str}\s*;" true))
     if [ ${#spec_lines[*]} -eq 0 ];then
-        echo_info "$(printf "[%13s]: %-50s" "Return" "spec { ${key_str} } not found")"
+        echo_info "$(printf -- "[%13s]: %-50s" "Return" "spec { ${key_str} } not found")"
         return 0
     elif [ ${#spec_lines[*]} -gt 1 ];then
         echo_erro "regex [^\s*${key_str}\s*;] match more from ${MY_VIM_DIR}/install.spec: \n${spec_lines[*]}"
@@ -632,7 +632,7 @@ function install_from_spec
         for (( idx = 2; idx <= ${total}; idx++))
         do
             action=$(echo "${actions}" | awk -F';' "{ print \$${idx} }")         
-            echo_info "$(printf "[%13s]: %-50s" "Action" "${action}")"
+            echo_info "$(printf -- "[%13s]: %-50s" "Action" "${action}")"
             if ! eval "${action}";then
                 echo_erro "${action}"
                 success=false
@@ -643,10 +643,10 @@ function install_from_spec
     fi
 
     if math_bool "${success}"; then
-        echo_info "$(printf "[%13s]: { %-13s } success" "Spec Install" "${xspec}")"
+        echo_info "$(printf -- "[%13s]: { %-13s } success" "Spec Install" "${xspec}")"
         return 0
     else
-        echo_erro "$(printf "[%13s]: { %-13s } failure" "Spec Install" "${xspec}")"
+        echo_erro "$(printf -- "[%13s]: { %-13s } failure" "Spec Install" "${xspec}")"
         return 1
     fi
 }
@@ -674,7 +674,7 @@ function install_rpms
     for rpm_file in ${local_rpms[*]}    
     do
         if ! string_match "${rpm_file}" ".rpm" 2;then
-            echo_debug "$(printf "[%13s]: { %-13s } skiped" "Install" "${rpm_file}")"
+            echo_debug "$(printf -- "[%13s]: { %-13s } skiped" "Install" "${rpm_file}")"
             continue
         fi
 

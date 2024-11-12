@@ -133,10 +133,10 @@ function how_use_func
     local indent="$2"
 
     local line
-    printf "%s%s\n" "${indent}" "***************************************************************"
+    printf -- "%s%s\n" "${indent}" "***************************************************************"
     while read -r line
     do
-        printf "%s%s\n" "${indent}" "${line}"
+        printf -- "%s%s\n" "${indent}" "${line}"
     done <<< "${subcmd_func_map[${func}]}"
 }
 
@@ -161,12 +161,12 @@ END
     done
 }
 
-FUNC_LIST=($(printf "%s\n" ${!subcmd_func_map[*]} | sort))
+FUNC_LIST=($(printf -- "%s\n" ${!subcmd_func_map[*]} | sort))
 SUB_CMD=$(get_subcmd 0)
 
 OPT_LIST=$(get_optval "-l" "--list")
 if math_bool "${OPT_LIST}";then
-    printf "%s\n" ${!subcmd_func_map[*]}
+    printf -- "%s\n" ${!subcmd_func_map[*]}
     exit 0
 fi
 

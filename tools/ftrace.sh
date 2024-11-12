@@ -3,9 +3,9 @@ function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
-    printf "%-15s <app-name> | <app-pid>\n" "${script_name}"
-    printf "%-15s @%s\n" "<app-name>"   "name of running-app which it will be ftraced"
-    printf "%-15s @%s\n" "or <app-pid>" "pid of running-app which it will be ftraced"
+    printf -- "%-15s <app-name> | <app-pid>\n" "${script_name}"
+    printf -- "%-15s @%s\n" "<app-name>"   "name of running-app which it will be ftraced"
+    printf -- "%-15s @%s\n" "or <app-pid>" "pid of running-app which it will be ftraced"
     echo "============================================="
 }
 

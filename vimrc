@@ -1665,7 +1665,6 @@ Bundle "tpope/vim-surround"
 " 绑定 Git命令封装 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "tpope/vim-fugitive"
-Bundle "gregsexton/gitv"
 
 "动态显示Git状态
 Bundle "airblade/vim-gitgutter"
@@ -1744,11 +1743,11 @@ function! GitGutterPrevHunkAllBuffers()
     endwhile
 endfunction
 
-nmap <silent> ]g :call GitGutterNextHunkCycle()<CR>
-nmap <silent> [g :call GitGutterPrevHunkCycle()<CR>
-nmap <silent> ]ga :call GitGutterNextHunkAllBuffers()<CR>
-nmap <silent> [ga :call GitGutterPrevHunkAllBuffers()<CR>
-nmap <silent> <Leader>gg :GitGutterToggle<CR>
+nmap <silent> <Leader>gf  :call GitGutterNextHunkCycle()<CR>
+nmap <silent> <Leader>gb  :call GitGutterPrevHunkCycle()<CR>
+nmap <silent> <Leader>gaf :call GitGutterNextHunkAllBuffers()<CR>
+nmap <silent> <Leader>gab :call GitGutterPrevHunkAllBuffers()<CR>
+nmap <silent> <Leader>gg  :GitGutterToggle<CR>
 
 "执行写操作时更新签名列
 autocmd BufWritePost * GitGutter

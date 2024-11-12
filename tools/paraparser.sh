@@ -219,32 +219,32 @@ function para_debug
     local -n subcmd_all_ref="${3:-_SUBCMD_ALL_REF}"
 	local idx key opt
 
-    printf "%s:\n" "option_all[${#option_all_ref[*]}]"
-	printf "[ " 
+    printf -- "%s:\n" "option_all[${#option_all_ref[*]}]"
+	printf -- "[ " 
     for ((idx=0; idx < ${#option_all_ref[*]}; idx++)) 
     do
-        printf "\"%s\" " "${option_all_ref[${idx}]}" 
+        printf -- "\"%s\" " "${option_all_ref[${idx}]}" 
     done
-	printf "]\n" 
+	printf -- "]\n" 
     echo
 
-    printf "%s:\n" "option_map[${#option_map_ref[*]}]"
+    printf -- "%s:\n" "option_map[${#option_map_ref[*]}]"
     for key in "${!option_map_ref[@]}"
     do
-        echo "$(printf "Key: %-8s  Value: %s" "${key}" "${option_map_ref[$key]}")"
+        echo "$(printf -- "Key: %-8s  Value: %s" "${key}" "${option_map_ref[$key]}")"
     done
     echo
 	
 	for key in "${subcmd_all_ref[@]}"
 	do
 		local options=($(get_subcmd_all "${key}"))
-		echo "$(printf "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
+		echo "$(printf -- "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
 		
 		if [ ${#options[*]} -gt 0 ];then
 			for opt in "${options[@]}"
 			do
 				local value=$(get_subcmd_optval "${key}" "${opt}")
-				echo "$(printf "Key: %-8s  Value: %s" "${opt}" "${value}")"
+				echo "$(printf -- "Key: %-8s  Value: %s" "${opt}" "${value}")"
 			done
 		fi
 	done

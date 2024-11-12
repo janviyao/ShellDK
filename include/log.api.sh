@@ -65,7 +65,7 @@ function echo_file
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
-            para=$(printf "$@")
+            para=$(printf -- "$@")
         fi
     fi
 
@@ -80,18 +80,18 @@ function echo_file
         log_type="debug"
     fi
 
-    local headpart=$(printf "[%5s]" "${log_type}")
+    local headpart=$(printf -- "[%5s]" "${log_type}")
     if math_bool "${LOG_HEADER}";then
-        headpart=$(printf "%s[%-5s]" "$(echo_header false)" "${log_type}")
+        headpart=$(printf -- "%s[%-5s]" "$(echo_header false)" "${log_type}")
     fi
 
     if [ -n "${REMOTE_IP}" ];then
         #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASH_LOG}
         #printf "%s %s\n" "${headpart}" "${para}" >> ${BASH_LOG}
-        echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASH_LOG}
+        echo -e $(printf -- "%s %s\n" "${headpart}" "${para}") >> ${BASH_LOG}
     else
         #printf "%s %s\n" "${headpart}" "${para}" >> ${BASH_LOG}
-        echo -e $(printf "%s %s\n" "${headpart}" "${para}") >> ${BASH_LOG}
+        echo -e $(printf -- "%s %s\n" "${headpart}" "${para}") >> ${BASH_LOG}
     fi
 
     if [ ${echo_level} -le ${LOG_ERRO} ];then
@@ -119,9 +119,9 @@ function echo_header
         fi
 
         if math_bool "${HEADER_FILE}";then
-            header="${header} $(printf "[%-18s[%-7d]]" "$(path2fname $0)" "$$")"
+            header="${header} $(printf -- "[%-18s[%-7d]]" "$(path2fname $0)" "$$")"
         else
-            header="${header} $(printf "[%-7d]" "$$")"
+            header="${header} $(printf -- "[%-7d]" "$$")"
         fi
 
         if math_bool "${color}";then
@@ -147,7 +147,7 @@ function echo_erro
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
-            para=$(printf "$@")
+            para=$(printf -- "$@")
         fi
     fi
 
@@ -182,7 +182,7 @@ function echo_info
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
-            para=$(printf "$@")
+            para=$(printf -- "$@")
         fi
     fi
 
@@ -215,7 +215,7 @@ function echo_warn
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
-            para=$(printf "$@")
+            para=$(printf -- "$@")
         fi
     fi
 
@@ -248,7 +248,7 @@ function echo_debug
     local para="$@"
     if [ $# -gt 1 ];then
         if [[ "${para}" =~ '%' ]];then
-            para=$(printf "$@")
+            para=$(printf -- "$@")
         fi
     fi
 

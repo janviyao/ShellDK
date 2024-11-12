@@ -384,6 +384,7 @@ function input_prompt
     local prompt_ctn="$2"
     local dflt_value="$3"
     local hide_hint="${4:-false}"
+	local xmax ymax
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: check function\n\$2: prompt string\n\$3: default value"
@@ -397,9 +398,13 @@ function input_prompt
     fi
 
 	if math_bool "${hide_hint}";then
+		read ymax xmax <<< $(stty size)
 		local coordinate=$(cursor_pos)
 		local x_coord=$(string_split "${coordinate}" ',' 1)
 		local y_coord=$(string_split "${coordinate}" ',' 2)
+		if [[ $((y_coord + 1)) -eq ${ymax} ]];then
+			y_coord=$((y_coord - 1))
+		fi
 	fi
 
     local input_val="";
@@ -425,6 +430,9 @@ function input_prompt
 				coordinate=$(cursor_pos)
 				x_coord=$(string_split "${coordinate}" ',' 1)
 				y_coord=$(string_split "${coordinate}" ',' 2)
+				if [[ $((y_coord + 1)) -eq ${ymax} ]];then
+					y_coord=$((y_coord - 1))
+				fi
 			fi
 
             if [ -n "${dflt_value}" ];then
@@ -450,6 +458,9 @@ function input_prompt
 					coordinate=$(cursor_pos)
 					x_coord=$(string_split "${coordinate}" ',' 1)
 					y_coord=$(string_split "${coordinate}" ',' 2)
+					if [[ $((y_coord + 1)) -eq ${ymax} ]];then
+						y_coord=$((y_coord - 1))
+					fi
 				fi
 
                 if [ -n "${dflt_value}" ];then
@@ -497,9 +508,9 @@ function select_one
     for item in ${array[*]}
     do
         if [[ "${item}" =~ "${GBL_COL_SPF}" ]];then
-            printf "%2d) %s\n" "${index}" "${item//${GBL_COL_SPF}/ }" &> /dev/tty
+            printf -- "%2d) %s\n" "${index}" "${item//${GBL_COL_SPF}/ }" &> /dev/tty
         else
-            printf "%2d) %s\n" "${index}" "${item}" &> /dev/tty
+            printf -- "%2d) %s\n" "${index}" "${item}" &> /dev/tty
         fi
         let index++
     done
@@ -606,7 +617,7 @@ function progress_bar
         local percentage=$(math_round "${move} * ${step}" 1)
 
         logr_task_ctrl_async "CURSOR_SAVE"
-        logr_task_ctrl_async "PRINT" "$(printf "[%-50s %-2d%% %c]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
+        logr_task_ctrl_async "PRINT" "$(printf -- "[%-50s %-2d%% %c]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
         logr_task_ctrl_async "CURSOR_RESTORE"
 
         let move++

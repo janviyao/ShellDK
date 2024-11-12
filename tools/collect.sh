@@ -30,7 +30,7 @@ do
     TAR_DIR=$(fname2path "${item}")
     TAR_FILE=$(path2fname "${item}")
 
-    echo_info "Collect { $(printf '%-20s' "${item}") } into { ${EXPORT_FILE} }"
+    echo_info "Collect { $(printf -- '%-20s' "${item}") } into { ${EXPORT_FILE} }"
 
     cd ${TAR_DIR}
     if have_file "${EXPORT_FILE}";then

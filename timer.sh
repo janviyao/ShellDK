@@ -8,7 +8,7 @@ export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
 function git_modify_list
 {
 	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" ) print $2 }'))
-	printf "%s\n" ${file_list[*]}
+	printf -- "%s\n" ${file_list[*]}
 }
 
 if [ -f ${GBL_USER_DIR}/timer/.timerc ];then

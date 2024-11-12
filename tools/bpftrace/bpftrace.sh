@@ -161,8 +161,8 @@ function save_result
     local save_file="$1"
     shift
 
-    printf "$@" 
-    printf "$@" >> ${save_file}
+    printf -- "$@" 
+    printf -- "$@" >> ${save_file}
     return 0
 }
 

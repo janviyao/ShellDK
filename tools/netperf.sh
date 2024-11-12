@@ -3,9 +3,9 @@ function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
-    printf "%-15s <client-ip> <server-ip>\n" "${script_name}"
-    printf "%-15s @%s\n" "<client-ip>" "ip address where netperf run"
-    printf "%-15s @%s\n" "<server-ip>" "ip address where netserver run"
+    printf -- "%-15s <client-ip> <server-ip>\n" "${script_name}"
+    printf -- "%-15s @%s\n" "<client-ip>" "ip address where netperf run"
+    printf -- "%-15s @%s\n" "<server-ip>" "ip address where netserver run"
     echo "============================================="
 }
 

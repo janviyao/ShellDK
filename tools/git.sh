@@ -5,19 +5,19 @@ declare -A subcmd_func_map
 function get_modify_list
 {
 	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" ) print $2 }'))
-	printf "%s\n" ${file_list[*]}
+	printf -- "%s\n" ${file_list[*]}
 }
 
 function get_add_list
 {
 	local file_list=($(git status --porcelain | awk '{ if( $1 == "??" ) print $2 }'))
-	printf "%s\n" ${file_list[*]}
+	printf -- "%s\n" ${file_list[*]}
 }
 
 function get_change_list
 {
 	local file_list=($(git status --porcelain | awk '{ if( $1 == "M" || $1 == "??" ) print $2 }'))
-	printf "%s\n" ${file_list[*]}
+	printf -- "%s\n" ${file_list[*]}
 }
 
 function get_commit_file
@@ -25,7 +25,7 @@ function get_commit_file
 	local commit_id="$1"
 	if [ -n "${commit_id}" ];then
 		local file_list=($(git show --name-status ${commit_id} | awk '{ if($1 == "M" || $1 == "A") print $2 }'))
-		printf "%s\n" ${file_list[*]}
+		printf -- "%s\n" ${file_list[*]}
 	fi
 }
 
@@ -1032,10 +1032,10 @@ function how_use_func
     local indent="$2"
 
     local line
-    printf "%s%s\n" "${indent}" "***************************************************************"
+    printf -- "%s%s\n" "${indent}" "***************************************************************"
     while read -r line
     do
-        printf "%s%s\n" "${indent}" "${line}"
+        printf -- "%s%s\n" "${indent}" "${line}"
     done <<< "${subcmd_func_map[${func}]}"
 }
 
@@ -1060,12 +1060,12 @@ END
     done
 }
 
-FUNC_LIST=($(printf "%s\n" ${!subcmd_func_map[*]} | sort))
+FUNC_LIST=($(printf -- "%s\n" ${!subcmd_func_map[*]} | sort))
 SUB_CMD=$(get_subcmd 0)
 
 OPT_LIST=$(get_optval "--func-list")
 if math_bool "${OPT_LIST}";then
-    printf "%s\n" ${FUNC_LIST[*]}
+    printf -- "%s\n" ${FUNC_LIST[*]}
     exit 0
 fi
 

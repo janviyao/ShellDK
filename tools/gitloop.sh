@@ -39,9 +39,8 @@ do
     cd ${gitdir}
     if [ -d .git ]; then
         echo_debug "enter into: ${gitdir}"
-        prefix=$(printf "%-30s @ " "${gitdir}")
-        logr_task_ctrl_async "PRINT" "${prefix}"
-        sleep 1
+        prefix=$(printf -- "%-30s @ " "${gitdir}")
+        logr_task_ctrl_sync "PRINT" "${prefix}"
 
         thread_pid=$(ctrl_create_thread "cd $(pwd);process_run_timeout ${OP_TIMEOUT} ${CMD_STR} \&\> ${tmp_file}") 
         progress_bar 1 ${PROGRESS_TIME} "mdat_kv_has_key thread-${thread_pid}-return"
@@ -49,7 +48,7 @@ do
         thread_ret=$(mdat_kv_get "thread-${thread_pid}-return")
         mdat_kv_unset_key "thread-${thread_pid}-return"
  
-        logr_task_ctrl_async "ERASE_LINE" 
+        logr_task_ctrl_sync "ERASE_LINE" 
         logr_task_ctrl_sync "PRINT_FROM_FILE" "${tmp_file}"
         logr_task_ctrl_sync "NEWLINE"
 

@@ -3,10 +3,10 @@ function how_use
 {
     local script_name=$(path2fname $0)
     echo "=================== Usage ==================="
-    printf "%-15s <device-name> <trace-time> <output-dir>\n" "${script_name}"
-    printf "%-15s @%s\n" "<device-name>" "name of device traced, such as sdb,sdc..."
-    printf "%-15s @%s\n" "<trace-time>"  "time traced"
-    printf "%-15s @%s\n" "<output-dir>"  "directory where result output"
+    printf -- "%-15s <device-name> <trace-time> <output-dir>\n" "${script_name}"
+    printf -- "%-15s @%s\n" "<device-name>" "name of device traced, such as sdb,sdc..."
+    printf -- "%-15s @%s\n" "<trace-time>"  "time traced"
+    printf -- "%-15s @%s\n" "<output-dir>"  "directory where result output"
     echo "============================================="
 
     echo

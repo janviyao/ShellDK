@@ -198,10 +198,10 @@ function how_use_func
     local indent="$2"
 
     local line
-    printf "%s%s\n" "${indent}" "***************************************************************"
+    printf -- "%s%s\n" "${indent}" "***************************************************************"
     while read -r line
     do
-        printf "%s%s\n" "${indent}" "${line}"
+        printf -- "%s%s\n" "${indent}" "${line}"
     done <<< "${func_map[${func}]}"
 }
 

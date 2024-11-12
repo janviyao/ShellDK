@@ -394,7 +394,7 @@ function account_check
             echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
             echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
             echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
-            echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
+            echo "printf -- '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
             chmod +x ${GBL_USER_DIR}/.askpass.sh 
             retval=0
         fi
@@ -473,26 +473,26 @@ function dump_system
 
     if have_file "/etc/centos-release";then
         value=$(cat /etc/centos-release)
-        printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
+        printf -- "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     elif have_file "/etc/redhat-release";then
         value=$(cat /etc/redhat-release)
-        printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
+        printf -- "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     else
         value=$(cat /etc/issue | head -n 1)
-        printf "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
+        printf -- "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     fi
 
     value=$(cat /proc/version | awk '{ print $3 }')
-    printf "[%${col_width1}s]: %s\n" "Linux Version" "${value}"
+    printf -- "[%${col_width1}s]: %s\n" "Linux Version" "${value}"
  
     value=$(gcc --version | grep -P "\d+(\.\d+)*" -o | head -n 1)
-    printf "[%${col_width1}s]: %s\n" "GCC Version" "${value}"
+    printf -- "[%${col_width1}s]: %s\n" "GCC Version" "${value}"
 
     value=$(getconf GNU_LIBC_VERSION | grep -P "\d+(\.\d+)*" -o)
-    printf "[%${col_width1}s]: %s\n" "GLIBC Version" "${value}"
+    printf -- "[%${col_width1}s]: %s\n" "GLIBC Version" "${value}"
 
     value=$(uname -i)
-    printf "[%${col_width1}s]: %s\n" "HW Platform" "${value}"
+    printf -- "[%${col_width1}s]: %s\n" "HW Platform" "${value}"
 
     value=$(getconf LONG_BIT)
 
@@ -503,10 +503,10 @@ function dump_system
     local socket_core=$(lscpu | grep "socket" | awk -F: '{ print $2 }')
     socket_core=$(string_replace "${socket_core}" '^\s*' "" true)
 
-    printf "[%${col_width1}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
+    printf -- "[%${col_width1}s]: %s\n" "CPU mode" "${value}-bit  ${cpu_list}  Core=${socket_core}/Socket  Thread=${core_thread}/Core"
 
     if have_cmd "iscsiadm";then
-        printf "[%${col_width1}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
+        printf -- "[%${col_width1}s]: %s\n" "iSCSI device" "$(get_iscsi_device)"
     fi
 }
 
@@ -520,7 +520,7 @@ function dump_network
     local half_wd=$((col_width1/2 - 3))
     local -a device_list=($(ls /sys/class/net))
 
-    printf "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "IFACE" "Dirver" "BSF" "VendorID" "DeviceID" "MTU" "RX-Queue" "TX-Queue" "RX-Buffer" "TX-Buffer"
+    printf -- "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "IFACE" "Dirver" "BSF" "VendorID" "DeviceID" "MTU" "RX-Queue" "TX-Queue" "RX-Buffer" "TX-Buffer"
     local net_dev
     for net_dev in ${device_list[*]}
     do
@@ -557,7 +557,7 @@ function dump_network
         local buffer_rx=($(echo "${buffer_info}" | grep "RX:" | grep -P "\d+" -o))
         local buffer_tx=($(echo "${buffer_info}" | grep "TX:" | grep -P "\d+" -o))
 
-        printf "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "${net_dev}" "${dirver}" "${bsf}" "${vendor_id}" "${device_id}" "${mtu_size}" "${rx_queue_size}" "${tx_queue_size}" "${buffer_rx}" "${buffer_tx}"
+        printf -- "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "${net_dev}" "${dirver}" "${bsf}" "${vendor_id}" "${device_id}" "${mtu_size}" "${rx_queue_size}" "${tx_queue_size}" "${buffer_rx}" "${buffer_tx}"
     done
 }
 
@@ -567,7 +567,7 @@ function dump_interrupt
     local tmp_file="$(file_temp)"
     
     cat /proc/interrupts &> ${tmp_file}
-    printf "%-10s %-30s %-30s %-50s\n" "IRQ-nr" "IRQ-cnt" "CPU-list" "Description"
+    printf -- "%-10s %-30s %-30s %-50s\n" "IRQ-nr" "IRQ-cnt" "CPU-list" "Description"
 
     local line
     while read line
@@ -606,7 +606,7 @@ function dump_interrupt
 
             if [ -n "${cpu_list}" ];then
                 local desc=$(string_split "${line}" " " "$((cpu_num + 2))-$")
-                printf "%-10s %-30s %-30s %-50s\n" "${irq_nr}" "${irq_total}" "${cpu_list}" "${desc}"
+                printf -- "%-10s %-30s %-30s %-50s\n" "${irq_nr}" "${irq_total}" "${cpu_list}" "${desc}"
             fi
         fi
     done < ${tmp_file}
@@ -718,13 +718,13 @@ function du_find
         if math_is_int "${obj_size}" || math_is_float "${obj_size}";then
             if [ ${obj_size} -ge ${size} ];then
                 if [[ ${unit} == "KB" ]];then
-                    echo "$(printf "%-10s %s" "$(math_float "${obj_size}/1024" 1)KB" "${obj_info}")"
+                    echo "$(printf -- "%-10s %s" "$(math_float "${obj_size}/1024" 1)KB" "${obj_info}")"
                 elif [[ ${unit} == "MB" ]];then
-                    echo "$(printf "%-8s %s" "$(math_float "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
+                    echo "$(printf -- "%-8s %s" "$(math_float "${obj_size}/1024/1024" 1)MB" "${obj_info}")"
                 elif [[ ${unit} == "GB" ]];then
-                    echo "$(printf "%-4s %s" "$(math_float "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
+                    echo "$(printf -- "%-4s %s" "$(math_float "${obj_size}/1024/1024/1024" 2)GB" "${obj_info}")"
                 else
-                    echo "$(printf "%-12s %s" "${obj_size}" "${obj_info}")"
+                    echo "$(printf -- "%-12s %s" "${obj_size}" "${obj_info}")"
                 fi
             fi
         fi
@@ -843,7 +843,7 @@ function cursor_pos
 	#echo "current position: $pos"
 	ypos=$(string_split "${pos}" ';' 1)
 	xpos=$(string_split "${pos}" ';' 2)
-	#echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
+	echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
 
 	if [ ${xpos} -le ${xmax} ];then
 		if [ ${xpos} -gt 0 ];then
@@ -851,12 +851,10 @@ function cursor_pos
 		fi
 	fi
 
-	if [ ${ypos} -lt ${ymax} ];then
+	if [ ${ypos} -le ${ymax} ];then
 		if [ ${ypos} -gt 1 ];then
 			ypos=$((ypos - 1))
 		fi
-	elif [ ${ypos} -eq ${ymax} ];then
-		ypos=$((ypos - 2))
 	fi
 
 	local cur_pos="${xpos},${ypos}"
@@ -1046,11 +1044,11 @@ function bin_info
 	fi
 
 	local pkg_name=$(rpm -qf ${xfile})
-	cecho blue "$(printf "[%26s package]: %-50s" ${xfile} "${pkg_name}")"
+	cecho blue "$(printf -- "[%26s package]: %-50s" ${xfile} "${pkg_name}")"
 
 	local sel_val=$(input_prompt "" "Display the dynamic section ? (yes/no)" "yes" true)
 	if math_bool "${sel_val}";then
-		cecho blue "$(printf "[%34s]: " "dynamic section")"
+		cecho blue "$(printf -- "[%34s]: " "dynamic section")"
 		readelf -d -W ${xfile}
 	fi
 

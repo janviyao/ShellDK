@@ -29,12 +29,12 @@ function math_is_float
 
 function math_char2ascii
 {
-	printf "%d\n" "'$1"
+	printf -- "%d\n" "'$1"
 }
 
 function math_ascii2char
 {
-	printf "\\$(printf '%03o' "$1")"
+	printf -- "\\$(printf '%03o' "$1")"
 }
 
 function math_bool
@@ -95,7 +95,7 @@ function math_expr_val
 	fi
 
 	if [[ ${value} =~ ^[0-9]+(\.[0-9]+)?$ ]];then
-		value=$(awk "BEGIN {printf \"%.${scale}f\n\", ${value}}")
+		value=$(awk "BEGIN { printf \"%.${scale}f\n\", ${value} }")
 		if [[ ${value} =~ ^\.[0-9]+$ ]];then
 			value="0${value}"
 		fi
@@ -198,7 +198,7 @@ function math_dec2hex
         return 1
     fi
 
-    local result=$(printf "0x%llx" ${value})
+    local result=$(printf -- "0x%llx" ${value})
     if [ -n "${result}" ];then
         if math_bool "${upper}";then
             echo "${result^^}"
@@ -256,7 +256,7 @@ function math_hex2dec
 
 	local prestr=$(string_start "${value}" 2)
 	if [[ ${prestr,,} == '0x' ]];then
-		result=$(printf "%lld" ${value})
+		result=$(printf -- "%lld" ${value})
 		if [ $? -ne 0 ];then
 			result=""
 		fi

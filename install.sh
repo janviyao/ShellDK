@@ -61,7 +61,7 @@ function inst_usage
     echo "=================== Opers ==================="
     for key in ${!FUNC_MAP[*]};
     do
-        printf "Op: %-10s Funcs: %s\n" ${key} "${FUNC_MAP[${key}]}"
+        printf -- "Op: %-10s Funcs: %s\n" ${key} "${FUNC_MAP[${key}]}"
     done
 }
 
@@ -100,9 +100,9 @@ REMOTE_INST="${REMOTE_INST:-0}"
 COPY_PKG=$(get_optval "-c" "--copy")
 COPY_PKG="${COPY_PKG:-0}"
 
-echo_info "$(printf "[%13s]: %-6s" "Install Ops" "${NEED_OPT}")"
-echo_info "$(printf "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
-echo_info "$(printf "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
+echo_info "$(printf -- "[%13s]: %-6s" "Install Ops" "${NEED_OPT}")"
+echo_info "$(printf -- "[%13s]: %-6s" "Remote Inst" "${REMOTE_INST}")"
+echo_info "$(printf -- "[%13s]: %-6s" "Copy Packag" "${COPY_PKG}")"
 
 CMD_PRE="my"
 declare -A commandMap
@@ -210,7 +210,7 @@ function inst_env
         echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
         echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
         echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
-        echo "printf '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
+        echo "printf -- '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
         chmod +x ${GBL_USER_DIR}/.askpass.sh 
     fi
 
@@ -400,7 +400,7 @@ function inst_vim
         #git clone https://github.com/vim/vim.git vim
         local make_dir=$(mytar vim-*.tar.gz)
 
-        echo_info "$(printf "[%13s]: %-50s" "Doing" "configure")"
+        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
         local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
         conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
         #conf_paras="${conf_paras} --enable-luainterp=yes"
@@ -616,16 +616,16 @@ if ! math_bool "${REMOTE_INST}"; then
     for key in ${!FUNC_MAP[*]};
     do
         if string_contain "${NEED_OPT}" "${key}"; then
-            echo_info "$(printf "[%13s]: %-6s" "Op" "${key}")"
-            echo_info "$(printf "[%13s]: %-6s" "Funcs" "${FUNC_MAP[${key}]}")"
+            echo_info "$(printf -- "[%13s]: %-6s" "Op" "${key}")"
+            echo_info "$(printf -- "[%13s]: %-6s" "Funcs" "${FUNC_MAP[${key}]}")"
 
             func_index=1
             func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")
             while test -n "${func}"
             do
-                echo_info "$(printf "[%13s]: %-13s start" "Install" "${func}")"
+                echo_info "$(printf -- "[%13s]: %-13s start" "Install" "${func}")"
                 ${func} $(get_subcmd '0-')
-                echo_info "$(printf "[%13s]: %-13s done" "Install" "${func}")"
+                echo_info "$(printf -- "[%13s]: %-13s done" "Install" "${func}")"
                 let func_index++
                 func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")
             done

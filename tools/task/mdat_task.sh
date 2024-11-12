@@ -511,14 +511,14 @@ function _mdat_thread_main
                 echo ""
                 if [[ "${req_body}" == "ALL" ]];then
                     for _xkey_ in ${!_global_map_[*]};do
-                        echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
+                        echo "$(printf -- "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                     done
                 else
                     local _var_arr_=(${req_body})
                     for _xkey_ in ${_var_arr_[*]}
                     do
                         if [ -n "${_global_map_[${_xkey_}]}" ];then
-                            echo "$(printf "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
+                            echo "$(printf -- "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                         fi
                     done
                 fi
