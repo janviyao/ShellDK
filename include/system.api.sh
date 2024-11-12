@@ -843,7 +843,7 @@ function cursor_pos
 	#echo "current position: $pos"
 	ypos=$(string_split "${pos}" ';' 1)
 	xpos=$(string_split "${pos}" ';' 2)
-	echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
+	#echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
 
 	if [ ${xpos} -le ${xmax} ];then
 		if [ ${xpos} -gt 0 ];then

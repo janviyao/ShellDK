@@ -18,7 +18,7 @@ function math_is_int
 function math_is_float
 {
     # is argument an integer?
-    local re='^-?[0-9]+\.?[0-9]+$'
+	local re='^-?[0-9]+(\.?[0-9]+)?$'
     if [[ -n $1 ]]; then
         [[ $1 =~ $re ]] && return 0
         return 1
@@ -125,7 +125,7 @@ function math_mod
         return 1
     fi
 
-    if ! math_is_int "${divisor}";then
+    if ! math_is_float "${divisor}";then
         echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
         return 1
     fi
@@ -144,7 +144,7 @@ function math_round
         return 1
     fi
 
-    if ! math_is_int "${divisor}";then
+    if ! math_is_float "${divisor}";then
         echo_erro "\nUsage: [$@]\n\$1: one integer\n\$2: whether to be uppercase(default: true)"
         return 1
     fi

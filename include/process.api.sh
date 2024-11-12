@@ -71,6 +71,7 @@ function process_run_callback
 {
     local cb_func="$1"
     shift
+	local cmd_str=$(para_pack "$@")
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: callback function with command retcode and command output file\n\$2~N: command sequence"
@@ -79,11 +80,11 @@ function process_run_callback
 
     local outfile="$(file_temp)"
 
-	eval "( $@ ) &> ${outfile};erro=\$?; ${cb_func} '$@' \"\${erro}\" \"${outfile}\"" &
+	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} '${cmd_str}' \"\${erro}\" \"${outfile}\"" &> /dev/null &
     local bgpid=$!
     echo "${bgpid}"
-    echo_file "${LOG_DEBUG}" "run_callback[${bgpid}] { ${cb_func} } { $@ }"
-
+    echo_file "${LOG_DEBUG}" "run_callback[${bgpid}] { ${cb_func} } { ${cmd_str} }"
+	
     return 0 
 }
 

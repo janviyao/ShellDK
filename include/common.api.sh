@@ -587,19 +587,20 @@ function progress_bar
     local coordinate=$(cursor_pos)
     local x_coord=$(string_split "${coordinate}" ',' 1)
     local y_coord=$(string_split "${coordinate}" ',' 2)
-    echo_debug "progress_bar: $@ @[${x_coord},${y_coord}]"
 
+	local sleep_s=1
     local shrink=$((100 / 50))
     local move=${orign}
-    local last=${total}
-    local step=$(math_float "100 / ${total}" 5)
+	local last=$(math_round "${total} - ${orign}" "${sleep_s}")
+    local step=$(math_float "100 / ${last}" 5)
     
     logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
     logr_task_ctrl_async "ERASE_LINE"
     #logr_task_ctrl_async "CURSOR_HIDE"
     
-    local index
-    local postfix=('|' '/' '-' '\')
+    echo_debug "progress_bar[${x_coord},${y_coord}]: $@"
+    local index percentage
+    local postfix=('|' '/' '-' '\\\\')
     while [ ${move} -le ${last} ]
     do
         if eval "${stop}";then
@@ -614,20 +615,20 @@ function progress_bar
         done
 
         index=$(math_mod ${move} 4)
-        local percentage=$(math_float "${move} * ${step}" 2)
+        percentage=$(math_float "${move} * ${step}" 2)
 
         logr_task_ctrl_async "CURSOR_SAVE"
-        logr_task_ctrl_async "PRINT" "$(printf -- "[%-50s %-.2f%% %c]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
+        logr_task_ctrl_async "PRINT" "$(printf -- "[%-50s %-.2f%% %s]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
         logr_task_ctrl_async "CURSOR_RESTORE"
 
         let move++
-        sleep 0.1 
+        sleep ${sleep_s}
     done
+    echo_debug "progress_bar: finish [%${percentage}]"
 
     logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
     logr_task_ctrl_async "ERASE_LINE"
     #logr_task_ctrl_async "CURSOR_SHOW"
-    echo_debug "progress_bar finish"
 }
 
 __MY_SOURCE "INCLUDED_LOG"       $MY_VIM_DIR/include/log.api.sh

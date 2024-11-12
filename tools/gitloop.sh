@@ -13,6 +13,37 @@ CMD_STR=$(para_pack "$@")
 CUR_DIR=$(pwd)
 tmp_file=$(file_temp)
 
+function _loop_callback1
+{
+	local cmd_str="$1"
+	local retcode="$2"
+	local outfile="$3"
+
+	echo_debug "_loop_callback1: { $@ }"
+	if [ ${retcode} -ne 0 ];then
+		echo_warn "failed[${retcode}] { ${cmd_str} }"
+	fi
+
+	if have_file "${outfile}";then
+		rm -f ${outfile}
+	fi
+
+	local ppids=($(ppid))
+	local self_pid=${ppids[1]}
+	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		while [ -z "${self_pid}" ]
+		do
+			echo_warn "_loop_callback1: self_pid empty"
+			ppids=($(ppid))
+			self_pid=${ppids[1]}
+		done
+		self_pid=$(process_winpid2pid ${self_pid})
+	fi
+
+	mdat_kv_set "thread-${self_pid}-return" "${retcode}"
+}
+export -f _loop_callback1
+
 function gitloop_signal
 {
     echo_debug "gitloop signal"
@@ -42,7 +73,7 @@ do
         prefix=$(printf -- "%-30s @ " "${gitdir}")
         logr_task_ctrl_sync "PRINT" "${prefix}"
 
-        thread_pid=$(ctrl_create_thread "cd $(pwd);process_run_timeout ${OP_TIMEOUT} ${CMD_STR} \&\> ${tmp_file}") 
+        thread_pid=$(process_run_callback _loop_callback1 "cd $(pwd);process_run_timeout ${PROGRESS_TIME} ${CMD_STR} \&\> ${tmp_file}") 
         progress_bar 1 ${PROGRESS_TIME} "mdat_kv_has_key thread-${thread_pid}-return"
 
         thread_ret=$(mdat_kv_get "thread-${thread_pid}-return")
