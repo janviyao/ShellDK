@@ -614,10 +614,10 @@ function progress_bar
         done
 
         index=$(math_mod ${move} 4)
-        local percentage=$(math_round "${move} * ${step}" 1)
+        local percentage=$(math_float "${move} * ${step}" 2)
 
         logr_task_ctrl_async "CURSOR_SAVE"
-        logr_task_ctrl_async "PRINT" "$(printf -- "[%-50s %-2d%% %c]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
+        logr_task_ctrl_async "PRINT" "$(printf -- "[%-50s %-.2f%% %c]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
         logr_task_ctrl_async "CURSOR_RESTORE"
 
         let move++
