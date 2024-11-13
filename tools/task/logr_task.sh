@@ -32,12 +32,12 @@ function logr_task_ctrl_async
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
-    
+
     local msg="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
     if [[ "${msg}" =~ " " ]];then
         msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
     fi
-
+ 
     echo "${msg}" > ${LOGR_PIPE}
     return 0
 }

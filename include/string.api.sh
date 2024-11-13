@@ -43,11 +43,7 @@ function regex_2str
             #regex=$(string_replace "${regex}" "${char}" "\\${char}")
         fi
     done
-	
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n" 
+	print_lossless "${result}"
 
 	[[ "${bash_options}" =~ x ]] && set -x
     return 0
@@ -88,11 +84,7 @@ function regex_perl2basic
             fi
         fi
     done
-
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n" 
+	print_lossless "${result}"
 
 	[[ "${bash_options}" =~ x ]] && set -x
     return 0
@@ -138,11 +130,7 @@ function regex_perl2extended
             fi
         fi
     done
-
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n" 
+	print_lossless "${result}"
 
     return 0
 }
@@ -191,10 +179,7 @@ function string_char
     math_is_int "${posstr}" || { return 1; }
 	
 	local result=${string:${posstr}:1}
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n"
+	print_lossless "${result}"
 
     return 0
 }
@@ -284,10 +269,7 @@ function string_split
         if [[ "${sub_index}" =~ '-' ]];then
             local index_s=$(awk -F '-' '{ print $1 }' <<< "${sub_index}")
             if ! math_is_int "${index_s}";then
-				if [[ "${string}" =~ '%' ]];then
-					string="${string//%/%%}"
-				fi
-                printf -- "${string}\n"
+				print_lossless "${string}"
                 return 1
             fi
             local index_e=$(awk -F '-' '{ print $2 }' <<< "${sub_index}")
@@ -320,19 +302,13 @@ function string_split
             fi
             substr="${sub_array[*]}"
         else
-			if [[ "${string}" =~ '%' ]];then
-				string="${string//%/%%}"
-			fi
-            printf -- "${string}\n"
+			print_lossless "${string}"
             return 1
         fi
     fi
 
     #echo_file "${LOG_DEBUG}" "SUB [${substr}] [$@]"
-	if [[ "${substr}" =~ '%' ]];then
-		substr="${substr//%/%%}"
-	fi
-    printf -- "${substr}\n"
+	print_lossless "${substr}"
     return 0
 }
 
@@ -347,16 +323,11 @@ function string_start
     fi
 	
 	local result="${string}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    math_is_int "${length}" || { printf -- "${result}\n"; return 1; }
+
+    math_is_int "${length}" || { print_lossless "${result}"; return 1; }
 
 	result="${string:0:${length}}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n"
+	print_lossless "${result}"
 
     return 0
 }
@@ -372,16 +343,10 @@ function string_end
     fi
 
 	local result="${string}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    math_is_int "${length}" || { printf -- "${result}\n"; return 1; }
+    math_is_int "${length}" || { print_lossless "${result}"; return 1; }
 
 	result="${string:0-${length}:${length}}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n"
+	print_lossless "${result}"
 
     return 0
 }
@@ -398,22 +363,13 @@ function string_sub
     fi
 
 	local result="${string}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    math_is_int "${start}" || { printf -- "${result}\n"; return 1; }
+    math_is_int "${start}" || { print_lossless "${result}"; return 1; }
 
 	result="${string:${start}}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    math_is_int "${length}" || { printf -- "${result}\n"; return 1; }
+    math_is_int "${length}" || { print_lossless "${result}"; return 1; }
 
 	result="${string:${start}:${length}}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    printf -- "${result}\n"
+	print_lossless "${result}"
 
     return 0
 }
@@ -429,19 +385,12 @@ function string_regex
     fi
 
 	local result="${string}"
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-    [ -z "${regstr}" ] && { printf -- "${result}\n"; return 1; } 
+    [ -z "${regstr}" ] && { print_lossless "${result}"; return 1; } 
 	
     #result=$(grep -P "${regstr}" -o <<< "${string}")
 	result=$(perl -ne "print \$1 if /(${regstr})/ or die" <<< "${string}" 2> /dev/null)
-	if [[ "${result}" =~ '%' ]];then
-		result="${result//%/%%}"
-	fi
-
     if [ $? -eq 0 ];then
-        printf -- "${result}\n"
+		print_lossless "${result}"
         return 0
     else
         return 1
@@ -517,11 +466,8 @@ function string_same
 
         let index--
         if [ ${index} -gt 0 ];then
-            local same=$(string_sub "${string}" 0 ${index})
-			if [[ "${same}" =~ '%' ]];then
-				same="${same//%/%%}"
-			fi
-            printf -- "${same}\n"
+            local result=$(string_sub "${string}" 0 ${index})
+			print_lossless "${result}"
             return 0
         fi
     fi
@@ -540,11 +486,8 @@ function string_same
 
         if [ ${index} -gt 0 ];then
             let index=${#string}-${index} 
-            local same=$(string_sub "${string}" ${index} ${#string})
-			if [[ "${same}" =~ '%' ]];then
-				same="${same//%/%%}"
-			fi
-            printf -- "${same}\n"
+            local result=$(string_sub "${string}" ${index} ${#string})
+			print_lossless "${result}"
             return 0
         fi
     fi
@@ -565,19 +508,12 @@ function string_insert
 
     if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "insert index { ${posstr} } invalid"
-		if [[ "${string}" =~ '%' ]];then
-			string="${string//%/%%}"
-		fi
-        printf -- "${string}\n"
+		print_lossless "${string}"
         return 1
     fi
 
     string="${string:0:posstr}${substr}${string:posstr}"
-	if [[ "${string}" =~ '%' ]];then
-		string="${string//%/%%}"
-	fi
-    printf -- "${string}\n"
-
+	print_lossless "${string}"
     return 0
 }
 
@@ -602,10 +538,7 @@ function string_trim
     fi
 
 	if [ -z "${substr}" ];then
-		if [[ "${string}" =~ '%' ]];then
-			string="${string//%/%%}"
-		fi
-		printf -- "${string}\n"
+		print_lossless "${string}"
 		return 0
 	fi
 
@@ -637,11 +570,7 @@ function string_trim
         fi
     fi
 
-	if [[ "${string}" =~ '%' ]];then
-		string="${string//%/%%}"
-	fi
-    printf -- "${string}\n"
-
+	print_lossless "${string}"
     return 0
 }
 
@@ -659,10 +588,7 @@ function string_replace
 	
 	local result=${string}
     if [ -z "${oldstr}" ];then
-		if [[ "${result}" =~ '%' ]];then
-			result="${result//%/%%}"
-		fi
-        printf -- "${result}\n"
+		print_lossless "${result}"
         return 1
     fi
     
@@ -680,18 +606,12 @@ function string_replace
         fi
 		
 		result=$(perl -pe "s/${oldstr}/${newstr}/g" <<< "${string}")
-		if [[ "${result}" =~ '%' ]];then
-			result="${result//%/%%}"
-		fi
     else
         #donot use (), because it fork child shell
         oldstr=$(regex_2str "${oldstr}") 
 		result=${string//${oldstr}/${newstr}}
-		if [[ "${result}" =~ '%' ]];then
-			result="${result//%/%%}"
-		fi
     fi
-	printf -- "${result}\n"
 
+	print_lossless "${result}"
     return 0
 }

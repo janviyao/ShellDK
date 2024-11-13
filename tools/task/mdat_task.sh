@@ -132,7 +132,6 @@ function mdat_kv_has_key
     fi
 
     echo_file "${LOG_DEBUG}" "mdat check key: [$@]"
-    
     if [ -z "${_pipe_}" ];then
         _pipe_="${MDAT_PIPE}"
     fi
@@ -145,7 +144,6 @@ function mdat_kv_has_key
     fi
     
     wait_value "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
-
     if math_bool "${FUNC_RET}";then
         return 0
     else
@@ -407,7 +405,7 @@ function _mdat_thread_main
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
 
-        echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
+        #echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! have_file "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"

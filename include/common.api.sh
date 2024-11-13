@@ -600,7 +600,7 @@ function progress_bar
     
     echo_debug "progress_bar[${x_coord},${y_coord}]: $@"
     local index percentage
-    local postfix=('|' '/' '-' '\\\\')
+    local postfix=('|' '/' '-' '\\')
     while [ ${move} -le ${last} ]
     do
         if eval "${stop}";then

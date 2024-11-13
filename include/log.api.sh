@@ -46,6 +46,22 @@ function cecho
     echo -e "${text}"
 }
 
+function print_lossless
+{
+	local string="$@"
+
+	if [[ "${string}" =~ '%' ]];then
+		string="${string//%/%%}"
+	fi
+
+	if [[ "${string}" =~ '\' ]];then
+		string="${string//\\/\\\\}"
+	fi
+
+	printf -- "${string}\n"
+	return 0
+}
+
 function echo_file
 {
     local bash_options="$-"
