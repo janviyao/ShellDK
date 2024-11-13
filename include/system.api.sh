@@ -408,7 +408,7 @@ function sudo_it
 {
 	local cmd=$(para_pack "$@")
 
-    echo_file "${LOG_DEBUG}" "[sudo_it] ${cmd}"
+    echo_file "${LOG_DEBUG}" "${cmd}"
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
 		python ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c "${cmd}"
         return $?
@@ -427,9 +427,9 @@ function sudo_it
             sudo -A bash -c "${cmd}"
             return $?
         else
-            echo_file "${LOG_WARN}" "sudo_it: { ${GBL_USER_DIR}/.askpass.sh } non-executable"
+            echo_file "${LOG_WARN}" "file { ${GBL_USER_DIR}/.askpass.sh } not executed"
             if ! account_check "${MY_NAME}" false;then
-                echo_file "${LOG_ERRO}" "sudo_it: Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
+                echo_file "${LOG_ERRO}" "Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
                 sudo bash -c "${cmd}"
                 return $?
             fi
@@ -843,7 +843,7 @@ function cursor_pos
 	#echo "current position: $pos"
 	ypos=$(string_split "${pos}" ';' 1)
 	xpos=$(string_split "${pos}" ';' 2)
-	#echo_file "${LOG_DEBUG}" "[cursor_pos] ${xpos},${ypos} == ${xmax},${ymax}"
+	#echo_file "${LOG_DEBUG}" "${xpos},${ypos} == ${xmax},${ymax}"
 
 	if [ ${xpos} -le ${xmax} ];then
 		if [ ${xpos} -gt 0 ];then
@@ -858,7 +858,7 @@ function cursor_pos
 	fi
 
 	local cur_pos="${xpos},${ypos}"
-	echo_file "${LOG_DEBUG}" "[cursor_pos] ${cur_pos}"
+	echo_file "${LOG_DEBUG}" "${cur_pos}"
 
 	echo "${cur_pos}"
 	return 0

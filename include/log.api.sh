@@ -85,20 +85,25 @@ function echo_file
         fi
     fi
 
-    local log_type="null"
+    local log_type="NOTICE"
     if [ ${echo_level} -eq ${LOG_ERRO} ];then
-        log_type="erro"
+        log_type="ERROR"
     elif [ ${echo_level} -eq ${LOG_WARN} ];then
-        log_type="warn"
+        log_type="WARN"
     elif [ ${echo_level} -eq ${LOG_INFO} ];then
-        log_type="info"
+        log_type="INFO"
     elif [ ${echo_level} -eq ${LOG_DEBUG} ];then
-        log_type="debug"
+        log_type="DEBUG"
     fi
 
-    local headpart=$(printf -- "[%5s]" "${log_type}")
+	local func_name=${FUNCNAME[1]}
+	if [[ ${func_name} =~ ^echo_ ]];then
+		func_name=${FUNCNAME[2]}
+	fi
+
+    local headpart=$(printf -- "[%-5s] [%s]" "${log_type}" "${func_name}")
     if math_bool "${LOG_HEADER}";then
-        headpart=$(printf -- "%s[%-5s]" "$(echo_header false)" "${log_type}")
+        headpart=$(printf -- "%s[%-5s] [%s]" "$(echo_header false)" "${log_type}" "${func_name}")
     fi
 
     if [ -n "${REMOTE_IP}" ];then

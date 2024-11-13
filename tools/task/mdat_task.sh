@@ -423,7 +423,7 @@ function _mdat_thread_main
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
-                process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
             fi
             echo_debug "mdat main exit"
             return 
@@ -526,7 +526,7 @@ function _mdat_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
 
         echo_file "${LOG_DEBUG}" "mdat wait: [${MDAT_PIPE}]"

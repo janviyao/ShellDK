@@ -159,7 +159,7 @@ function _logr_thread_main
         local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
         local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
         local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
-        echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
+        #echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! have_file "${ack_pipe}";then
@@ -179,7 +179,7 @@ function _logr_thread_main
             if [[ "${req_body}" == "EXIT" ]];then
                 if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                     echo_debug "write [ACK] to [${ack_pipe}]"
-                    process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                    process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
                 fi
                 echo_debug "logr main exit"
                 return
@@ -236,7 +236,7 @@ function _logr_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
 
         #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"

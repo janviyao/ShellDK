@@ -578,7 +578,7 @@ function _ncat_thread_main
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
-                process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
             fi
             #mdat_set_var "master_work=false"
             echo_debug "ncat main exit"
@@ -635,7 +635,7 @@ function _ncat_thread_main
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
 
         mdat_get_var "master_work"

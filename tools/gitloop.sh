@@ -19,7 +19,7 @@ function _loop_callback1
 	local retcode="$2"
 	local outfile="$3"
 
-	echo_debug "_loop_callback1: { $@ }"
+	echo_debug "$@"
 	local ppids=($(ppid))
 	local self_pid=${ppids[1]}
 	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then

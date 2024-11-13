@@ -339,7 +339,7 @@ function _rsync_callback1
 	local retcode="$2"
 	local outfile="$3"
 
-	echo_debug "_rsync_callback1: { $@ }"
+	echo_debug "$@"
 	if [ ${retcode} -ne 0 ];then
 		echo_warn "failed[${retcode}] { ${arg_str} }"
 	fi
@@ -379,7 +379,7 @@ function _xfer_thread_main
         if [[ "${req_xfer}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
-                process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
             fi
             echo_debug "xfer main exit"
             return 
@@ -427,7 +427,7 @@ EOF
                         echo_erro "remote dir { ${remote_xdir} } not exist"
                         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                             echo_debug "write [ACK] to [${ack_pipe}]"
-                            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+                            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
                         fi
                         continue
                     fi
@@ -449,7 +449,7 @@ EOF
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             echo_debug "write [ACK] to [${ack_pipe}]"
-            process_run_timeout 2 echo \"ACK\" \> ${ack_pipe}
+            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
 
         echo_file "${LOG_DEBUG}" "xfer wait: [${XFER_PIPE}]"

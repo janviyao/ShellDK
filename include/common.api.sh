@@ -598,7 +598,7 @@ function progress_bar
     logr_task_ctrl_async "ERASE_LINE"
     #logr_task_ctrl_async "CURSOR_HIDE"
     
-    echo_debug "progress_bar[${x_coord},${y_coord}]: $@"
+    echo_debug "pos:[${x_coord},${y_coord}] args:[$@]"
     local index percentage
     local postfix=('|' '/' '-' '\\')
     while [ ${move} -le ${last} ]
@@ -624,7 +624,7 @@ function progress_bar
         let move++
         sleep ${sleep_s}
     done
-    echo_debug "progress_bar: finish [%${percentage}]"
+    echo_debug "finish [%${percentage}]"
 
     logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
     logr_task_ctrl_async "ERASE_LINE"

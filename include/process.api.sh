@@ -52,7 +52,7 @@ function process_run
 {
 	local cmd_str=$(para_pack "$@")
 
-	echo_file "${LOG_DEBUG}" "[process_run] ${cmd_str}"
+	echo_file "${LOG_DEBUG}" "${cmd_str}"
 	eval "${cmd_str}" 
 
 	local retcode=$?
@@ -83,7 +83,7 @@ function process_run_callback
 	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} '${cb_args}' \"\${erro}\" '${outfile}'" &> /dev/null &
     local bgpid=$!
     echo "${bgpid}"
-    echo_file "${LOG_DEBUG}" "run_callback[${bgpid}] { ${cb_func} '${cb_args}' '${cmd_str}' '${outfile}' }"
+    echo_file "${LOG_DEBUG}" "pid[${bgpid}] { ${cb_func} '${cb_args}' '${cmd_str}' '${outfile}' }"
 	
     return 0 
 }
@@ -99,7 +99,7 @@ function process_run_timeout
     fi
 
     if [ $# -gt 0 ];then
-        echo_debug "[process_run_timeout]: ${time_s}s $@"
+        echo_debug "${time_s}s $@"
         process_run timeout ${time_s} "$@"
         return $?
     else
@@ -126,7 +126,7 @@ function process_run_lock
 
     (
         flock -x ${lockid}  #flock文件锁，-x表示独享锁
-        echo_file "${LOG_DEBUG}" "[process_run_lock] $@"
+        echo_file "${LOG_DEBUG}" "$@"
         process_run "$@"
     ) {lockid}<>${GBL_BASE_DIR}/shell.lock.${lockid}
 }
