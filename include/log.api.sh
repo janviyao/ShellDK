@@ -140,9 +140,9 @@ function echo_header
         fi
 
         if math_bool "${HEADER_FILE}";then
-            header="${header} $(printf -- "[%-18s[%-7d]]" "$(path2fname $0)" "$$")"
+            header="${header} $(printf -- "[%-18s[%7d]]" "$(path2fname $0)" "$$")"
         else
-            header="${header} $(printf -- "[%-7d]" "$$")"
+            header="${header} $(printf -- "[%7d]" "$$")"
         fi
 
         if math_bool "${color}";then

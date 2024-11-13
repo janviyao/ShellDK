@@ -20,18 +20,6 @@ function _loop_callback1
 	local outfile="$3"
 
 	echo_debug "$@"
-	local ppids=($(ppid))
-	local self_pid=${ppids[1]}
-	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-		while [ -z "${self_pid}" ]
-		do
-			echo_warn "_loop_callback1: self_pid empty"
-			ppids=($(ppid))
-			self_pid=${ppids[1]}
-		done
-		self_pid=$(process_winpid2pid ${self_pid})
-	fi
-
 	echo "${retcode}" > ${cb_args}
 	while test -f ${cb_args}
 	do

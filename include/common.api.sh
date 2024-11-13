@@ -309,7 +309,7 @@ function wait_value
         try_cnt=$(math_round ${timeout_s} 2)
         timeout_s=2
     fi
-    echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s]"
+    echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s] $@"
 
     # the first pid is shell where ppid run
     local self_pid=$$
@@ -343,21 +343,20 @@ function wait_value
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
 
-    local try_old=${try_cnt}
+    local try_old=0
     while true
     do
-        if [ ${try_old} -eq ${try_cnt} ];then
+        if [ ${try_old} -eq 0 ];then
             echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
             echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
         fi
 
-        echo_debug "try[${try_cnt}] to read from [${ack_pipe}]"
         #process_run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
         read -t ${timeout_s} FUNC_RET < ${ack_pipe}
-        echo_debug "read [${FUNC_RET}] from ${ack_pipe}"
+		echo_debug "(${try_old})read [${FUNC_RET}] from ${ack_pipe}"
 
-        let try_cnt--
-        if [ -n "${FUNC_RET}" -o ${try_cnt} -eq 0 ];then
+        let try_old++
+        if [ -n "${FUNC_RET}" -o ${try_old} -eq ${try_cnt} ];then
             break
         fi
 
@@ -368,11 +367,11 @@ function wait_value
     done
     eval "exec ${ack_fhno}>&-"
 
-    if [ ${try_cnt} -eq 0 ];then
+    if [ ${try_old} -eq ${try_cnt} ];then
         echo_debug "write [${send_pipe}] failed"
     fi
 
-    echo_debug "remove: [${ack_pipe}]"
+    #echo_debug "remove: [${ack_pipe}]"
     rm -f ${ack_pipe}
     rm -f ${ack_pipe}.result
     return 0
