@@ -15,19 +15,11 @@ tmp_file=$(file_temp)
 
 function _loop_callback1
 {
-	local cmd_str="$1"
+	local cb_args="$1"
 	local retcode="$2"
 	local outfile="$3"
 
 	echo_debug "_loop_callback1: { $@ }"
-	if [ ${retcode} -ne 0 ];then
-		echo_warn "failed[${retcode}] { ${cmd_str} }"
-	fi
-
-	if have_file "${outfile}";then
-		rm -f ${outfile}
-	fi
-
 	local ppids=($(ppid))
 	local self_pid=${ppids[1]}
 	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -40,7 +32,18 @@ function _loop_callback1
 		self_pid=$(process_winpid2pid ${self_pid})
 	fi
 
-	mdat_kv_set "thread-${self_pid}-return" "${retcode}"
+	echo "${retcode}" > ${cb_args}
+	while test -f ${cb_args}
+	do
+		sleep 0.1
+	done
+
+	logr_task_ctrl_sync "ERASE_LINE" 
+	if have_file "${outfile}";then
+		logr_task_ctrl_sync "PRINT_FROM_FILE" "${outfile}"
+		rm -f ${outfile}
+	fi
+	logr_task_ctrl_sync "NEWLINE"
 }
 export -f _loop_callback1
 
@@ -73,15 +76,12 @@ do
         prefix=$(printf -- "%-30s @ " "${gitdir}")
         logr_task_ctrl_sync "PRINT" "${prefix}"
 
-        thread_pid=$(process_run_callback _loop_callback1 "cd $(pwd);process_run_timeout ${PROGRESS_TIME} ${CMD_STR} \&\> ${tmp_file}") 
-        progress_bar 1 ${PROGRESS_TIME} "mdat_kv_has_key thread-${thread_pid}-return"
-
-        thread_ret=$(mdat_kv_get "thread-${thread_pid}-return")
-        mdat_kv_unset_key "thread-${thread_pid}-return"
- 
-        logr_task_ctrl_sync "ERASE_LINE" 
-        logr_task_ctrl_sync "PRINT_FROM_FILE" "${tmp_file}"
-        logr_task_ctrl_sync "NEWLINE"
+        rm -f ${tmp_file}
+        thread_pid=$(process_run_callback _loop_callback1 "${tmp_file}" "cd $(pwd);process_run_timeout ${PROGRESS_TIME} ${CMD_STR}") 
+        progress_bar 1 ${PROGRESS_TIME} "test -f ${tmp_file}"
+        thread_ret=$(cat ${tmp_file})
+        rm -f ${tmp_file}
+		process_wait ${thread_pid} 1
 
         if [ ${thread_ret} -ne 0 ];then
             echo_debug "{ ${CMD_STR} } exception errno: ${thread_ret}"

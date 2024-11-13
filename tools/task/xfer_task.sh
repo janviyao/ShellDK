@@ -335,13 +335,13 @@ function _bash_xfer_exit
 
 function _rsync_callback1
 {
-	local cmd_str="$1"
+	local arg_str="$1"
 	local retcode="$2"
 	local outfile="$3"
 
 	echo_debug "_rsync_callback1: { $@ }"
 	if [ ${retcode} -ne 0 ];then
-		echo_warn "failed[${retcode}] { ${cmd_str} }"
+		echo_warn "failed[${retcode}] { ${arg_str} }"
 	fi
 
 	if have_file "${outfile}";then
@@ -436,12 +436,12 @@ EOF
 
             have_file "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if [[ "${cmd_act}" == 'REMOTE' ]];then
-				local pid=$(process_run_callback _rsync_callback1 sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
+				local pid=$(process_run_callback _rsync_callback1 "xfer callback args" sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
 				echo "${pid}" > ${XFER_WORK}
 				process_wait ${pid} 1
             else
                 #have_file "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
-				local pid=$(process_run_callback _rsync_callback1 rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
+				local pid=$(process_run_callback _rsync_callback1 "xfer callback args" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
 				echo "${pid}" > ${XFER_WORK}
 				process_wait ${pid} 1
             fi

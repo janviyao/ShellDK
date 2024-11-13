@@ -70,7 +70,8 @@ function process_run
 function process_run_callback
 {
     local cb_func="$1"
-    shift
+    local cb_args="$2"
+    shift 2
 	local cmd_str=$(para_pack "$@")
 
     if [ $# -lt 1 ];then
@@ -78,12 +79,11 @@ function process_run_callback
         return 1
     fi
 
-    local outfile="$(file_temp)"
-
-	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} '${cmd_str}' \"\${erro}\" \"${outfile}\"" &> /dev/null &
+    local outfile=$(file_temp)
+	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} '${cb_args}' \"\${erro}\" '${outfile}'" &> /dev/null &
     local bgpid=$!
     echo "${bgpid}"
-    echo_file "${LOG_DEBUG}" "run_callback[${bgpid}] { ${cb_func} } { ${cmd_str} }"
+    echo_file "${LOG_DEBUG}" "run_callback[${bgpid}] { ${cb_func} '${cb_args}' '${cmd_str}' '${outfile}' }"
 	
     return 0 
 }
@@ -99,7 +99,7 @@ function process_run_timeout
     fi
 
     if [ $# -gt 0 ];then
-        echo_debug "timeout(${time_s}s): $@"
+        echo_debug "[process_run_timeout]: ${time_s}s $@"
         process_run timeout ${time_s} "$@"
         return $?
     else

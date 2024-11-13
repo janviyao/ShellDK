@@ -331,7 +331,7 @@ function wait_value
         ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
     done
 
-    echo_debug "make ack: [${ack_pipe}]"
+    #echo_debug "make ack: [${ack_pipe}]"
     #have_file "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
     have_file "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
@@ -588,7 +588,7 @@ function progress_bar
     local x_coord=$(string_split "${coordinate}" ',' 1)
     local y_coord=$(string_split "${coordinate}" ',' 2)
 
-	local sleep_s=1
+	local sleep_s=0.5
     local shrink=$((100 / 50))
     local move=${orign}
 	local last=$(math_round "${total} - ${orign}" "${sleep_s}")
