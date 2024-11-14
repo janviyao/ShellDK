@@ -555,16 +555,19 @@ function func_checkout
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
 		local short_name=$(awk -F'/' '{ print $NF }' <<< "${cur_branch}")
 
+		local index
 		local stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ print $1 }' | grep -P '(?<=stash@{)\d+(?=})' -o))
-		while [ ${#stash_indexs[*]} -gt 0 ]
+		for index in ${stash_indexs[*]}
 		do
-			if ! math_is_int "${stash_indexs[0]}";then
-				echo_erro "invalid index: ${index_str}"
+			if ! math_is_int "${index}";then
+				echo_erro "invalid index: ${index}"
 				break
 			fi
 
-			process_run git stash pop --index ${stash_indexs[0]}
-			stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ print $1 }' | grep -P '(?<=stash@{)\d+(?=})' -o))
+			process_run git stash pop --index ${index}
+			if [ $? -ne 0 ];then
+				echo_erro "failed: git stash pop --index ${index}"
+			fi
 		done
 	else
 		return 1
