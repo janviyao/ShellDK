@@ -210,11 +210,15 @@ function inst_env
         echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
         echo "    USR_PASSWORD=\$(system_decrypt \"${new_password}\")"     >> ${GBL_USER_DIR}/.askpass.sh
         echo "fi"                                                          >> ${GBL_USER_DIR}/.askpass.sh
-        echo "printf -- '%s\n' \"\${USR_PASSWORD}\""                          >> ${GBL_USER_DIR}/.askpass.sh
+        echo "printf -- '%s\n' \"\${USR_PASSWORD}\""                       >> ${GBL_USER_DIR}/.askpass.sh
         chmod +x ${GBL_USER_DIR}/.askpass.sh 
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
+		if ! install_from_spec "bash";then
+			return 1
+		fi
+
 		local -a must_deps=("make-4.3" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
 		if [ -z "${REMOTE_IP}" ];then
 			local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "yes")

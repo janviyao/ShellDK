@@ -1,3 +1,4 @@
+bash;                install_check 'bash' 'bash-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'bash-.+\.tar\.gz' true;rm -fr bash-*/
 make-3.82;           install_check 'make' 'make-.+\.rpm' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'make-.+\.rpm' true
 make-4.3;            install_check 'make' 'make-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'make-.+\.tar\.gz' true;rm -fr make-*/
 autoconf;            install_check 'autoconf' 'autoconf-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'autoconf-.+\.tar\.gz' true;rm -fr autoconf-*/

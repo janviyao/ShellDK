@@ -8,7 +8,7 @@ function array_have
     local -n array=$1
     local value="$2"
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: value"
         return 1
     fi
@@ -29,7 +29,7 @@ function array_filter
     local -n array=$1
     local regex="$2"
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: regex string"
         return 1
     fi
@@ -43,7 +43,7 @@ function array_index
     local -n array=$1
     local value="$2"
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: value"
         return 1
     fi
@@ -66,7 +66,7 @@ function array_add
 {
 	local -n array=$1
 
-	if [ $# -lt 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
+	if [ $# -lt 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
 		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: value"
 		return 1
 	fi
@@ -82,7 +82,7 @@ function array_del
     local xname="$1"
     local index="$2"
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: index or value to be deleted"
         return 1
     fi
@@ -113,7 +113,7 @@ function array_compare
     local -n array1=$1
     local -n array2=$2
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]] || [[ ! "$(declare -p $2)" =~ "declare -a" ]];then
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]] || [[ ! "$(declare -p $2 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference"
         return 1
     fi
@@ -146,7 +146,7 @@ function array_dedup
     local -n array1=$1
     local -n array2=$2
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]] || [[ ! "$(declare -p $2)" =~ "declare -a" ]];then
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]] || [[ ! "$(declare -p $2 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference"
         return 1
     fi
