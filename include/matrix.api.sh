@@ -57,27 +57,54 @@ function array_index
             return 0
         fi
     done
-
+	
+	echo $((${#array[*]} + 1))
     return 1
+}
+
+function array_add
+{
+	local -n array=$1
+
+	if [ $# -lt 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
+		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: value"
+		return 1
+	fi
+	shift
+
+	array+=("$@")
+	return 0
 }
 
 function array_del
 {
     local -n array=$1
+    local xname="$1"
     local index="$2"
 
     if [ $# -ne 2 ] || [[ ! "$(declare -p $1)" =~ "declare -a" ]];then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: index to be deleted"
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: index or value to be deleted"
         return 1
     fi
-    
-    local indexs=(${!array[*]})
-    local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
-    if [ ${index} -lt ${total} ];then
-        unset array[${index}]
-    fi
+	
+	if ! math_is_int "${index}";then
+		index=$(array_index ${xname} ${index})
+	fi
 
-    return 0
+	local indexs=(${!array[*]})
+	local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
+	if [ ${index} -lt ${total} ];then
+		unset array[${index}]
+	else
+		index=$(array_index ${xname} ${index})
+		if [ ${index} -lt ${total} ];then
+			unset array[${index}]
+		else
+			return 1
+		fi
+	fi
+
+	return 0
 }
 
 function array_compare

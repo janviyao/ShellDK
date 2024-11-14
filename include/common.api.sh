@@ -598,7 +598,7 @@ function progress_bar
     #logr_task_ctrl_async "CURSOR_HIDE"
     
     echo_debug "pos:[${x_coord},${y_coord}] args:[$@]"
-    local index percentage
+    local index percentage=0
     local postfix=('|' '/' '-' '\\')
     while [ ${move} -le ${last} ]
     do
