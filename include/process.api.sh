@@ -163,6 +163,7 @@ function process_signal
     local signal=$1
     shift
     local xproc_list=($@)
+    local exclude_pids=($(cat ${BASH_MASTER}))
 
     [ ${#xproc_list[*]} -eq 0 ] && return 1
 
@@ -178,7 +179,10 @@ function process_signal
         fi
     fi
 
-    local -a pid_array=($(process_name2pid ${xproc_list[*]}))
+	local -a pid_array=($(process_name2pid ${xproc_list[*]}))
+	if [ ${#exclude_pids[*]} -gt 0 ];then
+		array_dedup pid_array exclude_pids
+	fi
     echo_info "signal { ${signal} } into { ${pid_array[*]} }"
 
     if [ ${#pid_array[*]} -gt 0 ];then
@@ -195,8 +199,6 @@ function process_signal
 function process_kill
 {
     local xproc_list=($@)
-    local exclude_pids=($(cat ${BASH_MASTER}))
-
     [ ${#xproc_list[*]} -eq 0 ] && return 1
     
     local xproc
@@ -209,10 +211,6 @@ function process_kill
             local -a pid_array=(${xproc})
         else
             local -a pid_array=($(process_name2pid ${xproc}))
-        fi
-
-        if [ ${#exclude_pids[*]} -gt 0 ];then
-            array_dedup pid_array exclude_pids
         fi
 
         if [ ${#pid_array[*]} -gt 0 ];then
@@ -342,51 +340,51 @@ function process_name2pid
     for xproc in ${xproc_list[*]}
     do
         if math_is_int "${xproc}";then
-            pid_array[${#pid_array[*]}]=${xproc}
+			pid_array+=(${xproc})
             continue
         fi
 
         if [[ "${SYSTEM}" == "Linux" ]]; then
             local -a res_array=($(pgrep -x ${xproc}))
             if [ ${#res_array[*]} -gt 0 ];then
-                pid_array=(${pid_array[*]} ${res_array[*]})
+				pid_array+=(${res_array[*]})
                 continue
             fi
 
             res_array=($(pidof ${xproc}))
             if [ ${#res_array[*]} -gt 0 ];then
-                pid_array=(${pid_array[*]} ${res_array[*]})
+				pid_array+=(${res_array[*]})
                 continue
             fi
             #res_array=($(ps -C ${xproc} -o pid=))
             #if [ ${#res_array[*]} -gt 0 ];then
-            #    pid_array=(${pid_array[*]} ${res_array[*]})
+			#	 pid_array+=(${res_array[*]})
             #    continue
             #fi
 
             #local none_regex=$(regex_2str "${xproc}")
             #res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
             #if [ ${#res_array[*]} -gt 0 ];then
-            #    pid_array=(${pid_array[*]} ${res_array[*]})
+			#	 pid_array+=(${res_array[*]})
             #    continue
             #fi
 
             #res_array=($(ps -ww -eo pid,cmd | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
             #if [ ${#res_array[*]} -gt 0 ];then
-            #    pid_array=(${pid_array[*]} ${res_array[*]})
+			#	 pid_array+=(${res_array[*]})
             #    continue
             #fi
 
             #res_array=($(ps -ww -eo pid,cmd | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
             #if [ ${#res_array[*]} -gt 0 ];then
-            #    pid_array=(${pid_array[*]} ${res_array[*]})
+			#	 pid_array+=(${res_array[*]})
             #    continue
             #fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             local none_regex=$(regex_2str "${xproc}")
             local -a res_array=($(ps -s | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
             if [ ${#res_array[*]} -gt 0 ];then
-                pid_array=(${pid_array[*]} ${res_array[*]})
+				pid_array+=(${res_array[*]})
                 continue
             fi
         fi
@@ -419,7 +417,7 @@ function process_name2tid
 
         local tids=($(ps H --no-headers -T -p ${xpid} | awk '{ print $2 }' | grep -v ${xpid}))
         if [ ${#tids[*]} -gt 0 ]; then
-            proc_tids=(${proc_tids[*]} ${tids[*]})
+            proc_tids+=(${tids[*]})
         fi
     done
      
@@ -473,7 +471,7 @@ function process_ppid
         fi
 
         if [ ${#ppids[*]} -gt 0 ];then
-            ppid_array=(${ppid_array[*]} ${ppids[*]})
+            ppid_array+=(${ppids[*]})
         fi
     done
 
@@ -502,11 +500,11 @@ function process_cpid
             # ps -p $$ -o ppid=
             local subpro_path="/proc/${xpid}/task/${xpid}/children"
             if have_file "${subpro_path}"; then
-                child_pids=(${child_pids[*]} $(cat ${subpro_path} 2>/dev/null))
+                child_pids+=($(cat ${subpro_path} 2>/dev/null))
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             local childs=($(ps -ef | awk -v var=${xpid} '{ if ($3 == var) { print $2 } }'))
-            child_pids=(${child_pids[*]} ${childs[*]})
+            child_pids+=(${childs[*]})
         fi
     done
 
@@ -677,7 +675,7 @@ function process_info
                 fi
             fi
         done 
-        all_pids=(${all_pids[*]} ${pid_array[*]})
+        all_pids+=(${pid_array[*]})
     done
 
     if math_bool "${show_thread}"; then
@@ -957,7 +955,7 @@ function process_winpid2pid
     do
         if math_is_int "${xpid}";then
             local pids=($(ps -a | awk -v wpid=${xpid} '{ if ($4 == wpid) { print $1 } }'))
-            pid_list=(${pid_list[*]} ${pids[*]})
+            pid_list+=(${pids[*]})
         fi
     done
 

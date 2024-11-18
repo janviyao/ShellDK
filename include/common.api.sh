@@ -297,6 +297,7 @@ function wait_value
     local send_body="$1"
     local send_pipe="$2"
     local timeout_s="${3:-2}"
+	local -g FUNC_RET
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe"

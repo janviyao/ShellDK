@@ -515,12 +515,12 @@ function _xfer_thread
     local self_pid=$$
     if have_cmd "ppid";then
         local ppids=($(ppid))
-        local self_pid=${ppids[1]}
+        local self_pid=${ppids[0]}
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             while [ -z "${self_pid}" ]
             do
                 ppids=($(ppid))
-                self_pid=${ppids[1]}
+                self_pid=${ppids[0]}
             done
             self_pid=$(process_winpid2pid ${self_pid})
         fi
