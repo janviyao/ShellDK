@@ -296,7 +296,7 @@ function xfer_task_ctrl_sync
     fi
 
     echo_debug "xfer wait for ${one_pipe}"
-    wait_value "${xfer_body}" "${one_pipe}" "+${MAX_TIMEOUT}"
+    send_and_wait "${xfer_body}" "${one_pipe}" "+${MAX_TIMEOUT}"
     return 0
 }
 

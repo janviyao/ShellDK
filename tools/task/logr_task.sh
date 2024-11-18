@@ -63,7 +63,7 @@ function logr_task_ctrl_sync
         msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
     fi
 
-    wait_value "${msg}" "${LOGR_PIPE}"
+    send_and_wait "${msg}" "${LOGR_PIPE}"
     return 0
 }
 

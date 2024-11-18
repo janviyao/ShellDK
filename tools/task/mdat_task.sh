@@ -74,7 +74,7 @@ function mdat_task_ctrl_sync
         return 1
     fi
     
-    wait_value "${_body_}" "${_pipe_}"
+    send_and_wait "${_body_}" "${_pipe_}"
     return 0
 }
 
@@ -147,8 +147,8 @@ function mdat_kv_has_key
         return 1
     fi
     
-    wait_value "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
-    if math_bool "${FUNC_RET}";then
+    send_and_wait "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    if math_bool "${RESP_VAL}";then
         return 0
     else
         return 1
@@ -178,8 +178,8 @@ function mdat_kv_has_val
         return 1
     fi
     
-    wait_value "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
-    if math_bool "${FUNC_RET}";then
+    send_and_wait "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    if math_bool "${RESP_VAL}";then
         return 0
     else
         return 1
@@ -337,10 +337,10 @@ function mdat_kv_get
         return 1
     fi
 
-    wait_value "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
-    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${FUNC_RET}\"]"
+    send_and_wait "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${RESP_VAL}\"]"
 
-    echo "${FUNC_RET}"
+    echo "${RESP_VAL}"
     return 0
 }
 

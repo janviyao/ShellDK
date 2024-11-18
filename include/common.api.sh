@@ -294,23 +294,68 @@ function import_all
 
 function wait_value
 {
+	local resp_pipe="$1"
+	local timeout_s="${2:-2}"
+	local -g FUNC_RET
+
+	if [ $# -lt 1 ];then
+		echo_erro "\nUsage: [$@]\n\$1: resp_pipe\n\$2: timeout_s"
+		return 1
+	fi
+
+	local try_cnt=6
+	if [[ $(string_start "${timeout_s}" 1) == '+' ]]; then
+		timeout_s=$(string_trim "${timeout_s}" "+" 1)
+		try_cnt=$(math_round ${timeout_s} 2)
+		timeout_s=2
+	fi
+	echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s] $@"
+
+	#echo_debug "make ack: [${resp_pipe}]"
+	#have_file "${resp_pipe}" && rm -f ${resp_pipe}
+	mkfifo ${resp_pipe}
+	have_file "${resp_pipe}" || echo_erro "mkfifo: ${resp_pipe} fail"
+
+	if have_admin && [[ "${USR_NAME}" != "root" ]];then
+		chmod 777 ${resp_pipe}
+	fi
+
+	local ack_fhno=0
+	exec {ack_fhno}<>${resp_pipe}
+
+	local try_old=0
+	while true
+	do
+		#process_run_timeout ${timeout_s} read FUNC_RET \< ${resp_pipe}\; echo "\"\${FUNC_RET}\"" \> ${resp_pipe}.result
+		read -t ${timeout_s} FUNC_RET < ${resp_pipe}
+		echo_debug "(${try_old})read [${FUNC_RET}] from ${resp_pipe}"
+
+		let try_old++
+		if [ -n "${FUNC_RET}" -o ${try_old} -eq ${try_cnt} ];then
+			break
+		fi
+	done
+	eval "exec ${ack_fhno}>&-"
+
+	if [ ${try_old} -eq ${try_cnt} ];then
+		echo_debug "wait [${resp_pipe}] failed"
+		return 1
+	fi
+
+	return 0
+}
+
+function send_and_wait
+{
     local send_body="$1"
     local send_pipe="$2"
     local timeout_s="${3:-2}"
-	local -g FUNC_RET
+	local -g RESP_VAL
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe"
+		echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe\n\$3: timeout_s(default: 2s)"
         return 1
     fi
-
-    local try_cnt=6
-    if [[ $(string_start "${timeout_s}" 1) == '+' ]]; then
-        timeout_s=$(string_trim "${timeout_s}" "+" 1)
-        try_cnt=$(math_round ${timeout_s} 2)
-        timeout_s=2
-    fi
-    echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s] $@"
 
     # the first pid is shell where ppid run
     local self_pid=$$
@@ -332,49 +377,16 @@ function wait_value
         ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
     done
 
-    #echo_debug "make ack: [${ack_pipe}]"
-    #have_file "${ack_pipe}" && rm -f ${ack_pipe}
-    mkfifo ${ack_pipe}
-    have_file "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+	echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
+	echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
 
-    if have_admin && [[ "${USR_NAME}" != "root" ]];then
-        chmod 777 ${ack_pipe}
-    fi
-
-    local ack_fhno=0
-    exec {ack_fhno}<>${ack_pipe}
-
-    local try_old=0
-    while true
-    do
-        if [ ${try_old} -eq 0 ];then
-            echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
-            echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
-        fi
-
-        #process_run_timeout ${timeout_s} read FUNC_RET \< ${ack_pipe}\; echo "\"\${FUNC_RET}\"" \> ${ack_pipe}.result
-        read -t ${timeout_s} FUNC_RET < ${ack_pipe}
-		echo_debug "(${try_old})read [${FUNC_RET}] from ${ack_pipe}"
-
-        let try_old++
-        if [ -n "${FUNC_RET}" -o ${try_old} -eq ${try_cnt} ];then
-            break
-        fi
-
-		if ! have_file "${send_pipe}.run";then
-			echo_erro "pipe [${send_pipe}] dead"
-			break
-		fi
-    done
-    eval "exec ${ack_fhno}>&-"
-
-    if [ ${try_old} -eq ${try_cnt} ];then
-        echo_debug "write [${send_pipe}] failed"
-    fi
+	wait_value "${ack_pipe}" "${timeout_s}"
+	if [ $? -eq 0 ];then
+		RESP_VAL="${FUNC_RET}"
+	fi
 
     #echo_debug "remove: [${ack_pipe}]"
     rm -f ${ack_pipe}
-    rm -f ${ack_pipe}.result
     return 0
 }
 

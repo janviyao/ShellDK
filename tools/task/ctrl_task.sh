@@ -33,9 +33,9 @@ function ctrl_create_thread
     fi
     
     echo_file "${LOG_DEBUG}" "create thread: ${_cmdstr}"
-    wait_value "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${CTRL_PIPE}"
+    send_and_wait "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${CTRL_PIPE}"
 
-    echo "${FUNC_RET}"
+    echo "${RESP_VAL}"
     return 0
 }
 
@@ -81,7 +81,7 @@ function ctrl_task_ctrl_sync
         return 1
     fi
 
-    wait_value "${ctrl_body}" "${one_pipe}"
+    send_and_wait "${ctrl_body}" "${one_pipe}"
     return 0
 }
 
