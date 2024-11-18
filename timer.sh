@@ -2,7 +2,7 @@
 export MY_NAME="$1"
 export MY_HOME="/home/$1"
 export LOCAL_IP="127.0.0.1"
-export BTASK_LIST="master,mdat"
+export BTASK_LIST="master"
 export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
 
 function git_modify_list
