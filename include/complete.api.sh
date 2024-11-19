@@ -72,7 +72,13 @@ function _mydocker_completion()
 
 	# define custom completions here
 	if [[ $cword -eq 2 ]]; then
-		COMPREPLY=($(compgen -W "$(docker ps | grep -v 'NAMES' | awk '{ print $NF }')" -- "$cur"))
+		if [[ ${prev} == ?(*/)enter ]] || [[ ${prev} == ?(*/)stop ]] || [[ ${prev} == ?(*/)copy_to ]] || [[ ${prev} == ?(*/)copy_from ]]; then
+			COMPREPLY=($(compgen -W "$(docker ps | grep -v 'NAMES' | awk '{ print $NF }')" -- "$cur"))
+		elif [[ ${prev} == ?(*/)start ]]; then
+			COMPREPLY=($(compgen -W "$(docker ps -a | grep -v 'NAMES' | grep -E "Exited" | awk '{ print $NF }')" -- "$cur"))
+		else
+			COMPREPLY=($(compgen -W "$(docker ps -a | grep -v 'NAMES' | awk '{ print $NF }')" -- "$cur"))
+		fi
 		return 0
 	fi
 
