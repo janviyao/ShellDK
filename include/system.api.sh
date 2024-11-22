@@ -427,20 +427,17 @@ function sudo_it
             sudo -A bash -c "${cmd}"
             return $?
         else
-            echo_file "${LOG_WARN}" "file { ${GBL_USER_DIR}/.askpass.sh } not executed"
-            if ! account_check "${MY_NAME}" false;then
-                echo_file "${LOG_ERRO}" "Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
-                sudo bash -c "${cmd}"
-                return $?
-            fi
+			echo_file "${LOG_WARN}" "file { ${GBL_USER_DIR}/.askpass.sh } not executed"
+			if account_check "${MY_NAME}" false;then
+				if [ -n "${USR_PASSWORD}" ]; then
+					sudo -S bash -c "${cmd}" <<< "${USR_PASSWORD}"
+					return $?
+				fi
+			fi
 
-            if [ -n "${USR_PASSWORD}" ]; then
-                echo "${USR_PASSWORD}" | sudo -u 'root' -S bash -c "${cmd}"
-                return $?
-            else
-                sudo bash -c "${cmd}"
-                return $?
-            fi
+			echo_file "${LOG_ERRO}" "Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
+			sudo -n bash -c "${cmd}"
+			return $?
         fi
     fi
 
