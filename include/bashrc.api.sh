@@ -47,8 +47,8 @@ alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 alias myps='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; ps_grep'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
-alias psgrep='function psgrep { while [ $# -gt 0 ]; do sudo pgrep -fa $1 | grep -v pgrep; shift; done }; psgrep'
-alias mykill='function mykill { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo kill -9 $1; else sudo pkill -e -x -9 $1; fi; shift; done }; mykill'
+alias psgrep='function psgrep { while [ $# -gt 0 ]; do sudo_it pgrep -fa $1 | grep -v pgrep; shift; done }; psgrep'
+alias mykill='function mykill { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it kill -9 $1; else sudo_it pkill -e -x -9 $1; fi; shift; done }; mykill'
 
 alias gbranch='git branch'
 alias gstatus='git status'
