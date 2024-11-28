@@ -66,10 +66,14 @@ fi
 echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
 echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
-if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ]; then
+if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
     if have_file "${GBL_USER_DIR}/.${MY_NAME}";then
         account_check "${MY_NAME}" false
     fi
+
+	if [ -z "${USR_NAME}" ];then
+		USR_NAME="${MY_NAME}"
+	fi
 fi
 
 echo "${ROOT_PID}" > ${BASH_MASTER}

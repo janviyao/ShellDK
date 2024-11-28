@@ -335,11 +335,9 @@ function account_check
     local input_val=""
 
     if have_admin; then
-        export USR_NAME=${usr_name}
-        if [ -n "${USR_PASSWORD}" ]; then
-            [[ "${bash_options}" =~ x ]] && set -x
-            return 0
-        fi
+		export USR_NAME=${usr_name}
+		[[ "${bash_options}" =~ x ]] && set -x
+		return 0
     fi
 
     if have_sudoed; then
@@ -419,7 +417,7 @@ function sudo_it
         return $?
     else
         if have_sudoed;then
-			sudo bash -c "${cmd}"
+			sudo -n bash -c "${cmd}"
             return $?
         fi
 
