@@ -480,7 +480,7 @@ function install_from_make
         fi
     else
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make configure")"
-        make configure &>> build.log
+        USER=${MY_NAME} make configure &>> build.log
         if [ $? -eq 0 ]; then
             echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
             ./configure ${conf_para} &>> build.log
@@ -509,7 +509,7 @@ function install_from_make
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make -j 32")"
     local cflags_bk="${CFLAGS}"
     export CFLAGS="-fcommon"
-    make -j 32 &>> build.log
+    USER=${MY_NAME} make -j 32 &>> build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${makedir} failed, check: $(real_path build.log)"
         cd ${currdir}
@@ -518,7 +518,7 @@ function install_from_make
     export CFLAGS="${cflags_bk}"
 
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make install")"
-    sudo_it "make install &>> build.log"
+    sudo_it "USER=${MY_NAME} make install &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${makedir} failed, check: $(real_path build.log)"
         cd ${currdir}
