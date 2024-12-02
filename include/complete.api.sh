@@ -22,6 +22,16 @@ function _mygit_completion()
 } &&
 complete -F _mygit_completion mygit
 
+function _mygit_pull_completion()
+{
+	local cur prev words cword
+
+	_init_completion || return
+
+	COMPREPLY=($(compgen -W "$(git branch --no-color | awk '{ print $NF }')" -- "$cur"))
+} &&
+complete -F _mygit_pull_completion gpull
+
 function _mygit_checkout_completion()
 {
 	local cur prev words cword

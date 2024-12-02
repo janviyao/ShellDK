@@ -425,17 +425,19 @@ function func_pull
 		cur_branch=$(string_replace "${cur_branch}" "${GBL_SPACE}" " ")
 	fi
 
-	if [ -z "${cur_branch}" ];then
-		cur_branch=$(git symbolic-ref --short -q HEAD)
-	fi
-
-	if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
-		process_run git pull origin ${cur_branch}
-		if [ $? -eq 0 ];then
-			func_submodule_update
+	if [ -n "${cur_branch}" ];then
+		if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
+			process_run git pull origin ${cur_branch}
+		else
+			echo "There is no tracking information for the current branch."
+			return 0
 		fi
 	else
-		echo "There is no tracking information for the current branch."
+		process_run git pull
+	fi
+
+	if [ $? -eq 0 ];then
+		func_submodule_update
 	fi
 
     return 0
