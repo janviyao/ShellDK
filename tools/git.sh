@@ -433,7 +433,13 @@ function func_pull
 			return 0
 		fi
 	else
-		process_run git pull
+		cur_branch=$(git symbolic-ref --short -q HEAD)
+		if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
+			process_run git pull
+		else
+			echo "There is no tracking information for the current branch."
+			return 0
+		fi
 	fi
 
 	if [ $? -eq 0 ];then
