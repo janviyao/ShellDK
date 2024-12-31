@@ -147,6 +147,12 @@ function match_regex
 
     [ -z "${regstr}" ] && return 1 
 
+	if [[ ! "${regstr}" =~ '\/' ]];then
+		if [[ "${regstr}" =~ '/' ]];then
+			regstr="${regstr//\//\\/}"
+		fi
+	fi
+
 	if perl -ne "print if /${regstr}/ or die '\n'" <<< "${string}" &> /dev/null;then
         return 0
     else
@@ -387,6 +393,12 @@ function string_regex
 	local result="${string}"
     [ -z "${regstr}" ] && { print_lossless "${result}"; return 1; } 
 	
+	if [[ ! "${regstr}" =~ '\/' ]];then
+		if [[ "${regstr}" =~ '/' ]];then
+			regstr="${regstr//\//\\/}"
+		fi
+	fi
+
     #result=$(grep -P "${regstr}" -o <<< "${string}")
 	result=$(perl -ne "print \$1 if /(${regstr})/ or die" <<< "${string}" 2> /dev/null)
     if [ $? -eq 0 ];then
