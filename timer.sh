@@ -109,4 +109,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 	fi
 
     echo_debug "timer: finish"
+else
+    pid_list=($(pgrep -x timer.sh))
+    sudo -n kill -9 ${pid_list[*]} &> /dev/null
 fi
