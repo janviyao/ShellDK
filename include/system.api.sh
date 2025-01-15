@@ -417,7 +417,11 @@ function sudo_it
         return $?
     else
         if have_sudoed;then
-			sudo -n bash -c "${cmd}"
+			if [ $$ -eq $ROOT_PID ];then
+				sudo bash -c "${cmd}"
+			else
+				sudo -n bash -c "${cmd}"
+			fi
             return $?
         fi
 
@@ -434,7 +438,11 @@ function sudo_it
 			fi
 
 			echo_file "${LOG_ERRO}" "Username{ ${MY_NAME} } Password{ ${USR_PASSWORD} } check failed"
-			sudo -n bash -c "${cmd}"
+			if [ $$ -eq $ROOT_PID ];then
+				sudo bash -c "${cmd}"
+			else
+				sudo -n bash -c "${cmd}"
+			fi
 			return $?
         fi
     fi
