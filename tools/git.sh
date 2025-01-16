@@ -541,18 +541,29 @@ function func_checkout
 	fi
 	
 	if [ -n "${msg}" ];then
+		if match_regex "${msg}" "[0-9a-fA-F]{7,40}";then
+			msg=$(string_sub "${msg}" 0 7)
+		fi
+
 		local change_files=($(get_change_list))
 		if [ ${#change_files[*]} -gt 0 ];then
 			process_run git stash push -u
 		fi
 
-		if git branch -a | grep -F "${msg}" &> /dev/null;then
+		local branch_list=($(git branch -a | awk '{ if ($1 ~ /(remotes\/)?origin\//) { sub("^(remotes/)?origin/", "", $1); print $1 } else { print $1 } }'  |  grep -E "^\s*${msg}" | sort | uniq))
+		if [ ${#branch_list[*]} -eq 1 ];then
+			msg=${branch_list[0]}
 			process_run git checkout "${msg}"
 		else
-			if git cat-file -e "${msg}" &> /dev/null;then
-				process_run git checkout "${msg}" -b "${msg}"
+			if [ ${#branch_list[*]} -eq 0 ];then
+				if git cat-file -e "${msg}" &> /dev/null;then
+					process_run git checkout "${msg}" -b "${msg}"
+				else
+					process_run git checkout -b "${msg}"
+				fi
 			else
-				process_run git checkout -b "${msg}"
+				echo_erro "failed: ${msg} match too many branchs: ${branch_list[*]}"
+				return 0
 			fi
 		fi
 		
@@ -561,31 +572,33 @@ function func_checkout
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
-		local short_name=$(awk -F'/' '{ print $NF }' <<< "${cur_branch}")
+		if [ -n "${cur_branch}" ];then
+			local short_name=$(awk -F'/' '{ print $NF }' <<< "${cur_branch}")
 
-		local -a omit_list
-		local stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
-		while [ ${#stash_indexs[*]} -gt 0 ]
-		do
-			local index=$(string_split ${stash_indexs[0]} ',' 1)
-			local commit=$(string_split ${stash_indexs[0]} ',' 2)
-			if array_have omit_list "${commit}";then
-				unset stash_indexs[0]
-				continue
-			fi
+			local -a omit_list
+			local stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
+			while [ ${#stash_indexs[*]} -gt 0 ]
+			do
+				local index=$(string_split ${stash_indexs[0]} ',' 1)
+				local commit=$(string_split ${stash_indexs[0]} ',' 2)
+				if array_have omit_list "${commit}";then
+					unset stash_indexs[0]
+					continue
+				fi
 
-			if ! math_is_int "${index}";then
-				echo_erro "invalid index: ${index}"
-				break
-			fi
+				if ! math_is_int "${index}";then
+					echo_erro "invalid index: ${index}"
+					break
+				fi
 
-			process_run git stash pop ${index}
-			if [ $? -ne 0 ];then
-				echo_erro "failed: git stash pop ${index}"
-				array_add omit_list ${commit}
-			fi
-			stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
-		done
+				process_run git stash pop ${index}
+				if [ $? -ne 0 ];then
+					echo_erro "failed: git stash pop ${index}"
+					array_add omit_list ${commit}
+				fi
+				stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
+			done
+		fi
 	else
 		return 1
 	fi
