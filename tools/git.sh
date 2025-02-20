@@ -541,7 +541,7 @@ function func_checkout
 	fi
 	
 	if [ -n "${msg}" ];then
-		if match_regex "${msg}" "[0-9a-fA-F]{7,40}";then
+		if match_regex "${msg}" "^[0-9a-fA-F]{7,40}$";then
 			msg=$(string_sub "${msg}" 0 7)
 		fi
 

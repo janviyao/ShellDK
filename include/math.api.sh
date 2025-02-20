@@ -85,6 +85,11 @@ function math_expr_val
 	local scale=${2:-4}
 	local ibase=${3:-10}
 	
+    if [[ $# -lt 1 ]];then
+		echo_erro "\nUsage: [$@]\n\$1: expression\n\$2: scale(default: 4)\n\$3: base(default: 10)"
+        return 1
+    fi
+
 	if [ ${ibase} -eq 16 ];then
 		expre=${expre^^}
 	fi
