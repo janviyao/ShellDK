@@ -1,7 +1,9 @@
 # astyle config
 #--style=ansi 
 --style=linux
---indent=spaces=4 
--p -U -S 
---suffix=none 
+#--style=allman
+--indent=spaces=4
+--pad-oper
+--add-brackets
 --convert-tabs
+--suffix=none

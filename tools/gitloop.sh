@@ -15,9 +15,10 @@ tmp_file=$(file_temp)
 
 function _loop_callback1
 {
-	local cb_args="$1"
-	local retcode="$2"
-	local outfile="$3"
+	local retcode="$1"
+	local outfile="$2"
+	shift 2
+	local cb_args="$@"
 
 	echo_debug "$@"
 	echo "${retcode}" > ${cb_args}

@@ -741,7 +741,7 @@ function efind
     local xdir="$1"
     local regstr="$2"
     
-    echo_file "${LOG_DEBUG}" "[efind] $@"
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string\n\$3~\$n: other options to find"
         return 1
@@ -752,8 +752,9 @@ function efind
         return 1
     fi
 	
-	if [[ "${regstr:0:1}" == "^" ]];then
-		regstr="${regstr#^}"
+	local posix_reg=$(regex_perl2extended "${regstr}")
+	if [[ "${posix_reg:0:1}" == "^" ]];then
+		posix_reg="${posix_reg#^}"
 	fi
 
     shift 2
@@ -762,9 +763,9 @@ function efind
     local xret
     local -a ret_arr
 
-    ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${regstr}" 2\> /dev/null))
+    ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${posix_reg}" 2\> /dev/null))
     if [ $? -ne 0 ];then
-        ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${regstr}"))
+        ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${posix_reg}"))
     fi
 
     for xret in ${ret_arr[*]}    

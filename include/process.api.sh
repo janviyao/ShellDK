@@ -80,7 +80,7 @@ function process_run_callback
     fi
 
     local outfile=$(file_temp)
-	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} '${cb_args}' \"\${erro}\" '${outfile}'" &> /dev/null &
+	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}" &> /dev/null &
     local bgpid=$!
     echo "${bgpid}"
     echo_file "${LOG_DEBUG}" "pid[${bgpid}] { ${cb_func} '${cb_args}' '${cmd_str}' '${outfile}' }"

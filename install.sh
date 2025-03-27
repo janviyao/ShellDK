@@ -400,10 +400,6 @@ function inst_spec
 function inst_vim
 {
     if install_check "vim" "vim-.*\.tar\.gz" true;then
-        cd ${MY_VIM_DIR}/deps
-        #git clone https://github.com/vim/vim.git vim
-        local make_dir=$(mytar vim-*.tar.gz)
-
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
         local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
         conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
@@ -435,7 +431,7 @@ function inst_vim
             install_from_spec "ncurses-devel"
         fi
 
-        install_from_make "${make_dir}" "${conf_paras}"
+        install_from_tar "${MY_VIM_DIR}/deps/vim-*.tar.gz" "true" "${conf_paras}"
         if [ $? -ne 0 ];then
             return 1
         fi
@@ -443,7 +439,11 @@ function inst_vim
         sudo_it rm -f /usr/local/bin/vim
         have_file "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
-        sudo_it rm -fr ${make_dir}
+
+		local vim_dir=$(efind ${MY_VIM_DIR}/deps "vim-\d+\.\d+\.\d+")
+		if [ -n "${vim_dir}" ];then
+			rm -fr ${vim_dir}
+		fi
     fi
 
     local linkf=".vimrc"

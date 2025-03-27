@@ -245,6 +245,7 @@ function install_from_net
 {
     local xname="$1"
 
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify package name"
         return 1
@@ -311,6 +312,7 @@ function install_from_rpm
     local isreg="${2:-false}"
     local force="${3:-false}"
 
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify rpm-name or regex-string\n\$2: whether regex(default: false)\n\$3: whether force(default: false)"
         return 1
@@ -424,6 +426,7 @@ function install_from_make
     local makedir="$1"
     local conf_para="${2:-"--prefix=/usr"}"
 
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify compile directory\n\$2: specify configure args"
         return 1
@@ -535,6 +538,7 @@ function install_from_tar
     local isreg="${2:-false}"
     local conf_para="$3"
 
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify tar name or regex-name\n\$2: whether regex(default: false)\n\$3: specify make configure args"
         return 1
@@ -546,7 +550,9 @@ function install_from_tar
         if ! have_file "${fpath}";then
             fpath="."
         fi
-        local_tars=($(efind ${fpath} "${xfile}"))
+
+        local fname=$(path2fname ${xfile})
+        local_tars=($(efind ${fpath} "${fname}"))
     fi
 
 	if [ ${#local_tars[*]} -gt 1 ];then
@@ -591,6 +597,7 @@ function install_from_spec
     local xspec="$1"
     local force="${2:-false}"
 
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify spec-key\n\$2: whether force(default: false)"
         return 1
@@ -656,6 +663,7 @@ function install_rpms
     local xfile="$1"
     local force="${2:-false}"
 
+    echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: specify rpm-file or all-rpms-directory\n\$2: whether force"
         return 1

@@ -335,9 +335,10 @@ function _bash_xfer_exit
 
 function _rsync_callback1
 {
-	local arg_str="$1"
-	local retcode="$2"
-	local outfile="$3"
+	local retcode="$1"
+	local outfile="$2"
+	shift 2
+	local arg_str="$@"
 
 	echo_debug "$@"
 	if [ ${retcode} -ne 0 ];then

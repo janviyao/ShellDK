@@ -939,17 +939,17 @@ function file_temp
 
 function current_scriptdir
 {
-    local curfile="$0"
-
-    if [ -z "${curfile}" ];then
-        curfile="${BASH_SOURCE[0]}"
-    fi
-
-    if [ -f "${curfile}" ];then
-        echo $(fname2path "${curfile}")
-    else
-        echo $PWD
-    fi
+	local curfile="${BASH_SOURCE[0]}"
+	if [ -f "${curfile}" ];then
+		echo $(dirname "${curfile}")
+	else
+		curfile="$0"
+		if [ -f "${curfile}" ];then
+			echo $(dirname "${curfile}")
+		else
+			echo $PWD
+		fi
+	fi
 }
 
 function real_path
@@ -970,20 +970,23 @@ function real_path
         this_path=$(string_replace "${this_path}" "\-" "\-" true)
     fi
 
-    local old_path="${this_path}"
-    if test -r ${this_path};then
-        this_path=$(readlink -f ${this_path})
-    else
-        this_path=$(sudo_it readlink -f ${this_path})
-    fi
-
-    if [ -z "${this_path}" ];then
-        echo_file "${LOG_DEBUG}" "readlink { ${old_path} } return null"
-        this_path="${old_path}"
-    fi
+	local old_path="${this_path}"
+	if test -r ${this_path};then
+		if have_cmd "realpath";then
+			this_path=$(realpath ${this_path})
+		else
+			this_path=$(readlink -f ${this_path})
+		fi
+	else
+		if have_cmd "realpath";then
+			this_path=$(sudo_it realpath ${this_path})
+		else
+			this_path=$(sudo_it readlink -f ${this_path})
+		fi
+	fi
 
     if [ $? -ne 0 ];then
-        echo_file "${LOG_DEBUG}" "readlink fail: ${old_path}"
+        echo_file "${LOG_DEBUG}" "read_path fail: ${old_path}"
         if [[ "${last_char}" == '/' ]];then
             if [[ $(string_end "${old_path}" 1) == '/' ]]; then
                 echo "${old_path}"
@@ -994,6 +997,11 @@ function real_path
             echo "${old_path}"
         fi
         return 1
+    fi
+
+    if [ -z "${this_path}" ];then
+        echo_file "${LOG_DEBUG}" "read_path { ${old_path} } return null"
+        this_path="${old_path}"
     fi
 
     if ! have_file "${this_path}";then
