@@ -66,14 +66,16 @@ function tcpdump_expr
 
 function cpu_statistics
 {
-    local item1="sar -u 1 5                   : CPU all utilization statistics"
-    local item2="sar -P ALL 1 5               : CPU all and single utilization statistics"
-    local item3="pidstat -t -p <PID> 1 5      : Special threads cpu utilization statistics and cpu id"
-    local item4="top -b -H -p <PID> -d 1 -n 5 : Special threads cpu utilization statistics"
-    local item5="mpstat -P ALL 1 1            : List all cpus utilization statistics"
-    local item6="mpstat -P <CPU> 1 1          : Special cpu utilization statistics"
-    local item7="dstat -c -C <CPU> 1 5        : Special cpu utilization statistics"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}")
+    local item1="sar -u 1 5                   : CPU all utilization"
+    local item2="sar -P ALL 1 5               : CPU all and single utilization"
+    local item3="pidstat -t -p <PID> 1 5      : Special threads cpu utilization and cpu id"
+    local item4="pidstat -w 1 5               : Report cpu context switches"
+    local item5="vmstat 1 5                   : Report cpu context switches and hardware interrupts"
+    local item6="top -b -H -p <PID> -d 1 -n 5 : Special threads cpu utilization"
+    local item7="mpstat -P ALL 1 1            : List all cpus utilization and software interrupts"
+    local item8="mpstat -P <CPU> 1 1          : Special cpu utilization and software interrupts"
+    local item9="dstat -c -C <CPU> 1 5        : Special cpu utilization"
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}" "${item8}" "${item9}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
 
@@ -96,12 +98,12 @@ function cpu_statistics
 
 function mem_statistics
 {
-    local item1="sar -r 1 5       : Memory utilization statistics"
-    local item2="sar -R 1 5       : Memory statistics"
-    local item3="sar -S 1 5       : Swap space utilization statistics"
-    local item4="sar -W 1 5       : Swapping statistics"
-    local item5="sar -B 1 5       : Paging statistics"
-    local item6="sar -H 1 5       : Hugepages utilization statistics"
+    local item1="sar -r 1 5       : Memory utilization"
+    local item2="sar -R 1 5       : Memory utilization"
+    local item3="sar -S 1 5       : Swap space utilization"
+    local item4="sar -W 1 5       : Swapping utilization"
+    local item5="sar -B 1 5       : Paging utilization"
+    local item6="sar -H 1 5       : Hugepages utilization"
     local item7="vmstat -m 1 1    : View slabinfo"
     local item8="numastat -m      : Show meminfo-like system-wide numa-memory usage"
     local item9="numastat -p <PID>: Show process numa-memory info"
@@ -175,11 +177,15 @@ function disk_statistics
 
 function interrupt_statistics
 {
-    local item1="sar -I <INTR> 1 5: Specific interrupt statistics"
-    local item2="sar -I SUM 1 2   : Interrupts sumary statistics"
-    local item3="sar -I ALL 1 2   : Interrupt 0-15(software triger) statistics"
-    local item4="sar -I XALL 1 2  : Interrupt all statistics"
-    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}")
+    local item1="sar -I <INTR> 1 5   : Report one specific interrupt"
+    local item2="sar -I SUM 1 2      : Show interrupts sumary"
+    local item3="sar -I ALL 1 2      : Report 0-15 interrupt(software triger)"
+    local item4="sar -I XALL 1 2     : Report all interrupts"
+    local item5="vmstat 1 5          : Report all cpus hardware interrupts"
+    local item7="mpstat -P ALL 1 1   : Report all cpus software interrupts"
+    local item8="mpstat -P <CPU> 1 1 : Special cpu software interrupts"
+
+    local select_x=$(select_one "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}" "${item8}")
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
     
