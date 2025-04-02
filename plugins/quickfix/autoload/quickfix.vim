@@ -1051,10 +1051,15 @@ function! quickfix#grep_find(csarg)
         call quickfix#ctrl_main("load")
         call quickfix#ctrl_main("clear")
     endif
+	
+	let pattern = input('Search for perl-regex pattern: ', expand('<cword>'))
+	if pattern == ''
+		return
+	endif
 
     silent! normal! g`X
     silent! delmarks X
-    execute "Rgrep"
+    execute "Rgrep ".pattern
 
     if empty(getqflist())
         return

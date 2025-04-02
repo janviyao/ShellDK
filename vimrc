@@ -1346,7 +1346,7 @@ let g:vbookmark_bookmarkSaveFile = GetVimDir(1, "bookmark")."/save.vbm"
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 关键字搜索 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Bundle "yegappan/grep"
+Bundle "janviyao/grep"
 
 let Grep_Default_Filelist = '*'                                           "查找文件类型
 let Grep_Skip_Dirs = 'RCS CVS SCCS .repo .git .svn build'                 "不匹配指定目录
