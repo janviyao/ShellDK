@@ -521,7 +521,7 @@ function install_from_make
     export CFLAGS="${cflags_bk}"
 
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make install")"
-    sudo_it "USER=${MY_NAME} make install &>> build.log"
+    sudo_it "USER=${MY_NAME} make install INSTALL='install -o ${MY_NAME} -g users' &>> build.log"
     if [ $? -ne 0 ]; then
         echo_erro " Install: ${makedir} failed, check: $(real_path build.log)"
         cd ${currdir}
