@@ -87,6 +87,9 @@ function have_file
     elif [ -s "${xfile}" ];then
         [[ "${bash_options}" =~ x ]] && set -x
         return 0
+    elif [ -p "${xfile}" ];then
+        [[ "${bash_options}" =~ x ]] && set -x
+        return 0
     fi
 
     if ls --color=never "${xfile}" &> /dev/null;then
@@ -935,6 +938,48 @@ function file_temp
     done
 
     echo "${fpath}"
+}
+
+function file_write
+{
+	if [ $# -le 1 ];then
+		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
+		return 1
+	fi
+
+	local xfile="$1"
+	shift 1
+	local value="$@"
+
+    if have_file "${xfile}";then 
+		echo "${value}" > ${xfile}
+	else
+		echo_erro "file { ${xfile} } lost"
+		return 1
+    fi
+
+    return 0
+}
+
+function file_append
+{
+	if [ $# -le 1 ];then
+		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
+		return 1
+	fi
+
+	local xfile="$1"
+	shift 1
+	local value="$@"
+
+    if have_file "${xfile}";then 
+		echo "${value}" >> ${xfile}
+	else
+		echo_erro "file { ${xfile} } lost"
+		return 1
+    fi
+
+    return 0
 }
 
 function current_scriptdir

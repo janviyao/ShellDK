@@ -51,6 +51,9 @@ function process_wait
 function process_run
 {
 	local cmd_str=$(para_pack "$@")
+	if [ -z "${cmd_str}" ];then
+		return 0
+	fi
 
 	echo_file "${LOG_DEBUG}" "${cmd_str}"
 	eval "${cmd_str}" 
@@ -67,6 +70,27 @@ function process_run
     return ${retcode}
 }
 
+function process_run_with_condition
+{
+    if [ $# -le 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: condition\n\$2~N: command sequence"
+        return 1
+    fi
+
+	local condition="$1"
+	shift 1
+
+	echo_file "${LOG_DEBUG}" "condition { ${condition} } command { $@ }"
+	while ! eval "${condition}"
+	do
+		echo_file "${LOG_DEBUG}" "condition { ${condition} } sleep 0.1"
+		sleep 0.1
+	done
+
+	process_run "$@"
+	return $?
+}
+
 function process_run_callback
 {
     local cb_func="$1"
@@ -80,10 +104,10 @@ function process_run_callback
     fi
 
     local outfile=$(file_temp)
-	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}" &> /dev/null &
+	nohup bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; if [ -n '${cb_func}' ];then ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}; fi" &> /dev/null &
     local bgpid=$!
     echo "${bgpid}"
-    echo_file "${LOG_DEBUG}" "pid[${bgpid}] { ${cb_func} '${cb_args}' '${cmd_str}' '${outfile}' }"
+    echo_file "${LOG_DEBUG}" "pid[${bgpid}] { '${cb_func}' '${cb_args}' '${cmd_str}' '${outfile}' }"
 	
     return 0 
 }

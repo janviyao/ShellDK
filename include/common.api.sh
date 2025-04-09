@@ -382,7 +382,7 @@ function send_and_wait
     done
 
 	echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
-	echo "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}" > ${send_pipe}
+	process_run_callback '' '' "process_run_with_condition 'test -p ${ack_pipe}' 'echo \"NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}\" > ${send_pipe}'" &>/dev/null
 
 	wait_value "${ack_pipe}" "${timeout_s}"
 	if [ $? -eq 0 ];then
