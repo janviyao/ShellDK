@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 if math_bool "${KERNEL_DEBUG_ON}";then
     echo_info "Save: kernel log"
@@ -10,8 +10,8 @@ if math_bool "${KERNEL_DEBUG_ON}";then
 fi
 
 if math_bool "${DUMP_SAVE_ON}";then 
-    coredump_dir=$(fname2path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
-    if ! have_file "${coredump_dir}";then
+    coredump_dir=$(file_get_path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
+    if ! file_exist "${coredump_dir}";then
         coredump_dir=""
     else
         if [[ ${coredump_dir} == "/" ]];then
@@ -20,30 +20,30 @@ if math_bool "${DUMP_SAVE_ON}";then
     fi
 
     have_coredump=false
-    if have_file "${coredump_dir}/core-*";then
+    if file_exist "${coredump_dir}/core-*";then
         echo_info "Save: ${coredump_dir}/core-*"
         ${SUDO} mv -f ${coredump_dir}/core-* ${ISCSI_LOG_DIR}
         have_coredump=true
     fi
     
     if math_bool "${have_coredump}";then
-        if have_file "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
+        if file_exist "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then 
             echo_info "Save: ${ISCSI_APP_NAME}"
             cp -f ${ISCSI_APP_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}
         fi
 
-        if have_file "/dev/shm/spdk_iscsi_conns.*";then
+        if file_exist "/dev/shm/spdk_iscsi_conns.*";then
             echo_info "Save: /dev/shm/spdk_iscsi_conns.1"
             ${SUDO} cp -f /dev/shm/spdk_iscsi_conns.* ${ISCSI_LOG_DIR}
         fi
 
-        if have_file "/dev/hugepages/";then
+        if file_exist "/dev/hugepages/";then
             echo_info "Save: /dev/hugepages/"
             ${SUDO} cp -fr /dev/hugepages ${ISCSI_LOG_DIR}/
         fi
 
         ${SUDO} chmod -R 777 ${ISCSI_LOG_DIR}
-        if have_file "${ISCSI_LOG_DIR}/core-*";then
+        if file_exist "${ISCSI_LOG_DIR}/core-*";then
             if have_cmd "gdb";then
                 gdb -batch -ex "bt" ${ISCSI_LOG_DIR}/${ISCSI_APP_NAME} ${ISCSI_LOG_DIR}/core-* > ${ISCSI_LOG_DIR}/backtrace.txt
                 cat ${ISCSI_LOG_DIR}/backtrace.txt
@@ -52,12 +52,12 @@ if math_bool "${DUMP_SAVE_ON}";then
     fi
 fi
 
-if have_file "${BASH_LOG}";then
+if file_exist "${BASH_LOG}";then
     echo_info "Save: ${BASH_LOG}"
     ${SUDO} cp -f ${BASH_LOG} ${ISCSI_LOG_DIR}
 fi
 
-if have_file "${TEST_SUIT_ENV}";then
+if file_exist "${TEST_SUIT_ENV}";then
     echo_info "Save: ${TEST_SUIT_ENV}"
     ${SUDO} cp -f ${TEST_SUIT_ENV} ${ISCSI_LOG_DIR}
 fi

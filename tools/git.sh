@@ -357,15 +357,15 @@ function func_apply
 
 		local add_files=($(file_list "${msg}"))
 		if [ ${#add_files[*]} -gt 0 ];then
-			local cur_dir=$(real_path ${msg})
+			local cur_dir=$(file_realpath ${msg})
 			for msg in ${add_files[*]}
 			do
 				if [[ "${msg}" =~ "/M.patch" ]];then
 					continue
 				fi
 
-				local real_path=$(real_path ${msg})
-				local upper_path=$(string_trim "${real_path}" "${cur_dir}/" 1)	
+				local file_realpath=$(file_realpath ${msg})
+				local upper_path=$(string_trim "${file_realpath}" "${cur_dir}/" 1)	
 				local dir_path=$(dirname ${upper_path})
 				mkdir -p ${dir_path}
 
@@ -861,7 +861,7 @@ function func_submodule_add
         return 1
     fi
 
-    if have_file "${subdir}";then
+    if file_exist "${subdir}";then
         echo_erro "sub-directory { ${subdir} } already exists!"
         return 1
     fi
@@ -991,7 +991,7 @@ function func_submodule_del
 		return 1
 	fi
 
-	if have_file ".git/modules/${repo}";then
+	if file_exist ".git/modules/${repo}";then
 		rm -rf .git/modules/${repo}
 	fi
 
@@ -1074,7 +1074,7 @@ function how_use_func
 
 function how_use_tool
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
 
     cat <<-END >&2
     ============================== Usage ==============================

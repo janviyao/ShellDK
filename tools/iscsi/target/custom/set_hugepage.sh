@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 if [ $? -ne 0 ];then
@@ -34,11 +34,11 @@ fi
 HP_FILE_PREFIX=$(string_trim "${HP_MAP_FILE}" "*" 2)
 echo_info "HugePage file-prefix: ${HP_FILE_PREFIX}"
 
-have_file "${HP_MAP_FILE}" && exit 0
+file_exist "${HP_MAP_FILE}" && exit 0
 
 HP_FILE_SIZE=0
 CAN_FREE_SIZE=0
-if have_file "/dev/hugepages/fusion_target_iscsi*";then
+if file_exist "/dev/hugepages/fusion_target_iscsi*";then
     ${SUDO} chmod -R 777 /dev/hugepages
     for hugefile in /dev/hugepages/fusion_target_iscsi*
     do
@@ -95,7 +95,7 @@ do
     if [ ${loop_count} -ge 3 ];then
         if (( HP_FREE < HP_NEED_MB ));then
             LEFT_NR=$((HP_NEED_MB - HP_FREE))
-            if have_file "/dev/hugepages/fusion_target_iscsi*";then
+            if file_exist "/dev/hugepages/fusion_target_iscsi*";then
                 for hugefile in /dev/hugepages/fusion_target_iscsi*
                 do
                     if ! string_match "${hugefile}" "${HP_FILE_PREFIX}" 1;then

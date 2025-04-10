@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 # configure core-dump path
 ${SUDO} ulimit -c unlimited
@@ -10,7 +10,7 @@ ${SUDO} "cat /dev/null > /var/log/messages; rm -f /var/log/messages-*"
 ${SUDO} "cat /dev/null > /var/log/kern; rm -f /var/log/kern-*"
 
 if math_bool "${APPLY_SYSCTRL}";then
-    have_file "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
+    file_exist "${TEST_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${TEST_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} process_run sysctl -p
 fi
 

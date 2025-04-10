@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 if [ $? -ne 0 ];then
@@ -11,8 +11,8 @@ fi
 ${SUDO} "mkdir -p ${ISCSI_LOG_DIR}; chmod -R 777 ${ISCSI_LOG_DIR}" 
 
 LOCAL_CONF="${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/conf/istgt.conf"
-have_file "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
-have_file "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
+file_exist "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
+file_exist "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
 ${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
 
 for map_key in ${!ISCSI_INFO_MAP[*]}
@@ -79,7 +79,7 @@ do
         file_name=$(echo "${file_lun_map}" | awk -F: '{ print $1 }')
         lun_id=$(echo "${file_lun_map}" | awk -F: '{ print $2 }')
 
-        file_path=$(fname2path "${file_name}")
+        file_path=$(file_get_path "${file_name}")
         ${SUDO} "mkdir -p ${file_path}; chmod -R 777 ${file_path}" 
         ${SUDO} fallocate -l ${DEVICE_SIZE} ${file_name}
 

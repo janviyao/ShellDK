@@ -290,7 +290,7 @@ function import_all
     fi
 
     local import_file="/tmp/export.${parent_pid}"
-    if have_file "${import_file}";then 
+    if file_exist "${import_file}";then 
         local import_config=$(< "${import_file}")
         source<(echo "${import_config//\?=/=}")
     fi
@@ -316,9 +316,9 @@ function wait_value
 	echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s] $@"
 
 	#echo_debug "make ack: [${resp_pipe}]"
-	#have_file "${resp_pipe}" && rm -f ${resp_pipe}
+	#file_exist "${resp_pipe}" && rm -f ${resp_pipe}
 	mkfifo ${resp_pipe}
-	have_file "${resp_pipe}" || echo_erro "mkfifo: ${resp_pipe} fail"
+	file_exist "${resp_pipe}" || echo_erro "mkfifo: ${resp_pipe} fail"
 
 	if have_admin && [[ "${USR_NAME}" != "root" ]];then
 		chmod 777 ${resp_pipe}
@@ -376,7 +376,7 @@ function send_and_wait
     fi
 
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
-    while have_file "${ack_pipe}"
+    while file_exist "${ack_pipe}"
     do
         ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
     done

@@ -1,10 +1,10 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
     echo "=================== Usage ==================="
     printf -- "%-20s <source-dir> <destination-dir> [<exclude-regex> ...]\n" "${script_name}"
     printf -- "%-20s @ %s\n" "<source-dir>"      "where all will be copied from"
@@ -23,7 +23,7 @@ if [ ! -d ${SRC_DIR} ]; then
     echo_erro "first-para(SRC_DIR) must be directory: ${SRC_DIR}"
     exit 1
 fi
-SRC_DIR=$(real_path ${SRC_DIR})
+SRC_DIR=$(file_realpath ${SRC_DIR})
 
 regex_index=0
 DES_DIR="$(get_subcmd 1)"
@@ -40,7 +40,7 @@ else
 
 	regex_index=1
 fi
-DES_DIR=$(real_path ${DES_DIR})
+DES_DIR=$(file_realpath ${DES_DIR})
 
 BAK_CONF=$(pwd)/.bak.conf
 EXCLUDE_FILS=($(get_subcmd "${regex_index}-") "\w+\.d" "\w+\.o" "\w+\.gcno")
@@ -54,15 +54,15 @@ function common_backup
         return 1
     fi
 
-    local real_item=$(real_path ${bak_obj})
-    if ! have_file "${real_item}"; then
+    local real_item=$(file_realpath ${bak_obj})
+    if ! file_exist "${real_item}"; then
         return 1
     fi
 
-    local real_path=$(fname2path ${real_item})
+    local file_realpath=$(file_get_path ${real_item})
     local same_path=$(string_same "${real_item}" "${SRC_DIR}" 1)
     if [ -n "${same_path}" ];then
-        real_path=$(string_trim "${real_path}" "${same_path}" 1)
+        file_realpath=$(string_trim "${file_realpath}" "${same_path}" 1)
     fi
 
     local is_exclude=1
@@ -78,7 +78,7 @@ function common_backup
         done
 
         if [ ${is_exclude} -ne 0 ];then 
-            local desdir=${DES_DIR}${real_path}
+            local desdir=${DES_DIR}${file_realpath}
             mkdir -p ${desdir} 
 
             cp -f ${real_item} ${desdir}
@@ -96,7 +96,7 @@ function common_backup
         done
 
         if [ ${is_exclude} -ne 0 ];then 
-            local desdir=${DES_DIR}${real_path}
+            local desdir=${DES_DIR}${file_realpath}
             mkdir -p ${desdir} 
 
             cp -fr ${real_item} ${desdir}
@@ -126,7 +126,7 @@ function get_from_git
 }
 
 cd ${SRC_DIR}
-if have_file ".git"; then
+if file_exist ".git"; then
     ITEM_LIST=($(get_from_git))
     for item in ${ITEM_LIST[*]}
     do
@@ -137,7 +137,7 @@ if have_file ".git"; then
     done
 fi
 
-if have_file "${BAK_CONF}"; then
+if file_exist "${BAK_CONF}"; then
     ITEM_LIST=($(get_from_conf))
     for item in ${ITEM_LIST[*]}
     do
@@ -147,7 +147,7 @@ if have_file "${BAK_CONF}"; then
         fi
     done
 else
-    if ! have_file ".git"; then
+    if ! file_exist ".git"; then
 		echo_erro "file { ${BAK_CONF} } not accessed"
         exit 1
     fi

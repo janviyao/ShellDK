@@ -68,7 +68,7 @@ function check_passwd
                 return 1
             fi
         else
-			if have_file /etc/shadow;then
+			if file_exist /etc/shadow;then
 				echo_file "${LOG_WARN}" "file { /etc/shadow } not readable"
 				return 1
 			else
@@ -349,7 +349,7 @@ function account_check
     fi
 
     if [ -n "${usr_name}" -a -z "${USR_PASSWORD}" ]; then
-        if have_file "${GBL_USER_DIR}/.${usr_name}";then
+        if file_exist "${GBL_USER_DIR}/.${usr_name}";then
             export USR_NAME=${usr_name}
             export USR_PASSWORD=$(system_decrypt "$(cat ${GBL_USER_DIR}/.${usr_name})")
             if ! check_passwd "${USR_NAME}" "${USR_PASSWORD}";then
@@ -474,10 +474,10 @@ function dump_system
     local value=""
     local col_width1="15"
 
-    if have_file "/etc/centos-release";then
+    if file_exist "/etc/centos-release";then
         value=$(cat /etc/centos-release)
         printf -- "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
-    elif have_file "/etc/redhat-release";then
+    elif file_exist "/etc/redhat-release";then
         value=$(cat /etc/redhat-release)
         printf -- "[%${col_width1}s]: %s\n" "System Vendor" "${value}"
     else
@@ -531,8 +531,8 @@ function dump_network
             continue
         fi
 
-        local dev_dir=$(real_path /sys/class/net/${net_dev})
-        if have_file "${dev_dir}/mtu";then
+        local dev_dir=$(file_realpath /sys/class/net/${net_dev})
+        if file_exist "${dev_dir}/mtu";then
             local mtu_size=$(cat ${dev_dir}/mtu)
         else
             continue
@@ -541,17 +541,17 @@ function dump_network
         local tx_queue_size=$(ls -l ${dev_dir}/queues | grep tx | wc -l)
         local rx_queue_size=$(ls -l ${dev_dir}/queues | grep rx | wc -l)
 
-        dev_dir=$(fname2path ${dev_dir})
-        dev_dir=$(fname2path ${dev_dir})
-        local dirver=$(path2fname ${dev_dir}) 
+        dev_dir=$(file_get_path ${dev_dir})
+        dev_dir=$(file_get_path ${dev_dir})
+        local dirver=$(file_get_fname ${dev_dir}) 
 
-        if have_file "${dev_dir}/vendor";then
+        if file_exist "${dev_dir}/vendor";then
             local vendor_id=$(cat ${dev_dir}/vendor)
             local device_id=$(cat ${dev_dir}/device)
         fi
 
-        dev_dir=$(fname2path ${dev_dir})
-        local bsf=$(path2fname ${dev_dir})
+        dev_dir=$(file_get_path ${dev_dir})
+        local bsf=$(file_get_fname ${dev_dir})
         if ! match_regex "${bsf}" "[a-f0-9]+:[a-f0-9]+:[a-f0-9]+\.[a-f0-9]+";then
             bsf="virtual" 
         fi
@@ -626,7 +626,7 @@ function du_find
         return 1
     fi
 
-    if ! have_file "${dpath}";then
+    if ! file_exist "${dpath}";then
 		echo_erro "file { ${dpath} } not accessed"
         return 1
     fi
@@ -747,7 +747,7 @@ function efind
         return 1
     fi
 
-    if ! have_file "${xdir}";then
+    if ! file_exist "${xdir}";then
 		echo_erro "file { ${xdir} } not accessed"
         return 1
     fi
@@ -877,7 +877,7 @@ function get_iscsi_device
     local iscsi_sessions=$(sudo_it iscsiadm -m session -P 3 2>/dev/null)
 
     if [ -z "${iscsi_sessions}" ];then
-        if have_file "${return_file}";then
+        if file_exist "${return_file}";then
             echo "${iscsi_dev_array[*]}" > ${return_file}
         else
             echo "${iscsi_dev_array[*]}"
@@ -915,7 +915,7 @@ function get_iscsi_device
         fi
     fi
  
-    if have_file "${return_file}";then
+    if file_exist "${return_file}";then
         echo "${iscsi_dev_array[*]}" > ${return_file}
     else
         echo "${iscsi_dev_array[*]}"
@@ -1000,7 +1000,7 @@ function get_local_ip
         local local_iparray=($(ipconfig | grep -a -w "IPv4" | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     fi
 
-    if have_file "/etc/hosts";then
+    if file_exist "/etc/hosts";then
         for ipaddr in ${local_iparray[*]}
         do
             if cat /etc/hosts | grep -v -P "^#" | grep -w -F "${ipaddr}" &> /dev/null;then
@@ -1042,7 +1042,7 @@ function bin_info
 		fi
 	fi
 
-	if ! have_file "${xfile}";then
+	if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
         return 1
 	fi

@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 #${ISCSI_APP_UCTRL} bdev_set_options --disable-auto-examine
 #${ISCSI_APP_UCTRL} framework_start_init

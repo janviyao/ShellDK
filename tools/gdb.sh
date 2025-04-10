@@ -109,7 +109,7 @@ function func_script
 		xscript=$(string_replace "${xscript}" "${GBL_SPACE}" " ")
 	fi
 	
-    if ! have_file "${xscript}";then
+    if ! file_exist "${xscript}";then
 		echo_erro "file { ${xscript} } not accessed"
         return 0
     fi
@@ -142,7 +142,7 @@ function how_use_func
 
 function how_use_tool
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
 
     cat <<-END >&2
     ============================== Usage ==============================

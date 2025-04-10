@@ -9,8 +9,8 @@ NCAT_PROT_CURR="${NCAT_WORK_DIR}/port.$$"
 NCAT_PORT_USED="${GBL_USER_DIR}/port.used"
 
 NCAT_FD=${NCAT_FD:-9}
-have_file "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
-have_file "${NCAT_PIPE}" || echo_erro "mkfifo: ${NCAT_PIPE} fail"
+file_exist "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
+file_exist "${NCAT_PIPE}" || echo_erro "mkfifo: ${NCAT_PIPE} fail"
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 		return 1
@@ -52,16 +52,16 @@ function local_port_available
         return 1
     fi
 
-    if ! have_file "${BASH_WORK_DIR}";then
+    if ! file_exist "${BASH_WORK_DIR}";then
         return 1
     fi
 
-    if ! have_file "${NCAT_WORK_DIR}";then
+    if ! file_exist "${NCAT_WORK_DIR}";then
         echo_file "${LOG_ERRO}" "already deleted: ${NCAT_WORK_DIR}"
         return 1
     fi
 
-    if have_file "${NCAT_PORT_USED}";then
+    if file_exist "${NCAT_PORT_USED}";then
         if grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
             echo_file "${LOG_DEBUG}" "port[${port}] used"
             return 1
@@ -85,12 +85,12 @@ function local_port_available
 
 function ncat_port_get
 {
-	if ! have_file "${NCAT_PIPE}.run";then
+	if ! file_exist "${NCAT_PIPE}.run";then
 		echo_file "${LOG_ERRO}" "ncat task donot run: [${NCAT_PIPE}.run]"
 		return 1
 	fi
 
-	if ! have_file "${NCAT_PROT_CURR}";then
+	if ! file_exist "${NCAT_PROT_CURR}";then
 		echo_file "${LOG_ERRO}" "ncat [${NCAT_PROT_CURR}] donot generated"
 		return 1
 	fi
@@ -116,7 +116,7 @@ function ncat_generate_port
         return 0
     fi
 
-    if have_file "${NCAT_PROT_CURR}";then
+    if file_exist "${NCAT_PROT_CURR}";then
         local cur_port=$(cat ${NCAT_PROT_CURR})
         if math_is_int "${cur_port}";then
             if local_port_available "${cur_port}";then
@@ -141,7 +141,7 @@ function ncat_generate_port
         fi
     done
 
-    if have_file "${NCAT_WORK_DIR}";then
+    if file_exist "${NCAT_WORK_DIR}";then
         echo "${port_val}" > ${NCAT_PROT_CURR}
     fi
     echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] generated"
@@ -197,7 +197,7 @@ function ncat_send_msg
 
     echo_file "${LOG_DEBUG}" "ncat will send: [$@]" 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
-        if ! have_file "${NCAT_PIPE}.run";then
+        if ! file_exist "${NCAT_PIPE}.run";then
             echo_erro "ncat task donot run: [${NCAT_PIPE}.run]"
             return 1
         fi
@@ -224,7 +224,7 @@ function ncat_send_msg
     (echo "${ncat_body}" | nc -w 1 ${ncat_addr} ${ncat_port}) &> /dev/null
     while test $? -ne 0
     do
-        if ! have_file "${NCAT_PIPE}.run";then
+        if ! file_exist "${NCAT_PIPE}.run";then
             #echo_file "${LOG_ERRO}" "ncat task have exited: [${NCAT_PIPE}.run]"
             return 1
         fi
@@ -288,7 +288,7 @@ function ncat_send_file
     echo_debug "ncat send: [$@]"
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
         if local_port_available "${ncat_port}";then
-            if ! have_file "${NCAT_PIPE}.run";then
+            if ! file_exist "${NCAT_PIPE}.run";then
                 echo_erro "ncat task donot run"
                 return 1
             fi
@@ -326,9 +326,9 @@ function ncat_recv_file
         return 1
     fi
 
-    local f_path=$(fname2path "${file_name}")
-    if have_file "${f_path}";then
-        if have_file "${file_name}";then
+    local f_path=$(file_get_path "${file_name}")
+    if file_exist "${f_path}";then
+        if file_exist "${file_name}";then
             if test -r ${f_path} && test -w ${f_path} && test -x ${f_path};then
                 rm -f ${file_name}
             else
@@ -375,9 +375,9 @@ function ncat_wait_resp
     local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
  
     echo_debug "make ack: ${ack_pipe}"
-    #have_file "${ack_pipe}" && rm -f ${ack_pipe}
+    #file_exist "${ack_pipe}" && rm -f ${ack_pipe}
     mkfifo ${ack_pipe}
-    have_file "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
+    file_exist "${ack_pipe}" || echo_erro "mkfifo: ${ack_pipe} fail"
 
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
@@ -389,7 +389,7 @@ function ncat_wait_resp
         process_run_timeout ${timeout_s} read ack_value \< ${ack_pipe}\; echo "\"\${ack_value}\"" \> ${ack_pipe}.result
         local retcode=$?
 
-        if have_file "${ack_pipe}.result";then
+        if file_exist "${ack_pipe}.result";then
             export resp_ack=$(cat ${ack_pipe}.result)
         else
             export resp_ack=""
@@ -497,7 +497,7 @@ function remote_send_file
 function _bash_ncat_exit
 {
     echo_debug "ncat signal exit"
-    if ! have_file "${NCAT_PIPE}.run";then
+    if ! file_exist "${NCAT_PIPE}.run";then
         echo_debug "ncat task not started but signal EXIT"
         return 0
     fi
@@ -527,7 +527,7 @@ function _ncat_thread_main
 {
     local master_work=true
 
-    if ! have_file "${NCAT_WORK_DIR}";then
+    if ! file_exist "${NCAT_WORK_DIR}";then
         echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
         return
     fi
@@ -544,7 +544,7 @@ function _ncat_thread_main
         if [ -z "${ncat_body}" ];then
             mdat_get_var "master_work"
 
-            if ! have_file "${NCAT_WORK_DIR}";then
+            if ! file_exist "${NCAT_WORK_DIR}";then
                 echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
                 break
             fi
@@ -558,11 +558,11 @@ function _ncat_thread_main
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! have_file "${ack_pipe}";then
+            if ! file_exist "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
                 mdat_get_var "master_work"
 
-                if ! have_file "${NCAT_WORK_DIR}";then
+                if ! file_exist "${NCAT_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
                     break
                 fi
@@ -639,7 +639,7 @@ function _ncat_thread_main
         fi
 
         mdat_get_var "master_work"
-        if ! have_file "${NCAT_WORK_DIR}";then
+        if ! file_exist "${NCAT_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
             break
         fi
@@ -684,7 +684,7 @@ function _ncat_thread
 		process_run_lock 1 update_port_used
 	fi
 
-    if ! have_file "${NCAT_WORK_DIR}";then
+    if ! file_exist "${NCAT_WORK_DIR}";then
         echo_file "${LOG_DEBUG}" "because master have exited, ncat bg_thread[${self_pid}] exit"
         eval "exec ${NCAT_FD}>&-"
         exit 0

@@ -1,7 +1,7 @@
 #!/bin/bash
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
     echo "=================== Usage ==================="
     printf -- "%-15s <ip-address> <command>\n" "${script_name}"
     printf -- "%-15s @%s\n" "<ip-address>" "ip address where it will do the <command>"
@@ -13,7 +13,7 @@ if [ $# -lt 2 ];then
     how_use
     exit 1
 fi
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 HOST_IP="$1"
 shift

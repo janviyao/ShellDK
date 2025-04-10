@@ -143,7 +143,7 @@ function process_run_lock
     local lockid=$1
     shift
 
-    if ! have_file "${GBL_BASE_DIR}/shell.lock.${lockid}";then
+    if ! file_exist "${GBL_BASE_DIR}/shell.lock.${lockid}";then
         touch ${GBL_BASE_DIR}/shell.lock.${lockid}
         chmod 777 ${GBL_BASE_DIR}/shell.lock.${lockid}
     fi
@@ -296,8 +296,8 @@ function process_pid2name
             # ps -p 2133 -o args=
             # ps -p 2133 -o cmd=
             # cat /proc/${xpid}/status
-            if have_file "/proc/${xpid}/exe";then
-                local fname=$(path2fname "/proc/${xpid}/exe")
+            if file_exist "/proc/${xpid}/exe";then
+                local fname=$(file_get_fname "/proc/${xpid}/exe")
                 if [ -n "${fname}" ];then
                     if [[ ${fname} != 'exe' ]];then
                         name_list=(${name_list[*]} ${fname})
@@ -312,15 +312,15 @@ function process_pid2name
                     local pname=$(ps -eo pid,cmd | grep -P "^\s*${xpid}\b\s*" | awk '{ print $2 }')
                 fi
             elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-                if have_file "/proc/${xpid}/stat";then
+                if file_exist "/proc/${xpid}/stat";then
                     local pname=$(cat /proc/${xpid}/stat | grep -P "(?<=\().+(?=\))" -o)
                 fi
             fi
  
             if [ -n "${pname}" ];then
                 if [[ "${pname}" =~ '/' ]];then
-                    if have_file "${pname}";then
-                        name_list=(${name_list[*]} $(path2fname "${pname}"))
+                    if file_exist "${pname}";then
+                        name_list=(${name_list[*]} $(file_get_fname "${pname}"))
                     else
                         name_list=(${name_list[*]} ${pname})
                     fi
@@ -523,7 +523,7 @@ function process_cpid
         if [[ "${SYSTEM}" == "Linux" ]]; then
             # ps -p $$ -o ppid=
             local subpro_path="/proc/${xpid}/task/${xpid}/children"
-            if have_file "${subpro_path}"; then
+            if file_exist "${subpro_path}"; then
                 child_pids+=($(cat ${subpro_path} 2>/dev/null))
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -934,7 +934,7 @@ function process_coredump
     fi
 
     sudo_it "echo '/tmp/core-%e-%p-%s-%t' > /proc/sys/kernel/core_pattern" 
-    if have_file "/etc/security/limits.conf";then
+    if file_exist "/etc/security/limits.conf";then
         sudo_it "sed -i '\#\s\+core\s\\+#d' /etc/security/limits.conf"
         sudo_it "echo '* hard core unlimited' >> /etc/security/limits.conf" 
         sudo_it "echo '* soft core unlimited' >> /etc/security/limits.conf" 
@@ -948,7 +948,7 @@ function process_coredump
             continue
         fi
 
-        if have_file "/proc/${xpid}/coredump_filter";then
+        if file_exist "/proc/${xpid}/coredump_filter";then
             sudo_it "echo 0x7b > /proc/${xpid}/coredump_filter"
         fi
         sudo_it "kill -6 ${xpid}"

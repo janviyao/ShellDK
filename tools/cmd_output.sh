@@ -1,7 +1,7 @@
 #!/bin/bash
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
     echo "=================== Usage ==================="
     printf -- "%-15s [<ip-address>] <command>\n" "${script_name}"
     printf -- "%-15s @%s\n" "<ip-address>" "[optinal]ip address where it will do the <command>"
@@ -59,7 +59,7 @@ if [ $? -ne 0 ];then
     echo_erro "ssh fail: \"${CMD_EXE}\" @ ${HOST_IP}"
 fi
 
-if have_file "${tmp_file}";then
+if file_exist "${tmp_file}";then
     cat ${tmp_file}
     rm -f ${tmp_file}
 fi

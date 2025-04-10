@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV}
 
 FIO_DEBUG_ON=false
-FIO_ROOT_DIR=$(current_scriptdir)
+FIO_ROOT_DIR=$(file_get_path)
 FIO_APP_RUNTIME="$MY_VIM_DIR/tools/app/fio --alloc-size=131072"
 
 FIO_OUTPUT_DIR=${TEST_LOG_DIR}/fio

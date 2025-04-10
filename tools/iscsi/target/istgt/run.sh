@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 if ! math_bool "${KEEP_ENV_STATE}";then
     echo_info "kill and start: ${ISCSI_APP_NAME}"
@@ -9,7 +9,7 @@ else
     exit 0
 fi
 
-if ! have_file "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
+if ! file_exist "${ISCSI_APP_DIR}/${ISCSI_APP_NAME}";then
     if string_contain "${TEST_WORKGUIDE}" "deploy";then
         ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/build.sh
         if [ $? -ne 0 ];then
@@ -37,7 +37,7 @@ if [ $? -ne 0 ];then
 fi
 
 if math_bool "${TARGET_DEBUG_ON}";then
-    if ! have_file "${ISCSI_APP_LOG}";then
+    if ! file_exist "${ISCSI_APP_LOG}";then
         ${SUDO} "touch ${ISCSI_APP_LOG}"
     fi
 
@@ -47,7 +47,7 @@ if math_bool "${TARGET_DEBUG_ON}";then
 
     ${SUDO} "nohup ${ISCSI_APP_RUNTIME} &> ${ISCSI_APP_LOG} &"
 
-    if have_file "${ISCSI_APP_LOG}";then
+    if file_exist "${ISCSI_APP_LOG}";then
         ${SUDO} "chmod 777 ${ISCSI_APP_LOG}"
     fi
 else

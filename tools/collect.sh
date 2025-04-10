@@ -1,14 +1,14 @@
 #!/bin/bash
 #set -x
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 EXPORT_FILE="$1"
 if [ -z "${EXPORT_FILE}" ];then
     EXPORT_FILE="${MY_HOME}/vim.tar"
 fi
 
-EXPORT_DIR=$(fname2path "${EXPORT_FILE}")
-if ! have_file "${EXPORT_DIR}";then
+EXPORT_DIR=$(file_get_path "${EXPORT_FILE}")
+if ! file_exist "${EXPORT_DIR}";then
     ${SUDO} "mkdir -p ${EXPORT_DIR}; chmod -R 777 ${EXPORT_DIR}" 
 fi
 
@@ -24,16 +24,16 @@ TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.vim"
 #TAR_WHAT="${TAR_WHAT} ${MY_HOME}/.astylerc"
 
 # Start to tar 
-have_file "${EXPORT_FILE}" && ${SUDO} rm -f ${EXPORT_FILE}
+file_exist "${EXPORT_FILE}" && ${SUDO} rm -f ${EXPORT_FILE}
 for item in ${TAR_WHAT}
 do
-    TAR_DIR=$(fname2path "${item}")
-    TAR_FILE=$(path2fname "${item}")
+    TAR_DIR=$(file_get_path "${item}")
+    TAR_FILE=$(file_get_fname "${item}")
 
     echo_info "Collect { $(printf -- '%-20s' "${item}") } into { ${EXPORT_FILE} }"
 
     cd ${TAR_DIR}
-    if have_file "${EXPORT_FILE}";then
+    if file_exist "${EXPORT_FILE}";then
         tar -rf ${EXPORT_FILE} ${TAR_FILE}
     else
         tar -cf ${EXPORT_FILE} ${TAR_FILE}

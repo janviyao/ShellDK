@@ -32,7 +32,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 		fi
 	fi
 
-    if have_file "${MY_HOME}/.timerc";then
+    if file_exist "${MY_HOME}/.timerc";then
 		source ${MY_HOME}/.timerc
 		if [ $? -ne 0 ];then
 			echo_debug "timer: exception exit"
@@ -52,7 +52,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
     fi
     process_signal KILL ${pid_list[*]} &> /dev/null
 
-    if have_file "${TEST_SUIT_ENV}";then
+    if file_exist "${TEST_SUIT_ENV}";then
         source ${TEST_SUIT_ENV} 
 		if [ $? -ne 0 ];then
 			if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
@@ -62,7 +62,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 			fi
 		fi
 
-        if have_file "${ISCSI_APP_LOG}";then
+        if file_exist "${ISCSI_APP_LOG}";then
             logsize=$(file_size "${ISCSI_APP_LOG}")
             if [ -z "${logsize}" ];then
                 logsize=0
@@ -78,7 +78,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
         fi
     fi
 
-    if have_file "${BASH_LOG}";then
+    if file_exist "${BASH_LOG}";then
         logsize=$(file_size "${BASH_LOG}")
         if [ -z "${logsize}" ];then
             logsize=0

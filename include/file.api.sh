@@ -1,6 +1,32 @@
 #!/bin/bash
 : ${INCLUDED_FILE:=1}
 
+function file_create
+{
+	local xfile="$1"
+
+	if file_exist "${xfile}";then
+		return 0
+	fi
+
+	local xdir=$(file_get_path ${xfile})
+	if ! file_exist "${xdir}";then
+		mkdir -p ${xdir}
+		if [ $? -ne 0 ];then
+			echo_erro "file_create { $@ }"
+			return 1
+		fi
+	fi
+
+	touch ${xfile}
+	if [ $? -ne 0 ];then
+		echo_erro "file_create { $@ }"
+		return 1
+	fi
+
+	return 0
+}
+
 function file_owner_is
 {
     local fname="$1"
@@ -28,7 +54,7 @@ function file_privilege
     return 0
 }
 
-function have_file
+function file_exist
 {
     local bash_options="$-"
     set +x
@@ -49,7 +75,7 @@ function have_file
                 return 1
             fi
 
-            if have_file "${file}"; then
+            if file_exist "${file}"; then
                 [[ "${bash_options}" =~ x ]] && set -x
                 return 0
             fi
@@ -111,9 +137,10 @@ function file_expire
         return 0
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 0
-    fi     
+    fi
 
     local expire_time=$(date -d "-${xtime} second" "+%Y-%m-%d %H:%M:%S")
     local file_time=$(date -r ${xfile} "+%Y-%m-%d %H:%M:%S")
@@ -135,7 +162,8 @@ function file_has
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi 
 
@@ -165,7 +193,8 @@ function file_range_has
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi 
 
@@ -192,8 +221,9 @@ function file_add
         return 1
     fi
      
-    if ! have_file "${xfile}";then
-        echo > ${xfile}
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
+		return 1
     fi 
 
     local line_cnt=$(sed -n '$p' ${xfile})
@@ -222,7 +252,8 @@ function file_get
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi
 
@@ -281,7 +312,8 @@ function file_range_get
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi 
 
@@ -325,7 +357,7 @@ function file_del
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
@@ -425,8 +457,9 @@ function file_insert
         return 1
     fi
 
-    if ! have_file "${xfile}";then
-        echo > ${xfile}
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
+		return 1
     fi 
 
     if math_is_int "${line_nr}";then
@@ -484,7 +517,8 @@ function file_linenr
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi 
     
@@ -539,7 +573,8 @@ function file_range_linenr
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi
 
@@ -579,7 +614,8 @@ function file_range
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi 
 
@@ -625,7 +661,7 @@ function file_line_num
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
         echo "0"
         return 0
     fi 
@@ -645,8 +681,9 @@ function file_change
         return 1
     fi
 
-    if ! have_file "${xfile}";then
-        echo > ${xfile}
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
+		return 1
     fi 
 
     if math_is_int "${line_nr}";then
@@ -690,7 +727,7 @@ function file_replace
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
@@ -729,7 +766,7 @@ function file_replace_with_expr
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
@@ -771,7 +808,7 @@ function file_handle_with_cmd
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
         return 1
     fi
@@ -886,7 +923,8 @@ function file_list
         return 1
     fi
 
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
+		echo_erro "file { ${xfile} } lost"
         return 1
     fi
 	
@@ -932,7 +970,7 @@ function file_temp
     local base_dir="${1:-${BASH_WORK_DIR}}"
 
     local fpath="${base_dir}/tmp.$$.${RANDOM}"
-    while have_file "${fpath}" 
+    while file_exist "${fpath}" 
     do
         fpath="${base_dir}/tmp.$$.${RANDOM}"
     done
@@ -942,75 +980,74 @@ function file_temp
 
 function file_write
 {
+	local xfile="$1"
+	local value="$2"
+
 	if [ $# -le 1 ];then
 		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
 		return 1
 	fi
 
-	local xfile="$1"
-	shift 1
-	local value="$@"
-
-    if have_file "${xfile}";then 
-		echo "${value}" > ${xfile}
-	else
+    if ! file_exist "${xfile}";then 
 		echo_erro "file { ${xfile} } lost"
 		return 1
     fi
+
+	echo "${value}" > ${xfile}
+	if [ $? -ne 0 ];then
+		echo_erro "file_write { $@ }"
+		return 1
+	fi
 
     return 0
 }
 
 function file_append
 {
+	local xfile="$1"
+	local value="$2"
+
 	if [ $# -le 1 ];then
 		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
 		return 1
 	fi
 
-	local xfile="$1"
-	shift 1
-	local value="$@"
-
-    if have_file "${xfile}";then 
-		echo "${value}" >> ${xfile}
-	else
+    if ! file_exist "${xfile}";then 
 		echo_erro "file { ${xfile} } lost"
 		return 1
     fi
 
+	echo "${value}" >> ${xfile}
+	if [ $? -ne 0 ];then
+		echo_erro "file_append { $@ }"
+		return 1
+	fi
+
     return 0
 }
 
-function current_scriptdir
+function file_realpath
 {
-	local curfile="${BASH_SOURCE[0]}"
-	if [ -f "${curfile}" ];then
-		echo $(dirname "${curfile}")
-	else
-		curfile="$0"
-		if [ -f "${curfile}" ];then
-			echo $(dirname "${curfile}")
-		else
-			echo $PWD
-		fi
-	fi
-}
+	local xfile="$1"
 
-function real_path
-{
-    local orig_path="$1"
-
-    if [ -z "${orig_path}" ];then
+    if [ -z "${xfile}" ];then
         return 1
     fi
 
     local last_char=""
-    if [[ $(string_end "${orig_path}" 1) == '/' ]]; then
+    if [[ $(string_end "${xfile}" 1) == '/' ]]; then
+		xfile=$(string_trim ${xfile} / 2)
         last_char="/"
     fi
 
-    local this_path="${orig_path}"
+	if file_exist "${xfile}";then
+		if [ ! -L "${xfile}" ];then
+			echo "${xfile}${last_char}"
+			return 0
+		fi
+	fi
+
+    local this_path="${xfile}"
     if match_regex "${this_path}" "^-";then
         this_path=$(string_replace "${this_path}" "\-" "\-" true)
     fi
@@ -1032,15 +1069,7 @@ function real_path
 
     if [ $? -ne 0 ];then
         echo_file "${LOG_DEBUG}" "read_path fail: ${old_path}"
-        if [[ "${last_char}" == '/' ]];then
-            if [[ $(string_end "${old_path}" 1) == '/' ]]; then
-                echo "${old_path}"
-            else
-                echo "${old_path}/"
-            fi
-        else
-            echo "${old_path}"
-        fi
+		echo "${old_path}${last_char}"
         return 1
     fi
 
@@ -1049,32 +1078,35 @@ function real_path
         this_path="${old_path}"
     fi
 
-    if ! have_file "${this_path}";then
-        if ! string_contain "${orig_path}" '/';then
+    if ! file_exist "${this_path}";then
+        if ! string_contain "${xfile}" '/';then
             local path_bk="${this_path}"
-            this_path=$(which --skip-alias ${orig_path} 2>/dev/null)
-            if ! have_file "${this_path}";then
+            this_path=$(which --skip-alias ${xfile} 2>/dev/null)
+            if ! file_exist "${this_path}";then
                 this_path="${path_bk}"
             fi
         fi
     fi
 
-    if [[ "${last_char}" == '/' ]];then
-        if [[ $(string_end "${this_path}" 1) == '/' ]]; then
-            echo "${this_path}"
-        else
-            echo "${this_path}/"
-        fi
-    else
-        echo "${this_path}"
-    fi
-
+	echo "${this_path}${last_char}"
     return 0
 }
 
-function path2fname
+function file_get_fname
 {
-    local full_path=$(real_path "$1")
+	local xfile="$1"
+
+	if [ -z "${xfile}" ];then
+		xfile="${BASH_SOURCE[0]}"
+		if [ ! -f "${xfile}" ];then
+			xfile="$0"
+			if [ ! -f "${xfile}" ];then
+				xfile="$PWD"
+			fi
+		fi
+	fi
+
+    local full_path=$(file_realpath "${xfile}")
     if [ -z "${full_path}" ];then
         return 1
     fi
@@ -1093,16 +1125,26 @@ function path2fname
     return 0
 }
 
-function fname2path
+function file_get_path
 {
-    local dir_name=""
+	local xfile="$1"
 
-    local full_name=$(real_path "$1")
+	if [ -z "${xfile}" ];then
+		xfile="${BASH_SOURCE[0]}"
+		if [ ! -f "${xfile}" ];then
+			xfile="$0"
+			if [ ! -f "${xfile}" ];then
+				xfile="$PWD"
+			fi
+		fi
+	fi
+
+    local full_name=$(file_realpath "${xfile}")
     if [ -z "${full_name}" ];then
         return 1
     fi
 
-    dir_name=$(dirname ${full_name})
+    local dir_name=$(dirname ${full_name})
     if [ $? -ne 0 ];then
         echo_file "${LOG_ERRO}" "dirname fail: ${full_name}"
         return 1

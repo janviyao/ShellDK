@@ -1,9 +1,9 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 g_testcase_file="$1"
-if ! have_file "${g_testcase_file}"; then
+if ! file_exist "${g_testcase_file}"; then
 	echo_erro "file { $1 } not accessed"
     exit 1
 fi

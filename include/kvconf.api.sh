@@ -14,7 +14,7 @@ function kvconf_has_key
         return 1
     fi
 
-    if ! have_file "${kv_file}";then
+    if ! file_exist "${kv_file}";then
         return 1
     fi 
     
@@ -36,7 +36,7 @@ function kvconf_has_val
         return 1
     fi
 
-    if ! have_file "${kv_file}";then
+    if ! file_exist "${kv_file}";then
         return 1
     fi 
 
@@ -124,7 +124,7 @@ function kvconf_get
         return 1
     fi
 
-    if ! have_file "${kv_file}";then
+    if ! file_exist "${kv_file}";then
         return 1
     fi 
     
@@ -273,7 +273,7 @@ function kvconf_del
         return 1
     fi
 
-    if ! have_file "${kv_file}";then
+    if ! file_exist "${kv_file}";then
         return 1
     fi 
     
@@ -296,7 +296,7 @@ function kvconf_del_line
         return 1
     fi
 
-    if ! have_file "${kv_file}";then
+    if ! file_exist "${kv_file}";then
         return 1
     fi 
     
@@ -319,7 +319,7 @@ function kvconf_line_nr
         return 1
     fi
 
-    if ! have_file "${kv_file}";then
+    if ! file_exist "${kv_file}";then
         return 1
     fi 
     

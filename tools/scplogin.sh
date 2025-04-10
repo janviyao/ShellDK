@@ -1,7 +1,7 @@
 #!/bin/bash
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
     echo "=================== Usage ==================="
     printf -- "%-15s <src-dir> <des-dir>\n" "${script_name}"
     printf -- "%-15s @%s\n" "<src-dir>" "source directory which is either local directory or address-directory"
@@ -13,7 +13,7 @@ if [ $# -lt 2 ];then
     how_use
     exit 1
 fi
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 SRC_DIR="$1"
 DES_DIR="$2"

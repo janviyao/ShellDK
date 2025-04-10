@@ -54,10 +54,10 @@ function mytar
     fi
 
     local iscompress="true"
-    if have_file "${fpath}";then
+    if file_exist "${fpath}";then
         iscompress="false"
         if [ ${#flist[*]} -ge 1 ];then
-            local realfile=$(real_path "${fpath}")
+            local realfile=$(file_realpath "${fpath}")
             local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
             if math_bool "${xselect}";then
                 iscompress="true"
@@ -80,12 +80,12 @@ function mytar
         xwhat="${flist[*]}"
     else
         options="-xf"
-        if have_file "${flist[0]}";then
+        if file_exist "${flist[0]}";then
             xwhat="-C ${flist[0]}"
         fi
     fi
     
-    local fname=$(path2fname "${fpath}")
+    local fname=$(file_get_fname "${fpath}")
     if string_match "${fname}" ".tar.gz" 2;then
         options="-z ${options}"
     elif string_match "${fname}" ".tar.bz2" 2;then
@@ -103,10 +103,10 @@ function mytar
     tar ${options} ${fpath} ${xwhat}
 
     if math_bool "${iscompress}";then
-        echo $(real_path "${fpath}")
+        echo $(file_realpath "${fpath}")
     else
         local outdir="."
-        if have_file "${flist[0]}";then
+        if file_exist "${flist[0]}";then
             outdir="${flist[0]}"
         fi
         
@@ -122,7 +122,7 @@ function mytar
         local dir
         for dir in ${find_arr[*]}    
         do
-            local real_dir=$(real_path "${dir}")
+            local real_dir=$(file_realpath "${dir}")
             echo "${real_dir}"
         done
     fi
@@ -163,7 +163,7 @@ function install_check
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
         for xfile in ${file_list[*]}    
         do
-            local file_name=$(path2fname "${xfile}")
+            local file_name=$(file_get_fname "${xfile}")
             local new_version=$(string_regex "${file_name}" "\d+\.\d+(\.\d+)?")
             echo_info "$(printf -- "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
@@ -191,9 +191,9 @@ function install_provider
 
     local -a files
     if math_bool "${isreg}";then
-        local fname=$(path2fname ${xfile})
-        local fpath=$(fname2path ${xfile})
-        if ! have_file "${fpath}";then
+        local fname=$(file_get_fname ${xfile})
+        local fpath=$(file_get_path ${xfile})
+        if ! file_exist "${fpath}";then
             fpath="."
         fi
 
@@ -209,7 +209,7 @@ function install_provider
         fi
         xfile="${select_x}"
     else
-        if ! have_file "${xfile}";then
+        if ! file_exist "${xfile}";then
 			echo_erro "file { ${xfile} } not accessed"
             return 1
         fi
@@ -230,7 +230,7 @@ function install_provider
             return 0
         fi
 
-        local fname=$(path2fname ${xfile})
+        local fname=$(file_get_fname ${xfile})
         local rpm_file=$(yum search ${fname} | grep -w "${fname}")
         if [ -n "${rpm_file}" ];then
             echo "${rpm_file}"
@@ -322,8 +322,8 @@ function install_from_rpm
     # rpm -ql xxx.rpm     #query rpm package contents
     local local_rpms=(${xfile})
     if math_bool "${isreg}";then
-        local fpath=$(fname2path ${xfile})
-        if ! have_file "${fpath}";then
+        local fpath=$(file_get_path ${xfile})
+        if ! file_exist "${fpath}";then
             fpath="."
         fi
         local_rpms=($(efind ${fpath} ".*/?${xfile}"))
@@ -339,8 +339,8 @@ function install_from_rpm
     local rpm_file
     for rpm_file in ${local_rpms[*]}    
     do
-        local full_name=$(real_path ${rpm_file})
-        local fname=$(path2fname ${full_name})
+        local full_name=$(file_realpath ${rpm_file})
+        local fname=$(file_get_fname ${full_name})
 
         local versions=($(string_regex "${fname}" "\d+\.\d+(\.\d+)?"))
         if [ -z "${versions[*]}" ];then
@@ -437,46 +437,46 @@ function install_from_make
     cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
     echo "${conf_para}" > build.log
 
-    if have_file "contrib/download_prerequisites"; then
+    if file_exist "contrib/download_prerequisites"; then
         #GCC installation need this:
         if check_net; then
             echo_info "$(printf -- "[%13s]: %-50s" "Doing" "download_prerequisites")"
             ./contrib/download_prerequisites &>> build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Download_prerequisites: ${makedir} failed, check: $(real_path build.log)"
+                echo_erro " Download_prerequisites: ${makedir} failed, check: $(file_realpath build.log)"
                 cd ${currdir}
                 return 1
             fi
         fi
     fi
 
-    have_file "Makefile" || have_file "configure" 
-    [ $? -ne 0 ] && have_file "unix/" && cd unix/
-    [ $? -ne 0 ] && have_file "linux/" && cd linux/
+    file_exist "Makefile" || file_exist "configure" 
+    [ $? -ne 0 ] && file_exist "unix/" && cd unix/
+    [ $? -ne 0 ] && file_exist "linux/" && cd linux/
 
-    if have_file "autogen.sh"; then
+    if file_exist "autogen.sh"; then
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "autogen")"
         ./autogen.sh &>> build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${makedir} failed, check: $(real_path build.log)"
+            echo_erro " Autogen: ${makedir} failed, check: $(file_realpath build.log)"
             cd ${currdir}
             return 1
         fi
     fi
 
-    if have_file "configure"; then
+    if file_exist "configure"; then
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
         ./configure ${conf_para} &>> build.log
         if [ $? -ne 0 ]; then
             mkdir -p build && cd build
             ../configure ${conf_para} &>> ../build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${makedir} failed, check: $(real_path ../build.log)"
+                echo_erro " Configure: ${makedir} failed, check: $(file_realpath ../build.log)"
                 cd ${currdir}
                 return 1
             fi
 
-            if ! have_file "Makefile"; then
+            if ! file_exist "Makefile"; then
                 ls --color=never -A | xargs -i cp -fr {} ../
                 cd ..
             fi
@@ -491,12 +491,12 @@ function install_from_make
                 mkdir -p build && cd build
                 ../configure ${conf_para} &>> ../build.log
                 if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${makedir} failed, check: $(real_path ../build.log)"
+                    echo_erro " Configure: ${makedir} failed, check: $(file_realpath ../build.log)"
                     cd ${currdir}
                     return 1
                 fi
 
-                if ! have_file "Makefile"; then
+                if ! file_exist "Makefile"; then
                     ls --color=never -A | xargs -i cp -fr {} ../
                     cd ..
                 fi
@@ -504,7 +504,7 @@ function install_from_make
         fi
     fi
 
-    if have_file "build/gcc"; then
+    if file_exist "build/gcc"; then
         #astyle install
         cd build/gcc
     fi
@@ -514,7 +514,7 @@ function install_from_make
     export CFLAGS="-fcommon"
     USER=${MY_NAME} make -j 32 &>> build.log
     if [ $? -ne 0 ]; then
-        echo_erro " Make: ${makedir} failed, check: $(real_path build.log)"
+        echo_erro " Make: ${makedir} failed, check: $(file_realpath build.log)"
         cd ${currdir}
         return 1
     fi
@@ -523,7 +523,7 @@ function install_from_make
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make install")"
     sudo_it "USER=${MY_NAME} make install INSTALL='install -o ${MY_NAME} -g users' &>> build.log"
     if [ $? -ne 0 ]; then
-        echo_erro " Install: ${makedir} failed, check: $(real_path build.log)"
+        echo_erro " Install: ${makedir} failed, check: $(file_realpath build.log)"
         cd ${currdir}
         return 1
     fi
@@ -546,12 +546,12 @@ function install_from_tar
 
     local local_tars=(${xfile})
     if math_bool "${isreg}";then
-        local fpath=$(fname2path ${xfile})
-        if ! have_file "${fpath}";then
+        local fpath=$(file_get_path ${xfile})
+        if ! file_exist "${fpath}";then
             fpath="."
         fi
 
-        local fname=$(path2fname ${xfile})
+        local fname=$(file_get_fname ${xfile})
         local_tars=($(efind ${fpath} "${fname}"))
     fi
 
@@ -565,8 +565,8 @@ function install_from_tar
     local tar_file
     for tar_file in ${local_tars[*]}    
     do
-        local file_dir=$(fname2path ${tar_file})
-        local file_name=$(path2fname ${tar_file})
+        local file_dir=$(file_get_path ${tar_file})
+        local file_name=$(file_get_fname ${tar_file})
         echo_file "${LOG_DEBUG}" "tar: { ${tar_file} } path: { ${file_dir} } name: { ${file_name} }"
         echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${file_name}")"
 

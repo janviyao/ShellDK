@@ -6,8 +6,8 @@ mkdir -p ${LOGR_WORK_DIR}
 LOGR_TASK="${LOGR_WORK_DIR}/task"
 LOGR_PIPE="${LOGR_WORK_DIR}/pipe"
 LOGR_FD=${LOGR_FD:-8}
-have_file "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
-have_file "${LOGR_PIPE}" || echo_erro "mkfifo: ${LOGR_PIPE} fail"
+file_exist "${LOGR_PIPE}" || mkfifo ${LOGR_PIPE}
+file_exist "${LOGR_PIPE}" || echo_erro "mkfifo: ${LOGR_PIPE} fail"
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 		return 1
@@ -28,7 +28,7 @@ function logr_task_ctrl_async
     fi
 
     #echo_debug "logr_task_ctrl_async: [ctrl: ${req_ctrl} msg: ${req_body}]" 
-    if ! have_file "${LOGR_PIPE}.run";then
+    if ! file_exist "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
@@ -53,7 +53,7 @@ function logr_task_ctrl_sync
     fi
 
     #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
-    if ! have_file "${LOGR_PIPE}.run";then
+    if ! file_exist "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
@@ -70,7 +70,7 @@ function logr_task_ctrl_sync
 function _bash_logr_exit
 {
     echo_debug "logr signal exit" 
-    if ! have_file "${LOGR_PIPE}.run";then
+    if ! file_exist "${LOGR_PIPE}.run";then
         echo_debug "logr task not started but signal EXIT"
         return 0
     fi
@@ -162,9 +162,9 @@ function _logr_thread_main
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
 
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! have_file "${ack_pipe}";then
+            if ! file_exist "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                if ! have_file "${LOGR_WORK_DIR}";then
+                if ! file_exist "${LOGR_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
                     break
                 fi
@@ -226,7 +226,7 @@ function _logr_thread_main
         elif [[ "${req_ctrl}" == "PRINT" ]];then
             printf -- "%s" "${req_body}" 
         elif [[ "${req_ctrl}" == "PRINT_FROM_FILE" ]];then
-            if have_file "${req_body}";then
+            if file_exist "${req_body}";then
                 local file_log=$(cat ${req_body}) 
                 printf -- "%s" "${file_log}"
             else
@@ -240,7 +240,7 @@ function _logr_thread_main
         fi
 
         #echo_file "${LOG_DEBUG}" "logr wait: [${LOGR_PIPE}]"
-        if ! have_file "${LOGR_WORK_DIR}";then
+        if ! file_exist "${LOGR_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
             break
         fi

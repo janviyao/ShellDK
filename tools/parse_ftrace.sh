@@ -1,7 +1,7 @@
 #!/bin/bash
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
     echo "=================== Usage ==================="
     printf -- "%-15s <file-name>\n" "${script_name}"
     printf -- "%-15s @%s\n" "<file-name>" "file name where ftrace into"
@@ -13,8 +13,8 @@ if [ $# -lt 1 ];then
     exit 1
 fi
 
-file=$(real_path $1)
-if ! have_file "${file}";then
+file=$(file_realpath $1)
+if ! file_exist "${file}";then
 	echo_erro "file { ${file} } not accessed"
 fi
 tmp_file=$(file_temp "$(pwd)")

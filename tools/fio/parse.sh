@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 source ${TEST_SUIT_ENV}
 
@@ -7,7 +7,7 @@ g_read_pct=$(get_optval "-r" "--read-percent")
 [ -z "${g_read_pct}" ] && { echo_erro "invalid read-percent: ${g_read_pct}"; exit 1; } 
 
 g_return_file=$(get_optval "-o" "--output")
-have_file "${g_return_file}" || { echo_erro "file { ${g_return_file} } not accessed"; exit 1; } 
+file_exist "${g_return_file}" || { echo_erro "file { ${g_return_file} } not accessed"; exit 1; } 
 
 g_output_arr=($(get_subcmd '0-'))
 
@@ -52,7 +52,7 @@ function get_iops
     local grep_param="$2"
     local return_file="$3"
 
-    have_file "${return_file}" && echo > ${return_file} 
+    file_exist "${return_file}" && echo > ${return_file} 
     local iops_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" | grep -P "${g_iops_key}\s*=\s*\d+\.?\d*[kmgKMG]?" -o | grep -P "\d+\.?\d*[kmgKMG]?" -o)
     #echo_debug "${iops_list}"
 
@@ -92,7 +92,7 @@ function get_bandwidth
     local grep_param="$2"
     local return_file="$3"
     
-    have_file "${return_file}" && echo > ${return_file} 
+    file_exist "${return_file}" && echo > ${return_file} 
     local bandwidth_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" | grep -P "${g_bw_key}\s*=\s*\d+\.?\d*[kmgKMG]" -o | grep -P "\d+\.?\d*[kmgKMG]" -o)
     #echo_debug "${bandwidth_list}"
     
@@ -132,7 +132,7 @@ function get_latency
     local grep_param="$2"
     local return_file="$3"
     
-    have_file "${return_file}" && echo > ${return_file} 
+    file_exist "${return_file}" && echo > ${return_file} 
     local lat_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" -A 3 | grep -P "^\s+lat" | sed 's/ *//g')
     #echo_debug "${lat_list}"
 
@@ -182,7 +182,7 @@ function get_runtime
     local grep_param="$2"
     local return_file="$3"
     
-    have_file "${return_file}" && echo > ${return_file} 
+    file_exist "${return_file}" && echo > ${return_file} 
     local runtime_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*${g_iops_key}" | grep -P "\d+\.?\d*[a-z]{4}" -o)
     #echo_debug "${runtime_list}"
 

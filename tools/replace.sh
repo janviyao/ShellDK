@@ -3,7 +3,7 @@ source $MY_VIM_DIR/tools/paraparser.sh "hr" "$@"
 
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
 
 	cat <<-END >&2
     ============================== Usage ==============================
@@ -94,7 +94,7 @@ function do_replace
 
 for xfile in ${FILE_LIST[*]}
 do
-    if ! have_file "${xfile}";then
+    if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } not accessed"
         continue
     fi

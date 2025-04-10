@@ -16,7 +16,7 @@ ISCSI_HEADER_DIGEST="None"
 ISCSI_DATA_DIGEST="None"
 
 INITIATOR_LOG_DIR="${TEST_LOG_DIR}/initiator/\${LOCAL_IP}"
-ISCSI_ROOT_DIR=$(current_scriptdir)
+ISCSI_ROOT_DIR=$(file_get_path)
 ISCSI_INITIATOR_LOG=${INITIATOR_LOG_DIR}/iscsid.log
 ISCSI_TARGET_IP_ARRAY=(${SERVER_IP_ARRAY[*]:?"iSCSI target ip address empty"})
 ISCSI_INITIATOR_IP_ARRAY=(${CLIENT_IP_ARRAY[*]:?"iSCSI initiator ip address empty"})

@@ -1,6 +1,6 @@
 #!/bin/sh
 source ${TEST_SUIT_ENV}
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 if ! have_cmd "iscsiadm" || ! process_exist "iscsid";then
     exit 0
@@ -16,7 +16,7 @@ fi
 mounts_array=($(cat /proc/mounts | awk '{ print $1 }' | grep -F "/dev/"))
 for ((idx = 0; idx < ${#mounts_array[*]}; idx ++))
 do
-    mounts_array[${idx}]=$(real_path "${mounts_array[${idx}]}")
+    mounts_array[${idx}]=$(file_realpath "${mounts_array[${idx}]}")
 done
 
 device_array=($(cat ${WORK_ROOT_DIR}/disk.${LOCAL_IP}))

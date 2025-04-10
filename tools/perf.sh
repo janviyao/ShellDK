@@ -4,7 +4,7 @@ perf_obj=$(para_pack "$@")
 save_dir=$(pwd)/perf
 try_cnt=0
 tmp_dir=${save_dir}
-while have_file "${tmp_dir}"
+while file_exist "${tmp_dir}"
 do
     let try_cnt++
     tmp_dir=${save_dir}${try_cnt}
@@ -34,7 +34,7 @@ function acquire_result
         for ((index=$((${#key_array[*]} - 1)); index>=0; index--))
         do
             val_str=($(section_get_val "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"))
-            if have_file "${val_str}";then
+            if file_exist "${val_str}";then
                 break
             else
                 echo_file "${LOG_DEBUG}" "file invalid: ${val_str}"
@@ -158,7 +158,7 @@ function perf_record
 
 function perf_report
 {
-    local report_file=$(input_prompt "have_file" "input file" "$(acquire_result)")
+    local report_file=$(input_prompt "file_exist" "input file" "$(acquire_result)")
 
     #sudo_it "perf report -f --threads -i ${report_file}"
     sudo_it "perf report -f -i ${report_file}"
@@ -229,7 +229,7 @@ function perf_stat
         mkdir -p ${perf_save}
         update_conf "${perf_save}/perf.stat.data"
     elif [[ "${select_x}" == "report" ]];then
-        local report_file=$(input_prompt "have_file" "input file" "$(acquire_result)")
+        local report_file=$(input_prompt "file_exist" "input file" "$(acquire_result)")
         perf_para="report  -i ${report_file}"
     fi
 
@@ -253,8 +253,8 @@ function perf_probe
         probe_obj=$(input_prompt "" "specify probed object: (1) kernel (2) executable file (3) shared library" "kernel")
         while [[ "${probe_obj}" != "kernel" ]]
         do
-            probe_obj=$(real_path "${probe_obj}")
-            if have_file "${probe_obj}";then
+            probe_obj=$(file_realpath "${probe_obj}")
+            if file_exist "${probe_obj}";then
                 break
             else
                 echo_erro "file not exist: ${probe_obj}"
@@ -328,7 +328,7 @@ function perf_lock
     if [[ "${select_x}" == "record" ]];then
         perf_para="-v ${select_x} ${process_x}" 
     elif [[ "${select_x}" == "report" ]];then
-        local report_file=$(input_prompt "have_file" "input file" "$(acquire_result)")
+        local report_file=$(input_prompt "file_exist" "input file" "$(acquire_result)")
         perf_para="-v ${select_x} -i ${report_file}"
     else
         perf_para="-v ${select_x} ${process_x}" 
@@ -356,7 +356,7 @@ function perf_mem
         mkdir -p ${perf_save}
         update_conf "${perf_save}/perf.mem.data"
     elif [[ "${select_x}" == "report" ]];then
-        report_file=$(input_prompt "have_file" "input file" "$(acquire_result)")
+        report_file=$(input_prompt "file_exist" "input file" "$(acquire_result)")
         perf_para="${select_x} -i ${report_file}"
     else
         perf_para="${select_x} ${process_x}" 
@@ -382,7 +382,7 @@ function perf_kmem
     if [[ "${select_x}" == "record" ]];then
         perf_para="${perf_para} ${process_x}" 
     elif [[ "${select_x}" == "stat" ]];then
-        if have_file "./perf.data";then
+        if file_exist "./perf.data";then
             perf_para="${perf_para} -i perf.data" 
         else
             echo_erro "record file { perf.data } lost, please record firstly"
@@ -413,7 +413,7 @@ function perf_sched
     if [[ "${select_x}" == "record" ]];then
         perf_para="-v ${select_x} ${process_x}" 
     elif [[ "${select_x}" == "report" ]];then
-        local report_file=$(input_prompt "have_file" "input file" "$(acquire_result)")
+        local report_file=$(input_prompt "file_exist" "input file" "$(acquire_result)")
         perf_para="-v ${select_x} -i ${report_file}"
     else
         perf_para="-v ${select_x} ${process_x}" 

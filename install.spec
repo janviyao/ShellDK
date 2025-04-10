@@ -37,33 +37,33 @@ rsync;               install_check 'rsync' 'rsync-.+\.rpm' true;cd ${MY_VIM_DIR}
 nmap-ncat;           install_check 'nc' 'nmap-ncat-.+\.rpm' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'nmap-ncat-.+\.rpm' true
 sar;                 ! have_cmd 'sar';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'sysstat-.+\.rpm' true
 
-sudo;                ! have_file '/usr/libexec/sudo/libsudo_util.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'sudo-.+\.rpm' true
-readline;            ! have_file '/lib64/libreadline.so.6';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'readline-.+\.rpm' true
-readline-devel;      ! have_file '/usr/include/readline';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'readline-devel-.+\.rpm' true
-compat-openssl10;    ! have_file '/usr/lib64/libssl.so.10';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'compat-openssl10-.+\.rpm' true
-python-devel;        ! have_file '/usr/bin/python-config';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python-devel.+\.rpm' true
-python-libs;         ! have_file '/usr/lib64/libpython2.7.so.1.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python-libs.+\.rpm' true
-python3-devel;       ! have_file '/usr/bin/python3-config';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python3-devel.+\.rpm' true
-python3-libs;        ! have_file '/usr/lib64/libpython3.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python3-libs-.+\.rpm' true
-xz-libs;             ! have_file '/usr/lib64/liblzma.so.5';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'xz-libs.+\.rpm' true
-xz-devel;            ! have_file '/usr/lib64/liblzma.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'xz-devel.+\.rpm' true
-libiconv;            ! have_file '/usr/libiconv/lib64/libiconv.so.2';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'libiconv-1.+\.rpm' true
-libiconv-devel;      ! have_file '/usr/libiconv/lib64/libiconv.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'libiconv-devel.+\.rpm' true
-pcre;                ! have_file '/usr/lib64/libpcre.so.1';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-8.+\.rpm' true
-pcre-devel;          ! have_file '/usr/lib64/libpcre.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-devel.+\.rpm' true
-#pcre-cpp;           ! have_file '/usr/lib64/libpcrecpp.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-cpp.+\.rpm' true
-#cpre-utf16;         ! have_file '/usr/lib64/libpcre16.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-utf16.+\.rpm' true
-#pcre-utf32;         ! have_file '/usr/lib64/libpcre32.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-utf32.+\.rpm' true
-ncurses-base;        ! have_file '/usr/share/terminfo/x/xterm';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'ncurses-base.+\.rpm' true
-ncurses-libs;        ! have_file '/usr/lib64/libncurses.so.5';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'ncurses-libs.+\.rpm' true
-ncurses-devel;       ! have_file '/usr/lib64/libncurses.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'ncurses-devel.+\.rpm' true
-zlib;                ! have_file '/usr/lib64/libz.so.1';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'zlib-1.+\.rpm' true
-zlib-devel;          ! have_file '/usr/lib64/libz.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'zlib-devel.+\.rpm' true
-perl-Data-Dumper;    ! have_file '/usr/share/doc/perl-Data-Dumper';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'perl-Data-Dumper-2.167.+\.rpm' true
-perl-Thread-Queue;   ! have_file '/usr/share/doc/perl-Thread-Queue-3.02';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'perl-Thread-Queue-.+\.rpm' true
-locale;              ! have_file 'locale';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'glibc-common-.+\.rpm' true
-m4;                  ! have_file 'm4';cd ${MY_VIM_DIR}/deps;install_from_tar 'm4-.+\.tar\.gz' true;rm -fr m4-*/
-#golang;             ! have_file '/usr/lib/golang/api';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-1.+\.rpm' true
-#golang-src;         ! have_file '/usr/lib/golang/src';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-src-.+\.rpm' true
-#golang-bin;         ! have_file '/usr/lib/golang/bin';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-bin-.+\.rpm' true
+sudo;                ! file_exist '/usr/libexec/sudo/libsudo_util.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'sudo-.+\.rpm' true
+readline;            ! file_exist '/lib64/libreadline.so.6';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'readline-.+\.rpm' true
+readline-devel;      ! file_exist '/usr/include/readline';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'readline-devel-.+\.rpm' true
+compat-openssl10;    ! file_exist '/usr/lib64/libssl.so.10';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'compat-openssl10-.+\.rpm' true
+python-devel;        ! file_exist '/usr/bin/python-config';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python-devel.+\.rpm' true
+python-libs;         ! file_exist '/usr/lib64/libpython2.7.so.1.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python-libs.+\.rpm' true
+python3-devel;       ! file_exist '/usr/bin/python3-config';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python3-devel.+\.rpm' true
+python3-libs;        ! file_exist '/usr/lib64/libpython3.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'python3-libs-.+\.rpm' true
+xz-libs;             ! file_exist '/usr/lib64/liblzma.so.5';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'xz-libs.+\.rpm' true
+xz-devel;            ! file_exist '/usr/lib64/liblzma.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'xz-devel.+\.rpm' true
+libiconv;            ! file_exist '/usr/libiconv/lib64/libiconv.so.2';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'libiconv-1.+\.rpm' true
+libiconv-devel;      ! file_exist '/usr/libiconv/lib64/libiconv.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'libiconv-devel.+\.rpm' true
+pcre;                ! file_exist '/usr/lib64/libpcre.so.1';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-8.+\.rpm' true
+pcre-devel;          ! file_exist '/usr/lib64/libpcre.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-devel.+\.rpm' true
+#pcre-cpp;           ! file_exist '/usr/lib64/libpcrecpp.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-cpp.+\.rpm' true
+#cpre-utf16;         ! file_exist '/usr/lib64/libpcre16.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-utf16.+\.rpm' true
+#pcre-utf32;         ! file_exist '/usr/lib64/libpcre32.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'pcre-utf32.+\.rpm' true
+ncurses-base;        ! file_exist '/usr/share/terminfo/x/xterm';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'ncurses-base.+\.rpm' true
+ncurses-libs;        ! file_exist '/usr/lib64/libncurses.so.5';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'ncurses-libs.+\.rpm' true
+ncurses-devel;       ! file_exist '/usr/lib64/libncurses.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'ncurses-devel.+\.rpm' true
+zlib;                ! file_exist '/usr/lib64/libz.so.1';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'zlib-1.+\.rpm' true
+zlib-devel;          ! file_exist '/usr/lib64/libz.so';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'zlib-devel.+\.rpm' true
+perl-Data-Dumper;    ! file_exist '/usr/share/doc/perl-Data-Dumper';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'perl-Data-Dumper-2.167.+\.rpm' true
+perl-Thread-Queue;   ! file_exist '/usr/share/doc/perl-Thread-Queue-3.02';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'perl-Thread-Queue-.+\.rpm' true
+locale;              ! file_exist 'locale';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'glibc-common-.+\.rpm' true
+m4;                  ! file_exist 'm4';cd ${MY_VIM_DIR}/deps;install_from_tar 'm4-.+\.tar\.gz' true;rm -fr m4-*/
+#golang;             ! file_exist '/usr/lib/golang/api';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-1.+\.rpm' true
+#golang-src;         ! file_exist '/usr/lib/golang/src';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-src-.+\.rpm' true
+#golang-bin;         ! file_exist '/usr/lib/golang/bin';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'golang-bin-.+\.rpm' true
 

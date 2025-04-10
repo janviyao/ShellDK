@@ -207,7 +207,7 @@ function how_use_func
 
 function how_use_tool
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
 
     cat <<-END >&2
     ============================== Usage ==============================

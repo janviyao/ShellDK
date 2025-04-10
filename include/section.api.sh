@@ -15,7 +15,7 @@ function section_line_range
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
 
@@ -60,7 +60,7 @@ function section_has
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     
@@ -82,7 +82,7 @@ function section_key_has
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     
@@ -115,7 +115,7 @@ function section_val_has
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     
@@ -147,7 +147,7 @@ function section_line_nr
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
 
@@ -252,7 +252,7 @@ function section_get_keys
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     
@@ -308,7 +308,7 @@ function section_get_val
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
 
@@ -439,7 +439,7 @@ function section_del_section
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     
@@ -471,7 +471,7 @@ function section_del_key
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     
@@ -500,7 +500,7 @@ function section_del_line
         return 1
     fi
 
-    if ! have_file "${sec_file}";then
+    if ! file_exist "${sec_file}";then
         return 1
     fi 
     

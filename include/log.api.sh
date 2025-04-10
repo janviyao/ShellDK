@@ -140,7 +140,7 @@ function echo_header
         fi
 
         if math_bool "${HEADER_FILE}";then
-            header="${header} $(printf -- "[%-18s[%7d]]" "$(path2fname $0)" "$$")"
+            header="${header} $(printf -- "[%-18s[%7d]]" "$(file_get_fname $0)" "$$")"
         else
             header="${header} $(printf -- "[%7d]" "$$")"
         fi
@@ -172,7 +172,7 @@ function echo_erro
         fi
     fi
 
-    if ! have_file "${LOG_DISABLE}";then
+    if ! file_exist "${LOG_DISABLE}";then
         if [ -n "${REMOTE_IP}" ];then
             # echo -e "$(echo_header)${COLOR_ERROR}${FONT_BLINK}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
             echo >&2 -e "$(echo_header)${COLOR_ERROR}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
@@ -207,7 +207,7 @@ function echo_info
         fi
     fi
 
-    if ! have_file "${LOG_DISABLE}";then
+    if ! file_exist "${LOG_DISABLE}";then
         if [ -n "${REMOTE_IP}" ];then
             echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
             # echo -e "$(echo_header)${COLOR_INFO}${para}${COLOR_CLOSE}"
@@ -240,7 +240,7 @@ function echo_warn
         fi
     fi
 
-    if ! have_file "${LOG_DISABLE}";then
+    if ! file_exist "${LOG_DISABLE}";then
         if [ -n "${REMOTE_IP}" ];then
             echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
             # echo -e "$(echo_header)${COLOR_WARN}${FONT_BOLD}${para}${COLOR_CLOSE}"
@@ -273,7 +273,7 @@ function echo_debug
         fi
     fi
 
-    if ! have_file "${LOG_DISABLE}";then
+    if ! file_exist "${LOG_DISABLE}";then
         if [ -n "${REMOTE_IP}" ];then
             echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE} from [${REMOTE_IP}]"
             # echo -e "$(echo_header)${COLOR_DEBUG}${para}${COLOR_CLOSE}"

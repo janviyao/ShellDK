@@ -1,6 +1,6 @@
 #!/bin/sh
 source ${TEST_SUIT_ENV}
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 # configure core-dump path
 ${SUDO} ulimit -c unlimited
@@ -11,23 +11,23 @@ ${SUDO} "cat /dev/null > /var/log/kern; rm -f /var/log/kern-*"
 
 if math_bool "${APPLY_SYSCTRL}";then
     echo_info "sysctl reload"
-    have_file "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
+    file_exist "${ISCSI_ROOT_DIR}/conf/sysctl.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/sysctl.conf /etc/
     ${SUDO} sysctl -p
 fi
 
-have_file "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "iscsi-initiator-utils-.+\.rpm" true; }
+file_exist "/usr/sbin/iscsid" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "iscsi-initiator-utils-.+\.rpm" true; }
 have_cmd "sg_raw"             || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "sg3_utils-.+\.rpm" true; }
 
 if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
-    have_file "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-1.+\.rpm" true; }
-    have_file "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-libs-.+\.rpm" true; }
-    have_file "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-libs-.+\.rpm" true; }
-    have_file "/usr/sbin/multipathd"         || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-.+\.rpm" true; }
-    have_file "/usr/lib64/libaio.so.*"       || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libaio-.+\.rpm" true; }
+    file_exist "/usr/sbin/dmsetup"            || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-1.+\.rpm" true; }
+    file_exist "/usr/lib64/libdevmapper.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-libs-.+\.rpm" true; }
+    file_exist "/usr/lib64/libmultipath.so.*" || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-libs-.+\.rpm" true; }
+    file_exist "/usr/sbin/multipathd"         || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "device-mapper-multipath-.+\.rpm" true; }
+    file_exist "/usr/lib64/libaio.so.*"       || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "libaio-.+\.rpm" true; }
 fi
 
-have_file "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
-have_file "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
+file_exist "/etc/iscsi" || ${SUDO} mkdir -p /etc/iscsi
+file_exist "${ISCSI_ROOT_DIR}/conf/iscsid.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/iscsid.conf /etc/iscsi/
 
 if math_bool "${INITIATOR_DEBUG_ON}";then
     echo_info "enable iscsid debug"
@@ -40,7 +40,7 @@ if math_bool "${INITIATOR_DEBUG_ON}";then
         process_kill iscsid
     fi
 
-    log_dir=$(fname2path "${ISCSI_INITIATOR_LOG}")
+    log_dir=$(file_get_path "${ISCSI_INITIATOR_LOG}")
     ${SUDO} "mkdir -p ${log_dir}; chmod -R 777 ${log_dir}"
     ${SUDO} "nohup iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> ${ISCSI_INITIATOR_LOG} &"
 else
@@ -75,7 +75,7 @@ if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";t
         fi
     fi
 
-    have_file "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
+    file_exist "${ISCSI_ROOT_DIR}/conf/multipath.conf" && ${SUDO} cp -f ${ISCSI_ROOT_DIR}/conf/multipath.conf /etc/
     if process_exist "multipathd";then
         if math_bool "${ISCSI_MUTLIPATH_RESTART}";then
             echo_info "multipath restart"
@@ -92,14 +92,14 @@ else
     fi
 fi
 
-if have_file "/sys/module/dm_mod/parameters/use_blk_mq";then
+if file_exist "/sys/module/dm_mod/parameters/use_blk_mq";then
     para_val=$(cat /sys/module/dm_mod/parameters/use_blk_mq)
     if [[ "${para_val}" != "Y" ]];then
         echo_warn "dm blk_mq feature disable: /sys/module/dm_mod/parameters/use_blk_mq"
     fi
 fi
 
-if have_file "/sys/module/scsi_mod/parameters/use_blk_mq";then
+if file_exist "/sys/module/scsi_mod/parameters/use_blk_mq";then
     para_val=$(cat /sys/module/scsi_mod/parameters/use_blk_mq)
     if [[ "${para_val}" != "Y" ]];then
         echo_warn "scsi blk_mq feature disable: /sys/module/scsi_mod/parameters/use_blk_mq"

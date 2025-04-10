@@ -131,10 +131,10 @@ if have_cmd "ppid";then
     echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
 fi
 
-if __var_defined "BASH_WORK_DIR" && have_file "${BASH_WORK_DIR}";then
+if __var_defined "BASH_WORK_DIR" && file_exist "${BASH_WORK_DIR}";then
     echo_file "${LOG_DEBUG}" "share work: ${BASH_WORK_DIR}"
 else
-    have_file "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
+    file_exist "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
 
     if string_contain "${BTASK_LIST}" "master";then
         BASH_WORK_DIR="${GBL_USER_DIR}/bash.master.${ROOT_PID}"

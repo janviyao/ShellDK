@@ -7,8 +7,8 @@ CTRL_TASK="${CTRL_WORK_DIR}/task"
 CTRL_PIPE="${CTRL_WORK_DIR}/pipe"
 CTRL_FD=${CTRL_FD:-6}
 
-have_file "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
-have_file "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
+file_exist "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
+file_exist "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 		return 1
@@ -27,7 +27,7 @@ function ctrl_create_thread
         return 1
     fi
 
-    if ! have_file "${CTRL_PIPE}.run";then
+    if ! file_exist "${CTRL_PIPE}.run";then
         echo_erro "ctrl task [${CTRL_PIPE}.run] donot run for [$@]"
         return 1
     fi
@@ -53,7 +53,7 @@ function ctrl_task_ctrl_async
         one_pipe="${CTRL_PIPE}"
     fi
 
-    if ! have_file "${one_pipe}.run";then
+    if ! file_exist "${one_pipe}.run";then
         echo_erro "ctrl task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
@@ -76,7 +76,7 @@ function ctrl_task_ctrl_sync
         one_pipe="${CTRL_PIPE}"
     fi
 
-    if ! have_file "${one_pipe}.run";then
+    if ! file_exist "${one_pipe}.run";then
         echo_erro "ctrl task [${one_pipe}.run] donot run for [$@]"
         return 1
     fi
@@ -88,7 +88,7 @@ function ctrl_task_ctrl_sync
 function _bash_ctrl_exit
 { 
     echo_debug "ctrl signal exit"
-    if ! have_file "${CTRL_PIPE}.run";then
+    if ! file_exist "${CTRL_PIPE}.run";then
         echo_debug "ctrl task not started but signal EXIT"
         return 0
     fi
@@ -132,9 +132,9 @@ function _ctrl_thread_main
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! have_file "${ack_pipe}";then
+            if ! file_exist "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                if ! have_file "${CTRL_WORK_DIR}";then
+                if ! file_exist "${CTRL_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
                     break
                 fi
@@ -178,7 +178,7 @@ function _ctrl_thread_main
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [${bgpid}] to [${ack_pipe}]"
                 process_run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
-                if ! have_file "${CTRL_WORK_DIR}";then
+                if ! file_exist "${CTRL_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
                     break
                 fi
@@ -193,7 +193,7 @@ function _ctrl_thread_main
 
         echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
 
-        if ! have_file "${CTRL_WORK_DIR}";then
+        if ! file_exist "${CTRL_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
             break
         fi

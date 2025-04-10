@@ -3,7 +3,7 @@ source $MY_VIM_DIR/tools/paraparser.sh "h" "$@"
 
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
 
     cat <<-END >&2
     ============================== Usage ==============================

@@ -1,5 +1,5 @@
 #!/bin/bash
-CUR_DIR=$(current_scriptdir)
+CUR_DIR=$(file_get_path)
 
 pid_list=($(process_name2pid $1))
 if [ ${#pid_list[*]} -eq 0 ];then
@@ -22,7 +22,7 @@ STATS_HASH="cpu"
 g_save_dir=$(pwd)/bpftrace
 try_cnt=0
 tmp_dir=${g_save_dir}
-while have_file "${tmp_dir}"
+while file_exist "${tmp_dir}"
 do
     let try_cnt++
     tmp_dir=${g_save_dir}${try_cnt}

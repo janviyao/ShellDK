@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_info "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 for ipaddr in ${SERVER_IP_ARRAY[*]}
 do

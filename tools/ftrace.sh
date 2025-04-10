@@ -1,7 +1,7 @@
 #!/bin/bash
 function how_use
 {
-    local script_name=$(path2fname $0)
+    local script_name=$(file_get_fname $0)
     echo "=================== Usage ==================="
     printf -- "%-15s <app-name> | <app-pid>\n" "${script_name}"
     printf -- "%-15s @%s\n" "<app-name>"   "name of running-app which it will be ftraced"
@@ -17,7 +17,7 @@ fi
 save_dir=$(pwd)/ftrace
 try_cnt=0
 tmp_dir=${save_dir}
-while have_file "${tmp_dir}"
+while file_exist "${tmp_dir}"
 do
     let try_cnt++
     tmp_dir=${save_dir}${try_cnt}
@@ -25,7 +25,7 @@ done
 save_dir=${tmp_dir}
 mkdir -p ${save_dir}
 
-if have_file "/sys/kernel/debug/tracing/trace";then
+if file_exist "/sys/kernel/debug/tracing/trace";then
     trace_dir="/sys/kernel/debug/tracing"
 else
     sudo_it "mount -t tracefs tracefs /sys/kernel/debug/tracing"
@@ -99,7 +99,7 @@ if [[ "${cur_tracer}" == "nop" ]];then
     # kprobe_profile：动态事件触发的次数
     # kprobe需要对应内核ko驱动支持，参数tools/kprobe/*
     # $SUDO "echo 'p:myprobe xxx_set_dma_addr base_addr=%x0 ds_ch=%x1 y_addr=%x2 cb_addr=%x' > ${trace_dir}/kprobe_events"
-    # if have_file "${trace_dir}/events/kprobes/enable";then
+    # if file_exist "${trace_dir}/events/kprobes/enable";then
     #     $SUDO "echo 1 > ${trace_dir}/events/kprobes/enable"
     # fi
 

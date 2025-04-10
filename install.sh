@@ -141,23 +141,23 @@ function clean_env
     do
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            file_exist "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         else
-            have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            file_exist "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
 
     linkf=".vimrc"
     echo_debug "remove slink: ${linkf}"
     if [[ ${linkf:0:1} == "." ]];then
-        have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+        file_exist "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
     else
-        have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+        file_exist "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
     fi
 
     local TIMER_RUNDIR=${GBL_USER_DIR}/timer
-    have_file "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
-    have_file "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
+    file_exist "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
+    file_exist "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
@@ -169,19 +169,19 @@ function clean_env
         cron_dir="/var/cron/tabs"
     fi
 
-    if have_file "${cron_dir}";then
+    if file_exist "${cron_dir}";then
         ${SUDO} file_del "${cron_dir}/${MY_NAME}" ".+timer\.sh" true
     fi
 
-    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
-    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
-    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
-    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
-    have_file "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
-    #have_file "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
+    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
+    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
+    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
+    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
+    #file_exist "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    have_file "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
-    have_file "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
+    file_exist "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
+    file_exist "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
 
     local spec
     if [[ "${SYSTEM}" == "Linux" ]]; then
@@ -192,19 +192,19 @@ function clean_env
 
     for spec in ${must_deps[*]}
     do
-        have_file "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
+        file_exist "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
     done
 }
 
 function inst_env
 {
-    have_file "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
-    if ! have_file "${GBL_USER_DIR}/.${USR_NAME}";then
+    file_exist "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
+    if ! file_exist "${GBL_USER_DIR}/.${USR_NAME}";then
         echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_USER_DIR}/.${USR_NAME} 
     fi
 
-    have_file "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
-    if ! have_file "${GBL_USER_DIR}/.askpass.sh";then
+    file_exist "${GBL_USER_DIR}/.askpass.sh" && rm -f ${GBL_USER_DIR}/.askpass.sh
+    if ! file_exist "${GBL_USER_DIR}/.askpass.sh";then
         new_password="$(system_encrypt "${USR_PASSWORD}")"
         echo "#!/bin/bash"                                                 >  ${GBL_USER_DIR}/.askpass.sh
         echo "if [ -z \"\${USR_PASSWORD}\" ];then"                         >> ${GBL_USER_DIR}/.askpass.sh
@@ -257,19 +257,19 @@ function inst_env
         local link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            file_exist "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            file_exist "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
             ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     done
 
-	have_file "${MY_HOME}/.bashrc" || ( have_file "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc )
-	have_file "${MY_HOME}/.bash_profile" || ( have_file "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile )
+	file_exist "${MY_HOME}/.bashrc" || ( file_exist "/etc/skel/.bashrc" && cp -f /etc/skel/.bashrc ${MY_HOME}/.bashrc )
+	file_exist "${MY_HOME}/.bash_profile" || ( file_exist "/etc/skel/.bash_profile" && cp -f /etc/skel/.bash_profile ${MY_HOME}/.bash_profile )
 
-    have_file "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
-    #have_file "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
+    file_exist "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
+    #file_exist "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
     file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
     file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
@@ -285,17 +285,17 @@ function inst_env
     echo "source ${MY_VIM_DIR}/bashrc" >> ${MY_HOME}/.bashrc
     #echo "source ${MY_VIM_DIR}/bash_profile" >> ${MY_HOME}/.bash_profile
 
-    if have_file "${MY_HOME}/.ssh";then
-        have_file "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
-        have_file "${MY_HOME}/.ssh/id_rsa.pub" && rm -f ${MY_HOME}/.ssh/id_rsa.pub
+    if file_exist "${MY_HOME}/.ssh";then
+        file_exist "${MY_HOME}/.ssh/id_rsa" && rm -f ${MY_HOME}/.ssh/id_rsa
+        file_exist "${MY_HOME}/.ssh/id_rsa.pub" && rm -f ${MY_HOME}/.ssh/id_rsa.pub
     else
         mkdir -p ${MY_HOME}/.ssh
     fi
     cp -f ${MY_VIM_DIR}/ssh_key/* ${MY_HOME}/.ssh
     chmod 600 ${MY_HOME}/.ssh/id_rsa
 
-    have_file "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
-    if ! have_file "${MY_HOME}/.rsync.exclude";then
+    file_exist "${MY_HOME}/.rsync.exclude" && rm -f ${MY_HOME}/.rsync.exclude
+    if ! file_exist "${MY_HOME}/.rsync.exclude";then
         echo "build/*"  >  ${MY_HOME}/.rsync.exclude
         echo ".git/*"   >> ${MY_HOME}/.rsync.exclude
         echo "tags"     >> ${MY_HOME}/.rsync.exclude
@@ -312,18 +312,18 @@ function inst_env
 
     # timer
     local TIMER_RUNDIR=${GBL_USER_DIR}/timer
-    if ! have_file "${TIMER_RUNDIR}";then
+    if ! file_exist "${TIMER_RUNDIR}";then
         mkdir -p ${TIMER_RUNDIR}
         chmod 777 ${TIMER_RUNDIR}
     fi
 
-    have_file "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
-    if ! have_file "${TIMER_RUNDIR}/.timerc";then
+    file_exist "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
+    if ! file_exist "${TIMER_RUNDIR}/.timerc";then
         echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/.timerc
         echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/.timerc
     fi
 
-    if ! have_file "${MY_HOME}/.timerc";then
+    if ! file_exist "${MY_HOME}/.timerc";then
         echo "#!/bin/bash"                     >  ${MY_HOME}/.timerc
         chmod +x ${MY_HOME}/.timerc 
     fi
@@ -345,9 +345,9 @@ function inst_env
     fi
 
 	local cmd_pre=""
-    if have_file "${cron_dir}";then
+    if file_exist "${cron_dir}";then
         sudo_it chmod o+x ${cron_dir} 
-        if have_file "${cron_dir}/${MY_NAME}";then
+        if file_exist "${cron_dir}/${MY_NAME}";then
             ${SUDO} file_del "${cron_dir}/${MY_NAME}" "\".+timer\.sh\s+${MY_NAME}\"" true
             sudo_it "echo \"*/5 * * * * ${cmd_pre}${MY_VIM_DIR}/timer.sh ${MY_NAME}\" >> ${cron_dir}/${MY_NAME}"
         else
@@ -437,7 +437,7 @@ function inst_vim
         fi
 
         sudo_it rm -f /usr/local/bin/vim
-        have_file "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
+        file_exist "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
 
 		local vim_dir=$(efind ${MY_VIM_DIR}/deps "vim-\d+\.\d+\.\d+")
@@ -450,10 +450,10 @@ function inst_vim
     local link_file="${MY_VIM_DIR}/vimrc"
     echo_debug "create slink: ${linkf}"
     if [[ ${linkf:0:1} == "." ]];then
-        have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+        file_exist "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
         ln -s ${link_file} ${MY_HOME}/${linkf}
     else
-        have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+        file_exist "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
         ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
     fi
 
@@ -463,7 +463,7 @@ function inst_vim
     cp -fr ${MY_VIM_DIR}/colors ${MY_HOME}/.vim
     cp -fr ${MY_VIM_DIR}/syntax ${MY_HOME}/.vim
 
-    if ! have_file "${MY_HOME}/.vim/bundle/vundle"; then
+    if ! file_exist "${MY_HOME}/.vim/bundle/vundle"; then
         cd ${MY_VIM_DIR}/deps
         if [ -f bundle.tar.gz ]; then
             tar -xzf bundle.tar.gz
@@ -472,7 +472,7 @@ function inst_vim
     fi
 
     if check_net;then
-        if ! have_file "${MY_HOME}/.vim/bundle/vundle"; then
+        if ! file_exist "${MY_HOME}/.vim/bundle/vundle"; then
             mygit clone https://github.com/gmarik/vundle.git ${MY_HOME}/.vim/bundle/vundle
             #vim +BundleInstall +q +q
         #else
@@ -504,9 +504,9 @@ function inst_glibc
     local version_new=($(string_regex "${version}" "\d+\.\d+(\.\d+)?"))
 
     if __version_lt ${version_cur} ${version_new}; then
-		if ! have_file "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
+		if ! file_exist "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
 			wget -c https://mirrors.aliyun.com/gnu/glibc/glibc-${version_new}.tar.gz -O ${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz
-			if ! have_file "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
+			if ! file_exist "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
 				echo_erro "download failed: https://mirrors.aliyun.com/gnu/glibc/glibc-${version_new}.tar.gz"
 				return 1
 			fi
@@ -571,10 +571,10 @@ function inst_cygwin
         local link_file=${commandMap["apt-cyg"]}
         echo_debug "create slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
-            have_file "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
+            file_exist "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
             ln -s ${link_file} ${MY_HOME}/${linkf}
         else
-            have_file "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
+            file_exist "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
             ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
         fi
     fi

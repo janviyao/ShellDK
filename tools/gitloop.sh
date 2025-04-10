@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(path2fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
 
 RUN_DIR="$1"
 if [ ! -d ${RUN_DIR} ]; then
@@ -28,7 +28,7 @@ function _loop_callback1
 	done
 
 	logr_task_ctrl_sync "ERASE_LINE" 
-	if have_file "${outfile}";then
+	if file_exist "${outfile}";then
 		logr_task_ctrl_sync "PRINT_FROM_FILE" "${outfile}"
 		rm -f ${outfile}
 	fi
