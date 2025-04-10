@@ -1,5 +1,5 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/paraparser.sh "hr" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "h r src-regex x: exclude-str:" "$@"
 
 function how_use
 {
@@ -19,7 +19,8 @@ function how_use
 
     OPTIONS
         -h|--help                         # show this message
-        -r|--src-regex true/false         # indicate <old-string> is a regex string
+        -r|--src-regex                    # indicate <old-string> is a regex string
+        -x|--exclude-str 'string'         # exclude <string> which will match all path
 
     EXAMPLES
         myreplace 'aaa' 'bbb' ./file/file
@@ -43,6 +44,7 @@ if math_bool "${OPT_HELP}";then
 fi
 
 SRC_REGEX=$(get_optval "-r" "--src-regex")
+EXCL_STRS=($(get_optval "-x" "--exclude-str"))
 OLD_STR=$(get_subcmd 0)
 NEW_STR=$(get_subcmd 1)
 FILE_LIST=($(get_subcmd '2-'))
@@ -66,6 +68,22 @@ function do_replace
     local is_reg="${4:-false}"
 
     echo_debug "do_replace [$@]"
+	local excl
+	for excl in ${EXCL_STRS[*]}
+	do
+		if math_bool "${is_reg}";then
+			if match_regex "${xfile}" "${excl}";then
+				echo_warn "Jump    [${xfile}]"
+				return 0
+			fi
+		else
+			if string_contain "${xfile}" "${excl}";then
+				echo_warn "Jump    [${xfile}]"
+				return 0
+			fi
+		fi
+	done
+
     if [ -d "${xfile}" ];then
         #xfile=$(cd ${xfile};pwd)
         xfile=$(string_trim "${xfile}" "/" 2)

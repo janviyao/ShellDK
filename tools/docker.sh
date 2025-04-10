@@ -18,7 +18,8 @@ function func_create
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="bash"
 	local options=""
@@ -65,7 +66,8 @@ function func_enter
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="bash"
 	local options=""
@@ -111,7 +113,8 @@ function func_start
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="bash"
 	local options=""
@@ -157,7 +160,8 @@ function func_stop
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="bash"
 	local options=""
@@ -203,7 +207,8 @@ function func_copy_to
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="copy_to"
 	local options=""
@@ -252,7 +257,8 @@ function func_copy_from
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="copy_from"
 	local options=""

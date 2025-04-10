@@ -3,17 +3,12 @@ set -o allexport
 declare -a _OPTION_ALL=()
 declare -A _OPTION_MAP=()
 declare -a _SUBCMD_ALL=()
-
-declare -n _OPTION_ALL_REF="_OPTION_ALL"
-declare -n _OPTION_MAP_REF="_OPTION_MAP"
-declare -n _SUBCMD_ALL_REF="_SUBCMD_ALL"
-
-shortopts="$1"
+declare -a _SHORT_OPTS=($1)
 shift
 
-para_fetch "${shortopts}" _OPTION_ALL_REF _OPTION_MAP_REF _SUBCMD_ALL_REF "$@"
+para_fetch _SHORT_OPTS _OPTION_ALL _OPTION_MAP _SUBCMD_ALL "$@"
 if [ $? -ne 0 ];then
-	echo_erro "failed: para_fetch \"${shortopts}\" _OPTION_ALL_REF _OPTION_MAP_REF _SUBCMD_ALL_REF \"$@\""
+	echo_erro "failed: para_fetch _SHORT_OPTS _OPTION_ALL _OPTION_MAP _SUBCMD_ALL \"$@\""
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 		return 1
 	else
@@ -44,7 +39,7 @@ function get_optval
 			opt=$(string_replace "${opt}" " " "${GBL_SPACE}")
 		fi
 
-        local value=${_OPTION_MAP_REF[${opt}]}
+        local value=${_OPTION_MAP[${opt}]}
         #echo_debug "key: ${opt} value: ${value}"
         if [ -n "${value}" ];then
 			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
@@ -66,7 +61,7 @@ function get_subcmd
 	local index_s="0"
 	local index_e="$"
 	
-	if [ ${#_SUBCMD_ALL_REF[*]} -eq 0 ];then
+	if [ ${#_SUBCMD_ALL[*]} -eq 0 ];then
 		return 1
 	fi
 
@@ -94,12 +89,12 @@ function get_subcmd
     fi
 
 	if [[ "${index_e}" == '$' ]];then
-		index_e=$((${#_SUBCMD_ALL_REF[*]} - 1))
+		index_e=$((${#_SUBCMD_ALL[*]} - 1))
 	fi
 
 	for ((index=index_s; index<=index_e; index++))
 	do
-		local value=${_SUBCMD_ALL_REF[${index}]}
+		local value=${_SUBCMD_ALL[${index}]}
 		if [ -n "${value}" ];then
 			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
 				if ! math_bool "${is_inner}";then
@@ -123,12 +118,12 @@ function get_subcmd_all
 	fi
 
 	local next_cmd=""
-	local index total=${#_SUBCMD_ALL_REF[*]}
+	local index total=${#_SUBCMD_ALL[*]}
 	for ((index= 0; index < ${total}; index++))
 	do
-		if [[ "${_SUBCMD_ALL_REF[${index}]}" == "${subcmd}" ]];then
+		if [[ "${_SUBCMD_ALL[${index}]}" == "${subcmd}" ]];then
 			if [ $((index + 1)) -lt ${total} ];then
-				next_cmd="${_SUBCMD_ALL_REF[$((index + 1))]}"
+				next_cmd="${_SUBCMD_ALL[$((index + 1))]}"
 				break
 			fi
 		fi
@@ -136,7 +131,7 @@ function get_subcmd_all
 	
 	local sub_found=0
     local elem
-    for elem in ${_OPTION_ALL_REF[*]}
+    for elem in ${_OPTION_ALL[*]}
     do
         if [[ "${elem}" == "${subcmd}" ]];then
         	let sub_found++
@@ -170,7 +165,12 @@ function get_subcmd_optval
 	local -a subcmd_option_all=()
 	local -A subcmd_option_map=()
 	local -a subcmd_subcmd_all=()
-	para_fetch "${shortopts}" subcmd_option_all subcmd_option_map subcmd_subcmd_all "${subcmd_options[@]}"
+
+	para_fetch _SHORT_OPTS subcmd_option_all subcmd_option_map subcmd_subcmd_all "${subcmd_options[@]}"
+	if [ $? -ne 0 ];then
+		echo_erro "failed: para_fetch _SHORT_OPTS subcmd_option_all subcmd_option_map subcmd_subcmd_all \"${subcmd_options[@]}\""
+		return 1
+	fi
 
     local opt
     for opt in "${options[@]}"
@@ -200,23 +200,23 @@ function para_import
     local -n subcmd_all_ref="$3"
 	local key value
 
-	_OPTION_ALL_REF=(${option_all_ref[*]})
+	_OPTION_ALL=(${option_all_ref[*]})
 
-	unset _OPTION_MAP_REF
+	unset _OPTION_MAP
 	for key in "${!option_map_ref[@]}"
 	do
 		value=${option_map_ref[${key}]}
-		_OPTION_MAP_REF[${key}]="${value}"
+		map_add _OPTION_MAP ${key} ${value}
 	done
 
-	_SUBCMD_ALL_REF=(${subcmd_all_ref[*]})
+	_SUBCMD_ALL=(${subcmd_all_ref[*]})
 }
 
 function para_debug
 {
-    local -n option_all_ref="${1:-_OPTION_ALL_REF}"
-    local -n option_map_ref="${2:-_OPTION_MAP_REF}"
-    local -n subcmd_all_ref="${3:-_SUBCMD_ALL_REF}"
+    local -n option_all_ref="${1:-_OPTION_ALL}"
+    local -n option_map_ref="${2:-_OPTION_MAP}"
+    local -n subcmd_all_ref="${3:-_SUBCMD_ALL}"
 	local idx key opt
 
     printf -- "%s:\n" "option_all[${#option_all_ref[*]}]"

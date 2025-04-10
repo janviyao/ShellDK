@@ -49,7 +49,8 @@ function func_clone
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "hr" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h' 'r')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="clone"
 	local options=""
@@ -108,7 +109,8 @@ function func_log
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "ha:author:c:committer:t:time:g:grep:" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h' 'a:' 'author:' 'c:' 'committer:' 't:' 'time:' 'g:' 'grep:')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	if [ ${#option_map[*]} -le 0 ];then
 		return 1
@@ -164,7 +166,8 @@ function func_add
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="add"
 	local key
@@ -206,7 +209,8 @@ function func_commit
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="commit"
 	local key
@@ -259,7 +263,8 @@ function func_patch
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="patch"
 	local key
@@ -328,7 +333,8 @@ function func_apply
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="apply"
 	local key
@@ -401,7 +407,8 @@ function func_pull
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="pull"
 	local key
@@ -469,7 +476,8 @@ function func_push
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "hhelpfforce" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h' 'help' 'f' 'force')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local force_opt=""
 	local subcmd="push"
@@ -516,7 +524,8 @@ function func_checkout
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="checkout"
 	local key
@@ -625,7 +634,8 @@ function func_amend
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="amend"
 	local key
@@ -682,7 +692,8 @@ function func_grep
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "hlfiEPF" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h' 'l' 'f' 'i' 'E' 'P' 'F')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local look_mode="log"
 	local subcmd="grep"
@@ -762,7 +773,8 @@ function func_all
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="all"
 	local key
@@ -834,7 +846,8 @@ function func_submodule_add
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="submodule_add"
 	local key
@@ -893,7 +906,8 @@ function func_submodule_deinit
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="submodule_deinit"
 	local key
@@ -948,7 +962,8 @@ function func_submodule_del
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="submodule_del"
 	local key
@@ -1017,7 +1032,8 @@ function func_submodule_update
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "h" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="submodule_update"
 	local key

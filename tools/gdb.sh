@@ -21,7 +21,8 @@ function func_eval
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="eval"
 	local options=""
@@ -81,7 +82,8 @@ function func_script
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	para_fetch "" "option_all" "option_map" "subcmd_all" "$@"
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	local subcmd="script"
 	local options=""
