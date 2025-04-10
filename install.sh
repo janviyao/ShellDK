@@ -12,9 +12,9 @@ if [ $? -ne 0 ];then
 	exit 1
 fi
 
-source ${MY_VIM_DIR}/tools/paraparser.sh "n:r:c:f:o:" "$@"
+source ${MY_VIM_DIR}/tools/paraparser.sh "n: r: c: f: o:" "$@"
 if [ $? -ne 0 ];then
-	echo_erro "failed: paraparser.sh \"n:r:c:f:o:\" \"$@\""
+	echo_erro "failed: paraparser.sh \"n: r: c: f: o:\" \"$@\""
 	exit 1
 fi
 

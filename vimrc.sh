@@ -1,6 +1,6 @@
 #!/bin/bash
 echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
-source $MY_VIM_DIR/tools/paraparser.sh "m:p:o:" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "m: p: o:" "$@"
 #set -x
 
 OP_MODE=$(get_optval "-m" "--mode")
