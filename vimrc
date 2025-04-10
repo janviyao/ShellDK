@@ -505,7 +505,7 @@ vnoremap <silent> <C-k> 6k
 nnoremap <silent> <Leader>p  :call ReplaceWord()<CR>
 
 "搜索光标下单词
-nnoremap <silent> <Leader>rg :call QuickfixDo("grep")<CR>
+nnoremap <silent> <Leader>rg :call QuickfixDo("grep", expand("<cword>"))<CR>
 
 "替换字符串
 nnoremap <silent> <Leader>gr :call GlobalReplace()<CR>
@@ -1095,7 +1095,7 @@ function! QuickfixDo(opmode, arg="")
     if a:opmode == "cs"
         call Quickfix_csfind(a:arg)
     elseif a:opmode == "grep" 
-        call Quickfix_grep()
+        call Quickfix_grep(a:arg)
     endif
 endfunction
 

@@ -1052,13 +1052,14 @@ function! quickfix#grep_find(csarg)
         call quickfix#ctrl_main("clear")
     endif
 	
-	let pattern = input('Search for perl-regex pattern: ', expand('<cword>'))
+	let pattern = input('Search for perl-regex pattern: ', a:csarg)
 	if pattern == ''
 		return
 	endif
+	let pattern = substitute(pattern, '[#]', '\\#', 'g')
 
-    silent! normal! g`X
-    silent! delmarks X
+    "silent! normal! g`X
+    "silent! delmarks X
     execute "Rgrep ".pattern
 
     if empty(getqflist())

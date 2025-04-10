@@ -34,17 +34,16 @@ function! Quickfix_csfind(ccmd)
     call quickfix#csfind(a:ccmd, csarg)
 endfunction
 
-function! Quickfix_grep()
-    let csarg = expand('<cword>')
-    silent! normal! mX
+function! Quickfix_grep(arg)
+    "silent! normal! mX
 
-    call LogPrint("2file", "GrepFind: ".csarg)
+    call LogPrint("2file", "GrepFind: ".a:arg)
     call ToggleWindow("allclose")
 
     call quickfix#ctrl_main("save")
     call quickfix#ctrl_main("clear")
 
-    call quickfix#grep_find(csarg)
+    call quickfix#grep_find(a:arg)
 endfunction
 
 function! Quickfix_leave()
