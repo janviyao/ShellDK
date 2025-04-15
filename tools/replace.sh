@@ -99,12 +99,14 @@ function do_replace
             do_replace "${next}" "${string}" "${new_str}" ${is_reg} 
         else
             if [ -f "${next}" ];then
-                file_replace "${next}" "${string}" "${new_str}" ${is_reg} 
-                if [ $? -eq 0 ];then
-                    echo_info "Success [${next}]"
-                else
-                    echo_info "Failure [${next}]"
-                fi
+				if file_has "${next}" "${string}" ${is_reg} ;then
+					file_replace "${next}" "${string}" "${new_str}" ${is_reg} 
+					if [ $? -eq 0 ];then
+						echo_info "Success [${next}]"
+					else
+						echo_info "Failure [${next}]"
+					fi
+				fi
             fi
         fi
     done
