@@ -151,7 +151,7 @@ function file_expire
     fi
 }
 
-function file_has
+function file_contain
 {
     local xfile="$1"
     local string="$2"

@@ -99,7 +99,7 @@ function do_replace
             do_replace "${next}" "${string}" "${new_str}" ${is_reg} 
         else
             if [ -f "${next}" ];then
-				if file_has "${next}" "${string}" ${is_reg} ;then
+				if file_contain "${next}" "${string}" ${is_reg} ;then
 					file_replace "${next}" "${string}" "${new_str}" ${is_reg} 
 					if [ $? -eq 0 ];then
 						echo_info "Success [${next}]"

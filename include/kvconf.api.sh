@@ -18,7 +18,7 @@ function kvconf_has_key
         return 1
     fi 
     
-    if file_has ${kv_file} "^\s*${key_str}\s*${KV_FS}" true;then
+    if file_contain ${kv_file} "^\s*${key_str}\s*${KV_FS}" true;then
         return 0
     else
         return 1
