@@ -93,15 +93,15 @@ function process_run_with_condition
 
 function process_run_callback
 {
+    if [ $# -le 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: callback function with command retcode and command output file\n\$2~N: command sequence"
+        return 1
+    fi
+
     local cb_func="$1"
     local cb_args="$2"
     shift 2
 	local cmd_str=$(para_pack "$@")
-
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: callback function with command retcode and command output file\n\$2~N: command sequence"
-        return 1
-    fi
 
     local outfile=$(file_temp)
 	bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; if [ -n '${cb_func}' ];then ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}; fi" &> /dev/null &
@@ -110,6 +110,21 @@ function process_run_callback
     echo_file "${LOG_DEBUG}" "pid[${bgpid}] { '${cb_func}' '${cb_args}' '${cmd_str}' '${outfile}' }"
 	
     return 0 
+}
+
+function process_run_with_threads
+{
+	if [ $# -le 2 ];then
+		echo_erro "\nUsage: [$@]\n\$1: thread function\n\$2: running thread number\n\$3~N: thread parameter list"
+		return 1
+	fi
+
+	local cb_func="$1"
+	local tid_num="$2"
+	shift 2
+
+	printf "%s\n" "$@" | xargs -P ${tid_num} -I {} bash -c "${cb_func} {}"
+	return $?
 }
 
 function process_run_timeout

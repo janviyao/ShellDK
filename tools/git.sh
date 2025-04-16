@@ -68,7 +68,7 @@ function func_clone
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -81,10 +81,10 @@ function func_clone
 	if [ -n "${msg}" ];then
 		process_run git clone ${options} ${msg}
 	else
-		return 1
+		return 22
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['log']=$(cat << EOF
@@ -113,7 +113,7 @@ function func_log
 	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	if [ ${#option_map[*]} -le 0 ];then
-		return 1
+		return 22
 	fi
 
 	local subcmd="log"
@@ -139,12 +139,12 @@ function func_log
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['add']=$(cat << EOF
@@ -181,13 +181,13 @@ function func_add
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
 	
 	process_run git add -A
-    return 0
+    return $?
 }
 
 subcmd_func_map['commit']=$(cat << EOF
@@ -224,7 +224,7 @@ function func_commit
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -237,10 +237,10 @@ function func_commit
 	if [ -n "${msg}" ];then
 		process_run git commit -s -m "${msg}"
 	else
-		return 1
+		return 22
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['patch']=$(cat << EOF
@@ -278,7 +278,7 @@ function func_patch
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -311,7 +311,7 @@ function func_patch
 		fi
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['apply']=$(cat << EOF
@@ -348,7 +348,7 @@ function func_apply
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -385,7 +385,7 @@ function func_apply
 		fi
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['pull']=$(cat << EOF
@@ -422,7 +422,7 @@ function func_pull
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -453,7 +453,7 @@ function func_pull
 		func_submodule_update
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['push']=$(cat << EOF
@@ -495,14 +495,18 @@ function func_push
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
 
     local cur_branch=$(git symbolic-ref --short -q HEAD)
     process_run git push origin ${cur_branch} ${force_opt}
-    return 0
+	if [ $? -eq 0 ];then
+		process_run git branch --set-upstream-to=origin/${cur_branch} ${cur_branch}
+	fi
+
+    return $?
 }
 
 subcmd_func_map['checkout']=$(cat << EOF
@@ -539,7 +543,7 @@ function func_checkout
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -576,8 +580,9 @@ function func_checkout
 			fi
 		fi
 		
-		if [ $? -ne 0 ];then
-			return 0
+		local retcode=$?
+		if [ ${retcode} -ne 0 ];then
+			return ${retcode}
 		fi
 
 		local cur_branch=$(git symbolic-ref --short -q HEAD)
@@ -609,10 +614,10 @@ function func_checkout
 			done
 		fi
 	else
-		return 1
+		return 22
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['amend']=$(cat << EOF
@@ -649,7 +654,7 @@ function func_amend
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -662,10 +667,10 @@ function func_amend
 	if [ -n "${msg}" ];then
 		process_run git commit --amend -s -m "${msg}"
 	else
-		return 1
+		return 22
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['grep']=$(cat << EOF
@@ -727,7 +732,7 @@ function func_grep
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -744,12 +749,13 @@ function func_grep
 			process_run git log --grep "${pattern}" ${options} --oneline
 		else
 			echo_erro "look_mode { ${look_mode} } invalid!"
+			return 22
 		fi
 	else
-		return 1
+		return 22
 	fi
 
-    return 0
+    return $?
 }
 
 subcmd_func_map['all']=$(cat << EOF
@@ -788,43 +794,37 @@ function func_all
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
 
-	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
-	fi
-	
-	if [ -n "${msg}" ];then
-		local change_files=($(get_change_list))
+	local change_files=($(get_change_list))
 
-		process_run git add -A
-		if [ $? -ne 0 ];then
-			return 0
-		fi
-
-		process_run git commit -s -m "${msg}"
-		if [ $? -ne 0 ];then
-			process_run git restore --staged ${change_files[*]}
-			return 0
-		fi
-
-		local cur_branch=$(git symbolic-ref --short -q HEAD)
-		process_run git push origin ${cur_branch}
-		if [ $? -ne 0 ];then
-			# rollback commit
-			process_run git reset --soft HEAD^
-			# rollback add
-			process_run git restore --staged ${change_files[*]}
-		fi
-	else
-		return 1
+	func_add "$@"
+	local retcode=$?
+	if [ ${retcode} -ne 0 ];then
+		return ${retcode}
 	fi
 
-    return 0
+	func_commit "$@"
+	retcode=$?
+	if [ ${retcode} -ne 0 ];then
+		process_run git restore --staged ${change_files[*]}
+		return ${retcode}
+	fi
+
+	func_push "$@"
+	retcode=$?
+	if [ ${retcode} -ne 0 ];then
+		# rollback commit
+		process_run git reset --soft HEAD^
+		# rollback add
+		process_run git restore --staged ${change_files[*]}
+		return ${retcode}
+	fi
+
+	return 0
 }
 
 subcmd_func_map['submodule_add']=$(cat << EOF
@@ -861,7 +861,7 @@ function func_submodule_add
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -871,20 +871,21 @@ function func_submodule_add
     local branch="${subcmd_all[2]:-master}"
 
     if [ ${#subcmd_all[*]} -ne 3 ];then
-        return 1
+        return 22
     fi
 
     if file_exist "${subdir}";then
         echo_erro "sub-directory { ${subdir} } already exists!"
-        return 1
+        return 2
     fi
 
     process_run git submodule add ${repo} ${subdir}
-    if [ $? -eq 0 ];then
+    local retcode=$?
+    if [ ${retcode} -eq 0 ];then
         git config -f .gitmodules submodule.${repo}.branch ${branch}
     fi
 
-    return 0
+    return ${retcode}
 }
 
 subcmd_func_map['submodule_deinit']=$(cat << EOF
@@ -921,7 +922,7 @@ function func_submodule_deinit
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -940,7 +941,7 @@ function func_submodule_deinit
 	fi
 
 	process_run git submodule deinit --force ${repo}
-	return 0
+	return $?
 }
 
 subcmd_func_map['submodule_del']=$(cat << EOF
@@ -977,7 +978,7 @@ function func_submodule_del
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -996,14 +997,16 @@ function func_submodule_del
 	fi
 
     process_run git rm --cached ${repo}
+    local retcode=$?
     if [ $? -ne 0 ];then
-		return 0
+		return ${retcode}
 	fi
 
     section_del_section .gitmodules "submodule \"${repo}\""
-    if [ $? -ne 0 ];then
+    retcode=$?
+    if [ ${retcode} -ne 0 ];then
         echo_erro "failed { section_del_section .gitmodules 'submodule \"${repo}\"' }"
-		return 1
+		return ${retcode}
 	fi
 
 	if file_exist ".git/modules/${repo}";then
@@ -1047,7 +1050,7 @@ function func_submodule_update
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
+				return 22
 				;;
 		esac
 	done
@@ -1072,7 +1075,7 @@ function func_submodule_update
 		fi
     fi
 
-    return 0
+    return $?
 }
 
 function how_use_func
@@ -1157,6 +1160,11 @@ else
 fi
 
 func_${SUB_CMD} ${SUB_OPTS}
-if [ $? -ne 0 ];then
+retcode=$?
+if [ ${retcode} -eq 22 ];then
     how_use_func "${SUB_CMD}"
+elif [ ${retcode} -ne 0 ];then
+	echo_erro "failed(${retcode}): func_${SUB_CMD} ${SUB_OPTS}"
 fi
+
+exit ${retcode}

@@ -66,6 +66,7 @@ function do_replace
     local string="$2"
     local new_str="$3"
     local is_reg="${4:-false}"
+	local -a bg_tasks
 
     echo_debug "do_replace [$@]"
 	local excl
@@ -96,7 +97,8 @@ function do_replace
     for next in ${xfile_list[*]}
     do
         if [ -d "${next}" ];then
-            do_replace "${next}" "${string}" "${new_str}" ${is_reg} 
+           do_replace "${next}" "${string}" "${new_str}" ${is_reg} &
+           array_add bg_tasks $!
         else
             if [ -f "${next}" ];then
 				if file_contain "${next}" "${string}" ${is_reg} ;then
@@ -110,6 +112,10 @@ function do_replace
             fi
         fi
     done
+	
+	if [ ${#bg_tasks[*]} -gt 0 ];then
+		wait ${bg_tasks[*]}
+	fi
 }
 
 for xfile in ${FILE_LIST[*]}
@@ -119,6 +125,8 @@ do
         continue
     fi
 
-    do_replace "${xfile}" "${OLD_STR}" "${NEW_STR}" "${SRC_REGEX}"
+    do_replace "${xfile}" "${OLD_STR}" "${NEW_STR}" "${SRC_REGEX}" &
 done
+
+wait
 cd ${CUR_DIR}
