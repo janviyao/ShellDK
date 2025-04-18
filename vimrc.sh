@@ -124,6 +124,7 @@ function create_project
             fi
 
             if match_regex "${line}" "^/";then
+				line=$(string_replace "${line}" '^/' '' true)
                 line="^${line}"
             fi
 
