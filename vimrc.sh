@@ -176,8 +176,16 @@ function create_project
         done < .gitignore
     fi
     
-    local line_nr=$(file_linenr ${OUT_DIR}/cscope.files)
-    if [ -n "${line_nr}" ] && [ ${line_nr} -le 1 ];then
+	local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+	file_del ${OUT_DIR}/cscope.files ".+\/\..+" true
+	if [ $? -ne 0 ];then
+		echo_erro "failed: file_del ${OUT_DIR}/cscope.files \".+\/\..+\" true"
+		return 1
+	fi
+	local curr_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+	echo_debug "file_del { .+\/\..+ } lines=$((${prev_lines} - ${curr_lines}))"
+
+    if [ -n "${curr_lines}" ] && [ ${curr_lines} -le 1 ];then
         echo_erro "cscope.files empty"
         return 1
     fi

@@ -62,7 +62,7 @@ function local_port_available
     fi
 
     if file_exist "${NCAT_PORT_USED}";then
-        if grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
+        if file_contain ${NCAT_PORT_USED} "^${port}\s*$" true;then
             echo_file "${LOG_DEBUG}" "port[${port}] used"
             return 1
         fi
@@ -77,7 +77,8 @@ function local_port_available
     #fi
 
     #echo_file "${LOG_DEBUG}" "port[${port}] avalible"
-    if ! grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
+
+    if ! file_contain ${NCAT_PORT_USED} "^${port}\s*$" true;then
         process_run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
     fi
     return 0
