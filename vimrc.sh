@@ -128,9 +128,11 @@ function create_project
                 line="^${line}"
             fi
 
-            if match_regex "${line}" "/$";then
-                line="^${line}"
-            fi
+            #if match_regex "${line}" "/$";then
+            #    if ! match_regex "${line}" "^\^";then
+            #        line="^${line}"
+            #    fi
+            #fi
 
             if string_contain "${line}" ".";then
                 if match_regex "${line}" "^\.";then
