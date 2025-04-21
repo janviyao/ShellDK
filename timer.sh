@@ -46,11 +46,18 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
         exit 0
     fi
 
-    pid_list=($(process_name2pid timer.sh))
-    if string_contain "${pid_list[*]}" "$$";then
-        pid_list=($(string_replace "${pid_list[*]}" "\b$$\b" "" true))
-    fi
-    process_signal KILL ${pid_list[*]} &> /dev/null
+	pid_list=($(process_name2pid timer.sh))
+	array_del_by_value pid_list $$
+	for pid in ${pid_list[*]}
+	do
+		if ! process_exist ${pid};then
+			array_del_by_value pid_list ${pid}
+		fi
+	done
+
+	if [ ${#pid_list[*]} -gt 0 ];then
+		process_signal KILL ${pid_list[*]} &> /dev/null
+	fi
 
     if file_exist "${TEST_SUIT_ENV}";then
         source ${TEST_SUIT_ENV} 

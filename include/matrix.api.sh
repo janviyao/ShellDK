@@ -76,35 +76,49 @@ function array_add
 	return 0
 }
 
-function array_del
+function array_del_by_index
 {
     local -n _array_ref=$1
-    local xname="$1"
     local index="$2"
 
-    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: index or value to be deleted"
+    if [[ $# -ne 2 ]] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]] || ! math_is_int "${index}";then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: index to be deleted"
         return 1
     fi
-	
-	if ! math_is_int "${index}";then
-		index=$(array_index ${xname} ${index})
-	fi
 
 	local indexs=(${!_array_ref[*]})
+	if [ ${#indexs[*]} -eq 0 ];then
+		return 0
+	fi
+
 	local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
 	if [ ${index} -lt ${total} ];then
 		unset _array_ref[${index}]
-	else
-		index=$(array_index ${xname} ${index})
-		if [ ${index} -lt ${total} ];then
-			unset _array_ref[${index}]
-		else
-			return 1
-		fi
+		return 0
 	fi
 
-	return 0
+	return 1
+}
+
+function array_del_by_value
+{
+    local -n _array_ref=$1
+    local xname="$1"
+    local value="$2"
+	local index=0
+
+    if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: value to be deleted"
+        return 1
+    fi
+	
+	index=$(array_index ${xname} ${value})
+	if [ $? -ne 0 ];then
+		return 1
+	fi
+
+	array_del_by_index ${xname} ${index}
+	return $?
 }
 
 function array_compare
@@ -180,7 +194,7 @@ function array_dedup
 function map_add
 {
 	local -n _map_ref=$1
-	local key="$2"
+	local _key="$2"
 
 	if [ $# -lt 3 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -A" ]];then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3~N: values"
@@ -188,11 +202,37 @@ function map_add
 	fi
 	shift 2
 
-	local value=${_map_ref[${key}]}
-	if [ -n "${value}" ];then
-		_map_ref[${key}]="${value} $@"
+	local _value=${_map_ref[${_key}]}
+	if [ -n "${_value}" ];then
+		_map_ref[${_key}]="${_value} $@"
 	else
-		_map_ref[${key}]="$@"
+		_map_ref[${_key}]="$@"
+	fi
+
+	return 0
+}
+
+function map_del
+{
+	local -n _map_ref=$1
+	local _key="$2"
+	local _val="$3"
+
+	if [ $# -lt 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -A" ]];then
+		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3: value"
+		return 1
+	fi
+
+	if [ -n "${_val}" ];then
+		local _values=(${_map_ref[${_key}]})
+		array_del_by_value _values "${_val}"
+		if [ ${#_values[*]} -gt 0 ];then
+			_map_ref[${_key}]="${_values[*]}"
+		else
+			unset _map_ref["${_key}"]
+		fi
+	else
+		unset _map_ref["${_key}"]
 	fi
 
 	return 0
