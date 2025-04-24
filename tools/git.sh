@@ -563,7 +563,7 @@ function func_checkout
 			process_run git stash push -u
 		fi
 
-		local branch_list=($(git branch -a | awk '{ if ($1 ~ /(remotes\/)?origin\//) { sub("^(remotes/)?origin/", "", $1); print $1 } else { print $1 } }'  |  grep -E "^${msg}$" | sort | uniq))
+		local branch_list=($(git branch -a | awk '{ if ($1 ~ /(remotes\/)?origin\//) { sub("^(remotes/)?origin/", "", $1); print $1 } else { print $1 } }'  |  grep -E "^${msg}$" | sort -u))
 		if [ ${#branch_list[*]} -eq 1 ];then
 			msg=${branch_list[0]}
 			process_run git checkout "${msg}"

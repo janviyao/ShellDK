@@ -35,25 +35,25 @@ function update_port_used
 		return 0
 	fi
 
-    echo > ${NCAT_PORT_USED}
+    echo > ${NCAT_PORT_USED}.tmp
     if have_cmd "ss";then
-        ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
+        ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
     fi
 
     if have_cmd "netstat";then
         #netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
         if [[ "${SYSTEM}" == "Linux" ]]; then
-            netstat -tunlp 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
+            netstat -tunlp 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            netstat -n 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
+            netstat -n 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
         fi
     fi
 
     if have_cmd "lsof";then
-        lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
+        lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
     fi
-    echo "======" >> ${NCAT_PORT_USED}
 
+	sort -n -u ${NCAT_PORT_USED}.tmp &> ${NCAT_PORT_USED}
     return 0
 }
 

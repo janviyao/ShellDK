@@ -40,7 +40,7 @@ if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";t
     fi
 fi
 
-session_ip_array=($(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort | uniq))
+session_ip_array=($(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort -u))
 it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
 for item in ${it_array[*]}
 do
