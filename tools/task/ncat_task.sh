@@ -144,12 +144,14 @@ function ncat_generate_port
 
     if file_exist "${NCAT_PROT_CURR}";then
         local cur_port=$(cat ${NCAT_PROT_CURR})
-        if math_is_int "${cur_port}";then
-            if local_port_available "${cur_port}";then
-                echo "${cur_port}"
-                return 0
-            fi
-        fi
+		if math_is_int "${cur_port}";then
+			if [[ "${cur_port}" != "${port_val}" ]];then
+				if local_port_available "${cur_port}";then
+					echo "${cur_port}"
+					return 0
+				fi
+			fi
+		fi
     fi
 
 	if file_expire "${NCAT_PORT_USED}" 180;then
