@@ -7,6 +7,7 @@ NCAT_TASK="${NCAT_WORK_DIR}/task"
 NCAT_PIPE="${NCAT_WORK_DIR}/pipe"
 NCAT_PROT_CURR="${NCAT_WORK_DIR}/port.$$"
 NCAT_PORT_USED="${GBL_USER_DIR}/port.used"
+NCAT_PORT_NEXT="${GBL_USER_DIR}/port.next"
 
 NCAT_FD=${NCAT_FD:-9}
 file_exist "${NCAT_PIPE}" || mkfifo ${NCAT_PIPE}
@@ -23,6 +24,17 @@ NCAT_MASTER_ADDR=$(get_local_ip)
 
 function update_port_used
 {
+    if [ $# -gt 0 ];then
+		local port
+		for port in "$@"
+		do
+			if ! file_contain ${NCAT_PORT_USED} "^${port}\s*$" true;then
+				echo "${port}" >> ${NCAT_PORT_USED}
+			fi
+		done
+		return 0
+	fi
+
     echo > ${NCAT_PORT_USED}
     if have_cmd "ss";then
         ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
@@ -41,6 +53,8 @@ function update_port_used
         lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n | uniq &>> ${NCAT_PORT_USED}
     fi
     echo "======" >> ${NCAT_PORT_USED}
+
+    return 0
 }
 
 function local_port_available
@@ -68,19 +82,14 @@ function local_port_available
         fi
     fi
 
-    #if nc -zv 127.0.0.1 ${port} &> /dev/null;then
-    #    echo_file "${LOG_DEBUG}" "port[${port}] avalible"
-    #    if ! grep -P "^${port}\s*$" ${NCAT_PORT_USED} &> /dev/null;then
-    #        process_run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
-    #    fi
-    #    return 0
-    #fi
-
-    #echo_file "${LOG_DEBUG}" "port[${port}] avalible"
-
-    if ! file_contain ${NCAT_PORT_USED} "^${port}\s*$" true;then
-        process_run_lock 1 echo "${port}" \>\> ${NCAT_PORT_USED}
-    fi
+	#timeout 5 nc -l -4 ${port} &> /dev/null &
+	#if nc -zv 127.0.0.1 ${port} &> /dev/null;then
+	#	#echo_file "${LOG_DEBUG}" "port[${port}] avalible"
+	#	return 0
+	#else
+	#	process_run_lock 1 update_port_used ${ncat_port}
+	#	return 1
+	#fi
     return 0
 }
 
@@ -110,9 +119,25 @@ function ncat_port_get
 
 function ncat_generate_port
 {
-    local port_val=${1:-32767}
+    local port_val="$1"
+
+	if [ -z "${port_val}" ];then
+		if file_exist "${NCAT_PORT_NEXT}";then
+			port_val=$(cat ${NCAT_PORT_NEXT})
+		fi
+
+		if ! math_is_int "${port_val}";then
+			port_val="32767"
+		fi
+	fi
 
     if local_port_available "${port_val}";then
+		if [ $# -eq 0 ];then
+			echo "${port_val}" > ${NCAT_PROT_CURR}
+			process_run_lock 1 echo "$((port_val + 1))" \> ${NCAT_PORT_NEXT}
+			echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] generated"
+		fi
+
         echo "${port_val}"
         return 0
     fi
@@ -127,7 +152,7 @@ function ncat_generate_port
         fi
     fi
 
-	if file_expire "${NCAT_PORT_USED}" 60;then
+	if file_expire "${NCAT_PORT_USED}" 180;then
 		process_run_lock 1 update_port_used
 	fi
 
@@ -135,16 +160,15 @@ function ncat_generate_port
     while ! local_port_available "${port_val}"
     do
         #port_val=$(($RANDOM + ${start}))
-        port_val=$((${port_val} + 1))
+        port_val=$((port_val + 1))
         if [ ${port_val} -ge 65535 ];then
             port_val=32767
 			echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR}] port reach to max"
         fi
     done
 
-    if file_exist "${NCAT_WORK_DIR}";then
-        echo "${port_val}" > ${NCAT_PROT_CURR}
-    fi
+	echo "${port_val}" > ${NCAT_PROT_CURR}
+	process_run_lock 1 echo "$((port_val + 1))" \> ${NCAT_PORT_NEXT}
     echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR} ${port_val}] generated"
 
     echo "${port_val}"
@@ -256,12 +280,22 @@ function ncat_recv_msg
         local ncat_body
         #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
-        nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
-        do
-            echo "${ncat_body}"
-            echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
-            return 0
-        done
+        #local retcode
+        #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
+        #do
+        #    echo "${ncat_body}"
+        #    echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
+        #    return 0
+        #done
+		ncat_body=$(nc -l -4 ${ncat_port} 2>>${BASH_LOG})
+		if [ $? -eq 0 ];then
+			echo "${ncat_body}"
+			echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
+			return 0
+		else
+			process_run_lock 1 update_port_used ${ncat_port}
+			return 1
+		fi
     else
         echo_erro "ncat donot installed"
         return 1
@@ -384,6 +418,11 @@ function ncat_wait_resp
     exec {ack_fhno}<>${ack_pipe}
 
     local ncat_port=$(ncat_port_get)
+    if [ -z "${ncat_port}" ];then
+		echo_erro "ncat_port_get return null"
+    	return 1
+	fi
+
     echo_debug "wait ncat's response: ${ack_pipe}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${ncat_body}" 
     if [ $? -eq 0 ];then
@@ -681,7 +720,7 @@ function _ncat_thread
     fi
     #( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
-	if file_expire "${NCAT_PORT_USED}" 60;then
+	if file_expire "${NCAT_PORT_USED}" 180;then
 		process_run_lock 1 update_port_used
 	fi
 

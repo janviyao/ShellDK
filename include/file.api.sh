@@ -138,7 +138,7 @@ function file_expire
     fi
 
     if ! file_exist "${xfile}";then
-		echo_erro "file { ${xfile} } lost"
+		echo_file "${LOG_ERRO}" "file { ${xfile} } lost"
         return 0
     fi
 
