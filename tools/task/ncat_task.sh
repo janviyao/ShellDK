@@ -24,12 +24,21 @@ NCAT_MASTER_ADDR=$(get_local_ip)
 
 function update_port_used
 {
-    if [ $# -gt 0 ];then
+	if [ $# -gt 1 ];then
+		local mode="$1"
+		shift 1
+
 		local port
 		for port in "$@"
 		do
-			if ! file_contain ${NCAT_PORT_USED} "^${port}\s*$" true;then
-				echo "${port}" >> ${NCAT_PORT_USED}
+			if file_contain ${NCAT_PORT_USED} "^${port}\s*$" true;then
+				if [[ "${mode}" == "del" ]];then
+					file_del ${NCAT_PORT_USED} "^${port}\s*$" true
+				fi
+			else
+				if [[ "${mode}" == "add" ]];then
+					echo "${port}" >> ${NCAT_PORT_USED}
+				fi
 			fi
 		done
 		return 0
@@ -38,6 +47,7 @@ function update_port_used
     echo > ${NCAT_PORT_USED}.tmp
     if have_cmd "ss";then
         ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
+        echo "======ss" >> ${NCAT_PORT_USED}.tmp
     fi
 
     if have_cmd "netstat";then
@@ -47,10 +57,12 @@ function update_port_used
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             netstat -n 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
         fi
+        echo "======netstat" >> ${NCAT_PORT_USED}.tmp
     fi
 
     if have_cmd "lsof";then
         lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${NCAT_PORT_USED}.tmp
+        echo "======lsof" >> ${NCAT_PORT_USED}.tmp
     fi
 
 	sort -n -u ${NCAT_PORT_USED}.tmp &> ${NCAT_PORT_USED}
@@ -87,7 +99,7 @@ function local_port_available
 	#	#echo_file "${LOG_DEBUG}" "port[${port}] avalible"
 	#	return 0
 	#else
-	#	process_run_lock 1 update_port_used ${ncat_port}
+	#	process_run_lock 1 update_port_used add ${ncat_port}
 	#	return 1
 	#fi
     return 0
@@ -295,7 +307,7 @@ function ncat_recv_msg
 			echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
 			return 0
 		else
-			process_run_lock 1 update_port_used ${ncat_port}
+			process_run_lock 1 update_port_used add ${ncat_port}
 			return 1
 		fi
     else
@@ -556,6 +568,11 @@ function _bash_ncat_exit
         fi
         unset task_list[0]
     done
+
+	local cur_port=$(cat ${NCAT_PROT_CURR})
+	if math_is_int "${cur_port}";then
+		process_run_lock 1 update_port_used del ${cur_port}
+	fi
 
     if [ ${task_line} -eq 0 ];then
         echo_debug "ncat task have exited"
