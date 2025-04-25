@@ -171,6 +171,7 @@ function ncat_generate_port
 	fi
 
     echo "" > ${NCAT_PROT_CURR}
+	port_val=$((port_val + 1))
     while ! local_port_available "${port_val}"
     do
         #port_val=$(($RANDOM + ${start}))
@@ -301,12 +302,13 @@ function ncat_recv_msg
         #    echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
         #    return 0
         #done
-		ncat_body=$(nc -l -4 ${ncat_port} 2>>${BASH_LOG})
+		ncat_body=$(nc -l -4 ${ncat_port} 2>&1)
 		if [ $? -eq 0 ];then
 			echo "${ncat_body}"
 			echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
 			return 0
 		else
+			echo_file "${LOG_DEBUG}" "ncat error: [${ncat_body}]"
 			process_run_lock 1 update_port_used add ${ncat_port}
 			return 1
 		fi
