@@ -1040,55 +1040,52 @@ function file_realpath
         last_char="/"
     fi
 
-	if file_exist "${xfile}";then
-		if [ ! -L "${xfile}" ];then
-			echo "${xfile}${last_char}"
-			return 0
-		fi
+	#if file_exist "${xfile}";then
+	#	if [ ! -L "${xfile}" ];then
+	#		echo "${xfile}${last_char}"
+	#		return 0
+	#	fi
+	#fi
+	local cmd_pre="sudo_it"
+	if test -r ${xfile};then
+		cmd_pre=""
 	fi
 
-    local this_path="${xfile}"
-    if match_regex "${this_path}" "^-";then
-        this_path=$(string_replace "${this_path}" "\-" "\-" true)
-    fi
-
-	local old_path="${this_path}"
-	if test -r ${this_path};then
-		if have_cmd "realpath";then
-			this_path=$(realpath ${this_path})
-		else
-			this_path=$(readlink -f ${this_path})
-		fi
+	if have_cmd "realpath";then
+		local cmd_exe="realpath"
 	else
-		if have_cmd "realpath";then
-			this_path=$(sudo_it realpath ${this_path})
-		else
-			this_path=$(sudo_it readlink -f ${this_path})
-		fi
+		local cmd_exe="readlink -f"
 	fi
 
-    if [ $? -ne 0 ];then
-        echo_file "${LOG_DEBUG}" "read_path fail: ${old_path}"
-		echo "${old_path}${last_char}"
-        return 1
+	local new_path="${xfile}"
+	if [ -n "${cmd_pre}" ];then
+		new_path=$(${cmd_pre} ${cmd_exe} ${new_path})
+	else
+		new_path=$(${cmd_exe} ${new_path})
+	fi
+
+	if [ $? -ne 0 ];then
+		echo_file "${LOG_DEBUG}" "read_path fail: ${xfile}"
+		echo "${xfile}${last_char}"
+		return 1
+	fi
+
+    if [ -z "${new_path}" ];then
+        echo_file "${LOG_DEBUG}" "${cmd_exe} ${xfile} return null"
+        new_path="${xfile}"
     fi
 
-    if [ -z "${this_path}" ];then
-        echo_file "${LOG_DEBUG}" "read_path { ${old_path} } return null"
-        this_path="${old_path}"
-    fi
-
-    if ! file_exist "${this_path}";then
+    if ! file_exist "${new_path}";then
         if ! string_contain "${xfile}" '/';then
-            local path_bk="${this_path}"
-            this_path=$(which --skip-alias ${xfile} 2>/dev/null)
-            if ! file_exist "${this_path}";then
-                this_path="${path_bk}"
+            local old_path="${new_path}"
+            new_path=$(which --skip-alias ${xfile} 2>/dev/null)
+            if ! file_exist "${new_path}";then
+                new_path="${old_path}"
             fi
         fi
     fi
 
-	echo "${this_path}${last_char}"
+	echo "${new_path}${last_char}"
     return 0
 }
 
