@@ -69,7 +69,7 @@ function update_port_used
     return 0
 }
 
-function local_port_available
+function check_port_available
 {
     local port="$1"
 
@@ -105,7 +105,7 @@ function local_port_available
     return 0
 }
 
-function ncat_port_get
+function ncat_get_port
 {
 	if ! file_exist "${NCAT_PIPE}.run";then
 		echo_file "${LOG_ERRO}" "ncat task donot run: [${NCAT_PIPE}.run]"
@@ -143,7 +143,7 @@ function ncat_generate_port
 		fi
 	fi
 
-    if local_port_available "${port_val}";then
+    if check_port_available "${port_val}";then
 		if [ $# -eq 0 ];then
 			echo "${port_val}" > ${NCAT_PROT_CURR}
 			process_run_lock 1 echo "$((port_val + 1))" \> ${NCAT_PORT_NEXT}
@@ -158,7 +158,7 @@ function ncat_generate_port
         local cur_port=$(cat ${NCAT_PROT_CURR})
 		if math_is_int "${cur_port}";then
 			if [[ "${cur_port}" != "${port_val}" ]];then
-				if local_port_available "${cur_port}";then
+				if check_port_available "${cur_port}";then
 					echo "${cur_port}"
 					return 0
 				fi
@@ -172,7 +172,7 @@ function ncat_generate_port
 
     echo "" > ${NCAT_PROT_CURR}
 	port_val=$((port_val + 1))
-    while ! local_port_available "${port_val}"
+    while ! check_port_available "${port_val}"
     do
         #port_val=$(($RANDOM + ${start}))
         port_val=$((port_val + 1))
@@ -190,7 +190,7 @@ function ncat_generate_port
     return 0
 }
 
-function remote_ncat_alive
+function ncat_remote_alive
 {
     local ncat_addr="$1"
     local ncat_port="$2"
@@ -201,7 +201,7 @@ function remote_ncat_alive
     fi
 
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
-        if local_port_available "${ncat_port}";then
+        if check_port_available "${ncat_port}";then
             echo_debug "remote[${ncat_addr} ${ncat_port}] offline"
             return 1
         else
@@ -251,9 +251,9 @@ function ncat_send_msg
         return 1
     fi
 
-    #if ! remote_ncat_alive ${ncat_addr} ${ncat_port};then
+    #if ! ncat_remote_alive ${ncat_addr} ${ncat_port};then
     #    echo_warn "remote[${ncat_addr} ${ncat_port}] offline"
-    #    while ! remote_ncat_alive ${ncat_addr} ${ncat_port}
+    #    while ! ncat_remote_alive ${ncat_addr} ${ncat_port}
     #    do
     #        echo_warn "waiting for remote[${ncat_addr} ${ncat_port}] online"
     #        sleep 1
@@ -338,13 +338,19 @@ function ncat_send_file
 
     echo_debug "ncat send: [$@]"
     if [[ ${ncat_addr} == ${LOCAL_IP} ]];then
-        if local_port_available "${ncat_port}";then
+        if check_port_available "${ncat_port}";then
             if ! file_exist "${NCAT_PIPE}.run";then
                 echo_erro "ncat task donot run"
                 return 1
             fi
         fi
     fi
+
+    ncat_send_msg "${ncat_addr}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SEND_FILE${GBL_SPF1}${ncat_port}${GBL_SPF2}${file_name}"
+    if [ $? -ne 0 ];then
+        echo_erro "failed: send msg to remote [${ncat_addr} ${ncat_port}]"
+        return 1
+	fi
 
     if have_cmd "nc";then
         local try_count=0
@@ -433,9 +439,9 @@ function ncat_wait_resp
     local ack_fhno=0
     exec {ack_fhno}<>${ack_pipe}
 
-    local ncat_port=$(ncat_port_get)
+    local ncat_port=$(ncat_get_port)
     if [ -z "${ncat_port}" ];then
-		echo_erro "ncat_port_get return null"
+		echo_erro "ncat_get_port return null"
     	return 1
 	fi
 
@@ -466,7 +472,7 @@ function ncat_task_ctrl_async
 {
     local ncat_body="$1"
 
-    local ncat_port=$(ncat_port_get)
+    local ncat_port=$(ncat_get_port)
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${ncat_body}" 
     return $?
 }
@@ -477,7 +483,7 @@ function ncat_task_ctrl_sync
     ncat_wait_resp "${ncat_body}"
 }
 
-function wait_event
+function ncat_wait_event
 {
     local event_uid="$1"
     local event_msg="$2"
@@ -497,7 +503,7 @@ function wait_event
     fi
 }
 
-function notify_event
+function ncat_notify_event
 {
     local event_uid="$1"
     local event_msg="$2"
@@ -507,12 +513,13 @@ function notify_event
         return 1
     fi
 
-    local ncat_port=$(ncat_port_get)
+    local ncat_port=$(ncat_get_port)
     local event_body="NOTIFY_EVENT${GBL_SPF1}${event_uid}${GBL_SPF2}${event_msg}"
     ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
+    return $?
 }
 
-function remote_set_var
+function ncat_set_var
 {
     local ncat_addr="$1"
     local ncat_port="$2"
@@ -530,23 +537,6 @@ function remote_set_var
 
     echo_debug "remote set: [$@]" 
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
-    return $?
-}
-
-function remote_send_file
-{
-    local ncat_addr="$1"
-    local ncat_port="$2"
-    local file_name="$3"
-
-    if [ $# -lt 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ncat_addr\n\$2: ncat_port\n\$3: file_name"
-        return 1
-    fi
-
-    echo_debug "remote send: [$@]"
-    ncat_send_msg "${ncat_addr}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SEND_FILE${GBL_SPF1}${ncat_port}${GBL_SPF2}${file_name}"
-    ncat_send_file "${ncat_addr}" "${ncat_port}" "${file_name}"
     return $?
 }
 

@@ -56,7 +56,7 @@ if have_admin; then
     EXPECT_EOF="expect eof"
 fi
 
-NCAT_PORT=$(ncat_port_get)
+NCAT_PORT=$(ncat_get_port)
 if [ -z "${NCAT_PORT}" ];then
 	echo_erro "ncat port not generated"
 	exit 1
