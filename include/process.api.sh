@@ -106,6 +106,8 @@ function process_run_callback
     local outfile=$(file_temp)
 	bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; if [ -n '${cb_func}' ];then ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}; fi" &> /dev/null &
     local bgpid=$!
+    disown #使用 disown 命令将其从 Shell 的作业表中移除，从而避免状态提示
+
     echo "${bgpid}"
     echo_file "${LOG_DEBUG}" "pid[${bgpid}] { '${cb_func}' '${cb_args}' '${cmd_str}' '${outfile}' }"
 	
