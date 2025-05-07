@@ -12,26 +12,54 @@ function _psgrep_completion()
 	[[ $cword -gt 2 ]] && return 0
 
 	# define custom completions here
-	if [[ $cword -eq 1 ]]; then
-		if [ -n "${cur}" ];then
-			local key=${cur}
-			if [[ "${key}" =~ "/" ]];then
-				key=${key//\//\\/}
-			fi
-
-			if [[ ${key} =~ ^[0-9]+$ ]];then
-				COMPREPLY=($(compgen -W "$(ps -eo pid,comm | awk "{ if (\$1 ~ /^${key}/ ) print \$1 }")" -- "$cur"))
-			else
-				COMPREPLY=($(compgen -W "$(ps -eo pid,comm | awk "{ if (\$2 ~ /^${key}/ ) print \$2 }")" -- "$cur"))
-			fi
-
-			return 0
+	if [ -n "${cur}" ];then
+		local key=${cur}
+		if [[ "${key}" =~ "/" ]];then
+			key=${key//\//\\/}
 		fi
+
+		if [[ ${key} =~ ^[0-9]+$ ]];then
+			COMPREPLY=($(compgen -W "$(ps -eo pid,comm | awk "{ if (\$1 ~ /^${key}/ ) print \$1 }")" -- "$cur"))
+		else
+			COMPREPLY=($(compgen -W "$(ps -eo pid,comm | awk "{ if (\$2 ~ /^${key}/ ) print \$2 }")" -- "$cur"))
+		fi
+
+		return 0
 	fi
 
 	COMPREPLY=( )
 } &&
 complete -F _psgrep_completion psgrep
+
+function _mykill_completion()
+{
+	local cur prev words cword
+
+	_init_completion || return
+
+	#echo "<$cur | $prev | ${words[*]} | $cword>"
+	# don't complete past 2nd token
+	[[ $cword -gt 2 ]] && return 0
+
+	# define custom completions here
+	if [ -n "${cur}" ];then
+		local key=${cur}
+		if [[ "${key}" =~ "/" ]];then
+			key=${key//\//\\/}
+		fi
+
+		if [[ ${key} =~ ^[0-9]+$ ]];then
+			COMPREPLY=($(compgen -W "$(ps -eo pid,comm | awk "{ if (\$1 ~ /^${key}/ ) print \$1 }")" -- "$cur"))
+		else
+			COMPREPLY=($(compgen -W "$(ps -eo pid,comm | awk "{ if (\$2 ~ /^${key}/ ) print \$2 }")" -- "$cur"))
+		fi
+
+		return 0
+	fi
+
+	COMPREPLY=( )
+} &&
+complete -F _mykill_completion mykill
 
 function _mygit_completion()
 {
