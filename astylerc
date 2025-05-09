@@ -7,3 +7,4 @@
 --add-brackets
 --convert-tabs
 --suffix=none
+--indent-switches
