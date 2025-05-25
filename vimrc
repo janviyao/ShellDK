@@ -1651,8 +1651,8 @@ let g:mwAutoLoadMarks = 1                                  "自动加载高亮
 let g:mwAutoSaveMarks = 1                                  "自动保存高亮
 
 highlight def MarkWord7  ctermbg=Brown    ctermfg=Black  guibg=Brown      guifg=Black
-highlight def MarkWord8  ctermbg=DarkGray ctermfg=Black  guibg=DarkGray   guifg=Black
-highlight def MarkWord9  ctermbg=White    ctermfg=Black  guibg=White      guifg=Black
+highlight def MarkWord8  ctermbg=White    ctermfg=Black  guibg=White      guifg=Black
+highlight def MarkWord9  ctermbg=DarkRed  ctermfg=Black  guibg=DarkRed    guifg=Black
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动保存文档 插件
