@@ -125,6 +125,7 @@ commandMap["${CMD_PRE}gitloop"]="${MY_VIM_DIR}/tools/gitloop.sh"
 commandMap["${CMD_PRE}backup"]="${MY_VIM_DIR}/tools/backup.sh"
 commandMap["${CMD_PRE}paraparser"]="${MY_VIM_DIR}/tools/paraparser.sh"
 commandMap["${CMD_PRE}replace"]="${MY_VIM_DIR}/tools/replace.sh"
+commandMap["${CMD_PRE}astyle"]="${MY_VIM_DIR}/tools/astyle.sh"
 if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
     commandMap["sudo"]="${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py"
     commandMap["apt-cyg"]="${MY_VIM_DIR}/deps/apt-cyg"
