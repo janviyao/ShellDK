@@ -398,8 +398,16 @@ function file_del
                 fi
             fi
         else
+			if [[ "${string}" == '$' ]];then
+				eval "sed -i '${string}d' ${xfile}"
+				if [ $? -ne 0 ];then
+					echo_erro "file_del { $@ } delete-str { ${string} }"
+					return 1
+				fi
+				return 0
+			fi
+
             if [[ "${string}" =~ '-' ]];then
-                local is_range=true
                 local index_s=$(string_split "${string}" "-" 1)
                 local index_e=$(string_split "${string}" "-" 2)
 
