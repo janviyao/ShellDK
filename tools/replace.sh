@@ -1,5 +1,5 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/paraparser.sh "h r src-regex x: exclude-str:" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "h r src-regex x: exclude-str: t: file-type:" "$@"
 
 function how_use
 {
@@ -21,6 +21,7 @@ function how_use
         -h|--help                         # show this message
         -r|--src-regex                    # indicate <old-string> is a regex string
         -x|--exclude-str 'string'         # exclude <string> which will match all path
+        -t|--file-type 'type'             # include file <types> which will match file type
 
     EXAMPLES
         myreplace 'aaa' 'bbb'
@@ -45,6 +46,7 @@ fi
 
 SRC_REGEX=$(get_optval "-r" "--src-regex")
 EXCL_STRS=($(get_optval "-x" "--exclude-str"))
+FILE_TYPES=($(get_optval "-t" "--file-type"))
 OLD_STR=$(get_subcmd 0)
 NEW_STR=$(get_subcmd 1)
 FILE_LIST=($(get_subcmd '2-'))
@@ -60,6 +62,44 @@ if [ ${#FILE_LIST[*]} -eq 0 ];then
     fi
 fi
 
+function match_execlude
+{
+	local xfile="$1"
+	local is_reg="${2:-false}"
+
+	local excl
+	for excl in ${EXCL_STRS[*]}
+	do
+		if math_bool "${is_reg}";then
+			if match_regex "${xfile}" "${excl}";then
+				return 0
+			fi
+		else
+			if string_contain "${xfile}" "${excl}";then
+				return 0
+			fi
+		fi
+	done
+	
+	if [ ${#FILE_TYPES[*]} -gt 0 ];then
+		if [ -f "${xfile}" ];then
+			local type count=0
+			for type in ${FILE_TYPES[*]}
+			do
+				if ! match_regex "${xfile}" "\.${type}$";then
+					let count++
+				fi
+			done
+
+			if [ ${#FILE_TYPES[*]} -eq ${count} ];then
+				return 0
+			fi
+		fi
+	fi
+
+	return 1
+}
+
 function do_replace
 {
     local xfile="$1"
@@ -69,24 +109,12 @@ function do_replace
 	local -a bg_tasks
 
     echo_debug "do_replace [$@]"
-	local excl
-	for excl in ${EXCL_STRS[*]}
-	do
-		if math_bool "${is_reg}";then
-			if match_regex "${xfile}" "${excl}";then
-				echo_warn "Jump    [${xfile}]"
-				return 0
-			fi
-		else
-			if string_contain "${xfile}" "${excl}";then
-				echo_warn "Jump    [${xfile}]"
-				return 0
-			fi
-		fi
-	done
+    if match_execlude "${xfile}" ${is_reg};then
+		echo_warn "Jump    [${xfile}]"
+		return 0
+	fi
 
     if [ -d "${xfile}" ];then
-        #xfile=$(cd ${xfile};pwd)
         xfile=$(string_trim "${xfile}" "/" 2)
         local xfile_list=($(efind ${xfile} "${xfile}/.+" -maxdepth 1))
     else
@@ -100,7 +128,12 @@ function do_replace
            do_replace "${next}" "${string}" "${new_str}" ${is_reg} &
            array_add bg_tasks $!
         else
-            if [ -f "${next}" ];then
+			if match_execlude "${next}" ${is_reg};then
+				echo_warn "Jump    [${next}]"
+				continue
+			fi
+
+			if [ -f "${next}" ];then
 				if file_contain "${next}" "${string}" ${is_reg} ;then
 					file_replace "${next}" "${string}" "${new_str}" ${is_reg} 
 					if [ $? -eq 0 ];then

@@ -1,5 +1,5 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/paraparser.sh "h r regex x: exclude-str:" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "h r regex x: exclude-str: t: file-type:" "$@"
 
 function how_use
 {
@@ -19,6 +19,7 @@ function how_use
         -h|--help                         # show this message
         -x|--exclude-str 'string'         # exclude <string> which will match all path
         -r|--regex                        # indicate <exclude-string> is a regex string
+        -t|--file-type 'type'             # include file <types> which will match file type
 
     EXAMPLES
         myastyle
@@ -36,6 +37,7 @@ fi
 
 EXE_REGEX=$(get_optval "-r" "--regex")
 EXCL_STRS=($(get_optval "-x" "--exclude-str"))
+FILE_TYPES=($(get_optval "-t" "--file-type"))
 FILE_LIST=($(get_subcmd '0-'))
 
 CUR_DIR=$(pwd)
@@ -49,6 +51,44 @@ if [ ${#FILE_LIST[*]} -eq 0 ];then
     fi
 fi
 
+function match_execlude
+{
+	local xfile="$1"
+	local is_reg="${2:-false}"
+
+	local excl
+	for excl in ${EXCL_STRS[*]}
+	do
+		if math_bool "${is_reg}";then
+			if match_regex "${xfile}" "${excl}";then
+				return 0
+			fi
+		else
+			if string_contain "${xfile}" "${excl}";then
+				return 0
+			fi
+		fi
+	done
+	
+	if [ ${#FILE_TYPES[*]} -gt 0 ];then
+		if [ -f "${xfile}" ];then
+			local type count=0
+			for type in ${FILE_TYPES[*]}
+			do
+				if ! match_regex "${xfile}" "\.${type}$";then
+					let count++
+				fi
+			done
+
+			if [ ${#FILE_TYPES[*]} -eq ${count} ];then
+				return 0
+			fi
+		fi
+	fi
+
+	return 1
+}
+
 function do_format
 {
     local xfile="$1"
@@ -56,21 +96,10 @@ function do_format
 	local -a bg_tasks
 
     echo_debug "do_format [$@]"
-	local excl
-	for excl in ${EXCL_STRS[*]}
-	do
-		if math_bool "${is_reg}";then
-			if match_regex "${xfile}" "${excl}";then
-				echo_warn "Jump    [${xfile}]"
-				return 0
-			fi
-		else
-			if string_contain "${xfile}" "${excl}";then
-				echo_warn "Jump    [${xfile}]"
-				return 0
-			fi
-		fi
-	done
+    if match_execlude "${xfile}" ${is_reg};then
+		echo_warn "Jump    [${xfile}]"
+		return 0
+	fi
 
     if [ -d "${xfile}" ];then
         xfile=$(string_trim "${xfile}" "/" 2)
@@ -86,8 +115,13 @@ function do_format
            do_format "${next}" ${is_reg} &
            array_add bg_tasks $!
         else
+			if match_execlude "${next}" ${is_reg};then
+				echo_warn "Jump    [${next}]"
+				continue
+			fi
+
 			if [ -f "${next}" ];then
-				astyle --options=${MY_VIM_DIR}/astylerc ${next}
+				astyle --options=${MY_VIM_DIR}/astylerc ${next} 1>/dev/null
 				if [ $? -eq 0 ];then
 					echo_info "Success [${next}]"
 				else
