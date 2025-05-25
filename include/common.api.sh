@@ -389,18 +389,19 @@ function input_prompt
     local check_func="$1"
     local prompt_ctn="$2"
     local dflt_value="$3"
-    local hide_hint="${4:-false}"
+    local rd_timeout="${4:-${PROMPT_TIMEOUT}}"
+    local hide_hint="${5:-false}"
 	local xmax ymax
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: check function\n\$2: prompt string\n\$3: default value"
+		echo_erro "\nUsage: [$@]\n\$1: check function\n\$2: prompt string\n\$3: default value\n\$4: prompt timeout(default: ${PROMPT_TIMEOUT}s)\n\$5: hide hint after getting value(default: false)"
         return 1
     fi
     touch ${LOG_DISABLE}
 
-    local extra_opt=""
+    local extra_opt="-t ${rd_timeout}"
     if [[ "${prompt_ctn,,}" =~ 'password' ]] || [[ "${prompt_ctn,,}" =~ 'passwd' ]];then
-        extra_opt="-s"
+        extra_opt="${extra_opt} -s"
     fi
 
 	if math_bool "${hide_hint}";then

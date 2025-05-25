@@ -18,17 +18,18 @@ readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
 readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
 readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
 
-readonly OP_TRY_CNT=3
-readonly OP_TIMEOUT=60
-readonly SSH_TIMEOUT=600
-readonly MAX_TIMEOUT=1800
-
 readonly GBL_SPACE="<.>"
 readonly GBL_COL_SPF="<=>"
 readonly GBL_ACK_SPF="<#>"
 readonly GBL_SPF1="<1>"
 readonly GBL_SPF2="<2>"
 readonly GBL_SPF3="<3>"
+
+declare -i TRY_CNT_MAX=3
+declare -i RECEIVE_TIMEOUT=60
+declare -i PROMPT_TIMEOUT=30
+declare -i SSH_TIMEOUT=600
+declare -i MAX_TIMEOUT=1800
 
 # more aliases
 alias ls='ls --color=auto'

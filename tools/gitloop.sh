@@ -51,7 +51,7 @@ function gitloop_signal
 trap "gitloop_signal" EXIT SIGINT SIGTERM SIGKILL
 mdat_kv_set "gitloop-exit" "false"
 
-PROGRESS_TIME=$((OP_TIMEOUT * 10 * OP_TRY_CNT))
+PROGRESS_TIME=$((RECEIVE_TIMEOUT * 10 * TRY_CNT_MAX))
 cd ${RUN_DIR}
 for gitdir in $(ls -d */)
 do

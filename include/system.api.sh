@@ -1050,24 +1050,24 @@ function bin_info
 	local pkg_name=$(rpm -qf ${xfile})
 	cecho blue "$(printf -- "[%26s package]: %-50s" ${xfile} "${pkg_name}")"
 
-	local sel_val=$(input_prompt "" "Display the dynamic section ? (yes/no)" "yes" true)
+	local sel_val=$(input_prompt "" "Display the dynamic section ? (yes/no)" "yes" ${PROMPT_TIMEOUT} true)
 	if math_bool "${sel_val}";then
 		cecho blue "$(printf -- "[%34s]: " "dynamic section")"
 		readelf -d -W ${xfile}
 	fi
 
-	sel_val=$(input_prompt "" "Display the contents of the dynamic symbol table ? (yes/no)" "no" true)
+	sel_val=$(input_prompt "" "Display the contents of the dynamic symbol table ? (yes/no)" "no" ${PROMPT_TIMEOUT} true)
 	if math_bool "${sel_val}";then
 		objdump -T -w ${xfile}
 	fi
 
-	sel_val=$(input_prompt "" "Display assembler contents of all sections ? (yes/no)" "no" true)
+	sel_val=$(input_prompt "" "Display assembler contents of all sections ? (yes/no)" "no" ${PROMPT_TIMEOUT} true)
 	if math_bool "${sel_val}";then
 		objdump -S -D -w ${xfile}
 	fi
 
 	if math_is_int "${xbin}";then
-		sel_val=$(input_prompt "" "Display app memory map ? (yes/no)" "yes" true)
+		sel_val=$(input_prompt "" "Display app memory map ? (yes/no)" "yes" ${PROMPT_TIMEOUT} true)
 		if math_bool "${sel_val}";then
 			sudo_it cat /proc/${xbin}/maps
 		fi

@@ -294,7 +294,7 @@ function ncat_recv_msg
     if have_cmd "nc";then
         local ncat_body
         #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
-        #timeout ${OP_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
+        #timeout ${RECEIVE_TIMEOUT} nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         #local retcode
         #nc -l -4 ${ncat_port} 2>>${BASH_LOG} | while read ncat_body
         #do
