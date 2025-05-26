@@ -1,5 +1,5 @@
 #!/bin/bash
-source $MY_VIM_DIR/tools/paraparser.sh "h r regex x: exclude-str: t: file-type:" "$@"
+source $MY_VIM_DIR/tools/paraparser.sh "h r regex v verbose x: exclude-str: t: file-type:" "$@"
 
 function how_use
 {
@@ -20,6 +20,7 @@ function how_use
         -x|--exclude-str 'string'         # exclude <string> which will match all path
         -r|--regex                        # indicate <exclude-string> is a regex string
         -t|--file-type 'type'             # include file <types> which will match file type
+        -v|--verbose                      # show some verbose messages
 
     EXAMPLES
         myastyle
@@ -35,15 +36,24 @@ if math_bool "${OPT_HELP}";then
     exit 0
 fi
 
+VERBOSE=$(get_optval "-v" "--verbose")
 EXE_REGEX=$(get_optval "-r" "--regex")
 EXCL_STRS=($(get_optval "-x" "--exclude-str"))
+if [ ${#EXCL_STRS[*]} -eq 0 ];then
+	EXCL_STRS=('.git' '.svn')
+fi
+
 FILE_TYPES=($(get_optval "-t" "--file-type"))
+if [ ${#FILE_TYPES[*]} -eq 0 ];then
+	FILE_TYPES=('.c' '.cc' '.cpp' '.h' '.hh' '.hpp')
+fi
+
 FILE_LIST=($(get_subcmd '0-'))
 
 CUR_DIR=$(pwd)
 if [ ${#FILE_LIST[*]} -eq 0 ];then
     echo_warn "WARNNING ......"
-    xselect=$(input_prompt "" "check whether to format { ${CUR_DIR} } all files ? (yes/no)" "yes")
+    xselect=$(input_prompt "" "check whether to format { ${CUR_DIR} } all files ? (yes/no)" "no")
     if math_bool "${xselect}";then
         FILE_LIST=($(efind ${CUR_DIR} ".*" -maxdepth 1))
     else
@@ -75,7 +85,7 @@ function match_execlude
 			local type count=0
 			for type in ${FILE_TYPES[*]}
 			do
-				if ! match_regex "${xfile}" "\.${type}$";then
+				if ! match_regex "${xfile}" "${type}$";then
 					let count++
 				fi
 			done
@@ -97,7 +107,9 @@ function do_format
 
     echo_debug "do_format [$@]"
     if match_execlude "${xfile}" ${is_reg};then
-		echo_warn "Jump    [${xfile}]"
+		if math_bool "${VERBOSE}";then
+			echo_warn "Jump    [${xfile}]"
+		fi
 		return 0
 	fi
 
@@ -116,7 +128,9 @@ function do_format
            array_add bg_tasks $!
         else
 			if match_execlude "${next}" ${is_reg};then
-				echo_warn "Jump    [${next}]"
+				if math_bool "${VERBOSE}";then
+					echo_warn "Jump    [${next}]"
+				fi
 				continue
 			fi
 

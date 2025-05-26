@@ -222,7 +222,7 @@ function inst_env
 
 		local -a must_deps=("make-4.3" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
 		if [ -z "${REMOTE_IP}" ];then
-			local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "yes")
+			local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "no")
 			if ! math_bool "${xselect}";then
 				must_deps=()
 			fi

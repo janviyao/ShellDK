@@ -460,7 +460,7 @@ function file_insert
     local content="$2"
     local line_nr="${3:-$}"
 
-    if [ $# -lt 3 ];then
+    if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
         return 1
     fi
