@@ -762,7 +762,8 @@ function efind
     
     local xret
     local -a ret_arr
-
+	
+	# -regex: match full path
     ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${posix_reg}" 2\> /dev/null))
     if [ $? -ne 0 ];then
         ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${posix_reg}"))

@@ -936,6 +936,7 @@ function file_list
         return 1
     fi
 	
+	local -a bg_tasks
 	if [ -d "${xfile}" ];then
 		if [[ "${xfile:0-1:1}" == '/' ]]; then
 			xfile="${xfile::-1}"
@@ -953,11 +954,8 @@ function file_list
 					echo "${xfile}/${target}"
 				fi
 			elif [ -d "${xfile}/${target}" ];then
-				file_list "${xfile}/${target}" "${string}" "${is_reg}"
-				if [ $? -ne 0 ];then
-					echo_erro "file_list '${xfile}/${target}' '${string}' '${is_reg}'"
-					return 1
-				fi
+				file_list "${xfile}/${target}" "${string}" "${is_reg}" &
+				array_add bg_tasks $!
 			fi
 		done
 	fi
@@ -968,6 +966,10 @@ function file_list
 		fi
 	else
 		echo "${xfile}"
+	fi
+
+	if [ ${#bg_tasks[*]} -gt 0 ];then
+		wait ${bg_tasks[*]}
 	fi
 
     return 0

@@ -283,14 +283,16 @@ function func_patch
 		esac
 	done
 
-	local msg="${subcmd_all[0]}"
-	if [ -n "${msg}" ];then
-		#process_run git format-patch "${msg}~1..${msg}"
-		process_run git format-patch -1 "${msg}"
-	else
-		local patch_dir="$(date '+%Y%m%d-%H%M%S').patch"
-		mkdir -p ${patch_dir}	
+	local patch_dir="$(date '+%Y%m%d-%H%M%S').patch"
+	mkdir -p ${patch_dir}	
 
+	if [ ${#subcmd_all[*]} -gt 0 ];then
+		if [ ${#subcmd_all[*]} -eq 1 ];then
+			process_run git format-patch -o ${patch_dir} -1 ${subcmd_all[0]}
+		elif [ ${#subcmd_all[*]} -gt 1 ];then
+			process_run git format-patch -o ${patch_dir} ${subcmd_all[0]}..${subcmd_all[1]}
+		fi
+	else
 		local modify_files=($(get_modify_list))
 		if [ ${#modify_files[*]} -gt 0 ];then
 			git diff ${modify_files[*]} > ${patch_dir}/M.patch
@@ -353,31 +355,40 @@ function func_apply
 		esac
 	done
 
-	local msg="${subcmd_all[0]}"
-	if [ -f "${msg}" ];then
-		process_run git apply --reject "${msg}"
-	elif [ -d "${msg}" ];then
-		if [ -f "${msg}/M.patch" ];then
-			process_run git apply --reject "${msg}/M.patch"
-		fi
+	if [ ${#subcmd_all[*]} -eq 0 ];then
+		local patches=($(efind . ".+\.patch$"))
+		local xfile=$(select_one ${patches[*]})
+	else
+		local xfile="${subcmd_all[0]}"
+	fi
 
-		local add_files=($(file_list "${msg}"))
+	if [ -f "${xfile}" ];then
+		process_run git apply --reject "${xfile}"
+	elif [ -d "${xfile}" ];then
+		local patch_dir=${xfile}
+		local patches=($(file_list ${patch_dir} "/.+\.patch$" true))
+		for xfile in ${patches[*]}
+		do
+			process_run git apply --reject "${xfile}"
+		done
+
+		local add_files=($(file_list "${patch_dir}"))
 		if [ ${#add_files[*]} -gt 0 ];then
-			local cur_dir=$(file_realpath ${msg})
-			for msg in ${add_files[*]}
+			local cur_dir=$(file_realpath ${xfile})
+			for xfile in ${add_files[*]}
 			do
-				if [[ "${msg}" =~ "/M.patch" ]];then
+				if [[ "${xfile}" =~ '.patch' ]];then
 					continue
 				fi
 
-				local file_realpath=$(file_realpath ${msg})
+				local file_realpath=$(file_realpath ${xfile})
 				local upper_path=$(string_trim "${file_realpath}" "${cur_dir}/" 1)	
 				local dir_path=$(dirname ${upper_path})
 				mkdir -p ${dir_path}
 
-				if [ -f "${msg}" ];then
+				if [ -f "${xfile}" ];then
 					echo "Restore file: ${upper_path}"
-					cp -f ${msg} ${upper_path}
+					cp -f ${xfile} ${upper_path}
 				else
 					mkdir -p ${upper_path}
 				fi
