@@ -1,7 +1,7 @@
 #!/bin/bash
 : ${INCLUDED_COMPLETE:=1}
 
-function _psgrep_completion()
+function _psgrep_completion
 {
 	local cur prev words cword
 
@@ -31,7 +31,7 @@ function _psgrep_completion()
 } &&
 complete -F _psgrep_completion psgrep
 
-function _mykill_completion()
+function _mykill_completion
 {
 	local cur prev words cword
 
@@ -61,7 +61,7 @@ function _mykill_completion()
 } &&
 complete -F _mykill_completion mykill
 
-function _mygit_completion()
+function _mygit_completion
 {
 	local cur prev words cword
 
@@ -82,7 +82,7 @@ function _mygit_completion()
 } &&
 complete -F _mygit_completion mygit
 
-function _mygit_pull_completion()
+function _mygit_pull_completion
 {
 	local cur prev words cword
 
@@ -92,7 +92,7 @@ function _mygit_pull_completion()
 } &&
 complete -F _mygit_pull_completion gpull
 
-function _mygit_checkout_completion()
+function _mygit_checkout_completion
 {
 	local cur prev words cword
 
@@ -102,7 +102,7 @@ function _mygit_checkout_completion()
 } &&
 complete -F _mygit_checkout_completion gcheckout
 
-function _mygdb_completion()
+function _mygdb_completion
 {
 	local cur prev words cword
 
@@ -130,7 +130,7 @@ function _mygdb_completion()
 } &&
 complete -F _mygdb_completion mygdb
 
-function _mydocker_completion()
+function _mydocker_completion
 {
 	local cur prev words cword
 
@@ -155,3 +155,22 @@ function _mydocker_completion()
 	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/docker.sh --func-list)" -- "$cur"))
 } &&
 complete -F _mydocker_completion mydocker
+
+function _mytmux_completion
+{
+	local cur prev words cword
+
+	_init_completion || return
+
+	# don't complete past 2nd token
+	[[ $cword -gt 2 ]] && return 0
+	
+	# define custom completions here
+	if [[ $cword -eq 2 ]]; then
+		COMPREPLY=($(compgen -W "$(tmux list-sessions | awk -F: '{ print $1 }')" -- "$cur"))
+		return 0
+	fi
+
+	COMPREPLY=($(compgen -W "$(sh $MY_VIM_DIR/tools/tmux.sh --func-list)" -- "$cur"))
+} &&
+complete -F _mytmux_completion mytmux

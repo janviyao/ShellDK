@@ -743,7 +743,7 @@ function efind
     
     echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string\n\$3~\$n: other options to find"
+        echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string that must be able to match file's full-name\n\$3~\$n: other options to find"
         return 1
     fi
 

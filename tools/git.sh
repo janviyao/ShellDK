@@ -36,8 +36,8 @@ DESCRIPTION
     clone a remote repo into local repo
 
 OPTIONS
-    -h|--help		         # show this message
-    -r|--recurse		     # recurse clone submodules
+    -h|--help                # show this message
+    -r|--recurse             # recurse clone submodules
 
 EXAMPLES
     mygit clone "repo-url"   # clone <repo-url> into local repo
@@ -94,13 +94,13 @@ DESCRIPTION
     show commit logs by Author, Committer or Time
 
 OPTIONS
-    -h|--help                         # show this message
-    -a|--author                       # show log by Author
-    -c|--committer                    # show log by Committer
-    -t|--time                         # show log by Time
+    -h|--help               # show this message
+    -a|--author             # show log by Author
+    -c|--committer          # show log by Committer
+    -t|--time               # show log by Time
 
 EXAMPLES
-    mygit log -a zhangsan             # show zhangsan's log
+    mygit log -a zhangsan   # show zhangsan's log
 EOF
 )
 
@@ -154,10 +154,10 @@ DESCRIPTION
     add the changes to the index
 
 OPTIONS
-    -h|--help		# show this message
+    -h|--help               # show this message
 
 EXAMPLES
-    mygit add       # add current changes to the index
+    mygit add               # add current changes to the index
 EOF
 )
 
@@ -197,10 +197,10 @@ DESCRIPTION
     record the changes of then index into local repo
 
 OPTIONS
-    -h|--help		          # show this message
+    -h|--help               # show this message
 
 EXAMPLES
-    mygit commit "fix: xxx"   # record current changes of then index into local repo
+    mygit commit "fix: xxx" # record current changes of then index into local repo
 EOF
 )
 
@@ -250,11 +250,12 @@ DESCRIPTION
     prepare each non-merge commit with its "patch" in one "message" per commit
 
 OPTIONS
-    -h|--help		          # show this message
+    -h|--help                         # show this message
 
 EXAMPLES
-    mygit patch               # patch current changes of the index into file
-    mygit patch [commit-id]   # patch the changes of the [commit-id] into file
+    mygit patch                       # patch current changes of the index into file
+    mygit patch [commit-id]           # patch the changes of the [commit-id] into file
+    mygit patch [start-id] [end-id]   # patch the changes between the [start-id] and [end-id] into file
 EOF
 )
 
@@ -292,6 +293,11 @@ function func_patch
 		elif [ ${#subcmd_all[*]} -gt 1 ];then
 			process_run git format-patch -o ${patch_dir} ${subcmd_all[0]}..${subcmd_all[1]}
 		fi
+
+		local rescode=$?
+		if [ ${rescode} -ne 0 ];then
+			return ${rescode}
+		fi
 	else
 		local modify_files=($(get_modify_list))
 		if [ ${#modify_files[*]} -gt 0 ];then
@@ -313,7 +319,7 @@ function func_patch
 		fi
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['apply']=$(cat << EOF
@@ -323,10 +329,10 @@ DESCRIPTION
     reads the supplied diff output and applies it to files
 
 OPTIONS
-    -h|--help		          # show this message
+    -h|--help               # show this message
 
 EXAMPLES
-    mygit apply xxx.path/     # apply current patch of the directory into local repo
+    mygit apply xxx.path/   # apply current patch of the directory into local repo
 EOF
 )
 
@@ -370,6 +376,10 @@ function func_apply
 		for xfile in ${patches[*]}
 		do
 			process_run git apply --reject "${xfile}"
+			local rescode=$?
+			if [ ${rescode} -ne 0 ];then
+				return ${rescode}
+			fi
 		done
 
 		local add_files=($(file_list "${patch_dir}"))
@@ -396,7 +406,7 @@ function func_apply
 		fi
 	fi
 
-    return $?
+    return 0
 }
 
 subcmd_func_map['pull']=$(cat << EOF
@@ -406,10 +416,10 @@ DESCRIPTION
     incorporates changes from a remote repository into the current branch
 
 OPTIONS
-    -h|--help		# show this message
+    -h|--help               # show this message
 
 EXAMPLES
-    mygit pull      # fetch another repository to a local branch
+    mygit pull              # fetch another repository to a local branch
 EOF
 )
 
@@ -474,7 +484,7 @@ DESCRIPTION
     push the changes of local repo into remote repo
 
 OPTIONS
-    -h|--help		          # show this message
+    -h|--help                 # show this message
     -f|--force                # force to push
 
 EXAMPLES
@@ -638,10 +648,10 @@ DESCRIPTION
     modify a commit of the index
 
 OPTIONS
-    -h|--help		          # show this message
+    -h|--help               # show this message
 
 EXAMPLES
-    mygit amend               # modify a commit of the index
+    mygit amend             # modify a commit of the index
 EOF
 )
 
@@ -691,15 +701,15 @@ DESCRIPTION
     look for specified patterns in the commit logs or in the tracked files in the work tree
 
 OPTIONS
-    -h|--help		          # show this message
-    -l|--log		          # default option. search from the commit logs
-    -f|--file		          # search from the tracked files
-    -E|--extended-regexp	  # Use POSIX extended/basic regexp for patterns. Default is to use basic regexp.
-    -P|--perl-regexp	      # Use Perl-compatible regular expressions for patterns.
-    -F|--fixed-strings        # Use fixed strings for patterns (don’t interpret pattern as a regex).
+    -h|--help               # show this message
+    -l|--log                # default option. search from the commit logs
+    -f|--file               # search from the tracked files
+    -E|--extended-regexp    # Use POSIX extended/basic regexp for patterns. Default is to use basic regexp.
+    -P|--perl-regexp        # Use Perl-compatible regular expressions for patterns.
+    -F|--fixed-strings      # Use fixed strings for patterns (don’t interpret pattern as a regex).
 
 EXAMPLES
-    mygit grep "xxx"          # grep 'xxx' from the tracked files
+    mygit grep "xxx"        # grep 'xxx' from the tracked files
 EOF
 )
 
@@ -778,7 +788,7 @@ DESCRIPTION
 	3) push the changes of local repo into remote repo
 
 OPTIONS
-    -h|--help		          # show this message
+    -h|--help                 # show this message
 
 EXAMPLES
     mygit all "fix: xxx"      # record current changes of then index into local repo
@@ -845,10 +855,10 @@ DESCRIPTION
     add a submodule
 
 OPTIONS
-    -h|--help                                            # show this message
+    -h|--help                                             # show this message
 
 EXAMPLES
-    mygit submodule_add 'repo-url' 'sub_dir' 'master'    # add [sud_dir] with [repo-url] where its branch is <master>
+    mygit submodule_add 'repo-url' 'sub_dir' 'master'     # add [sud_dir] with [repo-url] where its branch is <master>
 EOF
 )
 
@@ -906,10 +916,10 @@ DESCRIPTION
     deinit a submodule
 
 OPTIONS
-    -h|--help                                            # show this message
+    -h|--help                                   # show this message
 
 EXAMPLES
-    mygit submodule_deinit 'repo-module'                 # deinit a submodule with [repo-module]
+    mygit submodule_deinit 'repo-module'        # deinit a submodule with [repo-module]
 EOF
 )
 
@@ -962,10 +972,10 @@ DESCRIPTION
     delete a submodule
 
 OPTIONS
-    -h|--help                                            # show this message
+    -h|--help                         # show this message
 
 EXAMPLES
-    mygit submodule_del 'repo-url'                       # delete a submodule with [repo-url]
+    mygit submodule_del 'repo-url'    # delete a submodule with [repo-url]
 EOF
 )
 
@@ -1034,10 +1044,10 @@ DESCRIPTION
     update a submodule repo
 
 OPTIONS
-    -h|--help                                            # show this message
+    -h|--help                         # show this message
 
 EXAMPLES
-    mygit submodule_update 'repo-url'                       # update a submodule repo with [repo-url]
+    mygit submodule_update 'repo-url' # update a submodule repo with [repo-url]
 EOF
 )
 
@@ -1098,7 +1108,11 @@ function how_use_func
     printf -- "%s%s\n" "${indent}" "***************************************************************"
     while read -r line
     do
-        printf -- "%s%s\n" "${indent}" "${line}"
+    	if [ -n "${indent}" ];then
+			printf -- "%s%s\n" "${indent}|" "${line}"
+		else
+			printf -- "%s\n" "${line}"
+		fi
     done <<< "${subcmd_func_map[${func}]}"
 }
 
@@ -1107,18 +1121,17 @@ function how_use_tool
     local script_name=$(file_get_fname $0)
 
     cat <<-END >&2
-    ============================== Usage ==============================
-    ${script_name} <command [options] [sub-parameter]>
-    DESCRIPTION
-        simplify git usage
+usage: ${script_name} <command [options] [parameter]>
+DESCRIPTION
+    simplify tmux usage
 
-    COMMANDS
+COMMANDS
 END
 
     local func
     for func in "${!subcmd_func_map[@]}"
     do
-        how_use_func "${func}" "        "
+        how_use_func "${func}" "    "
         echo
     done
 }
