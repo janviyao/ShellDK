@@ -199,11 +199,11 @@ function file_range_has
     fi 
 
     if math_bool "${is_reg}";then
-        if sed -n "${line_s},${line_e}p" | grep -P "${string}" &>/dev/null;then
+        if sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}" &>/dev/null;then
             return 0
         fi
     else
-        if sed -n "${line_s},${line_e}p" | grep -F "${string}" &>/dev/null;then
+        if sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}" &>/dev/null;then
             return 0
         fi
     fi
