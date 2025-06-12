@@ -95,8 +95,8 @@ DESCRIPTION
 
 OPTIONS
     -h|--help               # show this message
-    -a|--author             # show log by Author
-    -c|--committer          # show log by Committer
+    -a|--author <value>     # show log by Author
+    -c|--committer <value>  # show log by Committer
     -t|--time               # show log by Time
 
 EXAMPLES
@@ -109,7 +109,7 @@ function func_log
 	local -a option_all=()
 	local -A option_map=()
 	local -a subcmd_all=()
-	local -a shortopts=('h' 'a:' 'author:' 'c:' 'committer:' 't:' 'time:' 'g:' 'grep:')
+	local -a shortopts=('h' 'a:' 'author:' 'c:' 'committer:' 'g:' 'grep:' 't' 'time')
 	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
 
 	if [ ${#option_map[*]} -le 0 ];then
@@ -127,15 +127,15 @@ function func_log
 				return 0
 				;;
 			"-a"|"--author")
-				process_run git log --author="${value}"
+				local opts="--author='${value}'"
 				;;
 			"-c"|"--committer")
-				process_run git log --committer="${value}"
+				local opts="--committer='${value}'"
 				;;
 			"-t"|"--time")
 				local tm_s=$(input_prompt "" "input start time" "$(date '+%Y-%m-%d')")
 				local tm_e=$(input_prompt "" "input end time" "$(date '+%Y-%m-%d')")
-				process_run git log --since="${tm_s}" --until="${tm_e}"
+				local opts="--since='${tm_s}' --until='${tm_e}'"
 				;;
 			*)
 				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
@@ -144,7 +144,8 @@ function func_log
 		esac
 	done
 
-    return $?
+	process_run git log ${opts}
+    return 0
 }
 
 subcmd_func_map['add']=$(cat << EOF
@@ -244,7 +245,7 @@ function func_commit
 }
 
 subcmd_func_map['patch']=$(cat << EOF
-mygit patch [commit-id]
+mygit patch [commit-id] <commit-id>
 
 DESCRIPTION
     prepare each non-merge commit with its "patch" in one "message" per commit

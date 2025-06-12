@@ -233,7 +233,12 @@ function section_set
                 fi
             done
         else
-            echo "" >> ${sec_file}
+			local line_nr=$(file_line_num ${sec_file})
+			if [ ${line_nr} -gt 0 ];then
+				echo "" >> ${sec_file}
+			else
+				file_create ${sec_file}
+			fi
             echo "[${sec_name}]" >> ${sec_file}
             echo "${HEADER_SPACE}${key_str}${SKV_FS}${val_str}" >> ${sec_file}
         fi

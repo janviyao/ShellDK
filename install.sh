@@ -437,7 +437,7 @@ function inst_vim
             return 1
         fi
 
-        sudo_it rm -f /usr/local/bin/vim
+        sudo_it rm -f /usr/local/bin/vim /usr/bin/ex /usr/bin/view /usr/bin/rview
         file_exist "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
 
