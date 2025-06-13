@@ -35,7 +35,7 @@ function section_line_range
                     nr_end=$(file_linenr "${sec_file}" "" false)
                 fi
             fi
-            range_array[${#range_array[*]}]="${nr_start}${GBL_COL_SPF}${nr_end}"
+			range_array+=("${nr_start}${GBL_COL_SPF}${nr_end}")
         done
     fi
 
@@ -171,7 +171,7 @@ function section_line_nr
             if [ ${#nr_array[*]} -gt 0 ];then
                 for line_nr in ${nr_array[*]}
                 do
-                    line_nrs[${#line_nrs[*]}]="${line_nr}"
+					line_nrs+=("${line_nr}")
                 done
             fi
         done
@@ -280,7 +280,7 @@ function section_get_keys
                     fi
 
                     local key_str=$(string_split "${line_cnt}" "${SKV_FS}" "1")
-                    key_array[${#key_array[*]}]="${key_str}"
+					key_array+=("${key_str}")
                 fi
             done
         done

@@ -640,7 +640,8 @@ function file_range
         for line_nr2 in ${line_nrs2[*]}
         do
             if [ ${line_nr1} -lt ${line_nr2} ];then
-                range_array[${#range_array[*]}]="${line_nr1}${GBL_COL_SPF}${line_nr2}"
+				range_array+=("${line_nr1}${GBL_COL_SPF}${line_nr2}")
+				break
             fi
         done
     done
@@ -851,7 +852,6 @@ function file_count
 
     have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
-    local -i index=0
     local -a c_array
     local file
     for file in ${f_array[*]}
@@ -863,8 +863,7 @@ function file_count
                 readable=false
                 break
             fi
-            c_array[${index}]="${file}"
-            let index++
+			c_array+=("${file}")
         fi
     done
 
@@ -891,7 +890,6 @@ function file_size
 
     have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
-    local -i index=0
     local -a c_array
     local file
     for file in ${f_array[*]}
@@ -903,8 +901,7 @@ function file_size
                 readable=false
                 break
             fi
-            c_array[${index}]="${file}"
-            let index++
+			c_array+=("${file}")
         fi
     done
 
