@@ -11,10 +11,10 @@ file_exist "/usr/include/json/json_c_version.h"  || { cd ${MY_VIM_DIR}/deps/pack
 
 # configure core-dump path
 $SUDO file_del /etc/security/limits.conf '^.*\*\s+soft\s+core\s+.+' true
-$SUDO file_add /etc/security/limits.conf '* soft core unlimited'
+$SUDO file_append /etc/security/limits.conf '* soft core unlimited'
 
 $SUDO file_del /etc/security/limits.conf '^.*\*\s+hard\s+core\s+.+' true
-$SUDO file_add /etc/security/limits.conf '* hard core unlimited'
+$SUDO file_append /etc/security/limits.conf '* hard core unlimited'
 
 #${SUDO} ulimit -c unlimited
 ${SUDO} "echo '/core-%e-%s-%u-%g-%p-%t' > /proc/sys/kernel/core_pattern"

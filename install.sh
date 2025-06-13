@@ -379,9 +379,9 @@ function inst_env
         ${SUDO} "file_del /etc/ld.so.conf '/usr/local/lib'"
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
-        ${SUDO} "file_add /etc/ld.so.conf '/usr/lib64'"
-        ${SUDO} "file_add /etc/ld.so.conf '/usr/local/lib'"
-        ${SUDO} "file_add /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
+        ${SUDO} "file_append /etc/ld.so.conf '/usr/lib64'"
+        ${SUDO} "file_append /etc/ld.so.conf '/usr/local/lib'"
+        ${SUDO} "file_append /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
 
         sudo_it ldconfig
     fi

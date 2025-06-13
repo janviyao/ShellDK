@@ -104,7 +104,7 @@ function kvconf_set
             fi
         done
     else
-        file_add "${kv_file}" "${key_str}${KV_FS}${val_str}"
+        file_append "${kv_file}" "${key_str}${KV_FS}${val_str}"
         if [ $? -ne 0 ];then
             echo_erro "kvconf_set { $@ }"
             return 1
@@ -211,7 +211,7 @@ function kvconf_val_append
             fi
         done
     else
-        file_add "${kv_file}" "${key_str}${KV_FS}${val_str}"
+        file_append "${kv_file}" "${key_str}${KV_FS}${val_str}"
         if [ $? -ne 0 ];then
             echo_erro "kvconf_set { $@ }"
             return 1

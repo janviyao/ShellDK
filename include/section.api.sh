@@ -204,9 +204,7 @@ function section_set
     if [ ${#line_nrs[*]} -gt 1 ];then
         echo_erro "section_set { $@ }: section has multiple duplicate key"
         return 1
-    fi
-
-    if [ -n "${line_nrs[*]}" ];then
+    elif [ ${#line_nrs[*]} -eq 1 ];then
         file_change "${sec_file}" "${HEADER_SPACE}${key_str}${SKV_FS}${val_str}" "${line_nrs[0]}"
         if [ $? -ne 0 ];then
             echo_erro "section_set { $@ }"
@@ -217,9 +215,7 @@ function section_set
         if [ ${#line_array[*]} -gt 1 ];then
             echo_erro "section_set { $@ }: section has multiple duplicate section"
             return 1
-        fi
-        
-        if [ ${#line_array[*]} -eq 1 ];then
+        elif [ ${#line_array[*]} -eq 1 ];then
             local range
             for range in ${line_array[*]}
             do

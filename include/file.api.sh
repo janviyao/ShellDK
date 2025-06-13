@@ -211,36 +211,6 @@ function file_range_has
     return 1
 }
 
-function file_add
-{
-    local xfile="$1"
-    local content="$2"
-
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string"
-        return 1
-    fi
-     
-    if ! file_exist "${xfile}";then
-		echo_erro "file { ${xfile} } lost"
-		return 1
-    fi 
-
-    local line_cnt=$(sed -n '$p' ${xfile})
-    if [ -z "${line_cnt}" ];then
-        eval "sed -i '$ c\\${content}' ${xfile}"
-    else
-        eval "sed -i '$ a\\${content}' ${xfile}"
-    fi
-
-    if [ $? -ne 0 ];then
-        echo_erro "file_add { $@ }"
-        return 1
-    fi
- 
-    return 0
-}
-
 function file_get
 {
     local xfile="$1"
@@ -452,6 +422,38 @@ function file_del
     fi
 
     return 0 
+}
+
+function file_append
+{
+	local xfile="$1"
+	local value="$2"
+
+	if [ $# -le 1 ];then
+		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
+		return 1
+	fi
+
+    if ! file_exist "${xfile}";then 
+		echo_erro "file { ${xfile} } lost"
+		return 1
+    fi
+
+    local line_cnt=$(file_line_num ${xfile})
+    if [ ${line_cnt} -eq 0 ];then
+        #eval "sed -i '$ c\\${content}' ${xfile}"
+		echo "${value}" > ${xfile}
+    else
+        #eval "sed -i '$ a\\${content}' ${xfile}"
+		echo "${value}" >> ${xfile}
+    fi
+
+	if [ $? -ne 0 ];then
+		echo_erro "file_append { $@ }"
+		return 1
+	fi
+
+    return 0
 }
 
 function file_insert
@@ -674,7 +676,8 @@ function file_line_num
         return 0
     fi 
 
-    echo $(sed -n '$=' ${xfile})
+    #echo $(sed -n '$=' ${xfile})
+    echo $(awk 'BEGIN { total=0 } NF { total+=1 } END { print total }' ${xfile})
     return 0
 }
 
@@ -986,54 +989,6 @@ function file_temp
     done
 
     echo "${fpath}"
-}
-
-function file_write
-{
-	local xfile="$1"
-	local value="$2"
-
-	if [ $# -le 1 ];then
-		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
-		return 1
-	fi
-
-    if ! file_exist "${xfile}";then 
-		echo_erro "file { ${xfile} } lost"
-		return 1
-    fi
-
-	echo "${value}" > ${xfile}
-	if [ $? -ne 0 ];then
-		echo_erro "file_write { $@ }"
-		return 1
-	fi
-
-    return 0
-}
-
-function file_append
-{
-	local xfile="$1"
-	local value="$2"
-
-	if [ $# -le 1 ];then
-		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
-		return 1
-	fi
-
-    if ! file_exist "${xfile}";then 
-		echo_erro "file { ${xfile} } lost"
-		return 1
-    fi
-
-	echo "${value}" >> ${xfile}
-	if [ $? -ne 0 ];then
-		echo_erro "file_append { $@ }"
-		return 1
-	fi
-
-    return 0
 }
 
 function file_realpath
