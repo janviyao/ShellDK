@@ -44,28 +44,28 @@ else
 fi
 
 echo "# [global configure]" >> ${TEST_SUIT_ENV}
-kvconf_set "${TEST_SUIT_ENV}" "export PATH"     "$HOME/.local/bin:/sbin/:$PATH"
-kvconf_set "${TEST_SUIT_ENV}" "CONTROL_IP"      "${LOCAL_IP}"
+kvconf_set "${TEST_SUIT_ENV}" "" "export PATH"     "$HOME/.local/bin:/sbin/:$PATH"
+kvconf_set "${TEST_SUIT_ENV}" "" "CONTROL_IP"      "${LOCAL_IP}"
 echo "" >> ${TEST_SUIT_ENV}
 
-kvconf_set "${TEST_SUIT_ENV}" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[*]})"
-kvconf_set "${TEST_SUIT_ENV}" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*]})"
-#kvconf_set "${TEST_SUIT_ENV}" "declare -A HOST_DISK_MAP"   "(['${LOCAL_IP}']='empty')"
+kvconf_set "${TEST_SUIT_ENV}" "" "declare -a SERVER_IP_ARRAY" "(${SERVER_IP_ARRAY[*]})"
+kvconf_set "${TEST_SUIT_ENV}" "" "declare -a CLIENT_IP_ARRAY" "(${CLIENT_IP_ARRAY[*]})"
+# kvconf_set "${TEST_SUIT_ENV}" "" "declare -A HOST_DISK_MAP"   "(['${LOCAL_IP}']='empty')"
 echo "" >> ${TEST_SUIT_ENV}
 
-kvconf_set "${TEST_SUIT_ENV}" "WORK_ROOT_DIR"   "${WORK_ROOT_DIR}"
-kvconf_set "${TEST_SUIT_ENV}" "TOOL_ROOT_DIR"   "${TOOL_ROOT_DIR}"
-kvconf_set "${TEST_SUIT_ENV}" "APPLY_SYSCTRL"   "${APPLY_SYSCTRL}"
-kvconf_set "${TEST_SUIT_ENV}" "KERNEL_DEBUG_ON" "${KERNEL_DEBUG_ON}"
-kvconf_set "${TEST_SUIT_ENV}" "DUMP_SAVE_ON"    "${DUMP_SAVE_ON}"
+kvconf_set "${TEST_SUIT_ENV}" "" "WORK_ROOT_DIR"   "${WORK_ROOT_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "TOOL_ROOT_DIR"   "${TOOL_ROOT_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "APPLY_SYSCTRL"   "${APPLY_SYSCTRL}"
+kvconf_set "${TEST_SUIT_ENV}" "" "KERNEL_DEBUG_ON" "${KERNEL_DEBUG_ON}"
+kvconf_set "${TEST_SUIT_ENV}" "" "DUMP_SAVE_ON"    "${DUMP_SAVE_ON}"
 
-kvconf_set "${TEST_SUIT_ENV}" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
-kvconf_set "${TEST_SUIT_ENV}" "TEST_TARGET"     "${TEST_TARGET}"
-kvconf_set "${TEST_SUIT_ENV}" "TEST_WORKGUIDE"  "\"${TEST_WORKGUIDE}\""
-kvconf_set "${TEST_SUIT_ENV}" "TESTCASE_SUITE"  "\"${TESTCASE_SUITE}\""
+kvconf_set "${TEST_SUIT_ENV}" "" "KEEP_ENV_STATE"  "${KEEP_ENV_STATE}"
+kvconf_set "${TEST_SUIT_ENV}" "" "TEST_TARGET"     "${TEST_TARGET}"
+kvconf_set "${TEST_SUIT_ENV}" "" "TEST_WORKGUIDE"  "\"${TEST_WORKGUIDE}\""
+kvconf_set "${TEST_SUIT_ENV}" "" "TESTCASE_SUITE"  "\"${TESTCASE_SUITE}\""
 
-kvconf_set "${TEST_SUIT_ENV}" "TEST_ROOT_DIR"   "${TEST_ROOT_DIR}"
-kvconf_set "${TEST_SUIT_ENV}" "TEST_LOG_DIR"    "${TEST_LOG_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "TEST_ROOT_DIR"   "${TEST_ROOT_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "TEST_LOG_DIR"    "${TEST_LOG_DIR}"
 
 echo "" >> ${TEST_SUIT_ENV}
 echo "# [fio configure]" >> ${TEST_SUIT_ENV}

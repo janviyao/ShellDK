@@ -1024,10 +1024,10 @@ function func_submodule_del
 		return ${retcode}
 	fi
 
-    section_del_section .gitmodules "submodule \"${repo}\""
+    kvconf_del_section .gitmodules "submodule \"${repo}\""
     retcode=$?
     if [ ${retcode} -ne 0 ];then
-        echo_erro "failed { section_del_section .gitmodules 'submodule \"${repo}\"' }"
+        echo_erro "failed { kvconf_del_section .gitmodules 'submodule \"${repo}\"' }"
 		return ${retcode}
 	fi
 

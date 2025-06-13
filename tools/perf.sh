@@ -15,12 +15,12 @@ function update_conf
 {
     local res_file="$1"
 
-    local key_array=($(section_get_keys "${MY_HOME}/.perfrc" "PERF-DATA"))
+    local key_array=($(kvconf_get_keys "${MY_HOME}/.perfrc" "PERF-DATA"))
     if [ ${#key_array[*]} -gt 0 ];then
         local max_index=$(string_split "${key_array[$((${#key_array[*]} - 1))]}" "-" 2) 
-        section_set "${MY_HOME}/.perfrc" "PERF-DATA" "data-$((max_index+1))" "${res_file}"
+        kvconf_set "${MY_HOME}/.perfrc" "PERF-DATA" "data-$((max_index+1))" "${res_file}"
     else
-        section_set "${MY_HOME}/.perfrc" "PERF-DATA" "data-1" "${res_file}"
+        kvconf_set "${MY_HOME}/.perfrc" "PERF-DATA" "data-1" "${res_file}"
     fi
 }
 
@@ -29,16 +29,16 @@ function acquire_result
     local index=0
     local val_str=""
 
-    local key_array=($(section_get_keys "${MY_HOME}/.perfrc" "PERF-DATA"))
+    local key_array=($(kvconf_get_keys "${MY_HOME}/.perfrc" "PERF-DATA"))
     if [ ${#key_array[*]} -gt 0 ];then
         for ((index=$((${#key_array[*]} - 1)); index>=0; index--))
         do
-            val_str=($(section_get_val "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"))
+            val_str=($(kvconf_get_val "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"))
             if file_exist "${val_str}";then
                 break
             else
                 echo_file "${LOG_DEBUG}" "file invalid: ${val_str}"
-                section_del_key "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"
+                kvconf_del_key "${MY_HOME}/.perfrc" "PERF-DATA" "${key_array[${index}]}"
             fi
         done
     fi

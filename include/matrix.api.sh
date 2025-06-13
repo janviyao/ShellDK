@@ -3,6 +3,24 @@
 
 readonly MATRIX_KEY_SPF=","
 
+function array_print
+{
+    local -n _array_ref=$1
+
+    if [ $# -ne 1 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference"
+        return 1
+    fi
+
+    local item
+    for item in ${_array_ref[*]}
+    do
+		print_lossless "${item}"
+    done
+
+    return 0
+}
+
 function array_have
 {
     local -n _array_ref=$1
@@ -48,16 +66,21 @@ function array_index
         return 1
     fi
 
+	local found=0
     local index
     for index in ${!_array_ref[*]}
     do
         local item=${_array_ref[${index}]}
         if [[ ${item} == ${value} ]];then
             echo "${index}"
-            return 0
+			let found++
         fi
     done
 	
+	if [ ${found} -gt 0 ];then
+		return 0
+	fi
+
 	echo $((${#_array_ref[*]} + 1))
     return 1
 }
@@ -78,13 +101,14 @@ function array_add
 
 function array_del_by_index
 {
-    local -n _array_ref=$1
-    local index="$2"
-
-    if [[ $# -ne 2 ]] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]] || ! math_is_int "${index}";then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: index to be deleted"
+    if [[ $# -lt 2 ]] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: index to be deleted"
         return 1
     fi
+
+    local -n _array_ref=$1
+    shift 1
+	local index_list=("$@")
 
 	local indexs=(${!_array_ref[*]})
 	if [ ${#indexs[*]} -eq 0 ];then
@@ -92,12 +116,15 @@ function array_del_by_index
 	fi
 
 	local total=$((${indexs[$((${#indexs[*]} - 1))]} + 1))
-	if [ ${index} -lt ${total} ];then
-		unset _array_ref[${index}]
-		return 0
-	fi
+	local index
+	for index in ${index_list[*]}
+	do
+		if [ ${index} -lt ${total} ];then
+			unset _array_ref[${index}]
+		fi
+	done
 
-	return 1
+	return 0
 }
 
 function array_del_by_value
@@ -105,19 +132,19 @@ function array_del_by_value
     local -n _array_ref=$1
     local xname="$1"
     local value="$2"
-	local index=0
 
     if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: value to be deleted"
         return 1
     fi
-	
-	index=$(array_index ${xname} ${value})
+
+	local -a index_list
+	index_list=($(array_index ${xname} ${value}))
 	if [ $? -ne 0 ];then
 		return 1
 	fi
 
-	array_del_by_index ${xname} ${index}
+	array_del_by_index ${xname} ${index_list[*]}
 	return $?
 }
 

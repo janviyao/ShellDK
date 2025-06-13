@@ -21,28 +21,26 @@ ISCSI_INITIATOR_LOG=${INITIATOR_LOG_DIR}/iscsid.log
 ISCSI_TARGET_IP_ARRAY=(${SERVER_IP_ARRAY[*]:?"iSCSI target ip address empty"})
 ISCSI_INITIATOR_IP_ARRAY=(${CLIENT_IP_ARRAY[*]:?"iSCSI initiator ip address empty"})
 
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_ROOT_DIR" "${ISCSI_ROOT_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_ROOT_DIR" "${ISCSI_ROOT_DIR}"
 
 echo "" >> ${TEST_SUIT_ENV}
-kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_TARGET_IP_ARRAY" "(${ISCSI_TARGET_IP_ARRAY[*]})"
-kvconf_set "${TEST_SUIT_ENV}" "declare -a ISCSI_INITIATOR_IP_ARRAY" "(${ISCSI_INITIATOR_IP_ARRAY[*]})"
+kvconf_set "${TEST_SUIT_ENV}" "" "declare -a ISCSI_TARGET_IP_ARRAY" "(${ISCSI_TARGET_IP_ARRAY[*]})"
+kvconf_set "${TEST_SUIT_ENV}" "" "declare -a ISCSI_INITIATOR_IP_ARRAY" "(${ISCSI_INITIATOR_IP_ARRAY[*]})"
 
 echo "" >> ${TEST_SUIT_ENV}
 ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/setup.sh
 
 echo "" >> ${TEST_SUIT_ENV}
-kvconf_set "${TEST_SUIT_ENV}" "TARGET_DEBUG_ON"           "${TARGET_DEBUG_ON}"
-kvconf_set "${TEST_SUIT_ENV}" "INITIATOR_DEBUG_ON"        "${INITIATOR_DEBUG_ON}"
-kvconf_set "${TEST_SUIT_ENV}" "INITIATOR_LOG_DIR"         "${INITIATOR_LOG_DIR}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_MULTIPATH_ON"        "${ISCSI_MULTIPATH_ON}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_INITIATOR_LOG"       "${ISCSI_INITIATOR_LOG}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_MUTLIPATH_RESTART"   "${ISCSI_MUTLIPATH_RESTART}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_INITIATOR_RESTART"   "${ISCSI_INITIATOR_RESTART}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_SESSION_NR"          "${ISCSI_SESSION_NR}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_DEV_SIZE"            "${ISCSI_DEV_SIZE}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_BLK_SIZE"            "${ISCSI_BLK_SIZE}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_DEV_QD"              "${ISCSI_DEV_QD}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_HEADER_DIGEST"       "${ISCSI_HEADER_DIGEST}"
-kvconf_set "${TEST_SUIT_ENV}" "ISCSI_DATA_DIGEST"         "${ISCSI_DATA_DIGEST}"
-
-
+kvconf_set "${TEST_SUIT_ENV}" "" "TARGET_DEBUG_ON"           "${TARGET_DEBUG_ON}"
+kvconf_set "${TEST_SUIT_ENV}" "" "INITIATOR_DEBUG_ON"        "${INITIATOR_DEBUG_ON}"
+kvconf_set "${TEST_SUIT_ENV}" "" "INITIATOR_LOG_DIR"         "${INITIATOR_LOG_DIR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_MULTIPATH_ON"        "${ISCSI_MULTIPATH_ON}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_INITIATOR_LOG"       "${ISCSI_INITIATOR_LOG}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_MUTLIPATH_RESTART"   "${ISCSI_MUTLIPATH_RESTART}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_INITIATOR_RESTART"   "${ISCSI_INITIATOR_RESTART}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_SESSION_NR"          "${ISCSI_SESSION_NR}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_DEV_SIZE"            "${ISCSI_DEV_SIZE}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_BLK_SIZE"            "${ISCSI_BLK_SIZE}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_DEV_QD"              "${ISCSI_DEV_QD}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_HEADER_DIGEST"       "${ISCSI_HEADER_DIGEST}"
+kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_DATA_DIGEST"         "${ISCSI_DATA_DIGEST}"

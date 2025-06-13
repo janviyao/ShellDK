@@ -45,27 +45,27 @@ do
 
     pg_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 1)
     section_del "${ISCSI_CONF_DIR}/istgt.conf" "PortalGroup${pg_id}"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "PortalGroup${pg_id}" "Comment" "\"SINGLE PORT TEST\""
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "PortalGroup${pg_id}" "Portal DA1" "${tgt_ip}:3260"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "PortalGroup${pg_id}" "Comment" "\"SINGLE PORT TEST\""
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "PortalGroup${pg_id}" "Portal DA1" "${tgt_ip}:3260"
 
     ig_id=$(echo "${map_value}" | awk '{ print $3 }' | cut -d ":" -f 2)
     section_del "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "Comment" "\"Initiator Group${ig_id}\""
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "InitiatorName" "\"ALL\""
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "Comment" "\"Initiator Group${ig_id}\""
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "InitiatorName" "\"ALL\""
     netmask=$(echo "${ini_ip}" | grep -P "\d+\.\d+\.\d+" -o)
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "Netmask" "${netmask}.0/24"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "Netmask" "${netmask}.0/24"
 
     tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
     tgt_id=$(string_regex "${tgt_name}" "\d+")
     section_del "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "Comment" "\"Hard Disk Sample\""
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "TargetName" "${tgt_name}"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "TargetAlias" "\"Data ${tgt_name}\""
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "Mapping" "PortalGroup${pg_id} InitiatorGroup${ig_id}"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "AuthMethod" "Auto"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "AuthGroup" "AuthGroup1"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "UseDigest" "Auto"
-    section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "UnitType" "Disk"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "Comment" "\"Hard Disk Sample\""
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "TargetName" "${tgt_name}"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "TargetAlias" "\"Data ${tgt_name}\""
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "Mapping" "PortalGroup${pg_id} InitiatorGroup${ig_id}"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "AuthMethod" "Auto"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "AuthGroup" "AuthGroup1"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "UseDigest" "Auto"
+    kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "UnitType" "Disk"
 
     map_num=$(echo "${map_value}" | awk '{ print NF }')
     if [ ${map_num} -le 3 ];then
@@ -83,9 +83,9 @@ do
         ${SUDO} "mkdir -p ${file_path}; chmod -R 777 ${file_path}" 
         ${SUDO} fallocate -l ${DEVICE_SIZE} ${file_name}
 
-        section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "LUN${lun_id} Storage" "${file_name} Auto"
-        section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "LUN${lun_id} Option ReadCache" "Disable"
-        section_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "LUN${lun_id} Option WriteCache" "Disable"
+        kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "LUN${lun_id} Storage" "${file_name} Auto"
+        kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "LUN${lun_id} Option ReadCache" "Disable"
+        kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "LUN${lun_id} Option WriteCache" "Disable"
     done
 done
 

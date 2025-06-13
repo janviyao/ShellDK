@@ -244,18 +244,17 @@ function string_split
     local sub_index="${3:-0}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index"
+		echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index(start from 1, 0: all)"
         return 1
     fi
 
-    local substr=""
     if math_is_int "${sub_index}";then
         if [ ${sub_index} -eq 0 ];then
             local index=1
             local -a sub_array
             while true
             do
-                substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
+                local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
                 if [ -z "${substr}" ];then
                     break
                 fi
@@ -264,12 +263,17 @@ function string_split
                     substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
                 fi
 
-                sub_array[${#sub_array[*]}]="${substr}"
+				sub_array+=("${substr}")
                 let index++
             done
-            substr="${sub_array[*]}"
+			array_print sub_array
+			return 0
         else
-            substr=$(awk -F "${separator}" "{ print \$${sub_index}}" <<< "${string}")
+			local substr=$(awk -F "${separator}" "{ print \$${sub_index}}" <<< "${string}")
+			if [[ "${substr}" =~ ' ' ]];then
+				substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
+			fi
+			print_lossless "${substr}"
         fi
     else
         if [[ "${sub_index}" =~ '-' ]];then
@@ -278,44 +282,36 @@ function string_split
 				print_lossless "${string}"
                 return 1
             fi
-            local index_e=$(awk -F '-' '{ print $2 }' <<< "${sub_index}")
 
+			if [ ${index_s} -eq 0 ];then
+				index_s=1
+			fi
+
+			local index_e=$(awk -F '-' '{ print $2 }' <<< "${sub_index}")
+			if ! math_is_int "${index_e}";then
+				index_e=$(awk -F "${separator}" "{ print NF }" <<< "${string}")
+			fi
+
+			local index=0
             local -a sub_array
-            if math_is_int "${index_e}";then
-                local index=0
-                for ((index=index_s; index<=index_e; index++))
-                do
-                    substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
-                    if [[ "${substr}" =~ ' ' ]];then
-                        substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
-                    fi
-                    sub_array[${#sub_array[*]}]="${substr}"
-                done
-            else
-                while true
-                do
-                    substr=$(awk -F "${separator}" "{ print \$${index_s}}" <<< "${string}")
-                    if [ -z "${substr}" ];then
-                        break
-                    fi
+			for ((index=index_s; index<=index_e; index++))
+			do
+				local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
+				if [[ "${substr}" =~ ' ' ]];then
+					substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
+				fi
+				sub_array+=("${substr}")
+			done
 
-                    if [[ "${substr}" =~ ' ' ]];then
-                        substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
-                    fi
-                    sub_array[${#sub_array[*]}]="${substr}"
-                    let index_s++
-                done
-            fi
-            substr="${sub_array[*]}"
+			array_print sub_array
+			return 0
         else
 			print_lossless "${string}"
             return 1
         fi
     fi
 
-    #echo_file "${LOG_DEBUG}" "SUB [${substr}] [$@]"
-	print_lossless "${substr}"
-    return 0
+    return 1
 }
 
 function string_start
