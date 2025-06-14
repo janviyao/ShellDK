@@ -1,12 +1,9 @@
 #!/bin/bash
 echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "m: p: o:" "$@"
-#set -x
 
 OP_MODE=$(get_optval "-m" "--mode")
-if [ -n "${OP_MODE}" ];then
-    echo_debug "work-mode: ${OP_MODE}"
-fi
+echo_debug "work-mode: ${OP_MODE}"
 
 PRJ_DIR=$(get_optval "-p" "--project-dir")
 PRJ_DIR="${PRJ_DIR:-.}"
@@ -24,7 +21,7 @@ OUT_DIR=$(string_trim "${OUT_DIR}" "/" 2)
 if [ -n "${OUT_DIR}" ];then
     echo_debug "output-dir: ${OUT_DIR}"
     if ! file_exist "${OUT_DIR}"; then
-		echo_erro "file { ${OUT_DIR} } not accessed"
+		echo_erro "dir { ${OUT_DIR} } not accessed"
         exit 1
     fi
 else
@@ -34,7 +31,12 @@ fi
 
 function create_project
 {
-    cd ${PRJ_DIR}
+	local prj_dir="$1"
+	local out_dir="$2"
+
+	local cur_dir=$(pwd)
+	cd ${prj_dir}
+
     local default_type="c\\|cpp\\|tpp\\|cc\\|java\\|hpp\\|hh\\|h\\|s\\|S\\|py\\|go"
     local find_str="${default_type}"
 
@@ -75,40 +77,45 @@ function create_project
         input_val=$(input_prompt "" "input wipe directory" "")
     done
 
-    echo > ${OUT_DIR}/cscope.files
+    echo > ${out_dir}/cscope.files
+	local type_str
     for type_str in ${type_list[*]}
     do
         for dir_str in ${search_list[*]}
         do
-            find ${dir_str} -type f -regex ".+\\.\\(${type_str}\\)" >> ${OUT_DIR}/cscope.files 
+            find ${dir_str} -type f -regex ".+\\.\\(${type_str}\\)" >> ${out_dir}/cscope.files 
         done
     done
-    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.orig
+    cp -f ${out_dir}/cscope.files ${out_dir}/cscope.files.orig
 
-    file_replace ${OUT_DIR}/cscope.files "^\./" "" true
+    file_replace ${out_dir}/cscope.files "^\./" "" true
     if [ $? -ne 0 ];then
         echo_erro "file_replace { ./ } into { } fail"
+		cd ${cur_dir}
         return 1
     fi
-
+	
+	local wipe_str
     for wipe_str in ${wipe_list[*]}
     do
-        file_del ${OUT_DIR}/cscope.files "${wipe_str}" false
+        file_del ${out_dir}/cscope.files "${wipe_str}" false
         if [ $? -ne 0 ];then
             echo_erro "file_del { ${wipe_str}} fail"
+			cd ${cur_dir}
             return 1
         fi
     done
-    echo_debug "wipe cscope.files lines=$(file_line_num ${OUT_DIR}/cscope.files)"
-    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.wipe
 
-    sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
-    mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
-    echo_debug "orig cscope.files lines=$(file_line_num ${OUT_DIR}/cscope.files)"
-    cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.sort
+    echo_debug "wipe cscope.files lines=$(file_line_num ${out_dir}/cscope.files)"
+    cp -f ${out_dir}/cscope.files ${out_dir}/cscope.files.wipe
+
+    sort -u ${out_dir}/cscope.files > ${out_dir}/cscope.files.tmp
+    mv ${out_dir}/cscope.files.tmp ${out_dir}/cscope.files 
+    echo_debug "orig cscope.files lines=$(file_line_num ${out_dir}/cscope.files)"
+    cp -f ${out_dir}/cscope.files ${out_dir}/cscope.files.sort
 
     if file_exist ".gitignore"; then
-        local prev_lines=$(file_line_num ${OUT_DIR}/cscope.files)
+        local prev_lines=$(file_line_num ${out_dir}/cscope.files)
         local line
         while read line
         do
@@ -167,35 +174,39 @@ function create_project
                 continue
             fi
 
-            file_del ${OUT_DIR}/cscope.files "${line}" true
+            file_del ${out_dir}/cscope.files "${line}" true
             if [ $? -ne 0 ];then
                 echo_erro "file_del { ${line} } fail"
+				cd ${cur_dir}
                 return 1
             fi
 
-            local curr_lines=$(file_line_num ${OUT_DIR}/cscope.files)
+            local curr_lines=$(file_line_num ${out_dir}/cscope.files)
             echo_debug "file_del { ${line} } lines=$((${prev_lines} - ${curr_lines}))"
             prev_lines=${curr_lines}
         done < .gitignore
     fi
     
-	local prev_lines=$(file_line_num ${OUT_DIR}/cscope.files)
-	file_del ${OUT_DIR}/cscope.files ".+\/\..+" true
+	local prev_lines=$(file_line_num ${out_dir}/cscope.files)
+	file_del ${out_dir}/cscope.files ".+\/\..+" true
 	if [ $? -ne 0 ];then
-		echo_erro "failed: file_del ${OUT_DIR}/cscope.files \".+\/\..+\" true"
+		echo_erro "failed: file_del ${out_dir}/cscope.files \".+\/\..+\" true"
+		cd ${cur_dir}
 		return 1
 	fi
-	local curr_lines=$(file_line_num ${OUT_DIR}/cscope.files)
+
+	local curr_lines=$(file_line_num ${out_dir}/cscope.files)
 	echo_debug "file_del { .+\/\..+ } lines=$((${prev_lines} - ${curr_lines}))"
 
     if [ -n "${curr_lines}" ] && [ ${curr_lines} -le 1 ];then
         echo_erro "cscope.files empty"
+		cd ${cur_dir}
         return 1
     fi
 
-    rm -f ${OUT_DIR}/tags
-    rm -f ${OUT_DIR}/cscope.out*
-    rm -f ${OUT_DIR}/ncscope.*
+    rm -f ${out_dir}/tags
+    rm -f ${out_dir}/cscope.out*
+    rm -f ${out_dir}/ncscope.*
     
     #local extra_opt=$(ctags --help | grep '\-\-extra\=') 
     #if [ -n "${extra_opt}" ]; then
@@ -204,27 +215,30 @@ function create_project
     #    ctags --c++-kinds=+p --fields=+iaS --extras=+q -L cscope.files
     #fi
     echo_debug "build ctags ..."
-    ctags -L ${OUT_DIR}/cscope.files -o ${OUT_DIR}/tags
+    ctags -L ${out_dir}/cscope.files -o ${out_dir}/tags
 
-    if ! file_exist "${OUT_DIR}/tags";then
+    if ! file_exist "${out_dir}/tags";then
         echo_erro "tags create fail"
+		cd ${cur_dir}
         return 1
     fi
 
     echo_debug "build cscope ..."
-    cscope -ckbq -i ${OUT_DIR}/cscope.files -f ${OUT_DIR}/cscope.out
+    cscope -ckbq -i ${out_dir}/cscope.files -f ${out_dir}/cscope.out
 
-    if ! file_exist "${OUT_DIR}/cscope.*";then
+    if ! file_exist "${out_dir}/cscope.*";then
         echo_erro "cscope.out create fail"
+		cd ${cur_dir}
         return 1
     fi
 
+	cd ${cur_dir}
     return 0
 }
 
 case ${OP_MODE} in
     create)
-        create_project
+        create_project "${PRJ_DIR}" "${OUT_DIR}"
         if [ $? -ne 0 ];then
             exit 1
         fi
