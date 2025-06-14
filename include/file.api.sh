@@ -533,8 +533,8 @@ function file_linenr
     fi 
     
     if [ -z "${string}" ];then
-        echo $(sed -n '$=' ${xfile})
-        return 0
+		file_line_num ${xfile}
+        return $?
     fi
 
     local -a line_nrs
@@ -640,22 +640,19 @@ function file_range
         for line_nr2 in ${line_nrs2[*]}
         do
             if [ ${line_nr1} -lt ${line_nr2} ];then
-				range_array+=("${line_nr1}${GBL_SPACE}${line_nr2}")
+				range_array+=("${line_nr1}" "${line_nr2}")
 				break
             fi
         done
     done
 
     if [ ${#range_array[*]} -gt 0 ];then
-        local range
-        for range in ${range_array[*]}
-        do
-            echo "${range}"
-        done
+    	array_print range_array
         return 0
     else
         if [ ${#line_nrs1[*]} -gt 0 ];then
-            echo "${line_nrs1[0]}${GBL_SPACE}$"
+			range_array+=("${line_nrs1[0]}" "$")
+			array_print range_array
             return 0
         fi
     fi

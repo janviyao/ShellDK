@@ -99,16 +99,16 @@ function create_project
             return 1
         fi
     done
-    echo_debug "wipe cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
+    echo_debug "wipe cscope.files lines=$(file_line_num ${OUT_DIR}/cscope.files)"
     cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.wipe
 
     sort -u ${OUT_DIR}/cscope.files > ${OUT_DIR}/cscope.files.tmp
     mv ${OUT_DIR}/cscope.files.tmp ${OUT_DIR}/cscope.files 
-    echo_debug "orig cscope.files lines=$(file_linenr ${OUT_DIR}/cscope.files)"
+    echo_debug "orig cscope.files lines=$(file_line_num ${OUT_DIR}/cscope.files)"
     cp -f ${OUT_DIR}/cscope.files ${OUT_DIR}/cscope.files.sort
 
     if file_exist ".gitignore"; then
-        local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+        local prev_lines=$(file_line_num ${OUT_DIR}/cscope.files)
         local line
         while read line
         do
@@ -173,19 +173,19 @@ function create_project
                 return 1
             fi
 
-            local curr_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+            local curr_lines=$(file_line_num ${OUT_DIR}/cscope.files)
             echo_debug "file_del { ${line} } lines=$((${prev_lines} - ${curr_lines}))"
             prev_lines=${curr_lines}
         done < .gitignore
     fi
     
-	local prev_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+	local prev_lines=$(file_line_num ${OUT_DIR}/cscope.files)
 	file_del ${OUT_DIR}/cscope.files ".+\/\..+" true
 	if [ $? -ne 0 ];then
 		echo_erro "failed: file_del ${OUT_DIR}/cscope.files \".+\/\..+\" true"
 		return 1
 	fi
-	local curr_lines=$(file_linenr ${OUT_DIR}/cscope.files)
+	local curr_lines=$(file_line_num ${OUT_DIR}/cscope.files)
 	echo_debug "file_del { .+\/\..+ } lines=$((${prev_lines} - ${curr_lines}))"
 
     if [ -n "${curr_lines}" ] && [ ${curr_lines} -le 1 ];then

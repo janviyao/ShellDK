@@ -638,6 +638,22 @@ function progress_bar
     #logr_task_ctrl_async "CURSOR_SHOW"
 }
 
+function print_lossless
+{
+	local string="$@"
+
+	if [[ "${string}" =~ '%' ]];then
+		string="${string//%/%%}"
+	fi
+
+	if [[ "${string}" =~ '\' ]];then
+		string="${string//\\/\\\\}"
+	fi
+
+	printf -- "${string}\n"
+	return 0
+}
+
 __MY_SOURCE "INCLUDED_LOG"       $MY_VIM_DIR/include/log.api.sh
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then

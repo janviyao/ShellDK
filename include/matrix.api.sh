@@ -13,7 +13,7 @@ function array_print
     fi
 
     local _item
-    for _item in ${_array_ref[*]}
+    for _item in "${_array_ref[@]}"
     do
 		print_lossless "${_item}"
     done

@@ -244,7 +244,7 @@ function string_split
     local sub_index="${3:-0}"
 
     if [ $# -lt 2 ];then
-		echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index(start from 1, 0: all)"
+		echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index([1, N], 0: all)"
         return 1
     fi
 
@@ -274,6 +274,7 @@ function string_split
 				substr=$(string_replace "${substr}" " " "${GBL_SPACE}")
 			fi
 			print_lossless "${substr}"
+			return 0
         fi
     else
         if [[ "${sub_index}" =~ '-' ]];then
@@ -289,18 +290,19 @@ function string_split
 
 			local index_e=$(awk -F '-' '{ print $2 }' <<< "${sub_index}")
 			if ! math_is_int "${index_e}";then
-				index_e=$(awk -F "${separator}" "{ print NF }" <<< "${string}")
+				local total_nrs=($(awk -F "${separator}" "{ print NF }" <<< "${string}"))
+				index_e=${total_nrs[0]}
 			fi
 
 			local index=0
             local -a sub_array
-			for ((index=index_s; index<=index_e; index++))
+			for ((index = index_s; index <= index_e; index++))
 			do
 				local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
 				if [[ "${substr}" =~ ' ' ]];then
 					substr=$(string_replace "${substr}" " " "${GBL_SPACE}")
 				fi
-				sub_array+=("${substr}")
+				sub_array+=(${substr})
 			done
 
 			array_print sub_array

@@ -22,20 +22,22 @@ function kvconf_section_range
     local range
     local -a range_list
     local sec_linenr_array=($(file_range "${sec_file}" "\[${sec_name}\]" "\[.+\]" true))
-    if [ ${#sec_linenr_array[*]} -ge 1 ];then
-        for range in ${sec_linenr_array[*]}
+    if [ ${#sec_linenr_array[*]} -ge 2 ];then
+    	local index=0
+        while [ ${index} -lt ${#sec_linenr_array[*]} ]
         do
-            local nr_start=$(string_split "${range}" "${GBL_SPACE}" 1)
-            local nr_end=$(string_split "${range}" "${GBL_SPACE}" 2)
+			local nr_start=${sec_linenr_array[$((index + 0))]}
+            local nr_end=${sec_linenr_array[$((index + 1))]}
 
             if math_is_int "${nr_end}";then
                 nr_end=$((nr_end - 1))
             else
                 if [[ "${nr_end}" == "$" ]];then
-                    nr_end=$(file_linenr "${sec_file}" "" false)
+                    nr_end=$(file_line_num ${sec_file})
                 fi
             fi
-			range_list+=("${nr_start}${GBL_SPACE}${nr_end}")
+			range_list+=("${nr_start}" "${nr_end}")
+			let index+=2
         done
     fi
 
@@ -90,19 +92,17 @@ function kvconf_section_del
         return 1
     fi 
     
-    local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
-    if [ ${#range_list[*]} -gt 0 ];then
-        local range
-        for range in ${range_list[*]}
-        do
-            local nr_start=$(string_split "${range}" "${GBL_SPACE}" 1)
-            local nr_end=$(string_split "${range}" "${GBL_SPACE}" 2)
-
-            if file_del "${sec_file}" "${nr_start}-${nr_end}" false;then
-                return 0 
-            fi
-        done
-    fi
+	local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
+	if [ ${#range_list[*]} -ge 2 ];then
+		local index=0
+		while [ ${index} -lt ${#range_list[*]} ]
+		do
+			if file_del "${sec_file}" "${range_list[$((index + 0))]}-${range_list[$((index + 1))]}" false;then
+				return 0 
+			fi
+			let index+=2
+		done
+	fi
 
     return 1
 }
@@ -123,17 +123,15 @@ function kvconf_key_have
     fi 
     
 	if [ -n "${sec_name}" ];then
-		local range
 		local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
-		if [ ${#range_list[*]} -gt 0 ];then
-			for range in ${range_list[*]}
+		if [ ${#range_list[*]} -ge 2 ];then
+			local index=0
+			while [ ${index} -lt ${#range_list[*]} ]
 			do
-				local nr_start=$(string_split "${range}" "${GBL_SPACE}" 1)
-				local nr_end=$(string_split "${range}" "${GBL_SPACE}" 2)
-
-				if file_range_has "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true;then
+				if file_range_has "${sec_file}" "${range_list[$((index + 0))]}" "${range_list[$((index + 1))]}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true;then
 					return 0 
 				fi
+				let index+=2
 			done
 		fi
 	else
@@ -166,20 +164,18 @@ function kvconf_key_linenr
 	local line_nr
 	local -a key_line_nrs
 	if [ -n "${sec_name}" ];then
-		local range
 		local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
-		if [ ${#range_list[*]} -gt 0 ];then
-			for range in ${range_list[*]}
+		if [ ${#range_list[*]} -ge 2 ];then
+			local index=0
+			while [ ${index} -lt ${#range_list[*]} ]
 			do
-				local nr_start=$(string_split "${range}" "${GBL_SPACE}" 1)
-				local nr_end=$(string_split "${range}" "${GBL_SPACE}" 2)
-
-				local -a nr_array=($(file_range_linenr "${sec_file}" "${nr_start}" "${nr_end}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true))
+				local -a nr_array=($(file_range_linenr "${sec_file}" "${range_list[$((index + 0))]}" "${range_list[$((index + 1))]}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true))
 				if [ $? -ne 0 ];then
 					echo_file "${LOG_ERRO}" "kvconf_key_linenr { $@ }"
 					return 1
 				fi
 				key_line_nrs+=(${nr_array[*]})
+				let index+=2
 			done
 		fi
 	else
@@ -219,15 +215,15 @@ function kvconf_key_get
 	local -a key_array
 	if [ -n "${sec_name}" ];then
 		local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
-		if [ ${#range_list[*]} -gt 0 ];then
-			local range
-			for range in ${range_list[*]}
+		if [ ${#range_list[*]} -ge 2 ];then
+			local index=0
+			while [ ${index} -lt ${#range_list[*]} ]
 			do
-				local nr_start=$(string_split "${range}" "${GBL_SPACE}" 1)
-				local nr_end=$(string_split "${range}" "${GBL_SPACE}" 2)
+				local nr_start=${range_list[$((index + 0))]}
+				local nr_end=${range_list[$((index + 1))]}
 
 				local line_nr=$((nr_start + 1))
-				for ((; line_nr<=nr_end; line_nr++))
+				for ((; line_nr <= nr_end; line_nr++))
 				do
 					local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
 					if [ -n "${line_cnt}" ];then
@@ -243,6 +239,7 @@ function kvconf_key_get
 						key_array+=("${key_str}")
 					fi
 				done
+				let index+=2
 			done
 		fi
 	else
@@ -351,31 +348,43 @@ function kvconf_val_get
     fi 
 
     local line_nrs=($(kvconf_key_linenr "${sec_file}" "${sec_name}" "${key_str}"))
-    if [ ${#line_nrs[*]} -gt 1 ];then
-        echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }: section has multiple duplicate key"
-        return 1
-	elif [ ${#line_nrs[*]} -eq 1 ];then
-        local line_cnt=$(file_get ${sec_file} "${line_nrs[0]}" false)
-        if [ -n "${line_cnt}" ];then
-            if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
-                line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" " ")
-                if [ $? -ne 0 ];then
-                    echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
-                    return 1
-                fi
-            fi
+    if [ ${#line_nrs[*]} -ge 1 ];then
+		local -a val_list
+		local line_nr
+		for line_nr in "${line_nrs[@]}"
+		do
+			local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
+			if [ -n "${line_cnt}" ];then
+				if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
+					line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" " ")
+					if [ $? -ne 0 ];then
+						echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
+						return 1
+					fi
+				fi
 
-            if [ -n "${line_cnt}" ];then
-                line_cnt=$(string_replace "${line_cnt}" "^\s*${key_str}\s*${GBL_KV_SPF}" "" true)
-                if [ $? -ne 0 ];then
-                    echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
-                    return 1
-                fi
-                echo "${line_cnt}"
-            fi
-
-            return 0
-        fi
+				if [ -n "${line_cnt}" ];then
+					line_cnt=$(string_split "${line_cnt}" "${GBL_KV_SPF}" 2)
+					if [ $? -ne 0 ];then
+						echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
+						return 1
+					fi
+					
+					if [[ "${line_cnt}" =~ "${GBL_VAL_SPF}" ]];then
+						line_cnt=$(string_replace "${line_cnt}" "${GBL_VAL_SPF}" " ")
+						if [ $? -ne 0 ];then
+							echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
+							return 1
+						fi
+						val_list+=(${line_cnt})
+					else
+						val_list+=("${line_cnt}")
+					fi
+				fi
+			fi
+		done
+		array_print val_list
+		return 0
     fi
 
     return 1
@@ -460,39 +469,35 @@ function kvconf_set
         fi
     else
         local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
-        if [ ${#range_list[*]} -gt 1 ];then
+        if [ ${#range_list[*]} -gt 2 ];then
             echo_erro "kvconf_set { $@ }: section has multiple duplicate section"
             return 1
-        elif [ ${#range_list[*]} -eq 1 ];then
-            local range
-            for range in ${range_list[*]}
-            do
-                local nr_start=$(string_split "${range}" "${GBL_SPACE}" 1)
-                local nr_end=$(string_split "${range}" "${GBL_SPACE}" 2)
+        elif [ ${#range_list[*]} -eq 2 ];then
+			local nr_start=${range_list[0]}
+			local nr_end=${range_list[1]}
 
-				local line_nr=$((nr_start + 1))
-				for ((; line_nr<=nr_end; line_nr++))
-				do
-					local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
-					if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
-						line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" "")
-						if [ $? -ne 0 ];then
-							echo_file "${LOG_ERRO}" "kvconf_set { $@ }"
-							return 1
-						fi
+			local line_nr=$((nr_start + 1))
+			for ((; line_nr <= nr_end; line_nr++))
+			do
+				local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
+				if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
+					line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" "")
+					if [ $? -ne 0 ];then
+						echo_file "${LOG_ERRO}" "kvconf_set { $@ }"
+						return 1
 					fi
+				fi
 
-					if [ -z "${line_cnt}" ];then
-						break
-					fi
-				done
+				if [ -z "${line_cnt}" ];then
+					break
+				fi
+			done
 
-                file_insert "${sec_file}" "${GBL_INDENT}${key_str}${GBL_KV_SPF}${val_str}" "${line_nr}"
-                if [ $? -ne 0 ];then
-                    echo_erro "kvconf_set { $@ }"
-                    return 1
-                fi
-            done
+			file_insert "${sec_file}" "${GBL_INDENT}${key_str}${GBL_KV_SPF}${val_str}" "${line_nr}"
+			if [ $? -ne 0 ];then
+				echo_erro "kvconf_set { $@ }"
+				return 1
+			fi
         else
 			local line_nr=$(file_line_num ${sec_file})
 			if [ ${line_nr} -eq 0 ];then
@@ -534,11 +539,7 @@ function kvconf_append
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
 		local -a val_list=($(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$"))
-		echo "===${val_list[*]} + ${val_str}"
-		set -x
 		array_add val_list ${val_str}
-		set +x
-		echo "===${val_list[*]}"
 
 		if [ ${#val_list[*]} -gt 0 ];then
 			local new_val=$(array_2string val_list ${GBL_VAL_SPF})
