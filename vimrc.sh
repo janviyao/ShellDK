@@ -236,9 +236,31 @@ function create_project
     return 0
 }
 
+function delete_project
+{
+	local out_dir="$1"
+
+	if ! file_exist "${out_dir}"; then
+		echo_erro "dir { ${out_dir} } not accessed"
+		return 1
+	fi
+	
+	{
+		sleep 2
+		rm -fr ${out_dir}
+	} &
+	return 0
+}
+
 case ${OP_MODE} in
     create)
         create_project "${PRJ_DIR}" "${OUT_DIR}"
+        if [ $? -ne 0 ];then
+            exit 1
+        fi
+        ;;
+    delete)
+        delete_project "${OUT_DIR}"
         if [ $? -ne 0 ];then
             exit 1
         fi

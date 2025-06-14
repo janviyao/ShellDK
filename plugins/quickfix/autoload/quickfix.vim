@@ -224,7 +224,7 @@ endfunction
 function! s:get_tag(module, index)
     call PrintArgs("2file", "quickfix.get_tag", a:module, a:index)
 
-    let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".a:index
+    let info_file = GetVimDir("quickfix").'/info.'.a:module.".".a:index
     if filereadable(info_file)
         let info_dic = s:read_dict(a:module, info_file, 'b', 1)
         call LogPrint("2file", a:module." get tag [ ".info_dic.title." ] from index=".a:index)
@@ -346,10 +346,10 @@ function! s:list_all_qfix(module, title)
                 continue
             endif
 
-            let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".value.index
+            let info_file = GetVimDir("quickfix").'/info.'.a:module.".".value.index
             if filereadable(info_file)
                 let info_dic = s:read_dict(a:module, info_file, 'b', 1)
-                let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.value.index
+                let list_file = GetVimDir('quickfix').'/list.'.a:module.'.'.value.index
                 if filereadable(list_file)
                     let qflist = s:read_list(a:module, list_file, '', 9999999)
 
@@ -401,7 +401,7 @@ function! s:alloc_qfix_index(module)
     call PrintArgs("2file", "quickfix.alloc_qfix_index", a:module)
 
     let all_index = []
-    let info_list = systemlist("ls ".GetVimDir(1, "quickfix")."/info.".a:module.".*")
+    let info_list = systemlist("ls ".GetVimDir("quickfix")."/info.".a:module.".*")
     for info_file in info_list
         if filereadable(info_file)
             let index_val = str2nr(matchstr(info_file, '\v-?\d+$'))
@@ -426,14 +426,14 @@ function! s:qfix_rebuild(module)
     call PrintArgs("2file", "quickfix.qfix_rebuild", a:module)
 
     let index_init = -1
-    let index_file = GetVimDir(1, "quickfix").'/index.'.a:module
+    let index_file = GetVimDir("quickfix").'/index.'.a:module
     if filereadable(index_file)
         let data = s:read_list(a:module, index_file, 'b', 1)
         let index_init = str2nr(get(data, 0, ''))
         call LogPrint("2file", "qfix_rebuild main_index=".index_init)
     endif
 
-    let info_list = systemlist("ls ".GetVimDir(1, "quickfix")."/info.".a:module.".*")
+    let info_list = systemlist("ls ".GetVimDir("quickfix")."/info.".a:module.".*")
     for info_file in info_list
         if filereadable(info_file)
             let index_val = str2nr(matchstr(info_file, '\v-?\d+$'))
@@ -476,7 +476,7 @@ function! s:qfix_rebuild(module)
     "let value_list = []
     "call s:map_op.get_all_value(a:module, value_list)
     "for value in value_list 
-    "    let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".value.index
+    "    let info_file = GetVimDir("quickfix").'/info.'.a:module.".".value.index
     "    if filereadable(info_file)
 
     "    endif
@@ -484,14 +484,14 @@ function! s:qfix_rebuild(module)
     "let map_index = 0
     "let map_size = s:map_op.get_size(a:module)
     "while map_index < map_size
-    "    let info_file = GetVimDir(1, "quickfix")."/info.".a:module.".".map_index
+    "    let info_file = GetVimDir("quickfix")."/info.".a:module.".".map_index
     "    if filereadable(info_file)
     "        let map_index += 1
     "        continue
     "    else
     "        let map_next = map_index + 1
     "        while map_next < map_size
-    "            let next_file = GetVimDir(1, "quickfix")."/info.".a:module.".".map_next
+    "            let next_file = GetVimDir("quickfix")."/info.".a:module.".".map_next
     "            if filereadable(next_file)
     "                break
     "            endif
@@ -499,13 +499,13 @@ function! s:qfix_rebuild(module)
     "        endwhile
 
     "        if map_next < map_size
-    "            let old_file = GetVimDir(1, "quickfix")."/info.".a:module.".".map_next
-    "            let new_name = GetVimDir(1, "quickfix")."/info.".a:module.".".map_index
+    "            let old_file = GetVimDir("quickfix")."/info.".a:module.".".map_next
+    "            let new_name = GetVimDir("quickfix")."/info.".a:module.".".map_index
     "            call s:rename_file(a:module, old_file, new_name)
 
-    "            let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.map_next
+    "            let list_file = GetVimDir('quickfix').'/list.'.a:module.'.'.map_next
     "            if filereadable(list_file)
-    "                let new_name = GetVimDir(1, "quickfix")."/list.".a:module.".".map_index
+    "                let new_name = GetVimDir("quickfix")."/list.".a:module.".".map_index
     "                call s:rename_file(a:module, list_file, new_name)
     "            endif
 
@@ -544,10 +544,10 @@ function! s:qfix_load(module, index)
         return -1
     endif
 
-    let list_file = GetVimDir(1, 'quickfix').'/list.'.a:module.'.'.s:qfix_main_index
+    let list_file = GetVimDir('quickfix').'/list.'.a:module.'.'.s:qfix_main_index
     if filereadable(list_file) 
         let info_dic = {} 
-        let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".s:qfix_main_index
+        let info_file = GetVimDir("quickfix").'/info.'.a:module.".".s:qfix_main_index
         if filereadable(info_file)
             let info_dic = s:read_dict(a:module, info_file, 'b', 1)
         else
@@ -611,7 +611,7 @@ function! s:qfix_load(module, index)
         call cursor(s:qfix_main_info.fline, s:qfix_main_info.fcol)
 
         "save the newest index
-        let index_file = GetVimDir(1, "quickfix").'/index.'.a:module
+        let index_file = GetVimDir("quickfix").'/index.'.a:module
         call s:write_list(a:module, index_file, 'b', [s:qfix_main_index])
         "call quickfix#dump_info(a:module)
         return 0
@@ -631,7 +631,7 @@ function! s:qfix_save(module, index)
             call s:qfix_load(a:module, a:index)
         endif
 
-        let index_file = GetVimDir(1, "quickfix").'/index.'.a:module
+        let index_file = GetVimDir("quickfix").'/index.'.a:module
         call s:write_list(a:module, index_file, 'b', [a:index])
 
         call s:persist_info(a:module, a:index)
@@ -651,20 +651,20 @@ function! s:qfix_delete(module, index)
         call s:map_op.unset_map(a:module, tag, Callback)
     endif
 
-    let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".a:index
+    let info_file = GetVimDir("quickfix").'/info.'.a:module.".".a:index
     if filereadable(info_file)
         call delete(info_file)
         call LogPrint("2file", a:module." delete success: info".info_file)
     endif
 
-    let list_file = GetVimDir(1, "quickfix").'/list.'.a:module.".".a:index
+    let list_file = GetVimDir("quickfix").'/list.'.a:module.".".a:index
     if filereadable(list_file)
         call delete(list_file)
         call LogPrint("2file", a:module." delete success: list".list_file)
     endif
 
     if s:map_op.empty(a:module)
-        let index_file = GetVimDir(1, "quickfix").'/index.'.a:module
+        let index_file = GetVimDir("quickfix").'/index.'.a:module
         if filereadable(index_file)
             call delete(index_file)
         endif
@@ -697,7 +697,7 @@ function! s:persist_info(module, index, key="", value="")
         endif
     endif
 
-    let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".a:index
+    let info_file = GetVimDir("quickfix").'/info.'.a:module.".".a:index
     call LogPrint("2file", a:module." save info: ")
     call s:write_dict(a:module, info_file, 'b', s:qfix_main_info)
 endfunction
@@ -719,7 +719,7 @@ function! s:persist_list(module, index, qflist)
         endif
     endfor
 
-    let list_file = GetVimDir(1, "quickfix").'/list.'.a:module.".".a:index
+    let list_file = GetVimDir("quickfix").'/list.'.a:module.".".a:index
     call s:write_list(a:module, list_file, 'b', a:qflist)
 endfunction
 
@@ -728,7 +728,7 @@ function! s:unset_callback(module, tag)
 
     let value = s:map_op.get_value(a:module, a:tag)
     if !empty(value)
-        let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".value.index
+        let info_file = GetVimDir("quickfix").'/info.'.a:module.".".value.index
         if filereadable(info_file)
             let prev_tag = s:map_op.get_prev_key(a:module, a:tag)
             let next_tag = s:map_op.get_next_key(a:module, a:tag)
@@ -860,7 +860,7 @@ function! quickfix#ctrl_main(mode)
         endif
 
         if strlen(s:qfix_module) > 0 && s:qfix_module != "init"
-            let moduleFile = GetVimDir(1, "quickfix").'/module'
+            let moduleFile = GetVimDir("quickfix").'/module'
             call writefile([s:qfix_module], moduleFile, 'b')
         endif
 
@@ -873,7 +873,7 @@ function! quickfix#ctrl_main(mode)
         endif
     elseif a:mode == "load"
         if s:qfix_module == "init"
-            let module_file = GetVimDir(1, "quickfix").'/module'
+            let module_file = GetVimDir("quickfix").'/module'
             if filereadable(module_file)
                 let s:qfix_module = get(readfile(module_file, 'b', 1), 0, '')
                 if strlen(s:qfix_module) == 0
@@ -947,7 +947,7 @@ function! quickfix#ctrl_main(mode)
             let prev_tag = "" 
             let next_tag = []
 
-            let info_file = GetVimDir(1, "quickfix").'/info.'.s:qfix_module.".".value.index
+            let info_file = GetVimDir("quickfix").'/info.'.s:qfix_module.".".value.index
             if filereadable(info_file)
                 let info_dic = s:read_dict(s:qfix_module, info_file, 'b', 1)
                 let prev_tag = info_dic.prev
@@ -1121,7 +1121,7 @@ function! quickfix#dump_info(module, value_list=[], width=[])
         let prev_index = s:map_op.get_prev_value(a:module, value.key)
         let next_list = s:map_op.get_next_value(a:module, value.key)
 
-        let info_file = GetVimDir(1, "quickfix").'/info.'.a:module.".".value.index
+        let info_file = GetVimDir("quickfix").'/info.'.a:module.".".value.index
         if filereadable(info_file)
             let info_dic = s:read_dict(a:module, info_file, 'b', 1)
 

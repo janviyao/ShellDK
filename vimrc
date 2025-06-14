@@ -7,7 +7,7 @@ let g:log_dump_dict = 1
 let g:log_dump_list = 0
 
 let s:log_enable    = 0
-let s:log_file_path = '/tmp/vim.debug'
+let s:log_file_path = '/tmp/gbl/vim.debug'
 let s:log_file_max  = 698351616
 let s:log_line_max  = 500
 let s:vim_start     = reltime()
@@ -235,23 +235,18 @@ function! PrintList(type, explain, list, prefix="")
 endfunction
 
 "获取VIM工作目录
-function! GetVimDir(work, dir)
-    let makdir = expand('$HOME/.vimSession/')
-    if strlen(a:dir) == 0
-        let makdir = makdir . substitute(getcwd(), '[:\/]', '@', 'g')
-    else
-        if a:work == 1
-            let makdir = makdir . a:dir . "/" . substitute(getcwd(), '[:\/]', '@', 'g')
-        else
-            let makdir = makdir . a:dir 
-        endif
-    endif
+function! GetVimDir(dir)
+	let makdir = expand('$HOME/.vimSession/') . substitute(getcwd(), '[:\/]', '@', 'g')
 
     let gbranch = trim(system("git symbolic-ref --short -q HEAD 2>/dev/null"))
     if strlen(gbranch) > 0
         let gbranch = substitute(gbranch, '[#:\/]', '_', 'g')
         let makdir = makdir."/".gbranch
     endif
+
+	if strlen(a:dir) > 0
+		let makdir = makdir."/".a:dir 
+	endif
 
     if !isdirectory(makdir) 
         call mkdir(makdir, "p")
@@ -309,7 +304,7 @@ set viminfo=!,'1000,<1000,s1024,:100,f1                    "viminfo文件保存�
 "autocmd CursorHoldI * silent w
 
 "持久化的undo机制：保存文件修改的撤消/重做
-silent! execute 'set undodir='.GetVimDir(1, "undodir")
+silent! execute 'set undodir='.GetVimDir("undodir")
 set undofile
 set undolevels=10000 "maximum number of changes that can be undone
 set undoreload=10000 "maximum number lines to save for undo on a buffer reload
@@ -430,7 +425,7 @@ autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | silent! e
 
 "自动保存和加载VimSeesion和VimInfo
 autocmd VimEnter * call EnterHandler()
-"autocmd VimLeave * call LeaveHandler() 
+"autocmd VimLeave * call LeaveHandler(1) 
 
 "恢复命令栏默认高度
 autocmd CursorMoved * if exists("g:show_func") 
@@ -474,7 +469,7 @@ nnoremap <silent> <Leader>wc <C-w>c                        "关闭当前窗口
 nnoremap <silent> <Leader>wd :bd<CR>                       "删除当前缓存窗口
 nnoremap <silent> <Leader>ws :b#<CR>                       "切换上次缓存窗口
 nnoremap <silent> <Leader>wq :q<CR>                        "退出
-nnoremap <silent> <Leader>qq :call LeaveHandler()<CR>      "退出VIM
+nnoremap <silent> <Leader>qq :call LeaveHandler(1)<CR>     "退出VIM
 
 "控制窗口
 nnoremap <silent> <Leader>h <C-w>h                         "光标移到左面窗口
@@ -1086,9 +1081,6 @@ function! ToggleWindow(ccmd)
     endif
 endfunction
 
-"自定义变量
-let s:vim_exit_act = 0
-
 function! QuickfixDo(opmode, arg="")
     call LogPrint("2file", "QuickfixDo ".a:opmode." ".a:arg)
 
@@ -1104,14 +1096,13 @@ function! LoadProject(opmode)
     call LogPrint("2file", "LoadProject ".a:opmode)
 
     if a:opmode == "create"
-        let s:vim_exit_act = 2
-        silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m create -p \"".getcwd()."\" -o ".GetVimDir(1, "sessions")
-        call LeaveHandler()
+        silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m create -p \"".getcwd()."\" -o ".GetVimDir("sessions")
+        call LeaveHandler(1)
     elseif a:opmode == "delete" 
-        let s:vim_exit_act = 1
-        call LeaveHandler()
+        call LeaveHandler(0)
+        silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m delete -o ".GetVimDir("")
+		silent! execute "qa"
     elseif a:opmode == "load" 
-        let s:vim_exit_act = 0
         if has("ctags")
             if filereadable("tags")
                 set tags=tags;                             "结尾分号能够向父目录查找tags文件
@@ -1135,7 +1126,7 @@ function! LoadProject(opmode)
             set csverb       
         endif
 
-        let cus_ignore = GetVimDir(1, "sessions")."/gitignore"
+        let cus_ignore = GetVimDir("sessions")."/gitignore"
         if filereadable(cus_ignore)
             let cur_ignore = getcwd()."/.gitignore"
             silent! execute "!cp -f ".cur_ignore." ".cus_ignore.".bk"
@@ -1168,25 +1159,25 @@ function! EnterHandler()
         call delete(getcwd()."/cscope.out.po")
     endif
 
-    if filereadable(GetVimDir(1, "sessions")."/tags")
-        silent! execute "!ln -s ".GetVimDir(1, "sessions")."/tags ".getcwd()."/tags"
+    if filereadable(GetVimDir("sessions")."/tags")
+        silent! execute "!ln -s ".GetVimDir("sessions")."/tags ".getcwd()."/tags"
     endif
  
-    if filereadable(GetVimDir(1, "sessions")."/cscope.out")
-        silent! execute "!ln -s ".GetVimDir(1, "sessions")."/cscope.out.in ".getcwd()."/cscope.out.in"
-        silent! execute "!ln -s ".GetVimDir(1, "sessions")."/cscope.out ".getcwd()."/cscope.out"
-        silent! execute "!ln -s ".GetVimDir(1, "sessions")."/cscope.out.po ".getcwd()."/cscope.out.po"
+    if filereadable(GetVimDir("sessions")."/cscope.out")
+        silent! execute "!ln -s ".GetVimDir("sessions")."/cscope.out.in ".getcwd()."/cscope.out.in"
+        silent! execute "!ln -s ".GetVimDir("sessions")."/cscope.out ".getcwd()."/cscope.out"
+        silent! execute "!ln -s ".GetVimDir("sessions")."/cscope.out.po ".getcwd()."/cscope.out.po"
     endif
 
     if filereadable("tags") && filereadable("cscope.out")
         call LoadProject("load")
 
-        if filereadable(GetVimDir(1, "sessions")."/session.vim")
-            silent! execute "source ".GetVimDir(1, "sessions")."/session.vim"
+        if filereadable(GetVimDir("sessions")."/session.vim")
+            silent! execute "source ".GetVimDir("sessions")."/session.vim"
         endif
 
-        if filereadable(GetVimDir(1, "sessions")."/session.vim")
-            silent! execute "rviminfo ".GetVimDir(1, "sessions")."/session.viminfo"
+        if filereadable(GetVimDir("sessions")."/session.vim")
+            silent! execute "rviminfo ".GetVimDir("sessions")."/session.viminfo"
         endif
 
         call RestoreLoad()
@@ -1195,16 +1186,16 @@ function! EnterHandler()
 endfunction
 
 "VIM退出事件
-function! LeaveHandler()
+function! LeaveHandler(exit)
     if filereadable("tags") && filereadable("cscope.out") 
         call ToggleWindow("allclose")
         call Quickfix_ctrl("save")
         
-        silent! execute "mks! ".GetVimDir(1, "sessions")."/session.vim"
-        silent! execute "wviminfo! ".GetVimDir(1, "sessions")."/session.viminfo"
+        silent! execute "mks! ".GetVimDir("sessions")."/session.vim"
+        silent! execute "wviminfo! ".GetVimDir("sessions")."/session.viminfo"
         silent! execute "!rm -f cscope.* tags"
 
-        let cus_ignore = GetVimDir(1, "sessions")."/gitignore"
+        let cus_ignore = GetVimDir("sessions")."/gitignore"
         if filereadable(cus_ignore)
             let cur_ignore = getcwd()."/.gitignore"
             silent! execute "!cp -f ".cus_ignore.".bk ".cur_ignore
@@ -1212,20 +1203,15 @@ function! LeaveHandler()
     endif
 
     call Quickfix_leave()
-    if s:vim_exit_act == 1
-        " exit after delete-project
-        silent! execute "!rm -fr ".GetVimDir(1, "sessions") 
-        silent! execute "!rm -fr ".GetVimDir(1, "ctrlpcache") 
-        silent! execute "!rm -fr ".GetVimDir(1, "bookmark") 
-        silent! execute "!rm -fr ".GetVimDir(1, "quickfix") 
-    endif 
 
     call LogDisable()
     if getfsize(s:log_file_path) > s:log_file_max 
         call delete(s:log_file_path)
     endif
-    
-    silent! execute "qa"
+	
+	if a:exit == 1
+		silent! execute "qa"
+	endif
 endfunction
 
 "显示标签名
@@ -1341,7 +1327,7 @@ let g:bufExplorerShowRelativePath = 1                      "显示目录相对�
 Bundle "name5566/vim-bookmark"
 
 "关闭后保存书签，目录路径要存在，否则失败
-let g:vbookmark_bookmarkSaveFile = GetVimDir(1, "bookmark")."/save.vbm" 
+let g:vbookmark_bookmarkSaveFile = GetVimDir("bookmark")."/save.vbm" 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 关键字搜索 插件
@@ -1403,7 +1389,7 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Bundle "kien/ctrlp.vim"
 
-let g:ctrlp_cache_dir = GetVimDir(1, "ctrlpcache")         "设置存储缓存文件的目录
+let g:ctrlp_cache_dir = GetVimDir("ctrlpcache")            "设置存储缓存文件的目录
 let g:ctrlp_root_markers = ['tags', 'cscope.out']          "设置自定义的根目录标记作为默认标记
 let g:ctrlp_use_caching = 1                                "启用/禁用每个会话的缓存
 let g:ctrlp_clear_cache_on_exit = 0                        "通过退出Vim时不删除缓存文件来启用跨回话的缓存
