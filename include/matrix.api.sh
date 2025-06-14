@@ -33,7 +33,7 @@ function array_2string
 
     local _item
     local _string=""
-	for _item in ${_array_ref[*]}
+    for _item in "${_array_ref[@]}"
 	do
 		if [ -n "${_string}" ];then
 			_string="${_string}${separator}${_item}"
@@ -57,9 +57,9 @@ function array_have
     fi
 
     local _item
-    for _item in ${_array_ref[*]}
+    for _item in "${_array_ref[@]}"
     do
-        if [[ ${_item} == ${_value} ]];then
+        if [[ "${_item}" == "${_value}" ]];then
             return 0
         fi
     done
@@ -70,14 +70,22 @@ function array_have
 function array_filter
 {
     local -n _array_ref=$1
+    local  _array_name=$1
     local _regex="$2"
 
     if [ $# -ne 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: regex string"
         return 1
     fi
- 
-    _array_ref=($(string_replace "${_array_ref[*]}" "${_regex}" "" true))
+	
+	local _item
+	for _item in "${_array_ref[@]}"
+	do
+		if match_regex "${_item}" "${_regex}";then
+			array_del_by_value ${_array_name} "${_item}"
+		fi
+	done
+
     return 0
 }
 
@@ -110,6 +118,22 @@ function array_index
     return 1
 }
 
+function array_reset
+{
+	local -n _array_ref=$1
+	local _array_name=$1
+
+	if [ $# -lt 2 ] || [[ ! "$(declare -p $1 2>/dev/null)" =~ "declare -a" ]];then
+		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: value"
+		return 1
+	fi
+	shift
+
+	local _val_list=("$@")
+	mapfile -t _array_ref <<< "${_val_list[@]}"
+	return $?
+}
+
 function array_add
 {
 	local -n _array_ref=$1
@@ -123,9 +147,9 @@ function array_add
 
 	local val
 	local _val_list=("$@")
-	for val in ${_val_list[*]}
+	for val in "${_val_list[@]}"
 	do
-		if ! array_have ${_array_name} ${val};then
+		if ! array_have ${_array_name} "${val}";then
 			_array_ref+=("${val}")
 		fi
 	done
@@ -151,7 +175,7 @@ function array_del_by_index
 
 	local total=$((${_indexs[$((${#_indexs[*]} - 1))]} + 1))
 	local index
-	for index in ${_index_list[*]}
+	for index in "${_index_list[@]}"
 	do
 		if [ ${index} -lt ${total} ];then
 			unset _array_ref[${index}]
@@ -178,7 +202,7 @@ function array_del_by_value
 		return 1
 	fi
 
-	array_del_by_index ${_array_name} ${_index_list[*]}
+	array_del_by_index ${_array_name} "${_index_list[@]}"
 	return $?
 }
 
@@ -234,7 +258,7 @@ function array_dedup
     local _count=0
 
     local _item
-    for _item in ${_array_ref2[*]}
+    for _item in "${_array_ref2[@]}"
     do
         local index
         for ((index = 0; index < ${_total}; index++))

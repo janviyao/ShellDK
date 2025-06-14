@@ -349,7 +349,9 @@ function install_from_rpm
         fi
         echo_debug "rpm: { ${full_name} } versions: ${versions[*]}"
 
-        local split_names=($(string_split "${fname}" "${versions[0]}"))
+        local -a split_names
+        array_reset split_names "$(string_split "${fname}" "${versions[0]}")"
+
         if [ -z "${split_names[*]}" ];then
             echo_erro "$(printf -- "[%13s]: { %-13s } failure, version split fail" "Rpm Install" "${full_name}")"
             return 1
@@ -605,7 +607,9 @@ function install_from_spec
 
     echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${xspec}")"
     local key_str=$(regex_2str "${xspec}")
-    local spec_lines=($(file_get ${MY_VIM_DIR}/install.spec "^${key_str}\s*;" true))
+	local -a spec_lines
+	array_reset spec_lines "$(file_get ${MY_VIM_DIR}/install.spec "^${key_str}\s*;" true)"
+
     if [ ${#spec_lines[*]} -eq 0 ];then
         echo_info "$(printf -- "[%13s]: %-50s" "Return" "spec { ${key_str} } not found")"
         return 0
@@ -615,9 +619,6 @@ function install_from_spec
     fi
 
     local spec_line="${spec_lines[0]}"
-    if [[ "${spec_line}" =~ "${GBL_SPACE}" ]];then
-        spec_line=$(string_replace "${spec_line}" "${GBL_SPACE}" " ")
-    fi
     echo_debug "spec line: { ${spec_line} }"
 
     local actions=$(string_replace "${spec_line}" "^\s*${key_str}\s*;\s*" "" true)

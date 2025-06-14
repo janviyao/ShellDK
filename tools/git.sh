@@ -74,10 +74,6 @@ function func_clone
 	done
 
 	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
-	fi
-	
 	if [ -n "${msg}" ];then
 		process_run git clone ${options} ${msg}
 	else
@@ -231,10 +227,6 @@ function func_commit
 	done
 
 	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
-	fi
-	
 	if [ -n "${msg}" ];then
 		process_run git commit -s -m "${msg}"
 	else
@@ -450,10 +442,6 @@ function func_pull
 	done
 	
 	local cur_branch="${subcmd_all[*]}"
-	if [[ "${cur_branch}" =~ "${GBL_SPACE}" ]];then
-		cur_branch=$(string_replace "${cur_branch}" "${GBL_SPACE}" " ")
-	fi
-
 	if [ -n "${cur_branch}" ];then
 		if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
 			process_run git pull origin ${cur_branch}
@@ -571,10 +559,6 @@ function func_checkout
 	done
 
 	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
-	fi
-	
 	if [ -n "${msg}" ];then
 		if match_regex "${msg}" "^[0-9a-fA-F]{7,40}$";then
 			msg=$(string_sub "${msg}" 0 7)
@@ -682,10 +666,6 @@ function func_amend
 	done
 
 	local msg="${subcmd_all[*]}"
-	if [[ "${msg}" =~ "${GBL_SPACE}" ]];then
-		msg=$(string_replace "${msg}" "${GBL_SPACE}" " ")
-	fi
-	
 	if [ -n "${msg}" ];then
 		process_run git commit --amend -s -m "${msg}"
 	else
@@ -760,10 +740,6 @@ function func_grep
 	done
 
 	local pattern="${subcmd_all[*]}"
-	if [[ "${pattern}" =~ "${GBL_SPACE}" ]];then
-		pattern=$(string_replace "${pattern}" "${GBL_SPACE}" " ")
-	fi
-	
 	if [ -n "${pattern}" ];then
 		if [[ "${look_mode}" == "file" ]];then
 			process_run git grep ${options} "${pattern}"

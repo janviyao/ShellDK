@@ -227,14 +227,6 @@ function kvconf_key_get
 				do
 					local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
 					if [ -n "${line_cnt}" ];then
-						if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
-							line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" " ")
-							if [ $? -ne 0 ];then
-								echo_file "${LOG_ERRO}" "kvconf_key_get { $@ }"
-								return 1
-							fi
-						fi
-
 						local key_str=$(string_split "${line_cnt}" "${GBL_KV_SPF}" "1")
 						key_array+=("${key_str}")
 					fi
@@ -252,14 +244,6 @@ function kvconf_key_get
 			do
 				local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
 				if [ -n "${line_cnt}" ];then
-					if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
-						line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" " ")
-						if [ $? -ne 0 ];then
-							echo_file "${LOG_ERRO}" "kvconf_key_get { $@ }"
-							return 1
-						fi
-					fi
-
 					local key_str=$(string_split "${line_cnt}" "${GBL_KV_SPF}" "1")
 					key_array+=("${key_str}")
 				fi
@@ -323,7 +307,8 @@ function kvconf_val_have
     
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
-		local -a val_list=($(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$"))
+		local -a val_list
+        array_reset val_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
 		if array_have val_list ${val_str};then
 			return 0
 		fi
@@ -355,14 +340,6 @@ function kvconf_val_get
 		do
 			local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
 			if [ -n "${line_cnt}" ];then
-				if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
-					line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" " ")
-					if [ $? -ne 0 ];then
-						echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
-						return 1
-					fi
-				fi
-
 				if [ -n "${line_cnt}" ];then
 					line_cnt=$(string_split "${line_cnt}" "${GBL_KV_SPF}" 2)
 					if [ $? -ne 0 ];then
@@ -408,7 +385,8 @@ function kvconf_val_del
 
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
-		local -a val_list=($(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$"))
+		local -a val_list
+        array_reset val_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
 		array_del_by_value val_list ${val_str}
 
 		if [ ${#val_list[*]} -gt 0 ];then
@@ -480,14 +458,6 @@ function kvconf_set
 			for ((; line_nr <= nr_end; line_nr++))
 			do
 				local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
-				if [[ "${line_cnt}" =~ "${GBL_SPACE}" ]];then
-					line_cnt=$(string_replace "${line_cnt}" "${GBL_SPACE}" "")
-					if [ $? -ne 0 ];then
-						echo_file "${LOG_ERRO}" "kvconf_set { $@ }"
-						return 1
-					fi
-				fi
-
 				if [ -z "${line_cnt}" ];then
 					break
 				fi
@@ -538,7 +508,8 @@ function kvconf_append
     
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
-		local -a val_list=($(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$"))
+		local -a val_list
+		array_reset val_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
 		array_add val_list ${val_str}
 
 		if [ ${#val_list[*]} -gt 0 ];then

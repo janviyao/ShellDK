@@ -232,34 +232,19 @@ function file_get
         local line_nr
         for line_nr in ${line_nrs[*]}
         do
-            local content=$(sed -n "${line_nr}p" ${xfile})
-            if [[ "${content}" =~ ' ' ]];then
-                echo $(string_replace "${content}" " " "${GBL_SPACE}")
-            else
-                echo "${content}"
-            fi
+            echo "$(sed -n "${line_nr}p" ${xfile})"
         done
     else
         if math_is_int "${string}";then
             local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
-                local content=$(sed -n "${string}p" ${xfile})
-                if [[ "${content}" =~ ' ' ]];then
-                    echo $(string_replace "${content}" " " "${GBL_SPACE}")
-                else
-                    echo "${content}"
-                fi
+                echo "$(sed -n "${string}p" ${xfile})"
             else
                 return 1
             fi
         else
             if [[ "${string}" == "$" ]];then
-                local content=$(sed -n "${string}p" ${xfile})
-                if [[ "${content}" =~ ' ' ]];then
-                    echo $(string_replace "${content}" " " "${GBL_SPACE}")
-                else
-                    echo "${content}"
-                fi
+                echo "$(sed -n "${string}p" ${xfile})"
             else
                 return 1
             fi
@@ -304,12 +289,7 @@ function file_range_get
             echo_file "${LOG_ERRO}" "file_range_get { $@ }"
             return 1
         fi
-
-        if [[ "${content}" =~ ' ' ]];then
-            echo $(string_replace "${content}" " " "${GBL_SPACE}")
-        else
-            echo "${content}"
-        fi
+		echo "${content}"
         let line_s++
     done
 
@@ -675,7 +655,7 @@ function file_line_num
     fi 
 
     #echo $(sed -n '$=' ${xfile})
-    echo $(awk 'BEGIN { total=0 } NF { total+=1 } END { print total }' ${xfile})
+    echo $(awk 'BEGIN { line=0 } NF { line=NR } END { print line }' ${xfile})
     return 0
 }
 

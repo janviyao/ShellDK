@@ -19,11 +19,6 @@ fi
 function get_all_opts
 {
 	local all_opts="${!_OPTION_MAP[*]}"
-
-	if [[ "${all_opts}" =~ "${GBL_SPACE}" ]];then
-		all_opts=$(string_replace "${all_opts}" "${GBL_SPACE}" " ")
-	fi
-
 	printf -- "${all_opts}\n"
     return 0
 }
@@ -35,16 +30,9 @@ function get_optval
     local opt
     for opt in "${options[@]}"
     do
-		if [[ "${opt}" =~ " " ]];then
-			opt=$(string_replace "${opt}" " " "${GBL_SPACE}")
-		fi
-
         local value=${_OPTION_MAP[${opt}]}
         #echo_debug "key: ${opt} value: ${value}"
         if [ -n "${value}" ];then
-			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
-				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
-			fi
             printf -- "${value}\n"
             return 0
         fi
@@ -96,11 +84,6 @@ function get_subcmd
 	do
 		local value=${_SUBCMD_ALL[${index}]}
 		if [ -n "${value}" ];then
-			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
-				if ! math_bool "${is_inner}";then
-					value=$(string_replace "${value}" "${GBL_SPACE}" " ")
-				fi
-			fi
 			echo "${value}"
 		fi
 	done
@@ -112,10 +95,6 @@ function get_subcmd_all
 {
 	local subcmd="$1"
     local is_inner="${2:-false}"
-
-	if [[ "${subcmd}" =~ " " ]];then
-		subcmd=$(string_replace "${subcmd}" " " "${GBL_SPACE}")
-	fi
 
 	local next_cmd=""
 	local index total=${#_SUBCMD_ALL[*]}
@@ -143,11 +122,6 @@ function get_subcmd_all
 		fi
 		
 		if [ ${sub_found} -gt 0 ];then
-			if [[ "${elem}" =~ "${GBL_SPACE}" ]];then
-				if ! math_bool "${is_inner}";then
-					elem=$(string_replace "${elem}" "${GBL_SPACE}" " ")
-				fi
-			fi
 			printf -- "${elem}\n"
 		fi
     done
@@ -175,16 +149,9 @@ function get_subcmd_optval
     local opt
     for opt in "${options[@]}"
     do
-		if [[ "${opt}" =~ " " ]];then
-			opt=$(string_replace "${opt}" " " "${GBL_SPACE}")
-		fi
-
         local value=${subcmd_option_map[${opt}]}
         #echo_debug "key: ${opt} value: ${value}"
         if [ -n "${value}" ];then
-			if [[ "${value}" =~ "${GBL_SPACE}" ]];then
-				value=$(string_replace "${value}" "${GBL_SPACE}" " ")
-			fi
             printf -- "${value}\n"
             return 0
         fi

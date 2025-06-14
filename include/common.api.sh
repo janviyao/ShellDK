@@ -167,14 +167,6 @@ function para_fetch
 			opt_char="${option#-}"
 		fi
 
-		if [[ "${option}" =~ " " ]];then
-			option=$(string_replace "${option}" " " "${GBL_SPACE}")
-		fi
-
-		if [[ "${value}" =~ " " ]];then
-			value=$(string_replace "${value}" " " "${GBL_SPACE}")
-		fi
-
         echo_debug "para: ${option} ${value}"
         if [[ "${option:0:2}" == "--" ]];then
             if [[ -z "${subcmd}" ]];then
@@ -185,12 +177,12 @@ function para_fetch
 						return 1
 					fi
 
-					map_add ${option_map_refnm} ${option} ${value}
+					map_add ${option_map_refnm} "${option}" "${value}"
 				else
 					if math_bool "${with_equal}";then
-						map_add ${option_map_refnm} ${option} ${value}
+						map_add ${option_map_refnm} "${option}" "${value}"
 					else
-						map_add ${option_map_refnm} ${option} true
+						map_add ${option_map_refnm} "${option}" true
 					fi
 				fi
 			fi	
@@ -203,28 +195,28 @@ function para_fetch
 						return 1
 					fi
 
-					map_add ${option_map_refnm} ${option} ${value}
+					map_add ${option_map_refnm} "${option}" "${value}"
 				else
 					if math_bool "${with_equal}";then
-						map_add ${option_map_refnm} ${option} ${value}
+						map_add ${option_map_refnm} "${option}" "${value}"
 					else
-						map_add ${option_map_refnm} ${option} true
+						map_add ${option_map_refnm} "${option}" true
 					fi
 				fi
 			fi
 		else
-			array_add ${subcmd_all_refnm} ${option}
+			array_add ${subcmd_all_refnm} "${option}"
 		fi
 
-		array_add ${option_all_refnm} ${option}
+		array_add ${option_all_refnm} "${option}"
 		if math_bool "${value_used}";then
 			if ! math_bool "${with_equal}";then
-				array_add ${option_all_refnm} ${value}
+				array_add ${option_all_refnm} "${value}"
 				shift
 			fi
 		else
 			if math_bool "${with_equal}";then
-				array_add ${option_all_refnm} ${value}
+				array_add ${option_all_refnm} "${value}"
 			fi
 		fi
         shift
@@ -495,30 +487,17 @@ function input_prompt
 
 function select_one
 {
-    local -a array
-    while [ $# -gt 0 ]
-    do
-        if [[ "$1" =~ ' ' ]];then
-            array[${#array[*]}]="${1// /${GBL_SPACE}}" 
-        else
-            array[${#array[*]}]="$1" 
-        fi
-        shift
-    done
-   
+	local -a array=("$@")
+
     if [ ${#array[*]} -eq 0 ];then
         return 1
     fi
 
     local item
     local index=1
-    for item in ${array[*]}
+    for item in "${array[@]}"
     do
-        if [[ "${item}" =~ "${GBL_SPACE}" ]];then
-            printf -- "%2d) %s\n" "${index}" "${item//${GBL_SPACE}/ }" &> /dev/tty
-        else
-            printf -- "%2d) %s\n" "${index}" "${item}" &> /dev/tty
-        fi
+		printf -- "%2d) %s\n" "${index}" "${item}" &> /dev/tty
         let index++
     done
     
@@ -543,13 +522,7 @@ function select_one
     selected=${input_val:-${selected}}
     selected=$((selected - 1))
 
-    local item="${array[${selected}]}"
-    if [[ "${item}" =~ "${GBL_SPACE}" ]];then
-        echo "${item//${GBL_SPACE}/ }"
-    else
-        echo "${item}"
-    fi
-
+    echo "${array[${selected}]}"
     return 0
 }
 

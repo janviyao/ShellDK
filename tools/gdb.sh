@@ -46,10 +46,6 @@ function func_eval
 	unset subcmd_all[0]
 
 	local cmd_str="${subcmd_all[*]}"
-	if [[ "${cmd_str}" =~ "${GBL_SPACE}" ]];then
-		cmd_str=$(string_replace "${cmd_str}" "${GBL_SPACE}" " ")
-	fi
-	
     local -a pid_array=($(process_name2pid "${xproc}"))
     for xproc in ${pid_array[*]}
     do
@@ -107,10 +103,6 @@ function func_script
 	unset subcmd_all[0]
 
 	local xscript="${subcmd_all[*]}"
-	if [[ "${xscript}" =~ "${GBL_SPACE}" ]];then
-		xscript=$(string_replace "${xscript}" "${GBL_SPACE}" " ")
-	fi
-	
     if ! file_exist "${xscript}";then
 		echo_erro "file { ${xscript} } not accessed"
         return 0
