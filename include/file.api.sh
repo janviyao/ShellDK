@@ -234,7 +234,7 @@ function file_get
         do
             local content=$(sed -n "${line_nr}p" ${xfile})
             if [[ "${content}" =~ ' ' ]];then
-                echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
+                echo $(string_replace "${content}" " " "${GBL_SPACE}")
             else
                 echo "${content}"
             fi
@@ -245,7 +245,7 @@ function file_get
             if [ ${string} -le ${total_nr} ];then
                 local content=$(sed -n "${string}p" ${xfile})
                 if [[ "${content}" =~ ' ' ]];then
-                    echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
+                    echo $(string_replace "${content}" " " "${GBL_SPACE}")
                 else
                     echo "${content}"
                 fi
@@ -256,7 +256,7 @@ function file_get
             if [[ "${string}" == "$" ]];then
                 local content=$(sed -n "${string}p" ${xfile})
                 if [[ "${content}" =~ ' ' ]];then
-                    echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
+                    echo $(string_replace "${content}" " " "${GBL_SPACE}")
                 else
                     echo "${content}"
                 fi
@@ -306,7 +306,7 @@ function file_range_get
         fi
 
         if [[ "${content}" =~ ' ' ]];then
-            echo $(string_replace "${content}" " " "${GBL_COL_SPF}")
+            echo $(string_replace "${content}" " " "${GBL_SPACE}")
         else
             echo "${content}"
         fi
@@ -640,7 +640,7 @@ function file_range
         for line_nr2 in ${line_nrs2[*]}
         do
             if [ ${line_nr1} -lt ${line_nr2} ];then
-				range_array+=("${line_nr1}${GBL_COL_SPF}${line_nr2}")
+				range_array+=("${line_nr1}${GBL_SPACE}${line_nr2}")
 				break
             fi
         done
@@ -655,7 +655,7 @@ function file_range
         return 0
     else
         if [ ${#line_nrs1[*]} -gt 0 ];then
-            echo "${line_nrs1[0]}${GBL_COL_SPF}$"
+            echo "${line_nrs1[0]}${GBL_SPACE}$"
             return 0
         fi
     fi

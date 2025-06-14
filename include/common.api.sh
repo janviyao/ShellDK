@@ -499,7 +499,7 @@ function select_one
     while [ $# -gt 0 ]
     do
         if [[ "$1" =~ ' ' ]];then
-            array[${#array[*]}]="${1// /${GBL_COL_SPF}}" 
+            array[${#array[*]}]="${1// /${GBL_SPACE}}" 
         else
             array[${#array[*]}]="$1" 
         fi
@@ -514,8 +514,8 @@ function select_one
     local index=1
     for item in ${array[*]}
     do
-        if [[ "${item}" =~ "${GBL_COL_SPF}" ]];then
-            printf -- "%2d) %s\n" "${index}" "${item//${GBL_COL_SPF}/ }" &> /dev/tty
+        if [[ "${item}" =~ "${GBL_SPACE}" ]];then
+            printf -- "%2d) %s\n" "${index}" "${item//${GBL_SPACE}/ }" &> /dev/tty
         else
             printf -- "%2d) %s\n" "${index}" "${item}" &> /dev/tty
         fi
@@ -544,8 +544,8 @@ function select_one
     selected=$((selected - 1))
 
     local item="${array[${selected}]}"
-    if [[ "${item}" =~ "${GBL_COL_SPF}" ]];then
-        echo "${item//${GBL_COL_SPF}/ }"
+    if [[ "${item}" =~ "${GBL_SPACE}" ]];then
+        echo "${item//${GBL_SPACE}/ }"
     else
         echo "${item}"
     fi

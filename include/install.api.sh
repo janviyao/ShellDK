@@ -615,8 +615,8 @@ function install_from_spec
     fi
 
     local spec_line="${spec_lines[0]}"
-    if [[ "${spec_line}" =~ "${GBL_COL_SPF}" ]];then
-        spec_line=$(string_replace "${spec_line}" "${GBL_COL_SPF}" " ")
+    if [[ "${spec_line}" =~ "${GBL_SPACE}" ]];then
+        spec_line=$(string_replace "${spec_line}" "${GBL_SPACE}" " ")
     fi
     echo_debug "spec line: { ${spec_line} }"
 

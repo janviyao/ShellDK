@@ -260,7 +260,7 @@ function string_split
                 fi
 
                 if [[ "${substr}" =~ ' ' ]];then
-                    substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
+                    substr=$(string_replace "${substr}" " " "${GBL_SPACE}")
                 fi
 
 				sub_array+=("${substr}")
@@ -271,7 +271,7 @@ function string_split
         else
 			local substr=$(awk -F "${separator}" "{ print \$${sub_index}}" <<< "${string}")
 			if [[ "${substr}" =~ ' ' ]];then
-				substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
+				substr=$(string_replace "${substr}" " " "${GBL_SPACE}")
 			fi
 			print_lossless "${substr}"
         fi
@@ -298,7 +298,7 @@ function string_split
 			do
 				local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
 				if [[ "${substr}" =~ ' ' ]];then
-					substr=$(string_replace "${substr}" " " "${GBL_COL_SPF}")
+					substr=$(string_replace "${substr}" " " "${GBL_SPACE}")
 				fi
 				sub_array+=("${substr}")
 			done
