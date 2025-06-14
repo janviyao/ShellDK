@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "m: p: o:" "$@"
 #set -x
 

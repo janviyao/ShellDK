@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 if math_bool "${KERNEL_DEBUG_ON}";then
     echo_info "Save: kernel log"
@@ -10,7 +10,7 @@ if math_bool "${KERNEL_DEBUG_ON}";then
 fi
 
 if math_bool "${DUMP_SAVE_ON}";then 
-    coredump_dir=$(file_get_path "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
+    coredump_dir=$(file_path_get "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
     if ! file_exist "${coredump_dir}";then
         coredump_dir=""
     else

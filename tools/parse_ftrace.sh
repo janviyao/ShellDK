@@ -1,7 +1,7 @@
 #!/bin/bash
 function how_use
 {
-    local script_name=$(file_get_fname $0)
+    local script_name=$(file_fname_get $0)
     echo "=================== Usage ==================="
     printf -- "%-15s <file-name>\n" "${script_name}"
     printf -- "%-15s @%s\n" "<file-name>" "file name where ftrace into"

@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 file_exist "/usr/bin/meson"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "meson-.+\.rpm" true; }
 file_exist "/usr/bin/ninja"                      || { cd ${MY_VIM_DIR}/deps/packages; install_from_rpm "ninja-build-.+\.rpm" true; }

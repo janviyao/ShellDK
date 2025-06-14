@@ -85,7 +85,7 @@ function mytar
         fi
     fi
     
-    local fname=$(file_get_fname "${fpath}")
+    local fname=$(file_fname_get "${fpath}")
     if string_match "${fname}" ".tar.gz" 2;then
         options="-z ${options}"
     elif string_match "${fname}" ".tar.bz2" 2;then
@@ -163,7 +163,7 @@ function install_check
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
         for xfile in ${file_list[*]}    
         do
-            local file_name=$(file_get_fname "${xfile}")
+            local file_name=$(file_fname_get "${xfile}")
             local new_version=$(string_regex "${file_name}" "\d+\.\d+(\.\d+)?")
             echo_info "$(printf -- "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
@@ -191,8 +191,8 @@ function install_provider
 
     local -a files
     if math_bool "${isreg}";then
-        local fname=$(file_get_fname ${xfile})
-        local fpath=$(file_get_path ${xfile})
+        local fname=$(file_fname_get ${xfile})
+        local fpath=$(file_path_get ${xfile})
         if ! file_exist "${fpath}";then
             fpath="."
         fi
@@ -230,7 +230,7 @@ function install_provider
             return 0
         fi
 
-        local fname=$(file_get_fname ${xfile})
+        local fname=$(file_fname_get ${xfile})
         local rpm_file=$(yum search ${fname} | grep -w "${fname}")
         if [ -n "${rpm_file}" ];then
             echo "${rpm_file}"
@@ -322,7 +322,7 @@ function install_from_rpm
     # rpm -ql xxx.rpm     #query rpm package contents
     local local_rpms=(${xfile})
     if math_bool "${isreg}";then
-        local fpath=$(file_get_path ${xfile})
+        local fpath=$(file_path_get ${xfile})
         if ! file_exist "${fpath}";then
             fpath="."
         fi
@@ -340,7 +340,7 @@ function install_from_rpm
     for rpm_file in ${local_rpms[*]}    
     do
         local full_name=$(file_realpath ${rpm_file})
-        local fname=$(file_get_fname ${full_name})
+        local fname=$(file_fname_get ${full_name})
 
         local versions=($(string_regex "${fname}" "\d+\.\d+(\.\d+)?"))
         if [ -z "${versions[*]}" ];then
@@ -548,12 +548,12 @@ function install_from_tar
 
     local local_tars=(${xfile})
     if math_bool "${isreg}";then
-        local fpath=$(file_get_path ${xfile})
+        local fpath=$(file_path_get ${xfile})
         if ! file_exist "${fpath}";then
             fpath="."
         fi
 
-        local fname=$(file_get_fname ${xfile})
+        local fname=$(file_fname_get ${xfile})
         local_tars=($(efind ${fpath} "${fname}"))
     fi
 
@@ -567,8 +567,8 @@ function install_from_tar
     local tar_file
     for tar_file in ${local_tars[*]}    
     do
-        local file_dir=$(file_get_path ${tar_file})
-        local file_name=$(file_get_fname ${tar_file})
+        local file_dir=$(file_path_get ${tar_file})
+        local file_name=$(file_fname_get ${tar_file})
         echo_file "${LOG_DEBUG}" "tar: { ${tar_file} } path: { ${file_dir} } name: { ${file_name} }"
         echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${file_name}")"
 

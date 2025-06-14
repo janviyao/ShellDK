@@ -541,17 +541,17 @@ function dump_network
         local tx_queue_size=$(ls -l ${dev_dir}/queues | grep tx | wc -l)
         local rx_queue_size=$(ls -l ${dev_dir}/queues | grep rx | wc -l)
 
-        dev_dir=$(file_get_path ${dev_dir})
-        dev_dir=$(file_get_path ${dev_dir})
-        local dirver=$(file_get_fname ${dev_dir}) 
+        dev_dir=$(file_path_get ${dev_dir})
+        dev_dir=$(file_path_get ${dev_dir})
+        local dirver=$(file_fname_get ${dev_dir}) 
 
         if file_exist "${dev_dir}/vendor";then
             local vendor_id=$(cat ${dev_dir}/vendor)
             local device_id=$(cat ${dev_dir}/device)
         fi
 
-        dev_dir=$(file_get_path ${dev_dir})
-        local bsf=$(file_get_fname ${dev_dir})
+        dev_dir=$(file_path_get ${dev_dir})
+        local bsf=$(file_fname_get ${dev_dir})
         if ! match_regex "${bsf}" "[a-f0-9]+:[a-f0-9]+:[a-f0-9]+\.[a-f0-9]+";then
             bsf="virtual" 
         fi

@@ -124,7 +124,7 @@ function echo_header
         fi
 
         if math_bool "${HEADER_FILE}";then
-            header="${header} $(printf -- "[%-18s[%7d]]" "$(file_get_fname $0)" "$$")"
+            header="${header} $(printf -- "[%-18s[%7d]]" "$(file_fname_get $0)" "$$")"
         else
             header="${header} $(printf -- "[%7d]" "$$")"
         fi

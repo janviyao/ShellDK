@@ -1,10 +1,10 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 
 function how_use
 {
-    local script_name=$(file_get_fname $0)
+    local script_name=$(file_fname_get $0)
     echo "=================== Usage ==================="
     printf -- "%-20s <source-dir> <destination-dir> [<exclude-regex> ...]\n" "${script_name}"
     printf -- "%-20s @ %s\n" "<source-dir>"      "where all will be copied from"
@@ -59,7 +59,7 @@ function common_backup
         return 1
     fi
 
-    local file_realpath=$(file_get_path ${real_item})
+    local file_realpath=$(file_path_get ${real_item})
     local same_path=$(string_same "${real_item}" "${SRC_DIR}" 1)
     if [ -n "${same_path}" ];then
         file_realpath=$(string_trim "${file_realpath}" "${same_path}" 1)

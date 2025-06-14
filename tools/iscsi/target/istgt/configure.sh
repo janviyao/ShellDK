@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 if [ $? -ne 0 ];then
@@ -79,7 +79,7 @@ do
         file_name=$(echo "${file_lun_map}" | awk -F: '{ print $1 }')
         lun_id=$(echo "${file_lun_map}" | awk -F: '{ print $2 }')
 
-        file_path=$(file_get_path "${file_name}")
+        file_path=$(file_path_get "${file_name}")
         ${SUDO} "mkdir -p ${file_path}; chmod -R 777 ${file_path}" 
         ${SUDO} fallocate -l ${DEVICE_SIZE} ${file_name}
 

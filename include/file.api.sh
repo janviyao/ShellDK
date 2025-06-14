@@ -9,7 +9,7 @@ function file_create
 		return 0
 	fi
 
-	local xdir=$(file_get_path ${xfile})
+	local xdir=$(file_path_get ${xfile})
 	if ! file_exist "${xdir}";then
 		mkdir -p ${xdir}
 		if [ $? -ne 0 ];then
@@ -180,7 +180,7 @@ function file_contain
     return 1
 }
 
-function file_range_has
+function file_range_have
 {
     local xfile="$1"
     local line_s="$2"
@@ -1028,7 +1028,7 @@ function file_realpath
     return 0
 }
 
-function file_get_fname
+function file_fname_get
 {
 	local xfile="$1"
 
@@ -1061,7 +1061,7 @@ function file_get_fname
     return 0
 }
 
-function file_get_path
+function file_path_get
 {
 	local xfile="$1"
 

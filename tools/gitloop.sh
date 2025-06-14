@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 RUN_DIR="$1"
 if [ ! -d ${RUN_DIR} ]; then

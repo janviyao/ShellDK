@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV} 
-echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 source ${ISCSI_ROOT_DIR}/target/${TEST_TARGET}/include/private.conf.sh
 if [ $? -ne 0 ];then

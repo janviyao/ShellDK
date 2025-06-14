@@ -314,7 +314,7 @@ function process_pid2name
             # ps -p 2133 -o cmd=
             # cat /proc/${xpid}/status
             if file_exist "/proc/${xpid}/exe";then
-                local fname=$(file_get_fname "/proc/${xpid}/exe")
+                local fname=$(file_fname_get "/proc/${xpid}/exe")
                 if [ -n "${fname}" ];then
                     if [[ ${fname} != 'exe' ]];then
                         name_list=(${name_list[*]} ${fname})
@@ -337,7 +337,7 @@ function process_pid2name
             if [ -n "${pname}" ];then
                 if [[ "${pname}" =~ '/' ]];then
                     if file_exist "${pname}";then
-                        name_list=(${name_list[*]} $(file_get_fname "${pname}"))
+                        name_list=(${name_list[*]} $(file_fname_get "${pname}"))
                     else
                         name_list=(${name_list[*]} ${pname})
                     fi

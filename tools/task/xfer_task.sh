@@ -68,7 +68,7 @@ function do_rsync
                 if [[ ${x_direct} == "TO" ]];then
                     local xfer_dir=${xfer_des}
                     if [[ $(string_end "${xfer_dir}" 1) != '/' ]]; then
-                        xfer_dir=$(file_get_path "${xfer_dir}")
+                        xfer_dir=$(file_path_get "${xfer_dir}")
                     fi
 
                     sync_des="${remote_user}@${ipaddr}:${xfer_des}"
@@ -79,7 +79,7 @@ function do_rsync
 
                     local local_dir=${xfer_des}
                     if [[ $(string_end "${local_dir}" 1) != '/' ]]; then
-                        local_dir=$(file_get_path "${local_dir}")
+                        local_dir=$(file_path_get "${local_dir}")
                     fi
 
                     if ! file_exist "${local_dir}";then
@@ -113,14 +113,14 @@ function rsync_to
     local xfer_des="$1"
 
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-        xfer_des=$(file_get_path "${xfer_src}")
+        xfer_des=$(file_path_get "${xfer_src}")
         if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
             xfer_des="${xfer_des}/"
         fi
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(file_get_path "${xfer_src}")
+            xfer_des=$(file_path_get "${xfer_src}")
             if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
                 xfer_des="${xfer_des}/"
             fi
@@ -156,14 +156,14 @@ function rsync_from
     local xfer_des="$1"
 
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-        xfer_des=$(file_get_path "${xfer_src}")
+        xfer_des=$(file_path_get "${xfer_src}")
         if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
             xfer_des="${xfer_des}/"
         fi
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(file_get_path "${xfer_src}")
+            xfer_des=$(file_path_get "${xfer_src}")
             if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
                 xfer_des="${xfer_des}/"
             fi
@@ -189,14 +189,14 @@ function rsync_p2p_to
     shift
     local xfer_des="$1"
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-        xfer_des=$(file_get_path "${xfer_src}")
+        xfer_des=$(file_path_get "${xfer_src}")
         if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
             xfer_des="${xfer_des}/"
         fi
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(file_get_path "${xfer_src}")
+            xfer_des=$(file_path_get "${xfer_src}")
             if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
                 xfer_des="${xfer_des}/"
             fi
@@ -231,14 +231,14 @@ function rsync_p2p_from
     shift
     local xfer_des="$1"
     if match_regex "${xfer_des}" "\d+\.\d+\.\d+\.\d+";then
-        xfer_des=$(file_get_path "${xfer_src}")
+        xfer_des=$(file_path_get "${xfer_src}")
         if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
             xfer_des="${xfer_des}/"
         fi
     else
         shift
         if [ -z "${xfer_des}" ];then
-            xfer_des=$(file_get_path "${xfer_src}")
+            xfer_des=$(file_path_get "${xfer_src}")
             if [[ $(string_end "${xfer_des}" 1) != '/' ]]; then
                 xfer_des="${xfer_des}/"
             fi

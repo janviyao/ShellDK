@@ -125,7 +125,7 @@ function mdat_get_var
     return 0
 }
 
-function mdat_kv_has_key
+function mdat_kv_key_have
 {
     local _xkey_="$1"
     local _pipe_="$2"
@@ -155,7 +155,7 @@ function mdat_kv_has_key
     fi
 }
 
-function mdat_kv_has_val
+function mdat_kv_val_have
 {
     local _xkey_="$1"
     local _xval_="$2"

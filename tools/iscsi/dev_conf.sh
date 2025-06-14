@@ -1,6 +1,6 @@
 #!/bin/bash
 source ${TEST_SUIT_ENV}
-echo_debug "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 function conf_sched
 {

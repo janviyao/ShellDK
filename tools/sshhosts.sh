@@ -1,5 +1,5 @@
 #!/bin/bash
-echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 CMD_STR="$@"
 
 declare -a ip_array=($(get_hosts_ip))

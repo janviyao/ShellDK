@@ -128,7 +128,7 @@ function kvconf_key_have
 			local index=0
 			while [ ${index} -lt ${#range_list[*]} ]
 			do
-				if file_range_has "${sec_file}" "${range_list[$((index + 0))]}" "${range_list[$((index + 1))]}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true;then
+				if file_range_have "${sec_file}" "${range_list[$((index + 0))]}" "${range_list[$((index + 1))]}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true;then
 					return 0 
 				fi
 				let index+=2
@@ -137,7 +137,7 @@ function kvconf_key_have
 	else
 		local line_nrs=($(file_linenr "${sec_file}" "^\s*\[\w+\]\s*$" true))
 		if [ ${#line_nrs[*]} -gt 0 ];then
-			if file_range_has "${sec_file}" "0" "${line_nrs[0]}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true;then
+			if file_range_have "${sec_file}" "0" "${line_nrs[0]}" "^\s*${key_str}\s*${GBL_KV_SPF}\s*" true;then
 				return 0 
 			fi
 		fi

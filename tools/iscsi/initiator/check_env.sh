@@ -1,6 +1,6 @@
 #!/bin/sh
 source ${TEST_SUIT_ENV}
-echo_info "@@@@@@: $(file_get_fname $0) @${LOCAL_IP}"
+echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
 # configure core-dump path
 ${SUDO} ulimit -c unlimited
@@ -40,7 +40,7 @@ if math_bool "${INITIATOR_DEBUG_ON}";then
         process_kill iscsid
     fi
 
-    log_dir=$(file_get_path "${ISCSI_INITIATOR_LOG}")
+    log_dir=$(file_path_get "${ISCSI_INITIATOR_LOG}")
     ${SUDO} "mkdir -p ${log_dir}; chmod -R 777 ${log_dir}"
     ${SUDO} "nohup iscsid -d 8 -c /etc/iscsi/iscsid.conf -i /etc/iscsi/initiatorname.iscsi -f &> ${ISCSI_INITIATOR_LOG} &"
 else

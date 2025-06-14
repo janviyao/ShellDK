@@ -383,7 +383,7 @@ function ncat_recv_file
         return 1
     fi
 
-    local f_path=$(file_get_path "${file_name}")
+    local f_path=$(file_path_get "${file_name}")
     if file_exist "${f_path}";then
         if file_exist "${file_name}";then
             if test -r ${f_path} && test -w ${f_path} && test -x ${f_path};then
@@ -665,7 +665,7 @@ function _ncat_thread_main
                 ack_ctrl="donot need ack"
             fi
             {
-                if ! mdat_kv_has_key "${event_uid}.pipe";then
+                if ! mdat_kv_key_have "${event_uid}.pipe";then
                     return 0
                 fi
                 sleep 1

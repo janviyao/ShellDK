@@ -1,5 +1,5 @@
 #!/bin/bash
-CUR_DIR=$(file_get_path)
+CUR_DIR=$(file_path_get)
 
 pid_list=($(process_name2pid $1))
 if [ ${#pid_list[*]} -eq 0 ];then
