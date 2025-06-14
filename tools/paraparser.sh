@@ -19,7 +19,7 @@ fi
 function get_all_opts
 {
 	local all_opts="${!_OPTION_MAP[*]}"
-	printf -- "${all_opts}\n"
+	print_lossless "${all_opts}"
     return 0
 }
 
@@ -30,10 +30,10 @@ function get_optval
     local opt
     for opt in "${options[@]}"
     do
-        local value=${_OPTION_MAP[${opt}]}
+        local value=${_OPTION_MAP["${opt}"]}
         #echo_debug "key: ${opt} value: ${value}"
         if [ -n "${value}" ];then
-            printf -- "${value}\n"
+            print_lossless "${value}"
             return 0
         fi
     done
@@ -44,8 +44,6 @@ function get_optval
 function get_subcmd
 {
     local index="$1"
-    local is_inner="${2:-false}"
-
 	local index_s="0"
 	local index_e="$"
 	
@@ -94,7 +92,6 @@ function get_subcmd
 function get_subcmd_all
 {
 	local subcmd="$1"
-    local is_inner="${2:-false}"
 
 	local next_cmd=""
 	local index total=${#_SUBCMD_ALL[*]}
@@ -110,7 +107,7 @@ function get_subcmd_all
 	
 	local sub_found=0
     local elem
-    for elem in ${_OPTION_ALL[*]}
+    for elem in "${_OPTION_ALL[@]}"
     do
         if [[ "${elem}" == "${subcmd}" ]];then
         	let sub_found++
@@ -122,7 +119,7 @@ function get_subcmd_all
 		fi
 		
 		if [ ${sub_found} -gt 0 ];then
-			printf -- "${elem}\n"
+			print_lossless "${elem}"
 		fi
     done
 
@@ -135,10 +132,12 @@ function get_subcmd_optval
 	shift
 	local options=("$@")
 
-	local subcmd_options=($(get_subcmd_all "${subcmd}"))
 	local -a subcmd_option_all=()
 	local -A subcmd_option_map=()
 	local -a subcmd_subcmd_all=()
+
+	local -a subcmd_options
+	array_reset subcmd_options "$(get_subcmd_all "${subcmd}")"
 
 	para_fetch _SHORT_OPTS subcmd_option_all subcmd_option_map subcmd_subcmd_all "${subcmd_options[@]}"
 	if [ $? -ne 0 ];then
@@ -147,12 +146,12 @@ function get_subcmd_optval
 	fi
 
     local opt
-    for opt in "${options[@]}"
+    for opt in "${!subcmd_option_map[@]}"
     do
-        local value=${subcmd_option_map[${opt}]}
-        #echo_debug "key: ${opt} value: ${value}"
+        local value=${subcmd_option_map["${opt}"]}
+        #echo_info "key: ${opt} value: ${value}"
         if [ -n "${value}" ];then
-            printf -- "${value}\n"
+            print_lossless "${value}"
             return 0
         fi
     done
@@ -160,60 +159,62 @@ function get_subcmd_optval
     return 0
 }
 
-function para_import
-{
-    local -n option_all_ref="$1"
-    local -n option_map_ref="$2"
-    local -n subcmd_all_ref="$3"
-	local key value
-
-	_OPTION_ALL=(${option_all_ref[*]})
-
-	unset _OPTION_MAP
-	for key in "${!option_map_ref[@]}"
-	do
-		value=${option_map_ref[${key}]}
-		map_add _OPTION_MAP ${key} ${value}
-	done
-
-	_SUBCMD_ALL=(${subcmd_all_ref[*]})
-}
-
 function para_debug
 {
-    local -n option_all_ref="${1:-_OPTION_ALL}"
-    local -n option_map_ref="${2:-_OPTION_MAP}"
-    local -n subcmd_all_ref="${3:-_SUBCMD_ALL}"
-	local idx key opt
+	local idx subcmd opt
 
-    printf -- "%s:\n" "option_all[${#option_all_ref[*]}]"
+	echo "all_opts: $(get_all_opts)"
+	echo
+
+    printf -- "%s:\n" "option_all[${#_OPTION_ALL[*]}]"
 	printf -- "[ " 
-    for ((idx=0; idx < ${#option_all_ref[*]}; idx++)) 
+    for ((idx=0; idx < ${#_OPTION_ALL[*]}; idx++)) 
     do
-        printf -- "\"%s\" " "${option_all_ref[${idx}]}" 
+        printf -- "\"%s\" " "${_OPTION_ALL[${idx}]}" 
     done
 	printf -- "]\n" 
     echo
 
-    printf -- "%s:\n" "option_map[${#option_map_ref[*]}]"
-    for key in "${!option_map_ref[@]}"
+    printf -- "%s:\n" "option_map[${#_OPTION_MAP[*]}]"
+    for opt in "${!_OPTION_MAP[@]}"
     do
-        echo "$(printf -- "Key: %-8s  Value: %s" "${key}" "${option_map_ref[$key]}")"
+		printf -- "Key: %-8s  Value: %s\n" "${opt}" "$(get_optval ${opt})"
     done
     echo
 	
-	for key in "${subcmd_all_ref[@]}"
+	local -a all_sub_cmd
+	array_reset all_sub_cmd "$(get_subcmd "0-$")"
+
+	local count=0
+	for subcmd in "${all_sub_cmd[@]}"
 	do
-		local options=($(get_subcmd_all "${key}"))
-		echo "$(printf -- "subcmd: %-8s  options: %s" "${key}" "${options[*]}")"
-		
-		if [ ${#options[*]} -gt 0 ];then
-			for opt in "${options[@]}"
-			do
-				local value=$(get_subcmd_optval "${key}" "${opt}")
-				echo "$(printf -- "Key: %-8s  Value: %s" "${opt}" "${value}")"
-			done
-		fi
+		printf -- "subcmd(%d): %-8s\n" ${count} "${subcmd}"
+		let count++
+	done
+    echo
+
+	for subcmd in "${_SUBCMD_ALL[@]}"
+	do
+		local -a sub_all
+		array_reset sub_all "$(get_subcmd_all "${subcmd}")"
+
+		printf -- "subcmd: %-15s all: [ " "${subcmd}"
+		for opt in "${sub_all[@]}"
+		do
+			printf -- "\"%s\" " "${opt}" 
+		done
+		printf -- "]\n" 
+
+		count=1
+		for opt in "${sub_all[@]}"
+		do
+			if [[ "${opt:0:1}" == "-" ]];then
+				local value=$(get_subcmd_optval "${subcmd}" "${opt}")
+				printf -- "(%d)sub-opt: %-10s  opt-value: %s\n" ${count} "${opt}" "${value}"
+				let count++
+			fi
+		done
+		echo
 	done
 }
 
@@ -223,6 +224,6 @@ if math_bool "false";then
 	declare -p _SUBCMD_ALL
 	echo
 
-	para_debug
+	para_debug _OPTION_ALL _OPTION_MAP _SUBCMD_ALL
 	echo
 fi
