@@ -26,10 +26,10 @@ function mdat_task_alive
     fi
 }
 
-function mdat_task_ctrl_async
+function mdat_ctrl_async
 {
     local _body_="$1"
-    local _pipe_="$2"
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: body\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -37,10 +37,6 @@ function mdat_task_ctrl_async
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "pipe invalid: ${_pipe_}"
@@ -52,10 +48,10 @@ function mdat_task_ctrl_async
     return 0
 }
 
-function mdat_task_ctrl_sync
+function mdat_ctrl_sync
 {
     local _body_="$1"
-    local _pipe_="$2"
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: body\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -63,10 +59,6 @@ function mdat_task_ctrl_sync
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "pipe invalid: [${_pipe_}]"
@@ -80,9 +72,9 @@ function mdat_task_ctrl_sync
 
 function mdat_set_var
 {
+    local -n _var_ref_="$1"
     local _xkey_="$1"
-    local _pipe_="$2"
-    local _xval_=""
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -90,23 +82,17 @@ function mdat_set_var
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if string_contain "${_xkey_}" "=";then
-        _xval_="${_xkey_#*=}"
-        _xkey_="${_xkey_%%=*}"
-        #eval "declare -g ${_xkey_}=\"${_xval_}\""
-    else
-        _xval_="$(eval "echo \"\$${_xkey_}\"")"
-    fi
+    local _xval_="${_var_ref_}"
+    mdat_set "${_xkey_}" "${_xval_}" "${_pipe_}"
 
-    mdat_kv_set "${_xkey_}" "${_xval_}" "${_pipe_}"
     return $?
 }
 
 function mdat_get_var
 {
-    local _xkey_="$1"
-    local _pipe_="$2"
-    local _xval_=""
+    local -n _var_ref="$1"
+    local _var_name="$1"
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -114,21 +100,14 @@ function mdat_get_var
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if __var_defined "${_xkey_}";then
-        _xval_=$(eval "echo \$${_xkey_}")
-        eval "declare -g ${_xkey_}=\"${_xval_}\""
-        return 0
-    fi
-    
-    _xval_=$(mdat_kv_get "${_xkey_}" "${_pipe_}")
-    eval "declare -g ${_xkey_}=\"${_xval_}\""
+    _var_ref=$(mdat_get "${_var_name}" "${_pipe_}")
     return 0
 }
 
-function mdat_kv_key_have
+function mdat_key_have
 {
     local _xkey_="$1"
-    local _pipe_="$2"
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -136,10 +115,6 @@ function mdat_kv_key_have
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -155,11 +130,11 @@ function mdat_kv_key_have
     fi
 }
 
-function mdat_kv_val_have
+function mdat_val_have
 {
     local _xkey_="$1"
     local _xval_="$2"
-    local _pipe_="$3"
+	local _pipe_="${3:-${MDAT_PIPE}}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${MDAT_PIPE})"
@@ -167,10 +142,6 @@ function mdat_kv_val_have
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -187,11 +158,10 @@ function mdat_kv_val_have
 }
 
 
-function mdat_kv_bool
+function mdat_val_bool
 {
     local _xkey_="$1"
-    local _pipe_="$2"
-    local _xval_=""
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -199,7 +169,7 @@ function mdat_kv_bool
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    _xval_=$(mdat_kv_get "${_xkey_}" "${_pipe_}")
+    local _xval_=$(mdat_get "${_xkey_}" "${_pipe_}")
     if math_bool "${_xval_}";then
         return 0
     else
@@ -207,10 +177,10 @@ function mdat_kv_bool
     fi
 }
 
-function mdat_kv_unset_key
+function mdat_key_del
 {
     local _xkey_="$1"
-    local _pipe_="$2"
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -218,10 +188,6 @@ function mdat_kv_unset_key
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -229,15 +195,15 @@ function mdat_kv_unset_key
         return 1
     fi
 
-    mdat_task_ctrl_async "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    mdat_ctrl_async "KV_UNSET_KEY${GBL_SPF1}${_xkey_}" "${_pipe_}"
     return $?
 }
 
-function mdat_kv_unset_val
+function mdat_val_del
 {
     local _xkey_="$1"
     local _xval_="$2"
-    local _pipe_="$3"
+	local _pipe_="${3:-${MDAT_PIPE}}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${MDAT_PIPE})"
@@ -245,10 +211,6 @@ function mdat_kv_unset_val
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -256,15 +218,15 @@ function mdat_kv_unset_val
         return 1
     fi
 
-    mdat_task_ctrl_async "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdat_ctrl_async "KV_UNSET_VAL${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return $?
 }
 
-function mdat_kv_append
+function mdat_append
 {
     local _xkey_="$1"
     local _xval_="$2"
-    local _pipe_="$3"
+	local _pipe_="${3:-${MDAT_PIPE}}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${MDAT_PIPE})"
@@ -272,10 +234,6 @@ function mdat_kv_append
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -283,15 +241,15 @@ function mdat_kv_append
         return 1
     fi
     
-    mdat_task_ctrl_async "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdat_ctrl_async "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
 
-function mdat_kv_set
+function mdat_set
 {
     local _xkey_="$1"
     local _xval_="$2"
-    local _pipe_="$3"
+	local _pipe_="${3:-${MDAT_PIPE}}"
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: xval\n\$3: pipe(default: ${MDAT_PIPE})"
@@ -299,10 +257,6 @@ function mdat_kv_set
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -310,15 +264,14 @@ function mdat_kv_set
         return 1
     fi
     
-    mdat_task_ctrl_async "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    mdat_ctrl_async "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
     return 0
 }
 
-function mdat_kv_get
+function mdat_get
 {
     local _xkey_="$1"
-    local _pipe_="$2"
-    local _xval_=""
+	local _pipe_="${2:-${MDAT_PIPE}}"
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xkey\n\$2: pipe(default: ${MDAT_PIPE})"
@@ -326,10 +279,6 @@ function mdat_kv_get
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if [ -z "${_pipe_}" ];then
-        _pipe_="${MDAT_PIPE}"
-    fi
-
     if ! file_exist "${_pipe_}.run";then
         if file_exist "${BASH_WORK_DIR}";then
             echo_erro "mdat task [${_pipe_}.run] donot run for [$@]"
@@ -344,25 +293,25 @@ function mdat_kv_get
     return 0
 }
 
-function mdat_kv_print
+function mdat_clear
 {
-    local _xkey_="$@"
+	local _xkey_list=("$@")
 
-    if [ -z "${_xkey_}" ];then
-        mdat_task_ctrl_async "KEY_PRT${GBL_SPF1}ALL"
+    if [ ${#_xkey_list[*]} -eq 0 ];then
+        mdat_ctrl_async "KEY_CLR${GBL_SPF1}ALL"
     else
-        mdat_task_ctrl_async "KEY_PRT${GBL_SPF1}${_xkey_}"
+		mdat_ctrl_async "KEY_CLR${GBL_SPF1}$(array_2string _xkey_list ${GBL_RETURN})"
     fi
 }
 
-function mdat_kv_clear
+function mdat_print
 {
     local _xkey_="$@"
 
     if [ -z "${_xkey_}" ];then
-        mdat_task_ctrl_async "KEY_CLR${GBL_SPF1}ALL"
+        mdat_ctrl_async "KEY_PRT${GBL_SPF1}ALL"
     else
-        mdat_task_ctrl_async "KEY_CLR${GBL_SPF1}${_xkey_}"
+        mdat_ctrl_async "KEY_PRT${GBL_SPF1}${_xkey_}"
     fi
 }
 
@@ -392,7 +341,7 @@ function _bash_mdat_exit
         return 0
     fi
     
-    mdat_task_ctrl_sync "EXIT" 
+    mdat_ctrl_sync "EXIT" 
 }
 
 function _mdat_thread_main
@@ -446,7 +395,7 @@ function _mdat_thread_main
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "KEY_HAS" ]];then
             local _xkey_=${req_body}
-            if string_contain "${!_global_map_[*]}" "${_xkey_}";then
+            if map_key_have _global_map_ "${_xkey_}";then
                 echo_debug "mdat key: [${_xkey_}] exist for [${ack_pipe}]"
                 process_run_timeout 2 echo \"true\" \> ${ack_pipe}
             else
@@ -457,7 +406,7 @@ function _mdat_thread_main
         elif [[ "${req_ctrl}" == "VAL_HAS" ]];then
             local _xkey_=$(string_split "${req_body}" "${GBL_SPF2}" 1)
             local _xval_=$(string_split "${req_body}" "${GBL_SPF2}" 2)
-            if string_contain "${_global_map_[${_xkey_}]}" "${_xval_}";then
+			if map_val_have _global_map_ "${_xkey_}" "${_xval_}";then
                 echo_debug "mdat key: [${_xkey_}] val: [${_xval_}] exist for [${ack_pipe}]"
                 process_run_timeout 2 echo \"true\" \> ${ack_pipe}
             else
@@ -476,13 +425,15 @@ function _mdat_thread_main
             map_del _global_map_ "${_xkey_}" "${_xval_}"
         elif [[ "${req_ctrl}" == "KEY_CLR" ]];then
             if [ ${#_global_map_[*]} -gt 0 ];then
+				local _xkey_
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _xkey_ in ${!_global_map_[*]};do
+                    for _xkey_ in "${!_global_map_[@]}";do
 						map_del _global_map_ "${_xkey_}"
                     done
                 else
-                    local _var_arr_=(${req_body})
-                    for _xkey_ in ${_var_arr_[*]}
+                    local -a _key_list
+					array_reset _key_list "$(string_split "${req_body}" "${GBL_RETURN}" 0)"
+                    for _xkey_ in ${_key_list[*]}
                     do
 						map_del _global_map_ "${_xkey_}"
                     done
@@ -492,12 +443,12 @@ function _mdat_thread_main
             if [ ${#_global_map_[*]} -gt 0 ];then
                 echo ""
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _xkey_ in ${!_global_map_[*]};do
+                    for _xkey_ in "${!_global_map_[@]}";do
                         echo "$(printf -- "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"
                     done
                 else
                     local _var_arr_=(${req_body})
-                    for _xkey_ in ${_var_arr_[*]}
+                    for _xkey_ in "${_var_arr_[@]}" 
                     do
                         if [ -n "${_global_map_[${_xkey_}]}" ];then
                             echo "$(printf -- "[%15s]: %s" "${_xkey_}" "${_global_map_[${_xkey_}]}")"

@@ -535,7 +535,7 @@ function ncat_set_var
         var_valu="$(eval "echo \"\$${var_name}\"")"
     fi
 
-    echo_debug "remote set: [$@]" 
+    echo_debug "ncat_set_var: [$@]" 
     ncat_send_msg "${ncat_addr}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
     return $?
 }
@@ -584,7 +584,7 @@ function _ncat_thread_main
     fi
 
     local ncat_port=$(ncat_generate_port)
-    mdat_set_var "master_work"
+    mdat_set_var master_work
 
     while math_bool "${master_work}" 
     do
@@ -593,7 +593,7 @@ function _ncat_thread_main
 
         local ncat_body=$(ncat_recv_msg "${ncat_port}")
         if [ -z "${ncat_body}" ];then
-            mdat_get_var "master_work"
+            mdat_get_var master_work
 
             if ! file_exist "${NCAT_WORK_DIR}";then
                 echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
@@ -611,7 +611,7 @@ function _ncat_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! file_exist "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                mdat_get_var "master_work"
+                mdat_get_var master_work
 
                 if ! file_exist "${NCAT_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
@@ -631,7 +631,7 @@ function _ncat_thread_main
                 echo_debug "write [ACK] to [${ack_pipe}]"
                 process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
             fi
-            #mdat_set_var "master_work=false"
+            #mdat_set_var master_work
             echo_debug "ncat main exit"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
@@ -651,7 +651,9 @@ function _ncat_thread_main
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
             local var_name=$(string_split "${req_body}" "=" 1)
             local var_valu=$(string_split "${req_body}" "=" 2)
-            mdat_set_var "${var_name}=${var_valu}"
+
+			eval "local ${var_name}=${var_valu}"
+            mdat_set_var ${var_name}
         elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
             local rport=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
             local fname=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
@@ -661,11 +663,11 @@ function _ncat_thread_main
             local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                mdat_kv_set "${event_uid}.pipe" "${ack_pipe}"
+                mdat_set "${event_uid}.pipe" "${ack_pipe}"
                 ack_ctrl="donot need ack"
             fi
             {
-                if ! mdat_kv_key_have "${event_uid}.pipe";then
+                if ! mdat_key_have "${event_uid}.pipe";then
                     return 0
                 fi
                 sleep 1
@@ -678,8 +680,8 @@ function _ncat_thread_main
             local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
             local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
 
-            local ack_pipe=$(mdat_kv_get "${event_uid}.pipe")
-            mdat_kv_unset_key "${event_uid}.pipe"
+            local ack_pipe=$(mdat_get "${event_uid}.pipe")
+            mdat_key_del "${event_uid}.pipe"
             echo_debug "notify to [${ack_pipe}]"
             process_run_timeout 2 echo \"${event_msg}\" \> ${ack_pipe}
         fi
@@ -689,7 +691,7 @@ function _ncat_thread_main
             process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
 
-        mdat_get_var "master_work"
+        mdat_get_var master_work
         if ! file_exist "${NCAT_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
             break

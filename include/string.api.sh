@@ -250,25 +250,20 @@ function string_split
 
     if math_is_int "${sub_index}";then
         if [ ${sub_index} -eq 0 ];then
-            local index=1
+            local index
             local -a sub_array
-            while true
+			local total_nrs=($(awk -F "${separator}" "{ print NF }" <<< "${string}"))
+			for ((index = 1; index <= ${total_nrs[0]}; index++))
             do
                 local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
-                if [ -z "${substr}" ];then
-                    break
-                fi
-
 				sub_array+=("${substr}")
-                let index++
             done
 			array_print sub_array
-			return 0
         else
 			local substr=$(awk -F "${separator}" "{ print \$${sub_index}}" <<< "${string}")
 			print_lossless "${substr}"
-			return 0
         fi
+		return 0
     else
         if [[ "${sub_index}" =~ '-' ]];then
             local index_s=$(awk -F '-' '{ print $1 }' <<< "${sub_index}")

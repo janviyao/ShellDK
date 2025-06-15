@@ -41,21 +41,21 @@ function gitloop_signal
     echo_debug "gitloop signal"
     trap "" EXIT SIGINT SIGTERM SIGKILL
 
-    mdat_kv_set "gitloop-exit" "true"
+    mdat_set "gitloop-exit" "true"
     sleep 1
-    mdat_kv_unset_key "gitloop-exit"
+    mdat_key_del "gitloop-exit"
     rm -f ${tmp_file}
 
     exit 0
 }
 trap "gitloop_signal" EXIT SIGINT SIGTERM SIGKILL
-mdat_kv_set "gitloop-exit" "false"
+mdat_set "gitloop-exit" "false"
 
 PROGRESS_TIME=$((RECEIVE_TIMEOUT * 10 * TRY_CNT_MAX))
 cd ${RUN_DIR}
 for gitdir in $(ls -d */)
 do
-    if mdat_kv_bool "gitloop-exit";then
+    if mdat_val_bool "gitloop-exit";then
         break
     fi
 

@@ -130,14 +130,14 @@ function _redirect_func
     mkfifo ${log_pipe}
     exec {pipe_fd}<>${log_pipe}
 
-    mdat_kv_set "${log_file}" "${log_pipe}"
+    mdat_set "${log_file}" "${log_pipe}"
 
     local line
     while read line
     do
         if [[ "${line}" == "EXIT" ]];then
             eval "exec ${pipe_fd}>&-"
-            mdat_kv_unset_key "${log_file}"
+            mdat_key_del "${log_file}"
             rm -f ${log_pipe}
             return
         fi

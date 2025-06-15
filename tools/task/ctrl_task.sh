@@ -170,7 +170,7 @@ function _ctrl_thread_main
                 echo_file "${LOG_DEBUG}" "thread[${self_pid}] running: ${_cmdstr}"
 
                 eval "${_cmdstr}"
-                mdat_kv_set "thread-${self_pid}-return" "$?"
+                mdat_set "thread-${self_pid}-return" "$?"
                 exit 0
             } &
 
