@@ -33,29 +33,29 @@ function how_use
 END
 }
 
-SUB_LIST=($(get_subcmd '0-$'))
+SUB_LIST=($(array_print _SUBCMD_ALL '0-$'))
 if [ ${#SUB_LIST[*]} -lt 2 ];then
     how_use
     exit 1
 fi
 
-OPT_HELP=$(get_optval "-h" "--help")
+OPT_HELP=$(map_print _OPTION_MAP "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use
     exit 0
 fi
 
-VERBOSE=$(get_optval "-v" "--verbose")
-SRC_REGEX=$(get_optval "-r" "--src-regex")
-EXCL_STRS=($(get_optval "-x" "--exclude-str"))
+VERBOSE=$(map_print _OPTION_MAP "-v" "--verbose")
+SRC_REGEX=$(map_print _OPTION_MAP "-r" "--src-regex")
+EXCL_STRS=($(map_print _OPTION_MAP "-x" "--exclude-str"))
 if [ ${#EXCL_STRS[*]} -eq 0 ];then
 	EXCL_STRS=('.git' '.svn')
 fi
 
-FILE_TYPES=($(get_optval "-t" "--file-type"))
-OLD_STR=$(get_subcmd 0)
-NEW_STR=$(get_subcmd 1)
-FILE_LIST=($(get_subcmd '2-'))
+FILE_TYPES=($(map_print _OPTION_MAP "-t" "--file-type"))
+OLD_STR=$(array_print _SUBCMD_ALL 0)
+NEW_STR=$(array_print _SUBCMD_ALL 1)
+FILE_LIST=($(array_print _SUBCMD_ALL '2-'))
 
 CUR_DIR=$(pwd)
 if [ ${#FILE_LIST[*]} -eq 0 ];then

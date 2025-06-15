@@ -1,14 +1,15 @@
 #!/bin/bash
 set -o allexport
-declare -a _OPTION_ALL=()
-declare -A _OPTION_MAP=()
-declare -a _SUBCMD_ALL=()
+
 declare -a _SHORT_OPTS=($1)
+declare -a _OPTION_ALL=()
+declare -a _SUBCMD_ALL=()
+declare -A _OPTION_MAP=()
 shift
 
-para_fetch _SHORT_OPTS _OPTION_ALL _OPTION_MAP _SUBCMD_ALL "$@"
+para_fetch _SHORT_OPTS _OPTION_ALL _SUBCMD_ALL _OPTION_MAP "$@"
 if [ $? -ne 0 ];then
-	echo_erro "failed: para_fetch _SHORT_OPTS _OPTION_ALL _OPTION_MAP _SUBCMD_ALL \"$@\""
+	echo_erro "para_fetch _SHORT_OPTS _OPTION_ALL _SUBCMD_ALL _OPTION_MAP \"$@\""
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 		return 1
 	else
@@ -16,140 +17,62 @@ if [ $? -ne 0 ];then
 	fi
 fi
 
-function get_all_opts
-{
-	local all_opts="${!_OPTION_MAP[*]}"
-	print_lossless "${all_opts}"
-    return 0
-}
-
-function get_optval
-{
-	local options=("$@")
-
-    local opt
-    for opt in "${options[@]}"
-    do
-        local value=${_OPTION_MAP["${opt}"]}
-        #echo_debug "key: ${opt} value: ${value}"
-        if [ -n "${value}" ];then
-            print_lossless "${value}"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-function get_subcmd
-{
-    local index="$1"
-	local index_s="0"
-	local index_e="$"
-	
-	if [ ${#_SUBCMD_ALL[*]} -eq 0 ];then
-		return 1
-	fi
-
-    if math_is_int "${index}";then
-		index_s="${index}"
-		index_e="${index}"
-    else
-		if [[ "${index}" =~ '-' ]];then
-            index_s=$(awk -F '-' '{ print $1 }' <<< "${index}")
-            if ! math_is_int "${index_s}";then
-                return 1
-            fi
-
-			index_e=$(awk -F '-' '{ print $2 }' <<< "${index}")
-			if [ -z "${index_e}" ];then
-				index_e="$"
-			fi
-
-            if ! math_is_int "${index_e}";then
-				if [[ "${index_e}" != "$" ]];then
-					return 1
-				fi
-            fi
-		fi
-    fi
-
-	if [[ "${index_e}" == '$' ]];then
-		index_e=$((${#_SUBCMD_ALL[*]} - 1))
-	fi
-
-	for ((index=index_s; index<=index_e; index++))
-	do
-		local value=${_SUBCMD_ALL[${index}]}
-		if [ -n "${value}" ];then
-			echo "${value}"
-		fi
-	done
-
-    return 0
-}
-
 function get_subcmd_all
 {
-	local subcmd="$1"
+    local -n _subcmd_all_ref=$1
+    local _subcmd_all_refnm=$1
+    local -n _option_all_ref=$2
+	local _option_all_refnm=$2
+	local _subcmd="$3"
 
-	local next_cmd=""
-	local index total=${#_SUBCMD_ALL[*]}
-	for ((index= 0; index < ${total}; index++))
-	do
-		if [[ "${_SUBCMD_ALL[${index}]}" == "${subcmd}" ]];then
-			if [ $((index + 1)) -lt ${total} ];then
-				next_cmd="${_SUBCMD_ALL[$((index + 1))]}"
-				break
-			fi
-		fi
-	done
+	echo_file "${LOG_DEBUG}" "$@"
+	local _cmd_index=$(array_index ${_subcmd_all_refnm} "${_subcmd}")
+	local next_cmd=${_subcmd_all_ref[$((_cmd_index + 1))]}
 	
-	local sub_found=0
-    local elem
-    for elem in "${_OPTION_ALL[@]}"
-    do
-        if [[ "${elem}" == "${subcmd}" ]];then
-        	let sub_found++
-        	continue
-        fi
+	_cmd_index=$(array_index ${_option_all_refnm} "${_subcmd}")
+    if math_is_int "${_cmd_index}";then
+    	let _cmd_index++
+	else
+		return 1
+    fi
 
-		if [[ "${elem}" == "${next_cmd}" ]];then
-			break
-		fi
-		
-		if [ ${sub_found} -gt 0 ];then
-			print_lossless "${elem}"
-		fi
-    done
+	_nxt_index=$(array_index ${_option_all_refnm} "${next_cmd}")
+    if math_is_int "${_nxt_index}";then
+    	let _nxt_index--
+	else
+		return 1
+    fi
 
+	array_print "${_option_all_refnm}" "${_cmd_index}-${_nxt_index}"
     return 0
 }
 
 function get_subcmd_optval
 {
-	local subcmd="$1"
-	shift
-	local options=("$@")
+	local _short_opts_refnm=$1
+    local _option_all_refnm=$2
+    local _subcmd_all_refnm=$3
+	local _subcmd="$4"
+	shift 4
+	local _options=("$@")
 
 	local -a subcmd_option_all=()
 	local -A subcmd_option_map=()
 	local -a subcmd_subcmd_all=()
 
-	local -a subcmd_options
-	array_reset subcmd_options "$(get_subcmd_all "${subcmd}")"
+	local -a _subcmd_options
+	array_reset _subcmd_options "$(get_subcmd_all ${_subcmd_all_refnm} ${_option_all_refnm} "${_subcmd}")"
 
-	para_fetch _SHORT_OPTS subcmd_option_all subcmd_option_map subcmd_subcmd_all "${subcmd_options[@]}"
+	para_fetch ${_short_opts_refnm} subcmd_option_all subcmd_subcmd_all subcmd_option_map "${_subcmd_options[@]}"
 	if [ $? -ne 0 ];then
-		echo_erro "failed: para_fetch _SHORT_OPTS subcmd_option_all subcmd_option_map subcmd_subcmd_all \"${subcmd_options[@]}\""
+		echo_erro "para_fetch ${_short_opts_refnm} subcmd_option_all subcmd_subcmd_all subcmd_option_map \"${_subcmd_options[@]}\""
 		return 1
 	fi
 
-    local opt
-    for opt in "${!subcmd_option_map[@]}"
+    local _opt
+    for _opt in "${_options[@]}"
     do
-        local value=${subcmd_option_map["${opt}"]}
-        #echo_info "key: ${opt} value: ${value}"
+        local value=${subcmd_option_map["${_opt}"]}
         if [ -n "${value}" ];then
             print_lossless "${value}"
             return 0
@@ -163,7 +86,7 @@ function para_debug
 {
 	local idx subcmd opt
 
-	echo "all_opts: $(get_all_opts)"
+	echo "all_opts: ${!_OPTION_MAP[@]}"
 	echo
 
     printf -- "%s:\n" "option_all[${#_OPTION_ALL[*]}]"
@@ -178,12 +101,12 @@ function para_debug
     printf -- "%s:\n" "option_map[${#_OPTION_MAP[*]}]"
     for opt in "${!_OPTION_MAP[@]}"
     do
-		printf -- "Key: %-8s  Value: %s\n" "${opt}" "$(get_optval ${opt})"
+		printf -- "Key: %-8s  Value: %s\n" "${opt}" "$(map_print _OPTION_MAP ${opt})"
     done
     echo
 	
 	local -a all_sub_cmd
-	array_reset all_sub_cmd "$(get_subcmd "0-$")"
+	array_reset all_sub_cmd "$(array_print _SUBCMD_ALL "0-$")"
 
 	local count=0
 	for subcmd in "${all_sub_cmd[@]}"
@@ -196,7 +119,7 @@ function para_debug
 	for subcmd in "${_SUBCMD_ALL[@]}"
 	do
 		local -a sub_all
-		array_reset sub_all "$(get_subcmd_all "${subcmd}")"
+		array_reset sub_all "$(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${subcmd}")"
 
 		printf -- "subcmd: %-15s all: [ " "${subcmd}"
 		for opt in "${sub_all[@]}"
@@ -209,7 +132,7 @@ function para_debug
 		for opt in "${sub_all[@]}"
 		do
 			if [[ "${opt:0:1}" == "-" ]];then
-				local value=$(get_subcmd_optval "${subcmd}" "${opt}")
+				local value=$(get_subcmd_optval _SHORT_OPTS _OPTION_ALL _SUBCMD_ALL "${subcmd}" "${opt}")
 				printf -- "(%d)sub-opt: %-10s  opt-value: %s\n" ${count} "${opt}" "${value}"
 				let count++
 			fi
@@ -224,6 +147,5 @@ if math_bool "false";then
 	declare -p _SUBCMD_ALL
 	echo
 
-	para_debug _OPTION_ALL _OPTION_MAP _SUBCMD_ALL
-	echo
+	para_debug
 fi

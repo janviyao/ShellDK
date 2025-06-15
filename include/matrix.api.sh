@@ -19,10 +19,34 @@ function array_print
         return 1
     fi
 	shift 
+	
+	if [ ${#_array_ref[*]} -eq 0 ];then
+		return 1
+	fi
 
 	local _index_list=("$@")
 	if [ ${#_index_list[*]} -eq 0 ];then
 		_index_list=(${!_array_ref[*]})
+	else
+		local -a _new_index_list
+		local _index
+		for _index in ${_index_list[*]}
+		do
+			if math_is_int "${_index}";then
+				_new_index_list+=("${_index}")
+			else
+				local _max_index=$((${#_array_ref[*]} - 1))
+				if [[ "${_index}" =~ '-' ]];then
+					local _seq_list=($(seq_num "${_index}" "${_max_index}"))
+					if [ ${#_seq_list[*]} -gt 0 ];then
+						_new_index_list+=(${_seq_list[*]})
+					fi
+				elif [[ "${_index}" == '$' ]];then
+					_new_index_list+=(${_max_index})
+				fi
+			fi
+		done
+		_index_list=(${_new_index_list[*]})
 	fi
 
     local _index
@@ -136,6 +160,7 @@ function array_reset
 	local -n _array_ref=$1
 	local _array_name=$1
 
+	echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_array $1;then
 		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: value"
 		return 1
@@ -158,15 +183,7 @@ function array_add
 	fi
 	shift
 
-	local val
-	local _val_list=("$@")
-	for val in "${_val_list[@]}"
-	do
-		if ! array_have ${_array_name} "${val}";then
-			_array_ref+=("${val}")
-		fi
-	done
-
+	_array_ref+=("$@")
 	return 0
 }
 
@@ -300,6 +317,30 @@ function is_map
 	else
 		return 1
 	fi
+}
+
+function map_print
+{
+	local -n _map_ref=$1
+
+	echo_file "${LOG_DEBUG}" "$@"
+	if [ $# -lt 2 ] || ! is_map $1;then
+		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key"
+		return 1
+	fi
+	shift
+	local _key_list=("$@")
+
+	local _xkey
+	for _xkey in "${_key_list[@]}"
+	do
+		local _xvalue="${_map_ref["${_xkey}"]}"
+		if [ -n "${_xvalue}" ];then
+			print_lossless "${_xvalue}"
+		fi
+	done
+
+	return 0
 }
 
 function map_add

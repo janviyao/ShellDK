@@ -13,12 +13,12 @@ function how_use
     echo "============================================="
 }
 
-if [ -z "$(get_subcmd '0')" ];then
+if [ -z "$(array_print _SUBCMD_ALL 0)" ];then
     how_use
     exit 1
 fi
 
-SRC_DIR="$(get_subcmd 0)"
+SRC_DIR="$(array_print _SUBCMD_ALL 0)"
 if [ ! -d ${SRC_DIR} ]; then
     echo_erro "first-para(SRC_DIR) must be directory: ${SRC_DIR}"
     exit 1
@@ -26,7 +26,7 @@ fi
 SRC_DIR=$(file_realpath ${SRC_DIR})
 
 regex_index=0
-DES_DIR="$(get_subcmd 1)"
+DES_DIR="$(array_print _SUBCMD_ALL 1)"
 if [ -n "${DES_DIR}" ];then
     if [ ! -d ${DES_DIR} ]; then
         echo_erro "second-para(DES_DIR) not directory: ${DES_DIR}"
@@ -43,8 +43,8 @@ fi
 DES_DIR=$(file_realpath ${DES_DIR})
 
 BAK_CONF=$(pwd)/.bak.conf
-EXCLUDE_FILS=($(get_subcmd "${regex_index}-") "\w+\.d" "\w+\.o" "\w+\.gcno")
-EXCLUDE_DIRS=($(get_subcmd "${regex_index}-")) "build")
+EXCLUDE_FILS=($(array_print _SUBCMD_ALL "${regex_index}-") "\w+\.d" "\w+\.o" "\w+\.gcno")
+EXCLUDE_DIRS=($(array_print _SUBCMD_ALL "${regex_index}-")) "build")
 
 function common_backup
 {

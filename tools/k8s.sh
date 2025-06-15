@@ -226,7 +226,7 @@ END
     done
 }
 
-SUB_CMD=$(get_subcmd 0)
+SUB_CMD=$(array_print _SUBCMD_ALL 0)
 if [ -n "${SUB_CMD}" ];then
     tmp_list=(${!func_map[*]})
     if ! array_have tmp_list "${SUB_CMD}";then
@@ -238,22 +238,22 @@ else
     exit 1
 fi
 
-OPT_HELP=$(get_optval "-h" "--help")
+OPT_HELP=$(map_print _OPTION_MAP "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use_tool
     exit 0
 fi
 
-SUB_ALL=($(get_subcmd_all "${subcmd}"))
+SUB_ALL=($(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${subcmd}"))
 SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
-SUB_LIST=($(get_subcmd "0-$"))
+SUB_LIST=($(array_print _SUBCMD_ALL "0-$"))
 for next_cmd in ${SUB_LIST[*]}
 do
 	if [ "${next_cmd}" == "${SUB_CMD}" ];then
 		continue
 	fi
 
-	SUB_ALL=($(get_subcmd_all "${next_cmd}"))
+	SUB_ALL=($(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${next_cmd}"))
 	if [ -n "${SUB_OPTS}" ];then
 		SUB_OPTS="${SUB_OPTS} ${next_cmd} ${SUB_ALL[*]}"
 	else

@@ -2,10 +2,10 @@
 echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "m: p: o:" "$@"
 
-OP_MODE=$(get_optval "-m" "--mode")
+OP_MODE=$(map_print _OPTION_MAP "-m" "--mode")
 echo_debug "work-mode: ${OP_MODE}"
 
-PRJ_DIR=$(get_optval "-p" "--project-dir")
+PRJ_DIR=$(map_print _OPTION_MAP "-p" "--project-dir")
 PRJ_DIR="${PRJ_DIR:-.}"
 PRJ_DIR=$(string_trim "${PRJ_DIR}" "/" 2)
 if [ -n "${PRJ_DIR}" ];then
@@ -16,7 +16,7 @@ if [ -n "${PRJ_DIR}" ];then
     fi
 fi
 
-OUT_DIR=$(get_optval "-o" "--output-dir")
+OUT_DIR=$(map_print _OPTION_MAP "-o" "--output-dir")
 OUT_DIR=$(string_trim "${OUT_DIR}" "/" 2)
 if [ -n "${OUT_DIR}" ];then
     echo_debug "output-dir: ${OUT_DIR}"

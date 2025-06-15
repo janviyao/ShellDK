@@ -3,13 +3,13 @@ echo_debug "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 source ${TEST_SUIT_ENV}
 
-g_read_pct=$(get_optval "-r" "--read-percent")
+g_read_pct=$(map_print _OPTION_MAP "-r" "--read-percent")
 [ -z "${g_read_pct}" ] && { echo_erro "invalid read-percent: ${g_read_pct}"; exit 1; } 
 
-g_return_file=$(get_optval "-o" "--output")
+g_return_file=$(map_print _OPTION_MAP "-o" "--output")
 file_exist "${g_return_file}" || { echo_erro "file { ${g_return_file} } not accessed"; exit 1; } 
 
-g_output_arr=($(get_subcmd '0-'))
+g_output_arr=($(array_print _SUBCMD_ALL '0-'))
 
 g_start_time=""
 g_run_time=0

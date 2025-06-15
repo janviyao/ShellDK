@@ -30,25 +30,25 @@ function how_use
 END
 }
 
-OPT_HELP=$(get_optval "-h" "--help")
+OPT_HELP=$(map_print _OPTION_MAP "-h" "--help")
 if math_bool "${OPT_HELP}";then
     how_use
     exit 0
 fi
 
-VERBOSE=$(get_optval "-v" "--verbose")
-EXE_REGEX=$(get_optval "-r" "--regex")
-EXCL_STRS=($(get_optval "-x" "--exclude-str"))
+VERBOSE=$(map_print _OPTION_MAP "-v" "--verbose")
+EXE_REGEX=$(map_print _OPTION_MAP "-r" "--regex")
+EXCL_STRS=($(map_print _OPTION_MAP "-x" "--exclude-str"))
 if [ ${#EXCL_STRS[*]} -eq 0 ];then
 	EXCL_STRS=('.git' '.svn')
 fi
 
-FILE_TYPES=($(get_optval "-t" "--file-type"))
+FILE_TYPES=($(map_print _OPTION_MAP "-t" "--file-type"))
 if [ ${#FILE_TYPES[*]} -eq 0 ];then
 	FILE_TYPES=('.c' '.cc' '.cpp' '.h' '.hh' '.hpp')
 fi
 
-FILE_LIST=($(get_subcmd '0-'))
+FILE_LIST=($(array_print _SUBCMD_ALL '0-'))
 
 CUR_DIR=$(pwd)
 if [ ${#FILE_LIST[*]} -eq 0 ];then

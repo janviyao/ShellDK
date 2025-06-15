@@ -22,7 +22,7 @@ function func_eval
 	local -A option_map=()
 	local -a subcmd_all=()
 	local -a shortopts=()
-	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
 
 	local subcmd="eval"
 	local options=""
@@ -79,7 +79,7 @@ function func_script
 	local -A option_map=()
 	local -a subcmd_all=()
 	local -a shortopts=()
-	para_fetch "shortopts" "option_all" "option_map" "subcmd_all" "$@"
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
 
 	local subcmd="script"
 	local options=""
@@ -156,17 +156,17 @@ END
 }
 
 FUNC_LIST=($(printf -- "%s\n" ${!subcmd_func_map[*]} | sort))
-SUB_CMD=$(get_subcmd 0)
+SUB_CMD=$(array_print _SUBCMD_ALL 0)
 
-OPT_LIST=$(get_optval "-l" "--list")
+OPT_LIST=$(map_print _OPTION_MAP "-l" "--list")
 if math_bool "${OPT_LIST}";then
     printf -- "%s\n" ${!subcmd_func_map[*]}
     exit 0
 fi
 
-OPT_HELP=$(get_optval "-h" "--help")
+OPT_HELP=$(map_print _OPTION_MAP "-h" "--help")
 if math_bool "${OPT_HELP}";then
-	OPT_HELP=$(get_subcmd_optval "${SUB_CMD}" "-h" "--help")
+	OPT_HELP=$(get_subcmd_optval _SHORT_OPTS _OPTION_ALL _SUBCMD_ALL "${SUB_CMD}" "-h" "--help")
 	if ! math_bool "${OPT_HELP}";then
 		how_use_tool
 		exit 0
@@ -179,13 +179,13 @@ if [ -n "${SUB_CMD}" ];then
         exit 1
     fi
 
-	SUB_ALL=($(get_subcmd_all "${SUB_CMD}"))
+	SUB_ALL=($(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${SUB_CMD}"))
 	SUB_OPTS="${SUB_ALL[*]}"
 
-	SUB_LIST=($(get_subcmd "1-$" true))
+	SUB_LIST=($(array_print _SUBCMD_ALL "1-$"))
 	for next_cmd in "${SUB_LIST[@]}"
 	do
-		SUB_ALL=(${next_cmd} $(get_subcmd_all "${next_cmd}"))
+		SUB_ALL=(${next_cmd} $(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${next_cmd}"))
 		if [ -n "${SUB_OPTS}" ];then
 			SUB_OPTS="${SUB_OPTS} ${SUB_ALL[*]}"
 		else

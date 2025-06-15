@@ -65,16 +65,16 @@ function inst_usage
     done
 }
 
-OPT_HELP=$(get_optval "-h" "--help")
+OPT_HELP=$(map_print _OPTION_MAP "-h" "--help")
 if math_bool "${OPT_HELP}";then
     inst_usage
     exit 0
 fi
 
-NEED_OPT=$(get_optval "-o" "--op")
+NEED_OPT=$(map_print _OPTION_MAP "-o" "--op")
 #NEED_OP="${NEED_OPT:?'Please specify -o option'}"
 if [ -z "${NEED_OPT}" ];then
-    if [ -n "$(get_subcmd '0')" ];then
+    if [ -n "$(array_print _SUBCMD_ALL 0)" ];then
         NEED_OPT="spec"
     fi
 fi
@@ -94,10 +94,10 @@ if [[ ${OPT_MATCH} -eq 0 ]] || [[ ${OPT_MATCH} -eq ${#FUNC_MAP[*]} ]]; then
     exit -1
 fi
 
-REMOTE_INST=$(get_optval "-r" "--remote")
+REMOTE_INST=$(map_print _OPTION_MAP "-r" "--remote")
 REMOTE_INST="${REMOTE_INST:-0}"
 
-COPY_PKG=$(get_optval "-c" "--copy")
+COPY_PKG=$(map_print _OPTION_MAP "-c" "--copy")
 COPY_PKG="${COPY_PKG:-0}"
 
 echo_info "$(printf -- "[%13s]: %-6s" "Install Ops" "${NEED_OPT}")"
@@ -629,7 +629,7 @@ if ! math_bool "${REMOTE_INST}"; then
             while test -n "${func}"
             do
                 echo_info "$(printf -- "[%13s]: %-13s start" "Install" "${func}")"
-                ${func} $(get_subcmd '0-')
+                ${func} $(array_print _SUBCMD_ALL '0-')
                 echo_info "$(printf -- "[%13s]: %-13s done" "Install" "${func}")"
                 let func_index++
                 func=$(string_split "${FUNC_MAP[${key}]}" ";" "${func_index}")
@@ -637,7 +637,7 @@ if ! math_bool "${REMOTE_INST}"; then
         fi
     done
 else
-    declare -a ip_array=($(echo "$(get_subcmd '0-$')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    declare -a ip_array=($(echo "$(array_print _SUBCMD_ALL '0-$')" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
     if [ -z "${ip_array[*]}" ];then
         ip_array=($(get_hosts_ip))
     fi

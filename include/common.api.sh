@@ -52,6 +52,39 @@ function __MY_SOURCE
     return 0
 }
 
+function seq_num
+{
+	local _seq_num=$1
+	local _max_val=$2
+
+	local -a _number_list=()
+	if math_is_int "${_seq_num}";then
+		_number_list+=("${_seq_num}")
+	else
+		if [[ "${_seq_num}" =~ '-' ]];then
+			local _array_num=($(awk -F '-' '{ for (i=1; i<=NF; i++) { if ($i != "") { print $i } else { print "$" } } }' <<< "${_seq_num}"))
+			local _index_s=${_array_num[0]}
+			local _index_e=${_array_num[1]}
+			if math_is_int "${_index_s}";then
+				if math_is_int "${_index_e}";then
+					_number_list+=($(seq ${_index_s} ${_index_e}))
+				else
+					if [[ "${_index_e}" == "$" ]];then
+						if math_is_int "${_max_val}";then
+							_number_list+=($(seq ${_index_s} ${_max_val}))
+						else
+							_number_list+=(${_index_s} ${_index_e})
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+
+	printf "%s\n" ${_number_list[*]}
+	return 0
+}
+
 function para_pack
 {
     local bash_options="$-"
@@ -103,35 +136,17 @@ function para_fetch
     local bash_options="$-"
     set +x
 
-    if ! __var_defined "$1";then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
-		[[ "${bash_options}" =~ x ]] && set -x
-        return 1
-    fi
-
-    if ! __var_defined "$2";then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
-		[[ "${bash_options}" =~ x ]] && set -x
-        return 1
-    fi
-
-    if ! __var_defined "$3";then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
-		[[ "${bash_options}" =~ x ]] && set -x
-        return 1
-    fi
-
-    if ! __var_defined "$4";then
-        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference\n\$3: map variable reference\n\$4: array variable reference\n\$5~N: parameters"
-		[[ "${bash_options}" =~ x ]] && set -x
-        return 1
-    fi
-
-	echo_debug "para_fetch $@"
 	local shortopts_refnm="$1"
     local option_all_refnm="$2"
-    local option_map_refnm="$3"
-    local subcmd_all_refnm="$4"
+    local subcmd_all_refnm="$3"
+    local option_map_refnm="$4"
+
+	echo_debug "$@"
+    if ! is_array "$1" || ! is_array "$2" || ! is_array "$3" || ! is_map "$4";then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference\n\$3: array variable reference\n\$4: map variable reference\n\$5~N: parameters"
+		[[ "${bash_options}" =~ x ]] && set -x
+        return 1
+    fi
     shift 4
 
     local option=""
@@ -167,7 +182,7 @@ function para_fetch
 			opt_char="${option#-}"
 		fi
 
-        echo_debug "para: ${option} ${value}"
+        echo_debug "para: \"${option}\" \"${value}\""
         if [[ "${option:0:2}" == "--" ]];then
             if [[ -z "${subcmd}" ]];then
 				if [[ -n "${opt_char}" ]] && array_have ${shortopts_refnm} "${opt_char}:";then

@@ -266,26 +266,20 @@ function string_split
 		return 0
     else
         if [[ "${sub_index}" =~ '-' ]];then
-            local index_s=$(awk -F '-' '{ print $1 }' <<< "${sub_index}")
-            if ! math_is_int "${index_s}";then
+			local total_nrs=($(awk -F "${separator}" "{ print NF }" <<< "${string}"))
+			local index_list=($(seq_num "${sub_index}" "${total_nrs[0]}"))
+			if [ ${#index_list[*]} -eq 0 ];then
 				print_lossless "${string}"
-                return 1
-            fi
-
-			if [ ${index_s} -eq 0 ];then
-				index_s=1
+				return 1
 			fi
 
-			local index_e=$(awk -F '-' '{ print $2 }' <<< "${sub_index}")
-			if ! math_is_int "${index_e}";then
-				local total_nrs=($(awk -F "${separator}" "{ print NF }" <<< "${string}"))
-				index_e=${total_nrs[0]}
-			fi
-
-			local index=0
             local -a sub_array
-			for ((index = index_s; index <= index_e; index++))
+			local index=0
+			for index in ${index_list[*]}
 			do
+				if [ ${index} -eq 0 ];then
+					continue
+				fi
 				local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
 				sub_array+=("${substr}")
 			done
