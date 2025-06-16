@@ -357,9 +357,11 @@ function _xfer_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "xfer recv: [${line}] from [${XFER_PIPE}]"
-        local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
+		local -a msg_list
+		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
+        local ack_ctrl=${msg_list[0]}
+        local ack_pipe=${msg_list[1]}
+        local ack_body=${msg_list[2]}
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
@@ -373,22 +375,26 @@ function _xfer_thread_main
             fi
         fi
 
-        local req_xfer=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
-        local req_foot=$(string_split "${ack_body}" "${GBL_SPF1}" 3)
+		local -a req_list
+		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
+        local req_ctrl=${req_list[0]}
+        local req_body=${req_list[1]}
+        local req_foot=${req_list[2]}
 
-        if [[ "${req_xfer}" == "EXIT" ]];then
+        if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [ACK] to [${ack_pipe}]"
                 process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
             fi
             echo_debug "xfer main exit"
             return 
-        elif [[ "${req_xfer}" == "RSYNC" ]];then
-            local xfer_act=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
-            local xfer_cmd=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
-            local xfer_src=$(string_split "${req_body}" "${GBL_SPF2}" 3) 
-            local xfer_des=$(string_split "${req_body}" "${GBL_SPF2}" 4) 
+        elif [[ "${req_ctrl}" == "RSYNC" ]];then
+			local -a val_list
+			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local xfer_act=${val_list[0]}
+            local xfer_cmd=${val_list[1]}
+            local xfer_src=${val_list[2]}
+            local xfer_des=${val_list[3]}
 
             local action=""
             if [[ "${xfer_act}" == "UPDATE" ]];then
@@ -402,12 +408,14 @@ function _xfer_thread_main
             echo_debug "xfer_src: [${xfer_src}]"
             echo_debug "xfer_des: [${xfer_des}]"
 
-            local cmd_act=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 1) 
+			array_reset val_list "$(string_split "${xfer_cmd}" "${GBL_SPF3}")"
+            local cmd_act=${val_list[0]} 
+
             if [[ "${cmd_act}" == 'REMOTE' ]];then
-                local remote_user=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 2) 
-                local remote_pswd=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 3) 
-                local remote_addr=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 4) 
-                local remote_xdir=$(string_split "${xfer_cmd}" "${GBL_SPF3}" 5) 
+                local remote_user=${val_list[1]} 
+                local remote_pswd=${val_list[2]} 
+                local remote_addr=${val_list[3]} 
+                local remote_xdir=${val_list[4]} 
 
                 local cmdstr=$(cat << EOF
                 systype=\$(uname -s | grep -E '^[A-Za-z_]+' -o)

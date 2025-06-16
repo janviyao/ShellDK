@@ -126,9 +126,11 @@ function _ctrl_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "ctrl recv: [${line}] from [${CTRL_PIPE}]"
-        local ack_ctrl=$(string_split "${line}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_split "${line}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_split "${line}" "${GBL_ACK_SPF}" 3)
+		local -a msg_list
+		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
+        local ack_ctrl=${msg_list[0]}
+        local ack_pipe=${msg_list[1]}
+        local ack_body=${msg_list[2]}
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
@@ -142,8 +144,10 @@ function _ctrl_thread_main
             fi
         fi
         
-        local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
+		local -a req_list
+		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
+        local req_ctrl=${req_list[0]}
+        local req_body=${req_list[1]}
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then

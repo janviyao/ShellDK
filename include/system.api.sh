@@ -846,8 +846,12 @@ function cursor_pos
 
 	# save the position
 	#echo "current position: $pos"
-	ypos=$(string_split "${pos}" ';' 1)
-	xpos=$(string_split "${pos}" ';' 2)
+
+	local -a pos_list
+	array_reset pos_list "$(string_split "${pos}" ";")"
+
+	ypos=${pos_list[0]}
+	xpos=${pos_list[1]}
 	#echo_file "${LOG_DEBUG}" "${xpos},${ypos} == ${xmax},${ymax}"
 
 	if [ ${xpos} -le ${xmax} ];then
@@ -862,7 +866,7 @@ function cursor_pos
 		fi
 	fi
 
-	local cur_pos="${xpos},${ypos}"
+	local cur_pos="${xpos}${GBL_VAL_SPF}${ypos}"
 	echo_file "${LOG_DEBUG}" "${cur_pos}"
 
 	echo "${cur_pos}"

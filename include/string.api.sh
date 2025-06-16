@@ -206,15 +206,16 @@ function string_contain
     fi
 
     if [ -n "${separator}" ];then
-        local column_nr=$(awk -F "${separator}" "{ print NF }" <<< "${string}")
-        local index=1
-        for ((; index<=column_nr; index++))
-        do
-            local col_cnt=$(string_split "${string}" "${separator}" "${index}")
-            if [[ "${col_cnt}" == "${substr}" ]];then
-                return 0
-            fi
-        done
+		local -a _sub_list
+		array_reset _sub_list "$(awk -F "${separator}" '{ for (i=1;i<=NF;i++) { print $i }}' <<< "${string}")"
+
+		local _str
+		for _str in "${_sub_list[@]}"
+		do
+			if [[ "${_str}" == "${substr}" ]];then
+				return 0
+			fi
+		done
     else
         if [[ "${string}" =~ "${substr}" ]];then
             return 0
@@ -222,19 +223,6 @@ function string_contain
     fi
 
     return 1
-    #if [[ ${substr} == *\\* ]];then
-    #    substr="${substr//\\/\\\\}"
-    #fi
-
-    #if [[ ${substr} == *\** ]];then
-    #    substr="${substr//\*/\\*}"
-    #fi
-
-    #if [[ ${string} == *${substr}* ]];then
-    #    return 0
-    #else
-    #    return 1
-    #fi
 }
 
 function string_split
@@ -247,44 +235,34 @@ function string_split
 		echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index([1, N], 0: all)"
         return 1
     fi
+	
+	local -a _sub_list
+	array_reset _sub_list "$(awk -F "${separator}" '{ for (i=1;i<=NF;i++) { print $i }}' <<< "${string}")"
+	local total_nrs=${#_sub_list[*]}
 
     if math_is_int "${sub_index}";then
         if [ ${sub_index} -eq 0 ];then
-            local index
-            local -a sub_array
-			local total_nrs=($(awk -F "${separator}" "{ print NF }" <<< "${string}"))
-			for ((index = 1; index <= ${total_nrs[0]}; index++))
-            do
-                local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
-				sub_array+=("${substr}")
-            done
-			array_print sub_array
+			array_print _sub_list
         else
-			local substr=$(awk -F "${separator}" "{ print \$${sub_index}}" <<< "${string}")
-			print_lossless "${substr}"
+			print_lossless "${_sub_list[$((sub_index - 1))]}"
         fi
 		return 0
     else
         if [[ "${sub_index}" =~ '-' ]];then
-			local total_nrs=($(awk -F "${separator}" "{ print NF }" <<< "${string}"))
-			local index_list=($(seq_num "${sub_index}" "${total_nrs[0]}"))
+			local index_list=($(seq_num "${sub_index}" "${total_nrs}"))
 			if [ ${#index_list[*]} -eq 0 ];then
 				print_lossless "${string}"
 				return 1
 			fi
 
-            local -a sub_array
-			local index=0
-			for index in ${index_list[*]}
+            local -a _res_list
+			local _index
+			for _index in ${index_list[*]}
 			do
-				if [ ${index} -eq 0 ];then
-					continue
-				fi
-				local substr=$(awk -F "${separator}" "{ print \$${index}}" <<< "${string}")
-				sub_array+=("${substr}")
+				_res_list+=("${_sub_list[$((sub_index - 1))]}")
 			done
 
-			array_print sub_array
+			array_print _res_list
 			return 0
         else
 			print_lossless "${string}"
@@ -443,39 +421,39 @@ function string_same
     fi
 
     if [[ ${posstr} -eq 1 ]];then 
-        local index=1
+        local _index=1
         local sublen=${#substr}
-        while math_expr_if "${index} <= ${sublen}"
+        while math_expr_if "${_index} <= ${sublen}"
         do
-            if [[ $(string_start "${string}" ${index}) != $(string_start "${substr}" ${index}) ]]; then
+            if [[ $(string_start "${string}" ${_index}) != $(string_start "${substr}" ${_index}) ]]; then
                 break
             fi
-            let index++
+            let _index++
         done
 
-        let index--
-        if [ ${index} -gt 0 ];then
-            local result=$(string_sub "${string}" 0 ${index})
+        let _index--
+        if [ ${_index} -gt 0 ];then
+            local result=$(string_sub "${string}" 0 ${_index})
 			print_lossless "${result}"
             return 0
         fi
     fi
 
     if [[ ${posstr} -eq 2 ]];then
-        local index=1
+        local _index=1
         local sublen=${#substr}
-        while math_expr_if "${index} <= ${sublen}"
+        while math_expr_if "${_index} <= ${sublen}"
         do
-            if [[ $(string_end "${string}" ${index}) != $(string_end "${substr}" ${index}) ]]; then
+            if [[ $(string_end "${string}" ${_index}) != $(string_end "${substr}" ${_index}) ]]; then
                 break
             fi
-            let index++
+            let _index++
         done
-        let index--
+        let _index--
 
-        if [ ${index} -gt 0 ];then
-            let index=${#string}-${index} 
-            local result=$(string_sub "${string}" ${index} ${#string})
+        if [ ${_index} -gt 0 ];then
+            let _index=${#string}-${_index} 
+            local result=$(string_sub "${string}" ${_index} ${#string})
 			print_lossless "${result}"
             return 0
         fi

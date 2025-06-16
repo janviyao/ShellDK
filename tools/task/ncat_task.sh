@@ -603,9 +603,11 @@ function _ncat_thread_main
         fi
         echo_file "${LOG_DEBUG}" "ncat recv: [${ncat_body}]" 
 
-        local ack_ctrl=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 1)
-        local ack_pipe=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 2)
-        local ack_body=$(string_split "${ncat_body}" "${GBL_ACK_SPF}" 3)
+		local -a msg_list
+		array_reset msg_list "$(string_split "${ncat_body}" "${GBL_ACK_SPF}")"
+        local ack_ctrl=${msg_list[0]}
+        local ack_pipe=${msg_list[1]}
+        local ack_body=${msg_list[2]}
 
         echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
@@ -621,9 +623,11 @@ function _ncat_thread_main
             fi
         fi
 
-        local req_ctrl=$(string_split "${ack_body}" "${GBL_SPF1}" 1)
-        local req_body=$(string_split "${ack_body}" "${GBL_SPF1}" 2)
-        local req_foot=$(string_split "${ack_body}" "${GBL_SPF1}" 3)
+		local -a req_list
+		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
+        local req_ctrl=${req_list[0]}
+        local req_body=${req_list[1]}
+        local req_foot=${req_list[2]}
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
             echo_debug "ncat exit by {$(process_pid2name "${req_body}")[${req_body}]}" 
@@ -637,8 +641,11 @@ function _ncat_thread_main
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
         elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
-            local log_lvel=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
-            local log_body=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
+			local -a val_list
+			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local log_lvel=${val_list[0]}
+            local log_body=${val_list[1]}
+
             if [ ${log_lvel} -eq ${LOG_DEBUG} ];then
                 echo_debug "${log_body}"
             elif [ ${log_lvel} -eq ${LOG_INFO} ];then
@@ -649,18 +656,24 @@ function _ncat_thread_main
                 echo_erro "${log_body}"
             fi
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
-            local var_name=$(string_split "${req_body}" "=" 1)
-            local var_valu=$(string_split "${req_body}" "=" 2)
+			local -a val_list
+			array_reset val_list "$(string_split "${req_body}" "=")"
+            local var_name=${val_list[0]}
+            local var_valu=${val_list[1]}
 
 			eval "local ${var_name}=${var_valu}"
             mdat_set_var ${var_name}
         elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
-            local rport=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
-            local fname=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
+			local -a val_list
+			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local rport=${val_list[0]}
+            local fname=${val_list[1]}
             ncat_recv_file "${rport}" "${fname}"
         elif [[ "${req_ctrl}" == "WAIT_EVENT" ]];then
-            local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
-            local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
+			local -a val_list
+			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local event_uid=${val_list[0]}
+            local event_msg=${val_list[1]}
 
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 mdat_set "${event_uid}.pipe" "${ack_pipe}"
@@ -677,8 +690,10 @@ function _ncat_thread_main
                 ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
             }&
         elif [[ "${req_ctrl}" == "NOTIFY_EVENT" ]];then
-            local event_uid=$(string_split "${req_body}" "${GBL_SPF2}" 1) 
-            local event_msg=$(string_split "${req_body}" "${GBL_SPF2}" 2) 
+			local -a val_list
+			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local event_uid=${val_list[0]}
+            local event_msg=${val_list[1]}
 
             local ack_pipe=$(mdat_get "${event_uid}.pipe")
             mdat_key_del "${event_uid}.pipe"
