@@ -1096,14 +1096,14 @@ function! ProjectGo(opmode)
     call LogPrint("2file", "ProjectGo ".a:opmode)
 
     if a:opmode == "create"
-        silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m create -p \"".getcwd()."\" -o ".GetVimDir("sessions")
+        silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m create -p \"".getcwd()."\" -o ".GetVimDir("database")
         call LeaveHandler(1)
     elseif a:opmode == "delete" 
         call LeaveHandler(0)
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m delete -o ".GetVimDir("")
 		silent! execute "qa"
     elseif a:opmode == "load" 
-		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m load -o ".GetVimDir("")
+		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m load -o ".GetVimDir("database")
 
         if has("ctags")
             if filereadable("tags")
@@ -1128,17 +1128,17 @@ function! ProjectGo(opmode)
             set csverb       
         endif
 
-		if filereadable(GetVimDir("sessions")."/session.vim")
-			silent! execute "source ".GetVimDir("sessions")."/session.vim"
+		if filereadable(GetVimDir("session")."/session.vim")
+			silent! execute "source ".GetVimDir("session")."/session.vim"
 		endif
 
-		if filereadable(GetVimDir("sessions")."/session.vim")
-			silent! execute "rviminfo ".GetVimDir("sessions")."/session.viminfo"
+		if filereadable(GetVimDir("session")."/session.vim")
+			silent! execute "rviminfo ".GetVimDir("session")."/session.viminfo"
 		endif
 	elseif a:opmode == "unload" 
-		silent! execute "mks! ".GetVimDir("sessions")."/session.vim"
-		silent! execute "wviminfo! ".GetVimDir("sessions")."/session.viminfo"
-		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m unload -o ".GetVimDir("")
+		silent! execute "mks! ".GetVimDir("session")."/session.vim"
+		silent! execute "wviminfo! ".GetVimDir("session")."/session.viminfo"
+		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m unload -o ".GetVimDir("database")
     endif
 endfunction
 

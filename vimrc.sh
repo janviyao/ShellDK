@@ -264,41 +264,41 @@ function project_load
 		return 1
 	fi
 
-	if ! file_exist "${out_dir}/sessions/tags" || ! file_exist "${out_dir}/sessions/cscope.out"; then
+	if ! file_exist "${out_dir}/tags" || ! file_exist "${out_dir}/cscope.out"; then
 		return 0
 	fi
 
 	rm -f tags cscope.out cscope.out.in cscope.out.po
 	
-	ln -s ${out_dir}/sessions/tags tags
+	ln -s ${out_dir}/tags tags
 	if [ $? -ne 0 ];then
-		echo_erro "failed: ln -s ${out_dir}/sessions/tags tags"
+		echo_erro "failed: ln -s ${out_dir}/tags tags"
 		return 1
 	fi
 
-	ln -s ${out_dir}/sessions/cscope.out cscope.out
+	ln -s ${out_dir}/cscope.out cscope.out
 	if [ $? -ne 0 ];then
-		echo_erro "failed: ln -s ${out_dir}/sessions/cscope.out cscope.out"
+		echo_erro "failed: ln -s ${out_dir}/cscope.out cscope.out"
 		return 1
 	fi
 
-	ln -s ${out_dir}/sessions/cscope.out.in cscope.out.in
+	ln -s ${out_dir}/cscope.out.in cscope.out.in
 	if [ $? -ne 0 ];then
-		echo_erro "failed: ln -s ${out_dir}/sessions/cscope.out.in cscope.out.in"
+		echo_erro "failed: ln -s ${out_dir}/cscope.out.in cscope.out.in"
 		return 1
 	fi
 
-	ln -s ${out_dir}/sessions/cscope.out.po cscope.out.po
+	ln -s ${out_dir}/cscope.out.po cscope.out.po
 	if [ $? -ne 0 ];then
-		echo_erro "failed: ln -s ${out_dir}/sessions/cscope.out.po cscope.out.po"
+		echo_erro "failed: ln -s ${out_dir}/cscope.out.po cscope.out.po"
 		return 1
 	fi
 	
-	if file_exist ${out_dir}/sessions/gitignore;then
+	if file_exist ${out_dir}/gitignore;then
 		if file_exist .gitignore;then
-			cp -f .gitignore ${out_dir}/sessions/gitignore.bk
+			cp -f .gitignore ${out_dir}/gitignore.bk
 		fi
-		cp -f ${out_dir}/sessions/gitignore .gitignore
+		cp -f ${out_dir}/gitignore .gitignore
 	fi
 
 	return 0
@@ -315,8 +315,8 @@ function project_unload
 
 	rm -f tags cscope.out cscope.out.in cscope.out.po
 
-	if file_exist ${out_dir}/sessions/gitignore.bk;then
-		cp -f ${out_dir}/sessions/gitignore.bk .gitignore
+	if file_exist ${out_dir}/gitignore.bk;then
+		cp -f ${out_dir}/gitignore.bk .gitignore
 	fi
 
 	return 0
