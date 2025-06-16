@@ -29,7 +29,7 @@ else
     exit 1
 fi
 
-function create_project
+function project_create
 {
 	local prj_dir="$1"
 	local out_dir="$2"
@@ -236,7 +236,7 @@ function create_project
     return 0
 }
 
-function delete_project
+function project_delete
 {
 	local out_dir="$1"
 
@@ -249,18 +249,95 @@ function delete_project
 		sleep 2
 		rm -fr ${out_dir}
 	} &
+    disown
+
+	return 0
+}
+
+function project_load
+{
+	local out_dir="$1"
+
+	if ! file_exist "${out_dir}"; then
+		echo_erro "dir { ${out_dir} } not accessed"
+		return 1
+	fi
+
+	rm -f tags cscope.out cscope.out.in cscope.out.po
+	
+	ln -s ${out_dir}/sessions/tags tags
+	if [ $? -ne 0 ];then
+		echo_erro "failed: ln -s ${out_dir}/sessions/tags tags"
+		return 1
+	fi
+
+	ln -s ${out_dir}/sessions/cscope.out cscope.out
+	if [ $? -ne 0 ];then
+		echo_erro "failed: ln -s ${out_dir}/sessions/cscope.out cscope.out"
+		return 1
+	fi
+
+	ln -s ${out_dir}/sessions/cscope.out.in cscope.out.in
+	if [ $? -ne 0 ];then
+		echo_erro "failed: ln -s ${out_dir}/sessions/cscope.out.in cscope.out.in"
+		return 1
+	fi
+
+	ln -s ${out_dir}/sessions/cscope.out.po cscope.out.po
+	if [ $? -ne 0 ];then
+		echo_erro "failed: ln -s ${out_dir}/sessions/cscope.out.po cscope.out.po"
+		return 1
+	fi
+	
+	if file_exist ${out_dir}/sessions/gitignore;then
+		if file_exist .gitignore;then
+			cp -f .gitignore ${out_dir}/sessions/gitignore.bk
+		fi
+		cp -f ${out_dir}/sessions/gitignore .gitignore
+	fi
+
+	return 0
+}
+
+function project_unload
+{
+	local out_dir="$1"
+
+	if ! file_exist "${out_dir}"; then
+		echo_erro "dir { ${out_dir} } not accessed"
+		return 1
+	fi
+
+	rm -f tags cscope.out cscope.out.in cscope.out.po
+
+	if file_exist ${out_dir}/sessions/gitignore.bk;then
+		cp -f ${out_dir}/sessions/gitignore.bk .gitignore
+	fi
+
 	return 0
 }
 
 case ${OP_MODE} in
     create)
-        create_project "${PRJ_DIR}" "${OUT_DIR}"
+        project_create "${PRJ_DIR}" "${OUT_DIR}"
         if [ $? -ne 0 ];then
             exit 1
         fi
         ;;
     delete)
-        delete_project "${OUT_DIR}"
+        project_delete "${OUT_DIR}"
+        if [ $? -ne 0 ];then
+            exit 1
+        fi
+        ;;
+    load)
+        project_load "${OUT_DIR}"
+        if [ $? -ne 0 ];then
+            exit 1
+        fi
+        ;;
+    unload)
+        project_unload "${OUT_DIR}"
         if [ $? -ne 0 ];then
             exit 1
         fi

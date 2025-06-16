@@ -523,10 +523,10 @@ nnoremap <silent> <Leader>=  :call FormatSelect()<CR>
 nnoremap <silent> <Leader>cf :call CodeFormat()<CR>
 
 "清除工程相关文件
-nnoremap <silent> <Leader><F11> :call LoadProject("delete")<CR>
+nnoremap <silent> <Leader><F11> :call ProjectGo("delete")<CR>
 
 "重新生成工程文件
-nnoremap <silent> <Leader><F12> :call LoadProject("create")<CR>
+nnoremap <silent> <Leader><F12> :call ProjectGo("create")<CR>
 
 "窗口切换
 nnoremap <silent> <Leader>tl :call ToggleWindow("tl")<CR>  "切换TagsList
@@ -1092,8 +1092,8 @@ function! QuickfixDo(opmode, arg="")
 endfunction
 
 "工程控制
-function! LoadProject(opmode) 
-    call LogPrint("2file", "LoadProject ".a:opmode)
+function! ProjectGo(opmode) 
+    call LogPrint("2file", "ProjectGo ".a:opmode)
 
     if a:opmode == "create"
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m create -p \"".getcwd()."\" -o ".GetVimDir("sessions")
@@ -1103,6 +1103,8 @@ function! LoadProject(opmode)
         silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m delete -o ".GetVimDir("")
 		silent! execute "qa"
     elseif a:opmode == "load" 
+		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m load -o ".GetVimDir("")
+
         if has("ctags")
             if filereadable("tags")
                 set tags=tags;                             "结尾分号能够向父目录查找tags文件
@@ -1126,12 +1128,17 @@ function! LoadProject(opmode)
             set csverb       
         endif
 
-        let cus_ignore = GetVimDir("sessions")."/gitignore"
-        if filereadable(cus_ignore)
-            let cur_ignore = getcwd()."/.gitignore"
-            silent! execute "!cp -f ".cur_ignore." ".cus_ignore.".bk"
-            silent! execute "!cp -f ".cus_ignore." ".cur_ignore
-        endif
+		if filereadable(GetVimDir("sessions")."/session.vim")
+			silent! execute "source ".GetVimDir("sessions")."/session.vim"
+		endif
+
+		if filereadable(GetVimDir("sessions")."/session.vim")
+			silent! execute "rviminfo ".GetVimDir("sessions")."/session.viminfo"
+		endif
+	elseif a:opmode == "unload" 
+		silent! execute "mks! ".GetVimDir("sessions")."/session.vim"
+		silent! execute "wviminfo! ".GetVimDir("sessions")."/session.viminfo"
+		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m unload -o ".GetVimDir("")
     endif
 endfunction
 
@@ -1142,46 +1149,9 @@ function! EnterHandler()
         call s:worker_op.start("loger", function("s:loger_worker"), 50000, 10000)
         call s:worker_op.set_log("loger", v:false)
     endif
-
-    if filereadable(getcwd()."/tags")
-        call delete(getcwd()."/tags")
-    endif
-
-    if filereadable(getcwd()."/cscope.out.in")
-        call delete(getcwd()."/cscope.out.in")
-    endif
-
-    if filereadable(getcwd()."/cscope.out")
-        call delete(getcwd()."/cscope.out")
-    endif
-
-    if filereadable(getcwd()."/cscope.out.po")
-        call delete(getcwd()."/cscope.out.po")
-    endif
-
-    if filereadable(GetVimDir("sessions")."/tags")
-        silent! execute "!ln -s ".GetVimDir("sessions")."/tags ".getcwd()."/tags"
-    endif
  
-    if filereadable(GetVimDir("sessions")."/cscope.out")
-        silent! execute "!ln -s ".GetVimDir("sessions")."/cscope.out.in ".getcwd()."/cscope.out.in"
-        silent! execute "!ln -s ".GetVimDir("sessions")."/cscope.out ".getcwd()."/cscope.out"
-        silent! execute "!ln -s ".GetVimDir("sessions")."/cscope.out.po ".getcwd()."/cscope.out.po"
-    endif
-
-    if filereadable("tags") && filereadable("cscope.out")
-        call LoadProject("load")
-
-        if filereadable(GetVimDir("sessions")."/session.vim")
-            silent! execute "source ".GetVimDir("sessions")."/session.vim"
-        endif
-
-        if filereadable(GetVimDir("sessions")."/session.vim")
-            silent! execute "rviminfo ".GetVimDir("sessions")."/session.viminfo"
-        endif
-
-        call RestoreLoad()
-    endif
+	call ProjectGo("load")
+	call RestoreLoad()
     "silent! normal! M
 endfunction
 
@@ -1189,19 +1159,10 @@ endfunction
 function! LeaveHandler(exit)
     if filereadable("tags") && filereadable("cscope.out") 
         call ToggleWindow("allclose")
-        call Quickfix_ctrl("save")
-        
-        silent! execute "mks! ".GetVimDir("sessions")."/session.vim"
-        silent! execute "wviminfo! ".GetVimDir("sessions")."/session.viminfo"
-        silent! execute "!rm -f cscope.* tags"
-
-        let cus_ignore = GetVimDir("sessions")."/gitignore"
-        if filereadable(cus_ignore)
-            let cur_ignore = getcwd()."/.gitignore"
-            silent! execute "!cp -f ".cus_ignore.".bk ".cur_ignore
-        endif
+        call Quickfix_ctrl("save")    
     endif
 
+	call ProjectGo("unload")
     call Quickfix_leave()
 
     call LogDisable()
