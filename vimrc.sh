@@ -264,6 +264,10 @@ function project_load
 		return 1
 	fi
 
+	if ! file_exist "${out_dir}/sessions/tags" || ! file_exist "${out_dir}/sessions/cscope.out"; then
+		return 0
+	fi
+
 	rm -f tags cscope.out cscope.out.in cscope.out.po
 	
 	ln -s ${out_dir}/sessions/tags tags
