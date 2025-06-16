@@ -259,7 +259,7 @@ function string_split
 			local _index
 			for _index in ${index_list[*]}
 			do
-				_res_list+=("${_sub_list[$((sub_index - 1))]}")
+				_res_list+=("${_sub_list[$((_index - 1))]}")
 			done
 
 			array_print _res_list
