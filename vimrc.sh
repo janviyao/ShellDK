@@ -249,7 +249,8 @@ function project_delete
 		sleep 2
 		rm -fr ${out_dir}
 	} &
-    disown
+    local bgpid=$!
+    disown ${bgpid}
 
 	return 0
 }
