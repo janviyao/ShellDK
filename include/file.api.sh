@@ -168,7 +168,7 @@ function file_contain
     fi 
 
     if math_bool "${is_reg}";then
-        if grep -P "${string}" ${xfile} &>/dev/null;then
+        if perl -ne "BEGIN { \$count=0 }; \$count++ if /${string}/; END { exit (\$count?0:1) }" ${xfile};then
             return 0
         fi
     else
@@ -199,7 +199,7 @@ function file_range_have
     fi 
 
     if math_bool "${is_reg}";then
-        if sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}" &>/dev/null;then
+        if sed -n "${line_s},${line_e}p" ${xfile} | perl -ne "BEGIN { \$count=0 }; \$count++ if /${string}/; END { exit (\$count?0:1) }";then
             return 0
         fi
     else
@@ -230,7 +230,7 @@ function file_get
     if math_bool "${is_reg}";then
         local line_nrs=($(file_linenr "${xfile}" "${string}" true))
         local line_nr
-        for line_nr in ${line_nrs[*]}
+        for line_nr in "${line_nrs[@]}"
         do
             echo "$(sed -n "${line_nr}p" ${xfile})"
         done
@@ -277,19 +277,23 @@ function file_range_get
     fi
 
     local content=""
-    while [ ${line_s} -le ${${line_e}} ]
+    while [ ${line_s} -le ${line_e} ]
     do
         if math_bool "${is_reg}";then
-            content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -P "${string}")
+            content=$(sed -n "${line_s},${line_s}p" ${xfile} | perl -ne "print if /${string}/")
         else
-            content=$(sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}")
+            content=$(sed -n "${line_s},${line_s}p" ${xfile} | grep -F "${string}")
         fi
 
         if [ $? -ne 0 ];then
             echo_file "${LOG_ERRO}" "file_range_get { $@ }"
             return 1
         fi
-		echo "${content}"
+
+        if [ -n "${content}" ];then
+			echo "${content}"
+		fi
+
         let line_s++
     done
 
@@ -443,7 +447,7 @@ function file_insert
         fi
 
         local line_cnt=$(sed -n "${line_nr}p" ${xfile})
-        if [ -z "${line_cnt}" ];then
+		if string_empty "${line_cnt}"; then
             eval "sed -i '${line_nr} c\\${content}' ${xfile}"
         else
             eval "sed -i '${line_nr} i\\${content}' ${xfile}"
@@ -456,7 +460,7 @@ function file_insert
     else
         if [[ "${line_nr}" == "$" ]];then
             local line_cnt=$(sed -n "${line_nr}p" ${xfile})
-            if [ -z "${line_cnt}" ];then
+			if string_empty "${line_cnt}"; then
                 eval "sed -i '${line_nr} c\\${content}' ${xfile}"
             else
                 eval "sed -i '${line_nr} i\\${content}' ${xfile}"

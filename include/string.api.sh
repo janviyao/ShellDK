@@ -160,6 +160,15 @@ function match_regex
     fi
 }
 
+function string_empty
+{
+	if [[ "$1" =~ ^[[:space:]]*$ ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 function string_length
 {
     local string="$1"

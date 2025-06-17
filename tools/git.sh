@@ -614,7 +614,7 @@ function func_checkout
 				process_run git stash pop ${index}
 				if [ $? -ne 0 ];then
 					echo_erro "failed: git stash pop ${index}"
-					array_add omit_list ${commit}
+					array_add omit_list "${commit}" 
 				fi
 				stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
 			done
