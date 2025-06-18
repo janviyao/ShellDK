@@ -168,7 +168,7 @@ function file_contain
     fi 
 
     if math_bool "${is_reg}";then
-        if perl -ne "BEGIN { \$count=0 }; \$count++ if /${string}/; END { exit (\$count?0:1) }" ${xfile};then
+		if perl -ne "BEGIN { \$success=1 }; if (/${string}/) { \$success=0,exit }; END { exit(\$success) }" ${xfile};then
             return 0
         fi
     else
@@ -198,12 +198,26 @@ function file_range_have
         return 1
     fi 
 
+	if ! math_is_int "${line_s}";then
+		echo_erro "file_range_have { $@ }"
+		return 1
+	fi
+
+	if [[ "${line_e}" == "$" ]];then
+		line_e=$(file_line_num "${xfile}")
+	else
+		if ! math_is_int "${line_e}";then
+			echo_erro "file_range_have { $@ }"
+			return 1
+		fi
+	fi
+
     if math_bool "${is_reg}";then
-        if sed -n "${line_s},${line_e}p" ${xfile} | perl -ne "BEGIN { \$count=0 }; \$count++ if /${string}/; END { exit (\$count?0:1) }";then
+        if perl -ne "BEGIN { \$success=1 }; if (\$. >= ${line_s} && \$. <= ${line_e}) { if (/${string}/) { \$success=0,exit } }; END { exit(\$success) }" ${xfile};then
             return 0
         fi
     else
-        if sed -n "${line_s},${line_e}p" ${xfile} | grep -F "${string}" &>/dev/null;then
+		if perl -ne "BEGIN { \$success=1 }; if (\$. >= ${line_s} && \$. <= ${line_e}) { if (index(\$_, \"${string}\") != -1) { \$success=0,exit } }; END { exit(\$success) }" ${xfile};then
             return 0
         fi
     fi
@@ -272,30 +286,23 @@ function file_range_get
         return 1
     fi 
 
-    if [[ "${line_e}" == "$" ]];then
-        line_e=$(file_linenr "${xfile}" "" false)
-    fi
+	if ! math_is_int "${line_s}";then
+		echo_erro "file_range_get { $@ }"
+		return 1
+	fi
 
-    local content=""
-    while [ ${line_s} -le ${line_e} ]
-    do
-        if math_bool "${is_reg}";then
-            content=$(sed -n "${line_s},${line_s}p" ${xfile} | perl -ne "print if /${string}/")
-        else
-            content=$(sed -n "${line_s},${line_s}p" ${xfile} | grep -F "${string}")
-        fi
-
-        if [ $? -ne 0 ];then
-            echo_file "${LOG_ERRO}" "file_range_get { $@ }"
-            return 1
-        fi
-
-        if [ -n "${content}" ];then
-			echo "${content}"
+	if [[ "${line_e}" == "$" ]];then
+		line_e=$(file_line_num "${xfile}")
+	else
+		if ! math_is_int "${line_e}";then
+			echo_erro "file_range_get { $@ }"
+			return 1
 		fi
+	fi
 
-        let line_s++
-    done
+	local -a _cnt_list
+	array_reset _cnt_list "$(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e} && length(\$_) > 1) { if (/${string}/) { print \"\$_\" }}" ${xfile})"
+	array_print _cnt_list
 
     return 0
 }
@@ -333,7 +340,7 @@ function file_del
         fi
     else
         if math_is_int "${string}";then
-			local total_nr=$(file_line_num ${xfile})
+			local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
                 eval "sed -i '${string}d' ${xfile}"
                 if [ $? -ne 0 ];then
@@ -352,7 +359,7 @@ function file_del
 			fi
 
             if [[ "${string}" =~ '-' ]];then
-				local total_nr=$(file_line_num ${xfile})
+				local total_nr=$(sed -n '$=' ${xfile})
 				local index_list=($(seq_num "${string}" "${total_nr}"))
 				if [ ${#index_list[*]} -eq 0 ];then
 					echo_erro "file_del { $@ }"
@@ -502,34 +509,15 @@ function file_linenr
 
     local -a line_nrs
     if math_bool "${is_reg}";then
-        #line_nrs=($(sed = ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${string}" | awk -F ':' '{ print $1 }'))
-        line_nrs=($(grep -n -P "${string}" ${xfile} | awk -F ':' '{ print $1 }'))
+        line_nrs=($(perl -ne "if (/${string}/) { print \"\$.\n\" }" ${xfile}))
     else
-        #if [[ "${string}" =~ '/' ]];then
-        #    string=$(string_replace "${string}" "/" "\/")
-        #fi
-        #line_nrs=($(sed -n "/^\s*${string}/{=;q;}" ${xfile}))
-        #line_nrs=($(sed -n "/^\s*${string}\s*$/{=;}" ${xfile}))
-        line_nrs=($(grep -n -F "${string}" ${xfile} | awk -F: '{ print $1 }'))
-        #line_nrs=($(sed -n "/${string}/{=;}" ${xfile}))
+        line_nrs=($(perl -ne "if (index(\$_, \"${string}\") != -1) { print \"\$.\n\" }" ${xfile}))
         if [ $? -ne 0 ];then
             echo_file "${LOG_ERRO}" "file_linenr { $@ }"
         fi
     fi
 
-    if [ ${#line_nrs[*]} -gt 0 ];then
-        local line_nr
-        for line_nr in ${line_nrs[*]}
-        do
-            if math_is_int "${line_nr}" || [[ "${line_nr}" == "$" ]];then
-                echo "${line_nr}"
-            else
-                echo_file "${LOG_ERRO}" "file_get { $@ } linenr invalid: ${line_nr}"
-            fi
-        done
-        return 0
-    fi
-
+	array_print line_nrs
     return 1
 }
 
@@ -551,28 +539,29 @@ function file_range_linenr
         return 1
     fi
 
+	if ! math_is_int "${line_s}";then
+		echo_erro "file_range_linenr { $@ }"
+		return 1
+	fi
+
+	if [[ "${line_e}" == "$" ]];then
+		line_e=$(file_line_num "${xfile}")
+	else
+		if ! math_is_int "${line_e}";then
+			echo_erro "file_range_linenr { $@ }"
+			return 1
+		fi
+	fi
+
     local -a line_nrs
     if math_bool "${is_reg}";then
-        if [[ $(string_start "${string}" 1) == '^' ]]; then
-            local tmp_reg=$(string_sub "${string}" 1)
-            line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${tmp_reg}" | awk -F ':' '{ print $1 }'))
-        else
-            line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -P "^\d+:.*${string}" | awk -F ':' '{ print $1 }'))
-        fi
+		line_nrs=($(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e}) { if (/${string}/) { print \"\$.\n\" }}" ${xfile}))
     else
-        line_nrs=($(sed -n "${line_s},${line_e}{=;p}" ${xfile} | sed 'N;s/\n/:/' | grep -F "${string}" | awk -F ':' '{ print $1 }'))
+		line_nrs=($(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e}) { if (index(\$_, \"${string}\") != -1) { print \"\$.\n\" }}" ${xfile}))
     fi
 
-    if [ ${#line_nrs[*]} -gt 0 ];then
-        local line_nr
-        for line_nr in ${line_nrs[*]}
-        do
-            echo "${line_nr}"
-        done
-        return 0
-    fi
-
-    return 1
+	array_print line_nrs
+    return 0
 }
 
 function file_range

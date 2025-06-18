@@ -153,7 +153,7 @@ function match_regex
 		fi
 	fi
 
-	if perl -ne "print if /${regstr}/ or die '\n'" <<< "${string}" &> /dev/null;then
+	if perl -ne "if (/${regstr}/) { exit(0) } else { exit(1) }" <<< "${string}";then
         return 0
     else
         return 1
@@ -363,8 +363,7 @@ function string_regex
 		fi
 	fi
 
-    #result=$(grep -P "${regstr}" -o <<< "${string}")
-	result=$(perl -ne "print \$1 if /(${regstr})/ or die" <<< "${string}" 2> /dev/null)
+	result=$(perl -ne "if (/(${regstr})/) { print \$1 }" <<< "${string}")
     if [ $? -eq 0 ];then
 		print_lossless "${result}"
         return 0
