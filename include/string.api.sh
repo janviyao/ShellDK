@@ -137,7 +137,7 @@ function regex_perl2extended
 
 function string_empty
 {
-	if [[ "$1" =~ ^[[:space:]]*$ ]]; then
+	if [[ $1 =~ ^[[:space:]]*$ ]]; then
 		return 0
 	else
 		return 1

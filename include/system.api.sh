@@ -110,7 +110,9 @@ function sshto
 {
     local des_key="$1"
 
-    eval "local -A ip_map=($(get_hosts_ip map))"
+	local -A ip_map
+	get_hosts_ip ip_map
+
     if [ ${#ip_map[*]} -eq 0 ];then
         local ip_addr="${des_key}"
         if ! string_match "${ip_addr}" "\d+\.\d+\.\d+\.\d+";then
@@ -118,7 +120,7 @@ function sshto
         fi
 
         if [ -n "${ip_addr}" ];then
-            if [ -z "${USR_PASSWORD}" ]; then
+			if string_empty "${USR_PASSWORD}"; then
                 ssh ${ip_addr}
             else
                 sshpass -p "${USR_PASSWORD}" ssh ${ip_addr} 
@@ -133,16 +135,16 @@ function sshto
     local key
     if [ -z "${des_key}" ];then
         local -a select_array
-        for key in ${!ip_map[*]}
+        for key in "${!ip_map[@]}"
         do
-            select_array[${#select_array[*]}]="${ip_map[${key}]}[${key}]" 
+			select_array+=("${ip_map[${key}]}[${key}]") 
         done
 
-        local select_str=$(select_one ${select_array[*]})
-        for key in ${!ip_map[*]}
+        local select_str=$(select_one "${select_array[@]}")
+        for key in "${!ip_map[@]}"
         do
             if string_contain "${select_str}" "${key}";then
-                if [ -z "${USR_PASSWORD}" ]; then
+                if string_empty "${USR_PASSWORD}"; then
                     ssh ${key}
                 else
                     sshpass -p "${USR_PASSWORD}" ssh ${key} 
@@ -152,7 +154,7 @@ function sshto
         done
     else
         if string_match "${des_key}" "\d+\.\d+\.\d+\.\d+";then
-            if [ -z "${USR_PASSWORD}" ]; then
+			if string_empty "${USR_PASSWORD}"; then
                 ssh ${des_key}
             else
                 sshpass -p "${USR_PASSWORD}" ssh ${des_key} 
@@ -162,35 +164,35 @@ function sshto
     fi
 
     if math_is_int "${des_key}";then
-        local ip_array=($(echo ${!ip_map[*]} | grep -P "(\.?\d+\.?)*${des_key}(\.?\d+\.?)*" -o))
+        local ip_array=($(echo "${!ip_map[@]}" | grep -P "(\.?\d+\.?)*${des_key}(\.?\d+\.?)*" -o))
         if [ ${#ip_array[*]} -eq 1 ];then
-            if [ -z "${USR_PASSWORD}" ]; then
+			if string_empty "${USR_PASSWORD}"; then
                 ssh ${ip_array[0]}
             else
                 sshpass -p "${USR_PASSWORD}" ssh ${ip_array[0]} 
             fi
         elif [ ${#ip_array[*]} -gt 1 ];then
-            local ipaddr=$(select_one ${ip_array[*]})
-            if [ -z "${USR_PASSWORD}" ]; then
+            local ipaddr=$(select_one "${ip_array[@]}")
+			if string_empty "${USR_PASSWORD}"; then
                 ssh ${ipaddr}
             else
                 sshpass -p "${USR_PASSWORD}" ssh ${ipaddr} 
             fi
         else
-            local ipaddr=$(select_one ${!ip_map[*]})
-            if [ -z "${USR_PASSWORD}" ]; then
+            local ipaddr=$(select_one "${!ip_map[@]}")
+			if string_empty "${USR_PASSWORD}"; then
                 ssh ${ipaddr}
             else
                 sshpass -p "${USR_PASSWORD}" ssh ${ipaddr} 
             fi
         fi
     else
-        local hn_array=($(echo ${ip_map[*]} | grep -P "[^ ]*${des_key}[^ ]*" -o))
+        local hn_array=($(echo "${ip_map[@]}" | grep -P "[^ ]*${des_key}[^ ]*" -o))
         if [ ${#hn_array[*]} -eq 1 ];then
-            for key in ${!ip_map[*]}
+            for key in "${!ip_map[@]}" 
             do
-                if [[ ${ip_map[${key}]} == ${hn_array[0]} ]];then
-                    if [ -z "${USR_PASSWORD}" ]; then
+                if [[ "${ip_map[${key}]}" == "${hn_array[0]}" ]];then
+					if string_empty "${USR_PASSWORD}"; then
                         ssh ${key}
                     else
                         sshpass -p "${USR_PASSWORD}" ssh ${key} 
@@ -199,11 +201,11 @@ function sshto
                 fi
             done
         elif [ ${#hn_array[*]} -gt 1 ];then
-            local hname=$(select_one ${hn_array[*]})
-            for key in ${!ip_map[*]}
+            local hname=$(select_one "${hn_array[@]}")
+			for key in "${!ip_map[@]}" 
             do
-                if [[ ${ip_map[${key}]} == ${hname} ]];then
-                    if [ -z "${USR_PASSWORD}" ]; then
+                if [[ "${ip_map[${key}]}" == "${hname}" ]];then
+					if string_empty "${USR_PASSWORD}"; then
                         ssh ${key}
                     else
                         sshpass -p "${USR_PASSWORD}" ssh ${key} 
@@ -212,14 +214,15 @@ function sshto
                 fi
             done
         else
-            local ipaddr=$(select_one ${!ip_map[*]})
-            if [ -z "${USR_PASSWORD}" ]; then
+            local ipaddr=$(select_one "${!ip_map[@]}")
+			if string_empty "${USR_PASSWORD}"; then
                 ssh ${ipaddr}
             else
                 sshpass -p "${USR_PASSWORD}" ssh ${ipaddr} 
             fi
         fi
     fi
+
     return 0
 }
 
@@ -525,9 +528,9 @@ function dump_network
 
     printf -- "%-10s %-20s %-20s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n" "IFACE" "Dirver" "BSF" "VendorID" "DeviceID" "MTU" "RX-Queue" "TX-Queue" "RX-Buffer" "TX-Buffer"
     local net_dev
-    for net_dev in ${device_list[*]}
+    for net_dev in "${device_list[@]}" 
     do
-        if [[ ${net_dev} == "lo" ]];then
+        if [[ "${net_dev}" == "lo" ]];then
             continue
         fi
 
@@ -667,9 +670,9 @@ function du_find
     local -A size_map
     local dir_arr=($(sudo_it "find ${dpath} -maxdepth 1 -type d"))
     local sub_dir
-    for sub_dir in ${dir_arr[*]}
+    for sub_dir in "${dir_arr[@]}" 
     do
-        if [[ ${dpath} == ${sub_dir} ]];then
+        if [[ "${dpath}" == "${sub_dir}" ]];then
             continue
         fi
 
@@ -684,7 +687,7 @@ function du_find
         local max_path=""
         local max_size="0"
 
-        for sub_dir in ${!size_map[*]}
+        for sub_dir in "${!size_map[@]}" 
         do
             if [ ${size_map["${sub_dir}"]} -ge ${max_size} ];then
                 max_path="${sub_dir}"
@@ -788,7 +791,7 @@ function emove
 
     local xret
     local ret_arr=($(efind . "${regstr}" -maxdepth 1))
-    for xret in ${ret_arr[*]}    
+    for xret in "${ret_arr[@]}"
     do
         sudo_it mv ${xret} ${xfile}
         if [ $? -ne 0 ];then
@@ -894,7 +897,7 @@ function get_iscsi_device
     local line_nr=1
     local line_idx=1
     local line_array=($(echo "${iscsi_sessions}" | grep -n "Current Portal:" | awk -F: '{ print $1 }'))
-    for line_nr in ${line_array[*]}
+    for line_nr in "${line_array[@]}" 
     do
         line_nr=$((line_nr - 1))
         if [ ${line_idx} -lt ${line_nr} ];then
@@ -935,42 +938,49 @@ function get_iscsi_device
 
 function get_hosts_ip
 {
-    local ret_guide="$@"
+	local -n _list_ref=$1
+	local _list_refnm=$1
 
     local -A hostip_map
-
+	local -a _val_list
     local line
     while read line
     do
-        ipaddr=$(echo "${line}" | awk '{ print $1 }')
-        hostnm=$(echo "${line}" | awk '{ print $2 }')
+		array_reset _val_list "$(string_split "${line}" " ")"
+		if [ ${#_val_list[*]} -ne 2 ];then
+			continue
+		fi
 
-        test -z "${ipaddr}" && continue 
-        string_match "${ipaddr}" "^\s*\d+\.\d+\.\d+\.\d+" || continue 
+        local ipaddr=${_val_list[0]}
+        local hostnm=${_val_list[1]}
 
-        if ip addr | grep -F "${ipaddr}" &> /dev/null;then
-            if ! string_contain "${ret_guide}" "local";then
-                continue
-            fi
-        fi
+		if string_empty "${ipaddr}";then
+			continue
+		fi
+
+		if ! string_match "${ipaddr}" "^\s*\d+\.\d+\.\d+\.\d+";then
+			continue
+		fi
 
         if [[ "${ipaddr}" == "127.0.0.1" ]];then
             continue
         fi
 
-        local tmp_list=(${!hostip_map[*]})
-        if ! array_have tmp_list "${ipaddr}";then
-            hostip_map[${ipaddr}]="${hostnm}"
+        if ip addr | grep -F "${ipaddr}" &> /dev/null;then
+			continue
         fi
+
+		if ! map_key_have hostip_map "${ipaddr}";then
+			map_add hostip_map "${ipaddr}" "${hostnm}"
+		fi
     done < /etc/hosts
 
-    if string_contain "${ret_guide}" "map";then
-        local map_str=$(declare -p hostip_map)
-        map_str=$(string_gensub "${map_str}" '\(.+\)')
-        map_str=$(string_gensub "${map_str}" '[^()]+')
-        echo "${map_str}" 
-    else
-        echo "${!hostip_map[*]}" 
+    if is_map "${_list_refnm}";then
+    	map_copy hostip_map ${_list_refnm} 
+    elif is_array "${_list_refnm}";then
+    	array_add _list_ref "${!hostip_map[@]}" 
+	else
+        echo "${!hostip_map[@]}" 
     fi
 
     return 0
@@ -986,10 +996,10 @@ function get_local_ip
     fi
 
     local ssh_cli=$(echo "${SSH_CLIENT}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
-    local ssh_con=$(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
-    for ipaddr in ${ssh_con}
+	local ssh_con=($(echo "${SSH_CONNECTION}" | grep -P "\d+\.\d+\.\d+\.\d+" -o))
+    for ipaddr in "${ssh_con[@]}" 
     do
-        if [[ ${ssh_cli} == ${ipaddr} ]];then
+        if [[ "${ssh_cli}" == "${ipaddr}" ]];then
             continue
         fi
 
@@ -1006,7 +1016,7 @@ function get_local_ip
     fi
 
     if file_exist "/etc/hosts";then
-        for ipaddr in ${local_iparray[*]}
+        for ipaddr in "${local_iparray[@]}"
         do
             if cat /etc/hosts | grep -v -P "^#" | grep -w -F "${ipaddr}" &> /dev/null;then
                 echo "${ipaddr}"
@@ -1015,7 +1025,7 @@ function get_local_ip
         done
     fi
 
-    for ipaddr in ${local_iparray[*]}
+	for ipaddr in "${local_iparray[@]}"
     do
         if check_net "${ipaddr}";then
             echo "${ipaddr}"
@@ -1080,4 +1090,3 @@ function bin_info
 
 	return 0
 }
-

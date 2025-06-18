@@ -58,6 +58,20 @@ function array_print
     return 0
 }
 
+function array_copy
+{
+    local -n _array_ref1=$1
+    local -n _array_ref2=$2
+
+    if [ $# -lt 2 ] || ! is_array $1 || ! is_array $2;then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$1: array variable reference"
+        return 1
+    fi
+
+	_array_ref2+=("${_array_ref1[@]}")
+    return 0
+}
+
 function array_2string
 {
     local -n _array_ref=$1
@@ -338,6 +352,26 @@ function map_print
 		if [ -n "${_xvalue}" ];then
 			print_lossless "${_xvalue}"
 		fi
+	done
+
+	return 0
+}
+
+function map_copy
+{
+	local -n _map_ref1=$1
+	local -n _map_ref2=$2
+
+	echo_file "${LOG_DEBUG}" "$@"
+	if [ $# -lt 2 ] || ! is_map $1 || ! is_map $2;then
+		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map variable reference"
+		return 1
+	fi
+
+	local _xkey
+	for _xkey in "${!_map_ref1[@]}"
+	do
+		_map_ref2["${_xkey}"]="${_map_ref1["${_xkey}"]}"
 	done
 
 	return 0
