@@ -87,7 +87,7 @@ if string_contain "${BTASK_LIST}" "mdat";then
 		fi
 	fi
 
-    old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
+    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_mdat_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_mdat_exit" EXIT
 fi
@@ -102,7 +102,7 @@ if string_contain "${BTASK_LIST}" "ncat";then
 		fi
 	fi
 
-    old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
+    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_ncat_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_ncat_exit" EXIT
 fi
@@ -117,7 +117,7 @@ if string_contain "${BTASK_LIST}" "logr";then
 		fi
 	fi
 
-    old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
+    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_logr_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_logr_exit" EXIT
 fi
@@ -132,7 +132,7 @@ if string_contain "${BTASK_LIST}" "xfer";then
 		fi
 	fi
 
-    old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
+    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_xfer_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_xfer_exit" EXIT
 fi
@@ -147,12 +147,12 @@ if string_contain "${BTASK_LIST}" "ctrl";then
 		fi
 	fi
 
-    old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
+    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_ctrl_exit; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_ctrl_exit" EXIT
 fi
 
-old_spec=$(string_replace "$(string_regex "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
+old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
 [ -n "${old_spec}" ] && trap "trap - ERR; ${old_spec}; if __var_defined BASH_EXIT;then exit \${BASH_EXIT}; fi;" EXIT
 [ -z "${old_spec}" ] && trap "trap - ERR; if __var_defined BASH_EXIT;then exit \${BASH_EXIT}; else exit 0; fi;" EXIT
 unset old_spec
