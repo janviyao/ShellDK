@@ -42,16 +42,15 @@ function __version_eq
 
 function mytar
 {
-    local argc=$#
     local fpath="$1"
-    shift
-    local flist=($@)
 
-    local erro="\nUsage: [${fpath} $@]\n\$1: compress-package name\n\$2: (a)files or directorys when compress (b)directory when uncompress"
-    if [ ${argc} -lt 1 ];then
-        echo_erro "${erro}"
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: compress-package name\n\$2: (a)files or directorys when compress (b)directory when uncompress"
         return 1
     fi
+    shift
+
+    local flist=("$@")
 
     local iscompress="true"
     if file_exist "${fpath}";then
@@ -63,13 +62,12 @@ function mytar
                 iscompress="true"
                 sudo_it rm -f ${realfile}
             else
-                echo_erro "file { ${realfile} } already exists"
-                return 1
+                return 0
             fi
         fi
     else
         if [ ${#flist[*]} -eq 0 ];then
-            echo_erro "${erro}"
+			echo_erro "mytar { $@ }"
             return 1
         fi
     fi
@@ -77,7 +75,7 @@ function mytar
     local options="-cf"
     local xwhat=""
     if math_bool "${iscompress}";then
-        xwhat="${flist[*]}"
+        xwhat="${flist[@]}"
     else
         options="-xf"
         if file_exist "${flist[0]}";then
@@ -110,17 +108,17 @@ function mytar
             outdir="${flist[0]}"
         fi
         
-        local fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
+        local fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z_]+\-?[0-9]*\.?[0-9]*")
         local fprefix=$(regex_2str "${fprefix}")
 
         local find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
         if [ ${#find_arr[*]} -eq 0 ];then
-            fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z]+")
+            fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z_]+")
             find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
         fi
 
         local dir
-        for dir in ${find_arr[*]}    
+        for dir in "${find_arr[@]}"    
         do
             local real_dir=$(file_realpath "${dir}")
             echo "${real_dir}"
