@@ -23,7 +23,7 @@ ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 declare -A INITIATOR_TARGET_MAP
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do
-    ini_ip=$(string_regex "${map_key}" "\d+\.\d+\.\d+\.\d+")
+    ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then
         continue
     fi
@@ -56,7 +56,7 @@ do
     fi
 done
 
-kvconf_set "${TEST_SUIT_ENV}" "" "declare -A INITIATOR_TARGET_MAP"   "$(string_regex "$(declare -p INITIATOR_TARGET_MAP)" '\(.+\)')"
+kvconf_set "${TEST_SUIT_ENV}" "" "declare -A INITIATOR_TARGET_MAP"   "$(string_gensub "$(declare -p INITIATOR_TARGET_MAP)" '\(.+\)')"
 
 echo "" >> ${TEST_SUIT_ENV}
 kvconf_set "${TEST_SUIT_ENV}" "" "ISCSI_NODE_BASE"   "${ISCSI_NODE_BASE}"

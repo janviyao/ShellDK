@@ -24,12 +24,12 @@ if [ $# -eq 1 ];then
 fi
 echo_info "netperf from { ${client_ip} } to { ${server_ip} }"
 
-if ! match_regex "${client_ip}" "\d+\.\d+\.\d+\.\d+";then
+if ! string_match "${client_ip}" "\d+\.\d+\.\d+\.\d+";then
     echo_erro "Client IP { ${client_ip} } invalid"
     exit 1
 fi
 
-if ! match_regex "${server_ip}" "\d+\.\d+\.\d+\.\d+";then
+if ! string_match "${server_ip}" "\d+\.\d+\.\d+\.\d+";then
     echo_erro "Server IP { ${client_ip} } invalid"
     exit 1
 fi

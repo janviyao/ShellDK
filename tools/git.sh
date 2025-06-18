@@ -560,8 +560,8 @@ function func_checkout
 
 	local msg="${subcmd_all[*]}"
 	if [ -n "${msg}" ];then
-		if match_regex "${msg}" "^[0-9a-fA-F]{7,40}$";then
-			msg=$(string_sub "${msg}" 0 7)
+		if string_match "${msg}" "^[0-9a-fA-F]{7,40}$";then
+			msg=$(string_substr "${msg}" 0 7)
 		fi
 
 		local change_files=($(get_change_list))

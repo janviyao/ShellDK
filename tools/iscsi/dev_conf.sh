@@ -118,7 +118,7 @@ function conf_qdeep
 dev_name="$1"
 bdq_deep="$2"
 
-if string_match "${dev_name}" "dm" 1;then
+if string_match "${dev_name}" "^dm";then
     conf_sched ${dev_name}
     conf_merge ${dev_name}
     conf_qdeep ${dev_name} ${bdq_deep}

@@ -135,31 +135,6 @@ function regex_perl2extended
     return 0
 }
 
-function match_regex
-{
-    local string="$1"
-    local regstr="$2"
-
-    if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regex string"
-        return 1
-    fi
-
-    [ -z "${regstr}" ] && return 1 
-
-	if [[ ! "${regstr}" =~ '\/' ]];then
-		if [[ "${regstr}" =~ '/' ]];then
-			regstr="${regstr//\//\\/}"
-		fi
-	fi
-
-	if perl -ne "if (/${regstr}/) { exit(0) } else { exit(1) }" <<< "${string}";then
-        return 0
-    else
-        return 1
-    fi
-}
-
 function string_empty
 {
 	if [[ "$1" =~ ^[[:space:]]*$ ]]; then
@@ -321,7 +296,7 @@ function string_end
     return 0
 }
 
-function string_sub
+function string_substr
 {
     local string="$1"
     local start="$2"
@@ -344,7 +319,7 @@ function string_sub
     return 0
 }
 
-function string_regex
+function string_gensub
 {
     local string="$1"
     local regstr="$2"
@@ -376,40 +351,30 @@ function string_match
 {
     local string="$1"
     local substr="$2"
-    local posstr="${3:-0}"
+    local is_reg="${3:-true}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: match position(0: both start and end 1:start 2:end)"
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: whether regex(default: true)"
         return 1
     fi
 
-    if ! math_is_int "${posstr}";then
-        echo_erro "match position { ${posstr} } invalid"
-        return 1
-    fi
+	if math_bool "${is_reg}";then
+		if [[ ! "${substr}" =~ '\/' ]];then
+			if [[ "${substr}" =~ '/' ]];then
+				substr="${substr//\//\\/}"
+			fi
+		fi
 
-    local sublen=${#substr}
-    if [[ "${substr}" =~ '\' ]];then
-        substr="${substr//\\/\\\\}"
-    fi
+		if perl -ne "if (/${substr}/) { exit(0) } else { exit(1) }" <<< "${string}";then
+			return 0
+		fi
+	else
+		if perl -ne "if (index(\"${string}\", \"${substr}\") != -1) { exit(0) } else { exit(1) }";then
+			return 0
+		fi
+	fi
 
-    if [[ "${substr}" =~ '*' ]];then
-        substr="${substr//\*/\\*}"
-    fi
-
-    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then
-        if [[ $(string_start "${string}" ${sublen}) == ${substr} ]]; then
-            return 0
-        fi
-    fi
-
-    if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 2 ]];then
-        if [[ $(string_end "${string}" ${sublen}) == ${substr} ]]; then
-            return 0
-        fi
-    fi
-
-    return 1
+	return 1
 }
 
 function string_same
@@ -441,7 +406,7 @@ function string_same
 
         let _index--
         if [ ${_index} -gt 0 ];then
-            local result=$(string_sub "${string}" 0 ${_index})
+            local result=$(string_substr "${string}" 0 ${_index})
 			print_lossless "${result}"
             return 0
         fi
@@ -461,7 +426,7 @@ function string_same
 
         if [ ${_index} -gt 0 ];then
             let _index=${#string}-${_index} 
-            local result=$(string_sub "${string}" ${_index} ${#string})
+            local result=$(string_substr "${string}" ${_index} ${#string})
 			print_lossless "${result}"
             return 0
         fi
@@ -519,7 +484,7 @@ function string_trim
 
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then 
         if [ -n "${substr}" ];then
-            local newsub=$(string_regex "${string}" "^(${substr})+")
+            local newsub=$(string_gensub "${string}" "^(${substr})+")
             if [ -n "${newsub}" ]; then
                 newsub=$(regex_2str "${newsub}")
                 string="${string#${newsub}}"
@@ -531,7 +496,7 @@ function string_trim
 
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 2 ]];then
         if [ -n "${substr}" ];then
-            local newsub=$(string_regex "${string}" "(${substr})+$")
+            local newsub=$(string_gensub "${string}" "(${substr})+$")
             if [ -n "${newsub}" ]; then
                 if [[ "${string}" =~ '\*' ]];then
                     string=$(string_replace "${string}" '\*' '\*' true)

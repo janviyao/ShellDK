@@ -13,7 +13,7 @@ do
     map_val="${ISCSI_INFO_MAP[${map_key}]}"
     unset ISCSI_INFO_MAP[${map_key}]
 
-    if ! match_regex "${map_key}" "INI\d+-\d+";then
+    if ! string_match "${map_key}" "INI\d+-\d+";then
         echo_erro "ISCSI_INFO_MAP KEY{ ${map_key} } invalid"
         exit 1
     fi

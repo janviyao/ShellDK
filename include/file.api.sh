@@ -66,11 +66,11 @@ function file_exist
         return 1
     fi
 
-    if match_regex "${xfile}" "\*$";then
+    if string_match "${xfile}" "\*$";then
         local file
         for file in ${xfile}
         do
-            if match_regex "${file}" "\*$";then
+            if string_match "${file}" "\*$";then
                 [[ "${bash_options}" =~ x ]] && set -x
                 return 1
             fi
@@ -82,7 +82,7 @@ function file_exist
         done
     fi
 
-    if match_regex "${xfile}" "^~";then
+    if string_match "${xfile}" "^~";then
         xfile=$(string_replace "${xfile}" '^~' "${MY_HOME}" true)
     fi
 
@@ -168,6 +168,12 @@ function file_contain
     fi 
 
     if math_bool "${is_reg}";then
+		if [[ ! "${string}" =~ '\/' ]];then
+			if [[ "${string}" =~ '/' ]];then
+				string="${string//\//\\/}"
+			fi
+		fi
+
 		if perl -ne "BEGIN { \$success=1 }; if (/${string}/) { \$success=0,exit }; END { exit(\$success) }" ${xfile};then
             return 0
         fi
@@ -213,6 +219,12 @@ function file_range_have
 	fi
 
     if math_bool "${is_reg}";then
+		if [[ ! "${string}" =~ '\/' ]];then
+			if [[ "${string}" =~ '/' ]];then
+				string="${string//\//\\/}"
+			fi
+		fi
+
         if perl -ne "BEGIN { \$success=1 }; if (\$. >= ${line_s} && \$. <= ${line_e}) { if (/${string}/) { \$success=0,exit } }; END { exit(\$success) }" ${xfile};then
             return 0
         fi
@@ -301,7 +313,17 @@ function file_range_get
 	fi
 
 	local -a _cnt_list
-	array_reset _cnt_list "$(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e} && length(\$_) > 1) { if (/${string}/) { print \"\$_\" }}" ${xfile})"
+	if math_bool "${is_reg}";then
+		if [[ ! "${string}" =~ '\/' ]];then
+			if [[ "${string}" =~ '/' ]];then
+				string="${string//\//\\/}"
+			fi
+		fi
+
+		array_reset _cnt_list "$(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e} && length(\$_) > 1) { if (/${string}/) { print \"\$_\" }}" ${xfile})"
+	else
+		array_reset _cnt_list "$(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e} && length(\$_) > 1) { if (index(\$_, \"${string}\") != -1) { print \"\$_\" }}" ${xfile})"
+	fi
 	array_print _cnt_list
 
     return 0
@@ -509,6 +531,12 @@ function file_linenr
 
     local -a line_nrs
     if math_bool "${is_reg}";then
+		if [[ ! "${string}" =~ '\/' ]];then
+			if [[ "${string}" =~ '/' ]];then
+				string="${string//\//\\/}"
+			fi
+		fi
+
         line_nrs=($(perl -ne "if (/${string}/) { print \"\$.\n\" }" ${xfile}))
     else
         line_nrs=($(perl -ne "if (index(\$_, \"${string}\") != -1) { print \"\$.\n\" }" ${xfile}))
@@ -555,6 +583,12 @@ function file_range_linenr
 
     local -a line_nrs
     if math_bool "${is_reg}";then
+		if [[ ! "${string}" =~ '\/' ]];then
+			if [[ "${string}" =~ '/' ]];then
+				string="${string//\//\\/}"
+			fi
+		fi
+
 		line_nrs=($(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e}) { if (/${string}/) { print \"\$.\n\" }}" ${xfile}))
     else
 		line_nrs=($(perl -ne "if (\$. >= ${line_s} && \$. <= ${line_e}) { if (index(\$_, \"${string}\") != -1) { print \"\$.\n\" }}" ${xfile}))
@@ -896,7 +930,7 @@ function file_list
 		do
 			if [ -f "${xfile}/${target}" ];then
 				if math_bool "${is_reg}";then
-					if match_regex "${xfile}/${target}" "${string}";then
+					if string_match "${xfile}/${target}" "${string}";then
 						echo "${xfile}/${target}"
 					fi
 				else
@@ -910,7 +944,7 @@ function file_list
 	fi
 
 	if math_bool "${is_reg}";then
-		if match_regex "${xfile}" "${string}";then
+		if string_match "${xfile}" "${string}";then
 			echo "${xfile}"
 		fi
 	else

@@ -77,7 +77,7 @@ function match_execlude
 	for excl in ${EXCL_STRS[*]}
 	do
 		if math_bool "${is_reg}";then
-			if match_regex "${xfile}" "${excl}";then
+			if string_match "${xfile}" "${excl}";then
 				return 0
 			fi
 		else
@@ -92,7 +92,7 @@ function match_execlude
 			local type count=0
 			for type in ${FILE_TYPES[*]}
 			do
-				if ! match_regex "${xfile}" "${type}$";then
+				if ! string_match "${xfile}" "${type}$";then
 					let count++
 				fi
 			done

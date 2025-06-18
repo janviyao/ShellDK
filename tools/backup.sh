@@ -70,7 +70,7 @@ function common_backup
         for regex in ${EXCLUDE_FILS[*]}
         do
             [ -z "${regex}" ] && continue
-            if match_regex "${real_item}" "${regex}";then 
+            if string_match "${real_item}" "${regex}";then 
                 echo_warn "Exclude F: ${real_item}"
                 is_exclude=0
                 break
@@ -88,7 +88,7 @@ function common_backup
         for regex in ${EXCLUDE_DIRS[*]}
         do
             [ -z "${regex}" ] && continue
-            if match_regex "${real_item}" "${regex}";then 
+            if string_match "${real_item}" "${regex}";then 
                 echo_warn "Exclude D: ${real_item}"
                 is_exclude=0
                 break

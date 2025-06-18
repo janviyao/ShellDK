@@ -118,7 +118,7 @@ function array_filter
 	local _item
 	for _item in "${_array_ref[@]}"
 	do
-		if match_regex "${_item}" "${_regex}";then
+		if string_match "${_item}" "${_regex}";then
 			array_del_by_value ${_array_name} "${_item}"
 		fi
 	done

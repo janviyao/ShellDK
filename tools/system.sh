@@ -49,13 +49,13 @@ function tcpdump_expr
     fi
 
     if [ -n "${host_str}" ];then
-        if string_regex "${expr_str}" "\(.+\)" &> /dev/null ;then
+        if string_gensub "${expr_str}" "\(.+\)" &> /dev/null ;then
             expr_str="${expr_str} and (${host_str})"
         fi
     fi
 
     if [ -n "${port_str}" ];then
-        if string_regex "${expr_str}" "\(.+\)" &> /dev/null ;then
+        if string_gensub "${expr_str}" "\(.+\)" &> /dev/null ;then
             expr_str="${expr_str} and (${port_str})"
         fi
     fi
@@ -138,7 +138,7 @@ function net_statistics
     select_x=$(string_split "${select_x}" ":" 1)
     select_x=$(string_trim "${select_x}" " ")
  
-    if string_regex "${select_x}" "^\s*tcpdump" &> /dev/null ;then
+    if string_gensub "${select_x}" "^\s*tcpdump" &> /dev/null ;then
         local expression=$(tcpdump_expr)
 
         local input_val=$(input_prompt "" "input dump's record number" "")

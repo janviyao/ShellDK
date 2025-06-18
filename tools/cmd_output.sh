@@ -28,7 +28,7 @@ fi
 echo_debug "paras: { ${HOST_IP} ${CMD_EXE} }"
 echo_debug "Get { ${CMD_EXE} } from { ${HOST_IP} }"
 
-if match_regex "${HOST_IP}" "\d+\.\d+\.\d+\.\d+";then
+if string_match "${HOST_IP}" "\d+\.\d+\.\d+\.\d+";then
     if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
         eval "${CMD_EXE}"
         exit $?

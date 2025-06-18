@@ -101,7 +101,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 
     for bash_dir in $(cd ${GBL_USER_DIR};ls -d */)
     do
-        bash_pid=$(string_regex "${bash_dir}" "\d+")
+        bash_pid=$(string_gensub "${bash_dir}" "\d+")
         if [ -n "${bash_pid}" ];then
             if ! process_exist "${bash_pid}";then
                 rm -fr ${GBL_USER_DIR}/${bash_dir}

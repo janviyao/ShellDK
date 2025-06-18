@@ -365,7 +365,7 @@ function process_name2pid
     fi
     
     if [ ${#xproc_list[*]} -gt 1 ];then
-        if match_regex "${xproc_list[*]}" "^\d+(\s\d+)+$";then
+        if string_match "${xproc_list[*]}" "^\d+(\s\d+)+$";then
             echo "${xproc_list[*]}"
             return 0
         fi
@@ -617,8 +617,8 @@ function thread_info
             local -a stats=($(cat /proc/${xproc}/stat))
 
             local tinfo_str=$(cat /proc/${xproc}/task/${tid}/stat)
-            if match_regex "${tinfo_str}" "\(\S+\s+\S+\)";then
-                local old_str=$(string_regex "${tinfo_str}" "\(\S+\s+\S+\)")
+            if string_match "${tinfo_str}" "\(\S+\s+\S+\)";then
+                local old_str=$(string_gensub "${tinfo_str}" "\(\S+\s+\S+\)")
                 local new_str=$(string_replace "${old_str}" "\s+" "-" true)
                 tinfo_str=$(string_replace "${tinfo_str}" "\(\S+\s+\S+\)" "${new_str}" true)
             fi

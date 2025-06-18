@@ -10,7 +10,7 @@ if math_bool "${KERNEL_DEBUG_ON}";then
 fi
 
 if math_bool "${DUMP_SAVE_ON}";then
-    coredump_dir=$(file_path_get "$(string_regex "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
+    coredump_dir=$(file_path_get "$(string_gensub "$(cat /proc/sys/kernel/core_pattern)" '(/\S+)+')")
     if ! file_exist "${coredump_dir}";then
         coredump_dir=""
     else

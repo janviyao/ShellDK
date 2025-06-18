@@ -36,7 +36,7 @@ function have_sudoed
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
-        if sudo -n true &> /dev/null; then
+        if sudo -n bash -c "true &> /dev/null" &> /dev/null; then
             return 0
         else
             return 1
@@ -113,7 +113,7 @@ function sshto
     eval "local -A ip_map=($(get_hosts_ip map))"
     if [ ${#ip_map[*]} -eq 0 ];then
         local ip_addr="${des_key}"
-        if ! match_regex "${ip_addr}" "\d+\.\d+\.\d+\.\d+";then
+        if ! string_match "${ip_addr}" "\d+\.\d+\.\d+\.\d+";then
             ip_addr=$(input_prompt "" "input ip address" "")
         fi
 
@@ -151,7 +151,7 @@ function sshto
             fi
         done
     else
-        if match_regex "${des_key}" "\d+\.\d+\.\d+\.\d+";then
+        if string_match "${des_key}" "\d+\.\d+\.\d+\.\d+";then
             if [ -z "${USR_PASSWORD}" ]; then
                 ssh ${des_key}
             else
@@ -552,7 +552,7 @@ function dump_network
 
         dev_dir=$(file_path_get ${dev_dir})
         local bsf=$(file_fname_get ${dev_dir})
-        if ! match_regex "${bsf}" "[a-f0-9]+:[a-f0-9]+:[a-f0-9]+\.[a-f0-9]+";then
+        if ! string_match "${bsf}" "[a-f0-9]+:[a-f0-9]+:[a-f0-9]+\.[a-f0-9]+";then
             bsf="virtual" 
         fi
 
@@ -582,7 +582,7 @@ function dump_interrupt
         if [ ${cpu_num} -eq 0 ];then
             cpu_num=$(echo "${line}" | awk '{ print NF }')
         else
-            local irq_nr=$(string_regex "${line}" "^\s*\w+(?=:)")
+            local irq_nr=$(string_gensub "${line}" "^\s*\w+(?=:)")
             irq_nr=$(string_trim "${irq_nr}" " " 0)
             if [ -z "${irq_nr}" ];then
                 continue
@@ -634,24 +634,24 @@ function du_find
     local size="${limit}"
     local unit=""
     if ! math_is_int "${size}" && ! math_is_float "${size}";then
-        if match_regex "${size^^}" "^\d+(\.\d+)?KB?$";then
-            size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
+        if string_match "${size^^}" "^\d+(\.\d+)?KB?$";then
+            size=$(string_gensub "${size^^}" "^\d+(\.\d+)?")
             if math_is_int "${size}";then
                 size=$((size*1024))
             elif math_is_float "${size}";then
                 size=$(math_float "${size}*1024" 0)
             fi
             unit="KB"
-        elif match_regex "${size^^}" "^\d+(\.\d+)?MB?$";then
-            size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
+        elif string_match "${size^^}" "^\d+(\.\d+)?MB?$";then
+            size=$(string_gensub "${size^^}" "^\d+(\.\d+)?")
             if math_is_int "${size}";then
                 size=$((size*1024*1024))
             elif math_is_float "${size}";then
                 size=$(math_float "${size}*1024*10244" 0)
             fi
             unit="MB"
-        elif match_regex "${size^^}" "^\d+(\.\d+)?GB?$";then
-            size=$(string_regex "${size^^}" "^\d+(\.\d+)?")
+        elif string_match "${size^^}" "^\d+(\.\d+)?GB?$";then
+            size=$(string_gensub "${size^^}" "^\d+(\.\d+)?")
             if math_is_int "${size}";then
                 size=$((size*1024*1024*1024))
             elif math_is_float "${size}";then
@@ -812,7 +812,7 @@ function check_net
     if [ $? -eq 0 ];then
         return 0
     else
-        if match_regex "${address}" "^\s*\d+\.\d+\.\d+\.\d+";then
+        if string_match "${address}" "^\s*\d+\.\d+\.\d+\.\d+";then
             return 1
         else
             local ret_code=$(curl -I -s --connect-timeout ${timeout} ${address} -w %{http_code} | tail -n1)   
@@ -946,7 +946,7 @@ function get_hosts_ip
         hostnm=$(echo "${line}" | awk '{ print $2 }')
 
         test -z "${ipaddr}" && continue 
-        match_regex "${ipaddr}" "^\s*\d+\.\d+\.\d+\.\d+" || continue 
+        string_match "${ipaddr}" "^\s*\d+\.\d+\.\d+\.\d+" || continue 
 
         if ip addr | grep -F "${ipaddr}" &> /dev/null;then
             if ! string_contain "${ret_guide}" "local";then
@@ -966,8 +966,8 @@ function get_hosts_ip
 
     if string_contain "${ret_guide}" "map";then
         local map_str=$(declare -p hostip_map)
-        map_str=$(string_regex "${map_str}" '\(.+\)')
-        map_str=$(string_regex "${map_str}" '[^()]+')
+        map_str=$(string_gensub "${map_str}" '\(.+\)')
+        map_str=$(string_gensub "${map_str}" '[^()]+')
         echo "${map_str}" 
     else
         echo "${!hostip_map[*]}" 

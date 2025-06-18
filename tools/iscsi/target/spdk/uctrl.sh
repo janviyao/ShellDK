@@ -20,7 +20,7 @@ declare -a create_bdev_array
 
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do
-    ini_ip=$(string_regex "${map_key}" "\d+\.\d+\.\d+\.\d+")
+    ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then
         continue
     fi
@@ -150,7 +150,7 @@ fi
 if [[ "${op_mode}" == "create_bdev" ]];then
     for item in ${create_bdev_array[*]} 
     do
-        name_type=$(string_regex "${item,,}" "[a-z]+")
+        name_type=$(string_gensub "${item,,}" "[a-z]+")
         if [[ ${name_type} == "malloc" ]];then
             echo_info "${UCTRL_CMD_MAP[${op_mode}_${name_type}]} -b ${item} ${BDEV_SIZE_MB} 4096"
             eval "${ISCSI_APP_UCTRL} ${UCTRL_CMD_MAP[${op_mode}_${name_type}]} -b ${item} ${BDEV_SIZE_MB} 4096"

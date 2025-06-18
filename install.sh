@@ -502,7 +502,7 @@ function inst_glibc
     local version="$1"
 
     local version_cur=$(getconf -a | grep 'GNU_LIBC_VERSION' | grep -P "\d+\.\d+" -o)
-    local version_new=($(string_regex "${version}" "\d+\.\d+(\.\d+)?"))
+    local version_new=($(string_gensub "${version}" "\d+\.\d+(\.\d+)?"))
 
     if __version_lt ${version_cur} ${version_new}; then
 		if ! file_exist "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
@@ -646,7 +646,7 @@ else
     inst_paras=""
     for key in ${!_OPTION_MAP[*]}
     do
-        if match_regex "${key}" "\-?\-[rc][a-zA-Z]*";then
+        if string_match "${key}" "\-?\-[rc][a-zA-Z]*";then
             continue
         fi
 

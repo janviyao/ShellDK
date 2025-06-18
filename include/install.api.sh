@@ -86,13 +86,13 @@ function mytar
     fi
     
     local fname=$(file_fname_get "${fpath}")
-    if string_match "${fname}" ".tar.gz" 2;then
+    if string_match "${fname}" "\.tar\.gz$";then
         options="-z ${options}"
-    elif string_match "${fname}" ".tar.bz2" 2;then
+    elif string_match "${fname}" "\.tar\.bz2$";then
         options="-j ${options}"
-    elif string_match "${fname}" ".tar.xz" 2;then
+    elif string_match "${fname}" "\.tar\.xz$";then
         options="-J ${options}"
-    elif string_match "${fname}" ".tar" 2;then
+    elif string_match "${fname}" "\.tar$";then
         options="${options}"
     else
         echo_erro "not support compress-package name: ${fname}"
@@ -110,12 +110,12 @@ function mytar
             outdir="${flist[0]}"
         fi
         
-        local fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
+        local fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z]+\-?[0-9]*\.?[0-9]*")
         local fprefix=$(regex_2str "${fprefix}")
 
         local find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
         if [ ${#find_arr[*]} -eq 0 ];then
-            fprefix=$(string_regex "${fname}" "^[0-9a-zA-Z]+")
+            fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z]+")
             find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
         fi
 
@@ -164,7 +164,7 @@ function install_check
         for xfile in ${file_list[*]}    
         do
             local file_name=$(file_fname_get "${xfile}")
-            local new_version=$(string_regex "${file_name}" "\d+\.\d+(\.\d+)?")
+            local new_version=$(string_gensub "${file_name}" "\d+\.\d+(\.\d+)?")
             echo_info "$(printf -- "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
                 rm -f ${tmp_file}
@@ -342,7 +342,7 @@ function install_from_rpm
         local full_name=$(file_realpath ${rpm_file})
         local fname=$(file_fname_get ${full_name})
 
-        local versions=($(string_regex "${fname}" "\d+\.\d+(\.\d+)?"))
+        local versions=($(string_gensub "${fname}" "\d+\.\d+(\.\d+)?"))
         if [ -z "${versions[*]}" ];then
             echo_erro "$(printf -- "[%13s]: { %-13s } failure, version invalid" "Rpm Install" "${full_name}")"
             return 1
@@ -371,7 +371,7 @@ function install_from_rpm
 
         if ! math_bool "${force}";then
             local version_new=${versions[0]}
-            local version_sys=($(string_regex "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
+            local version_sys=($(string_gensub "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
             if __version_gt ${version_sys} ${version_new}; then
                 echo_erro "$(printf -- "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
                 return 1
@@ -682,7 +682,7 @@ function install_rpms
     local rpm_file
     for rpm_file in ${local_rpms[*]}    
     do
-        if ! string_match "${rpm_file}" ".rpm" 2;then
+        if ! string_match "${rpm_file}" "\.rpm$";then
             echo_debug "$(printf -- "[%13s]: { %-13s } skiped" "Install" "${rpm_file}")"
             continue
         fi

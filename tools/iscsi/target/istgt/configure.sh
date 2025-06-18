@@ -17,7 +17,7 @@ ${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
 
 for map_key in ${!ISCSI_INFO_MAP[*]}
 do
-    ini_ip=$(string_regex "${map_key}" "\d+\.\d+\.\d+\.\d+")
+    ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then
         continue
     fi
@@ -56,7 +56,7 @@ do
     kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "InitiatorGroup${ig_id}" "Netmask" "${netmask}.0/24"
 
     tgt_name=$(echo "${map_value}" | awk '{ print $2 }')
-    tgt_id=$(string_regex "${tgt_name}" "\d+")
+    tgt_id=$(string_gensub "${tgt_name}" "\d+")
     section_del "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}"
     kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "Comment" "\"Hard Disk Sample\""
     kvconf_set "${ISCSI_CONF_DIR}/istgt.conf" "LogicalUnit${tgt_id}" "TargetName" "${tgt_name}"

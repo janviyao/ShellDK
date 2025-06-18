@@ -11,7 +11,7 @@ fi
 
 if file_exist "${ISCSI_INITIATOR_LOG}";then
     echo_info "Save: ${ISCSI_INITIATOR_LOG}"
-    if ! string_match "${ISCSI_INITIATOR_LOG}" "${INITIATOR_LOG_DIR}" 1;then
+    if ! string_match "${ISCSI_INITIATOR_LOG}" "^${INITIATOR_LOG_DIR}";then
         ${SUDO} mv -f ${ISCSI_INITIATOR_LOG}* ${INITIATOR_LOG_DIR}
     fi
 fi

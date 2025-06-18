@@ -24,7 +24,7 @@ for device in ${device_array[*]}
 do
     for dev_path in ${mounts_array[*]}
     do
-        if string_match "${dev_path}" "${device}" 2;then
+        if string_match "${dev_path}" "${device}$";then
             echo_info "umount ${dev_path}"
             sudo_it umount ${dev_path}
             break

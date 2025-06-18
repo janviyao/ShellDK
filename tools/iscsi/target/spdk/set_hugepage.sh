@@ -43,7 +43,7 @@ if file_exist "/dev/hugepages/fusion_target_iscsi*";then
     for hugefile in /dev/hugepages/fusion_target_iscsi*
     do
         cur_size=$(file_size ${hugefile} | tail -n 1)
-        if ! string_match "${hugefile}" "${HP_FILE_PREFIX}" 1;then
+        if ! string_match "${hugefile}" "^${HP_FILE_PREFIX}";then
             let CAN_FREE_SIZE=CAN_FREE_SIZE+cur_size
             #echo_info "rm -f ${hugefile}"
             #process_run rm -f ${hugefile} 
@@ -98,7 +98,7 @@ do
             if file_exist "/dev/hugepages/fusion_target_iscsi*";then
                 for hugefile in /dev/hugepages/fusion_target_iscsi*
                 do
-                    if ! string_match "${hugefile}" "${HP_FILE_PREFIX}" 1;then
+                    if ! string_match "${hugefile}" "^${HP_FILE_PREFIX}";then
                         cur_size=$(file_size ${hugefile} | tail -n 1)
                         cur_size=$(( cur_size / 1024 / 1024 ))
 

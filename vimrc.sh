@@ -122,27 +122,27 @@ function project_create
             [ -z "${line}" ] && continue
             echo_debug "orig regex: ${line}"
 
-            if match_regex "${line}" "^#";then
+            if string_match "${line}" "^#";then
                 continue
             fi
 
-            if match_regex "${line}" "^!";then
+            if string_match "${line}" "^!";then
                 continue
             fi
 
-            if match_regex "${line}" "^/";then
+            if string_match "${line}" "^/";then
 				line=$(string_replace "${line}" '^/' '' true)
                 line="^${line}"
             fi
 
-            #if match_regex "${line}" "/$";then
-            #    if ! match_regex "${line}" "^\^";then
+            #if string_match "${line}" "/$";then
+            #    if ! string_match "${line}" "^\^";then
             #        line="^${line}"
             #    fi
             #fi
 
             if string_contain "${line}" ".";then
-                #if match_regex "${line}" "^\.";then
+                #if string_match "${line}" "^\.";then
                 #    line="^${line}"
                 #fi
                 line=$(string_replace "${line}" '.' '\.')
@@ -164,7 +164,7 @@ function project_create
             local conflict=false
             for dir_str in ${search_list[*]}
             do
-                if match_regex "${dir_str}" "${line}";then
+                if string_match "${dir_str}" "${line}";then
                     conflict=true
                     break
                 fi

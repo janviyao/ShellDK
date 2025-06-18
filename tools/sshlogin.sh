@@ -33,7 +33,7 @@ if [ -z "${CMD_EXE}" ];then
     exit 0
 fi
 
-if match_regex "${HOST_IP}" "\d+\.\d+\.\d+\.\d+";then
+if string_match "${HOST_IP}" "\d+\.\d+\.\d+\.\d+";then
     if [[ ${HOST_IP} == ${LOCAL_IP} ]];then
         eval "${CMD_EXE}"
         exit $?

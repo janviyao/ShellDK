@@ -76,7 +76,7 @@ do
             continue
         fi
 
-        declare -a values=($(string_regex "${line}" "\d+"))
+        declare -a values=($(string_gensub "${line}" "\d+"))
 
         if [[ "${line}" =~ "average" ]];then
             if [ ${#values[*]} -ne 4 ];then
@@ -91,12 +91,12 @@ do
         else
             if [ ${#values[*]} -ne 3 ];then
                 if [ ${#values[*]} -eq 2 ];then
-                    if match_regex "${line}" "^\[\d+,\s+\.\.\.\)\s+\d+";then
+                    if string_match "${line}" "^\[\d+,\s+\.\.\.\)\s+\d+";then
                         #echo_erro "line(...): ${line}"
                         #echo_erro "values before reset: ${values[*]}" 
                         values=(${values[0]} $((${values[0]} + ${LHIST_STEP})) ${values[1]})            
                         #echo_erro "values after  reset: ${values[*]}" 
-                    elif match_regex "${line}" "^\(\.\.\.,\s+\d+\)\s+\d+";then
+                    elif string_match "${line}" "^\(\.\.\.,\s+\d+\)\s+\d+";then
                         #echo_erro "line(...): ${line}"
                         #echo_erro "values before reset: ${values[*]}" 
                         values=(${values[0]} ${values[0]} ${values[1]})            
@@ -112,12 +112,12 @@ do
             fi
             
             if [[ "${line}" =~ "K" ]];then
-                if match_regex "${line}" "^\[\d+K,\s+\d+\)\s+\d+";then
+                if string_match "${line}" "^\[\d+K,\s+\d+\)\s+\d+";then
                     #echo_erro "line(K): ${line}"
                     #echo_erro "values before reset: ${values[*]}" 
                     values=($((${values[1]} - ${LHIST_STEP})) ${values[1]} ${values[2]})            
                     #echo_erro "values after  reset: ${values[*]}" 
-                elif match_regex "${line}" "^\[\d+,\s+\d+K\)\s+\d+";then
+                elif string_match "${line}" "^\[\d+,\s+\d+K\)\s+\d+";then
                     #echo_erro "line(K): ${line}"
                     #echo_erro "values before reset: ${values[*]}" 
                     values=(${values[0]} $((${values[0]} + ${LHIST_STEP})) ${values[2]})            
@@ -173,7 +173,7 @@ do
     lhist_avg=0
     for lhist in ${g_lhist_array[*]}
     do
-        if string_match "${lhist}" "${script}:" 0;then
+        if string_match "${lhist}" "${script}:" false;then
             lhist_avg=$(string_split "${lhist}" ':' 2)        
             break
         fi
@@ -182,7 +182,7 @@ do
     stats_avg=0
     for stats in ${g_stats_array[*]}
     do
-        if string_match "${stats}" "${script}:" 0;then
+        if string_match "${stats}" "${script}:" false;then
             stats_avg=$(string_split "${stats}" ':' 2)        
             break
         fi
