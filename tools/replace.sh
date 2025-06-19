@@ -112,7 +112,7 @@ function do_replace
     local string="$2"
     local new_str="$3"
     local is_reg="${4:-false}"
-	local -a bg_tasks
+	local -a bg_tasks=()
 
     echo_debug "do_replace [$@]"
 	if match_execlude "${xfile}" ${is_reg};then

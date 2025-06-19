@@ -20,7 +20,7 @@ function kvconf_section_range
     fi 
 
     local range
-    local -a range_list
+	local -a range_list=()
     local sec_linenrs=($(file_range "${sec_file}" "\[${sec_name}\]" "\[.+\]" true))
     if [ ${#sec_linenrs[*]} -ge 2 ];then
     	local index=0
@@ -164,8 +164,8 @@ function kvconf_key_linenr
     fi 
 
 	local line_nr
-	local -a nr_array
-	local -a key_line_nrs
+	local -a nr_array=()
+	local -a key_line_nrs=()
 	if [ -n "${sec_name}" ];then
 		local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
 		if [ ${#range_list[*]} -ge 2 ];then
@@ -215,7 +215,7 @@ function kvconf_key_get
         return 1
     fi 
     
-	local -a key_array
+	local -a key_array=()
 	if [ -n "${sec_name}" ];then
 		local range_list=($(kvconf_section_range "${sec_file}" "${sec_name}"))
 		if [ ${#range_list[*]} -ge 2 ];then
@@ -312,7 +312,7 @@ function kvconf_val_have
     
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
-		local -a split_list
+		local -a split_list=()
         array_reset split_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
 		if array_have split_list "${val_str}";then
 			return 0
@@ -339,7 +339,7 @@ function kvconf_val_get
 
     local line_nrs=($(kvconf_key_linenr "${sec_file}" "${sec_name}" "${key_str}"))
     if [ ${#line_nrs[*]} -ge 1 ];then
-		local -a val_list
+		local -a val_list=()
 		local line_nr
 		for line_nr in "${line_nrs[@]}"
 		do
@@ -353,7 +353,7 @@ function kvconf_val_get
 					fi
 					
 					if [[ "${line_cnt}" =~ "${GBL_VAL_SPF}" ]];then
-						local -a split_list
+						local -a split_list=()
 						array_reset split_list "$(string_split "${line_cnt}" "${GBL_VAL_SPF}")"
 						if [ $? -ne 0 ];then
 							echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
@@ -391,7 +391,7 @@ function kvconf_val_del
 
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
-		local -a split_list
+		local -a split_list=()
 		array_reset split_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
 		if [ $? -ne 0 ];then
 			echo_erro "kvconf_val_del { $@ }"
@@ -523,7 +523,7 @@ function kvconf_append
     
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
-		local -a split_list
+		local -a split_list=()
 		array_reset split_list "$(string_split "${val_all}" "${GBL_VAL_SPF}")"
 		if [ $? -ne 0 ];then
 			echo_erro "kvconf_append { $@ }"

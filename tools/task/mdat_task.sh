@@ -346,12 +346,12 @@ function _bash_mdat_exit
 
 function _mdat_thread_main
 {
-    local -A _global_map_
+	local -A _global_map_=()
     local line
     while read line
     do
         echo_file "${LOG_DEBUG}" "mdat recv: [${line}] from [${MDAT_PIPE}]"
-		local -a msg_list
+		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}
         local ack_pipe=${msg_list[1]}
@@ -369,7 +369,7 @@ function _mdat_thread_main
             fi
         fi
 
-		local -a req_list
+		local -a req_list=()
 		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
         local req_ctrl=${req_list[0]}
         local req_body=${req_list[1]}
@@ -382,14 +382,14 @@ function _mdat_thread_main
             echo_debug "mdat main exit"
             return 
         elif [[ "${req_ctrl}" == "KV_SET" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local _xkey_=${val_list[0]}
             local _xval_=${val_list[1]}
 
             map_add _global_map_ "${_xkey_}" "${_xval_}"
         elif [[ "${req_ctrl}" == "KV_APPEND" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local _xkey_=${val_list[0]}
             local _xval_=${val_list[1]}
@@ -412,7 +412,7 @@ function _mdat_thread_main
             fi
             ack_ctrl="donot need ack"
         elif [[ "${req_ctrl}" == "VAL_HAS" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local _xkey_=${val_list[0]}
             local _xval_=${val_list[1]}
@@ -429,7 +429,7 @@ function _mdat_thread_main
             local _xkey_=${req_body}
             map_del _global_map_ "${_xkey_}"
         elif [[ "${req_ctrl}" == "KV_UNSET_VAL" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local _xkey_=${val_list[0]}
             local _xval_=${val_list[1]}
@@ -444,7 +444,7 @@ function _mdat_thread_main
 						map_del _global_map_ "${_xkey_}"
                     done
                 else
-                    local -a _key_list
+					local -a _key_list=()
 					array_reset _key_list "$(string_split "${req_body}" "${GBL_RETURN}" 0)"
                     for _xkey_ in ${_key_list[*]}
                     do

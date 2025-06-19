@@ -312,7 +312,7 @@ function file_range_get
 		fi
 	fi
 
-	local -a _cnt_list
+	local -a _cnt_list=()
 	if math_bool "${is_reg}";then
 		if [[ ! "${string}" =~ '\/' ]];then
 			if [[ "${string}" =~ '/' ]];then
@@ -529,7 +529,7 @@ function file_linenr
         return $?
     fi
 
-    local -a line_nrs
+	local -a line_nrs=()
     if math_bool "${is_reg}";then
 		if [[ ! "${string}" =~ '\/' ]];then
 			if [[ "${string}" =~ '/' ]];then
@@ -581,7 +581,7 @@ function file_range_linenr
 		fi
 	fi
 
-    local -a line_nrs
+	local -a line_nrs=()
     if math_bool "${is_reg}";then
 		if [[ ! "${string}" =~ '\/' ]];then
 			if [[ "${string}" =~ '/' ]];then
@@ -618,7 +618,7 @@ function file_range
     local line_nrs1=($(file_linenr "${xfile}" "${string1}" "${is_reg}"))
     local line_nrs2=($(file_linenr "${xfile}" "${string2}" "${is_reg}"))
 
-    local -a range_array
+	local -a range_array=()
     local line_nr1
     local line_nr2
     for line_nr1 in ${line_nrs1[*]}
@@ -835,7 +835,7 @@ function file_count
 
     have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
-    local -a c_array
+	local -a c_array=()
     local file
     for file in ${f_array[*]}
     do
@@ -873,7 +873,7 @@ function file_size
 
     have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
 
-    local -a c_array
+	local -a c_array=()
     local file
     for file in ${f_array[*]}
     do
@@ -919,7 +919,7 @@ function file_list
         return 1
     fi
 	
-	local -a bg_tasks
+	local -a bg_tasks=()
 	if [ -d "${xfile}" ];then
 		if [[ "${xfile:0-1:1}" == '/' ]]; then
 			xfile="${xfile::-1}"

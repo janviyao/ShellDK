@@ -260,7 +260,7 @@ function process_kill
                 local xselect=$(input_prompt "" "decide if kill someone else's process? (yes/no)" "yes")
                 if ! math_bool "${xselect}";then
                     local xpid
-                    local -a ouser_pids
+					local -a ouser_pids=()
                     for xpid in "${pid_array[@]}" 
                     do
                         if ! process_owner_is ${MY_NAME} ${xpid};then
@@ -302,7 +302,7 @@ function process_pid2name
     fi
 
     local xpid
-    local -a name_list
+	local -a name_list=()
     for xpid in "${xproc_list[@]}" 
     do
         if math_is_int "${xpid}";then
@@ -377,7 +377,7 @@ function process_name2pid
     fi
 
     local xproc
-    local -a pid_array
+	local -a pid_array=()
     for xproc in "${xproc_list[@]}" 
     do
         if math_is_int "${xproc}";then
@@ -446,7 +446,7 @@ function process_name2tid
     fi
 
     local xpid
-    local -a proc_tids
+	local -a proc_tids=()
     local -a pid_array=($(process_name2pid "${xproc_list[@]}"))
     for xpid in "${pid_array[@]}" 
     do
@@ -495,7 +495,7 @@ function process_ppid
     local xproc_list=("$@")
         
     local xpid
-    local -a ppid_array
+	local -a ppid_array=()
     local -a pid_array=($(process_name2pid "${xproc_list[@]}"))
     for xpid in "${pid_array[@]}" 
     do
@@ -527,7 +527,7 @@ function process_cpid
     local xproc_list=("$@")
 
     local xpid
-    local -a child_pids
+	local -a child_pids=()
     local -a pid_array=($(process_name2pid "${xproc_list[@]}"))
     for xpid in "${pid_array[@]}" 
     do
@@ -571,7 +571,7 @@ function thread_info
 
     #local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
     local -a header_array=("COMMAND" "TID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "VSZ" "RSS" "CPU")
-    local -A index_map
+	local -A index_map=()
     index_map["TID"]="%-10s %-10d 0"
     index_map["COMMAND"]="%-20s %-20s 1"
     index_map["STATE"]="%-5s %-5s 2"
@@ -978,7 +978,7 @@ function process_winpid2pid
     fi
 
     local xpid
-    local -a pid_list
+	local -a pid_list=()
     for xpid in "${xproc_list[@]}" 
     do
         if math_is_int "${xpid}";then

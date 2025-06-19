@@ -63,7 +63,7 @@ function project_create
         input_val=$(input_prompt "" "input search directory" "")
     done
 
-    local -a wipe_list
+	local -a wipe_list=()
     input_val=$(input_prompt "" "input wipe directory" "")
     while [ -n "${input_val}" ]
     do

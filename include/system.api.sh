@@ -110,7 +110,7 @@ function sshto
 {
     local des_key="$1"
 
-	local -A ip_map
+	local -A ip_map=()
 	get_hosts_ip ip_map
 
     if [ ${#ip_map[*]} -eq 0 ];then
@@ -134,7 +134,7 @@ function sshto
 
     local key
     if [ -z "${des_key}" ];then
-        local -a select_array
+		local -a select_array=()
         for key in "${!ip_map[@]}"
         do
 			select_array+=("${ip_map[${key}]}[${key}]") 
@@ -667,7 +667,7 @@ function du_find
         fi
     fi
 
-    local -A size_map
+	local -A size_map=()
     local dir_arr=($(sudo_it "find ${dpath} -maxdepth 1 -type d"))
     local sub_dir
     for sub_dir in "${dir_arr[@]}" 
@@ -764,7 +764,7 @@ function efind
     local opts="$@"
     
     local xret
-    local -a ret_arr
+	local -a ret_arr=()
 	
 	# -regex: match full path
     ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${posix_reg}" 2\> /dev/null))
@@ -850,7 +850,7 @@ function cursor_pos
 	# save the position
 	#echo "current position: $pos"
 
-	local -a pos_list
+	local -a pos_list=()
 	array_reset pos_list "$(string_split "${pos}" ";")"
 
 	ypos=${pos_list[0]}
@@ -941,8 +941,8 @@ function get_hosts_ip
 	local -n _list_ref=$1
 	local _list_refnm=$1
 
-    local -A hostip_map
-	local -a _val_list
+	local -A hostip_map=()
+	local -a _val_list=()
     local line
     while read line
     do

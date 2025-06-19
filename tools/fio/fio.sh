@@ -150,8 +150,8 @@ function start_test_func
         local conf_brief_name=${bs_value}.job${job_value}.qd${depth_value}
         local conf_fname=${conf_brief_name}.conf
 
-        local -a host_info_array
-        local -A host_devs_array
+		local -a host_info_array=()
+		local -A host_devs_array=()
         local start_idx=5
         while true
         do

@@ -414,7 +414,7 @@ function input_prompt
 	if math_bool "${hide_hint}";then
 		read ymax xmax <<< $(stty size)
 		local coordinate=$(cursor_pos)
-		local -a pos_list
+		local -a pos_list=()
 		array_reset pos_list "$(string_split "${coordinate}" "${GBL_VAL_SPF}")"
 		local x_coord=${pos_list[0]}
 		local y_coord=${pos_list[1]}
@@ -444,7 +444,7 @@ function input_prompt
         do
 			if math_bool "${hide_hint}";then
 				coordinate=$(cursor_pos)
-				local -a pos_list
+				local -a pos_list=()
 				array_reset pos_list "$(string_split "${coordinate}" "${GBL_VAL_SPF}")"
 				x_coord=${pos_list[0]}
 				y_coord=${pos_list[1]}
@@ -474,7 +474,7 @@ function input_prompt
             do
 				if math_bool "${hide_hint}";then
 					coordinate=$(cursor_pos)
-					local -a pos_list
+					local -a pos_list=()
 					array_reset pos_list "$(string_split "${coordinate}" "${GBL_VAL_SPF}")"
 					x_coord=${pos_list[0]}
 					y_coord=${pos_list[1]}
@@ -586,7 +586,7 @@ function progress_bar
     fi
 
     local coordinate=$(cursor_pos)
-	local -a pos_list
+	local -a pos_list=()
 	array_reset pos_list "$(string_split "${coordinate}" "${GBL_VAL_SPF}")"
 	local x_coord=${pos_list[0]}
 	local y_coord=${pos_list[1]}

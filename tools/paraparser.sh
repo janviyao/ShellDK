@@ -60,7 +60,7 @@ function get_subcmd_optval
 	local -A subcmd_option_map=()
 	local -a subcmd_subcmd_all=()
 
-	local -a _subcmd_options
+	local -a _subcmd_options=()
 	array_reset _subcmd_options "$(get_subcmd_all ${_subcmd_all_refnm} ${_option_all_refnm} "${_subcmd}")"
 
 	para_fetch ${_short_opts_refnm} subcmd_option_all subcmd_subcmd_all subcmd_option_map "${_subcmd_options[@]}"
@@ -105,7 +105,7 @@ function para_debug
     done
     echo
 	
-	local -a all_sub_cmd
+	local -a all_sub_cmd=()
 	array_reset all_sub_cmd "$(array_print _SUBCMD_ALL "0-$")"
 
 	local count=0
@@ -118,7 +118,7 @@ function para_debug
 
 	for subcmd in "${_SUBCMD_ALL[@]}"
 	do
-		local -a sub_all
+		local -a sub_all=()
 		array_reset sub_all "$(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${subcmd}")"
 
 		printf -- "subcmd: %-15s all: [ " "${subcmd}"

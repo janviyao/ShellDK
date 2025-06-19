@@ -603,7 +603,7 @@ function _ncat_thread_main
         fi
         echo_file "${LOG_DEBUG}" "ncat recv: [${ncat_body}]" 
 
-		local -a msg_list
+		local -a msg_list=()
 		array_reset msg_list "$(string_split "${ncat_body}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}
         local ack_pipe=${msg_list[1]}
@@ -623,7 +623,7 @@ function _ncat_thread_main
             fi
         fi
 
-		local -a req_list
+		local -a req_list=()
 		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
         local req_ctrl=${req_list[0]}
         local req_body=${req_list[1]}
@@ -641,7 +641,7 @@ function _ncat_thread_main
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
             #{ process_signal INT 'nc'; }& 
         elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local log_lvel=${val_list[0]}
             local log_body=${val_list[1]}
@@ -656,7 +656,7 @@ function _ncat_thread_main
                 echo_erro "${log_body}"
             fi
         elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "=")"
             local var_name=${val_list[0]}
             local var_valu=${val_list[1]}
@@ -664,13 +664,13 @@ function _ncat_thread_main
 			eval "local ${var_name}=${var_valu}"
             mdat_set_var ${var_name}
         elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local rport=${val_list[0]}
             local fname=${val_list[1]}
             ncat_recv_file "${rport}" "${fname}"
         elif [[ "${req_ctrl}" == "WAIT_EVENT" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local event_uid=${val_list[0]}
             local event_msg=${val_list[1]}
@@ -690,7 +690,7 @@ function _ncat_thread_main
                 ncat_send_msg "${NCAT_MASTER_ADDR}" "${ncat_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${event_body}" 
             }&
         elif [[ "${req_ctrl}" == "NOTIFY_EVENT" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local event_uid=${val_list[0]}
             local event_msg=${val_list[1]}

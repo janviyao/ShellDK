@@ -28,7 +28,7 @@ function array_print
 	if [ ${#_index_list[*]} -eq 0 ];then
 		_index_list=(${!_array_ref[*]})
 	else
-		local -a _new_index_list
+		local -a _new_index_list=()
 		local _index
 		for _index in ${_index_list[*]}
 		do
@@ -240,7 +240,7 @@ function array_del_by_value
         return 1
     fi
 
-	local -a _index_list
+	local -a _index_list=()
 	_index_list=($(array_index ${_array_name} "${_value}"))
 	if [ $? -ne 0 ];then
 		return 1
@@ -390,7 +390,7 @@ function map_add
 	shift 2
 	local _new_list=("$@")
 
-	local -a _map_val_list
+	local -a _map_val_list=()
 	local _old_map_value="${_map_ref[${_key}]}"
 	if [ -n "${_old_map_value}" ];then
 		array_reset _map_val_list "${_old_map_value}"
@@ -419,17 +419,23 @@ function map_get
 	shift 2
 	local _index_list=("$@")
 
-	local -a _map_val_list
+	local -a _map_val_list=()
 	local _old_map_value="${_map_ref["${_key}"]}"
 	if [ -n "${_old_map_value}" ];then
 		array_reset _map_val_list "${_old_map_value}"
 	fi
 
-	local _index
-	for _index in "${_index_list[@]}"
-	do
-		print_lossless "${_map_val_list[${_index}]}"
-	done
+	if [ ${#_index_list[*]} -gt 0 ];then
+		local _index
+		for _index in "${_index_list[@]}"
+		do
+			print_lossless "${_map_val_list[${_index}]}"
+		done
+	else
+		if [ ${#_map_val_list[*]} -gt 0 ];then
+			array_print _map_val_list
+		fi
+	fi
 
 	return 0
 }
@@ -448,7 +454,7 @@ function map_del
 	local _del_val_list=("$@")
 	
 	if [ ${#_del_val_list[*]} -gt 0 ];then
-		local -a _map_val_list
+		local -a _map_val_list=()
 		local _old_map_value="${_map_ref[${_key}]}"
 		if [ -n "${_old_map_value}" ];then
 			array_reset _map_val_list "${_old_map_value}"
@@ -509,8 +515,7 @@ function map_val_have
 		return 1
 	fi
 
-
-	local -a _map_val_list
+	local -a _map_val_list=()
 	array_reset _map_val_list "${_map_ref["${_key}"]}"
 
 	local _xval

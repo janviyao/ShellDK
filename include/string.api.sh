@@ -190,7 +190,7 @@ function string_contain
     fi
 
     if [ -n "${separator}" ];then
-		local -a _sub_list
+		local -a _sub_list=()
 		array_reset _sub_list "$(awk -F "${separator}" '{ for (i=1;i<=NF;i++) { print $i }}' <<< "${string}")"
 
 		local _str
@@ -220,7 +220,7 @@ function string_split
         return 1
     fi
 	
-	local -a _sub_list
+	local -a _sub_list=()
 	array_reset _sub_list "$(awk -F "${separator}" '{ for (i=1;i<=NF;i++) { print $i }}' <<< "${string}")"
 	local total_nrs=${#_sub_list[*]}
 
@@ -239,7 +239,7 @@ function string_split
 				return 1
 			fi
 
-            local -a _res_list
+			local -a _res_list=()
 			local _index
 			for _index in ${index_list[*]}
 			do

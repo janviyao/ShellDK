@@ -187,7 +187,7 @@ function install_provider
         return 1
     fi
 
-    local -a files
+	local -a files=()
     if math_bool "${isreg}";then
         local fname=$(file_fname_get ${xfile})
         local fpath=$(file_path_get ${xfile})
@@ -347,7 +347,7 @@ function install_from_rpm
         fi
         echo_debug "rpm: { ${full_name} } versions: ${versions[*]}"
 
-        local -a split_names
+		local -a split_names=()
         array_reset split_names "$(string_split "${fname}" "${versions[0]}")"
 
         if [ -z "${split_names[*]}" ];then
@@ -605,7 +605,7 @@ function install_from_spec
 
     echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${xspec}")"
     local key_str=$(regex_2str "${xspec}")
-	local -a spec_lines
+	local -a spec_lines=()
 	array_reset spec_lines "$(file_get ${MY_VIM_DIR}/install.spec "^${key_str}\s*;" true)"
 
     if [ ${#spec_lines[*]} -eq 0 ];then

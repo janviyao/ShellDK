@@ -357,7 +357,7 @@ function _xfer_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "xfer recv: [${line}] from [${XFER_PIPE}]"
-		local -a msg_list
+		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}
         local ack_pipe=${msg_list[1]}
@@ -375,7 +375,7 @@ function _xfer_thread_main
             fi
         fi
 
-		local -a req_list
+		local -a req_list=()
 		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
         local req_ctrl=${req_list[0]}
         local req_body=${req_list[1]}
@@ -389,7 +389,7 @@ function _xfer_thread_main
             echo_debug "xfer main exit"
             return 
         elif [[ "${req_ctrl}" == "RSYNC" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local xfer_act=${val_list[0]}
             local xfer_cmd=${val_list[1]}

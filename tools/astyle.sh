@@ -103,7 +103,7 @@ function do_format
 {
     local xfile="$1"
     local is_reg="${2:-false}"
-	local -a bg_tasks
+	local -a bg_tasks=()
 
     echo_debug "do_format [$@]"
     if match_execlude "${xfile}" ${is_reg};then

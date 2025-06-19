@@ -156,7 +156,7 @@ function _logr_thread_main
             line=$(string_replace "${line}" "${GBL_SPACE}" " ")
         fi
 
-		local -a msg_list
+		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}
         local ack_pipe=${msg_list[1]}
@@ -175,7 +175,7 @@ function _logr_thread_main
             fi
         fi
 
-		local -a req_list
+		local -a req_list=()
 		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
         local req_ctrl=${req_list[0]}
         local req_body=${req_list[1]}
@@ -190,7 +190,7 @@ function _logr_thread_main
                 return
             fi
         elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local log_lvel=${val_list[0]}
             local log_body=${val_list[1]}
@@ -208,7 +208,7 @@ function _logr_thread_main
             local log_file="${req_body}"
             ( _redirect_func "${log_file}" & )
         elif [[ "${req_ctrl}" == "CURSOR_MOVE" ]];then
-			local -a val_list
+			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local x_val=${val_list[0]}
             local y_val=${val_list[1]}

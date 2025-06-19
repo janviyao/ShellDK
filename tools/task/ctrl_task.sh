@@ -126,7 +126,7 @@ function _ctrl_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "ctrl recv: [${line}] from [${CTRL_PIPE}]"
-		local -a msg_list
+		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}
         local ack_pipe=${msg_list[1]}
@@ -144,7 +144,7 @@ function _ctrl_thread_main
             fi
         fi
         
-		local -a req_list
+		local -a req_list=()
 		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
         local req_ctrl=${req_list[0]}
         local req_body=${req_list[1]}
