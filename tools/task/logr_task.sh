@@ -19,21 +19,21 @@ exec {LOGR_FD}<>${LOGR_PIPE} # 自动分配FD
 
 function logr_task_ctrl_async
 {
-    local req_ctrl="$1"
-    local req_body="$2"
+    local _ctrl="$1"
+    local _body="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: req_body"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl\n\$2: body"
         return 1
     fi
 
-    #echo_debug "logr_task_ctrl_async: [ctrl: ${req_ctrl} msg: ${req_body}]" 
+    #echo_debug "logr_task_ctrl_async: [ctrl: ${_ctrl} msg: ${_body}]" 
     if ! file_exist "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
 
-    local msg="${GBL_ACK_SPF}${GBL_ACK_SPF}${req_ctrl}${GBL_SPF1}${req_body}"
+    local msg="${GBL_ACK_SPF}${GBL_ACK_SPF}${_ctrl}${GBL_SPF1}${_body}"
     if [[ "${msg}" =~ " " ]];then
         msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
     fi
@@ -44,26 +44,27 @@ function logr_task_ctrl_async
 
 function logr_task_ctrl_sync
 {
-    local req_ctrl="$1"
-    local req_body="$2"
+    local _ctrl="$1"
+    local _body="$2"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: req_body"
+        echo_erro "\nUsage: [$@]\n\$1: ctrl\n\$2: body"
         return 1
     fi
 
-    #echo_debug "log ato self: [ctrl: ${req_ctrl} msg: ${req_body}]" 
+    #echo_debug "log ato self: [ctrl: ${_ctrl} msg: ${_body}]" 
     if ! file_exist "${LOGR_PIPE}.run";then
         echo_erro "logr task [${LOGR_PIPE}.run] donot run for [$@]"
         return 1
     fi
 
-    local msg="${req_ctrl}${GBL_SPF1}${req_body}"
+    local msg="${_ctrl}${GBL_SPF1}${_body}"
     if [[ "${msg}" =~ " " ]];then
         msg=$(string_replace "${msg}" " " "${GBL_SPACE}")
     fi
 
-    send_and_wait "${msg}" "${LOGR_PIPE}"
+    local send_resp_val=""
+    send_and_wait send_resp_val "${msg}" "${LOGR_PIPE}"
     return 0
 }
 
@@ -177,11 +178,11 @@ function _logr_thread_main
 
 		local -a req_list=()
 		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
-        local req_ctrl=${req_list[0]}
-        local req_body=${req_list[1]}
+        local _ctrl=${req_list[0]}
+        local _body=${req_list[1]}
 
-        if [[ "${req_ctrl}" == "CTRL" ]];then
-            if [[ "${req_body}" == "EXIT" ]];then
+        if [[ "${_ctrl}" == "CTRL" ]];then
+            if [[ "${_body}" == "EXIT" ]];then
                 if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                     echo_debug "write [ACK] to [${ack_pipe}]"
                     process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
@@ -189,9 +190,9 @@ function _logr_thread_main
                 echo_debug "logr main exit"
                 return
             fi
-        elif [[ "${req_ctrl}" == "REMOTE_PRINT" ]];then
+        elif [[ "${_ctrl}" == "REMOTE_PRINT" ]];then
 			local -a val_list=()
-			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+			array_reset val_list "$(string_split "${_body}" "${GBL_SPF2}")"
             local log_lvel=${val_list[0]}
             local log_body=${val_list[1]}
 
@@ -204,44 +205,44 @@ function _logr_thread_main
             elif [ ${log_lvel} -eq ${LOG_ERRO} ];then
                 echo_erro "${log_body}"
             fi
-        elif [[ "${req_ctrl}" == "REDIRECT" ]];then
-            local log_file="${req_body}"
+        elif [[ "${_ctrl}" == "REDIRECT" ]];then
+            local log_file="${_body}"
             ( _redirect_func "${log_file}" & )
-        elif [[ "${req_ctrl}" == "CURSOR_MOVE" ]];then
+        elif [[ "${_ctrl}" == "CURSOR_MOVE" ]];then
 			local -a val_list=()
-			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+			array_reset val_list "$(string_split "${_body}" "${GBL_SPF2}")"
             local x_val=${val_list[0]}
             local y_val=${val_list[1]}
 
             tput cup ${y_val} ${x_val}
-        elif [[ "${req_ctrl}" == "CURSOR_HIDE" ]];then
+        elif [[ "${_ctrl}" == "CURSOR_HIDE" ]];then
             tput civis
-        elif [[ "${req_ctrl}" == "CURSOR_SHOW" ]];then
+        elif [[ "${_ctrl}" == "CURSOR_SHOW" ]];then
             tput cnorm
-        elif [[ "${req_ctrl}" == "CURSOR_SAVE" ]];then
+        elif [[ "${_ctrl}" == "CURSOR_SAVE" ]];then
             tput sc
-        elif [[ "${req_ctrl}" == "CURSOR_RESTORE" ]];then
+        elif [[ "${_ctrl}" == "CURSOR_RESTORE" ]];then
             tput rc
-        elif [[ "${req_ctrl}" == "ERASE_LINE" ]];then
+        elif [[ "${_ctrl}" == "ERASE_LINE" ]];then
             tput el
-        elif [[ "${req_ctrl}" == "ERASE_BEHIND" ]];then
+        elif [[ "${_ctrl}" == "ERASE_BEHIND" ]];then
             tput ed
-        elif [[ "${req_ctrl}" == "ERASE_ALL" ]];then
+        elif [[ "${_ctrl}" == "ERASE_ALL" ]];then
             tput clear
-        elif [[ "${req_ctrl}" == "RETURN" ]];then
+        elif [[ "${_ctrl}" == "RETURN" ]];then
             printf -- "\r"
-        elif [[ "${req_ctrl}" == "NEWLINE" ]];then
+        elif [[ "${_ctrl}" == "NEWLINE" ]];then
             printf -- "\n"
-        elif [[ "${req_ctrl}" == "BACKSPACE" ]];then
+        elif [[ "${_ctrl}" == "BACKSPACE" ]];then
             printf -- "\b"
-        elif [[ "${req_ctrl}" == "PRINT" ]];then
-            printf -- "%s" "${req_body}" 
-        elif [[ "${req_ctrl}" == "PRINT_FROM_FILE" ]];then
-            if file_exist "${req_body}";then
-                local file_log=$(cat ${req_body}) 
+        elif [[ "${_ctrl}" == "PRINT" ]];then
+            printf -- "%s" "${_body}" 
+        elif [[ "${_ctrl}" == "PRINT_FROM_FILE" ]];then
+            if file_exist "${_body}";then
+                local file_log=$(cat ${_body}) 
                 printf -- "%s" "${file_log}"
             else
-                printf -- "%s" "print fails: ${req_body} not exist" 
+                printf -- "%s" "print fails: ${_body} not exist" 
             fi
         fi
 

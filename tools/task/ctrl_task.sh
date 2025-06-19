@@ -33,55 +33,49 @@ function ctrl_create_thread
     fi
     
     echo_file "${LOG_DEBUG}" "create thread: ${_cmdstr}"
-    send_and_wait "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${CTRL_PIPE}"
+    local send_resp_val=""
+    send_and_wait send_resp_val "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${CTRL_PIPE}"
 
-    echo "${RESP_VAL}"
+    echo "${send_resp_val}"
     return 0
 }
 
 function ctrl_task_ctrl_async
 {
-    local ctrl_body="$1"
-    local one_pipe="$2"
+    local _body="$1"
+    local _pipe="${2:-${CTRL_PIPE}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${CTRL_PIPE})"
         return 1
     fi
 
-    if [ -z "${one_pipe}" ];then
-        one_pipe="${CTRL_PIPE}"
-    fi
-
-    if ! file_exist "${one_pipe}.run";then
-        echo_erro "ctrl task [${one_pipe}.run] donot run for [$@]"
+    if ! file_exist "${_pipe}.run";then
+        echo_erro "ctrl task [${_pipe}.run] donot run for [$@]"
         return 1
     fi
     
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${ctrl_body}" > ${one_pipe}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body}" > ${_pipe}
     return 0
 }
 
 function ctrl_task_ctrl_sync
 {
-    local ctrl_body="$1"
-    local one_pipe="$2"
+    local _body="$1"
+    local _pipe="${2:-${CTRL_PIPE}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: ctrl_body\n\$2: one_pipe(default: ${CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${CTRL_PIPE})"
         return 1
     fi
 
-    if [ -z "${one_pipe}" ];then
-        one_pipe="${CTRL_PIPE}"
-    fi
-
-    if ! file_exist "${one_pipe}.run";then
-        echo_erro "ctrl task [${one_pipe}.run] donot run for [$@]"
+    if ! file_exist "${_pipe}.run";then
+        echo_erro "ctrl task [${_pipe}.run] donot run for [$@]"
         return 1
     fi
 
-    send_and_wait "${ctrl_body}" "${one_pipe}"
+    local send_resp_val=""
+    send_and_wait send_resp_val "${_body}" "${_pipe}"
     return 0
 }
 
@@ -120,12 +114,11 @@ function _bash_ctrl_exit
 
 function _ctrl_thread_main
 {
-    local index
-
-    local line
+    local index line
     while read line
     do
         echo_file "${LOG_DEBUG}" "ctrl recv: [${line}] from [${CTRL_PIPE}]"
+
 		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}
@@ -179,6 +172,8 @@ function _ctrl_thread_main
             } &
 
             local bgpid=$!
+			disown ${bgpid}
+
             if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
                 echo_debug "write [${bgpid}] to [${ack_pipe}]"
                 process_run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
@@ -194,7 +189,6 @@ function _ctrl_thread_main
             echo_debug "write [ACK] to [${ack_pipe}]"
             process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
-
         echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
 
         if ! file_exist "${CTRL_WORK_DIR}";then

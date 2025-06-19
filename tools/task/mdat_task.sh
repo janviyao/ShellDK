@@ -66,7 +66,8 @@ function mdat_ctrl_sync
         return 1
     fi
     
-    send_and_wait "${_body_}" "${_pipe_}"
+    local send_resp_val=""
+    send_and_wait send_resp_val "${_body_}" "${_pipe_}"
     return 0
 }
 
@@ -122,8 +123,9 @@ function mdat_key_have
         return 1
     fi
     
-    send_and_wait "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
-    if math_bool "${RESP_VAL}";then
+    local send_resp_val=""
+    send_and_wait send_resp_val "KEY_HAS${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    if math_bool "${send_resp_val}";then
         return 0
     else
         return 1
@@ -149,8 +151,9 @@ function mdat_val_have
         return 1
     fi
     
-    send_and_wait "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
-    if math_bool "${RESP_VAL}";then
+    local send_resp_val=""
+    send_and_wait send_resp_val "KEY_HAS${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_pipe_}"
+    if math_bool "${send_resp_val}";then
         return 0
     else
         return 1
@@ -286,10 +289,11 @@ function mdat_get
         return 1
     fi
 
-    send_and_wait "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
-    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${RESP_VAL}\"]"
+    local send_resp_val=""
+    send_and_wait send_resp_val "KV_GET${GBL_SPF1}${_xkey_}" "${_pipe_}"
+    echo_file "${LOG_DEBUG}" "mdat get: [${_xkey_} = \"${send_resp_val}\"]"
 
-    echo "${RESP_VAL}"
+    echo "${send_resp_val}"
     return 0
 }
 
@@ -351,6 +355,7 @@ function _mdat_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "mdat recv: [${line}] from [${MDAT_PIPE}]"
+
 		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}

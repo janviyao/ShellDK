@@ -41,9 +41,9 @@ function do_rsync
 
     file_exist "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
     if [ -n "${xfer_ips[*]}" ];then
-        for ipaddr in ${xfer_ips[*]}
+        for ipaddr in "${xfer_ips[@]}" 
         do
-            if [[ ${ipaddr} != ${LOCAL_IP} ]];then
+            if [[ "${ipaddr}" != "${LOCAL_IP}" ]];then
                 local remote_user="${USR_NAME}"
                 local remote_pswd="${USR_PASSWORD}"
 
@@ -65,7 +65,7 @@ function do_rsync
 					return 1
 				fi
 
-                if [[ ${x_direct} == "TO" ]];then
+                if [[ "${x_direct}" == "TO" ]];then
                     local xfer_dir=${xfer_des}
                     if [[ $(string_end "${xfer_dir}" 1) != '/' ]]; then
                         xfer_dir=$(file_path_get "${xfer_dir}")
@@ -73,7 +73,7 @@ function do_rsync
 
                     sync_des="${remote_user}@${ipaddr}:${xfer_des}"
                     sync_cmd="REMOTE${GBL_SPF3}${remote_user}${GBL_SPF3}${remote_pswd}${GBL_SPF3}${ipaddr}${GBL_SPF3}${xfer_dir}"
-                elif [[ ${x_direct} == "FROM" ]];then
+                elif [[ "${x_direct}" == "FROM" ]];then
                     sync_src="${remote_user}@${ipaddr}:${xfer_src}"
                     sync_cmd="REMOTE${GBL_SPF3}${remote_user}${GBL_SPF3}${remote_pswd}${GBL_SPF3}${ipaddr}${GBL_SPF3}"
 
@@ -127,7 +127,7 @@ function rsync_to
         fi
     fi
 
-    local xfer_ips=($@)
+    local xfer_ips=("$@")
     #if [ -z "${xfer_ips[*]}" ];then        
     #    xfer_ips=($(get_hosts_ip))
     #fi
@@ -203,7 +203,7 @@ function rsync_p2p_to
         fi
     fi
 
-    local xfer_ips=($@)
+    local xfer_ips=("$@")
     #if [ -z "${xfer_ips[*]}" ];then        
     #    xfer_ips=($(get_hosts_ip))
     #fi
@@ -244,7 +244,7 @@ function rsync_p2p_from
             fi
         fi
     fi
-    local xfer_ips=($@)
+    local xfer_ips=("$@")
  
     xfer_src=$(file_realpath "${xfer_src}")
     xfer_des=$(file_realpath "${xfer_des}")
@@ -255,48 +255,42 @@ function rsync_p2p_from
 
 function xfer_task_ctrl_async
 {
-    local xfer_body="$1"
-    local one_pipe="$2"
+    local _body="$1"
+    local _pipe="${2:-${XFER_PIPE}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_body\n\$2: one_pipe(default: ${XFER_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${XFER_PIPE})"
         return 1
     fi
 
-    if [ -z "${one_pipe}" ];then
-        one_pipe="${XFER_PIPE}"
-    fi
-
-    if ! file_exist "${one_pipe}.run";then
-        echo_erro "xfer task [${one_pipe}.run] donot run for [$@]"
+    if ! file_exist "${_pipe}.run";then
+        echo_erro "xfer task [${_pipe}.run] donot run for [$@]"
         return 1
     fi
 
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${xfer_body}" > ${one_pipe}
+    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body}" > ${_pipe}
     return 0
 }
 
 function xfer_task_ctrl_sync
 {
-    local xfer_body="$1"
-    local one_pipe="$2"
+    local _body="$1"
+    local _pipe="${2:-${XFER_PIPE}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xfer_body\n\$2: one_pipe(default: ${XFER_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${XFER_PIPE})"
         return 1
     fi
 
-    if [ -z "${one_pipe}" ];then
-        one_pipe="${XFER_PIPE}"
-    fi
-
-    if ! file_exist "${one_pipe}.run";then
-        echo_erro "xfer task [${one_pipe}.run] donot run for [$@]"
+    if ! file_exist "${_pipe}.run";then
+        echo_erro "xfer task [${_pipe}.run] donot run for [$@]"
         return 1
     fi
 
-    echo_debug "xfer wait for ${one_pipe}"
-    send_and_wait "${xfer_body}" "${one_pipe}" "+${MAX_TIMEOUT}"
+    echo_debug "xfer wait for ${_pipe}"
+
+    local send_resp_val=""
+    send_and_wait send_resp_val "${_body}" "${_pipe}" "+${MAX_TIMEOUT}"
     return 0
 }
 
@@ -357,6 +351,7 @@ function _xfer_thread_main
     while read line
     do
         echo_file "${LOG_DEBUG}" "xfer recv: [${line}] from [${XFER_PIPE}]"
+
 		local -a msg_list=()
 		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
         local ack_ctrl=${msg_list[0]}

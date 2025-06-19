@@ -13,13 +13,17 @@
 
 function __var_defined
 {
-    if [[ -n $1 ]]; then
-        if [[ $1 =~ ^-?[0-9]+$ ]]; then
-            return 1
-        fi
-    else
-        return 1
-    fi
+	if [[ -v $1 ]]; then
+		return 0
+	else
+		if [[ -n $1 ]]; then
+			if [[ $1 =~ ^-?[0-9]+$ ]]; then
+				return 1
+			fi
+		else
+			return 1
+		fi
+	fi
 
     ## "set -u" error will lead to shell's exit, so "$()" this will fork a child shell can solve it
     ## local check="\$(set -u ;: \$${var_name})"
@@ -62,7 +66,7 @@ function seq_num
 		_number_list+=("${_seq_num}")
 	else
 		if [[ "${_seq_num}" =~ '-' ]];then
-			local _array_num=($(awk -F '-' '{ for (i=1; i<=NF; i++) { if ($i != "") { print $i } else { print "$" } } }' <<< "${_seq_num}"))
+			local -a _array_num=($(awk -F '-' '{ for (i=1; i<=NF; i++) { if ($i != "") { print $i } else { print "$" } } }' <<< "${_seq_num}"))
 			local _index_s=${_array_num[0]}
 			local _index_e=${_array_num[1]}
 			if math_is_int "${_index_s}";then
@@ -295,9 +299,9 @@ function import_all
 
 function wait_value
 {
-	local resp_pipe="$1"
-	local timeout_s="${2:-2}"
-	local -g FUNC_RET
+	local -n _wait_val_ref=$1
+	local resp_pipe="$2"
+	local timeout_s="${3:-2}"
 
 	if [ $# -lt 1 ];then
 		echo_erro "\nUsage: [$@]\n\$1: resp_pipe\n\$2: timeout_s"
@@ -327,12 +331,12 @@ function wait_value
 	local try_old=0
 	while true
 	do
-		#process_run_timeout ${timeout_s} read FUNC_RET \< ${resp_pipe}\; echo "\"\${FUNC_RET}\"" \> ${resp_pipe}.result
-		read -t ${timeout_s} FUNC_RET < ${resp_pipe}
-		echo_debug "(${try_old})read [${FUNC_RET}] from ${resp_pipe}"
+		#process_run_timeout ${timeout_s} read _wait_val_ref \< ${resp_pipe}\; echo "\"\${_wait_val_ref}\"" \> ${resp_pipe}.result
+		read -t ${timeout_s} _wait_val_ref < ${resp_pipe}
+		echo_debug "(${try_old})read [${_wait_val_ref}] from ${resp_pipe}"
 
 		let try_old++
-		if [ -n "${FUNC_RET}" -o ${try_old} -eq ${try_cnt} ];then
+		if [ -n "${_wait_val_ref}" -o ${try_old} -eq ${try_cnt} ];then
 			break
 		fi
 	done
@@ -348,10 +352,11 @@ function wait_value
 
 function send_and_wait
 {
-    local send_body="$1"
-    local send_pipe="$2"
-    local timeout_s="${3:-2}"
-	local -g RESP_VAL
+	local -n _resp_val_ref=$1
+	local _resp_val_refnm=$1
+    local send_body="$2"
+    local send_pipe="$3"
+    local timeout_s="${4:-2}"
 
     if [ $# -lt 2 ];then
 		echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe\n\$3: timeout_s(default: 2s)"
@@ -381,9 +386,9 @@ function send_and_wait
 	echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
 	process_run_callback '' '' "process_run_with_condition 'test -p ${ack_pipe}' 'echo \"NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}\" > ${send_pipe}'" &>/dev/null
 
-	wait_value "${ack_pipe}" "${timeout_s}"
-	if [ $? -eq 0 ];then
-		RESP_VAL="${FUNC_RET}"
+	wait_value ${_resp_val_refnm} "${ack_pipe}" "${timeout_s}"
+	if [ $? -ne 0 ];then
+		_resp_val_ref=""
 	fi
 
     #echo_debug "remove: [${ack_pipe}]"
