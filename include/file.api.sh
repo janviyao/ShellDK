@@ -4,9 +4,15 @@
 function file_create
 {
 	local xfile="$1"
+	local isdir="${2:-false}"
 
 	if file_exist "${xfile}";then
 		return 0
+	fi
+
+    if math_bool "${isdir}";then
+		mkdir -p ${xfile}
+		return $?
 	fi
 
 	local xdir=$(file_path_get ${xfile})

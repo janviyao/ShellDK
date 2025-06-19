@@ -57,13 +57,18 @@ function mytar
         iscompress="false"
         if [ ${#flist[*]} -ge 1 ];then
             local realfile=$(file_realpath "${fpath}")
-            local xselect=$(input_prompt "" "decide if delete ${realfile} ? (yes/no)" "yes")
+            local xselect=$(input_prompt "" "delete { ${realfile} } ? (yes/no)" "yes")
             if math_bool "${xselect}";then
                 iscompress="true"
                 sudo_it rm -f ${realfile}
-            else
-                return 0
-            fi
+			else
+				local xselect=$(input_prompt "" "decompress { ${realfile} } to { ${flist[0]} } ? (yes/no)" "yes")
+				if math_bool "${xselect}";then
+					iscompress="false"
+				else
+					return 0
+				fi
+			fi
         fi
     else
         if [ ${#flist[*]} -eq 0 ];then
@@ -78,20 +83,28 @@ function mytar
         xwhat="${flist[@]}"
     else
         options="-xf"
-        if file_exist "${flist[0]}";then
-            xwhat="-C ${flist[0]}"
-        fi
+		if [ ${#flist[*]} -gt 0 ];then
+			if ! file_exist "${flist[0]}";then
+				file_create "${flist[0]}" true
+			fi
+			xwhat="-C ${flist[0]}"
+		fi
     fi
     
+    local ls_opts="-tf"
     local fname=$(file_fname_get "${fpath}")
     if string_match "${fname}" "\.tar\.gz$";then
         options="-z ${options}"
+        ls_opts="-z ${ls_opts}"
     elif string_match "${fname}" "\.tar\.bz2$";then
         options="-j ${options}"
+        ls_opts="-j ${ls_opts}"
     elif string_match "${fname}" "\.tar\.xz$";then
         options="-J ${options}"
+        ls_opts="-J ${ls_opts}"
     elif string_match "${fname}" "\.tar$";then
         options="${options}"
+        ls_opts="${ls_opts}"
     else
         echo_erro "not support compress-package name: ${fname}"
         return 1
@@ -104,23 +117,19 @@ function mytar
         echo $(file_realpath "${fpath}")
     else
         local outdir="."
-        if file_exist "${flist[0]}";then
-            outdir="${flist[0]}"
-        fi
-        
-        local fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z_]+\-?[0-9]*\.?[0-9]*")
-        local fprefix=$(regex_2str "${fprefix}")
-
-        local find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
-        if [ ${#find_arr[*]} -eq 0 ];then
-            fprefix=$(string_gensub "${fname}" "^[0-9a-zA-Z_]+")
-            find_arr=($(efind ${outdir} ".*/?${fprefix}.*" -maxdepth 1 -type d))
-        fi
+		if [ ${#flist[*]} -gt 0 ];then
+			if file_exist "${flist[0]}";then
+				outdir="${flist[0]}"
+			fi
+		fi
+		
+		local item_list=()
+		array_reset item_list "$(tar ${ls_opts} ${fpath} | grep -E "^[^/]+/?$")"
 
         local dir
-        for dir in "${find_arr[@]}"    
+        for dir in "${item_list[@]}"    
         do
-            local real_dir=$(file_realpath "${dir}")
+            local real_dir=$(file_realpath "${outdir}/${dir}")
             echo "${real_dir}"
         done
     fi
