@@ -48,8 +48,8 @@ alias mylsblk='lsblk -o NAME,MOUNTPOINT,SIZE,MAJ:MIN,HCTL,TRAN,WWN,MIN-IO,OPT-IO
 alias mylspci='lspci -vvv -nn'
 alias mylsscsi='lsscsi -d -s -g -p -P -i -w'
 
-alias mywget='function mywget { if [ $# -ge 2 ];then local fname=$2; else local fname=$(string_gensub "$1" "(?<=\/)[^\/]+$"); fi; wget "$1" -O ${fname}; return $?; }; mywget'
-alias myps='function ps_grep { ps -ef | grep $@ | grep -v grep | awk "{ print \$2 }" | { pids=($(cat)); process_info "${pids[*]}" false true "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; ps_grep'
+alias mywget='function mywget { if [ $# -eq 2 ];then local fname=$2; elif [ $# -eq 1 ];then local fname=$(string_gensub "$1" "(?<=\/)[^\/]+$"); else return 1; fi; wget "$1" -O ${fname}; return $?; }; mywget'
+alias myps='function myps { ps -ef | grep "$@" | grep -v grep | awk "{ print \$2 }" | { local pids=($(cat)); process_info "${pids[*]}" "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; myps'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
 alias psgrep='function psgrep { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it ps -eo pid,cmd | awk "{ if (\$1 ~ /^$1/ ) print \$0 }"; else sudo_it pgrep -fa $1 | grep -v pgrep; fi; shift; done }; psgrep'
