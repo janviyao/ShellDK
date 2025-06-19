@@ -397,12 +397,12 @@ function process_name2pid
 				pid_array+=("${res_array[@]}")
                 continue
             fi
-            #res_array=($(ps -C ${xproc} -o pid=))
-            #if [ ${#res_array[*]} -gt 0 ];then
-			#	 pid_array+=(${res_array[*]})
-            #    continue
-            #fi
 
+            res_array=($(ps -C ${xproc} -o pid=))
+            if [ ${#res_array[*]} -gt 0 ];then
+				 pid_array+=(${res_array[*]})
+                continue
+            fi
             #local none_regex=$(regex_2str "${xproc}")
             #res_array=($(ps -eo pid,comm | grep -v grep | grep -v process_name2pid | awk "{ if(\$0 ~ /[ ]+${none_regex}[ ]+/) print \$1 }"))    
             #if [ ${#res_array[*]} -gt 0 ];then
@@ -673,7 +673,7 @@ function process_info
     local show_thread=${4:-false}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid list\n\$2: output headers(string)\n\$3: whether to show header(bool)\n\$4: whether to show threads(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xproc list\n\$2: output headers(string)\n\$3: whether to show header(bool)\n\$4: whether to show threads(bool)"
         return 1
     fi
     
@@ -685,41 +685,26 @@ function process_info
     fi
 
     local hdr_showed=${show_header}
-    local -a all_pids
-    local xproc
-    for xproc in "${xproc_list[@]}" 
-    do
-        local -a pid_array=($(process_name2pid ${xproc}))    
-        local xpid
-        for xpid in "${pid_array[@]}" 
-        do
-            if [ ${xpid} -eq 0 ];then
-                continue
-            fi
-
-            if ! process_exist ${xpid};then
-                continue
-            fi
-
-            if [[ "${SYSTEM}" == "Linux" ]]; then
-                if math_bool "${hdr_showed}"; then
-                    ps -ww -p ${xpid} -o ${ps_header}
-                    hdr_showed=false
-                else
-                    ps -ww -p ${xpid} -o ${ps_header} --no-headers
-                fi
-            elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-                if math_bool "${hdr_showed}"; then
-                    ps -a | grep -w "PID" 
-                    ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
-                    hdr_showed=false
-                else
-                    ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
-                fi
-            fi
-        done 
-        all_pids+=("${pid_array[@]}")
-    done
+	local -a all_pids=($(process_name2pid "${xproc_list[@]}"))
+	for xpid in "${all_pids[@]}" 
+	do
+		if [[ "${SYSTEM}" == "Linux" ]]; then
+			if math_bool "${hdr_showed}"; then
+				ps -ww -p ${xpid} -o ${ps_header}
+				hdr_showed=false
+			else
+				ps -ww -p ${xpid} -o ${ps_header} --no-headers
+			fi
+		elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+			if math_bool "${hdr_showed}"; then
+				ps -a | grep -w "PID" 
+				ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
+				hdr_showed=false
+			else
+				ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
+			fi
+		fi
+	done
 
     if math_bool "${show_thread}"; then
         for xpid in "${all_pids[@]}" 
