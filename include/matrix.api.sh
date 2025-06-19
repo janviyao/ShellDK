@@ -174,7 +174,7 @@ function array_reset
 	local -n _array_ref=$1
 	local _array_name=$1
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_array $1;then
 		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: value"
 		return 1
@@ -337,7 +337,7 @@ function map_print
 {
 	local -n _map_ref=$1
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_map $1;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key"
 		return 1
@@ -362,7 +362,7 @@ function map_copy
 	local -n _map_ref1=$1
 	local -n _map_ref2=$2
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_map $1 || ! is_map $2;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map variable reference"
 		return 1
@@ -382,7 +382,7 @@ function map_add
 	local -n _map_ref=$1
 	local _key="$2"
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 3 ] || ! is_map $1;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3~N: value list"
 		return 1
@@ -411,7 +411,7 @@ function map_get
 	local -n _map_ref=$1
 	local _key="$2"
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 3 ] || ! is_map $1;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3~N: index list"
 		return 1
@@ -445,7 +445,7 @@ function map_del
 	local -n _map_ref=$1
 	local _key="$2"
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_map $1;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3~N: value list"
 		return 1
@@ -486,7 +486,7 @@ function map_key_have
 	local -n _map_ref=$1
 	local _key="$2"
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_map $1;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key"
 		return 1
@@ -509,7 +509,7 @@ function map_val_have
 	local _key="$2"
 	local _val="$3"
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 3 ] || ! is_map $1;then
 		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3: value"
 		return 1
@@ -535,7 +535,7 @@ function mmap_add
     local _map_name=$1
     local _dimension=$2
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
     if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: values"
         return 1
@@ -562,7 +562,7 @@ function mmap_get
     local _map_name=$1
     local _dimension=$2
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
     if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: index list"
         return 1
@@ -589,7 +589,7 @@ function mmap_del
     local _map_name=$1
     local _dimension=$2
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
     if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: values"
         return 1
@@ -616,7 +616,7 @@ function mmap_key_have
     local _map_name=$1
     local _dimension=$2
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
     if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: key list"
         return 1
@@ -643,7 +643,7 @@ function mmap_val_have
     local _map_name=$1
     local _dimension=$2
 
-	echo_file "${LOG_DEBUG}" "$@"
+	#echo_file "${LOG_DEBUG}" "$@"
     if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
         echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: key list"
         return 1

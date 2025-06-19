@@ -444,7 +444,7 @@ function func_pull
 	local cur_branch="${subcmd_all[*]}"
 	if [ -n "${cur_branch}" ];then
 		if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
-			process_run git pull origin ${cur_branch}
+			process_run git pull --rebase origin ${cur_branch}
 		else
 			echo "There is no tracking information for the current branch."
 			return 0
@@ -452,7 +452,7 @@ function func_pull
 	else
 		cur_branch=$(git symbolic-ref --short -q HEAD)
 		if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
-			process_run git pull
+			process_run git pull --rebase
 		else
 			echo "There is no tracking information for the current branch."
 			return 0
