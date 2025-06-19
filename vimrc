@@ -1016,21 +1016,6 @@ function! GlobalReplace()
     silent! normal! M
 endfunction
 
-"恢复加载
-function! RestoreLoad()
-    if !exists("autocommands_loaded")
-        "防止多次加载                                                                                            
-        let autocommands_loaded = 1
-
-        call Quickfix_ctrl("load")
-
-        let bufnr = bufnr('%')
-        let filename = bufname(bufnr)
-        call LogPrint("2file", "RestoreLoad bufnr: ".bufnr." file: ".filename)
-        silent! execute 'e '.filename
-    endif
-endfunction
-
 "关闭BufExplorer
 function! CloseBufExp()
     let benr = bufnr("BufExplorer")
@@ -1136,15 +1121,27 @@ function! ProjectGo(opmode)
 			silent! execute "rviminfo ".GetVimDir("session")."/session.viminfo"
 		endif
 
+		call Quickfix_start()
+		call Quickfix_ctrl("load")
+
 		if len(v:argv) > 1
-			if filereadable(v:argv[1])
-				silent! execute "edit ".v:argv[1]
-			endif
+			silent! execute 'edit '.v:argv[1]
+		else
+			let bufnr = bufnr('%')
+			let filename = bufname(bufnr)
+			"call LogPrint("2file", "RestoreLoad bufnr: ".bufnr." file: ".filename)
+			silent! execute 'edit '.filename
+			"silent! normal! M
 		endif
 	elseif a:opmode == "unload" 
+		call ToggleWindow("allclose")
+		call Quickfix_ctrl("save")    
+
 		silent! execute "mks! ".GetVimDir("session")."/session.vim"
 		silent! execute "wviminfo! ".GetVimDir("session")."/session.viminfo"
 		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m unload -o ".GetVimDir("database")
+
+		call Quickfix_stop()
     endif
 endfunction
 
@@ -1157,19 +1154,11 @@ function! EnterHandler()
     endif
  
 	call ProjectGo("load")
-	call RestoreLoad()
-    "silent! normal! M
 endfunction
 
 "VIM退出事件
 function! LeaveHandler(exit)
-    if filereadable("tags") && filereadable("cscope.out") 
-        call ToggleWindow("allclose")
-        call Quickfix_ctrl("save")    
-    endif
-
 	call ProjectGo("unload")
-    call Quickfix_leave()
 
     call LogDisable()
     if getfsize(s:log_file_path) > s:log_file_max 

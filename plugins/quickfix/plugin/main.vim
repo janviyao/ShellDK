@@ -46,7 +46,12 @@ function! Quickfix_grep(arg)
     call quickfix#grep_find(a:arg)
 endfunction
 
-function! Quickfix_leave()
+function! Quickfix_start()
+    call LogPrint("2file", "quickfix-worker start: quickfix")
+	call s:worker_op.start("quickfix", s:file_op.process_req, 20, 3)
+endfunction
+
+function! Quickfix_stop()
     while s:worker_op.has_work("quickfix")
         let works = s:worker_op.get_works("quickfix")
         call LogPrint("2file", "quickfix leave, wait worker [".string(works)."] stop: 10ms")
@@ -65,8 +70,6 @@ nnoremap <silent> <Leader>qd  :call quickfix#ctrl_main("delete")<CR>
 nnoremap <silent> <Leader>qrc :call quickfix#ctrl_main("recover")<CR>
 nnoremap <silent> <Leader>qrf :call quickfix#ctrl_main("recover-next")<CR>
 nnoremap <silent> <Leader>qrb :call quickfix#ctrl_main("recover-prev")<CR>
-
-call s:worker_op.start("quickfix", s:file_op.process_req, 20, 3)
 
 " restore 'cpo'
 let &cpo = s:cpo_save
