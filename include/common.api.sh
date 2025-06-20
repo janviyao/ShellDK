@@ -205,12 +205,12 @@ function para_fetch
 						return 1
 					fi
 
-					map_add ${option_map_refnm} "${option}" "${value}"
+					map_append ${option_map_refnm} "${option}" "${value}"
 				else
 					if math_bool "${with_equal}";then
-						map_add ${option_map_refnm} "${option}" "${value}"
+						map_append ${option_map_refnm} "${option}" "${value}"
 					else
-						map_add ${option_map_refnm} "${option}" true
+						map_append ${option_map_refnm} "${option}" true
 					fi
 				fi
 			fi	
@@ -223,28 +223,28 @@ function para_fetch
 						return 1
 					fi
 
-					map_add ${option_map_refnm} "${option}" "${value}"
+					map_append ${option_map_refnm} "${option}" "${value}"
 				else
 					if math_bool "${with_equal}";then
-						map_add ${option_map_refnm} "${option}" "${value}"
+						map_append ${option_map_refnm} "${option}" "${value}"
 					else
-						map_add ${option_map_refnm} "${option}" true
+						map_append ${option_map_refnm} "${option}" true
 					fi
 				fi
 			fi
 		else
-			array_add ${subcmd_all_refnm} "${option}"
+			array_append ${subcmd_all_refnm} "${option}"
 		fi
 
-		array_add ${option_all_refnm} "${option}"
+		array_append ${option_all_refnm} "${option}"
 		if math_bool "${value_used}";then
 			if ! math_bool "${with_equal}";then
-				array_add ${option_all_refnm} "${value}"
+				array_append ${option_all_refnm} "${value}"
 				shift
 			fi
 		else
 			if math_bool "${with_equal}";then
-				array_add ${option_all_refnm} "${value}"
+				array_append ${option_all_refnm} "${value}"
 			fi
 		fi
         shift

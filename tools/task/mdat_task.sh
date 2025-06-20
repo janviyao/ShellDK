@@ -1,4 +1,6 @@
 #!/bin/bash
+# shell cannot export map or array data to global environment, so design mdat task
+#
 : ${INCLUDED_MDAT:=1}
 MDAT_WORK_DIR="${BASH_WORK_DIR}/mdat"
 mkdir -p ${MDAT_WORK_DIR}
@@ -392,14 +394,14 @@ function _mdat_thread_main
             local _xkey_=${val_list[0]}
             local _xval_=${val_list[1]}
 
-            map_add _global_map_ "${_xkey_}" "${_xval_}"
+            map_append _global_map_ "${_xkey_}" "${_xval_}"
         elif [[ "${req_ctrl}" == "KV_APPEND" ]];then
 			local -a val_list=()
 			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local _xkey_=${val_list[0]}
             local _xval_=${val_list[1]}
             
-            map_add _global_map_ "${_xkey_}" "${_xval_}"
+            map_append _global_map_ "${_xkey_}" "${_xval_}"
             echo_debug "map[${_xkey_}]=[${_global_map_[${_xkey_}]}]"
         elif [[ "${req_ctrl}" == "KV_GET" ]];then
             local _xkey_=${req_body}

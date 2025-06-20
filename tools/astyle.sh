@@ -125,7 +125,7 @@ function do_format
     do
         if [ -d "${next}" ];then
            do_format "${next}" ${is_reg} &
-           array_add bg_tasks $!
+           array_append bg_tasks $!
         else
 			if match_execlude "${next}" ${is_reg};then
 				if math_bool "${VERBOSE}";then

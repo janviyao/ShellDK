@@ -943,7 +943,7 @@ function file_list
 				fi
 			elif [ -d "${xfile}/${target}" ];then
 				file_list "${xfile}/${target}" "${string}" "${is_reg}" &
-				array_add bg_tasks $!
+				array_append bg_tasks $!
 			fi
 		done
 	fi
