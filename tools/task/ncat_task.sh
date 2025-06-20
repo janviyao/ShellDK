@@ -583,6 +583,7 @@ function _ncat_thread_main
         return
     fi
 
+	local ncat_body
     local ncat_port=$(ncat_generate_port)
     mdat_set_var master_work
 
@@ -591,8 +592,8 @@ function _ncat_thread_main
         ncat_port=$(ncat_generate_port ${ncat_port})
         #echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
 
-        local ncat_body=$(ncat_recv_msg "${ncat_port}")
-        if [ -z "${ncat_body}" ];then
+        ncat_body=$(ncat_recv_msg "${ncat_port}")
+        if [ $? -ne 0 ];then
             mdat_get_var master_work
 
             if ! file_exist "${NCAT_WORK_DIR}";then

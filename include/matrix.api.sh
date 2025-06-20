@@ -30,7 +30,7 @@ function array_print
 	else
 		local -a _new_index_list=()
 		local _index
-		for _index in ${_index_list[*]}
+		for _index in "${_index_list[@]}"
 		do
 			if math_is_int "${_index}";then
 				_new_index_list+=("${_index}")
@@ -50,7 +50,7 @@ function array_print
 	fi
 
     local _index
-    for _index in ${_index_list[*]}
+    for _index in "${_index_list[@]}" 
     do
 		print_lossless "${_array_ref[${_index}]}"
     done
@@ -152,7 +152,7 @@ function array_index
 
 	local _found=0
     local _index
-    for _index in ${!_array_ref[*]}
+    for _index in "${!_array_ref[@]}"
     do
         local _item="${_array_ref[${_index}]}"
         if [[ "${_item}" == "${_value}" ]];then

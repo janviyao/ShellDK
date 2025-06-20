@@ -69,7 +69,7 @@ else
 fi
 
 running_traces=($(sudo_it lsof +D ${trace_dir} | awk '{ if(NR != 1) { print $1 }}' | uniq))
-for app in ${running_traces[*]}
+for app in "${running_traces[@]}"
 do
     process_kill ${app}
 done

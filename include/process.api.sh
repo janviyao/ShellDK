@@ -104,7 +104,7 @@ function process_run_callback
 	local cmd_str=$(para_pack "$@")
 
     local outfile=$(file_temp)
-	bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; if [ -n '${cb_func}' ];then ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}; fi" &> /dev/null &
+	bash -c "( ${cmd_str} ) &> ${outfile};erro=\$?; if [ -n '${cb_func}' ];then ${cb_func} \"\${erro}\" '${outfile}' ${cb_args}; else rm -f ${outfile}; fi" &> /dev/null &
     local bgpid=$!
     disown ${bgpid} #使用 disown 命令将其从 Shell 的作业表中移除，使其不再受父进程退出的影响, 从而避免状态提示
 
@@ -626,7 +626,7 @@ function thread_info
             fi
 
             local -a tinfo=(${tinfo_str})
-            for header in ${header_array[*]}
+            for header in "${header_array[@]}" 
             do
                 local -a values=(${index_map[${header}]})
                 printf -- "${values[1]} " "${tinfo[${values[2]}]}"
@@ -750,7 +750,7 @@ function process_ptree
         fi
 
         local -a cpid_array=($(process_cpid "${xpid}"))    
-        for cpid in ${cpid_array[*]}
+        for cpid in "${cpid_array[@]}"
         do
             process_ptree "${cpid}" "${show_thread}" "${show_header}"
         done
@@ -840,7 +840,7 @@ function process_cpu2
         if math_is_int "${cpu}";then
             local pid_list=$(ps -eLo pid,psr | sort -n -u -k 2 | awk -v cid=${cpu} '{ if ($2 == cid) print $1 }')
             local xpid
-            for xpid in ${pid_list[*]}
+            for xpid in "${pid_list[@]}" 
             do
                 printf -- "%-8d %s\n" "${xpid}" "$(process_pid2name "${xpid}")"
             done

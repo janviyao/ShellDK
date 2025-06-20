@@ -47,7 +47,7 @@ function func_eval
 
 	local cmd_str="${subcmd_all[*]}"
     local -a pid_array=($(process_name2pid "${xproc}"))
-    for xproc in ${pid_array[*]}
+    for xproc in "${pid_array[@]}"
     do
         sudo_it gdb --batch --eval-command "${cmd_str}" -p ${xproc}
         if [ $? -ne 0 ];then
@@ -109,7 +109,7 @@ function func_script
     fi
 
     local -a pid_array=($(process_name2pid "${xproc}"))
-    for xproc in ${pid_array[*]}
+    for xproc in "${pid_array[@]}"
     do
         sudo_it gdb --batch --command "${xscript}" -p ${xproc}
         if [ $? -ne 0 ];then

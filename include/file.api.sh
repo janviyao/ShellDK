@@ -388,15 +388,14 @@ function file_del
 
             if [[ "${string}" =~ '-' ]];then
 				local total_nr=$(sed -n '$=' ${xfile})
-				local index_list=($(seq_num "${string}" "${total_nr}"))
+				local index_list=($(seq_num "${string}" "${total_nr}" false))
 				if [ ${#index_list[*]} -eq 0 ];then
 					echo_erro "file_del { $@ }"
 					return 1
 				fi
 				
-				total_nr=${#index_list[0]}
                 local index_s=${index_list[0]}
-				local index_e=${index_list[$((total_nr - 1))]}
+                local index_e=${index_list[1]}
 
 				eval "sed -i '${index_s},${index_e}d' ${xfile}"
 				if [ $? -ne 0 ];then
@@ -627,9 +626,9 @@ function file_range
 	local -a range_array=()
     local line_nr1
     local line_nr2
-    for line_nr1 in ${line_nrs1[*]}
+    for line_nr1 in "${line_nrs1[@]}"
     do
-        for line_nr2 in ${line_nrs2[*]}
+        for line_nr2 in "${line_nrs2[@]}"
         do
             if [ ${line_nr1} -lt ${line_nr2} ];then
 				range_array+=("${line_nr1}" "${line_nr2}")
@@ -783,7 +782,7 @@ function file_replace_with_expr
     fi
 
     local line_nr
-    for line_nr in ${line_nrs[*]}
+    for line_nr in "${line_nrs[@]}"
     do
 		local new_str=$(cat < <(eval "${new_exp}"))
         eval "sed -r -i '${line_nr} s/${string}/${new_str}/g' ${xfile}"
@@ -825,7 +824,7 @@ function file_handle_with_cmd
     fi
 
     local line_nr
-    for line_nr in ${line_nrs[*]}
+    for line_nr in "${line_nrs[@]}"
     do
 		local content=$(sed -n "${line_nr}p" ${xfile})
         eval "${run_cmd}" <<< "${content}"
@@ -843,7 +842,7 @@ function file_count
 
 	local -a c_array=()
     local file
-    for file in ${f_array[*]}
+    for file in "${f_array[@]}"
     do
         if ! test -r ${file};then
             sudo_it "chmod +r ${file}"
@@ -864,7 +863,7 @@ function file_count
         echo "${fcount}"
     fi
 
-    for file in ${c_array[*]}
+    for file in "${c_array[@]}"
     do
         if test -r ${file};then
             sudo_it "chmod -r ${file}"
@@ -881,7 +880,7 @@ function file_size
 
 	local -a c_array=()
     local file
-    for file in ${f_array[*]}
+    for file in "${f_array[@]}"
     do
         if ! test -r ${file};then
             sudo_it "chmod +r ${file}"
@@ -901,7 +900,7 @@ function file_size
         echo "${fcount}"
     fi
 
-    for file in ${c_array[*]}
+    for file in "${c_array[@]}"
     do
         if test -r ${file};then
             sudo_it "chmod -r ${file}"
@@ -968,7 +967,8 @@ function file_temp
 {
     local base_dir="${1:-${BASH_WORK_DIR}}"
 
-    local fpath="${base_dir}/tmp.$$.${RANDOM}"
+    #local fpath="${base_dir}/tmp.$$.${RANDOM}"
+	local fpath=$(mktemp -u -p ${base_dir} tmp.$$.XXXXXX)
     while file_exist "${fpath}" 
     do
         fpath="${base_dir}/tmp.$$.${RANDOM}"

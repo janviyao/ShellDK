@@ -74,7 +74,7 @@ function match_execlude
 	local is_reg="${2:-false}"
 
 	local excl
-	for excl in ${EXCL_STRS[*]}
+	for excl in "${EXCL_STRS[@]}"
 	do
 		if math_bool "${is_reg}";then
 			if string_match "${xfile}" "${excl}";then
@@ -90,7 +90,7 @@ function match_execlude
 	if [ ${#FILE_TYPES[*]} -gt 0 ];then
 		if [ -f "${xfile}" ];then
 			local type count=0
-			for type in ${FILE_TYPES[*]}
+			for type in "${FILE_TYPES[@]}"
 			do
 				if ! string_match "${xfile}" "${type}$";then
 					let count++
@@ -130,7 +130,7 @@ function do_replace
     fi
 
     local next
-    for next in ${xfile_list[*]}
+    for next in "${xfile_list[@]}"
     do
         if [ -d "${next}" ];then
            do_replace "${next}" "${string}" "${new_str}" ${is_reg} &
@@ -161,7 +161,7 @@ function do_replace
 	fi
 }
 
-for xfile in ${FILE_LIST[*]}
+for xfile in "${FILE_LIST[@]}"
 do
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } not accessed"

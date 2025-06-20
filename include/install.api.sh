@@ -168,7 +168,7 @@ function install_check
         fi
 
         local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
-        for xfile in ${file_list[*]}    
+        for xfile in "${file_list[@]}"
         do
             local file_name=$(file_fname_get "${xfile}")
             local new_version=$(string_gensub "${file_name}" "\d+\.\d+(\.\d+)?")
@@ -344,7 +344,7 @@ function install_from_rpm
 	fi
 
     local rpm_file
-    for rpm_file in ${local_rpms[*]}    
+    for rpm_file in "${local_rpms[@]}"
     do
         local full_name=$(file_realpath ${rpm_file})
         local fname=$(file_fname_get ${full_name})
@@ -400,7 +400,7 @@ function install_from_rpm
 			fi
 
             local sys_rpm
-            for sys_rpm in ${system_rpms[*]}
+            for sys_rpm in "${system_rpms[@]}"
             do
                 sudo_it rpm -e --nodeps ${sys_rpm} 
                 if [ $? -ne 0 ]; then
@@ -572,7 +572,7 @@ function install_from_tar
 	fi
 
     local tar_file
-    for tar_file in ${local_tars[*]}    
+    for tar_file in "${local_tars[@]}"
     do
         local file_dir=$(file_path_get ${tar_file})
         local file_name=$(file_fname_get ${tar_file})
@@ -584,7 +584,7 @@ function install_from_tar
 
         local dir_arr=($(mytar "${file_name}"))
         local tar_dir
-        for tar_dir in ${dir_arr[*]}    
+        for tar_dir in "${dir_arr[@]}"
         do
             install_from_make "${tar_dir}" "${conf_para}"
             if [ $? -ne 0 ]; then
@@ -687,7 +687,7 @@ function install_rpms
     fi
 
     local rpm_file
-    for rpm_file in ${local_rpms[*]}    
+    for rpm_file in "${local_rpms[@]}"
     do
         if ! string_match "${rpm_file}" "\.rpm$";then
             echo_debug "$(printf -- "[%13s]: { %-13s } skiped" "Install" "${rpm_file}")"

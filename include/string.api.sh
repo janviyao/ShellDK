@@ -21,7 +21,7 @@ function regex_2str
     local result="${regex}"
     local reg_chars=('\/' '\\' '\*' '\+' '\.' '\[' '\]' '\{' '\}' '\(' '\)')
     local char
-    for char in ${reg_chars[*]}
+    for char in "${reg_chars[@]}"
     do
         if [[ ${regex} =~ ${char} ]];then
             #eval "result=${result//${char}/\\${char}}"
@@ -64,7 +64,7 @@ function regex_perl2basic
     local result="${regex}"
     local reg_chars=('\+' '\?' '\{' '\}' '\(' '\)' '|')
     local char
-    for char in ${reg_chars[*]}
+    for char in "${reg_chars[@]}"
     do
         if [[ ${regex} =~ ${char} ]];then
             if [[ ${char} == '\{' ]];then
@@ -102,7 +102,7 @@ function regex_perl2extended
     local result="${regex}"
     local reg_chars=('\\d' '\\D' '\\w' '\\W' '\\s' '\\S' '\$')
     local char
-    for char in ${reg_chars[*]}
+    for char in "${reg_chars[@]}"
     do
         if [[ ${regex} =~ ${char} ]];then
             if [[ ${char} == '\\d' ]];then
@@ -241,7 +241,7 @@ function string_split
 
 			local -a _res_list=()
 			local _index
-			for _index in ${index_list[*]}
+			for _index in "${index_list[@]}"
 			do
 				_res_list+=("${_sub_list[$((_index - 1))]}")
 			done

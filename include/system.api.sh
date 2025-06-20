@@ -772,7 +772,7 @@ function efind
         ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${posix_reg}"))
     fi
 
-    for xret in ${ret_arr[*]}    
+    for xret in "${ret_arr[@]}"
     do
         echo "${xret}"
     done

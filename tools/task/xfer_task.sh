@@ -469,8 +469,9 @@ function _xfer_kill_rsync
     if file_exist "${XFER_WORK}";then
         local work_list=($(cat ${XFER_WORK}))
         echo_file "${LOG_DEBUG}" "kill xfer works[${work_list[*]}]"
-
-        for pid in ${work_list[*]}
+		
+		local pid
+        for pid in "${work_list[@]}"
         do
             process_kill ${pid}
         done

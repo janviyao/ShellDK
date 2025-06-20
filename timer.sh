@@ -92,10 +92,10 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
         fi
         echo_debug "timer: bash.log size= $((logsize / 1024 / 1024))MB"
 
-        maxsize=$((300*1024*1024))
-        if (( logsize > maxsize ));then
-            cp -f ${BASH_LOG} ${BASH_LOG}.old
-            cat /dev/null > ${BASH_LOG}
+		if math_expr_if "${logsize} > (100 * 1024 * 1024)";then
+			line_num=$(file_line_num ${BASH_LOG})
+			line_num=$(math_expr_val "${line_num} - (${line_num} / 100)" 0)
+			file_del ${BASH_LOG} "1-${line_num}"
         fi
     fi
 

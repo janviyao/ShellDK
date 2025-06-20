@@ -60,6 +60,7 @@ function seq_num
 {
 	local _seq_num=$1
 	local _max_val=$2
+	local _spread=${3:-true}
 
 	local -a _number_list=()
 	if math_is_int "${_seq_num}";then
@@ -71,13 +72,21 @@ function seq_num
 			local _index_e=${_array_num[1]}
 			if math_is_int "${_index_s}";then
 				if math_is_int "${_index_e}";then
-					_number_list+=($(seq ${_index_s} ${_index_e}))
+					if math_bool "${_spread}";then
+						_number_list+=($(seq ${_index_s} ${_index_e}))
+					else
+						_number_list+=("${_index_s}" "${_index_e}")
+					fi
 				else
 					if [[ "${_index_e}" == "$" ]];then
 						if math_is_int "${_max_val}";then
-							_number_list+=($(seq ${_index_s} ${_max_val}))
+							if math_bool "${_spread}";then
+								_number_list+=($(seq ${_index_s} ${_max_val}))
+							else
+								_number_list+=("${_index_s}" "${_max_val}")
+							fi
 						else
-							_number_list+=(${_index_s} ${_index_e})
+							_number_list+=("${_index_s}" "${_index_e}")
 						fi
 					fi
 				fi

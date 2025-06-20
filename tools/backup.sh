@@ -67,7 +67,7 @@ function common_backup
 
     local is_exclude=1
     if [ -f ${real_item} ];then
-        for regex in ${EXCLUDE_FILS[*]}
+        for regex in "${EXCLUDE_FILS[@]}"
         do
             [ -z "${regex}" ] && continue
             if string_match "${real_item}" "${regex}";then 
@@ -85,7 +85,7 @@ function common_backup
             echo_info "Copy File: ${real_item}"
         fi
     else
-        for regex in ${EXCLUDE_DIRS[*]}
+        for regex in "${EXCLUDE_DIRS[@]}" 
         do
             [ -z "${regex}" ] && continue
             if string_match "${real_item}" "${regex}";then 
@@ -110,7 +110,7 @@ function common_backup
 function get_from_conf
 {
     local list=($(cat ${BAK_CONF}))
-    for item in ${list[*]}
+    for item in "${list[@]}"
     do
         echo ${item}
     done
@@ -119,7 +119,7 @@ function get_from_conf
 function get_from_git
 {
     local list=($(git status --porcelain | awk '{ print $2 }'))
-    for item in ${list[*]}
+    for item in "${list[@]}" 
     do
         echo ${item}
     done
@@ -128,7 +128,7 @@ function get_from_git
 cd ${SRC_DIR}
 if file_exist ".git"; then
     ITEM_LIST=($(get_from_git))
-    for item in ${ITEM_LIST[*]}
+    for item in "${ITEM_LIST[@]}"
     do
         common_backup "${item}"
         if [ $? -ne 0 ];then
@@ -139,7 +139,7 @@ fi
 
 if file_exist "${BAK_CONF}"; then
     ITEM_LIST=($(get_from_conf))
-    for item in ${ITEM_LIST[*]}
+    for item in "${ITEM_LIST[@]}"
     do
         common_backup "${item}"
         if [ $? -ne 0 ];then

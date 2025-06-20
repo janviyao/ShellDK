@@ -79,9 +79,9 @@ function project_create
 
     echo > ${out_dir}/cscope.files
 	local type_str
-    for type_str in ${type_list[*]}
+    for type_str in "${type_list[@]}"
     do
-        for dir_str in ${search_list[*]}
+        for dir_str in "${search_list[@]}"
         do
             find ${dir_str} -type f -regex ".+\\.\\(${type_str}\\)" >> ${out_dir}/cscope.files 
         done
@@ -96,7 +96,7 @@ function project_create
     fi
 	
 	local wipe_str
-    for wipe_str in ${wipe_list[*]}
+    for wipe_str in "${wipe_list[@]}"
     do
         file_del ${out_dir}/cscope.files "${wipe_str}" false
         if [ $? -ne 0 ];then
@@ -162,7 +162,7 @@ function project_create
             echo_debug "new  regex: ${line}"
 
             local conflict=false
-            for dir_str in ${search_list[*]}
+            for dir_str in "${search_list[@]}"
             do
                 if string_match "${dir_str}" "${line}";then
                     conflict=true

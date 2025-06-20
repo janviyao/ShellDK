@@ -59,7 +59,7 @@ function inst_usage
 
     echo ""
     echo "=================== Opers ==================="
-    for key in ${!FUNC_MAP[*]};
+    for key in "${!FUNC_MAP[@]}"
     do
         printf -- "Op: %-10s Funcs: %s\n" ${key} "${FUNC_MAP[${key}]}"
     done
@@ -80,7 +80,7 @@ if [ -z "${NEED_OPT}" ];then
 fi
 
 OPT_MATCH=0
-for key in ${!FUNC_MAP[*]};
+for key in "${!FUNC_MAP[@]}"
 do
     if string_contain "${NEED_OPT}" "${key}"; then
         let OPT_MATCH=OPT_MATCH+1
@@ -138,7 +138,7 @@ commandMap[".astylerc"]="${MY_VIM_DIR}/astylerc"
 function clean_env
 {
     local linkf
-    for linkf in ${!commandMap[*]};
+    for linkf in "${!commandMap[@]}"
     do
         echo_debug "remove slink: ${linkf}"
         if [[ ${linkf:0:1} == "." ]];then
@@ -191,7 +191,7 @@ function clean_env
         local must_deps=("ppid" "fstat" "tig")
     fi
 
-    for spec in ${must_deps[*]}
+    for spec in "${must_deps[@]}"
     do
         file_exist "${LOCAL_BIN_DIR}/${spec}" && rm -f ${LOCAL_BIN_DIR}/${spec}
     done
@@ -229,7 +229,7 @@ function inst_env
 		fi
 
         local spec
-        for spec in ${must_deps[*]}
+        for spec in "${must_deps[@]}"
         do
             if ! install_from_net "${spec}";then
                 if ! install_from_spec "${spec}";then
@@ -245,7 +245,7 @@ function inst_env
         local comm_tools=("ppid" "fstat" "perror" "tig")
     fi
 
-    for spec in ${comm_tools[*]}
+    for spec in "${comm_tools[@]}"
     do
         if ! install_from_spec "${spec}";then
             return 1
@@ -253,7 +253,7 @@ function inst_env
     done
 
     local linkf
-    for linkf in ${!commandMap[*]};
+    for linkf in "${!commandMap[@]}"
     do
         local link_file=${commandMap["${linkf}"]}
         echo_debug "create slink: ${linkf}"
@@ -491,7 +491,7 @@ function inst_vim
     #git clone https://github.com/universal-ctags/ctags.git ctags
     #svn checkout https://svn.code.sf.net/p/astyle/code/trunk astyle
     local vim_deps=("cscope" "ctags" "astyle" "ack-grep" "ag")
-    for spec in ${vim_deps[*]}
+    for spec in "${vim_deps[@]}"
     do
         install_from_spec "${spec}"
     done
@@ -618,7 +618,7 @@ function inst_cygwin
 }
 
 if ! math_bool "${REMOTE_INST}"; then
-    for key in ${!FUNC_MAP[*]};
+    for key in "${!FUNC_MAP[@]}"
     do
         if string_contain "${NEED_OPT}" "${key}"; then
             echo_info "$(printf -- "[%13s]: %-6s" "Op" "${key}")"
@@ -644,7 +644,7 @@ else
     echo_info "Remote install into { ${ip_array[*]} }"
 
     inst_paras=""
-    for key in ${!_OPTION_MAP[*]}
+    for key in "${!_OPTION_MAP[@]}"
     do
         if string_match "${key}" "\-?\-[rc][a-zA-Z]*";then
             continue

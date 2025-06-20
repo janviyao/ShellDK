@@ -59,8 +59,8 @@ fi
 mkdir -p ${output_dir}
 cd ${output_dir}
 
-dev_names=($@)
-for dev_name in ${dev_names[*]}
+dev_names=("$@")
+for dev_name in "${dev_names[@]}" 
 do
     if ! file_exist "/dev/${dev_name}";then
 		echo_erro "file { /dev/${dev_name} } not accessed"
@@ -81,7 +81,7 @@ declare -a trace_pids=($(process_name2pid blktrace))
 function stop_blktrace
 {
     local pid
-    for pid in ${trace_pids[*]}
+    for pid in "${trace_pids[@]}"
     do
         if process_exist "${pid}";then
             process_signal INT ${pid}
@@ -114,7 +114,7 @@ if [ -z "${do_collect}" ];then
     do_collect="no"
 fi
 
-for dev_name in ${dev_names[*]}
+for dev_name in "${dev_names[@]}" 
 do
     echo
     echo_info "%-15s %s" "blktrace" "into { ${output_dir}/${dev_name}/${dev_name} }"
