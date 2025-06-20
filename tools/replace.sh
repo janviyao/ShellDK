@@ -134,7 +134,7 @@ function do_replace
     do
         if [ -d "${next}" ];then
            do_replace "${next}" "${string}" "${new_str}" ${is_reg} &
-           array_add bg_tasks $!
+           array_append bg_tasks $!
         else
 			if match_execlude "${next}" ${is_reg};then
 				if math_bool "${VERBOSE}";then

@@ -26,11 +26,11 @@ function array_print
 
 	local _index_list=("$@")
 	if [ ${#_index_list[*]} -eq 0 ];then
-		_index_list=(${!_array_ref[*]})
+		_index_list=("${!_array_ref[@]}")
 	else
 		local -a _new_index_list=()
 		local _index
-		for _index in ${_index_list[*]}
+		for _index in "${_index_list[@]}" 
 		do
 			if math_is_int "${_index}";then
 				_new_index_list+=("${_index}")
@@ -50,7 +50,7 @@ function array_print
 	fi
 
     local _index
-    for _index in ${_index_list[*]}
+    for _index in "${_index_list[@]}"
     do
 		print_lossless "${_array_ref[${_index}]}"
     done
@@ -186,7 +186,7 @@ function array_reset
 	return $?
 }
 
-function array_add
+function array_append
 {
 	local -n _array_ref=$1
 	local _array_name=$1
@@ -377,7 +377,7 @@ function map_copy
 	return 0
 }
 
-function map_add
+function map_append
 {
 	local -n _map_ref=$1
 	local _key="$2"
@@ -403,40 +403,6 @@ function map_add
 	done
 
 	_map_ref["${_key}"]="$(array_print _map_val_list)"
-	return 0
-}
-
-function map_get
-{
-	local -n _map_ref=$1
-	local _key="$2"
-
-	#echo_file "${LOG_DEBUG}" "$@"
-	if [ $# -lt 3 ] || ! is_map $1;then
-		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3~N: index list"
-		return 1
-	fi
-	shift 2
-	local _index_list=("$@")
-
-	local -a _map_val_list=()
-	local _old_map_value="${_map_ref["${_key}"]}"
-	if [ -n "${_old_map_value}" ];then
-		array_reset _map_val_list "${_old_map_value}"
-	fi
-
-	if [ ${#_index_list[*]} -gt 0 ];then
-		local _index
-		for _index in "${_index_list[@]}"
-		do
-			print_lossless "${_map_val_list[${_index}]}"
-		done
-	else
-		if [ ${#_map_val_list[*]} -gt 0 ];then
-			array_print _map_val_list
-		fi
-	fi
-
 	return 0
 }
 
@@ -503,6 +469,21 @@ function map_key_have
 	return 1
 }
 
+function map_key_get
+{
+	local -n _map_ref=$1
+
+	#echo_file "${LOG_DEBUG}" "$@"
+	if [ $# -lt 1 ] || ! is_map $1;then
+		echo_erro "\nUsage: [$@]\n\$1: map variable reference"
+		return 1
+	fi
+
+	local _key_list=("${!_map_ref[@]}")
+	array_print _key_list
+	return $?
+}
+
 function map_val_have
 {
 	local -n _map_ref=$1
@@ -529,10 +510,44 @@ function map_val_have
 	return 1
 }
 
-function mmap_add
+function map_val_get
 {
-    local -n _map_ref=$1
-    local _map_name=$1
+	local -n _map_ref=$1
+	local _key="$2"
+
+	#echo_file "${LOG_DEBUG}" "$@"
+	if [ $# -lt 3 ] || ! is_map $1;then
+		echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: key\n\$3~N: value index list"
+		return 1
+	fi
+	shift 2
+	local _index_list=("$@")
+
+	local -a _map_val_list=()
+	local _old_map_value="${_map_ref["${_key}"]}"
+	if [ -n "${_old_map_value}" ];then
+		array_reset _map_val_list "${_old_map_value}"
+	fi
+
+	if [ ${#_index_list[*]} -gt 0 ];then
+		local _index
+		for _index in "${_index_list[@]}"
+		do
+			print_lossless "${_map_val_list[${_index}]}"
+		done
+	else
+		if [ ${#_map_val_list[*]} -gt 0 ];then
+			array_print _map_val_list
+		fi
+	fi
+
+	return 0
+}
+
+function mmap_append
+{
+    local -n _mmap_ref=$1
+    local _mmap_refnm=$1
     local _dimension=$2
 
 	#echo_file "${LOG_DEBUG}" "$@"
@@ -551,42 +566,15 @@ function mmap_add
 	done
 	
 	local _key=$(array_2string _key_list)
-	map_add ${_map_name} "${_key}" "$@"
-
-    return $?
-}
-
-function mmap_get
-{
-    local -n _map_ref=$1
-    local _map_name=$1
-    local _dimension=$2
-
-	#echo_file "${LOG_DEBUG}" "$@"
-    if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
-        echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: index list"
-        return 1
-    fi
-    shift 2
-
-	local -a _key_list=()
-	while [[ $# -gt 0 ]] && [[ ${_dimension} -gt 0 ]]
-	do
-		_key_list+=("$1")
-		shift
-		let _dimension--
-	done
-	
-	local _key=$(array_2string _key_list)
-	map_get ${_map_name} "${_key}" "$@"
+	map_append ${_mmap_refnm} "${_key}" "$@"
 
     return $?
 }
 
 function mmap_del
 {
-    local -n _map_ref=$1
-    local _map_name=$1
+    local -n _mmap_ref=$1
+    local _mmap_refnm=$1
     local _dimension=$2
 
 	#echo_file "${LOG_DEBUG}" "$@"
@@ -605,15 +593,15 @@ function mmap_del
 	done
 	
 	local _key=$(array_2string _key_list)
-	map_del ${_map_name} "${_key}" "$@"
+	map_del ${_mmap_refnm} "${_key}" "$@"
 
     return $?
 }
 
 function mmap_key_have
 {
-    local -n _map_ref=$1
-    local _map_name=$1
+    local -n _mmap_ref=$1
+    local _mmap_refnm=$1
     local _dimension=$2
 
 	#echo_file "${LOG_DEBUG}" "$@"
@@ -632,15 +620,15 @@ function mmap_key_have
 	done
 	
 	local _key=$(array_2string _key_list)
-	map_key_have ${_map_name} "${_key}" 
+	map_key_have ${_mmap_refnm} "${_key}" 
 
     return $?
 }
 
 function mmap_val_have
 {
-    local -n _map_ref=$1
-    local _map_name=$1
+    local -n _mmap_ref=$1
+    local _mmap_refnm=$1
     local _dimension=$2
 
 	#echo_file "${LOG_DEBUG}" "$@"
@@ -660,7 +648,34 @@ function mmap_val_have
 	local _val="$1"
 
 	local _key=$(array_2string _key_list)
-	map_val_have ${_map_name} "${_key}" "${_val}"
+	map_val_have ${_mmap_refnm} "${_key}" "${_val}"
+
+    return $?
+}
+
+function mmap_val_get
+{
+    local -n _mmap_ref=$1
+    local _mmap_refnm=$1
+    local _dimension=$2
+
+	#echo_file "${LOG_DEBUG}" "$@"
+    if [[ $# -le 2 ]] || ! is_map $1 || ! math_is_int "${_dimension}";then
+        echo_erro "\nUsage: [$@]\n\$1: map variable reference\n\$2: map dimension\n\$3~N: index list"
+        return 1
+    fi
+    shift 2
+
+	local -a _key_list=()
+	while [[ $# -gt 0 ]] && [[ ${_dimension} -gt 0 ]]
+	do
+		_key_list+=("$1")
+		shift
+		let _dimension--
+	done
+	
+	local _key=$(array_2string _key_list)
+	map_val_get ${_mmap_refnm} "${_key}" "$@"
 
     return $?
 }

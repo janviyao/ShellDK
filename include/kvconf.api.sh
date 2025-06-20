@@ -530,7 +530,7 @@ function kvconf_append
 			return 1
 		fi
 
-		array_add split_list "${val_str}" 
+		array_append split_list "${val_str}" 
 		if [ $? -ne 0 ];then
 			echo_erro "kvconf_append { $@ }"
 			return 1

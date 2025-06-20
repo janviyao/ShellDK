@@ -971,14 +971,14 @@ function get_hosts_ip
         fi
 
 		if ! map_key_have hostip_map "${ipaddr}";then
-			map_add hostip_map "${ipaddr}" "${hostnm}"
+			map_append hostip_map "${ipaddr}" "${hostnm}"
 		fi
     done < /etc/hosts
 
     if is_map "${_list_refnm}";then
     	map_copy hostip_map ${_list_refnm} 
     elif is_array "${_list_refnm}";then
-    	array_add _list_ref "${!hostip_map[@]}" 
+    	array_append _list_ref "${!hostip_map[@]}" 
 	else
         echo "${!hostip_map[@]}" 
     fi
