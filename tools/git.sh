@@ -441,6 +441,12 @@ function func_pull
 		esac
 	done
 	
+	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "\w+\.(com|cn)+(?=:)")
+	if ! check_net "${site}";then
+		echo_erro "failed: check_net ${site}"
+		return 1
+	fi
+
 	local cur_branch="${subcmd_all[*]}"
 	if [ -n "${cur_branch}" ];then
 		if git branch -r | grep -F "${cur_branch}" &> /dev/null;then
@@ -509,6 +515,12 @@ function func_push
 				;;
 		esac
 	done
+	
+	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "\w+\.(com|cn)+(?=:)")
+	if ! check_net "${site}";then
+		echo_erro "failed: check_net ${site}"
+		return 1
+	fi
 
     local cur_branch=$(git symbolic-ref --short -q HEAD)
     process_run git push origin ${cur_branch} ${force_opt}

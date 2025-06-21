@@ -22,6 +22,9 @@ fi
 exec {NCAT_FD}<>${NCAT_PIPE}
 NCAT_MASTER_ADDR=$(get_local_ip)
 
+readonly NCAT_PORT_MIN=32767
+readonly NCAT_PORT_MAX=65535
+
 function update_port_used
 {
 	if [ $# -gt 1 ];then
@@ -94,6 +97,10 @@ function check_port_available
         fi
     fi
 
+	if [ ${port} -ge ${NCAT_PORT_MAX} ];then
+		return 1
+	fi
+
 	#timeout 5 nc -l -4 ${port} &> /dev/null &
 	#if nc -zv 127.0.0.1 ${port} &> /dev/null;then
 	#	#echo_file "${LOG_DEBUG}" "port[${port}] avalible"
@@ -139,7 +146,7 @@ function ncat_generate_port
 		fi
 
 		if ! math_is_int "${port_val}";then
-			port_val="32767"
+			port_val=${NCAT_PORT_MIN}
 		fi
 	fi
 
@@ -176,8 +183,8 @@ function ncat_generate_port
     do
         #port_val=$(($RANDOM + ${start}))
         port_val=$((port_val + 1))
-        if [ ${port_val} -ge 65535 ];then
-            port_val=32767
+        if [ ${port_val} -ge ${NCAT_PORT_MAX} ];then
+            port_val=${NCAT_PORT_MIN}
 			echo_file "${LOG_DEBUG}" "ncat [${NCAT_MASTER_ADDR}] port reach to max"
         fi
     done
