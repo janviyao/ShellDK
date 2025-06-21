@@ -441,7 +441,7 @@ function func_pull
 		esac
 	done
 	
-	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "\w+\.(com|cn)+(?=:)")
+	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "[^@]+\.(com|cn)+(?=:)")
 	if ! check_net "${site}";then
 		echo_erro "failed: check_net ${site}"
 		return 1
@@ -516,7 +516,7 @@ function func_push
 		esac
 	done
 	
-	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "\w+\.(com|cn)+(?=:)")
+	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "[^@]+\.(com|cn)+(?=:)")
 	if ! check_net "${site}";then
 		echo_erro "failed: check_net ${site}"
 		return 1
