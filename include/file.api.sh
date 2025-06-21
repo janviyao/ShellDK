@@ -5,14 +5,18 @@ function file_create
 {
 	local xfile="$1"
 	local isdir="${2:-false}"
+	__bash_set 'x'
 
 	if file_exist "${xfile}";then
+		__bash_unset 'x'
 		return 0
 	fi
 
     if math_bool "${isdir}";then
 		mkdir -p ${xfile}
-		return $?
+		local rescode=$?
+		__bash_unset 'x'
+		return ${rescode}
 	fi
 
 	local xdir=$(file_path_get ${xfile})
@@ -20,6 +24,7 @@ function file_create
 		mkdir -p ${xdir}
 		if [ $? -ne 0 ];then
 			echo_erro "file_create { $@ }"
+			__bash_unset 'x'
 			return 1
 		fi
 	fi
@@ -27,9 +32,11 @@ function file_create
 	touch ${xfile}
 	if [ $? -ne 0 ];then
 		echo_erro "file_create { $@ }"
+		__bash_unset 'x'
 		return 1
 	fi
 
+	__bash_unset 'x'
 	return 0
 }
 
@@ -37,16 +44,20 @@ function file_owner_is
 {
     local fname="$1"
     local fuser="$2"
+	__bash_set 'x'
 
     if [ $# -ne 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: path of file or directory\n\$2: user name"
+		__bash_unset 'x'
         return 1
     fi
     
     local nuser=$(ls -l -d ${fname} | awk '{ print $3 }')
     if [[ "${nuser}" == "${fuser}" ]]; then
+		__bash_unset 'x'
         return 0
     else
+		__bash_unset 'x'
         return 1
     fi
 }
@@ -54,19 +65,22 @@ function file_owner_is
 function file_privilege
 {
     local xfile="$1"
+	__bash_set 'x'
 
     local privilege=$(find ${xfile} -maxdepth 0 -printf "%m" 2>> ${BASH_LOG})
     echo "${privilege}"
+
+	__bash_unset 'x'
     return 0
 }
 
 function file_exist
 {
     local xfile="$1"
-	__set_x
+	__bash_set 'x'
 
     if [ -z "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -75,12 +89,12 @@ function file_exist
         for file in ${xfile}
         do
             if string_match "${file}" "\*$";then
-				__unset_x
+				__bash_unset 'x'
                 return 1
             fi
 
             if file_exist "${file}"; then
-				__unset_x
+				__bash_unset 'x'
                 return 0
             fi
         done
@@ -91,43 +105,43 @@ function file_exist
     fi
 
     if [ -e "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -f "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -d "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -r "${xfile}" -o -w "${xfile}" -o -x "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -h "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -L "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -b "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -c "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -s "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     elif [ -p "${xfile}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
 
     if ls --color=never "${xfile}" &> /dev/null;then
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
   
-	__unset_x
+	__bash_unset 'x'
     return 1
 }
 
@@ -135,22 +149,27 @@ function file_expire
 {
     local xfile="$1"
     local xtime="$2"
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: file path\n\$2: second number"
+		__bash_unset 'x'
         return 0
     fi
 
     if ! file_exist "${xfile}";then
 		echo_file "${LOG_ERRO}" "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 0
     fi
 
     local expire_time=$(date -d "-${xtime} second" "+%Y-%m-%d %H:%M:%S")
     local file_time=$(date -r ${xfile} "+%Y-%m-%d %H:%M:%S")
     if [[ "${expire_time}" > "${file_time}" ]];then
+		__bash_unset 'x'
         return 0
     else
+		__bash_unset 'x'
         return 1
     fi
 }
@@ -160,14 +179,17 @@ function file_contain
     local xfile="$1"
     local string="$2"
     local is_reg="${3:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi 
 
@@ -179,14 +201,17 @@ function file_contain
 		fi
 
 		if perl -ne "BEGIN { \$success=1 }; if (/${string}/) { \$success=0,exit }; END { exit(\$success) }" ${xfile};then
+			__bash_unset 'x'
             return 0
         fi
     else
         if grep -F "${string}" ${xfile} &>/dev/null;then
+			__bash_unset 'x'
             return 0
         fi
     fi
 
+	__bash_unset 'x'
     return 1
 }
 
@@ -197,19 +222,23 @@ function file_range_have
     local line_e="$3"
     local string="$4"
     local is_reg="${5:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 4 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi 
 
 	if ! math_is_int "${line_s}";then
 		echo_erro "file_range_have { $@ }"
+		__bash_unset 'x'
 		return 1
 	fi
 
@@ -218,6 +247,7 @@ function file_range_have
 	else
 		if ! math_is_int "${line_e}";then
 			echo_erro "file_range_have { $@ }"
+			__bash_unset 'x'
 			return 1
 		fi
 	fi
@@ -230,14 +260,17 @@ function file_range_have
 		fi
 
         if perl -ne "BEGIN { \$success=1 }; if (\$. >= ${line_s} && \$. <= ${line_e}) { if (/${string}/) { \$success=0,exit } }; END { exit(\$success) }" ${xfile};then
+			__bash_unset 'x'
             return 0
         fi
     else
 		if perl -ne "BEGIN { \$success=1 }; if (\$. >= ${line_s} && \$. <= ${line_e}) { if (index(\$_, \"${string}\") != -1) { \$success=0,exit } }; END { exit(\$success) }" ${xfile};then
+			__bash_unset 'x'
             return 0
         fi
     fi
 
+	__bash_unset 'x'
     return 1
 }
 
@@ -246,14 +279,17 @@ function file_get
     local xfile="$1"
     local string="${2}"
     local is_reg="${3:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi
 
@@ -270,17 +306,20 @@ function file_get
             if [ ${string} -le ${total_nr} ];then
                 echo "$(sed -n "${string}p" ${xfile})"
             else
+				__bash_unset 'x'
                 return 1
             fi
         else
             if [[ "${string}" == "$" ]];then
                 echo "$(sed -n "${string}p" ${xfile})"
             else
+				__bash_unset 'x'
                 return 1
             fi
         fi
     fi
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -291,19 +330,23 @@ function file_range_get
     local line_e="$3"
     local string="$4"
     local is_reg="${5:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 4 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi 
 
 	if ! math_is_int "${line_s}";then
 		echo_erro "file_range_get { $@ }"
+		__bash_unset 'x'
 		return 1
 	fi
 
@@ -312,6 +355,7 @@ function file_range_get
 	else
 		if ! math_is_int "${line_e}";then
 			echo_erro "file_range_get { $@ }"
+			__bash_unset 'x'
 			return 1
 		fi
 	fi
@@ -330,6 +374,7 @@ function file_range_get
 	fi
 	array_print _cnt_list
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -338,18 +383,22 @@ function file_del
     local xfile="$1"
     local string="$2"
     local is_reg="${3:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string or line-range\n\$3: \$2 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
+		__bash_unset 'x'
         return 1
     fi
 
     if [ -z "${string}" ];then
+		__bash_unset 'x'
         return 1
     fi
 
@@ -359,28 +408,32 @@ function file_del
             posix_reg=$(string_replace "${posix_reg}" '#' '\#')
         fi
 
-        eval "sed -r -i '\#${posix_reg}#d' ${xfile}"
+        sed -r -i "\#${posix_reg}#d" ${xfile}
         if [ $? -ne 0 ];then
             echo_erro "file_del { $@ } posix_reg { ${posix_reg} }"
+			__bash_unset 'x'
             return 1
         fi
     else
         if math_is_int "${string}";then
 			local total_nr=$(sed -n '$=' ${xfile})
             if [ ${string} -le ${total_nr} ];then
-                eval "sed -i '${string}d' ${xfile}"
+                sed -i "${string}d" ${xfile}
                 if [ $? -ne 0 ];then
                     echo_erro "file_del { $@ }"
+					__bash_unset 'x'
                     return 1
                 fi
             fi
         else
 			if [[ "${string}" == '$' ]];then
-				eval "sed -i '${string}d' ${xfile}"
+				sed -i "${string}d" ${xfile}
 				if [ $? -ne 0 ];then
 					echo_erro "file_del { $@ }"
+					__bash_unset 'x'
 					return 1
 				fi
+				__bash_unset 'x'
 				return 0
 			fi
 
@@ -389,18 +442,21 @@ function file_del
 				local index_list=($(seq_num "${string}" "${total_nr}" false))
 				if [ ${#index_list[*]} -eq 0 ];then
 					echo_erro "file_del { $@ }"
+					__bash_unset 'x'
 					return 1
 				fi
 				
                 local index_s=${index_list[0]}
                 local index_e=${index_list[1]}
 
-				eval "sed -i '${index_s},${index_e}d' ${xfile}"
+				sed -i "${index_s},${index_e}d" ${xfile}
 				if [ $? -ne 0 ];then
 					echo_erro "file_del { $@ }"
+					__bash_unset 'x'
 					return 1
 				fi
 
+				__bash_unset 'x'
 				return 0
             fi
 
@@ -408,14 +464,16 @@ function file_del
                 string=$(string_replace "${string}" '#' '\#')
             fi
 
-            eval "sed -i '\#${string}#d' ${xfile}"
+            sed -i "\#${string}#d" ${xfile}
             if [ $? -ne 0 ];then
                 echo_erro "file_del { $@ } delete-str { ${string} }"
+				__bash_unset 'x'
                 return 1
             fi
         fi
     fi
 
+	__bash_unset 'x'
     return 0 
 }
 
@@ -423,14 +481,17 @@ function file_append
 {
 	local xfile="$1"
 	local value="$2"
+	__bash_set 'x'
 
 	if [ $# -le 1 ];then
 		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
+		__bash_unset 'x'
 		return 1
 	fi
 
     if ! file_exist "${xfile}";then 
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
 		return 1
     fi
 
@@ -445,9 +506,11 @@ function file_append
 
 	if [ $? -ne 0 ];then
 		echo_erro "file_append { $@ }"
+		__bash_unset 'x'
 		return 1
 	fi
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -456,14 +519,17 @@ function file_insert
     local xfile="$1"
     local content="$2"
     local line_nr="${3:-$}"
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
 		return 1
     fi 
 
@@ -480,34 +546,38 @@ function file_insert
 
         local line_cnt=$(sed -n "${line_nr}p" ${xfile})
 		if string_empty "${line_cnt}"; then
-            eval "sed -i '${line_nr} c\\${content}' ${xfile}"
+            sed -i "${line_nr} c\\${content}" ${xfile}
         else
-            eval "sed -i '${line_nr} i\\${content}' ${xfile}"
+            sed -i "${line_nr} i\\${content}" ${xfile}
         fi
 
         if [ $? -ne 0 ];then
             echo_erro "file_insert { $@ }"
+			__bash_unset 'x'
             return 1
         fi
     else
         if [[ "${line_nr}" == "$" ]];then
             local line_cnt=$(sed -n "${line_nr}p" ${xfile})
 			if string_empty "${line_cnt}"; then
-                eval "sed -i '${line_nr} c\\${content}' ${xfile}"
+                sed -i "${line_nr} c\\${content}" ${xfile}
             else
-                eval "sed -i '${line_nr} i\\${content}' ${xfile}"
+                sed -i "${line_nr} i\\${content}" ${xfile}
             fi
 
             if [ $? -ne 0 ];then
                 echo_erro "file_insert { $@ }"
+				__bash_unset 'x'
                 return 1
             fi
         else
             echo_erro "line_nr: ${line_nr} not integer"
+			__bash_unset 'x'
             return 1
         fi
     fi
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -516,20 +586,25 @@ function file_linenr
     local xfile="$1"
     local string="$2"
     local is_reg="${3:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi 
     
     if [ -z "${string}" ];then
 		file_line_num ${xfile}
-        return $?
+		local rescode=$?
+		__bash_unset 'x'
+        return ${rescode}
     fi
 
 	local -a line_nrs=()
@@ -549,7 +624,8 @@ function file_linenr
     fi
 
 	array_print line_nrs
-    return 1
+	__bash_unset 'x'
+    return 0
 }
 
 function file_range_linenr
@@ -559,19 +635,23 @@ function file_range_linenr
     local line_e="$3"
     local string="$4"
     local is_reg="${5:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 4 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi
 
 	if ! math_is_int "${line_s}";then
 		echo_erro "file_range_linenr { $@ }"
+		__bash_unset 'x'
 		return 1
 	fi
 
@@ -580,6 +660,7 @@ function file_range_linenr
 	else
 		if ! math_is_int "${line_e}";then
 			echo_erro "file_range_linenr { $@ }"
+			__bash_unset 'x'
 			return 1
 		fi
 	fi
@@ -598,6 +679,7 @@ function file_range_linenr
     fi
 
 	array_print line_nrs
+	__bash_unset 'x'
     return 0
 }
 
@@ -607,14 +689,17 @@ function file_range
     local string1="$2"
     local string2="$3"
     local is_reg="${4:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: string\n\$4: \$2 and \$3 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi 
 
@@ -637,34 +722,41 @@ function file_range
 
     if [ ${#range_array[*]} -gt 0 ];then
     	array_print range_array
+		__bash_unset 'x'
         return 0
     else
         if [ ${#line_nrs1[*]} -gt 0 ];then
 			range_array+=("${line_nrs1[0]}" "$")
 			array_print range_array
+			__bash_unset 'x'
             return 0
         fi
     fi
 
+	__bash_unset 'x'
     return 1
 }
 
 function file_line_num
 {
     local xfile="$1"
+	__bash_set 'x'
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
         echo "0"
+		__bash_unset 'x'
         return 0
     fi 
 
     #echo $(sed -n '$=' ${xfile})
     echo $(awk 'BEGIN { line=0 } NF { line=NR } END { print line }' ${xfile})
+	__bash_unset 'x'
     return 0
 }
 
@@ -673,42 +765,50 @@ function file_change
     local xfile="$1"
     local content="$2"
     local line_nr="${3:-$}"
+	__bash_set 'x'
 
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
 		return 1
     fi 
 
     if math_is_int "${line_nr}";then
         local total_nr=$(sed -n '$=' ${xfile})
         if [ ${line_nr} -le ${total_nr} ];then
-            eval "sed -i '${line_nr} c\\${content}' ${xfile}"
+            sed -i "${line_nr} c\\${content}" ${xfile}
             if [ $? -ne 0 ];then
                 echo_erro "file_change { $@ }"
+				__bash_unset 'x'
                 return 1
             fi
         else
             echo_erro "file(total: ${total_nr}) line=${line_nr} not exist"
+			__bash_unset 'x'
             return 1
         fi
     else
         if [[ "${line_nr}" == "$" ]];then
-            eval "sed -i '${line_nr} c\\${content}' ${xfile}"
+            sed -i "${line_nr} c\\${content}" ${xfile}
             if [ $? -ne 0 ];then
                 echo_erro "file_change { $@ }"
+				__bash_unset 'x'
                 return 1
             fi
         else
             echo_erro "line_nr: ${line_nr} not integer"
+			__bash_unset 'x'
             return 1
         fi
     fi
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -718,15 +818,18 @@ function file_replace
     local string="$2"
     local new_str="$3"
     local is_reg="${4:-false}"
-    local line_nr="${5:-'1,\\$'}"
+    local line_nr="${5:-1,$}"
+	__bash_set 'x'
 
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(default: false)\n\$5: line-number or line-range(default range: 1,$)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
+		__bash_unset 'x'
         return 1
     fi
 
@@ -742,12 +845,14 @@ function file_replace
         new_str=$(string_replace "${new_str}" '/' '\/')
     fi
 
-    eval "sed -r -i '${line_nr} s/${string}/${new_str}/g' ${xfile}"
+    sed -r -i "${line_nr} s/${string}/${new_str}/g" ${xfile}
     if [ $? -ne 0 ];then
         echo_erro "file_replace { $@ }"
+		__bash_unset 'x'
         return 1
     fi
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -757,15 +862,18 @@ function file_replace_with_expr
     local string="$2"
     local new_exp="$3"
     local is_reg="${4:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 3 ];then
 		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string(one expresion)\n\$4: \$2 whether regex(default: false)\n
 		\r**Inner Variables**: \n\$xfile  : file path\n\$line_nr: line number"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
+		__bash_unset 'x'
         return 1
     fi
 
@@ -783,13 +891,15 @@ function file_replace_with_expr
     for line_nr in "${line_nrs[@]}"
     do
 		local new_str=$(cat < <(eval "${new_exp}"))
-        eval "sed -r -i '${line_nr} s/${string}/${new_str}/g' ${xfile}"
+        sed -r -i "${line_nr} s/${string}/${new_str}/g" ${xfile}
         if [ $? -ne 0 ];then
             echo_erro "file_replace_with_expr { $@ }"
+			__bash_unset 'x'
             return 1
         fi
     done
 
+	__bash_unset 'x'
     return 0
 }
 
@@ -799,15 +909,18 @@ function file_handle_with_cmd
     local string="$2"
     local run_cmd="$3"
     local is_reg="${4:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 3 ];then
 		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: lookup string\n\$3: command with default input(current line)\n\$4: \$2 whether regex(default: false)\n
 		\r**Inner Variables**: \n\$xfile  : file path\n\$line_nr: line number\n\$content: line content"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
         echo_erro "file { ${xfile} } not accessed"
+		__bash_unset 'x'
         return 1
     fi
 
@@ -828,15 +941,17 @@ function file_handle_with_cmd
         eval "${run_cmd}" <<< "${content}"
     done
 
+	__bash_unset 'x'
     return 0
 }
 
 function file_count
 {
-    local f_array=($@)
+    local f_array=("$@")
     local readable=true
+	__bash_set 'x'
 
-    have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
+    have_cmd "fstat" || { echo_erro "fstat not exist" ; __bash_unset 'x'; return 0; }
 
 	local -a c_array=()
     local file
@@ -867,14 +982,18 @@ function file_count
             sudo_it "chmod -r ${file}"
         fi
     done
+
+	__bash_unset 'x'
+    return 0
 }
 
 function file_size
 {
-    local f_array=($@)
+    local f_array=("$@")
     local readable=true
+	__bash_set 'x'
 
-    have_cmd "fstat" || { echo_erro "fstat not exist" ; return 0; }
+    have_cmd "fstat" || { echo_erro "fstat not exist" ; __bash_unset 'x'; return 0; }
 
 	local -a c_array=()
     local file
@@ -904,6 +1023,9 @@ function file_size
             sudo_it "chmod -r ${file}"
         fi
     done
+
+	__bash_unset 'x'
+	return 0
 }
 
 function file_list
@@ -911,14 +1033,17 @@ function file_list
     local xfile="$1"
     local string="${2}"
     local is_reg="${3:-false}"
+	__bash_set 'x'
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(default: false)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xfile}";then
 		echo_erro "file { ${xfile} } lost"
+		__bash_unset 'x'
         return 1
     fi
 	
@@ -958,12 +1083,14 @@ function file_list
 		wait ${bg_tasks[*]}
 	fi
 
+	__bash_unset 'x'
     return 0
 }
 
 function file_temp
 {
     local base_dir="${1:-${BASH_WORK_DIR}}"
+	__bash_set 'x'
 
     #local fpath="${base_dir}/tmp.$$.${RANDOM}"
 	local fpath=$(mktemp -u -p ${base_dir} tmp.$$.XXXXXX)
@@ -973,13 +1100,17 @@ function file_temp
     done
 
     echo "${fpath}"
+	__bash_unset 'x'
+    return 0
 }
 
 function file_realpath
 {
 	local xfile="$1"
+	__bash_set 'x'
 
     if [ -z "${xfile}" ];then
+		__bash_unset 'x'
         return 1
     fi
 
@@ -1016,6 +1147,7 @@ function file_realpath
 	if [ $? -ne 0 ];then
 		echo_file "${LOG_DEBUG}" "read_path fail: ${xfile}"
 		echo "${xfile}${last_char}"
+		__bash_unset 'x'
 		return 1
 	fi
 
@@ -1035,12 +1167,14 @@ function file_realpath
     fi
 
 	echo "${new_path}${last_char}"
+	__bash_unset 'x'
     return 0
 }
 
 function file_fname_get
 {
 	local xfile="$1"
+	__bash_set 'x'
 
 	if [ -z "${xfile}" ];then
 		xfile="${BASH_SOURCE[0]}"
@@ -1054,12 +1188,14 @@ function file_fname_get
 
     local full_path=$(file_realpath "${xfile}")
     if [ -z "${full_path}" ];then
+		__bash_unset 'x'
         return 1
     fi
 
     local file_name=$(basename --multiple ${full_path})
     if [ $? -ne 0 ];then
         echo_file "${LOG_ERRO}" "basename fail: ${full_path}"    
+		__bash_unset 'x'
         return 1
     fi
 
@@ -1068,12 +1204,14 @@ function file_fname_get
     fi
 
     echo "${file_name}"
+	__bash_unset 'x'
     return 0
 }
 
 function file_path_get
 {
 	local xfile="$1"
+	__bash_set 'x'
 
 	if [ -z "${xfile}" ];then
 		xfile="${BASH_SOURCE[0]}"
@@ -1087,15 +1225,18 @@ function file_path_get
 
     local full_name=$(file_realpath "${xfile}")
     if [ -z "${full_name}" ];then
+		__bash_unset 'x'
         return 1
     fi
 
     local dir_name=$(dirname ${full_name})
     if [ $? -ne 0 ];then
         echo_file "${LOG_ERRO}" "dirname fail: ${full_name}"
+		__bash_unset 'x'
         return 1
     fi
 
     echo "${dir_name}"
+	__bash_unset 'x'
     return 0
 }

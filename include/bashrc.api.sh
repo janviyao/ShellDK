@@ -83,17 +83,16 @@ mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_USER_DIR}
 
-function __set_x
+function __bash_set
 {
-	local bash_opts="$-"
-	set +x
-	eval "declare -g ${FUNCNAME[1]}$$_opts='${bash_opts}'"
+	eval "declare -g opts_${FUNCNAME[1]}$$='$-'"
+	eval "set +$1"
 }
 
-function __unset_x
+function __bash_unset
 {
-	if [[ $(eval "echo \${${FUNCNAME[1]}$$_opts}") =~ x ]];then
-		set -x
+	if [[ $(eval "echo \${opts_${FUNCNAME[1]}$$}") =~ $1 ]];then
+		eval "set -$1"
 	fi
 }
 

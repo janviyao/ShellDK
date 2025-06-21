@@ -116,7 +116,7 @@ function kvconf_key_have
     local key_str="$3"
 
     if [ $# -ne 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key"
         return 1
     fi
 
@@ -155,7 +155,7 @@ function kvconf_key_linenr
     local key_str="$3"
 
     if [ $# -ne 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key"
         return 1
     fi
 
@@ -269,7 +269,7 @@ function kvconf_key_del
     local key_str="$3"
 
     if [ $# -ne 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key"
         return 1
     fi
 
@@ -302,7 +302,7 @@ function kvconf_val_have
     local val_str="$4"
 
     if [ $# -ne 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str\n\$4: val_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key\n\$4: value"
         return 1
     fi
 
@@ -314,6 +314,11 @@ function kvconf_val_have
 	if [ -n "${val_all}" ];then
 		local -a split_list=()
         array_reset split_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
+
+		if [[ "${val_str}" =~ "${GBL_KV_SPF}" ]];then
+			val_str=$(string_replace "${val_str}" "${GBL_KV_SPF}" "${GBL_SPF1}")
+		fi
+
 		if array_have split_list "${val_str}";then
 			return 0
 		fi
@@ -328,14 +333,16 @@ function kvconf_val_get
     local sec_name="$2"
     local key_str="$3"
 
-    if [ $# -ne 3 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str"
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key\n\$4~N: value index list"
         return 1
     fi
 
     if ! file_exist "${sec_file}";then
         return 1
     fi 
+    shift 3
+	local _val_index_list=("$@")
 
     local line_nrs=($(kvconf_key_linenr "${sec_file}" "${sec_name}" "${key_str}"))
     if [ ${#line_nrs[*]} -ge 1 ];then
@@ -345,28 +352,30 @@ function kvconf_val_get
 		do
 			local line_cnt=$(file_get ${sec_file} "${line_nr}" false)
 			if [ -n "${line_cnt}" ];then
-				if [ -n "${line_cnt}" ];then
-					line_cnt=$(string_split "${line_cnt}" "${GBL_KV_SPF}" 2)
+				line_cnt=$(string_split "${line_cnt}" "${GBL_KV_SPF}" 2)
+				if [ $? -ne 0 ];then
+					echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
+					return 1
+				fi
+
+				if [[ "${line_cnt}" =~ "${GBL_SPF1}" ]];then
+					line_cnt=$(string_replace "${line_cnt}" "${GBL_SPF1}" "${GBL_KV_SPF}")
+				fi
+
+				if [[ "${line_cnt}" =~ "${GBL_VAL_SPF}" ]];then
+					local -a split_list=()
+					array_reset split_list "$(string_split "${line_cnt}" "${GBL_VAL_SPF}")"
 					if [ $? -ne 0 ];then
 						echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
 						return 1
 					fi
-					
-					if [[ "${line_cnt}" =~ "${GBL_VAL_SPF}" ]];then
-						local -a split_list=()
-						array_reset split_list "$(string_split "${line_cnt}" "${GBL_VAL_SPF}")"
-						if [ $? -ne 0 ];then
-							echo_file "${LOG_ERRO}" "kvconf_val_get { $@ }"
-							return 1
-						fi
-						val_list+=("${split_list[@]}")
-					else
-						val_list+=("${line_cnt}")
-					fi
+					val_list+=("${split_list[@]}")
+				else
+					val_list+=("${line_cnt}")
 				fi
 			fi
 		done
-		array_print val_list
+		array_print val_list "${_val_index_list[@]}"
 		return 0
     fi
 
@@ -381,7 +390,7 @@ function kvconf_val_del
     local val_str="$4"
 
     if [ $# -ne 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str\n\$4: val_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key\n\$4: value"
         return 1
     fi
 
@@ -389,32 +398,25 @@ function kvconf_val_del
         return 1
     fi 
 
-	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
-	if [ -n "${val_all}" ];then
-		local -a split_list=()
-		array_reset split_list "$(string_split "${val_all}" "${GBL_VAL_SPF}" "1-$")"
+	local -a value_list=()
+	array_reset value_list "$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")"
+	if [ $? -ne 0 ];then
+		echo_erro "kvconf_val_del { $@ }"
+		return 1
+	fi
+
+	if [ ${#value_list[*]} -gt 0 ];then
+		array_del_by_value value_list "${val_str}"
 		if [ $? -ne 0 ];then
 			echo_erro "kvconf_val_del { $@ }"
 			return 1
 		fi
 
-		array_del_by_value split_list "${val_str}"
-		if [ $? -ne 0 ];then
-			echo_erro "kvconf_val_del { $@ }"
-			return 1
-		fi
-
-		if [ ${#split_list[*]} -gt 0 ];then
-			local new_val=""
-			local val
-			for val in "${split_list[@]}"
-			do
-				if [ -n "${new_val}" ];then
-					new_val="${new_val}${GBL_VAL_SPF}${val}"
-				else
-					new_val="${val}"
-				fi
-			done
+		if [ ${#value_list[*]} -gt 0 ];then
+			local new_val=$(array_2string value_list "${GBL_VAL_SPF}")
+			if [[ "${new_val}" =~ "${GBL_KV_SPF}" ]];then
+				new_val=$(string_replace "${new_val}" "${GBL_KV_SPF}" "${GBL_SPF1}")
+			fi
 
 			kvconf_set "${sec_file}" "${sec_name}" "${key_str}" "${new_val}"
 			if [ $? -ne 0 ];then
@@ -441,10 +443,14 @@ function kvconf_set
     local val_str="$4"
 
     if [ $# -ne 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str\n\$4: val_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key\n\$4: value"
         return 1
     fi
     
+	if [[ "${val_str}" =~ "${GBL_KV_SPF}" ]];then
+		val_str=$(string_replace "${val_str}" "${GBL_KV_SPF}" "${GBL_SPF1}")
+	fi
+
     local line_nrs=($(kvconf_key_linenr "${sec_file}" "${sec_name}" "${key_str}"))
     if [ ${#line_nrs[*]} -gt 1 ];then
         echo_erro "kvconf_set { $@ }: section has multiple duplicate key"
@@ -517,10 +523,14 @@ function kvconf_append
     local val_str="$4"
 
     if [ $# -ne 4 ];then
-        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key_str\n\$4: val_str"
+        echo_erro "\nUsage: [$@]\n\$1: sec_file\n\$2: sec_name\n\$3: key\n\$4: value"
         return 1
     fi
     
+	if [[ "${val_str}" =~ "${GBL_KV_SPF}" ]];then
+		val_str=$(string_replace "${val_str}" "${GBL_KV_SPF}" "${GBL_SPF1}")
+	fi
+
 	local val_all=$(kvconf_val_get "${sec_file}" "${sec_name}" "${key_str}")
 	if [ -n "${val_all}" ];then
 		local -a split_list=()

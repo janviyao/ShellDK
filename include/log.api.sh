@@ -48,7 +48,7 @@ function cecho
 
 function echo_file
 {
-	__set_x
+	__bash_set 'x'
     local echo_level="$1"
     shift
 
@@ -56,7 +56,7 @@ function echo_file
         if [ ${echo_level} -le ${LOG_ERRO} ];then
             echo -e "$(print_backtrace)" >> ${BASH_LOG}
         fi
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
 
@@ -102,10 +102,10 @@ function echo_file
     fi
 
     if [ ${echo_level} -eq ${LOG_ERRO} ];then
-		__unset_x
+		__bash_unset 'x'
 		return 1 
     fi
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -138,11 +138,11 @@ function echo_header
 
 function echo_erro
 {
-	__set_x
+	__bash_set 'x'
     #local para=$(string_replace "$@" "${MY_HOME}/" "")
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_ERRO} ];then
         echo_file "${LOG_ERRO}" "$@"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -165,16 +165,16 @@ function echo_erro
     fi
 
     echo_file "${LOG_ERRO}" "$@"
-	__unset_x
+	__bash_unset 'x'
     return 1
 }
 
 function echo_info
 {
-	__set_x
+	__bash_set 'x'
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_INFO} ];then
         echo_file "${LOG_INFO}" "$@"
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
 
@@ -196,16 +196,16 @@ function echo_info
     fi
 
     echo_file "${LOG_INFO}" "$@"
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
 function echo_warn
 {
-	__set_x
+	__bash_set 'x'
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_WARN} ];then
         echo_file "${LOG_WARN}" "$@"
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
 
@@ -227,16 +227,16 @@ function echo_warn
     fi
 
     echo_file "${LOG_WARN}" "$@"
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
 function echo_debug
 {
-	__set_x
+	__bash_set 'x'
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_DEBUG} ];then
         echo_file "${LOG_DEBUG}" "$@"
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
 
@@ -258,15 +258,15 @@ function echo_debug
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
 function echo_die
 {
-	__set_x
+	__bash_set 'x'
     echo_erro "$@"
 
-	__unset_x
+	__bash_unset 'x'
     exit 1
 }

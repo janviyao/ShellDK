@@ -4,16 +4,16 @@
 function regex_2str
 {
     local regex="$@"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
     if [ -z "${regex}" ];then
-		__unset_x
+		__bash_unset 'x'
         return 0
     fi
 
@@ -36,7 +36,7 @@ function regex_2str
 
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "regex_2str { $@ }"
-				__unset_x
+				__bash_unset 'x'
                 return 1
             fi
             #regex=$(string_replace "${regex}" "${char}" "\\${char}")
@@ -44,18 +44,18 @@ function regex_2str
     done
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
 function regex_perl2basic
 {
     local regex="$@"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -77,25 +77,25 @@ function regex_perl2basic
 
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "regex_perl2basic { $@ }"
-				__unset_x
+				__bash_unset 'x'
                 return 1
             fi
         fi
     done
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
 function regex_perl2extended
 {
     local regex="$@"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -126,14 +126,14 @@ function regex_perl2extended
 
             if [ $? -ne 0 ];then
                 echo_file "${LOG_ERRO}" "regex_perl2extended { $@ }"
-				__unset_x
+				__bash_unset 'x'
                 return 1
             fi
         fi
     done
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -149,12 +149,16 @@ function string_empty
 function string_length
 {
     local string="$1"
+	__bash_set 'x'
+
     if [[ -z "${string}" ]];then
         echo "0"
+		__bash_unset 'x'
         return 1
     fi
 
     echo ${#string}
+	__bash_unset 'x'
     return 0
 }
 
@@ -162,20 +166,20 @@ function string_char
 {
     local string="$1"
     local posstr="$2"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: char position(index from 0)"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
-    math_is_int "${posstr}" || { __unset_x; return 1; }
+    math_is_int "${posstr}" || { __bash_unset 'x'; return 1; }
 	
 	local result=${string:${posstr}:1}
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -184,16 +188,16 @@ function string_contain
     local string="$1"
     local substr="$2"
     local separator="$3"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: separator"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
     if [[ -z "${string}" ]] || [[ -z "${substr}" ]];then
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -205,18 +209,18 @@ function string_contain
 		for _str in "${_sub_list[@]}"
 		do
 			if [[ "${_str}" == "${substr}" ]];then
-				__unset_x
+				__bash_unset 'x'
 				return 0
 			fi
 		done
     else
         if [[ "${string}" =~ "${substr}" ]];then
-			__unset_x
+			__bash_unset 'x'
             return 0
         fi
     fi
 
-	__unset_x
+	__bash_unset 'x'
     return 1
 }
 
@@ -225,11 +229,11 @@ function string_split
     local string="$1"
     local separator="$2"
     local sub_index="${3:-0}"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
 		echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index([1, N], 0: all)"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 	
@@ -243,14 +247,14 @@ function string_split
         else
 			print_lossless "${_sub_list[$((sub_index - 1))]}"
         fi
-		__unset_x
+		__bash_unset 'x'
 		return 0
     else
         if [[ "${sub_index}" =~ '-' ]];then
 			local index_list=($(seq_num "${sub_index}" "${total_nrs}"))
 			if [ ${#index_list[*]} -eq 0 ];then
 				print_lossless "${string}"
-				__unset_x
+				__bash_unset 'x'
 				return 1
 			fi
 
@@ -262,16 +266,16 @@ function string_split
 			done
 
 			array_print _res_list
-			__unset_x
+			__bash_unset 'x'
 			return 0
         else
 			print_lossless "${string}"
-			__unset_x
+			__bash_unset 'x'
             return 1
         fi
     fi
 
-	__unset_x
+	__bash_unset 'x'
     return 1
 }
 
@@ -279,22 +283,22 @@ function string_start
 {
     local string="$1"
     local length="$2"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 	
 	local result="${string}"
 
-    math_is_int "${length}" || { print_lossless "${result}"; __unset_x; return 1; }
+    math_is_int "${length}" || { print_lossless "${result}"; __bash_unset 'x'; return 1; }
 
 	result="${string:0:${length}}"
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -302,21 +306,21 @@ function string_end
 {
     local string="$1"
     local length="$2"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
 	local result="${string}"
-    math_is_int "${length}" || { print_lossless "${result}"; __unset_x; return 1; }
+    math_is_int "${length}" || { print_lossless "${result}"; __bash_unset 'x'; return 1; }
 
 	result="${string:0-${length}:${length}}"
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -325,24 +329,24 @@ function string_substr
     local string="$1"
     local start="$2"
     local length="$3"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: start\n\$3: length"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
 	local result="${string}"
-    math_is_int "${start}" || { print_lossless "${result}"; __unset_x; return 1; }
+    math_is_int "${start}" || { print_lossless "${result}"; __bash_unset 'x'; return 1; }
 
 	result="${string:${start}}"
-    math_is_int "${length}" || { print_lossless "${result}"; __unset_x; return 1; }
+    math_is_int "${length}" || { print_lossless "${result}"; __bash_unset 'x'; return 1; }
 
 	result="${string:${start}:${length}}"
 	print_lossless "${result}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -350,16 +354,16 @@ function string_gensub
 {
     local string="$1"
     local regstr="$2"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regex string"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
 	local result="${string}"
-    [ -z "${regstr}" ] && { print_lossless "${result}"; __unset_x; return 1; } 
+    [ -z "${regstr}" ] && { print_lossless "${result}"; __bash_unset 'x'; return 1; } 
 	
 	if [[ ! "${regstr}" =~ '\/' ]];then
 		if [[ "${regstr}" =~ '/' ]];then
@@ -370,10 +374,10 @@ function string_gensub
 	result=$(perl -ne "if (/(${regstr})/) { print \$1 }" <<< "${string}")
     if [ $? -eq 0 ];then
 		print_lossless "${result}"
-		__unset_x
+		__bash_unset 'x'
         return 0
     else
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 }
@@ -383,11 +387,11 @@ function string_match
     local string="$1"
     local substr="$2"
     local is_reg="${3:-true}"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: whether regex(default: true)"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -399,17 +403,17 @@ function string_match
 		fi
 
 		if perl -ne "if (/${substr}/) { exit(0) } else { exit(1) }" <<< "${string}";then
-			__unset_x
+			__bash_unset 'x'
 			return 0
 		fi
 	else
 		if perl -ne "if (index(\"${string}\", \"${substr}\") != -1) { exit(0) } else { exit(1) }";then
-			__unset_x
+			__bash_unset 'x'
 			return 0
 		fi
 	fi
 
-	__unset_x
+	__bash_unset 'x'
 	return 1
 }
 
@@ -418,17 +422,17 @@ function string_same
     local string="$1"
     local substr="$2"
     local posstr="${3:-0}"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: both start and end 1:start 2:end)"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
     if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "trim position { ${posstr} } invalid"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -447,7 +451,7 @@ function string_same
         if [ ${_index} -gt 0 ];then
             local result=$(string_substr "${string}" 0 ${_index})
 			print_lossless "${result}"
-			__unset_x
+			__bash_unset 'x'
             return 0
         fi
     fi
@@ -468,12 +472,12 @@ function string_same
             let _index=${#string}-${_index} 
             local result=$(string_substr "${string}" ${_index} ${#string})
 			print_lossless "${result}"
-			__unset_x
+			__bash_unset 'x'
             return 0
         fi
     fi
 
-	__unset_x
+	__bash_unset 'x'
     return 1
 }
 
@@ -482,25 +486,25 @@ function string_insert
     local string="$1"
     local substr="$2"
     local posstr="${3:-0}"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: insert position index"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
     if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "insert index { ${posstr} } invalid"
 		print_lossless "${string}"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
     string="${string:0:posstr}${substr}${string:posstr}"
 	print_lossless "${string}"
 
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -509,17 +513,17 @@ function string_trim
     local string="$1"
     local substr="$2"
     local posstr="${3:-0}"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: start&end 1:start 2:end)"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
     if ! math_is_int "${posstr}";then
         echo_file "${LOG_ERRO}" "trim position { ${posstr} } invalid"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 
@@ -529,7 +533,7 @@ function string_trim
 
 	if [ -z "${substr}" ];then
 		print_lossless "${string}"
-		__unset_x
+		__bash_unset 'x'
 		return 0
 	fi
 
@@ -562,7 +566,7 @@ function string_trim
     fi
 
 	print_lossless "${string}"
-	__unset_x
+	__bash_unset 'x'
     return 0
 }
 
@@ -572,18 +576,18 @@ function string_replace
     local oldstr="$2"
     local newstr="$3"
     local is_reg="${4:-false}"
-	__set_x
+	__bash_set 'x'
 
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: oldstr\n\$3: newstr\n\$4: whether regex(default: false)"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
 	
 	local result=${string}
     if [ -z "${oldstr}" ];then
 		print_lossless "${result}"
-		__unset_x
+		__bash_unset 'x'
         return 1
     fi
     
@@ -608,6 +612,6 @@ function string_replace
     fi
 
 	print_lossless "${result}"
-	__unset_x
+	__bash_unset 'x'
     return 0
 }

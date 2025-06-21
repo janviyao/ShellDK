@@ -333,18 +333,18 @@ function account_check
     local usr_name="$1"
     local can_input=${2:-true}
     local input_val=""
-	__set_x
+	__bash_set 'x'
 
     if have_admin; then
 		export USR_NAME=${usr_name}
-		__unset_x
+		__bash_unset 'x'
 		return 0
     fi
 
     if have_sudoed; then
         export USR_NAME=${usr_name}
         if [ -n "${USR_PASSWORD}" ]; then
-			__unset_x
+			__bash_unset 'x'
             return 0
         fi
     fi
@@ -399,7 +399,7 @@ function account_check
         fi
     fi
 
-	__unset_x
+	__bash_unset 'x'
     return ${retval}
 }
 
