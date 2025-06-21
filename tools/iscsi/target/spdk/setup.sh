@@ -20,7 +20,7 @@ SPDK_APP_RUNTIME="${SPDK_APP_DIR}/${SPDK_APP_NAME} -m 0XFF --shm-id=1"
 ISCSI_NODE_BASE=iqn.2016-06.io.spdk
 
 declare -A INITIATOR_TARGET_MAP
-for map_key in ${!ISCSI_INFO_MAP[*]}
+for map_key in "${!ISCSI_INFO_MAP[@]}" 
 do
     ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then

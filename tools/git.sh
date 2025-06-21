@@ -366,7 +366,7 @@ function func_apply
 	elif [ -d "${xfile}" ];then
 		local patch_dir=${xfile}
 		local patches=($(file_list ${patch_dir} "/.+\.patch$" true))
-		for xfile in ${patches[*]}
+		for xfile in "${patches[@]}" 
 		do
 			process_run git apply --reject "${xfile}"
 			local rescode=$?
@@ -378,7 +378,7 @@ function func_apply
 		local add_files=($(file_list "${patch_dir}"))
 		if [ ${#add_files[*]} -gt 0 ];then
 			local cur_dir=$(file_realpath ${xfile})
-			for xfile in ${add_files[*]}
+			for xfile in "${add_files[@]}"
 			do
 				if [[ "${xfile}" =~ '.patch' ]];then
 					continue

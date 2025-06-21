@@ -1041,7 +1041,7 @@ function! quickfix#csfind(ccmd, csarg)
 endfunction
 
 function! quickfix#grep_find(csarg)
-    call PrintArgs("2file", "quickfix.quickfix#csfind", a:csarg)
+    call PrintArgs("2file", "quickfix.quickfix#grep_find", a:csarg)
 
     if s:qfix_module != "grep"
         let s:qfix_module = "grep"

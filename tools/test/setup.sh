@@ -79,7 +79,7 @@ echo "" >> ${TEST_SUIT_ENV}
 echo "# [runtime configure]" >> ${TEST_SUIT_ENV}
 
 # Push run env
-for ipaddr in ${CLIENT_IP_ARRAY[*]}
+for ipaddr in "${CLIENT_IP_ARRAY[@]}"
 do
     if [[ ${LOCAL_IP} == ${ipaddr} ]];then
         continue
@@ -87,7 +87,7 @@ do
     ${TOOL_ROOT_DIR}/scplogin.sh "${TEST_SUIT_ENV}" "${ipaddr}:${TEST_SUIT_ENV}"
 done
 
-for ipaddr in ${SERVER_IP_ARRAY[*]}
+for ipaddr in "${SERVER_IP_ARRAY[@]}"
 do
     if [[ ${LOCAL_IP} == ${ipaddr} ]];then
         continue

@@ -32,7 +32,7 @@ function conf_sched
     local chose_sched=""
     if math_bool "${disk_type}";then
         # HDD device
-        for sched in ${hdd_sheds[*]}
+        for sched in "${hdd_sheds[@]}" 
         do
             if string_contain "${sys_scheds}" "${sched}";then
                 chose_sched="${sched}"
@@ -41,7 +41,7 @@ function conf_sched
         done
     else
         # SSD device
-        for sched in ${ssd_sheds[*]}
+        for sched in "${ssd_sheds[@]}"
         do
             if string_contain "${sys_scheds}" "${sched}";then
                 chose_sched="${sched}"
@@ -128,7 +128,7 @@ if string_match "${dev_name}" "^dm";then
         bdq_deep=$(math_float "${bdq_deep}/${#slaves[*]}" 0)
     fi
 
-    for dev in ${slaves[*]}
+    for dev in "${slaves[@]}" 
     do
         conf_sched ${dev}
         conf_merge ${dev}

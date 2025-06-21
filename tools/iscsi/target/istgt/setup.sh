@@ -19,7 +19,7 @@ ISTGT_APP_RUNTIME="${ISTGT_APP_DIR}/${ISTGT_APP_NAME}"
 ISCSI_NODE_BASE="iqn.2007-09.jp.ne.peach.istgt"
 
 declare -A INITIATOR_TARGET_MAP
-for map_key in ${!ISCSI_INFO_MAP[*]}
+for map_key in "${!ISCSI_INFO_MAP[@]}"
 do
     ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then

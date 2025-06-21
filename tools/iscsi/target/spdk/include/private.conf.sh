@@ -18,7 +18,7 @@ ISCSI_INFO_MAP["INI0-0"]="TGT0 disk1 0:0 Malloc0:0"
 #ISCSI_INFO_MAP["INI0-1"]="TGT0 disk1 0:0 Null0:0"
 #ISCSI_INFO_MAP["INI1-0"]="TGT0 disk2 0:0 Malloc0:0"
 
-for map_key in ${!ISCSI_INFO_MAP[*]}
+for map_key in "${!ISCSI_INFO_MAP[@]}" 
 do
     map_val="${ISCSI_INFO_MAP[${map_key}]}"
     unset ISCSI_INFO_MAP[${map_key}]

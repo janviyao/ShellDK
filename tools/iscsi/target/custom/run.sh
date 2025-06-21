@@ -93,7 +93,7 @@ else
 fi
 
 iscsi_pids=($(process_name2pid "${ISCSI_APP_NAME}"))
-for pid in ${iscsi_pids[*]}
+for pid in "${iscsi_pids[@]}"
 do
     sudo_it "echo 0x7b > /proc/${pid}/coredump_filter"
 done

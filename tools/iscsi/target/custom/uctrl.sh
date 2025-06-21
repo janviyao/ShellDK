@@ -21,7 +21,7 @@ declare -a create_portal_group_array
 declare -a create_initiator_group_array
 declare -a create_bdev_array
 
-for map_key in ${!ISCSI_INFO_MAP[*]}
+for map_key in "${!ISCSI_INFO_MAP[@]}" 
 do
     ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then
@@ -119,7 +119,7 @@ do
             fi
         fi
 
-        for bl_item in ${bdev_lun_pair_array[*]}
+        for bl_item in "${bdev_lun_pair_array[@]}" 
         do
             tmp_list=(${target_node_bl_map[${tgt_name}]})
             if ! array_have tmp_list "${bl_item}";then
@@ -134,7 +134,7 @@ do
 done
 
 if [[ "${op_mode}" == "create_portal_group" ]];then
-    for item in ${create_portal_group_array[*]} 
+    for item in "${create_portal_group_array[@]}"
     do
         item=$(string_replace "${item}" "${GBL_SPF1}" " ")
         echo_info "${UCTRL_CMD_MAP[${op_mode}]} ${item}"
@@ -148,7 +148,7 @@ if [[ "${op_mode}" == "create_portal_group" ]];then
 fi
 
 if [[ "${op_mode}" == "create_initiator_group" ]];then
-    for item in ${create_initiator_group_array[*]} 
+    for item in "${create_initiator_group_array[@]}"
     do
         item=$(string_replace "${item}" "${GBL_SPF1}" " ")
 
@@ -163,7 +163,7 @@ if [[ "${op_mode}" == "create_initiator_group" ]];then
 fi
 
 if [[ "${op_mode}" == "create_bdev" ]];then
-    for item in ${create_bdev_array[*]} 
+    for item in "${create_bdev_array[@]}"
     do
         name_type=$(string_gensub "${item,,}" "[a-z]+")
         if [[ ${name_type} == "malloc" ]];then
@@ -190,7 +190,7 @@ if [[ "${op_mode}" == "create_bdev" ]];then
 fi
 
 if [[ "${op_mode}" == "create_target_node" ]];then
-    for tgt_name in ${create_target_node_array[*]} 
+    for tgt_name in "${create_target_node_array[@]}"
     do
         bdev_lun_pairs="${target_node_bl_map[${tgt_name}]}"
         pg_ig_pairs="${target_node_pi_map[${tgt_name}]}"

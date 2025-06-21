@@ -24,7 +24,7 @@ functions=(net_rx_action mlx5e_handle_rx_cqe nf_hook_slow smp_call_function_sing
           part_round_stats)
 
 echo "FUNCTION TOTAL(us) COUNT AVG(us)" > ${tmp_file}
-for func in ${functions[*]}
+for func in "${functions[@]}"
 do
     cat ${file} | grep -F "${func}" | awk "BEGIN{ total=0; count=0; } { if (\$7 ~ /^[0-9.]+$/) { total=total+\$7;count=count+1; }} END{ printf \"${func} %f %d %f\n\",total,count,total/count; }" >> ${tmp_file}
 done

@@ -53,12 +53,13 @@ function get_iops
     local return_file="$3"
 
     file_exist "${return_file}" && echo > ${return_file} 
-    local iops_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" | grep -P "${g_iops_key}\s*=\s*\d+\.?\d*[kmgKMG]?" -o | grep -P "\d+\.?\d*[kmgKMG]?" -o)
-    #echo_debug "${iops_list}"
+	local iops_list=($(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" | grep -P "${g_iops_key}\s*=\s*\d+\.?\d*[kmgKMG]?" -o | grep -P "\d+\.?\d*[kmgKMG]?" -o))
+    #echo_debug "${iops_list[*]}"
 
     local iops_cnt=0
     local iops_total=0
-    for iops_ctx in ${iops_list}
+    local iops_ctx
+    for iops_ctx in "${iops_list[@]}"
     do
         iops_value=$(echo ${iops_ctx} | grep -P '\d+\.?\d*' -o)
         iops_unit=$(echo ${iops_ctx} | grep -P '[a-zA-Z]+' -o | cut -c 1)
@@ -93,12 +94,13 @@ function get_bandwidth
     local return_file="$3"
     
     file_exist "${return_file}" && echo > ${return_file} 
-    local bandwidth_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" | grep -P "${g_bw_key}\s*=\s*\d+\.?\d*[kmgKMG]" -o | grep -P "\d+\.?\d*[kmgKMG]" -o)
-    #echo_debug "${bandwidth_list}"
+	local bandwidth_list=($(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" | grep -P "${g_bw_key}\s*=\s*\d+\.?\d*[kmgKMG]" -o | grep -P "\d+\.?\d*[kmgKMG]" -o))
+    #echo_debug "${bandwidth_list[*]}"
     
     local bandwidth_cnt=0
     local bandwidth_total=0
-    for bandwidth_ctx in ${bandwidth_list}
+	local bandwidth_ctx
+    for bandwidth_ctx in "${bandwidth_list[@]}"
     do
         bandwidth_value=$(echo ${bandwidth_ctx} | grep -P '\d+\.?\d*' -o)
         bandwidth_unit=$(echo ${bandwidth_ctx} | grep -P '[a-zA-Z]+' -o)
@@ -133,12 +135,13 @@ function get_latency
     local return_file="$3"
     
     file_exist "${return_file}" && echo > ${return_file} 
-    local lat_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" -A 3 | grep -P "^\s+lat" | sed 's/ *//g')
-    #echo_debug "${lat_list}"
+	local lat_list=($(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*\s*${g_iops_key}\s*=" -A 3 | grep -P "^\s+lat" | sed 's/ *//g'))
+    #echo_debug "${lat_list[*]}"
 
     local lat_cnt=0
     local lat_total=0
-    for lat_ctx in ${lat_list}
+    local lat_ctx
+    for lat_ctx in "${lat_list[@]}"
     do
         lat_value=0
         nsec_flag=$(echo "${lat_ctx}" | grep -P "lat\s*\(nsec\):" | wc -l)
@@ -183,12 +186,13 @@ function get_runtime
     local return_file="$3"
     
     file_exist "${return_file}" && echo > ${return_file} 
-    local runtime_list=$(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*${g_iops_key}" | grep -P "\d+\.?\d*[a-z]{4}" -o)
-    #echo_debug "${runtime_list}"
+	local runtime_list=($(cat ${check_file} | grep -P "${grep_param}\s*:\s*.*${g_iops_key}" | grep -P "\d+\.?\d*[a-z]{4}" -o))
+    #echo_debug "${runtime_list[*]}"
 
     local runtime_cnt=0
     local runtime_total=0
-    for runtime_ctx in ${runtime_list}
+    local runtime_ctx
+    for runtime_ctx in "${runtime_list[@]}" 
     do
         runtime_value=$(echo "${runtime_ctx}" | grep -P "\d+\.?\d*" -o)
         nsec_flag=$(echo "${runtime_ctx}" | grep "nsec" | wc -l)
@@ -322,7 +326,7 @@ function summary_calc
 }
 
 param_init
-for test_output in ${g_output_arr[*]};
+for test_output in "${g_output_arr[@]}"
 do 
     collect_result "${test_output}"
 done

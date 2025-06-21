@@ -15,7 +15,7 @@ file_exist "${ISCSI_CONF_DIR}" || ${SUDO} "mkdir -p ${ISCSI_CONF_DIR}"
 file_exist "${LOCAL_CONF}" && ${SUDO} cp -f ${LOCAL_CONF} ${ISCSI_CONF_DIR}
 ${SUDO} chmod -R 777 ${ISCSI_CONF_DIR}
 
-for map_key in ${!ISCSI_INFO_MAP[*]}
+for map_key in "${!ISCSI_INFO_MAP[@]}"
 do
     ini_ip=$(string_gensub "${map_key}" "\d+\.\d+\.\d+\.\d+")
     if [ -z "${ini_ip}" ];then

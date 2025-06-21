@@ -162,7 +162,8 @@ if (( opt_pid )); then
 	# convert to filter
 	opt_filter=1
 	# ftrace common_pid is thread id from user's perspective
-	for tid in /proc/$pid/task/*; do
+	for tid in /proc/$pid/task/*
+	do
 		filter="$filter || common_pid == ${tid##*/}"
 	done
 	filter=${filter:3}  # trim leading ' || ' (four characters)

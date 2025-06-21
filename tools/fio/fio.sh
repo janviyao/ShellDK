@@ -27,7 +27,7 @@ function run_fio_func
     echo > ${output_dir}/hosts
 
     local opt_sub=""
-    for host_info in ${host_info_array[*]}
+    for host_info in "${host_info_array[@]}"
     do
         local host_ip=$(echo "${host_info}" | awk -F: '{print $1}')
         local dev_array=($(echo "${host_info}" | awk -F: '{print $2}' | tr ',' ' '))
@@ -167,7 +167,7 @@ function start_test_func
 
             local host_ip=$(echo "${host_info}" | awk -F: '{print $1}')
             local dev_array=($(echo "${host_info}" | awk -F: '{print $2}' | tr ',' ' '))
-            for sub_dev in ${dev_array[*]}
+            for sub_dev in "${dev_array[@]}"
             do
                 local tmp_list=(${host_devs_array[${host_ip}]})
                 if ! array_have tmp_list "${sub_dev}";then
@@ -178,7 +178,7 @@ function start_test_func
             let start_idx++
         done
  
-        for host_ip in ${!host_devs_array[*]}
+        for host_ip in "${!host_devs_array[@]}"
         do
             local remote_conf=${conf_fname}.${host_ip}
             #echo_info "============================================================================="
@@ -189,7 +189,7 @@ function start_test_func
             sed -i '/\[disk-.*\]/,$d' ${output_dir}/${remote_conf}
 
             local dev_array=(${host_devs_array[${host_ip}]})
-            for sub_dev in ${dev_array[*]}
+            for sub_dev in "${dev_array[@]}"
             do
                 echo "[disk-${sub_dev}]" >> ${output_dir}/${remote_conf}
                 echo -e "\tname=disk-${sub_dev}" >> ${output_dir}/${remote_conf}

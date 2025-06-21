@@ -27,7 +27,7 @@ elif [[ "${BDEV_TYPE,,}" == "cstor" ]];then
     ISCSI_INFO_MAP["INI0-2"]="TGT0 disk2 0:0 DISK0:0"
 fi
 
-for map_key in ${!ISCSI_INFO_MAP[*]}
+for map_key in "${!ISCSI_INFO_MAP[@]}"
 do
     map_val="${ISCSI_INFO_MAP[${map_key}]}"
     unset ISCSI_INFO_MAP[${map_key}]

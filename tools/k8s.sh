@@ -219,7 +219,7 @@ function how_use_tool
 END
 
     local func
-    for func in ${!func_map[*]}
+    for func in "${!func_map[@]}"
     do
         how_use_func "${func}" "        "
         echo
@@ -228,7 +228,7 @@ END
 
 SUB_CMD=$(array_print _SUBCMD_ALL 0)
 if [ -n "${SUB_CMD}" ];then
-    tmp_list=(${!func_map[*]})
+    tmp_list=("${!func_map[@]}")
     if ! array_have tmp_list "${SUB_CMD}";then
         echo_erro "unkonw command { ${SUB_CMD} } "
         exit 1
@@ -247,7 +247,7 @@ fi
 SUB_ALL=($(get_subcmd_all _SUBCMD_ALL _OPTION_ALL "${subcmd}"))
 SUB_OPTS="${SUB_CMD} ${SUB_ALL[*]}"
 SUB_LIST=($(array_print _SUBCMD_ALL "0-$"))
-for next_cmd in ${SUB_LIST[*]}
+for next_cmd in "${SUB_LIST[@]}" 
 do
 	if [ "${next_cmd}" == "${SUB_CMD}" ];then
 		continue

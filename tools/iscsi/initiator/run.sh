@@ -13,7 +13,7 @@ if [ ${#it_array[*]} -eq 0 ];then
     exit 1
 fi
 
-for item in ${it_array[*]}
+for item in "${it_array[@]}"
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
     if ! get_iscsi_device "${tgt_ip}" &> /dev/null;then
@@ -26,7 +26,7 @@ done
 ${ISCSI_ROOT_DIR}/initiator/configure.sh
 ${ISCSI_ROOT_DIR}/initiator/check_env.sh
 
-for item in ${it_array[*]} 
+for item in "${it_array[@]}"
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
 
@@ -56,7 +56,7 @@ if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";t
     fi
 fi
 
-for item in ${it_array[*]} 
+for item in "${it_array[@]}"
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
     tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')
@@ -77,7 +77,7 @@ done
 
 tmp_file="$(file_temp)"
 iscsi_device_array=($(echo))
-for item in ${it_array[*]}
+for item in "${it_array[@]}"
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
 
@@ -99,7 +99,7 @@ if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";t
     while true 
     do
         loaded_fin=true
-        for iscsi_dev in ${iscsi_device_array[*]}
+        for iscsi_dev in "${iscsi_device_array[@]}"
         do
             dm_device_array=($(ls /sys/block/${iscsi_dev}/holders 2>/dev/null))
             if [ ${#dm_device_array[*]} -eq 0 ];then
@@ -124,7 +124,7 @@ fi
 
 declare -a dm_device_array
 if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
-    for iscsi_dev in ${iscsi_device_array[*]}
+    for iscsi_dev in "${iscsi_device_array[@]}"
     do
         for dm_dev in $(ls /sys/block/${iscsi_dev}/holders)
         do
@@ -136,12 +136,12 @@ if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";t
 fi
 
 if math_bool "${ISCSI_MULTIPATH_ON}" && math_expr_if "${ISCSI_SESSION_NR} > 1";then
-    for mdev in ${dm_device_array[*]}
+    for mdev in "${dm_device_array[@]}"
     do
         ${ISCSI_ROOT_DIR}/dev_conf.sh ${mdev} $((ISCSI_DEV_QD * ISCSI_SESSION_NR))
     done
 else
-    for iscsi_dev in ${iscsi_device_array[*]}
+    for iscsi_dev in "${iscsi_device_array[@]}"
     do
         ${ISCSI_ROOT_DIR}/dev_conf.sh ${iscsi_dev} ${ISCSI_DEV_QD}
     done

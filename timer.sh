@@ -48,7 +48,7 @@ if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
 
 	pid_list=($(process_name2pid timer.sh))
 	array_del_by_value pid_list $$
-	for pid in ${pid_list[*]}
+	for pid in "${pid_list[@]}"
 	do
 		if ! process_exist ${pid};then
 			array_del_by_value pid_list ${pid}

@@ -33,7 +33,7 @@ mkdir -p ${g_save_dir}
 declare -a scripts=(lat0.io_submit.bt lat1.aio_write.bt lat2.blk_account_io_start.bt lat3.iscsi_queuecommand.bt lat4.iscsi_xmitworker.bt lat5.iscsi_complete_task.bt lat6.scsi_end_request.bt lat7.aio_complete.bt)
 #declare -a scripts=(lat3.iscsi_queuecommand.bt lat4.iscsi_xmitworker.bt lat5.iscsi_complete_task.bt)
 
-for script in ${scripts[*]}
+for script in "${scripts[@]}"
 do
     tmp_file=$(file_temp)
     cp -f ${CUR_DIR}/${script} ${g_save_dir}/${script}
@@ -59,7 +59,7 @@ g_stats_total=0
 declare -a g_lhist_array
 declare -a g_stats_array
 
-for script in ${scripts[*]}
+for script in "${scripts[@]}"
 do
     declare -i lhist_count=0
     declare -i lhist_total=0
@@ -168,10 +168,10 @@ function save_result
 
 echo
 save_result "${g_save_dir}/avg.result" "%-30s %-20s %-12s %-20s %-12s\n" "script name" "lhist average(ns)" "percent(%)" "stats average(ns)" "percent(%)"
-for script in ${scripts[*]}
+for script in "${scripts[@]}"
 do
     lhist_avg=0
-    for lhist in ${g_lhist_array[*]}
+    for lhist in "${g_lhist_array[@]}"
     do
         if string_match "${lhist}" "${script}:" false;then
             lhist_avg=$(string_split "${lhist}" ':' 2)        
@@ -180,7 +180,7 @@ do
     done
 
     stats_avg=0
-    for stats in ${g_stats_array[*]}
+    for stats in "${g_stats_array[@]}"
     do
         if string_match "${stats}" "${script}:" false;then
             stats_avg=$(string_split "${stats}" ':' 2)        

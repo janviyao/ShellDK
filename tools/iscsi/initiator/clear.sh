@@ -20,9 +20,9 @@ do
 done
 
 device_array=($(cat ${WORK_ROOT_DIR}/disk.${LOCAL_IP}))
-for device in ${device_array[*]}
+for device in "${device_array[@]}" 
 do
-    for dev_path in ${mounts_array[*]}
+    for dev_path in "${mounts_array[@]}"
     do
         if string_match "${dev_path}" "${device}$";then
             echo_info "umount ${dev_path}"
@@ -42,7 +42,7 @@ fi
 
 session_ip_array=($(${SUDO} iscsiadm -m node | grep -P "\d+\.\d+\.\d+\.\d+" -o | sort -u))
 it_array=(${INITIATOR_TARGET_MAP[${LOCAL_IP}]})
-for item in ${it_array[*]}
+for item in "${it_array[@]}"
 do
     tgt_ip=$(echo "${item}" | awk -F: '{ print $1 }')
     tgt_name=$(echo "${item}" | awk -F: '{ print $2 }')

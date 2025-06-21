@@ -447,13 +447,14 @@ function _mdat_thread_main
             if [ ${#_global_map_[*]} -gt 0 ];then
 				local _xkey_
                 if [[ "${req_body}" == "ALL" ]];then
-                    for _xkey_ in "${!_global_map_[@]}";do
+                    for _xkey_ in "${!_global_map_[@]}"
+                    do
 						map_del _global_map_ "${_xkey_}"
                     done
                 else
 					local -a _key_list=()
 					array_reset _key_list "$(string_split "${req_body}" "${GBL_RETURN}" 0)"
-                    for _xkey_ in ${_key_list[*]}
+                    for _xkey_ in "${_key_list[@]}"
                     do
 						map_del _global_map_ "${_xkey_}"
                     done

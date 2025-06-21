@@ -2,7 +2,7 @@
 source ${TEST_SUIT_ENV}
 echo_info "@@@@@@: $(file_fname_get $0) @${LOCAL_IP}"
 
-for ipaddr in ${SERVER_IP_ARRAY[*]}
+for ipaddr in "${SERVER_IP_ARRAY[@]}" 
 do
     ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${FIO_ROOT_DIR}/client.sh"
     if [ $? -ne 0 ];then
@@ -11,7 +11,7 @@ do
     fi
 done
 
-for ipaddr in ${CLIENT_IP_ARRAY[*]}
+for ipaddr in "${CLIENT_IP_ARRAY[@]}"
 do
     ${TOOL_ROOT_DIR}/sshlogin.sh "${ipaddr}" "${FIO_ROOT_DIR}/server.sh"
     if [ $? -ne 0 ];then
