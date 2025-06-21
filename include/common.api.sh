@@ -100,8 +100,7 @@ function seq_num
 
 function para_pack
 {
-    local bash_options="$-"
-    set +x
+	__set_x
 	
 	local cmd=""
 	if [ $# -eq 1 ];then
@@ -140,15 +139,13 @@ function para_pack
 		shift
 	done
 
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     echo "${cmd}"
 }
 
 function para_fetch
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
 	local shortopts_refnm="$1"
     local option_all_refnm="$2"
     local subcmd_all_refnm="$3"
@@ -157,7 +154,7 @@ function para_fetch
 	echo_debug "$@"
     if ! is_array "$1" || ! is_array "$2" || ! is_array "$3" || ! is_map "$4";then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: array variable reference\n\$3: array variable reference\n\$4: map variable reference\n\$5~N: parameters"
-		[[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 1
     fi
     shift 4
@@ -183,7 +180,7 @@ function para_fetch
             option=$(string_split "${option}" '=' 1)
             if [[ "${value:0:1}" == "-" ]];then
                 echo_erro "para invalid: ${option}=${value}"
-				[[ "${bash_options}" =~ x ]] && set -x
+				__unset_x
                 return 1
             fi
         fi
@@ -250,7 +247,7 @@ function para_fetch
         shift
     done
 
-	[[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return 0
 }
 

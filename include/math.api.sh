@@ -39,28 +39,26 @@ function math_ascii2char
 
 function math_bool
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     local expr="$@"
 
     if [[ $# -gt 1 ]];then
         math_expr_if "${expr}"
         local ret=$?
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return ${ret}
     fi
 
     if [[ "${expr,,}" == "yes" ]] || [[ "${expr,,}" == "true" ]] || [[ "${expr,,}" == "y" ]] || [[ "${expr,,}" == "1" ]]; then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [[ "${expr,,}" == "no" ]] || [[ "${expr,,}" == "false" ]] || [[ "${expr,,}" == "n" ]] || [[ "${expr,,}" == "0" ]]; then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 1
     else
         math_expr_if "${expr}"
         local ret=$?
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return ${ret}
     fi
 }
@@ -78,15 +76,14 @@ function math_expr_if
 
 function math_expr_val
 {
-	local bash_options="$-"
-	set +x
-
+	__set_x
 	local expre="$1"
 	local scale=${2:-4}
 	local ibase=${3:-10}
 	
     if [[ $# -lt 1 ]];then
 		echo_erro "\nUsage: [$@]\n\$1: expression\n\$2: scale(default: 4)\n\$3: base(default: 10)"
+		__unset_x
         return 1
     fi
 
@@ -107,7 +104,7 @@ function math_expr_val
 	fi
 
 	echo "${value}"
-	[[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
 	return 0
 }
 

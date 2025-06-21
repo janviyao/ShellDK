@@ -187,12 +187,13 @@ function process_exist
 
     for xpid in "${pid_array[@]}" 
     do
+        #if ps -p ${xpid} &> /dev/null; then
         #${SUDO} "kill -s 0 ${xpid} &> /dev/null"
-        #if [ $? -eq 0 ]; then
-        if ps -p ${xpid} &> /dev/null; then
-            continue
+		local msg=$(kill -s 0 ${xpid} 2>&1)
+        if [[ "${msg}" =~ 'No such process' ]]; then
+			return 1
         else
-            return 1
+            continue
         fi
     done
 
@@ -458,9 +459,9 @@ function process_name2tid
             continue
         fi
 
-        local tids=($(ps H --no-headers -T -p ${xpid} | awk '{ print $2 }' | grep -v ${xpid}))
+        local tids=($(ps H --no-headers -T -p ${xpid} | awk '{ print $2 }' | grep -v -E "^${xpid}$"))
         if [ ${#tids[*]} -gt 0 ]; then
-            proc_tids+=(${tids[*]})
+            proc_tids+=("${tids[@]}")
         fi
     done
      
@@ -540,10 +541,11 @@ function process_cpid
         fi
 
         if [[ "${SYSTEM}" == "Linux" ]]; then
-            # ps -p $$ -o ppid=
             local subpro_path="/proc/${xpid}/task/${xpid}/children"
             if file_exist "${subpro_path}"; then
                 child_pids+=($(cat ${subpro_path} 2>/dev/null))
+			else
+                child_pids+=($(ps -o pid= --ppid ${xpid}))
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             local childs=($(ps -ef | awk -v var=${xpid} '{ if ($3 == var) { print $2 } }'))
@@ -561,7 +563,7 @@ function thread_info
     local show_header=${2:-true}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: whether to print header(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: pid or app-name\n\$2: whether to print header(default: true)"
         return 1
     fi
 
@@ -570,28 +572,28 @@ function thread_info
     fi
 
     #local -a header_array=("COMMAND" "PID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "PRI" "NICE" "THREADS" "VSZ" "RSS" "CPU")
-    local -a header_array=("COMMAND" "TID" "STATE" "PPID" "FLAGS" "MINFL" "MAJFL" "VSZ" "RSS" "CPU")
+    local -a header_array=("PPID" "TID" "STATE" "MINFL" "MAJFL" "FLAGS" "VSZ" "RSS" "CPU" "%CPU" "COMMAND")
 	local -A index_map=()
-    index_map["TID"]="%-10s %-10d 0"
-    index_map["COMMAND"]="%-20s %-20s 1"
+    index_map["TID"]="%7s %7d 0"
+    index_map["COMMAND"]="%20s %20s 1"
     index_map["STATE"]="%-5s %-5s 2"
-    index_map["PPID"]="%-10s %-10d 3"
-    index_map["FLAGS"]="%-10s %-10d 8"
-    index_map["MINFL"]="%-7s %-7d 9"
-    index_map["MAJFL"]="%-5s %-5d 11"
-    index_map["UTIME"]="%-5s %-5d 13"
-    index_map["STIME"]="%-5s %-5d 14"
-    index_map["CUTIME"]="%-5s %-5d 15"
-    index_map["CSTIME"]="%-5s %-5d 16"
-    index_map["PRI"]="%-3s %-3d 17"
-    index_map["NICE"]="%-4s %-4d 18"
-    index_map["THREADS"]="%-7s %-7d 19"
-    index_map["VSZ"]="%-12s %-12d 22"
-    index_map["RSS"]="%-6s %-6d 23"
-    index_map["WCHAN"]="%-5s %-5d 34"
-    index_map["POLICY"]="%-6s %-6d 40"
-    index_map["CPU"]="%-3s %-3d 38"
-    index_map["CPU-U"]="%-5s %4.1f x"
+    index_map["PPID"]="%7s %7d 3"
+    index_map["FLAGS"]="%10s %-10d 8"
+    index_map["MINFL"]="%9s %9d 9"
+    index_map["MAJFL"]="%9s %9d 11"
+    index_map["UTIME"]="%5s %5d 13"
+    index_map["STIME"]="%5s %5d 14"
+    index_map["CUTIME"]="%5s %5d 15"
+    index_map["CSTIME"]="%5s %5d 16"
+    index_map["PRI"]="%3s %3d 17"
+    index_map["NICE"]="%4s %4d 18"
+    index_map["THREADS"]="%7s %7d 19"
+    index_map["VSZ"]="%10s %10d 22"
+    index_map["RSS"]="%6s %6d 23"
+    index_map["WCHAN"]="%5s %5d 34"
+    index_map["POLICY"]="%6s %6d 40"
+    index_map["CPU"]="%5s %5d 38"
+    index_map["%CPU"]="%5s %5.1f 52"
 
     local header
     if math_bool "${show_header}"; then
@@ -600,7 +602,7 @@ function thread_info
             local -a values=(${index_map[${header}]})
             printf -- "${values[0]} " "${header}"
         done
-        printf -- "%5s \n" "%CPU"
+		printf -- "\n"
     fi
 
     #top -b -n 1 -H -p ${xpid}  | sed -n "7,$ p"
@@ -624,42 +626,42 @@ function thread_info
                 local new_str=$(string_replace "${old_str}" "\s+" "-" true)
                 tinfo_str=$(string_replace "${tinfo_str}" "\(\S+\s+\S+\)" "${new_str}" true)
             fi
-
-            local -a tinfo=(${tinfo_str})
-            for header in "${header_array[@]}" 
-            do
-                local -a values=(${index_map[${header}]})
-                printf -- "${values[1]} " "${tinfo[${values[2]}]}"
-            done
+            local -a tinfo_list=(${tinfo_str})
 
             local -a values=(${index_map["CPU"]})
-            local cpu_nm=${tinfo[${values[2]}]}
+            local cpu_nm=${tinfo_list[${values[2]}]}
 
             values=(${index_map["UTIME"]})
-            local tutime=${tinfo[${values[2]}]}
+            local tutime=${tinfo_list[${values[2]}]}
             local putime=${stats[${values[2]}]}
 
             values=(${index_map["CUTIME"]})
             local pcutime=${stats[${values[2]}]}
 
             values=(${index_map["STIME"]})
-            local tstime=${tinfo[${values[2]}]}
+            local tstime=${tinfo_list[${values[2]}]}
             local pstime=${stats[${values[2]}]}
 
             values=(${index_map["CSTIME"]})
             local pcstime=${stats[${values[2]}]}
 
-            local ttime=$((tutime+tstime))
-            local ptime=$((putime+pstime+pcutime+pcstime))
+            local ttime=$((tutime + tstime))
+            local ptime=$((putime + pstime + pcutime + pcstime))
 
             #echo_debug "proces utime: ${putime} stime: ${pstime} cpu${cpu_nm}: ${ptime}"
             #echo_debug "thread utime: ${tutime} stime: ${tstime} cpu${cpu_nm}: ${ttime}"
             if [ ${ptime} -gt 0 ];then
-                values=(${index_map["CPU-U"]})
-                printf -- "${values[1]}%% \n" "$((100*ttime/ptime))"
+				tinfo_list+=("$((100*ttime/ptime))")
             else
-                printf -- "\n"
+				tinfo_list+=("0")
             fi
+
+            for header in "${header_array[@]}" 
+            do
+                local -a values=(${index_map[${header}]})
+                printf -- "${values[1]} " "${tinfo_list[${values[2]}]}"
+            done
+			printf -- "\n"
         done
     done
     return 0
@@ -670,56 +672,54 @@ function process_info
     local xproc_list=($1)
     local out_headers=${2}
     local show_header=${3:-true}
-    local show_thread=${4:-false}
+    local show_thread=${4:-true}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: xproc list\n\$2: output headers(string)\n\$3: whether to show header(bool)\n\$4: whether to show threads(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: xproc list\n\$2: output headers(string)\n\$3: whether to show header(default: true)\n\$4: whether to show threads(default: false)"
         return 1
     fi
     
     if [ -n "${out_headers}" ];then
         local ps_header="${out_headers}"
     else
-        #local ps_header="ppid,pid,lwp=TID,nlwp=TID-CNT,psr=RUN-CPU,nice,pri,policy,stat,pcpu,maj_flt,min_flt,flags,sz,vsz,pmem,wchan:15,stackp,eip,esp,cmd"
-        local ps_header="user,ppid,pid,nlwp=THREADS,psr=CUR-CPU,nice,pri,policy,stat,pcpu,maj_flt:9,min_flt:9,flags,sz,vsz,pmem,wchan:15,cmd"
+        #local ps_header="ppid,pid,lwp=TID,nlwp=TID-CNT,psr=RUN-CPU,nice=NICE,pri,policy=POLICY,stat=STATE,pcpu,maj_flt:9,min_flt:9,flags:10=FLAGS,sz,vsz,pmem,wchan:5,stackp,eip,esp,cmd"
+        local ps_header="ppid,pid,stat=STATE,min_flt:9,maj_flt:9,flags:10=FLAGS,vsz,sz,nice=NICE,pri,policy=POLICY,pmem,wchan:5,psr=CPU,pcpu,cmd"
     fi
 
-    local hdr_showed=${show_header}
-	local -a all_pids=($(process_name2pid "${xproc_list[@]}"))
-	for xpid in "${all_pids[@]}" 
+	local xproc xpid
+	for xproc in "${xproc_list[@]}"
 	do
-		if [[ "${SYSTEM}" == "Linux" ]]; then
-			if math_bool "${hdr_showed}"; then
-				ps -ww -p ${xpid} -o ${ps_header}
-				hdr_showed=false
-			else
-				ps -ww -p ${xpid} -o ${ps_header} --no-headers
+		local hdr_showed=${show_header}
+		local -a all_pids=($(process_name2pid "${xproc}"))
+		for xpid in "${all_pids[@]}" 
+		do
+			if [[ "${SYSTEM}" == "Linux" ]]; then
+				if math_bool "${hdr_showed}"; then
+					ps -ww -p ${xpid} -o ${ps_header}
+					hdr_showed=false
+				else
+					ps -ww -p ${xpid} -o ${ps_header} --no-headers
+				fi
+			elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+				if math_bool "${hdr_showed}"; then
+					ps -a | grep -w "PID" 
+					ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
+					hdr_showed=false
+				else
+					ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
+				fi
 			fi
-		elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-			if math_bool "${hdr_showed}"; then
-				ps -a | grep -w "PID" 
-				ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
-				hdr_showed=false
-			else
-				ps -a | awk -v var=${xpid} '{ if ($1 == var) { print $0 } }'
+
+			if math_bool "${show_thread}"; then
+				echo
+				#printf "************************************ PID[%d] threads ************************************\n" ${xpid}
+				thread_info "${xpid}"
+				if math_bool "${show_header}" || math_bool "${show_thread}"; then
+					printf -- "\n"
+				fi
 			fi
-		fi
+		done
 	done
-
-    if math_bool "${show_thread}"; then
-        for xpid in "${all_pids[@]}" 
-        do
-            local -a tid_array=($(process_name2tid ${xpid}))
-            if [ ${#tid_array[*]} -gt 0 ];then
-                printf -- "************************************ PID[%d] have { %d } threads************************************\n" ${xpid} ${#tid_array[*]}
-                thread_info "${xpid}" true
-
-                if math_bool "${show_header}" || math_bool "${show_thread}"; then
-                    printf -- "\n"
-                fi
-            fi
-        done 
-    fi
 
     return 0
 }
@@ -727,14 +727,13 @@ function process_info
 function process_ptree
 {
     local xproc="$1"
-    local show_thread=${2:-false}
-    local show_header=${3:-true}
+    local print_prefx=${2}
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: whether to print threads(bool)\n\$3: whether to print header(bool)"
+        echo_erro "\nUsage: [$@]\n\$1: pid\n\$2: show indent(default: null)"
         return 1
     fi
-    
+
     local xpid
     local cpid
     local -a pid_array=($(process_name2pid ${xproc}))
@@ -743,19 +742,23 @@ function process_ptree
         if ! process_exist ${xpid};then
             continue
         fi
+		
+		local proc_name=$(process_pid2name ${xpid})
+		printf "%s%s\n" "${print_prefx}" "${proc_name}{${xpid}}"
 
-        process_info "${xpid}" "" "${show_header}" "${show_thread}"
-        if math_bool "${show_header}"; then
-            show_header=false
-        fi
-
-        local -a cpid_array=($(process_cpid "${xpid}"))    
-        for cpid in "${cpid_array[@]}"
+        local -a sub_array=($(process_cpid "${xpid}"))    
+        for cpid in "${sub_array[@]}"
         do
-            process_ptree "${cpid}" "${show_thread}" "${show_header}"
+            process_ptree "${cpid}" "      +${print_prefx}"
+        done
+
+        local -a tid_array=($(process_name2tid "${xpid}"))    
+        for cpid in "${tid_array[@]}"
+        do
+            process_ptree "${cpid}" "      -${print_prefx}"
         done
     done
- 
+
     return 0
 }
 

@@ -48,9 +48,7 @@ function cecho
 
 function echo_file
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     local echo_level="$1"
     shift
 
@@ -58,7 +56,7 @@ function echo_file
         if [ ${echo_level} -le ${LOG_ERRO} ];then
             echo -e "$(print_backtrace)" >> ${BASH_LOG}
         fi
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     fi
 
@@ -102,11 +100,12 @@ function echo_file
     if [ ${echo_level} -le ${LOG_ERRO} ];then
         echo -e "$(print_backtrace)" >> ${BASH_LOG}
     fi
-    [[ "${bash_options}" =~ x ]] && set -x
 
     if [ ${echo_level} -eq ${LOG_ERRO} ];then
+		__unset_x
 		return 1 
     fi
+	__unset_x
     return 0
 }
 
@@ -139,13 +138,11 @@ function echo_header
 
 function echo_erro
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     #local para=$(string_replace "$@" "${MY_HOME}/" "")
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_ERRO} ];then
         echo_file "${LOG_ERRO}" "$@"
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 1
     fi
 
@@ -168,18 +165,16 @@ function echo_erro
     fi
 
     echo_file "${LOG_ERRO}" "$@"
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return 1
 }
 
 function echo_info
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_INFO} ];then
         echo_file "${LOG_INFO}" "$@"
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     fi
 
@@ -201,18 +196,16 @@ function echo_info
     fi
 
     echo_file "${LOG_INFO}" "$@"
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return 0
 }
 
 function echo_warn
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_WARN} ];then
         echo_file "${LOG_WARN}" "$@"
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     fi
 
@@ -234,18 +227,16 @@ function echo_warn
     fi
 
     echo_file "${LOG_WARN}" "$@"
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return 0
 }
 
 function echo_debug
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     if [ ${LOG_SHOW_LEVEL} -lt ${LOG_DEBUG} ];then
         echo_file "${LOG_DEBUG}" "$@"
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     fi
 
@@ -267,17 +258,15 @@ function echo_debug
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return 0
 }
 
 function echo_die
 {
-    local bash_options="$-"
-    set +x
-
+	__set_x
     echo_erro "$@"
 
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     exit 1
 }

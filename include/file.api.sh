@@ -62,13 +62,11 @@ function file_privilege
 
 function file_exist
 {
-    local bash_options="$-"
-    set +x
-
     local xfile="$1"
+	__set_x
 
     if [ -z "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 1
     fi
 
@@ -77,12 +75,12 @@ function file_exist
         for file in ${xfile}
         do
             if string_match "${file}" "\*$";then
-                [[ "${bash_options}" =~ x ]] && set -x
+				__unset_x
                 return 1
             fi
 
             if file_exist "${file}"; then
-                [[ "${bash_options}" =~ x ]] && set -x
+				__unset_x
                 return 0
             fi
         done
@@ -93,43 +91,43 @@ function file_exist
     fi
 
     if [ -e "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -f "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -d "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -r "${xfile}" -o -w "${xfile}" -o -x "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -h "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -L "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -b "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -c "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -s "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     elif [ -p "${xfile}" ];then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     fi
 
     if ls --color=never "${xfile}" &> /dev/null;then
-        [[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
         return 0
     fi
   
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return 1
 }
 

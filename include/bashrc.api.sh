@@ -1,6 +1,8 @@
 #export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\H\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 #export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 export PS1='\n\e[1;37m[\e[m\e[1;32m\u\e[m\e[1;33m@\e[m\e[1;35m\H\e[m \e[4m`pwd`\e[m\e[1;37m]\e[m\e[1;36m\e[m\n\$'
+#export PS4='$(printf "[%s:%s] " "${FUNCNAME[0]}" "$LINENO")'
+export PS4='$(printf "%02d[%*s] " ${#FUNCNAME[@]} $((15 + ${#FUNCNAME[@]} * 2)) "${FUNCNAME[0]}")'
 
 export GOPATH=${MY_HOME}/.local
 export GOROOT=${GOPATH}/go
@@ -80,6 +82,20 @@ unalias rm &> /dev/null || true
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_USER_DIR}
+
+function __set_x
+{
+	local bash_opts="$-"
+	set +x
+	eval "declare -g ${FUNCNAME[1]}$$_opts='${bash_opts}'"
+}
+
+function __unset_x
+{
+	if [[ $(eval "echo \${${FUNCNAME[1]}$$_opts}") =~ x ]];then
+		set -x
+	fi
+}
 
 function __my_bashrc_deps
 {

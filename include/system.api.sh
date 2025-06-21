@@ -330,23 +330,21 @@ function service_ctrl
 
 function account_check
 {
-    local bash_options="$-"
-    set +x
-
     local usr_name="$1"
     local can_input=${2:-true}
     local input_val=""
+	__set_x
 
     if have_admin; then
 		export USR_NAME=${usr_name}
-		[[ "${bash_options}" =~ x ]] && set -x
+		__unset_x
 		return 0
     fi
 
     if have_sudoed; then
         export USR_NAME=${usr_name}
         if [ -n "${USR_PASSWORD}" ]; then
-            [[ "${bash_options}" =~ x ]] && set -x
+			__unset_x
             return 0
         fi
     fi
@@ -401,7 +399,7 @@ function account_check
         fi
     fi
 
-    [[ "${bash_options}" =~ x ]] && set -x
+	__unset_x
     return ${retval}
 }
 
