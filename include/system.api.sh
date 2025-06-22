@@ -741,7 +741,7 @@ function efind
 {   
     local xdir="$1"
     local regstr="$2"
-    local maxdep="${3:-100}"
+    local maxdep="${3:-1024}"
     
 	__bash_set 'x'
     echo_file "${LOG_DEBUG}" "$@"
@@ -757,13 +757,19 @@ function efind
         return 1
     fi
 
-	if [[ "${xdir:0:1}" == "/" ]] || [[ "${xdir:0:2}" == "./" ]];then
-		let maxdep++
+	if [[ "${xdir:0-1:1}" == "/" ]];then
+		let maxdep--
 	fi
     
+	if [[ ! "${regstr}" =~ '\/' ]];then
+		if [[ "${regstr}" =~ '/' ]];then
+			oldstr="${regstr//\//\\/}"
+		fi
+	fi
+
 	local -a ret_arr=()
     #ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${posix_reg}" 2\> /dev/null))
-	ret_arr=($(sudo_it "perl -e 'use File::Find; my \$maxdep=${maxdep}; find(sub { my \$dep=\$File::Find::name =~ tr!/!!; return if \$dep > \$maxdep; if (/${regstr}/) { print \"\$File::Find::name\n\" } }, \"${xdir}\")' 2> /dev/null"))
+	ret_arr=($(sudo_it "perl -e 'use File::Find; my \$maxdep=${maxdep}+(\"${xdir}\" =~ tr!/!!); find(sub { my \$dep=(\$File::Find::dir =~ tr!/!!); return if \$dep > \$maxdep; if (/${regstr}/) { print \"\$File::Find::name\n\" } }, \"${xdir}\")' 2> /dev/null"))
     if [ $? -ne 0 ];then
         #ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${posix_reg}"))
 		echo_erro "efind { $@ }"

@@ -205,9 +205,9 @@ function install_provider
         fi
 
         if [ -n "${fname}" ];then
-            files=($(efind ${fpath} ".*/?${fname}"))
+            files=($(efind ${fpath} "${fname}"))
         else
-            files=($(efind ${fpath} ".*/?${xfile}"))
+            files=($(efind ${fpath} "${xfile}"))
         fi
 
         local select_x="${files[*]}"
@@ -333,7 +333,7 @@ function install_from_rpm
         if ! file_exist "${fpath}";then
             fpath="."
         fi
-        local_rpms=($(efind ${fpath} ".*/?${xfile}"))
+        local_rpms=($(efind ${fpath} "${xfile}"))
     fi
 
 	if [ ${#local_rpms[*]} -gt 1 ];then

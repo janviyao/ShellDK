@@ -47,6 +47,7 @@ FILE_TYPES=($(map_print _OPTION_MAP "-t" "--file-type"))
 if [ ${#FILE_TYPES[*]} -eq 0 ];then
 	FILE_TYPES=('.c' '.cc' '.cpp' '.h' '.hh' '.hpp')
 fi
+FILE_REGEX="\w+\.($(array_2string FILE_TYPES '|'))$"
 
 FILE_LIST=($(array_print _SUBCMD_ALL '0-'))
 
@@ -79,22 +80,6 @@ function match_execlude
 			fi
 		fi
 	done
-	
-	if [ ${#FILE_TYPES[*]} -gt 0 ];then
-		if [ -f "${xfile}" ];then
-			local type count=0
-			for type in "${FILE_TYPES[@]}" 
-			do
-				if ! string_match "${xfile}" "${type}$";then
-					let count++
-				fi
-			done
-
-			if [ ${#FILE_TYPES[*]} -eq ${count} ];then
-				return 0
-			fi
-		fi
-	fi
 
 	return 1
 }
@@ -114,8 +99,7 @@ function do_format
 	fi
 
     if [ -d "${xfile}" ];then
-        xfile=$(string_trim "${xfile}" "/" 2)
-        local xfile_list=($(efind ${xfile} "${xfile}/.+" 1))
+        local xfile_list=($(efind ${xfile} "${FILE_REGEX}"))
     else
         local xfile_list=(${xfile})
     fi
