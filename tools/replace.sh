@@ -112,38 +112,37 @@ function do_replace
 	fi
 
     if [ -d "${xfile}" ];then
-        local xfile_list=($(efind ${xfile} "${FILE_REGEX}"))
+        local xfile_list=($(efind ${xfile} "${FILE_REGEX}" 0 '-f'))
     else
         local xfile_list=(${xfile})
     fi
 
-    local next
-    for next in "${xfile_list[@]}"
-    do
-        if [ -d "${next}" ];then
-           do_replace "${next}" "${string}" "${new_str}" ${is_reg} &
-           array_append bg_tasks $!
-        else
-			if match_execlude "${next}" ${is_reg};then
-				if math_bool "${VERBOSE}";then
-					echo_warn "Jump    [${next}]"
+	local next
+	for next in "${xfile_list[@]}"
+	do
+		if [ -f "${next}" ];then
+			if file_contain "${next}" "${string}" ${is_reg} ;then
+				file_replace "${next}" "${string}" "${new_str}" ${is_reg} 
+				if [ $? -eq 0 ];then
+					echo_info "Success [${next}]"
+				else
+					echo_info "Failure [${next}]"
 				fi
-				continue
 			fi
-
-			if [ -f "${next}" ];then
-				if file_contain "${next}" "${string}" ${is_reg} ;then
-					file_replace "${next}" "${string}" "${new_str}" ${is_reg} 
-					if [ $? -eq 0 ];then
-						echo_info "Success [${next}]"
-					else
-						echo_info "Failure [${next}]"
-					fi
-				fi
-            fi
-        fi
-    done
+		fi
+	done
 	
+	if [ -d "${xfile}" ];then
+		xfile_list=($(efind ${xfile} ".+" 0 '-d'))
+		for next in "${xfile_list[@]}"
+		do
+			if [ -d "${next}" ];then
+				do_replace "${next}" "${string}" "${new_str}" ${is_reg} &
+				array_append bg_tasks $!
+			fi
+		done
+	fi
+
 	if [ ${#bg_tasks[*]} -gt 0 ];then
 		wait ${bg_tasks[*]}
 	fi

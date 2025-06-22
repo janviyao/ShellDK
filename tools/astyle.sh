@@ -99,7 +99,7 @@ function do_format
 	fi
 
     if [ -d "${xfile}" ];then
-        local xfile_list=($(efind ${xfile} "${FILE_REGEX}"))
+        local xfile_list=($(efind ${xfile} "${FILE_REGEX}" 0 '-f'))
     else
         local xfile_list=(${xfile})
     fi
@@ -107,28 +107,28 @@ function do_format
     local next
     for next in "${xfile_list[@]}"
     do
-        if [ -d "${next}" ];then
-           do_format "${next}" ${is_reg} &
-           array_append bg_tasks $!
-        else
-			if match_execlude "${next}" ${is_reg};then
-				if math_bool "${VERBOSE}";then
-					echo_warn "Jump    [${next}]"
-				fi
-				continue
+		if [ -f "${next}" ];then
+			astyle --options=${MY_VIM_DIR}/astylerc ${next} 1>/dev/null
+			if [ $? -eq 0 ];then
+				echo_info "Success [${next}]"
+			else
+				echo_info "Failure [${next}]"
 			fi
-
-			if [ -f "${next}" ];then
-				astyle --options=${MY_VIM_DIR}/astylerc ${next} 1>/dev/null
-				if [ $? -eq 0 ];then
-					echo_info "Success [${next}]"
-				else
-					echo_info "Failure [${next}]"
-				fi
-			fi
-        fi
+		fi
     done
 	
+	if [ -d "${xfile}" ];then
+		xfile_list=($(efind ${xfile} "${FILE_REGEX}" 0 '-d'))
+
+		for next in "${xfile_list[@]}"
+		do
+			if [ -d "${next}" ];then
+				do_format "${next}" ${is_reg} &
+				array_append bg_tasks $!
+			fi
+		done
+	fi
+
 	if [ ${#bg_tasks[*]} -gt 0 ];then
 		wait ${bg_tasks[*]}
 	fi
