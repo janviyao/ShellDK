@@ -179,8 +179,8 @@ function file_contain
     local xfile="$1"
     local string="$2"
     local is_reg="${3:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(default: false)"
 		__bash_unset 'x'
@@ -222,8 +222,8 @@ function file_range_have
     local line_e="$3"
     local string="$4"
     local is_reg="${5:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 4 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
 		__bash_unset 'x'
@@ -279,8 +279,8 @@ function file_get
     local xfile="$1"
     local string="${2}"
     local is_reg="${3:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(default: false)"
 		__bash_unset 'x'
@@ -330,8 +330,8 @@ function file_range_get
     local line_e="$3"
     local string="$4"
     local is_reg="${5:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 4 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
 		__bash_unset 'x'
@@ -383,8 +383,8 @@ function file_del
     local xfile="$1"
     local string="$2"
     local is_reg="${3:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string or line-range\n\$3: \$2 whether regex(default: false)"
 		__bash_unset 'x'
@@ -403,14 +403,13 @@ function file_del
     fi
 
     if math_bool "${is_reg}";then
-        local posix_reg=$(regex_perl2extended "${string}")
-        if [[ "${posix_reg}" =~ '#' ]];then
-            posix_reg=$(string_replace "${posix_reg}" '#' '\#')
-        fi
+		if [[ "${string}" =~ '/' ]];then
+			string=$(string_replace "${string}" '/' '\/')
+		fi
 
-        sed -r -i "\#${posix_reg}#d" ${xfile}
+		perl -i -ne "if (!/${string}/) { print }" ${xfile}
         if [ $? -ne 0 ];then
-            echo_erro "file_del { $@ } posix_reg { ${posix_reg} }"
+            echo_erro "file_del { $@ }"
 			__bash_unset 'x'
             return 1
         fi
@@ -481,8 +480,8 @@ function file_append
 {
 	local xfile="$1"
 	local value="$2"
-	__bash_set 'x'
 
+	__bash_set 'x'
 	if [ $# -le 1 ];then
 		echo_erro "\nUsage: [$@]\n\$1: file path\n\$2~N: value"
 		__bash_unset 'x'
@@ -519,8 +518,8 @@ function file_insert
     local xfile="$1"
     local content="$2"
     local line_nr="${3:-$}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
 		__bash_unset 'x'
@@ -586,8 +585,8 @@ function file_linenr
     local xfile="$1"
     local string="$2"
     local is_reg="${3:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: \$2 whether regex(default: false)"
 		__bash_unset 'x'
@@ -635,8 +634,8 @@ function file_range_linenr
     local line_e="$3"
     local string="$4"
     local is_reg="${5:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 4 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line of start\n\$3: line of end\n\$4: string\n\$5: \$4 whether regex(default: false)"
 		__bash_unset 'x'
@@ -689,8 +688,8 @@ function file_range
     local string1="$2"
     local string2="$3"
     local is_reg="${4:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: string\n\$3: string\n\$4: \$2 and \$3 whether regex(default: false)"
 		__bash_unset 'x'
@@ -740,8 +739,8 @@ function file_range
 function file_line_num
 {
     local xfile="$1"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile"
 		__bash_unset 'x'
@@ -765,8 +764,8 @@ function file_change
     local xfile="$1"
     local content="$2"
     local line_nr="${3:-$}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: content-string\n\$3: line-number(default: $)"
 		__bash_unset 'x'
@@ -818,9 +817,10 @@ function file_replace
     local string="$2"
     local new_str="$3"
     local is_reg="${4:-false}"
-    local line_nr="${5:-1,$}"
-	__bash_set 'x'
+    local line_nr="${5:-"1-$"}"
 
+	__bash_set 'x'
+	echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string\n\$4: \$2 whether regex(default: false)\n\$5: line-number or line-range(default range: 1,$)"
 		__bash_unset 'x'
@@ -833,10 +833,6 @@ function file_replace
         return 1
     fi
 
-    if math_bool "${is_reg}";then
-        string=$(regex_perl2extended "${string}")
-    fi
-
     if [[ "${string}" =~ '/' ]];then
         string=$(string_replace "${string}" '/' '\/')
     fi
@@ -845,8 +841,29 @@ function file_replace
         new_str=$(string_replace "${new_str}" '/' '\/')
     fi
 
-    sed -r -i "${line_nr} s/${string}/${new_str}/g" ${xfile}
-    if [ $? -ne 0 ];then
+	if [[ "${line_nr}" =~ '-' ]];then
+		local total_nr=$(sed -n '$=' ${xfile})
+		local line_list=($(seq_num "${line_nr}" "${total_nr}" false))
+		if [ ${#line_list[*]} -eq 0 ];then
+			echo_erro "file_replace { $@ }"
+			__bash_unset 'x'
+			return 1
+		fi
+
+		local line_s=${line_list[0]}
+		local line_e=${line_list[1]}
+	else
+		local line_s=${line_nr}
+		local line_e=${line_nr}
+	fi
+
+	if math_bool "${is_reg}";then
+		perl -i -pe "if (\$. >= ${line_s} && \$. <= ${line_e}) { s/${string}/${new_str}/g }" ${xfile}
+	else
+		sed -i "${line_s},${line_e} s/${string}/${new_str}/g" ${xfile}
+	fi
+
+	if [ $? -ne 0 ];then
         echo_erro "file_replace { $@ }"
 		__bash_unset 'x'
         return 1
@@ -862,8 +879,8 @@ function file_replace_with_expr
     local string="$2"
     local new_exp="$3"
     local is_reg="${4:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 3 ];then
 		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: old string\n\$3: new string(one expresion)\n\$4: \$2 whether regex(default: false)\n
 		\r**Inner Variables**: \n\$xfile  : file path\n\$line_nr: line number"
@@ -878,11 +895,6 @@ function file_replace_with_expr
     fi
 
     local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
-
-    if math_bool "${is_reg}";then
-        string=$(regex_perl2extended "${string}")
-    fi
-
     if [[ "${string}" =~ '/' ]];then
         string=$(string_replace "${string}" '/' '\/')
     fi
@@ -891,7 +903,16 @@ function file_replace_with_expr
     for line_nr in "${line_nrs[@]}"
     do
 		local new_str=$(cat < <(eval "${new_exp}"))
-        sed -r -i "${line_nr} s/${string}/${new_str}/g" ${xfile}
+		if [[ "${new_str}" =~ '/' ]];then
+			new_str=$(string_replace "${new_str}" '/' '\/')
+		fi
+
+		if math_bool "${is_reg}";then
+			perl -i -pe "if (\$. == ${line_nr}) { s/${string}/${new_str}/g }" ${xfile}
+		else
+			sed -i "${line_nr} s/${string}/${new_str}/g" ${xfile}
+		fi
+
         if [ $? -ne 0 ];then
             echo_erro "file_replace_with_expr { $@ }"
 			__bash_unset 'x'
@@ -909,8 +930,8 @@ function file_handle_with_cmd
     local string="$2"
     local run_cmd="$3"
     local is_reg="${4:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 3 ];then
 		echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: lookup string\n\$3: command with default input(current line)\n\$4: \$2 whether regex(default: false)\n
 		\r**Inner Variables**: \n\$xfile  : file path\n\$line_nr: line number\n\$content: line content"
@@ -925,11 +946,6 @@ function file_handle_with_cmd
     fi
 
     local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
-
-    if math_bool "${is_reg}";then
-        string=$(regex_perl2extended "${string}")
-    fi
-
     if [[ "${string}" =~ '/' ]];then
         string=$(string_replace "${string}" '/' '\/')
     fi
@@ -949,8 +965,8 @@ function file_count
 {
     local f_array=("$@")
     local readable=true
-	__bash_set 'x'
 
+	__bash_set 'x'
     have_cmd "fstat" || { echo_erro "fstat not exist" ; __bash_unset 'x'; return 0; }
 
 	local -a c_array=()
@@ -991,8 +1007,8 @@ function file_size
 {
     local f_array=("$@")
     local readable=true
-	__bash_set 'x'
 
+	__bash_set 'x'
     have_cmd "fstat" || { echo_erro "fstat not exist" ; __bash_unset 'x'; return 0; }
 
 	local -a c_array=()
@@ -1033,8 +1049,8 @@ function file_list
     local xfile="$1"
     local string="${2}"
     local is_reg="${3:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: xfile\n\$2: line-number or regex\n\$3: \$2 whether regex(default: false)"
 		__bash_unset 'x'
@@ -1090,8 +1106,8 @@ function file_list
 function file_temp
 {
     local base_dir="${1:-${BASH_WORK_DIR}}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     #local fpath="${base_dir}/tmp.$$.${RANDOM}"
 	local fpath=$(mktemp -u -p ${base_dir} tmp.$$.XXXXXX)
     while file_exist "${fpath}" 
@@ -1107,8 +1123,8 @@ function file_temp
 function file_realpath
 {
 	local xfile="$1"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ -z "${xfile}" ];then
 		__bash_unset 'x'
         return 1
@@ -1174,8 +1190,8 @@ function file_realpath
 function file_fname_get
 {
 	local xfile="$1"
-	__bash_set 'x'
 
+	__bash_set 'x'
 	if [ -z "${xfile}" ];then
 		xfile="${BASH_SOURCE[0]}"
 		if [ ! -f "${xfile}" ];then
@@ -1211,8 +1227,8 @@ function file_fname_get
 function file_path_get
 {
 	local xfile="$1"
-	__bash_set 'x'
 
+	__bash_set 'x'
 	if [ -z "${xfile}" ];then
 		xfile="${BASH_SOURCE[0]}"
 		if [ ! -f "${xfile}" ];then

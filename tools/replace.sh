@@ -28,7 +28,7 @@ function how_use
         myreplace 'aaa' 'bbb'
         myreplace 'aaa' 'bbb' ./file/file
         myreplace -x '.git' 'aaa' 'bbb' ./file
-        myreplace -r '\s+aaa\s+' 'bbb' ./file
+        myreplace -r -t 'c' -t 'h'  '\s+aaa\s+' 'bbb' ./file
     ===================================================================
 END
 }
@@ -62,7 +62,7 @@ if [ ${#FILE_LIST[*]} -eq 0 ];then
     echo_warn "WARNNING ......"
     xselect=$(input_prompt "" "check whether to replace { ${CUR_DIR} } all files ? (yes/no)" "no")
     if math_bool "${xselect}";then
-        FILE_LIST=($(efind ${CUR_DIR} ".*" -maxdepth 1))
+        FILE_LIST=($(efind ${CUR_DIR} ".*" 1))
     else
         exit 0
     fi
@@ -92,7 +92,7 @@ function match_execlude
 			local type count=0
 			for type in "${FILE_TYPES[@]}"
 			do
-				if ! string_match "${xfile}" "${type}$";then
+				if ! string_match "${xfile}" "\.${type}$";then
 					let count++
 				fi
 			done
@@ -124,7 +124,7 @@ function do_replace
 
     if [ -d "${xfile}" ];then
         xfile=$(string_trim "${xfile}" "/" 2)
-        local xfile_list=($(efind ${xfile} "${xfile}/.+" -maxdepth 1))
+        local xfile_list=($(efind ${xfile} "${xfile}/.+" 1))
     else
         local xfile_list=(${xfile})
     fi

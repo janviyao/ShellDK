@@ -61,6 +61,7 @@ function seq_num
 	local _seq_num=$1
 	local _max_val=$2
 	local _spread=${3:-true}
+	__bash_set 'x'
 
 	local -a _number_list=()
 	if math_is_int "${_seq_num}";then
@@ -95,6 +96,7 @@ function seq_num
 	fi
 
 	printf "%s\n" ${_number_list[*]}
+	__bash_unset 'x'
 	return 0
 }
 

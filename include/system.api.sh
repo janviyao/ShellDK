@@ -741,39 +741,44 @@ function efind
 {   
     local xdir="$1"
     local regstr="$2"
+    local maxdep="${3:-100}"
     
+	__bash_set 'x'
     echo_file "${LOG_DEBUG}" "$@"
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string that must be able to match file's full-name\n\$3~\$n: other options to find"
+        echo_erro "\nUsage: [$@]\n\$1: directory\n\$2: regex string that match file's name\n\$3: max depth(default: 100)"
+		__bash_unset 'x'
         return 1
     fi
 
     if ! file_exist "${xdir}";then
 		echo_erro "file { ${xdir} } not accessed"
+		__bash_unset 'x'
         return 1
     fi
-	
-	local posix_reg=$(regex_perl2extended "${regstr}")
-	if [[ "${posix_reg:0:1}" == "^" ]];then
-		posix_reg="${posix_reg#^}"
-	fi
 
-    shift 2
-    local opts="$@"
+	if [[ "${xdir:0:1}" == "/" ]] || [[ "${xdir:0:2}" == "./" ]];then
+		let maxdep++
+	fi
     
-    local xret
 	local -a ret_arr=()
-	
-	# -regex: match full path
-    ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${posix_reg}" 2\> /dev/null))
+    #ret_arr=($(sudo_it find ${xdir} ${opts} -regextype posix-extended -regex "(.+/)*${posix_reg}" 2\> /dev/null))
+	ret_arr=($(sudo_it "perl -e 'use File::Find; my \$maxdep=${maxdep}; find(sub { my \$dep=\$File::Find::name =~ tr!/!!; return if \$dep > \$maxdep; if (/${regstr}/) { print \"\$File::Find::name\n\" } }, \"${xdir}\")' 2> /dev/null"))
     if [ $? -ne 0 ];then
-        ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${posix_reg}"))
+        #ret_arr=($(sudo_it find ${xdir} ${opts} | grep -E "(.+/)*${posix_reg}"))
+		echo_erro "efind { $@ }"
+		__bash_unset 'x'
+		return 1
     fi
 
+    local xret
     for xret in "${ret_arr[@]}"
     do
         echo "${xret}"
     done
+
+	__bash_unset 'x'
+    return 0
 }
 
 function emove
@@ -788,7 +793,7 @@ function emove
     fi
 
     local xret
-    local ret_arr=($(efind . "${regstr}" -maxdepth 1))
+    local ret_arr=($(efind . "${regstr}" 1))
     for xret in "${ret_arr[@]}"
     do
         sudo_it mv ${xret} ${xfile}

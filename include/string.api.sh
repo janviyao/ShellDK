@@ -4,8 +4,8 @@
 function regex_2str
 {
     local regex="$@"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 1 ];then
         echo_erro "\nUsage: [$@]\n\$1: regex string"
 		__bash_unset 'x'
@@ -48,95 +48,6 @@ function regex_2str
     return 0
 }
 
-function regex_perl2basic
-{
-    local regex="$@"
-	__bash_set 'x'
-
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: regex string"
-		__bash_unset 'x'
-        return 1
-    fi
-
-    local result="${regex}"
-    local reg_chars=('\+' '\?' '\{' '\}' '\(' '\)' '|')
-    local char
-    for char in "${reg_chars[@]}"
-    do
-        if [[ ${regex} =~ ${char} ]];then
-            if [[ ${char} == '\{' ]];then
-                result=$(sed "s/{/\\\\${char}/g" <<< "${result}")
-            elif [[ ${char} == '\(' ]];then
-                result=$(sed "s/(/\\\\${char}/g" <<< "${result}")
-            elif [[ ${char} == '\)' ]];then
-                result=$(sed "s/)/\\\\${char}/g" <<< "${result}")
-            else
-                result=$(sed "s/${char}/\\\\${char}/g" <<< "${result}")
-            fi
-
-            if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "regex_perl2basic { $@ }"
-				__bash_unset 'x'
-                return 1
-            fi
-        fi
-    done
-	print_lossless "${result}"
-
-	__bash_unset 'x'
-    return 0
-}
-
-function regex_perl2extended
-{
-    local regex="$@"
-	__bash_set 'x'
-
-    if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: regex string"
-		__bash_unset 'x'
-        return 1
-    fi
-
-    local result="${regex}"
-    local reg_chars=('\\d' '\\D' '\\w' '\\W' '\\s' '\\S' '\$')
-    local char
-    for char in "${reg_chars[@]}"
-    do
-        if [[ ${regex} =~ ${char} ]];then
-            if [[ ${char} == '\\d' ]];then
-                result=$(sed "s/${char}/[0-9]/g" <<< "${result}")
-            elif [[ ${char} == '\\D' ]];then
-                result=$(sed "s/${char}/[^0-9]/g" <<< "${result}")
-            elif [[ ${char} == '\\w' ]];then
-                result=$(sed "s/${char}/[0-9a-zA-Z_]/g" <<< "${result}")
-            elif [[ ${char} == '\\W' ]];then
-                result=$(sed "s/${char}/[^0-9a-zA-Z_]/g" <<< "${result}")
-            elif [[ ${char} == '\\s' ]];then
-                result=$(sed "s/${char}/[ \\\\\\\\t]/g" <<< "${result}")
-            elif [[ ${char} == '\\S' ]];then
-                result=$(sed "s/${char}/[^ \\\\\\\\t]/g" <<< "${result}")
-            elif [[ ${char} == '\$' ]];then
-				result=$(sed "s/${char}/\\\\\\\\$/g" <<< "${result}")
-				if [[ ${result} =~ \$$ ]];then
-					result=$(sed "s/\\\\\\\\\$$/$/" <<< "${result}")
-				fi
-            fi
-
-            if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "regex_perl2extended { $@ }"
-				__bash_unset 'x'
-                return 1
-            fi
-        fi
-    done
-	print_lossless "${result}"
-
-	__bash_unset 'x'
-    return 0
-}
-
 function string_empty
 {
 	if [[ $1 =~ ^[[:space:]]*$ ]]; then
@@ -149,8 +60,8 @@ function string_empty
 function string_length
 {
     local string="$1"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [[ -z "${string}" ]];then
         echo "0"
 		__bash_unset 'x'
@@ -166,8 +77,8 @@ function string_char
 {
     local string="$1"
     local posstr="$2"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: char position(index from 0)"
 		__bash_unset 'x'
@@ -188,8 +99,8 @@ function string_contain
     local string="$1"
     local substr="$2"
     local separator="$3"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: separator"
 		__bash_unset 'x'
@@ -229,8 +140,8 @@ function string_split
     local string="$1"
     local separator="$2"
     local sub_index="${3:-0}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
 		echo_erro "\nUsage: [$@]\n\$1: string\n\$2: separator\n\$3: sub_index([1, N], 0: all)"
 		__bash_unset 'x'
@@ -283,8 +194,8 @@ function string_start
 {
     local string="$1"
     local length="$2"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
 		__bash_unset 'x'
@@ -306,8 +217,8 @@ function string_end
 {
     local string="$1"
     local length="$2"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: length"
 		__bash_unset 'x'
@@ -329,8 +240,8 @@ function string_substr
     local string="$1"
     local start="$2"
     local length="$3"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: start\n\$3: length"
 		__bash_unset 'x'
@@ -354,8 +265,8 @@ function string_gensub
 {
     local string="$1"
     local regstr="$2"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: regex string"
 		__bash_unset 'x'
@@ -387,8 +298,8 @@ function string_match
     local string="$1"
     local substr="$2"
     local is_reg="${3:-true}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: whether regex(default: true)"
 		__bash_unset 'x'
@@ -422,8 +333,8 @@ function string_same
     local string="$1"
     local substr="$2"
     local posstr="${3:-0}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: both start and end 1:start 2:end)"
 		__bash_unset 'x'
@@ -486,8 +397,8 @@ function string_insert
     local string="$1"
     local substr="$2"
     local posstr="${3:-0}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: insert position index"
 		__bash_unset 'x'
@@ -513,8 +424,8 @@ function string_trim
     local string="$1"
     local substr="$2"
     local posstr="${3:-0}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 2 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: trim position(0: start&end 1:start 2:end)"
 		__bash_unset 'x'
@@ -576,8 +487,8 @@ function string_replace
     local oldstr="$2"
     local newstr="$3"
     local is_reg="${4:-false}"
-	__bash_set 'x'
 
+	__bash_set 'x'
     if [ $# -lt 3 ];then
         echo_erro "\nUsage: [$@]\n\$1: string\n\$2: oldstr\n\$3: newstr\n\$4: whether regex(default: false)"
 		__bash_unset 'x'

@@ -55,7 +55,7 @@ if [ ${#FILE_LIST[*]} -eq 0 ];then
     echo_warn "WARNNING ......"
     xselect=$(input_prompt "" "check whether to format { ${CUR_DIR} } all files ? (yes/no)" "no")
     if math_bool "${xselect}";then
-        FILE_LIST=($(efind ${CUR_DIR} ".*" -maxdepth 1))
+        FILE_LIST=($(efind ${CUR_DIR} ".*" 1))
     else
         exit 0
     fi
@@ -115,7 +115,7 @@ function do_format
 
     if [ -d "${xfile}" ];then
         xfile=$(string_trim "${xfile}" "/" 2)
-        local xfile_list=($(efind ${xfile} "${xfile}/.+" -maxdepth 1))
+        local xfile_list=($(efind ${xfile} "${xfile}/.+" 1))
     else
         local xfile_list=(${xfile})
     fi

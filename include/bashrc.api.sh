@@ -85,8 +85,9 @@ mkdir -p ${GBL_USER_DIR}
 
 function __bash_set
 {
-	eval "declare -g opts_${FUNCNAME[1]}$$='$-'"
+	local bash_opts="$-"
 	eval "set +$1"
+	eval "declare -g opts_${FUNCNAME[1]}$$='${bash_opts}'"
 }
 
 function __bash_unset
