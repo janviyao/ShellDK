@@ -194,8 +194,10 @@ function file_contain
     fi 
 
     if math_bool "${is_reg}";then
-		if [[ ! "${string}" =~ '\/' ]];then
-			if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '/' ]];then
+			if [[ "${string}" =~ '\/' ]];then
+				string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+			else
 				string="${string//\//\\/}"
 			fi
 		fi
@@ -253,8 +255,10 @@ function file_range_have
 	fi
 
     if math_bool "${is_reg}";then
-		if [[ ! "${string}" =~ '\/' ]];then
-			if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '/' ]];then
+			if [[ "${string}" =~ '\/' ]];then
+				string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+			else
 				string="${string//\//\\/}"
 			fi
 		fi
@@ -362,8 +366,10 @@ function file_range_get
 
 	local -a _cnt_list=()
 	if math_bool "${is_reg}";then
-		if [[ ! "${string}" =~ '\/' ]];then
-			if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '/' ]];then
+			if [[ "${string}" =~ '\/' ]];then
+				string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+			else
 				string="${string//\//\\/}"
 			fi
 		fi
@@ -404,10 +410,14 @@ function file_del
 
     if math_bool "${is_reg}";then
 		if [[ "${string}" =~ '/' ]];then
-			string=$(string_replace "${string}" '/' '\/')
+			if [[ "${string}" =~ '\/' ]];then
+				string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+			else
+				string="${string//\//\\/}"
+			fi
 		fi
 
-		perl -i -ne "if (!/${string}/) { print }" ${xfile}
+		perl -i -ne "if (! /${string}/) { print }" ${xfile}
         if [ $? -ne 0 ];then
             echo_erro "file_del { $@ }"
 			__bash_unset 'x'
@@ -608,8 +618,10 @@ function file_linenr
 
 	local -a line_nrs=()
     if math_bool "${is_reg}";then
-		if [[ ! "${string}" =~ '\/' ]];then
-			if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '/' ]];then
+			if [[ "${string}" =~ '\/' ]];then
+				string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+			else
 				string="${string//\//\\/}"
 			fi
 		fi
@@ -666,8 +678,10 @@ function file_range_linenr
 
 	local -a line_nrs=()
     if math_bool "${is_reg}";then
-		if [[ ! "${string}" =~ '\/' ]];then
-			if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '/' ]];then
+			if [[ "${string}" =~ '\/' ]];then
+				string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+			else
 				string="${string//\//\\/}"
 			fi
 		fi
@@ -833,13 +847,21 @@ function file_replace
         return 1
     fi
 
-    if [[ "${string}" =~ '/' ]];then
-        string=$(string_replace "${string}" '/' '\/')
-    fi
+	if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '\/' ]];then
+			string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+		else
+			string="${string//\//\\/}"
+		fi
+	fi
 
-    if [[ "${new_str}" =~ '/' ]];then
-        new_str=$(string_replace "${new_str}" '/' '\/')
-    fi
+	if [[ "${new_str}" =~ '/' ]];then
+		if [[ "${new_str}" =~ '\/' ]];then
+			new_str=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${new_str}")
+		else
+			new_str="${new_str//\//\\/}"
+		fi
+	fi
 
 	if [[ "${line_nr}" =~ '-' ]];then
 		local total_nr=$(sed -n '$=' ${xfile})
@@ -895,16 +917,25 @@ function file_replace_with_expr
     fi
 
     local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
-    if [[ "${string}" =~ '/' ]];then
-        string=$(string_replace "${string}" '/' '\/')
-    fi
+
+	if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '\/' ]];then
+			string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+		else
+			string="${string//\//\\/}"
+		fi
+	fi
 
     local line_nr
     for line_nr in "${line_nrs[@]}"
     do
 		local new_str=$(cat < <(eval "${new_exp}"))
 		if [[ "${new_str}" =~ '/' ]];then
-			new_str=$(string_replace "${new_str}" '/' '\/')
+			if [[ "${new_str}" =~ '\/' ]];then
+				new_str=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${new_str}")
+			else
+				new_str="${new_str//\//\\/}"
+			fi
 		fi
 
 		if math_bool "${is_reg}";then
@@ -946,9 +977,13 @@ function file_handle_with_cmd
     fi
 
     local line_nrs=($(file_linenr "${xfile}" "${string}" ${is_reg}))
-    if [[ "${string}" =~ '/' ]];then
-        string=$(string_replace "${string}" '/' '\/')
-    fi
+	if [[ "${string}" =~ '/' ]];then
+		if [[ "${string}" =~ '\/' ]];then
+			string=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${string}")
+		else
+			string="${string//\//\\/}"
+		fi
+	fi
 
     local line_nr
     for line_nr in "${line_nrs[@]}"

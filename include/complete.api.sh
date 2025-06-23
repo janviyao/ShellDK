@@ -14,8 +14,12 @@ function _psgrep_completion
 	# define custom completions here
 	if [ -n "${cur}" ];then
 		local key=${cur}
-		if [[ "${key}" =~ "/" ]];then
-			key=${key//\//\\/}
+		if [[ "${key}" =~ '/' ]];then
+			if [[ "${key}" =~ '\/' ]];then
+				key=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${key}")
+			else
+				key="${key//\//\\/}"
+			fi
 		fi
 
 		if [[ ${key} =~ ^[0-9]+$ ]];then
@@ -44,8 +48,12 @@ function _mykill_completion
 	# define custom completions here
 	if [ -n "${cur}" ];then
 		local key=${cur}
-		if [[ "${key}" =~ "/" ]];then
-			key=${key//\//\\/}
+		if [[ "${key}" =~ '/' ]];then
+			if [[ "${key}" =~ '\/' ]];then
+				key=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${key}")
+			else
+				key="${key//\//\\/}"
+			fi
 		fi
 
 		if [[ ${key} =~ ^[0-9]+$ ]];then
@@ -116,8 +124,12 @@ function _mygdb_completion
 	if [[ $cword -eq 2 ]]; then
 		if [ -n "${cur}" ];then
 			local key=${cur}
-			if [[ "${key}" =~ "/" ]];then
-				key=${key//\//\\/}
+			if [[ "${key}" =~ '/' ]];then
+				if [[ "${key}" =~ '\/' ]];then
+					key=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${key}")
+				else
+					key="${key//\//\\/}"
+				fi
 			fi
 			COMPREPLY=($(compgen -W "$(pgrep -l ${cur} | awk "{ if (\$2 ~ /^${key}/ ) print \$2 }")" -- "$cur"))
 		else

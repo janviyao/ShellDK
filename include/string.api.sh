@@ -276,8 +276,10 @@ function string_gensub
 	local result="${string}"
     [ -z "${regstr}" ] && { print_lossless "${result}"; __bash_unset 'x'; return 1; } 
 	
-	if [[ ! "${regstr}" =~ '\/' ]];then
-		if [[ "${regstr}" =~ '/' ]];then
+	if [[ "${regstr}" =~ '/' ]];then
+		if [[ "${regstr}" =~ '\/' ]];then
+			regstr=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${regstr}")
+		else
 			regstr="${regstr//\//\\/}"
 		fi
 	fi
@@ -307,8 +309,10 @@ function string_match
     fi
 
 	if math_bool "${is_reg}";then
-		if [[ ! "${substr}" =~ '\/' ]];then
-			if [[ "${substr}" =~ '/' ]];then
+		if [[ "${substr}" =~ '/' ]];then
+			if [[ "${substr}" =~ '\/' ]];then
+				substr=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${substr}")
+			else
 				substr="${substr//\//\\/}"
 			fi
 		fi
@@ -502,23 +506,25 @@ function string_replace
         return 1
     fi
     
-    if math_bool "${is_reg}";then
-        if [[ ! "${oldstr}" =~ '\/' ]];then
-            if [[ "${oldstr}" =~ '/' ]];then
-                oldstr="${oldstr//\//\\/}"
-            fi
-        fi
+	if [[ "${oldstr}" =~ '/' ]];then
+		if [[ "${oldstr}" =~ '\/' ]];then
+			oldstr=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${oldstr}")
+		else
+			oldstr="${oldstr//\//\\/}"
+		fi
+	fi
 
-        if [[ ! "${newstr}" =~ '\/' ]];then
-            if [[ "${newstr}" =~ '/' ]];then
-                newstr="${newstr//\//\\/}"
-            fi
-        fi
-		
+    if math_bool "${is_reg}";then	
+		if [[ "${newstr}" =~ '/' ]];then
+			if [[ "${newstr}" =~ '\/' ]];then
+				newstr=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${newstr}")
+			else
+				newstr="${newstr//\//\\/}"
+			fi
+		fi
 		result=$(perl -pe "s/${oldstr}/${newstr}/g" <<< "${string}")
     else
         #donot use (), because it fork child shell
-        oldstr=$(regex_2str "${oldstr}") 
 		result=${string//${oldstr}/${newstr}}
     fi
 

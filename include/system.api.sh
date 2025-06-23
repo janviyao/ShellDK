@@ -762,9 +762,11 @@ function efind
 		xdir=${xdir%?}
 	fi
     
-	if [[ ! "${regstr}" =~ '\/' ]];then
-		if [[ "${regstr}" =~ '/' ]];then
-			oldstr="${regstr//\//\\/}"
+	if [[ "${regstr}" =~ '/' ]];then
+		if [[ "${regstr}" =~ '\/' ]];then
+			regstr=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${regstr}")
+		else
+			regstr="${regstr//\//\\/}"
 		fi
 	fi
 
