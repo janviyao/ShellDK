@@ -18,32 +18,24 @@ function regex_2str
     fi
 
     local result="${regex}"
-    local reg_chars=('\/' '\\' '\*' '\+' '\.' '\[' '\]' '\{' '\}' '\(' '\)')
-    local char
-    for char in "${reg_chars[@]}"
-    do
-        if [[ ${regex} =~ ${char} ]];then
-            #eval "result=${result//${char}/\\${char}}"
-            if [[ ${char} == '\{' ]];then
-                result=$(sed "s/{/\\\\${char}/g" <<< "${result}")
-            elif [[ ${char} == '\(' ]];then
-                result=$(sed "s/(/\\\\${char}/g" <<< "${result}")
-            elif [[ ${char} == '\)' ]];then
-                result=$(sed "s/)/\\\\${char}/g" <<< "${result}")
-            else
-                result=$(sed "s/${char}/\\\\${char}/g" <<< "${result}")
-            fi
+	if [[ "${result}" =~ '/' ]];then
+		if [[ "${result}" =~ '\/' ]];then
+			result=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${result}")
+		else
+			result="${result//\//\\/}"
+		fi
+	fi
 
-            if [ $? -ne 0 ];then
-                echo_file "${LOG_ERRO}" "regex_2str { $@ }"
-				__bash_unset 'x'
-                return 1
-            fi
-            #regex=$(string_replace "${regex}" "${char}" "\\${char}")
-        fi
-    done
+	local reg_chars=('/' '\' '*' '+' '.' '[' ']' '{' '}' '(' ')')
+	local char
+	for char in "${reg_chars[@]}"
+	do
+		if [[ "${regex}" =~ "${char}" ]];then
+			result="${result//"${char}"/\\"${char}"}"
+		fi
+	done
+
 	print_lossless "${result}"
-
 	__bash_unset 'x'
     return 0
 }
@@ -442,16 +434,13 @@ function string_trim
         return 1
     fi
 
-    if [ -n "${substr}" ];then
-        substr=$(regex_2str "${substr}")
-    fi
-
 	if [ -z "${substr}" ];then
 		print_lossless "${string}"
 		__bash_unset 'x'
 		return 0
 	fi
 
+	substr=$(regex_2str "${substr}")
     if [[ ${posstr} -eq 0 ]] || [[ ${posstr} -eq 1 ]];then 
         if [ -n "${substr}" ];then
             local newsub=$(string_gensub "${string}" "^(${substr})+")
