@@ -18,14 +18,6 @@ function regex_2str
     fi
 
     local result="${regex}"
-	if [[ "${result}" =~ '/' ]];then
-		if [[ "${result}" =~ '\/' ]];then
-			result=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${result}")
-		else
-			result="${result//\//\\/}"
-		fi
-	fi
-
 	local reg_chars=('/' '\' '*' '+' '.' '[' ']' '{' '}' '(' ')')
 	local char
 	for char in "${reg_chars[@]}"
