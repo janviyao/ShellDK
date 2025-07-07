@@ -831,9 +831,9 @@ function check_net
     local timeout=5 
     
     if [[ "${SYSTEM}" == "Linux" ]]; then
-        sudo_it ping -c 1 -w ${timeout} ${address} &> /dev/null
+        ping -c 1 -w ${timeout} ${address} &> /dev/null
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        sudo_it ping -n 1 -w ${timeout} ${address} &> /dev/null
+        ping -n 1 -w ${timeout} ${address} &> /dev/null
     fi
 
     if [ $? -eq 0 ];then

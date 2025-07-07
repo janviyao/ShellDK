@@ -14,13 +14,16 @@ function array_print
 {
     local -n _array_ref=$1
 
+	__bash_set 'x'
     if [ $# -lt 1 ] || ! is_array $1;then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: index_list"
+		__bash_unset 'x'
         return 1
     fi
 	shift 
 	
 	if [ ${#_array_ref[*]} -eq 0 ];then
+		__bash_unset 'x'
 		return 1
 	fi
 
@@ -55,20 +58,24 @@ function array_print
 		print_lossless "${_array_ref[${_index}]}"
     done
 
+	__bash_unset 'x'
     return 0
 }
 
 function array_copy
 {
-    local -n _array_ref1=$1
-    local -n _array_ref2=$2
+    local -n _array_src=$1
+    local -n _array_des=$2
+	__bash_set 'x'
 
     if [ $# -lt 2 ] || ! is_array $1 || ! is_array $2;then
         echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$1: array variable reference"
+		__bash_unset 'x'
         return 1
     fi
 
-	_array_ref2+=("${_array_ref1[@]}")
+	_array_des+=("${_array_src[@]}")
+	__bash_unset 'x'
     return 0
 }
 
@@ -76,9 +83,11 @@ function array_2string
 {
     local -n _array_ref=$1
     local _separator="${2:-${GBL_VAL_SPF}}"
+	__bash_set 'x'
 
     if [ $# -lt 1 ] || ! is_array $1;then
 		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: separator(default: ${GBL_VAL_SPF})"
+		__bash_unset 'x'
         return 1
     fi
 
@@ -94,6 +103,7 @@ function array_2string
 	done
 
 	echo "${_string}"
+	__bash_unset 'x'
     return 0
 }
 
@@ -173,16 +183,19 @@ function array_reset
 {
 	local -n _array_ref=$1
 	local _array_name=$1
+	__bash_set 'x'
 
 	#echo_file "${LOG_DEBUG}" "$@"
 	if [ $# -lt 2 ] || ! is_array $1;then
 		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2~N: value"
+		__bash_unset 'x'
 		return 1
 	fi
 	shift
 
 	local _val_list=("$@")
 	mapfile -t _array_ref <<< "${_val_list[@]}"
+	__bash_unset 'x'
 	return $?
 }
 
@@ -321,6 +334,20 @@ function array_dedup
         done
     done
 
+    return 0
+}
+
+function array_uniq
+{
+    local -n _array_ref=$1
+    local _array_refnm=$1
+
+    if [ $# -ne 1 ] || ! is_array $1;then
+        echo_erro "\nUsage: [$@]\n\$1: array variable reference"
+        return 1
+    fi
+
+	mapfile -t _array_ref <<< "$(array_print ${_array_refnm} | sort | uniq)"
     return 0
 }
 

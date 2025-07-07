@@ -245,6 +245,42 @@ function string_substr
     return 0
 }
 
+function string_index
+{
+    local string="$1"
+    local substr="$2"
+    local is_reg="${3:-false}"
+
+	__bash_set 'x'
+    if [ $# -lt 2 ];then
+        echo_erro "\nUsage: [$@]\n\$1: string\n\$2: substr\n\$3: whether regex(default: false)"
+		__bash_unset 'x'
+        return 1
+    fi
+
+	if math_bool "${is_reg}";then
+		if [[ "${substr}" =~ '/' ]];then
+			if [[ "${substr}" =~ '\/' ]];then
+				substr=$(perl -pe 's#(?<!\\)\/#\\/#g' <<< "${substr}")
+			else
+				substr="${substr//\//\\/}"
+			fi
+		fi
+
+		if perl -e 'my $string = shift; my $substr = shift; while ($string =~ /(?=$substr)/g) { print pos($string), "\n"; }' "${string}" "${substr}";then
+			__bash_unset 'x'
+			return 0
+		fi
+	else
+		grep -b -o "${substr}" <<< "${string}" | awk -F: '{print $1}'
+		__bash_unset 'x'
+		return 0
+	fi
+
+	__bash_unset 'x'
+	return 1
+}
+
 function string_gensub
 {
     local string="$1"

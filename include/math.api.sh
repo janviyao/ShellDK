@@ -7,9 +7,9 @@ function math_is_int
 	__bash_set 'x'
     local re='^-?[0-9]+$'
     if [[ -n $1 ]]; then
-        [[ $1 =~ $re ]] && return 0
+        [[ $1 =~ $re ]] && { __bash_unset 'x'; return 0; }
         re='^(0[xX])?[0-9a-fA-F]+$'
-        [[ $1 =~ $re ]] && return 0
+        [[ $1 =~ $re ]] && { __bash_unset 'x'; return 0; }
 		__bash_unset 'x'
         return 1
     else

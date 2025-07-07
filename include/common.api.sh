@@ -717,6 +717,15 @@ if [ $? -ne 0 ];then
 	fi
 fi
 
+__MY_SOURCE "INCLUDED_XML"       $MY_VIM_DIR/include/xml.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
 __MY_SOURCE "INCLUDED_PROCESS"   $MY_VIM_DIR/include/process.api.sh
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
