@@ -1477,12 +1477,12 @@ if has('patch-8.2.0662') || has('nvim-0.5')
     Bundle 'vim-denops/denops.vim'
     let g:denops_disable_version_check = 1                 "denops与vim版本不兼容时不报错
 
-    " Install your sources
-    Bundle 'Shougo/ddc-around'
-
     " Install your filters
     Bundle 'Shougo/ddc-matcher_head'
     Bundle 'Shougo/ddc-sorter_rank'
+
+    " Install your sources
+    Bundle 'Shougo/ddc-source-around'
 
     " Customize global settings
     " Use around source.
