@@ -217,9 +217,13 @@ function install_provider
         xfile="${select_x}"
     else
         if ! file_exist "${xfile}";then
-			echo_erro "file { ${xfile} } not accessed"
-            return 1
-        fi
+			if have_cmd "${xfile}";then
+				xfile=$(file_realpath ${xfile})
+			else
+				echo_erro "file { ${xfile} } not accessed"
+				return 1
+			fi
+		fi
     fi
 
     if have_cmd "rpm";then
@@ -241,6 +245,35 @@ function install_provider
         local rpm_file=$(yum search ${fname} | grep -w "${fname}")
         if [ -n "${rpm_file}" ];then
             echo "${rpm_file}"
+            return 0
+        fi
+    fi
+
+    return 0
+}
+
+function install_search
+{
+    local xkey="$1"
+
+    if [ $# -ne 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: key word"
+        return 1
+    fi
+
+	local -a files=()
+    if have_cmd "yum";then
+		array_reset files "$(yum search "*${xkey}*")"
+        if [ ${#files[*]} -gt 0 ];then
+        	array_print files
+            return 0
+        fi
+    fi
+
+    if have_cmd "rpm";then
+		array_reset files "$(rpm -qa | grep -F "${xkey}")"
+        if [ ${#files[*]} -gt 0 ];then
+        	array_print files
             return 0
         fi
     fi
