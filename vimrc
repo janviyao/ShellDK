@@ -1137,8 +1137,10 @@ function! ProjectGo(opmode)
 		call ToggleWindow("allclose")
 		call Quickfix_ctrl("save")    
 
-		silent! execute "mks! ".GetVimDir("session")."/session.vim"
-		silent! execute "wviminfo! ".GetVimDir("session")."/session.viminfo"
+		if filereadable("tags") || filereadable("cscope.out") 
+			silent! execute "mks! ".GetVimDir("session")."/session.vim"
+			silent! execute "wviminfo! ".GetVimDir("session")."/session.viminfo"
+		endif
 		silent! execute "!bash ".g:my_vim_dir."/vimrc.sh -m unload -o ".GetVimDir("database")
 
 		call Quickfix_stop()
