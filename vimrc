@@ -297,7 +297,7 @@ set switchbuf=useopen                                      "显示已打开窗�
 set matchpairs=(:),{:},[:],<:>                             "匹配括号的规则，增加针对html的<>
 set completeopt=longest,menu                               "关掉智能补全时的预览窗口
 
-set viminfo=!,%,'100,<100,s100,:100,@100,/100,f1           "viminfo文件保存的信息选项
+set viminfo=!,'100,<100,s100,:100,@100,/100,f1             "viminfo文件保存的信息选项
 
 "自动保存文件
 "set updatetime=1000
@@ -1117,7 +1117,7 @@ function! ProjectGo(opmode)
 			silent! execute "source ".GetVimDir("session")."/session.vim"
 		endif
 
-		if filereadable(GetVimDir("session")."/session.vim")
+		if filereadable(GetVimDir("session")."/session.viminfo")
 			silent! execute "rviminfo ".GetVimDir("session")."/session.viminfo"
 		endif
 
