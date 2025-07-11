@@ -9,6 +9,7 @@ TAR_WHAT+=("${MY_HOME}/.ssh")
 TAR_WHAT+=("${MY_HOME}/.vim")
 TAR_WHAT+=("$@")
 
+CUR_PWD=$(pwd)
 # Start to tar 
 file_exist "${EXPORT_FILE}" && sudo_it rm -f ${EXPORT_FILE}
 for item in "${TAR_WHAT[@]}"
@@ -24,4 +25,5 @@ do
     else
         tar -cf ${EXPORT_FILE} ${TAR_FILE}
     fi
+    cd ${CUR_PWD}
 done

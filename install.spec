@@ -12,8 +12,6 @@ ppid;                ! have_cmd 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g 
 fstat;               ! have_cmd 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;emove 'fstat(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/fstat*
 perror;              ! have_cmd 'perror';cd ${MY_VIM_DIR}/tools/app;gcc perror.c -g -o perror;emove 'perror(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/perror*
 chk_passwd;          ! have_cmd 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;emove 'chk_passwd(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/chk_passwd*
-linux.deno;          ! have_cmd 'deno';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-unknown-linux-gnu.zip;mv -f deno ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno
-cygwin.deno;         ! have_cmd 'deno.exe';cd ${MY_VIM_DIR}/deps;unzip deno-x86_64-pc-windows-msvc.zip;mv -f deno.exe ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/deno.exe
 cygwin.sudo;         ! have_cmd 'cygwin-sudo.py';cd ${MY_VIM_DIR}/deps/cygwin-sudo;cp -f cygwin-sudo.py ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/cygwin-sudo.py
 
 astyle;              install_check 'astyle' 'astyle-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/

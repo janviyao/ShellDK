@@ -246,8 +246,9 @@ function project_delete
 	fi
 	
 	{
-		sleep 2
+		sleep 1
 		rm -fr ${out_dir}
+        #echo_info "project remove success: ${out_dir}"
 	} &
     local bgpid=$!
     disown ${bgpid}

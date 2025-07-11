@@ -482,9 +482,11 @@ function inst_vim
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
-        install_from_spec "linux.deno"
-    elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        install_from_spec "cygwin.deno"
+    	cp -f ${MY_VIM_DIR}/deps/libclang-*.tar.bz2 ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives/
+    	cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
+		local cur_dir=$(pwd)
+		cd ${MY_HOME}/.vim/bundle/YouCompleteMe
+		python3 ./install.py --clang-completer --no-regex --verbose
     fi
 
     #git clone https://git.code.sf.net/p/cscope/cscope cscope

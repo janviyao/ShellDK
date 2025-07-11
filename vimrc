@@ -286,7 +286,13 @@ set whichwrap=b,s,<,>,~,[,]                                "允许<BS>和光标�
 set history=1024                                           "history文件中需要记录的行数
 set confirm                                                "在处理未保存或只读文件的时候，弹出确认
 set hidden                                                 "允许在有未保存的修改时切换缓冲区
+
 set wildmenu                                               "命令行TAB自动完成以及备选提示
+"set wildmode=list:longest,full                             "启用命令补全
+"set complete+=b                                            "关键字补全（当前 buffer）
+"set complete+=w                                            "全局关键字补全（所有 buffer）
+"inoremap <silent><expr><Tab>   pumvisible() ? '<C-n>' : (col('.') <= 1 <Bar><Bar> getline('.')[col('.') - 2] =~# '\s') ? '<Tab>' : '<C-n>'
+"inoremap <silent><expr><S-Tab> pumvisible() ? '<C-p>' : '<C-h>'
 
 "set mouse-=a                                              "在所有的模式下面打开鼠标
 "set selection=exclusive
@@ -1425,27 +1431,24 @@ nnoremap <silent> <Leader>aft :IHT<CR>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动补全 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"Bundle 'Valloric/YouCompleteMe'
+Bundle "ycm-core/YouCompleteMe"
 
-"跳转到定义处
-"nnoremap <Leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR>
-
-"let g:ycm_global_ycm_extra_conf='~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/.ycm_extra_conf.py'
-"let g:ycm_confirm_extra_conf=0                             "不显示开启vim时检查ycm_extra_conf文件的信息
-"let g:ycm_collect_identifiers_from_tags_files=1            "开启基于tag的补全，可以在这之后添加需要的标签路径
-"let g:ycm_min_num_of_chars_for_completion=1                "输入第1个字符开始补全
-"let g:ycm_cache_omnifunc=0                                 "禁止缓存匹配项,每次都重新生成匹配项
-"let g:ycm_seed_identifiers_with_syntax=1                   "开启语义补全
-"let g:ycm_complete_in_comments=1                           "在注释输入中也能补全
-"let g:ycm_complete_in_strings=1                            "在字符串输入中也能补全
-"let g:ycm_use_ultisnips_completer=1                        "允许使用UltiSnip插件的自动补全结果
-"let g:ycm_autoclose_preview_window_after_insertion=1       "离开插入模式，自动关闭窗口
-"let g:ycm_enable_diagnostic_signs = 0                      "语法告警以及错误标签指示使能
-"let g:ycm_enable_diagnostic_highlighting = 1               "语法告警以及错误高亮使能
-"let g:ycm_echo_current_diagnostic = 1                      "语法告警以及错误提示
-"let g:ycm_key_list_select_completion=['<c-n>', '<Down>']   "按键选中当前项
-"let g:ycm_key_list_previous_completion=['<c-p>', '<Up>']   "向前选择
-"let g:ycm_key_invoke_completion='<C-Space>'                "激活自动补全
+let g:ycm_global_ycm_extra_conf='~/.vim/.ycm_extra_conf.py'
+let g:ycm_key_list_select_completion = ['<TAB>', '<Down>']     "向下移动选择
+let g:ycm_key_list_previous_completion = ['<S-TAB>', '<Up>']   "向上移动选择
+let g:ycm_key_list_stop_completion = ['<C-y>']                 "关闭弹出菜单
+let g:ycm_key_detailed_diagnostics = '<leader>d'               "显示当前行的详细诊断信息
+let g:ycm_confirm_extra_conf=0                                 "不显示开启vim时检查ycm_extra_conf文件的信息
+let g:ycm_collect_identifiers_from_tags_files=1                "开启基于tag的补全，可以在这之后添加需要的标签路径
+let g:ycm_min_num_of_chars_for_completion=1                    "输入第1个字符开始补全
+let g:ycm_cache_omnifunc=0                                     "禁止使用omnicompletion engines
+let g:ycm_seed_identifiers_with_syntax=1                       "开启语义补全
+let g:ycm_complete_in_comments=1                               "在注释输入中也能补全
+let g:ycm_complete_in_strings=1                                "在字符串输入中也能补全
+let g:ycm_autoclose_preview_window_after_insertion=1           "离开插入模式，自动关闭窗口
+let g:ycm_enable_diagnostic_signs = 0                          "禁用语法告警以及错误标签指示
+let g:ycm_enable_diagnostic_highlighting = 1                   "语法告警以及错误高亮使能
+let g:ycm_echo_current_diagnostic = 1                          "语法告警以及错误提示
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 快速移动 插件
@@ -1470,56 +1473,6 @@ let g:gundo_preview_height = 20                            "设置预览窗口�
 let g:gundo_right = 0                                      "设置窗口在左侧
 let g:gundo_help = 0                                       "不显示帮忙信息
 let g:gundo_close_on_revert = 1                            "恢复之后自动关闭窗口
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
-" 绑定 自动补全 插件
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-if has('patch-8.2.0662') || has('nvim-0.5')
-    Bundle 'Shougo/ddc.vim'
-    Bundle 'vim-denops/denops.vim'
-    let g:denops_disable_version_check = 1                 "denops与vim版本不兼容时不报错
-
-    " Install your filters
-    Bundle 'Shougo/ddc-matcher_head'
-    Bundle 'Shougo/ddc-sorter_rank'
-
-    " Install your sources
-    Bundle 'Shougo/ddc-source-around'
-
-    " Customize global settings
-    " Use around source.
-    " https://github.com/Shougo/ddc-around
-    call ddc#custom#patch_global('sources', ['around'])
-
-    " Use matcher_head and sorter_rank.
-    " https://github.com/Shougo/ddc-matcher_head
-    " https://github.com/Shougo/ddc-sorter_rank
-    call ddc#custom#patch_global('sourceOptions', {
-                \ '_': {
-                \   'matchers': ['matcher_head'],
-                \   'sorters': ['sorter_rank']},
-                \ })
-
-    " Change source options
-    call ddc#custom#patch_global('sourceOptions', { 'around': {'mark': 'A'}, })
-
-    call ddc#custom#patch_global('sourceParams', { 'around': {'maxSize': 500}, })
-
-    " Customize settings on a filetype
-    call ddc#custom#patch_filetype(['c', 'cpp'], 'sources', ['around', 'clangd'])
-    call ddc#custom#patch_filetype(['c', 'cpp'], 'sourceOptions', { 'clangd': {'mark': 'C'}, })
-    call ddc#custom#patch_filetype('markdown', 'sourceParams', { 'around': {'maxSize': 100}, })
-
-    " Mappings
-    " <TAB>: completion.
-    inoremap <silent><expr> <TAB> pumvisible() ? '<C-n>' : (col('.') <= 1 <Bar><Bar> getline('.')[col('.') - 2] =~# '\s') ? '<TAB>' : ddc#map#manual_complete()
-
-    " <S-TAB>: completion back.
-    inoremap <expr><S-TAB>  pumvisible() ? '<C-p>' : '<C-h>'
-
-    " Use ddc.
-    call ddc#enable()
-endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动补全符号 插件
