@@ -400,8 +400,12 @@ function inst_spec
 
 function inst_vim
 {
+	if ! install_from_spec "python3.12";then
+		return 1
+	fi
+	sudo_it ldconfig
+
     if install_check "vim" "vim-.*\.tar\.gz" true;then
-        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
         local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
         conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
         #conf_paras="${conf_paras} --enable-luainterp=yes"
@@ -486,7 +490,7 @@ function inst_vim
 			cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
 			local cur_dir=$(pwd)
 			cd ${MY_HOME}/.vim/bundle/YouCompleteMe
-			python3 ./install.py --clang-completer --no-regex --verbose
+			python3.12 ./install.py --clang-completer --no-regex --verbose
 		fi
     fi
 

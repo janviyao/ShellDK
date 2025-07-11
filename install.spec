@@ -3,6 +3,7 @@ make-3.82;           install_check 'make' 'make-.+\.rpm' true;cd ${MY_VIM_DIR}/d
 make-4.3;            install_check 'make' 'make-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'make-.+\.tar\.gz' true;rm -fr make-*/
 autoconf;            install_check 'autoconf' 'autoconf-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'autoconf-.+\.tar\.gz' true;rm -fr autoconf-*/
 automake;            install_check 'automake' 'automake-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'automake-.+\.tar\.gz' true;rm -fr automake-*/
+python3.12;           ! have_cmd 'python3.12';cd ${MY_VIM_DIR}/deps;install_from_tar 'Python-3.12.11.tgz' false '--enable-shared';sudo_it rm -fr Python-*/
 
 #gcc;                install_check 'gcc' 'gcc-.+\.rpm' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'gcc-.+\.rpm' true
 gcc;                 install_check 'gcc' 'gcc-.*\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-4.9.2/gcc-4.9.2.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh

@@ -93,7 +93,7 @@ function mytar
     
     local ls_opts="-tf"
     local fname=$(file_fname_get "${fpath}")
-    if string_match "${fname}" "\.tar\.gz$";then
+    if string_match "${fname}" "\.tar\.gz$" || string_match "${fname}" "\.tgz$";then
         options="-z ${options}"
         ls_opts="-z ${ls_opts}"
     elif string_match "${fname}" "\.tar\.bz2$";then
@@ -507,7 +507,7 @@ function install_from_make
     fi
 
     if file_exist "configure"; then
-        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
+        echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure ${conf_para}")"
         ./configure ${conf_para} &>> build.log
         if [ $? -ne 0 ]; then
             mkdir -p build && cd build
