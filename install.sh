@@ -464,13 +464,11 @@ function inst_vim
     cp -fr ${MY_VIM_DIR}/colors ${MY_HOME}/.vim
     cp -fr ${MY_VIM_DIR}/syntax ${MY_HOME}/.vim
 
-    if ! file_exist "${MY_HOME}/.vim/bundle/vundle"; then
-        cd ${MY_VIM_DIR}/deps
-        if [ -f bundle.tar.gz ]; then
-            tar -xzf bundle.tar.gz
-            mv -f bundle ${MY_HOME}/.vim/
-        fi
-    fi
+	if [ -f ${MY_VIM_DIR}/deps/bundle.tar.gz ]; then
+		file_exist "${MY_HOME}/.vim/bundle" && rm -fr ${MY_HOME}/.vim/bundle
+		local bundle=$(mytar ${MY_VIM_DIR}/deps/bundle.tar.gz)
+		mv -f ${bundle} ${MY_HOME}/.vim/
+	fi
 
     if check_net;then
         if ! file_exist "${MY_HOME}/.vim/bundle/vundle"; then
@@ -482,11 +480,14 @@ function inst_vim
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
-    	cp -f ${MY_VIM_DIR}/deps/libclang-*.tar.bz2 ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives/
-    	cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
-		local cur_dir=$(pwd)
-		cd ${MY_HOME}/.vim/bundle/YouCompleteMe
-		python3 ./install.py --clang-completer --no-regex --verbose
+		if file_exist "${MY_HOME}/.vim/bundle/YouCompleteMe"; then
+			mkdir -p ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives
+			cp -f ${MY_VIM_DIR}/deps/libclang-*.tar.bz2 ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives/
+			cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
+			local cur_dir=$(pwd)
+			cd ${MY_HOME}/.vim/bundle/YouCompleteMe
+			python3 ./install.py --clang-completer --no-regex --verbose
+		fi
     fi
 
     #git clone https://git.code.sf.net/p/cscope/cscope cscope
