@@ -351,6 +351,25 @@ function array_uniq
     return 0
 }
 
+function array_gensub
+{
+	local -n _array_ref=$1
+	local regstr="$2"
+
+	if [ $# -ne 2 ] || ! is_array $1;then
+		echo_erro "\nUsage: [$@]\n\$1: array variable reference\n\$2: regex string"
+		return 1
+	fi
+
+	local _item
+	for _item in "${_array_ref[@]}"
+	do
+		string_gensub "${_item}" "${regstr}"
+	done
+
+	return 0
+}
+
 function is_map
 {
 	if [[ "$(declare -p $1 2>/dev/null)" =~ "declare -A" ]];then

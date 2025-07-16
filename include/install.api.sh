@@ -648,18 +648,25 @@ function install_from_spec
     echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${xspec}")"
     local key_str=$(regex_2str "${xspec}")
 	local -a spec_lines=()
-	array_reset spec_lines "$(file_get ${MY_VIM_DIR}/install.spec "^${key_str}\s*;" true)"
+	array_reset spec_lines "$(file_get ${MY_VIM_DIR}/install.spec "^${key_str}[^;]*\s*;" true)"
 
     if [ ${#spec_lines[*]} -eq 0 ];then
         echo_info "$(printf -- "[%13s]: %-50s" "Return" "spec { ${key_str} } not found")"
         return 0
     elif [ ${#spec_lines[*]} -gt 1 ];then
-        echo_erro "regex [^\s*${key_str}\s*;] match more from ${MY_VIM_DIR}/install.spec: \n${spec_lines[*]}"
-        return 1
+		local key_list=($(array_gensub spec_lines "^${key_str}[^;]*\s*(?=;)"))
+		local select_x=$(select_one ${key_list[*]})
+
+		array_reset spec_lines "$(file_get ${MY_VIM_DIR}/install.spec "^${select_x}\s*;" true)"
+		if [ ${#spec_lines[*]} -gt 1 ];then
+			echo_erro "regex [^\s*${key_str}\s*;] match more from ${MY_VIM_DIR}/install.spec: \n${spec_lines[*]}"
+			return 1
+		fi
+		key_str=${select_x}
     fi
 
     local spec_line="${spec_lines[0]}"
-    echo_debug "spec line: { ${spec_line} }"
+    echo_debug "spec: { ${key_str} } line: { ${spec_line} }"
 
     local actions=$(string_replace "${spec_line}" "^\s*${key_str}\s*;\s*" "" true)
     local total=$(echo "${actions}" | awk -F';' '{ print NF }')

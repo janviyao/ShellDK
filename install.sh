@@ -395,6 +395,11 @@ function inst_env
 
 function inst_spec
 {
+    if [ $# -lt 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: specify spec-key\n\$2: whether force(default: false)"
+        return 1
+    fi
+
     install_from_spec "$@"
 }
 
@@ -507,6 +512,11 @@ function inst_vim
 function inst_glibc
 {
     local version="$1"
+
+    if [ $# -ne 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: glibc version"
+        return 1
+    fi
 
     local version_cur=$(getconf -a | grep 'GNU_LIBC_VERSION' | grep -P "\d+\.\d+" -o)
     local version_new=($(string_gensub "${version}" "\d+\.\d+(\.\d+)?"))
