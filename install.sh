@@ -492,7 +492,7 @@ function inst_vim
 		file_del "${MY_HOME}/.bashrc" "export.+AUTO_CPL_ENGINE.+" true
 		if file_exist "${MY_HOME}/.vim/bundle/YouCompleteMe"; then
 			local version_sys=$(string_gensub "$(gcc --version)" "\d+\.\d+(\.\d+)?" | head -n 1)
-			if __version_gt "7.1.0" "${version_sys}"; then
+			if __version_gt "${version_sys}" "7.1.0"; then
 				mkdir -p ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives
 				cp -f ${MY_VIM_DIR}/deps/libclang-*.tar.bz2 ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives/
 				cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
@@ -501,6 +501,8 @@ function inst_vim
 				python3.12 ./install.py --clang-completer --verbose
 				if [ $? -eq 0 ];then
 					file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=YouCompleteMe"
+				else
+					file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=Default"
 				fi
 			else
 				file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=Default"

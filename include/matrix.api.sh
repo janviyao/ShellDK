@@ -291,11 +291,20 @@ function array_compare
         local item1=${_array_ref1[${_idx}]}
         local item2=${_array_ref2[${_idx}]}
         
-        if [[ ${item1} > ${item2} ]];then
-            return 1
-        elif [[ ${item1} < ${item2} ]];then
-            return 255
-        fi
+		if math_is_int "${item1}" && math_is_int "${item2}";then
+
+			if math_expr_if "${item1} > ${item2}";then
+				return 1
+			elif math_expr_if "${item1} < ${item2}";then
+				return 255
+			fi
+		else
+			if [[ ${item1} > ${item2} ]];then
+				return 1
+			elif [[ ${item1} < ${item2} ]];then
+				return 255
+			fi
+		fi
     done
 
     return 0
