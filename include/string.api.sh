@@ -304,7 +304,7 @@ function string_gensub
 		fi
 	fi
 
-	result=$(perl -ne "if (/(${regstr})/) { print \$1 }" <<< "${string}")
+	result=$(perl -ne "while (/(${regstr})/g) { print \"\$1\n\" }" <<< "${string}")
     if [ $? -eq 0 ];then
 		print_lossless "${result}"
 		__bash_unset 'x'

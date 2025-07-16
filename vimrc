@@ -288,11 +288,6 @@ set confirm                                                "在处理未保存�
 set hidden                                                 "允许在有未保存的修改时切换缓冲区
 
 set wildmenu                                               "命令行TAB自动完成以及备选提示
-"set wildmode=list:longest,full                             "启用命令补全
-"set complete+=b                                            "关键字补全（当前 buffer）
-"set complete+=w                                            "全局关键字补全（所有 buffer）
-"inoremap <silent><expr><Tab>   pumvisible() ? '<C-n>' : (col('.') <= 1 <Bar><Bar> getline('.')[col('.') - 2] =~# '\s') ? '<Tab>' : '<C-n>'
-"inoremap <silent><expr><S-Tab> pumvisible() ? '<C-p>' : '<C-h>'
 
 "set mouse-=a                                              "在所有的模式下面打开鼠标
 "set selection=exclusive
@@ -1431,6 +1426,8 @@ nnoremap <silent> <Leader>aft :IHT<CR>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 自动补全 插件
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let s:auto_cpl_engine = getenv('AUTO_CPL_ENGINE') 
+if s:auto_cpl_engine == 'YouCompleteMe'
 Bundle "ycm-core/YouCompleteMe"
 
 let g:ycm_global_ycm_extra_conf='~/.vim/.ycm_extra_conf.py'
@@ -1449,6 +1446,16 @@ let g:ycm_autoclose_preview_window_after_insertion=1           "离开插入模�
 let g:ycm_enable_diagnostic_signs = 0                          "禁用语法告警以及错误标签指示
 let g:ycm_enable_diagnostic_highlighting = 1                   "语法告警以及错误高亮使能
 let g:ycm_echo_current_diagnostic = 1                          "语法告警以及错误提示
+
+elseif s:auto_cpl_engine == 'Default'
+
+set wildmode=list:longest,full                                 "启用命令补全
+set complete+=b                                                "关键字补全（当前 buffer）
+set complete+=w                                                "全局关键字补全（所有 buffer）
+inoremap <silent><expr><Tab>   pumvisible() ? '<C-n>' : (col('.') <= 1 <Bar><Bar> getline('.')[col('.') - 2] =~# '\s') ? '<Tab>' : '<C-n>'
+inoremap <silent><expr><S-Tab> pumvisible() ? '<C-p>' : '<C-h>'
+
+endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 " 绑定 快速移动 插件

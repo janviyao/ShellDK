@@ -171,7 +171,7 @@ function install_check
         for xfile in "${file_list[@]}"
         do
             local file_name=$(file_fname_get "${xfile}")
-            local new_version=$(string_gensub "${file_name}" "\d+\.\d+(\.\d+)?")
+            local new_version=$(string_gensub "${file_name}" "\d+\.\d+(\.\d+)?" | head -n 1)
             echo_info "$(printf -- "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
                 rm -f ${tmp_file}
@@ -411,7 +411,7 @@ function install_from_rpm
 
         if ! math_bool "${force}";then
             local version_new=${versions[0]}
-            local version_sys=($(string_gensub "${system_rpms[0]}" "\d+\.\d+(\.\d+)?"))
+            local version_sys=$(string_gensub "${system_rpms[0]}" "\d+\.\d+(\.\d+)?" | head -n 1)
             if __version_gt ${version_sys} ${version_new}; then
                 echo_erro "$(printf -- "[%13s]: %-13s" "Version" "installing: { ${version_new} }  installed: { ${version_sys} }")"
                 return 1

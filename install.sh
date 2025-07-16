@@ -220,7 +220,7 @@ function inst_env
 			return 1
 		fi
 
-		local -a must_deps=("make-4.3" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+		local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
 		if [ -z "${REMOTE_IP}" ];then
 			local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "no")
 			if ! math_bool "${xselect}";then
@@ -489,13 +489,24 @@ function inst_vim
     fi
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
+		file_del "${MY_HOME}/.bashrc" "export.+AUTO_CPL_ENGINE.+" true
 		if file_exist "${MY_HOME}/.vim/bundle/YouCompleteMe"; then
-			mkdir -p ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives
-			cp -f ${MY_VIM_DIR}/deps/libclang-*.tar.bz2 ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives/
-			cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
-			local cur_dir=$(pwd)
-			cd ${MY_HOME}/.vim/bundle/YouCompleteMe
-			python3.12 ./install.py --clang-completer --no-regex --verbose
+			local version_sys=$(string_gensub "$(gcc --version)" "\d+\.\d+(\.\d+)?" | head -n 1)
+			if __version_gt "7.1.0" "${version_sys}"; then
+				mkdir -p ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives
+				cp -f ${MY_VIM_DIR}/deps/libclang-*.tar.bz2 ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/clang_archives/
+				cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
+				local cur_dir=$(pwd)
+				cd ${MY_HOME}/.vim/bundle/YouCompleteMe
+				python3.12 ./install.py --clang-completer --verbose
+				if [ $? -eq 0 ];then
+					file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=YouCompleteMe"
+				fi
+			else
+				file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=Default"
+			fi
+		else
+			file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=Default"
 		fi
     fi
 
@@ -519,7 +530,7 @@ function inst_glibc
     fi
 
     local version_cur=$(getconf -a | grep 'GNU_LIBC_VERSION' | grep -P "\d+\.\d+" -o)
-    local version_new=($(string_gensub "${version}" "\d+\.\d+(\.\d+)?"))
+    local version_new=$(string_gensub "${version}" "\d+\.\d+(\.\d+)?" | head -n 1)
 
     if __version_lt ${version_cur} ${version_new}; then
 		if ! file_exist "${MY_VIM_DIR}/deps/glibc-${version_new}.tar.gz";then
@@ -535,7 +546,7 @@ function inst_glibc
 			rm -fr ${MY_VIM_DIR}/deps/glibc-${version_new}*
 		fi
         ## Install glibc
-        #install_from_spec "make-4.3" true
+        #install_from_spec "make" true
         #install_from_spec "${glibc_spec}" true
         ##install_from_spec "glibc-common"
         sudo_it "rm -f /etc/environment"
