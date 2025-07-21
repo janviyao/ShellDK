@@ -542,7 +542,7 @@ function string_replace
 		result=$(perl -pe "s/${oldstr}/${newstr}/g" <<< "${string}")
     else
         #donot use (), because it fork child shell
-		result=${string//${oldstr}/${newstr}}
+		result=${string//"${oldstr}"/"${newstr}"}
     fi
 
 	print_lossless "${result}"

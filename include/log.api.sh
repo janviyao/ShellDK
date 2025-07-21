@@ -91,10 +91,10 @@ function echo_file
     if [ -n "${REMOTE_IP}" ];then
         #printf "%s %s from [%s]\n" "${headpart}" "$@" "${REMOTE_IP}" >> ${BASH_LOG}
         #printf "%s %s\n" "${headpart}" "${para}" >> ${BASH_LOG}
-        echo -e $(printf -- "%s %s\n" "${headpart}" "${para}") >> ${BASH_LOG}
+        echo -e "$(printf -- "%s %s\n" "${headpart}" "${para}")" >> ${BASH_LOG}
     else
         #printf "%s %s\n" "${headpart}" "${para}" >> ${BASH_LOG}
-        echo -e $(printf -- "%s %s\n" "${headpart}" "${para}") >> ${BASH_LOG}
+        echo -e "$(printf -- "%s %s\n" "${headpart}" "${para}")" >> ${BASH_LOG}
     fi
 
     if [ ${echo_level} -le ${LOG_ERRO} ];then
