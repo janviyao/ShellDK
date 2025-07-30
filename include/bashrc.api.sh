@@ -83,20 +83,6 @@ mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_USER_DIR}
 
-function __bash_set
-{
-	local bash_opts="$-"
-	eval "set +$1"
-	eval "declare -g opts_${FUNCNAME[1]}$$='${bash_opts}'"
-}
-
-function __bash_unset
-{
-	if [[ $(eval "echo \${opts_${FUNCNAME[1]}$$}") =~ $1 ]];then
-		eval "set -$1"
-	fi
-}
-
 function __my_bashrc_deps
 {
     local bin_dir="${MY_HOME}/.local/bin"

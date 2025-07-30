@@ -9,10 +9,10 @@ gcc-4.9.2;           install_check 'gcc' 'gcc-.*\.tar\.gz' true;cd ${MY_VIM_DIR}
 gcc-9.2.0;           install_check 'gcc' 'gcc-.*\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
 glibc-common;        math_bool 'true';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'glibc-common-.+\.rpm' true
 
-ppid;                ! have_cmd 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;emove 'ppid(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/ppid*
-fstat;               ! have_cmd 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;emove 'fstat(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/fstat*
-perror;              ! have_cmd 'perror';cd ${MY_VIM_DIR}/tools/app;gcc perror.c -g -o perror;emove 'perror(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/perror*
-chk_passwd;          ! have_cmd 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;emove 'chk_passwd(\.exe)?' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/chk_passwd*
+ppid;                ! have_cmd 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;emove 'ppid(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/ppid*
+fstat;               ! have_cmd 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;emove 'fstat(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/fstat*
+perror;              ! have_cmd 'perror';cd ${MY_VIM_DIR}/tools/app;gcc perror.c -g -o perror;emove 'perror(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/perror*
+chk_passwd;          ! have_cmd 'chk_passwd';cd ${MY_VIM_DIR}/tools/app;gcc chk_passwd.c -g -lcrypt -o chk_passwd;emove 'chk_passwd(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/chk_passwd*
 cygwin.sudo;         ! have_cmd 'cygwin-sudo.py';cd ${MY_VIM_DIR}/deps/cygwin-sudo;cp -f cygwin-sudo.py ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/cygwin-sudo.py
 
 astyle;              install_check 'astyle' 'astyle-.+\.tar\.gz' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'astyle.+\.tar\.gz' true;cp -f astyle*/build/gcc/bin/astyle* ${LOCAL_BIN_DIR};chmod 777 ${LOCAL_BIN_DIR}/astyle*;rm -fr astyle*/

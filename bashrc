@@ -45,6 +45,20 @@ if [ -z "${MY_HOME}" ];then
     fi
 fi
 
+function __bash_set
+{
+	local bash_opts="$-"
+	eval "set +$1"
+	eval "declare -g opts_${FUNCNAME[1]}$$='${bash_opts}'"
+}
+
+function __bash_unset
+{
+	if [[ $(eval "echo \${opts_${FUNCNAME[1]}$$}") =~ $1 ]];then
+		eval "set -$1"
+	fi
+}
+
 source $MY_VIM_DIR/include/common.api.sh
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
