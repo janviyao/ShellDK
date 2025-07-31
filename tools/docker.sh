@@ -2,18 +2,35 @@
 source $MY_VIM_DIR/tools/paraparser.sh "" "$@"
 declare -A subcmd_func_map
 
-subcmd_func_map['create']=$(cat << EOF
-mydocker create <container-name> <IMAGE>
+function container_running
+{
+	local is_running=$(docker inspect --format='{{.State.Running}}' $1 2> /dev/null)
+	if math_bool "${is_running}";then
+		return 0
+	fi
+	return 1
+}
+
+function container_exist
+{
+	if docker inspect $1 &> /dev/null;then
+		return 0
+	fi
+	return 1
+}
+
+subcmd_func_map['create_container']=$(cat << EOF
+mydocker create_container <container-name> <image-name|image-id>
 
 DESCRIPTION
-    create a new container <container-name> with <IMAGE> and start it in the backgroud
+    create a new container <container-name> with <image-name|image-id> and start it in the backgroud
 
 OPTIONS
     -h|--help                # show this message
 EOF
 )
 
-function func_create
+function func_create_container
 {
 	local -a option_all=()
 	local -A option_map=()
@@ -75,11 +92,169 @@ function func_create
     return 0
 }
 
+subcmd_func_map['create_image']=$(cat << EOF
+mydocker create_image <container-name|container-id> <new-image-name> [version-tag]
+
+DESCRIPTION
+    create a new image by a running container
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_create_image
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	local image="${subcmd_all[1]}"
+	local tag="${subcmd_all[2]}"
+	if [[ -n "${name}" ]] && [[ -n "${image}" ]];then
+		if ! container_exist "${name}";then
+			return 1
+		fi
+
+		if [ -z "${tag}" ];then
+			tag="latest"
+		fi
+		process_run docker commit ${name} ${image}:${tag}
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['del_container']=$(cat << EOF
+mydocker del_container <container-name|container-id>
+
+DESCRIPTION
+    delete a container
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_del_container
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	if [ -n "${name}" ];then
+		if ! container_exist "${name}";then
+			return 1
+		fi
+
+		process_run docker stop ${name}
+		process_run docker rm ${name}
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['del_image']=$(cat << EOF
+mydocker del_image <image-name|image-id> [version-tag]
+
+DESCRIPTION
+    delete a image
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_del_image
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local image="${subcmd_all[0]}"
+	local tag="${subcmd_all[1]}"
+	if [[ -n "${image}" ]];then
+		if [ -z "${tag}" ];then
+			tag="latest"
+		fi
+		process_run docker rmi ${image}:${tag}
+	else
+		return 1
+	fi
+
+    return 0
+}
 subcmd_func_map['inspect']=$(cat << EOF
 mydocker inspect <container-name|container-id>
 
 DESCRIPTION
-    show configure information of a running container
+    show configures of a running container
 
 OPTIONS
     -h|--help                # show this message
