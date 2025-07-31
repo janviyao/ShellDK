@@ -441,12 +441,13 @@ function inst_vim
             install_from_spec "ncurses-devel"
         fi
 
+        sudo_it rm -f /usr/bin/ex /usr/bin/view /usr/bin/rview
         install_from_tar "${MY_VIM_DIR}/deps/vim-*.tar.gz" "true" "${conf_paras}"
         if [ $? -ne 0 ];then
             return 1
         fi
 
-        sudo_it rm -f /usr/local/bin/vim /usr/bin/ex /usr/bin/view /usr/bin/rview
+        sudo_it rm -f /usr/local/bin/vim
         file_exist "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
 

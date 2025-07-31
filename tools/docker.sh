@@ -42,7 +42,79 @@ function func_create
 	local name="${subcmd_all[0]}"
 	local image="${subcmd_all[1]}"
 	if [[ -n "${name}" ]] && [[ -n "${image}" ]];then
-		process_run docker run -d -v ${MY_HOME}:${MY_HOME} --net=host --name ${name} -it ${image} /bin/bash 
+		local rebind_list=""
+		local value=$(input_prompt "" "decide if rebind to map some directorys? (yes/no)" "no")
+		while math_bool "${value}"
+		do
+			local local_dir=$(input_prompt "" "input local directory" "")
+			if string_empty "${local_dir}";then
+				break
+			fi
+
+			if ! file_exist "${local_dir}";then
+				echo_erro "directory invalid { ${local_dir} } "
+				break
+			fi
+
+			local container_dir=$(input_prompt "" "input container directory" "")
+			if string_empty "${container_dir}";then
+				break
+			fi
+
+			if [ -n "${rebind_list}" ];then
+				rebind_list="${rebind_list} -v ${local_dir}:${container_dir}"
+			else
+				rebind_list="-v ${local_dir}:${container_dir}"
+			fi
+		done
+		process_run docker run -d -v ${MY_HOME}:${MY_HOME} ${rebind_list} --net=host --name ${name} -it ${image} /bin/bash 
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['inspect']=$(cat << EOF
+mydocker inspect <container-name|container-id>
+
+DESCRIPTION
+    show configure information of a running container
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_inspect
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	if [ -n "${name}" ];then
+		process_run docker inspect ${name}
 	else
 		return 1
 	fi
