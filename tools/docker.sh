@@ -19,8 +19,8 @@ function container_exist
 	return 1
 }
 
-subcmd_func_map['create_container']=$(cat << EOF
-mydocker create_container <container-name> <image-name|image-id>
+subcmd_func_map['container_create']=$(cat << EOF
+mydocker container_create <container-name> <image-name|image-id>
 
 DESCRIPTION
     create a new container <container-name> with <image-name|image-id> and start it in the backgroud
@@ -30,7 +30,7 @@ OPTIONS
 EOF
 )
 
-function func_create_container
+function func_container_create
 {
 	local -a option_all=()
 	local -A option_map=()
@@ -92,8 +92,60 @@ function func_create_container
     return 0
 }
 
-subcmd_func_map['create_image']=$(cat << EOF
-mydocker create_image <container-name|container-id> <new-image-name> [version-tag]
+subcmd_func_map['container_delete']=$(cat << EOF
+mydocker container_delete <container-name|container-id>
+
+DESCRIPTION
+    delete a container
+
+OPTIONS
+    -h|--help                # show this message
+EOF
+)
+
+function func_container_delete
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=()
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="bash"
+	local options=""
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 1
+				;;
+		esac
+	done
+
+	local name="${subcmd_all[0]}"
+	if [ -n "${name}" ];then
+		if ! container_exist "${name}";then
+			return 1
+		fi
+
+		process_run docker stop ${name}
+		process_run docker rm ${name}
+	else
+		return 1
+	fi
+
+    return 0
+}
+
+subcmd_func_map['image_create']=$(cat << EOF
+mydocker image_create <container-name|container-id> <new-image-name> [version-tag]
 
 DESCRIPTION
     create a new image by a running container
@@ -103,7 +155,7 @@ OPTIONS
 EOF
 )
 
-function func_create_image
+function func_image_create
 {
 	local -a option_all=()
 	local -A option_map=()
@@ -148,60 +200,8 @@ function func_create_image
     return 0
 }
 
-subcmd_func_map['del_container']=$(cat << EOF
-mydocker del_container <container-name|container-id>
-
-DESCRIPTION
-    delete a container
-
-OPTIONS
-    -h|--help                # show this message
-EOF
-)
-
-function func_del_container
-{
-	local -a option_all=()
-	local -A option_map=()
-	local -a subcmd_all=()
-	local -a shortopts=()
-	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
-
-	local subcmd="bash"
-	local options=""
-	local key
-	for key in "${!option_map[@]}"
-	do
-		local value="${option_map[${key}]}"
-		case "${key}" in
-			"-h"|"--help")
-				how_use_func "${subcmd}"
-				return 0
-				;;
-			*)
-				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 1
-				;;
-		esac
-	done
-
-	local name="${subcmd_all[0]}"
-	if [ -n "${name}" ];then
-		if ! container_exist "${name}";then
-			return 1
-		fi
-
-		process_run docker stop ${name}
-		process_run docker rm ${name}
-	else
-		return 1
-	fi
-
-    return 0
-}
-
-subcmd_func_map['del_image']=$(cat << EOF
-mydocker del_image <image-name|image-id> [version-tag]
+subcmd_func_map['image_delete']=$(cat << EOF
+mydocker image_delete <image-name|image-id> [version-tag]
 
 DESCRIPTION
     delete a image
@@ -211,7 +211,7 @@ OPTIONS
 EOF
 )
 
-function func_del_image
+function func_image_delete
 {
 	local -a option_all=()
 	local -A option_map=()
@@ -250,6 +250,7 @@ function func_del_image
 
     return 0
 }
+
 subcmd_func_map['inspect']=$(cat << EOF
 mydocker inspect <container-name|container-id>
 

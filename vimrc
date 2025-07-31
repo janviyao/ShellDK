@@ -1230,7 +1230,11 @@ endfunction
 filetype off
 set runtimepath+=~/.vim/bundle/vundle
 silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/common"
+if has('python') || has('python3') 
 silent! execute "set runtimepath+=".g:my_vim_dir."/plugins/quickfix"
+else
+call LogPrint("error", "vim compile without python or python3")
+endif
 call vundle#rc()
 Bundle "gmarik/vundle"                                     
 
