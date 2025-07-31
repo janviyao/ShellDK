@@ -144,42 +144,50 @@ function install_check
     local isreg="${3:-false}"
 
     if [ $# -lt 2 ];then
-        echo_erro "\nUsage: [$@]\n\$1: executable bin\n\$2: file-name or regex-string\n\$3: whether regex(default: false)"
+        echo_erro "\nUsage: [$@]\n\$1: executable bin\n\$2: file-name or version-string\n\$3: whether regex(default: false)"
         return 1
     fi
 	
     if have_cmd "${xbin}";then
-        local tmp_file=$(file_temp)
-        ${xbin} --version &> ${tmp_file}
-        if [ $? -ne 0 ];then
-            rm -f ${tmp_file}
-            return 0
-        fi
+		local cur_version=$(string_gensub "$(${xbin} --version)" "\d+\.\d+(\.\d+)?" | head -n 1)
+		if [ -z "${cur_version}" ];then
+			return 0
+		fi
 
-        local file_list=(${xfile})
-        if math_bool "${isreg}";then
-            file_list=($(efind ${MY_VIM_DIR}/deps "${xfile}"))
-        fi
-        
+		local -a file_list=()
+		if math_bool "${isreg}";then
+			file_list=($(efind ${MY_VIM_DIR}/deps "${xfile}"))
+		else
+			if file_exist "${xfile}";then
+				file_list=(${xfile})
+			fi
+		fi
+
         if [ ${#file_list[*]} -eq 0 ];then
-            echo_info "file { ${xfile} } not exist"
-            rm -f ${tmp_file}
+			local new_version=$(string_gensub "${xfile}" "\d+\.\d+(\.\d+)?" | head -n 1)
+			if [ -z "${new_version}" ];then
+				echo_erro "file { ${xfile} } not exist"
+				return 1
+			fi
+
+            if __version_lt ${cur_version} ${new_version}; then
+                return 0
+            fi
+
             return 1
         fi
 
-        local cur_version=$(grep -P "\d+\.\d+(\.\d+)?" -o ${tmp_file} | head -n 1)
         for xfile in "${file_list[@]}"
         do
             local file_name=$(file_fname_get "${xfile}")
-            local new_version=$(string_gensub "${file_name}" "\d+\.\d+(\.\d+)?" | head -n 1)
+			local new_version=$(string_gensub "${file_name}" "\d+\.\d+(\.\d+)?" | head -n 1)
+
             echo_info "$(printf -- "[%13s]: installing: { %-8s }  installed: { %-8s }" "Version" "${new_version}" "${cur_version}")"
             if __version_lt ${cur_version} ${new_version}; then
-                rm -f ${tmp_file}
                 return 0
             fi
         done
 
-        rm -f ${tmp_file}
         return 1
     fi
 
