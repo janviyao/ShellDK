@@ -488,15 +488,15 @@ function install_from_make
 
     local currdir="$(pwd)"
     cd ${makedir} || { echo_erro "enter fail: ${makedir}"; return 1; }
-    echo "${conf_para}" > ${currdir}/build.log
+    echo "${conf_para}" > ${makedir}/build.log
 
     if file_exist "contrib/download_prerequisites"; then
         #GCC installation need this:
         if check_net; then
             echo_info "$(printf -- "[%13s]: %-50s" "Doing" "download_prerequisites")"
-            ./contrib/download_prerequisites &>> ${currdir}/build.log
+            ./contrib/download_prerequisites &>> ${makedir}/build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Download_prerequisites: ${makedir} failed, check: $(file_realpath ${currdir}/build.log)"
+                echo_erro " Download_prerequisites: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
                 cd ${currdir}
                 return 1
             fi
@@ -509,9 +509,9 @@ function install_from_make
 
     if file_exist "autogen.sh"; then
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "autogen")"
-        ./autogen.sh &>> ${currdir}/build.log
+        ./autogen.sh &>> ${makedir}/build.log
         if [ $? -ne 0 ]; then
-            echo_erro " Autogen: ${makedir} failed, check: $(file_realpath ${currdir}/build.log)"
+            echo_erro " Autogen: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
             cd ${currdir}
             return 1
         fi
@@ -519,12 +519,12 @@ function install_from_make
 
     if file_exist "configure"; then
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure ${conf_para}")"
-        ./configure ${conf_para} &>> ${currdir}/build.log
+        ./configure ${conf_para} &>> ${makedir}/build.log
         if [ $? -ne 0 ]; then
             mkdir -p build && cd build
-            ../configure ${conf_para} &>> ${currdir}/build.log
+            ../configure ${conf_para} &>> ${makedir}/build.log
             if [ $? -ne 0 ]; then
-                echo_erro " Configure: ${makedir} failed, check: $(file_realpath ${currdir}/build.log)"
+                echo_erro " configure: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
                 cd ${currdir}
                 return 1
             fi
@@ -534,17 +534,25 @@ function install_from_make
                 cd ..
             fi
         fi
-    else
+	elif file_exist "config"; then
+		echo_info "$(printf -- "[%13s]: %-50s" "Doing" "config ${conf_para}")"
+		./config ${conf_para} &>> ${makedir}/build.log
+		if [ $? -ne 0 ]; then
+			echo_erro " config: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
+			cd ${currdir}
+			return 1
+		fi
+	else
         echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make configure")"
-        USER=${MY_NAME} make configure &>> ${currdir}/build.log
+        USER=${MY_NAME} make configure &>> ${makedir}/build.log
         if [ $? -eq 0 ]; then
             echo_info "$(printf -- "[%13s]: %-50s" "Doing" "configure")"
-            ./configure ${conf_para} &>> ${currdir}/build.log
+            ./configure ${conf_para} &>> ${makedir}/build.log
             if [ $? -ne 0 ]; then
                 mkdir -p build && cd build
-                ../configure ${conf_para} &>> ${currdir}/build.log
+                ../configure ${conf_para} &>> ${makedir}/build.log
                 if [ $? -ne 0 ]; then
-                    echo_erro " Configure: ${makedir} failed, check: $(file_realpath ${currdir}/build.log)"
+                    echo_erro " Configure: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
                     cd ${currdir}
                     return 1
                 fi
@@ -565,18 +573,18 @@ function install_from_make
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make -j 32")"
     local cflags_bk="${CFLAGS}"
     export CFLAGS="-fcommon"
-    USER=${MY_NAME} make -j 32 &>> ${currdir}/build.log
+    USER=${MY_NAME} make -j 32 &>> ${makedir}/build.log
     if [ $? -ne 0 ]; then
-        echo_erro " Make: ${makedir} failed, check: $(file_realpath ${currdir}/build.log)"
+        echo_erro " Make: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
         cd ${currdir}
         return 1
     fi
     export CFLAGS="${cflags_bk}"
 
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make install")"
-    sudo_it "USER=${MY_NAME} make install INSTALL='install -o ${MY_NAME} -g users' &>> ${currdir}/build.log"
+    sudo_it "USER=${MY_NAME} make install INSTALL='install -o ${MY_NAME} -g users' &>> ${makedir}/build.log"
     if [ $? -ne 0 ]; then
-        echo_erro " Install: ${makedir} failed, check: $(file_realpath ${currdir}/build.log)"
+        echo_erro " Install: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
         cd ${currdir}
         return 1
     fi
