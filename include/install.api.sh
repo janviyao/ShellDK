@@ -149,7 +149,7 @@ function install_check
     fi
 	
     if have_cmd "${xbin}";then
-		local cur_version=$(string_gensub "$(${xbin} --version)" "\d+\.\d+(\.\d+)?" | head -n 1)
+		local cur_version=$(string_gensub "$(${xbin} --version 2>&1)" "\d+\.\d+(\.\d+)?" | head -n 1)
 		if [ -z "${cur_version}" ];then
 			return 0
 		fi

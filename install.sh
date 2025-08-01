@@ -499,7 +499,13 @@ function inst_vim
 				cp -f ${MY_HOME}/.vim/bundle/YouCompleteMe/third_party/ycmd/examples/.ycm_extra_conf.py ${MY_HOME}/.vim/
 				local cur_dir=$(pwd)
 				cd ${MY_HOME}/.vim/bundle/YouCompleteMe
-				python3.12 ./install.py --clang-completer --verbose
+
+				if [[ "${MY_NAME}" == "root" ]]; then
+					python3.12 ./install.py --force-sudo --clang-completer --verbose
+				else
+					python3.12 ./install.py --clang-completer --verbose
+				fi
+
 				if [ $? -eq 0 ];then
 					file_append "${MY_HOME}/.bashrc" "export AUTO_CPL_ENGINE=YouCompleteMe"
 				else
