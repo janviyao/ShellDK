@@ -410,7 +410,7 @@ function inst_vim
 	fi
 	sudo_it ldconfig
 
-    if install_check "vim" "vim-.*\.tar\.gz" true;then
+    if install_check "vim" "vim-.*\.tar\.gz$" true;then
         local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
         conf_paras="${conf_paras} --enable-largefile --disable-gui --disable-netbeans"
         #conf_paras="${conf_paras} --enable-luainterp=yes"
@@ -451,7 +451,7 @@ function inst_vim
         file_exist "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
         sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
 
-		local vim_dir=$(efind ${MY_VIM_DIR}/deps "vim-\d+\.\d+\.\d+")
+		local vim_dir=$(efind ${MY_VIM_DIR}/deps "vim-\d+\.\d+\.\d+$")
 		if [ -n "${vim_dir}" ];then
 			rm -fr ${vim_dir}
 		fi
