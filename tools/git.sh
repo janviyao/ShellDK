@@ -898,62 +898,6 @@ function func_submodule_add
     return ${retcode}
 }
 
-subcmd_func_map['submodule_deinit']=$(cat << EOF
-mygit submodule_deinit <repo-module>
-
-DESCRIPTION
-    deinit a submodule
-
-OPTIONS
-    -h|--help                                   # show this message
-
-EXAMPLES
-    mygit submodule_deinit 'repo-module'        # deinit a submodule with [repo-module]
-EOF
-)
-
-function func_submodule_deinit
-{
-	local -a option_all=()
-	local -A option_map=()
-	local -a subcmd_all=()
-	local -a shortopts=('h')
-	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
-
-	local subcmd="submodule_deinit"
-	local key
-	for key in "${!option_map[@]}"
-	do
-		local value="${option_map[${key}]}"
-		case "${key}" in
-			"-h"|"--help")
-				how_use_func "${subcmd}"
-				return 0
-				;;
-			*)
-				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
-				return 22
-				;;
-		esac
-	done
-
-	local repo="${subcmd_all[0]}"
-	if [ -z "${repo}" ];then
-		local submodules=($(git submodule status | awk '{ print $2 }'))
-		if [ ${#submodules[*]} -gt 0 ];then
-			echo_info "please select submodule to deinit:"
-			repo=$(select_one ${submodules[*]})
-		fi
-	fi
-
-	if [ -z "${repo}" ];then
-		return 0
-	fi
-
-	process_run git submodule deinit --force ${repo}
-	return $?
-}
-
 subcmd_func_map['submodule_del']=$(cat << EOF
 mygit submodule_del <repo-url>
 
@@ -1006,6 +950,12 @@ function func_submodule_del
 		return 0
 	fi
 
+	process_run git submodule deinit -f ${repo}
+    local retcode=$?
+    if [ $? -ne 0 ];then
+		return ${retcode}
+	fi
+
     process_run git rm --cached ${repo}
     local retcode=$?
     if [ $? -ne 0 ];then
@@ -1020,10 +970,71 @@ function func_submodule_del
 	fi
 
 	if file_exist ".git/modules/${repo}";then
-		rm -rf .git/modules/${repo}
+		rm -fr .git/modules/${repo}
 	fi
 
     return 0
+}
+
+subcmd_func_map['submodule_reset']=$(cat << EOF
+mygit submodule_reset <repo-module>
+
+DESCRIPTION
+    reset a submodule
+
+OPTIONS
+    -h|--help                                   # show this message
+
+EXAMPLES
+    mygit submodule_reset 'repo-module'        # reset a submodule with [repo-module]
+EOF
+)
+
+function func_submodule_reset
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="submodule_deinit"
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 22
+				;;
+		esac
+	done
+
+	local repo="${subcmd_all[0]}"
+	if [ -z "${repo}" ];then
+		local submodules=($(git submodule status | awk '{ print $2 }'))
+		if [ ${#submodules[*]} -gt 0 ];then
+			echo_info "please select submodule to deinit:"
+			repo=$(select_one ${submodules[*]})
+		fi
+	fi
+
+	if [ -z "${repo}" ];then
+		return 0
+	fi
+
+	process_run git submodule update --init --recursive --force ${repo}
+    local retcode=$?
+    if [ $? -ne 0 ];then
+		return ${retcode}
+	fi
+
+	return $?
 }
 
 subcmd_func_map['submodule_update']=$(cat << EOF
@@ -1078,7 +1089,7 @@ function func_submodule_update
 			fi
 
 			if [[ "${repo}" == "all" ]];then
-				process_run git submodule update --init --recursive
+				process_run git submodule update --init --recursive --remote
 			else
 				process_run git submodule update --init --recursive --remote ${repo}
 			fi
