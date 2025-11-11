@@ -306,6 +306,10 @@ function process_pid2name
 	local -a name_list=()
     for xpid in "${xproc_list[@]}" 
     do
+		if [ -z "${xpid}" ];then
+			continue
+		fi
+
         if math_is_int "${xpid}";then
             if ! process_exist ${xpid};then
                 continue
@@ -381,6 +385,10 @@ function process_name2pid
 	local -a pid_array=()
     for xproc in "${xproc_list[@]}" 
     do
+		if [ -z "${xproc}" ];then
+			continue
+		fi
+
         if math_is_int "${xproc}";then
 			pid_array+=(${xproc})
             continue

@@ -109,6 +109,7 @@ declare -A commandMap
 commandMap["${CMD_PRE}sudo"]="${MY_VIM_DIR}/tools/sudo.sh"
 commandMap["${CMD_PRE}k8s"]="${MY_VIM_DIR}/tools/k8s.sh"
 commandMap["${CMD_PRE}system"]="${MY_VIM_DIR}/tools/system.sh"
+commandMap["${CMD_PRE}perf"]="${MY_VIM_DIR}/tools/perf.sh"
 commandMap["${CMD_PRE}ftrace"]="${MY_VIM_DIR}/tools/ftrace.sh"
 commandMap["${CMD_PRE}bpftrace"]="${MY_VIM_DIR}/tools/bpftrace/bpftrace.sh"
 commandMap["${CMD_PRE}tmux"]="${MY_VIM_DIR}/tools/tmux.sh"
