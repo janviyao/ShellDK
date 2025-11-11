@@ -29,6 +29,54 @@ function get_commit_file
 	fi
 }
 
+function stash_push
+{
+	local change_files=($(get_change_list))
+	if [ ${#change_files[*]} -gt 0 ];then
+		process_run git stash push -u
+		local retcode=$?
+		if [ ${retcode} -ne 0 ];then
+			return ${retcode}
+		fi
+	fi
+
+	return 0
+}
+
+function stash_pop
+{
+	local cur_branch=$(git symbolic-ref --short -q HEAD)
+	if [ -n "${cur_branch}" ];then
+		local short_name=$(awk -F'/' '{ print $NF }' <<< "${cur_branch}")
+
+		local -a omit_list
+		local stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
+		while [ ${#stash_indexs[*]} -gt 0 ]
+		do
+			local index=$(string_split ${stash_indexs[0]} ',' 1)
+			local commit=$(string_split ${stash_indexs[0]} ',' 2)
+			if array_have omit_list "${commit}";then
+				unset stash_indexs[0]
+				continue
+			fi
+
+			if ! math_is_int "${index}";then
+				echo_erro "invalid index: ${index}"
+				break
+			fi
+
+			process_run git stash pop ${index}
+			if [ $? -ne 0 ];then
+				echo_erro "failed: git stash pop ${index}"
+				array_append omit_list "${commit}" 
+			fi
+			stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
+		done
+	fi
+
+	return 0
+}
+
 subcmd_func_map['clone']=$(cat << EOF
 mygit clone <repo-url>
 
@@ -531,6 +579,147 @@ function func_push
     return $?
 }
 
+subcmd_func_map['pr_pull']=$(cat << EOF
+mygit pr_pull <PR-commit-id>
+
+DESCRIPTION
+    pull <PR-commit-id> from a remote repository into the local branch named 'PR-commit-id'
+
+OPTIONS
+    -h|--help               # show this message
+
+EXAMPLES
+    mygit pr_pull 166c80    # fetch another repository to a local branch
+EOF
+)
+
+function func_pr_pull
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=('h')
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local subcmd="pr_pull"
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 22
+				;;
+		esac
+	done
+	
+	local pr_id="${subcmd_all[0]}"
+	if [ -n "${pr_id}" ];then
+		stash_push
+		local retcode=$?
+		if [ ${retcode} -ne 0 ];then
+			return ${retcode}
+		fi
+
+		process_run git fetch origin ${pr_id}
+		if [ $? -ne 0 ];then
+			echo_erro "failed: git fetch origin ${pr_id}"
+			stash_pop
+			return 22
+		fi
+
+		if string_match "${pr_id}" "^[0-9a-fA-F]{7,40}$";then
+			pr_id=$(string_substr "${pr_id}" 0 7)
+		fi
+
+		process_run git checkout -b "PR-${pr_id}" FETCH_HEAD
+		if [ $? -ne 0 ];then
+			echo_erro "failed: git checkout -b \"PR-${pr_id}\" FETCH_HEAD"
+			stash_pop
+			return 22
+		fi
+	else
+		return 22
+	fi
+
+    return $?
+}
+
+subcmd_func_map['pr_push']=$(cat << EOF
+mygit pr_push <target-branch> [local-branch]
+
+DESCRIPTION
+    push the changes of local repo into remote repo
+
+OPTIONS
+    -h|--help                 # show this message
+    -f|--force                # force to push
+
+EXAMPLES
+    mygit push                # push the changes of local repo into remote repo
+EOF
+)
+
+function func_pr_push
+{
+	local -a option_all=()
+	local -A option_map=()
+	local -a subcmd_all=()
+	local -a shortopts=('h' 'help' 'f' 'force')
+	para_fetch "shortopts" "option_all" "subcmd_all" "option_map" "$@"
+
+	local force_opt=""
+	local subcmd="pr_push"
+	local key
+	for key in "${!option_map[@]}"
+	do
+		local value="${option_map[${key}]}"
+		case "${key}" in
+			"-h"|"--help")
+				how_use_func "${subcmd}"
+				return 0
+				;;
+			"-f"|"--force")
+				force_opt="--force"
+				;;
+			*)
+				echo "subcmd[${subcmd}] option[${key}] value[${value}] invalid"
+				return 22
+				;;
+		esac
+	done
+	
+	local site=$(string_gensub "$(git remote -v | grep push | awk '{ print $2 }')" "[^@]+\.(com|cn)+(?=:)")
+	if ! check_net "${site}";then
+		echo_erro "failed: check_net ${site}"
+		return 1
+	fi
+
+	local tar_branch="${subcmd_all[0]}"
+	if [ -z "${tar_branch}" ];then
+		echo_erro "invalid: target_branch ${tar_branch}"
+		return 22
+	fi
+
+	local loc_branch="${subcmd_all[1]}"
+	if [ -n "${loc_branch}" ];then
+		process_run git push origin HEAD:refs/for/${tar_branch}/${loc_branch} ${force_opt}
+	else
+		process_run git push origin HEAD:refs/for/${tar_branch} ${force_opt}
+	fi
+
+	if [ $? -eq 0 ];then
+		return 22
+	fi
+
+    return $?
+}
+
 subcmd_func_map['checkout']=$(cat << EOF
 mygit checkout <branch>
 
@@ -572,13 +761,14 @@ function func_checkout
 
 	local msg="${subcmd_all[*]}"
 	if [ -n "${msg}" ];then
-		if string_match "${msg}" "^[0-9a-fA-F]{7,40}$";then
-			msg=$(string_substr "${msg}" 0 7)
+		stash_push
+		local retcode=$?
+		if [ ${retcode} -ne 0 ];then
+			return ${retcode}
 		fi
 
-		local change_files=($(get_change_list))
-		if [ ${#change_files[*]} -gt 0 ];then
-			process_run git stash push -u
+		if string_match "${msg}" "^[0-9a-fA-F]{7,40}$";then
+			msg=$(string_substr "${msg}" 0 7)
 		fi
 
 		local branch_list=($(git branch -a | awk '{ if ($1 ~ /(remotes\/)?origin\//) { sub("^(remotes/)?origin/", "", $1); print $1 } else { print $1 } }'  |  grep -E "^${msg}$" | sort -u))
@@ -594,43 +784,18 @@ function func_checkout
 				fi
 			else
 				echo_erro "failed: ${msg} match too many branchs: ${branch_list[*]}"
+				stash_pop
 				return 0
 			fi
 		fi
 		
 		local retcode=$?
 		if [ ${retcode} -ne 0 ];then
+			stash_pop
 			return ${retcode}
 		fi
 
-		local cur_branch=$(git symbolic-ref --short -q HEAD)
-		if [ -n "${cur_branch}" ];then
-			local short_name=$(awk -F'/' '{ print $NF }' <<< "${cur_branch}")
-
-			local -a omit_list
-			local stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
-			while [ ${#stash_indexs[*]} -gt 0 ]
-			do
-				local index=$(string_split ${stash_indexs[0]} ',' 1)
-				local commit=$(string_split ${stash_indexs[0]} ',' 2)
-				if array_have omit_list "${commit}";then
-					unset stash_indexs[0]
-					continue
-				fi
-
-				if ! math_is_int "${index}";then
-					echo_erro "invalid index: ${index}"
-					break
-				fi
-
-				process_run git stash pop ${index}
-				if [ $? -ne 0 ];then
-					echo_erro "failed: git stash pop ${index}"
-					array_append omit_list "${commit}" 
-				fi
-				stash_indexs=($(git stash list | grep -F "WIP on ${short_name}" | awk -F: '{ if (match($1, /[0-9]+/)) printf "%s,%s\n",substr($1,RSTART,RLENGTH),substr($3,2,8) }'))
-			done
-		fi
+		stash_pop
 	else
 		return 22
 	fi
