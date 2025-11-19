@@ -1057,7 +1057,9 @@ function! quickfix#grep_find(csarg)
 		return
 	endif
 	let pattern = substitute(pattern, '[#]', '\\#', 'g')
+	let pattern = substitute(pattern, ' ', '\\ ', 'g')
 
+    "call PrintArgs("2file", "perl-regex pattern: ", pattern)
     "silent! normal! g`X
     "silent! delmarks X
     execute "Rgrep ".pattern

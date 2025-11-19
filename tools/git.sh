@@ -620,6 +620,11 @@ function func_pr_pull
 	
 	local pr_id="${subcmd_all[0]}"
 	if [ -n "${pr_id}" ];then
+		if ! string_match "${pr_id}" "^[0-9a-fA-F]{7,40}$";then
+			echo_erro "invalid: PR-commit-id ${pr_id}"
+			return 22
+		fi
+
 		stash_push
 		local retcode=$?
 		if [ ${retcode} -ne 0 ];then

@@ -57,7 +57,7 @@ alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompres
 alias psgrep='function psgrep { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it ps -eo pid,cmd | awk "{ if (\$1 ~ /^$1/ ) print \$0 }"; else sudo_it pgrep -fa $1 | grep -v pgrep; fi; shift; done }; psgrep'
 alias mykill='function mykill { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it kill -9 $1; else sudo_it pkill -e -x -9 $1; fi; shift; done }; mykill'
 
-alias gbranch='git branch'
+alias gbranch='git branch -v'
 alias gstatus='git status'
 alias gclear='git clean -df; git reset --hard HEAD'
 alias gdiff='git diff'
