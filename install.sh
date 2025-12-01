@@ -159,7 +159,6 @@ function clean_env
 
     local TIMER_RUNDIR=${GBL_USER_DIR}/timer
     file_exist "${TIMER_RUNDIR}" && rm -fr ${TIMER_RUNDIR}
-    file_exist "${MY_HOME}/.timerc" && rm -f ${MY_HOME}/.timerc
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
         ${SUDO} "file_del /etc/ld.so.conf '${LOCAL_LIB_DIR}'"
@@ -319,7 +318,6 @@ function inst_env
         chmod 777 ${TIMER_RUNDIR}
     fi
 
-    file_exist "${TIMER_RUNDIR}/.timerc" && rm -f ${TIMER_RUNDIR}/.timerc
     if ! file_exist "${TIMER_RUNDIR}/.timerc";then
         echo "#!/bin/bash"                      > ${TIMER_RUNDIR}/.timerc
         echo "export MY_VIM_DIR=${MY_VIM_DIR}" >> ${TIMER_RUNDIR}/.timerc

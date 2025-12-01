@@ -872,6 +872,7 @@ function process_2cpu
         do
 			#printf -- "%-5s %s\n" "HT" "%CPU"
 			#ps -eLo pid,psr,%cpu | sort -n -u -k 3 -r | awk -v var=${xpid} '{ if ($1 == var) printf "%-5d %s\n", $2, $3 }'
+			#pidstat -t -p ${xpid}
 			ps -Lo pid,psr,%cpu -p ${xpid}
 			if [[ "${xpid}" != "${pid_list[$((${#pid_list[*]} - 1))]}" ]];then
 				echo

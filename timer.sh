@@ -4,6 +4,7 @@ export MY_HOME="/home/$1"
 export LOCAL_IP="127.0.0.1"
 export BTASK_LIST="master"
 export GBL_USER_DIR="/tmp/gbl/${MY_NAME}"
+export TIMER_RUNDIR="${GBL_USER_DIR}/timer"
 
 function git_modify_list
 {
@@ -11,8 +12,8 @@ function git_modify_list
 	printf -- "%s\n" ${file_list[*]}
 }
 
-if [ -f ${GBL_USER_DIR}/timer/.timerc ];then
-    source ${GBL_USER_DIR}/timer/.timerc
+if [ -f ${TIMER_RUNDIR}/.timerc ];then
+    source ${TIMER_RUNDIR}/.timerc
 	if [ $? -ne 0 ];then
 		echo_debug "timer: exception exit"
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
