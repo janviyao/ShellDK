@@ -85,7 +85,7 @@ function cpu_statistics
     fi
 
     if string_contain "${select_x}" "<PID>";then
-        local process_x=$(input_prompt "" "specify one running-app's pid" "")
+        local process_x=$(input_prompt "" "specify one running-app's pid or name" "")
         local pid_array=($(process_name2pid "${process_x}"))
         select_x=$(string_replace "${select_x}" "<PID>" "${pid_array[0]}")
     fi
@@ -112,7 +112,7 @@ function mem_statistics
     select_x=$(string_trim "${select_x}" " ")
 
     if string_contain "${select_x}" "<PID>";then
-        local process_x=$(input_prompt "" "specify one running-app's pid" "")
+        local process_x=$(input_prompt "" "specify one running-app's pid or name" "")
         local pid_array=($(process_name2pid "${process_x}"))
         select_x=$(string_replace "${select_x}" "<PID>" "${pid_array[0]}")
     fi
@@ -236,7 +236,7 @@ function software_statistics
     select_x=$(string_trim "${select_x}" " ")
 
     if string_contain "${select_x}" "<PID>";then
-        local process_x=$(input_prompt "" "specify one app with parameters or one running-app's pid" "")
+        local process_x=$(input_prompt "" "specify one app with parameters or one running-app's pid or name" "")
         if math_is_int "${process_x}";then
             select_x=$(string_replace "${select_x}" "<PID>" "${process_x}")
         else

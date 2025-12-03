@@ -56,11 +56,14 @@ function construct_pid
     local para_str="$@"
     echo_file "${LOG_DEBUG}" "construct_pid: ${para_str}"
 
+	local -a pid_array
     if [ ${para_cnt} -eq 0 ];then
         local process_x=$(input_prompt "" "specify one running-app's name or its pid" "")
-        local pid_array=($(process_name2pid "${process_x}"))
+		array_reset pid_array "$(ps -eo pid,comm | awk "{ if (\$0 ~ /${process_x}/ ) print \$0 }")"
         if [ ${#pid_array[*]} -gt 0 ];then
-            echo "${pid_array[0]}"
+			local select_x=$(select_one "${pid_array[@]}")
+			select_x=$(string_split "${select_x}" " " 1)
+            echo "${select_x}"
             return 0
         else
             echo "${process_x}"
@@ -74,9 +77,11 @@ function construct_pid
                     return 0
                 fi
             else
-                local pid_array=($(process_name2pid "${para_str}"))
+				array_reset pid_array "$(ps -eo pid,comm | awk "{ if (\$0 ~ /${para_str}/ ) print \$0 }")"
                 if [ ${#pid_array[*]} -gt 0 ];then
-                    echo "${pid_array[0]}"
+					local select_x=$(select_one "${pid_array[@]}")
+					select_x=$(string_split "${select_x}" " " 1)
+					echo "${select_x}"
                     return 0
                 fi
             fi
@@ -136,15 +141,26 @@ function perf_record
     local process_x="$1"
     local perf_save="$2"
     local perf_pid=$(construct_pid ${process_x})
-
+	
+	# --call-graph dwarf: 
+	# 强制使用 DWARF 调试信息解析调用栈
+    # 依赖程序的 DWARF 调试符号（通常由 -g 编译选项生成）
+    # 提供 最详细的调用栈信息，包括函数名、文件名和行号
+    #
+    # -g 选项（默认调用栈记录）
+    # 启用调用栈记录（call graph），默认使用 frame pointer（FP）或 LBR（Last Branch Record）两种方式之一
+    # FP（Frame Pointer）：
+    #	依赖编译器插入的帧指针（需编译时启用 -fno-omit-frame-pointer），适用于大多数用户空间程序
+    # LBR（Last Branch Record）：
+    #	依赖硬件支持（如 Intel 的 LBR 功能），适用于内核空间或需要高精度的调用栈记录
     local perf_para=""
     if math_is_int "${perf_pid}";then
-        perf_para="-a -g -o ${perf_save}/perf.record.data -p ${perf_pid}" 
+        perf_para="-a --call-graph dwarf -o ${perf_save}/perf.record.data -p ${perf_pid}" 
     else
         if [ -n "${process_x}" ];then
-            perf_para="-a -g -o ${perf_save}/perf.record.data -- ${process_x}" 
+            perf_para="-a --call-graph dwarf -o ${perf_save}/perf.record.data -- ${process_x}" 
         else
-            perf_para="-a -g -o ${perf_save}/perf.record.data" 
+            perf_para="-a --call-graph dwarf -o ${perf_save}/perf.record.data" 
         fi
     fi
 

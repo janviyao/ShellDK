@@ -54,7 +54,7 @@ alias mywget='function mywget { if [ $# -eq 2 ];then local fname=$2; elif [ $# -
 alias myps='function myps { ps -ef | grep "$@" | grep -v grep | awk "{ print \$2 }" | { local pids=($(cat)); process_info "${pids[*]}" "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; myps'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
-alias psgrep='function psgrep { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it ps -eo pid,cmd | awk "{ if (\$1 ~ /^$1/ ) print \$0 }"; else sudo_it pgrep -fa $1 | grep -v pgrep; fi; shift; done }; psgrep'
+alias psgrep='function psgrep { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it ps -eo pid,cmd | awk "{ if (\$1 ~ /$1/ ) print \$0 }"; else sudo_it pgrep -fa $1 | grep -v pgrep; fi; shift; done }; psgrep'
 alias mykill='function mykill { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it kill -9 $1; else sudo_it pkill -e -x -9 $1; fi; shift; done }; mykill'
 
 alias gbranch='git branch -v'
