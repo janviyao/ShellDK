@@ -181,6 +181,24 @@ function perf_report
     return 0
 }
 
+function perf_flame
+{
+    local report_file=$(input_prompt "file_exist" "input file" "$(acquire_result)")
+	local report_dir=$(file_path_get ${report_file})
+
+	local flame_dir="$(pwd)/FlameGraph"
+	if ! file_exist "${flame_dir}";then
+		local tool_dir="${MY_VIM_DIR}/tools"
+		flame_dir=$(mytar "${tool_dir}/FlameGraph.tar.gz")
+	fi
+
+	sudo_it "perf script -i ${report_file} > ${report_dir}/flame.perf"
+	sudo_it "${flame_dir}/stackcollapse-perf.pl ${report_dir}/flame.perf > ${report_dir}/flame.folded"
+	sudo_it "${flame_dir}/flamegraph.pl ${report_dir}/flame.folded > ${report_dir}/flame.svg"
+
+    return 0
+}
+
 function perf_top
 {
     local process_x="$1"
@@ -476,6 +494,7 @@ perf_func=$(select_one \
             " trace: Like strace cmd, but it trace more" \
             "record: Run a command and record its profile into perf.data" \
             "report: Read perf.data (created by perf record) and display the profile" \
+            " flame: Stack trace visualizer: Flame Graph" \
             "   top: System profiling tool" \
             "  stat: Run a command and gather performance counter statistics" \
             " probe: Define new dynamic tracepoints" \
@@ -500,6 +519,9 @@ case ${perf_func} in
         ;;
     "report")
         perf_report
+        ;;
+    "flame")
+        perf_flame
         ;;
     "top")
         perf_top "${perf_obj}"
