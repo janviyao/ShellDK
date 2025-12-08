@@ -7,7 +7,7 @@ if ! test -d "$MY_VIM_DIR";then
 fi
 
 if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-    bash -c "${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c '${CMD_STR}'"
+    bash -c "python3 ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c '${CMD_STR}'"
     exit $?
 fi
 

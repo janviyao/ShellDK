@@ -38,7 +38,6 @@ FUNC_MAP["vim"]="inst_vim"
 FUNC_MAP["spec"]="inst_spec"
 FUNC_MAP["all"]="clean_env; inst_env; inst_vim"
 FUNC_MAP["glibc"]="inst_glibc"
-FUNC_MAP["cygwin"]="inst_cygwin"
 FUNC_MAP["hostname"]="inst_hostname"
 
 function inst_usage
@@ -54,7 +53,6 @@ function inst_usage
     echo "install.sh -o spec       @install all rpm package being depended on"
     echo "install.sh -o all        @install all vim's package"
     echo "install.sh -o glibc      @install glibc package by selection"
-    echo "install.sh -o cygwin     @install cygwin environment packages"
     echo "install.sh -o hostname   @set hostname"
 
     echo ""
@@ -129,7 +127,7 @@ commandMap["${CMD_PRE}replace"]="${MY_VIM_DIR}/tools/replace.sh"
 commandMap["${CMD_PRE}astyle"]="${MY_VIM_DIR}/tools/astyle.sh"
 if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
     commandMap["sudo"]="${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py"
-    commandMap["apt-cyg"]="${MY_VIM_DIR}/deps/apt-cyg"
+    commandMap["apt-cyg"]="${MY_VIM_DIR}/deps/apt-cyg/apt-cyg"
 fi
 
 commandMap[".minttyrc"]="${MY_VIM_DIR}/minttyrc"
@@ -173,12 +171,14 @@ function clean_env
     if file_exist "${cron_dir}";then
         ${SUDO} file_del "${cron_dir}/${MY_NAME}" ".+timer\.sh" true
     fi
-
-    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
-    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
-    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
-    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
-    file_exist "${MY_HOME}/.bashrc" && file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
+	
+	if file_exist "${MY_HOME}/.bashrc";then
+		file_del "${MY_HOME}/.bashrc" "unset\s+\\\$\\(.+\\)" true
+		file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+		file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
+		file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
+		file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
+	fi
     #file_exist "${MY_HOME}/.bash_profile" && sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
     file_exist "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
@@ -199,6 +199,14 @@ function clean_env
 
 function inst_env
 {
+	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		if ! touch /cygdrive/c/Windows/test.txt &> /dev/null;then
+			echo_erro "Please run the cygwin as an administrator"
+			return 1
+		fi
+		rm -f /cygdrive/c/Windows/test.txt
+	fi
+
     file_exist "${GBL_USER_DIR}/.${USR_NAME}" && rm -f ${GBL_USER_DIR}/.${USR_NAME}
     if ! file_exist "${GBL_USER_DIR}/.${USR_NAME}";then
         echo "$(system_encrypt ${USR_PASSWORD})" > ${GBL_USER_DIR}/.${USR_NAME} 
@@ -215,29 +223,27 @@ function inst_env
         chmod +x ${GBL_USER_DIR}/.askpass.sh 
     fi
 
-    if [[ "${SYSTEM}" == "Linux" ]]; then
-		if ! install_from_spec "bash";then
-			return 1
-		fi
+	local -a must_deps=("bash" "make" "automake" "autoconf" "gcc" "gcc-c++" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		must_deps+=("cygutils" "cygrunsrv" "cron" "coreutils" "wget" "tar" "xz" "cpio" "nc" "sed" "findutils" "util-linux" "openssh")
+	fi
 
-		local -a must_deps=("make" "automake" "autoconf" "gcc" "gcc-c++" "sudo" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
-		if [ -z "${REMOTE_IP}" ];then
-			local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "no")
-			if ! math_bool "${xselect}";then
-				must_deps=()
+	if [ -z "${REMOTE_IP}" ];then
+		local xselect=$(input_prompt "" "decide if install some system packages? (yes/no)" "no")
+		if ! math_bool "${xselect}";then
+			must_deps=()
+		fi
+	fi
+
+	local spec
+	for spec in "${must_deps[@]}"
+	do
+		if ! install_from_net "${spec}";then
+			if ! install_from_spec "${spec}";then
+				return 1
 			fi
 		fi
-
-        local spec
-        for spec in "${must_deps[@]}"
-        do
-            if ! install_from_net "${spec}";then
-                if ! install_from_spec "${spec}";then
-                    return 1
-                fi
-            fi
-        done
-    fi
+	done
 
     if [[ "${SYSTEM}" == "Linux" ]]; then
         local comm_tools=("ppid" "fstat" "chk_passwd" "perror" "tig")
@@ -272,14 +278,19 @@ function inst_env
     file_exist "${MY_HOME}/.bashrc" || touch ${MY_HOME}/.bashrc
     #file_exist "${MY_HOME}/.bash_profile" || touch ${MY_HOME}/.bash_profile
 
-    file_del "${MY_HOME}/.bashrc" "unset\s+\$(.+)" true
-    file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
-    file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
-    file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
-    file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+	if file_exist "${MY_HOME}/.bashrc";then
+		file_del "${MY_HOME}/.bashrc" "unset\s+\\\$\\(.+\\)" true
+		file_del "${MY_HOME}/.bashrc" "source.+\/bashrc" true
+		file_del "${MY_HOME}/.bashrc" "export.+LOCAL_IP.+" true
+		file_del "${MY_HOME}/.bashrc" "export.+MY_VIM_DIR.+" true
+		file_del "${MY_HOME}/.bashrc" "export.+TEST_SUIT_ENV.+" true
+	fi
     #sed -i "/source.\+\/bash_profile/d" ${MY_HOME}/.bash_profile
 
-    echo "unset \$(compgen -v | grep -E 'INCLUDED_|USR_NAME|USR_PASSWORD|BASH_WORK_DIR|MY_VIM_DIR')" >> ${MY_HOME}/.bashrc
+	if [[ "${SYSTEM}" == "Linux" ]]; then
+		echo "unset \$(compgen -v | grep -E 'INCLUDED_|USR_NAME|USR_PASSWORD|BASH_WORK_DIR|MY_VIM_DIR')" >> ${MY_HOME}/.bashrc
+	fi
+
     echo "export LOCAL_IP=\"${LOCAL_IP}\"" >> ${MY_HOME}/.bashrc
     echo "export MY_VIM_DIR=\"${MY_VIM_DIR}\"" >> ${MY_HOME}/.bashrc
     echo "export TEST_SUIT_ENV=\"${MY_HOME}/.testrc\"" >> ${MY_HOME}/.bashrc
@@ -328,16 +339,33 @@ function inst_env
         chmod +x ${MY_HOME}/.timerc 
     fi
 
-    if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        if ! ( cygrunsrv -L | grep -w "cron" &> /dev/null );then
-            install_from_net cron
-            if [ $? -ne 0 ];then
-                return 1
-            fi
+	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		if ! ( cygrunsrv --list | grep -w "cygsshd" &> /dev/null );then
+			mkpasswd -l > /etc/passwd
+			mkgroup -l > /etc/group
+			chmod +rwx /var
+			rm -fr /var/log/lastlog /etc/ssh* /var/empty
 
-            $SUDO cron-config
-        fi
-    fi
+			ssh-host-config -y 
+			if [ $? -ne 0 ];then
+				echo_erro "execute { ssh-host-config } failed"
+				return 1
+			fi
+		fi
+
+		if ! ( cygrunsrv --query cygsshd | grep -w "Running" &> /dev/null );then
+			cygrunsrv --start cygsshd
+			if [ $? -ne 0 ];then
+				echo "*** Enter into windows services.msc"
+				echo "*** Check CYGWINsshd service whether to have started ?"
+				echo "*** and then execute 'ssh localhost' to check whether success"
+			fi
+		fi
+
+		if ! ( cygrunsrv --list | grep -w "cron" &> /dev/null );then
+			cron-config
+		fi
+	fi
 
     local cron_dir="/var/spool/cron"
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
@@ -362,14 +390,15 @@ function inst_env
     if [[ "${SYSTEM}" == "Linux" ]]; then
         sudo_it systemctl restart crond
         sudo_it systemctl status crond
+		crontab -l
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-        if cygrunsrv -Q cron | grep -w "Running" &> /dev/null;then
-            $SUDO cygrunsrv -E cron
-        fi
-        $SUDO cygrunsrv -S cron
-        $SUDO cygrunsrv -Q cron
+		if cygrunsrv --query cron | grep -w "Running" &> /dev/null;then
+			cygrunsrv --stop cron
+		fi
+		cygrunsrv --start cron
+		cygrunsrv --query cron
+		crontab -c ${cron_dir} -l
     fi
-    crontab -l
  
     if [[ "${SYSTEM}" == "Linux" ]]; then
         sudo_it chmod +w /etc/ld.so.conf
@@ -404,10 +433,13 @@ function inst_spec
 
 function inst_vim
 {
-	if ! install_from_spec "python3.12";then
-		return 1
+	if [[ "${SYSTEM}" == "Linux" ]]; then
+		if ! install_from_spec "python3.12";then
+			return 1
+		fi
+
+		sudo_it ldconfig
 	fi
-	sudo_it ldconfig
 
     if install_check "vim" "vim-.*\.tar\.gz$" true;then
         local conf_paras="--prefix=/usr --with-features=huge --enable-cscope --enable-multibyte --enable-fontset"
@@ -428,27 +460,40 @@ function inst_vim
             exit -1
         fi
 
-        if ! install_from_net "ncurses-base";then
-            install_from_spec "ncurses-base"
-        fi
+		if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+			if ! install_from_net "ncurses";then
+				return 1
+			fi
 
-        if ! install_from_net "ncurses-libs";then
-            install_from_spec "ncurses-libs"
-        fi
+			if ! install_from_net "libncurses-devel";then
+				return 1
+			fi
+		elif [[ "${SYSTEM}" == "Linux" ]]; then
+			if ! install_from_net "ncurses-base";then
+				install_from_spec "ncurses-base"
+			fi
 
-        if ! install_from_net "ncurses-devel";then
-            install_from_spec "ncurses-devel"
-        fi
+			if ! install_from_net "ncurses-libs";then
+				install_from_spec "ncurses-libs"
+			fi
 
-        sudo_it rm -f /usr/bin/ex /usr/bin/view /usr/bin/rview
+			if ! install_from_net "ncurses-devel";then
+				install_from_spec "ncurses-devel"
+			fi
+		fi
+
+        sudo_it rm -f /usr/bin/vim /usr/local/bin/vim ${LOCAL_BIN_DIR}/vim /usr/bin/ex /usr/bin/view /usr/bin/rview
         install_from_tar "${MY_VIM_DIR}/deps/vim-*.tar.gz" "true" "${conf_paras}"
         if [ $? -ne 0 ];then
             return 1
         fi
 
-        sudo_it rm -f /usr/local/bin/vim
-        file_exist "${LOCAL_BIN_DIR}/vim" && rm -f ${LOCAL_BIN_DIR}/vim
-        sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
+		if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+			file_exist "/usr/bin/vim" || sudo_it ln -s /usr/bin/vim.exe /usr/bin/vim
+			sudo_it ln -s /usr/bin/vim.exe ${LOCAL_BIN_DIR}/vim
+		elif [[ "${SYSTEM}" == "Linux" ]]; then
+			sudo_it ln -s /usr/bin/vim ${LOCAL_BIN_DIR}/vim
+		fi
 
 		local vim_dir=$(efind ${MY_VIM_DIR}/deps "vim-\d+\.\d+\.\d+$")
 		if [ -n "${vim_dir}" ];then
@@ -476,7 +521,7 @@ function inst_vim
 	if [ -f ${MY_VIM_DIR}/deps/bundle.tar.gz ]; then
 		file_exist "${MY_HOME}/.vim/bundle" && rm -fr ${MY_HOME}/.vim/bundle
 		local bundle=$(mytar ${MY_VIM_DIR}/deps/bundle.tar.gz)
-		mv -f ${bundle} ${MY_HOME}/.vim/
+		sudo_it mv -f ${bundle} ${MY_HOME}/.vim/
 	fi
 
     if check_net;then
@@ -584,73 +629,6 @@ function inst_hostname
             sudo_it hostnamectl set-hostname ${hostnm}
         fi
     fi
-}
-
-function inst_cygwin
-{
-    if [[ "${SYSTEM}" != "CYGWIN_NT" ]]; then
-        echo_erro "NOT CYGWIN ENVIRONMENT"
-        return 1
-    fi
-    
-    if ! have_cmd "flock";then
-        install_from_net util-linux
-        if [ $? -ne 0 ];then
-            return 1
-        fi
-    fi
-
-    $SUDO mkpasswd -l \> /etc/passwd
-    $SUDO mkgroup -l \> /etc/group
-    $SUDO chmod +rwx /var
-
-    if ! have_cmd "apt-cyg";then
-        local link_file=${commandMap["apt-cyg"]}
-        echo_debug "create slink: ${linkf}"
-        if [[ ${linkf:0:1} == "." ]];then
-            file_exist "${MY_HOME}/${linkf}" && rm -f ${MY_HOME}/${linkf}
-            ln -s ${link_file} ${MY_HOME}/${linkf}
-        else
-            file_exist "${LOCAL_BIN_DIR}/${linkf}" && rm -f ${LOCAL_BIN_DIR}/${linkf}
-            ln -s ${link_file} ${LOCAL_BIN_DIR}/${linkf}
-        fi
-    fi
-
-    if ! have_cmd "cygrunsrv";then
-        install_from_net cygrunsrv
-        if [ $? -ne 0 ];then
-            return 1
-        fi
-    fi
-
-    if ! ( cygrunsrv -L | grep -w "cygsshd" &> /dev/null );then
-        #if cygrunsrv -Q cygsshd &> /dev/null;then
-        #    $SUDO cygrunsrv -R cygsshd
-        #fi
-        if ! have_cmd "ssh-host-config";then
-            install_from_net openssh
-            if [ $? -ne 0 ];then
-                return 1
-            fi
-        fi
-
-        $SUDO ssh-host-config -y 
-        if [ $? -ne 0 ];then
-            echo_erro "execute { ssh-host-config } failed"
-            return 1
-        fi
-    fi
-
-    if ! ( cygrunsrv -Q cygsshd | grep -w "Running" &> /dev/null );then
-        $SUDO cygrunsrv -S cygsshd
-        if [ $? -ne 0 ];then
-            echo "*** Enter into windows services.msc"
-            echo "*** Check CYGWINsshd service whether to have started ?"
-            echo "*** and then execute 'ssh localhost' to check whether success"
-        fi
-    fi
- 
-    return 0
 }
 
 if ! math_bool "${REMOTE_INST}"; then

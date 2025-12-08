@@ -7,7 +7,7 @@ readonly LOG_INFO=3
 readonly LOG_DEBUG=4
 
 LOG_SHOW_LEVEL=${LOG_INFO}
-LOG_FILE_LEVEL=${LOG_INFO}
+LOG_FILE_LEVEL=${LOG_DEBUG}
 
 LOG_HEADER=true
 HEADER_TIME=true
@@ -123,9 +123,9 @@ function echo_header
         fi
 
         if math_bool "${HEADER_FILE}";then
-            header="${header} $(printf -- "[%-18s[%7d]]" "$(file_fname_get $0)" "$$")"
+            header="${header} $(printf -- "[%-18s[%7d]]" "$(file_fname_get $0)" "${TASK_PID}")"
         else
-            header="${header} $(printf -- "[%7d]" "$$")"
+            header="${header} $(printf -- "[%7d]" "${TASK_PID}")"
         fi
 
         if math_bool "${color}";then

@@ -309,15 +309,18 @@ function ncat_recv_msg
         #    echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
         #    return 0
         #done
-		ncat_body=$(nc -l -4 ${ncat_port} 2>&1)
-		if [ $? -eq 0 ];then
+		ncat_body=$(timeout ${RECEIVE_TIMEOUT} nc -l -4 -p ${ncat_port} 2>&1)
+        local retcode=$?
+		if [ ${retcode} -eq 0 ];then
 			echo "${ncat_body}"
 			echo_file "${LOG_DEBUG}" "ncat recved: [${ncat_body}]"
 			return 0
 		else
-			echo_file "${LOG_DEBUG}" "ncat error: [${ncat_body}]"
-			process_run_lock 1 update_port_used add ${ncat_port}
-			return 1
+			if [ ${retcode} -ne 124 ];then
+				echo_file "${LOG_DEBUG}" "ncat error: [${ncat_body}]"
+				process_run_lock 1 update_port_used add ${ncat_port}
+			fi
+			return ${retcode}
 		fi
     else
         echo_erro "ncat donot installed"
@@ -404,7 +407,7 @@ function ncat_recv_file
     fi
 
     if have_cmd "nc";then
-        timeout ${MAX_TIMEOUT} nc -l -4 ${ncat_port} > ${file_name}
+        timeout ${MAX_TIMEOUT} nc -l -4 -p ${ncat_port} > ${file_name}
     else
         echo_erro "ncat donot installed"
         return 1
@@ -583,8 +586,6 @@ function _bash_ncat_exit
 
 function _ncat_thread_main
 {
-    local master_work=true
-
     if ! file_exist "${NCAT_WORK_DIR}";then
         echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
         return
@@ -592,17 +593,14 @@ function _ncat_thread_main
 
 	local ncat_body
     local ncat_port=$(ncat_generate_port)
-    mdat_set_var master_work
 
-    while math_bool "${master_work}" 
+    while true
     do
         ncat_port=$(ncat_generate_port ${ncat_port})
         #echo_file "${LOG_DEBUG}" "ncat listening into port[${ncat_port}] ..."
 
         ncat_body=$(ncat_recv_msg "${ncat_port}")
         if [ $? -ne 0 ];then
-            mdat_get_var master_work
-
             if ! file_exist "${NCAT_WORK_DIR}";then
                 echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
                 break
@@ -621,8 +619,6 @@ function _ncat_thread_main
         if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
             if ! file_exist "${ack_pipe}";then
                 echo_erro "pipe invalid: [${ack_pipe}]"
-                mdat_get_var master_work
-
                 if ! file_exist "${NCAT_WORK_DIR}";then
                     echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
                     break
@@ -643,7 +639,6 @@ function _ncat_thread_main
                 echo_debug "write [ACK] to [${ack_pipe}]"
                 process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
             fi
-            #mdat_set_var master_work
             echo_debug "ncat main exit"
             return
             # signal will call sudo.sh, then will enter into deadlock, so make it backgroud
@@ -714,7 +709,6 @@ function _ncat_thread_main
             process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
         fi
 
-        mdat_get_var master_work
         if ! file_exist "${NCAT_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ncat will exit"
             break
@@ -737,24 +731,20 @@ function _ncat_thread
 
     trap "" SIGINT SIGTERM SIGKILL
 
-    local self_pid=$$
+	local self_pid=$(cat ${NCAT_TASK})
+	while [ -z "${self_pid}" ]
+	do
+		sleep 1
+		self_pid=$(cat ${NCAT_TASK})
+	done
+	export TASK_PID=${self_pid}
+
     if have_cmd "ppid";then
-        local ppids=($(ppid))
-        self_pid=${ppids[0]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[0]}
-            done
-            self_pid=$(process_winpid2pid ${self_pid})
-        fi
         local ppinfos=($(ppid -n))
-        echo_file "${LOG_DEBUG}" "ncat bg_thread [${ppinfos[*]}]"
-    else
-        echo_file "${LOG_DEBUG}" "ncat bg_thread [$(process_pid2name $$)[$$]]"
+        echo_file "${LOG_DEBUG}" "ncat bg_thread [${ppinfos[*]}] start"
+	else
+        echo_file "${LOG_DEBUG}" "ncat bg_thread [$(process_pid2name ${self_pid})[${self_pid}]] start"
     fi
-    #( sudo_it "renice -n -3 -p ${self_pid} &> /dev/null" &)
 
 	if file_expire "${NCAT_PORT_USED}" 180;then
 		process_run_lock 1 update_port_used
@@ -767,8 +757,7 @@ function _ncat_thread
     fi
 
     touch ${NCAT_PIPE}.run
-    echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] start"
-    echo "${self_pid}" >> ${NCAT_TASK}
+    echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] ready"
     echo "${self_pid}" >> ${BASH_MASTER}
     _ncat_thread_main
     echo_file "${LOG_DEBUG}" "ncat bg_thread[${self_pid}] exit"
@@ -779,4 +768,7 @@ function _ncat_thread
     exit 0
 }
 
-( _ncat_thread & )
+( 
+	_ncat_thread & 
+    echo "$!" >> ${NCAT_TASK}
+)

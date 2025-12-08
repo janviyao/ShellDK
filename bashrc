@@ -1,4 +1,4 @@
-if declare -F __my_bash_exit &>/dev/null;then
+if [[ "${ROOT_PID}" == "$$" ]];then
     echo_file "${LOG_WARN}" "bashrc has loaded"
     if [ -z "${TMUX}" ];then
         return
@@ -37,6 +37,7 @@ if [ -z "${MY_NAME}" ];then
     #fi
 fi
 
+export TASK_PID=$$
 if [ -z "${MY_HOME}" ];then
     if declare -p HOME &>/dev/null;then
         readonly MY_HOME=${HOME}
@@ -80,18 +81,19 @@ fi
 echo_file "${LOG_DEBUG}" "envir: ${PRIVATE_VAR}"
 echo_file "${LOG_DEBUG}" "tasks: ${BTASK_LIST}"
 
-if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
-    if file_exist "${GBL_USER_DIR}/.${MY_NAME}";then
-        account_check "${MY_NAME}" false
-    fi
+if [[ "${SYSTEM}" == "Linux" ]]; then
+	if [ -z "${USR_NAME}" -o -z "${USR_PASSWORD}" ];then
+		if file_exist "${GBL_USER_DIR}/.${MY_NAME}";then
+			account_check "${MY_NAME}" false
+		fi
 
-	if [ -z "${USR_NAME}" ];then
-		USR_NAME="${MY_NAME}"
+		if [ -z "${USR_NAME}" ];then
+			USR_NAME="${MY_NAME}"
+		fi
 	fi
 fi
 
-echo "${ROOT_PID}" > ${BASH_MASTER}
-if string_contain "${BTASK_LIST}" "mdat";then
+if [[ "${BTASK_LIST}" =~ "mdat" ]];then
     __MY_SOURCE "INCLUDED_MDAT" $MY_VIM_DIR/tools/task/mdat_task.sh
 	if [ $? -ne 0 ];then
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
@@ -106,7 +108,7 @@ if string_contain "${BTASK_LIST}" "mdat";then
     [ -z "${old_spec}" ] && trap "_bash_mdat_exit" EXIT
 fi
 
-if string_contain "${BTASK_LIST}" "ncat";then
+if [[ "${BTASK_LIST}" =~ "ncat" ]];then
     __MY_SOURCE "INCLUDED_NCAT" $MY_VIM_DIR/tools/task/ncat_task.sh
 	if [ $? -ne 0 ];then
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
@@ -121,7 +123,7 @@ if string_contain "${BTASK_LIST}" "ncat";then
     [ -z "${old_spec}" ] && trap "_bash_ncat_exit" EXIT
 fi
 
-if string_contain "${BTASK_LIST}" "logr";then
+if [[ "${BTASK_LIST}" =~ "logr" ]];then
     __MY_SOURCE "INCLUDED_LOGR" $MY_VIM_DIR/tools/task/logr_task.sh
 	if [ $? -ne 0 ];then
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
@@ -136,7 +138,7 @@ if string_contain "${BTASK_LIST}" "logr";then
     [ -z "${old_spec}" ] && trap "_bash_logr_exit" EXIT
 fi
 
-if string_contain "${BTASK_LIST}" "xfer";then
+if [[ "${BTASK_LIST}" =~ "xfer" ]];then
     __MY_SOURCE "INCLUDED_XFER" $MY_VIM_DIR/tools/task/xfer_task.sh
 	if [ $? -ne 0 ];then
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
@@ -151,7 +153,7 @@ if string_contain "${BTASK_LIST}" "xfer";then
     [ -z "${old_spec}" ] && trap "_bash_xfer_exit" EXIT
 fi
 
-if string_contain "${BTASK_LIST}" "ctrl";then
+if [[ "${BTASK_LIST}" =~ "ctrl" ]];then
     __MY_SOURCE "INCLUDED_CTRL" $MY_VIM_DIR/tools/task/ctrl_task.sh
 	if [ $? -ne 0 ];then
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then

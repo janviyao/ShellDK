@@ -202,25 +202,23 @@ function _ctrl_thread
 {
     trap "" SIGINT SIGTERM SIGKILL
 
-    local self_pid=$$
+	local self_pid=$(cat ${CTRL_TASK})
+	while [ -z "${self_pid}" ]
+	do
+		sleep 1
+		self_pid=$(cat ${CTRL_TASK})
+	done
+	export TASK_PID=${self_pid}
+
     if have_cmd "ppid";then
-        local ppids=($(ppid))
-        local self_pid=${ppids[0]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[0]}
-            done
-            self_pid=$(process_winpid2pid ${self_pid})
-        fi
         local ppinfos=($(ppid -n))
-        echo_file "${LOG_DEBUG}" "ctrl bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "ctrl bg_thread [${ppinfos[*]}] start"
+	else
+        echo_file "${LOG_DEBUG}" "ctrl bg_thread [$(process_pid2name ${self_pid})[${self_pid}]] start"
     fi
 
     touch ${CTRL_PIPE}.run
-    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] start"
-    echo "${self_pid}" >> ${CTRL_TASK}
+    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] ready"
     echo "${self_pid}" >> ${BASH_MASTER}
     _ctrl_thread_main
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] exit"
@@ -231,4 +229,7 @@ function _ctrl_thread
     exit 0
 }
 
-( _ctrl_thread & )
+( 
+	_ctrl_thread & 
+    echo "$!" >> ${CTRL_TASK}
+)

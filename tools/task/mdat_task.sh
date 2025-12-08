@@ -497,28 +497,24 @@ function _mdat_thread
 {
     trap "" SIGINT SIGTERM SIGKILL
 
-    local self_pid=$$
+	local self_pid=$(cat ${MDAT_TASK})
+	while [ -z "${self_pid}" ]
+	do
+		sleep 1
+		self_pid=$(cat ${MDAT_TASK})
+	done
+	export TASK_PID=${self_pid}
+
     if have_cmd "ppid";then
-        local ppids=($(ppid))
-        self_pid=${ppids[0]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[0]}
-            done
-            self_pid=$(process_winpid2pid ${self_pid})
-        fi
         local ppinfos=($(ppid -n))
-        echo_file "${LOG_DEBUG}" "mdat bg_thread [${ppinfos[*]}]"
+        echo_file "${LOG_DEBUG}" "mdat bg_thread [${ppinfos[*]}] start"
     else
-        echo_file "${LOG_DEBUG}" "mdat bg_thread [$(process_pid2name $$)[$$]]"
+        echo_file "${LOG_DEBUG}" "mdat bg_thread [$(process_pid2name ${self_pid})[${self_pid}]] start"
     fi
     #( sudo_it "renice -n -5 -p ${self_pid} &> /dev/null" &)
 
     touch ${MDAT_PIPE}.run
-    echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] start"
-    echo "${self_pid}" >> ${MDAT_TASK}
+    echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] ready"
     echo "${self_pid}" >> ${BASH_MASTER}
     _mdat_thread_main
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${self_pid}] exit"
@@ -529,13 +525,16 @@ function _mdat_thread
     exit 0
 }
 
-( _mdat_thread & )
+( 
+	_mdat_thread & 
+    echo "$!" >> ${MDAT_TASK}
+)
 
-while true
-do
-    if file_exist "${MDAT_PIPE}.run";then
-        break
-    else
-        sleep 0.1
-    fi
-done
+#while true
+#do
+#    if file_exist "${MDAT_PIPE}.run";then
+#        break
+#    else
+#        sleep 0.1
+#    fi
+#done

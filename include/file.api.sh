@@ -84,25 +84,29 @@ function file_exist
         return 1
     fi
 
-    if string_match "${xfile}" "\*$";then
-        local file
-        for file in ${xfile}
-        do
-            if string_match "${file}" "\*$";then
-				__bash_unset 'x'
-                return 1
-            fi
+	if [[ "${xfile}" =~ '*' ]];then
+		if string_match "${xfile}" "\*$";then
+			local file
+			for file in ${xfile}
+			do
+				if string_match "${file}" "\*$";then
+					__bash_unset 'x'
+					return 1
+				fi
 
-            if file_exist "${file}"; then
-				__bash_unset 'x'
-                return 0
-            fi
-        done
-    fi
+				if file_exist "${file}"; then
+					__bash_unset 'x'
+					return 0
+				fi
+			done
+		fi
+	fi
 
-    if string_match "${xfile}" "^~";then
-        xfile=$(string_replace "${xfile}" '^~' "${MY_HOME}" true)
-    fi
+	if [[ "${xfile}" =~ '~' ]];then
+		if string_match "${xfile}" "^~";then
+			xfile=$(string_replace "${xfile}" '^~' "${MY_HOME}" true)
+		fi
+	fi
 
     if [ -e "${xfile}" ];then
 		__bash_unset 'x'

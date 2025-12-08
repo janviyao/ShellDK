@@ -7,10 +7,10 @@ export PS4='$(printf "%02d[%*s] " ${#FUNCNAME[@]} $((15 + ${#FUNCNAME[@]} * 2)) 
 export GOPATH=${MY_HOME}/.local
 export GOROOT=${GOPATH}/go
 export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${MY_HOME}/.local/bin:${GOROOT}/bin:/usr/lib/udev
+export LOCAL_IP=${LOCAL_IP:-"$(get_local_ip)"}
 
 readonly ROOT_PID=$$
 readonly SYSTEM=$(uname -s | grep -E '^[A-Za-z_]+' -o)
-readonly LOCAL_IP=$(get_local_ip)
 readonly GBL_BASE_DIR="/tmp/gbl"
 readonly GBL_USER_DIR="${GBL_BASE_DIR}/${MY_NAME}"
 readonly SUDO="${MY_VIM_DIR}/tools/sudo.sh"
@@ -157,3 +157,4 @@ fi
 
 readonly LOG_DISABLE="${BASH_WORK_DIR}/bash.log.disable"
 readonly BASH_MASTER="${BASH_WORK_DIR}/taskset"
+echo "${ROOT_PID}" > ${BASH_MASTER}

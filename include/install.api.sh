@@ -304,18 +304,16 @@ function install_from_net
 
     echo_info "$(printf -- "[%13s]: { %-13s }" "Will install" "${xname}")"
     if check_net; then
-        if [[ "${SYSTEM}" == "Linux" ]]; then
-            if have_cmd "yum";then
-                sudo_it yum -y install ${xname} \&\> /dev/null
-                if [ $? -ne 0 ]; then
-                    echo_erro "$(printf -- "[%13s]: { %-13s } failure" "yum Install" "${xname}")"
-                    return 1
-                else
-                    echo_info "$(printf -- "[%13s]: { %-13s } success" "yum Install" "${xname}")"
-                    return 0
-                fi
-            fi
-        fi
+		if have_cmd "yum";then
+			sudo_it yum -y install ${xname} \&\> /dev/null
+			if [ $? -ne 0 ]; then
+				echo_erro "$(printf -- "[%13s]: { %-13s } failure" "yum Install" "${xname}")"
+				return 1
+			else
+				echo_info "$(printf -- "[%13s]: { %-13s } success" "yum Install" "${xname}")"
+				return 0
+			fi
+		fi
 
         if have_cmd "apt";then
             sudo_it apt -y install ${xname} \&\> /dev/null
@@ -341,7 +339,7 @@ function install_from_net
 
         if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             if have_cmd "apt-cyg";then
-                sudo_it apt-cyg -y install ${xname} \&\> /dev/null
+                sudo_it apt-cyg install ${xname} \&\> /dev/null
                 if [ $? -ne 0 ]; then
                     echo_erro "$(printf -- "[%13s]: { %-13s } failure" "apt-cyg Install" "${xname}")"
                     return 1
@@ -571,8 +569,11 @@ function install_from_make
     fi
 
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make -j 32")"
+
     local cflags_bk="${CFLAGS}"
-    export CFLAGS="-fcommon"
+    local cxxflags_bk="${CXXFLAGS}"
+    export CFLAGS="-fcommon -D_GNU_SOURCE"
+	export CXXFLAGS="-D_GNU_SOURCE"
     USER=${MY_NAME} make -j 32 &>> ${makedir}/build.log
     if [ $? -ne 0 ]; then
         echo_erro " Make: ${makedir} failed, check: $(file_realpath ${makedir}/build.log)"
@@ -580,6 +581,7 @@ function install_from_make
         return 1
     fi
     export CFLAGS="${cflags_bk}"
+	export CXXFLAGS="${cxxflags_bk}"
 
     echo_info "$(printf -- "[%13s]: %-50s" "Doing" "make install")"
     sudo_it "USER=${MY_NAME} make install INSTALL='install -o ${MY_NAME} -g users' &>> ${makedir}/build.log"

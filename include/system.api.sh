@@ -335,6 +335,12 @@ function account_check
     local input_val=""
 	__bash_set 'x'
 
+	if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		export USR_NAME=${usr_name}
+		__bash_unset 'x'
+		return 0
+	fi
+
     if have_admin; then
 		export USR_NAME=${usr_name}
 		__bash_unset 'x'
@@ -409,7 +415,7 @@ function sudo_it
 
     echo_file "${LOG_DEBUG}" "${cmd}"
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-		python ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c "${cmd}"
+		python3 ${MY_VIM_DIR}/deps/cygwin-sudo/cygwin-sudo.py bash -c "${cmd}"
         return $?
     fi
 
