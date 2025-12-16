@@ -56,15 +56,15 @@ if have_admin; then
     EXPECT_EOF="expect eof"
 fi
 
-NCAT_PORT=$(ncat_get_port)
-if [ -z "${NCAT_PORT}" ];then
-	echo_erro "ncat port not generated"
+XFER_PORT=$(system_port_ctrl)
+if [ -z "${XFER_PORT}" ];then
+	echo_erro "xfer port not generated"
 	exit 1
 fi
 
 LOC_ENV="export BTASK_LIST='mdat';export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};"
 RET_VAR="sshlogin_ret$$"
-RET_MSG="${RET_VAR}=\$?;(echo \\\"${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${RET_VAR}=\\\$${RET_VAR}\\\" | nc -w 1 ${NCAT_MASTER_ADDR} ${NCAT_PORT}) &> /dev/null"
+RET_MSG="${RET_VAR}=\$?;xfer_set_var ${LOCAL_IP} ${XFER_PORT} ${RET_VAR} \\\$${RET_VAR}\\\""
 SSH_CMD="(${CMD_EXE}); ${RET_MSG}; exit 0"
 
 trap "exit 1" SIGINT SIGTERM SIGKILL

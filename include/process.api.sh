@@ -166,10 +166,32 @@ function process_run_lock
     fi
 
     (
-        flock -x ${lockid}  #flock文件锁，-x表示独享锁
+		if [[ "${SYSTEM}" == "Linux" ]]; then
+			flock -w ${PROMPT_TIMEOUT} -x ${lockid}      #flock文件锁，-x表示独享锁
+		elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+			timeout ${PROMPT_TIMEOUT} flock -x ${lockid} #flock文件锁，-x表示独享锁
+		fi
+
+		if [ $? -ne 0 ];then
+			echo_erro "flock ${lockid} failed"
+			return 1
+		fi
+
         echo_file "${LOG_DEBUG}" "$@"
-        process_run "$@"
+
+		eval "$@" 
+		local retcode=$?
+		if [ ${retcode} -ne 0 ];then
+			if have_cmd 'perror';then
+				echo_erro "${cmd_str} | errono: ${retcode} | $(perror ${retcode})"
+			else
+				echo_erro "${cmd_str} | errono: ${retcode}"
+			fi
+		fi
+		return ${retcode}
     ) {lockid}<>${GBL_BASE_DIR}/shell.lock.${lockid}
+    
+    return $?
 }
 
 function process_exist
@@ -414,7 +436,7 @@ function process_name2pid
             fi
         elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
             local none_regex=$(regex_2str "${xproc}")
-            local -a res_array=($(ps -s | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $1 }'))
+            local -a res_array=($(ps -ef | grep -P "\s*\b${none_regex}\b\s*" | grep -v grep | grep -v process_name2pid | awk '{ print $2 }'))
             if [ ${#res_array[*]} -gt 0 ];then
 				pid_array+=("${res_array[@]}")
                 continue

@@ -17,7 +17,7 @@ if [[ ${PRIVATE_VAR} != ${TERM} ]];then
 fi
 
 if [ -z "${BTASK_LIST}" ];then
-    export BTASK_LIST="master,mdat,ncat,logr,ctrl,xfer"
+    export BTASK_LIST="master,mdat,logr,ctrl,xfer"
 fi
 
 # all variables and functions exported
@@ -104,23 +104,8 @@ if [[ "${BTASK_LIST}" =~ "mdat" ]];then
 	fi
 
     old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_mdat_exit; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_mdat_exit" EXIT
-fi
-
-if [[ "${BTASK_LIST}" =~ "ncat" ]];then
-    __MY_SOURCE "INCLUDED_NCAT" $MY_VIM_DIR/tools/task/ncat_task.sh
-	if [ $? -ne 0 ];then
-		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-			return 1
-		else
-			exit 1
-		fi
-	fi
-
-    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_ncat_exit; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_ncat_exit" EXIT
+    [ -n "${old_spec}" ] && trap "_bash_mdat_exit & disown; ${old_spec}" EXIT
+    [ -z "${old_spec}" ] && trap "_bash_mdat_exit & disown" EXIT
 fi
 
 if [[ "${BTASK_LIST}" =~ "logr" ]];then
@@ -134,8 +119,8 @@ if [[ "${BTASK_LIST}" =~ "logr" ]];then
 	fi
 
     old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_logr_exit; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_logr_exit" EXIT
+    [ -n "${old_spec}" ] && trap "_bash_logr_exit & disown; ${old_spec}" EXIT
+    [ -z "${old_spec}" ] && trap "_bash_logr_exit & disown" EXIT
 fi
 
 if [[ "${BTASK_LIST}" =~ "xfer" ]];then
@@ -149,8 +134,8 @@ if [[ "${BTASK_LIST}" =~ "xfer" ]];then
 	fi
 
     old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_xfer_exit; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_xfer_exit" EXIT
+    [ -n "${old_spec}" ] && trap "_bash_xfer_exit & disown; ${old_spec}" EXIT
+    [ -z "${old_spec}" ] && trap "_bash_xfer_exit & disown" EXIT
 fi
 
 if [[ "${BTASK_LIST}" =~ "ctrl" ]];then
@@ -164,8 +149,8 @@ if [[ "${BTASK_LIST}" =~ "ctrl" ]];then
 	fi
 
     old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_ctrl_exit; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_ctrl_exit" EXIT
+    [ -n "${old_spec}" ] && trap "_bash_ctrl_exit & disown; ${old_spec}" EXIT
+    [ -z "${old_spec}" ] && trap "_bash_ctrl_exit & disown" EXIT
 fi
 
 old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)

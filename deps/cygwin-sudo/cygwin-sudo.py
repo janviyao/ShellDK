@@ -13,6 +13,9 @@ import tempfile
 import time
 import traceback
 import tty
+import sys
+import io
+import logging
 from contextlib import ExitStack, closing, contextmanager
 
 import termios
@@ -23,10 +26,34 @@ CMD_STDERR = 3
 CMD_WINSZ = 4
 CMD_RETURN = 5
 
+# 配置日志
+logging.basicConfig(
+    filename='/tmp/cygwin-sudo.log',   # 日志文件路径
+    level=logging.INFO,                # 日志级别（DEBUG, INFO, WARNING, ERROR, CRITICAL）
+    format='[%(asctime)s] [%(levelname)s] %(message)s'  # 日志格式
+)
+logger = logging.getLogger()
+
+# 重定向 print 到日志
+class LoggerWriter(io.TextIOBase):
+    def __init__(self, original_stdout=None):
+        self.original_stdout = original_stdout or sys.__stdout__
+        self.buffer = []
+
+    def write(self, message):
+        self.original_stdout.write(message)    # 写入控制台
+        logger.info(message.strip())
+        return len(message)
+
+    def flush(self):
+        self.original_stdout.flush()           # 刷新控制台
+        self.buffer.clear()
+
+    def close(self):
+        super().close()
 
 class PartialRead(Exception):
     pass
-
 
 class MessageChannel:
     def __init__(self, sock):
@@ -64,6 +91,7 @@ class MessageChannel:
 
 class ElevatedServer:
     def main(self, argv):
+        logger.debug("ElevatedServer: enter")
         try:
             port = int(argv[1])
             password_file = argv[2]
@@ -72,11 +100,13 @@ class ElevatedServer:
 
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             with closing(self.sock):
+                logger.debug("ElevatedServer: start to connection")
                 self.sock.connect(('127.0.0.1', port))
+                logger.debug("ElevatedServer: connection success")
                 self.channel = MessageChannel(self.sock)
                 received_password = self.channel.recv_message()
                 if received_password != password:
-                    print("ERROR: invalid password")
+                    print("ElevatedServer: ERROR: invalid password")
                     sys.exit(1)
 
                 child_argv = self.channel.recv_message().split(b'\0')
@@ -86,7 +116,7 @@ class ElevatedServer:
                 env_packed = self.channel.recv_message()
                 child_envdict = dict(x.split(b'=', 1) for x in env_packed.split(b'\0'))
 
-                print("Elevated sudo server running:")
+                print("ElevatedServer: sudo server running:")
                 print("> " + b" ".join(child_argv).decode())
 
                 child_pid, child_fds = self.pty_fork(child_pty_flags)
@@ -98,39 +128,42 @@ class ElevatedServer:
                     self.main_process()
         except Exception as e:
             if argv[0] == "visible":
-                print("\nSudo server crashed:")
+                print("ElevatedServer: sudo server crashed:")
                 traceback.print_exc()
                 time.sleep(10)
                 sys.exit(1)
 
     def child_process(self, argv, cwd, winsize, envdict):
+        logger.debug("ElevatedServer: enter child_process")
         try:
             os.chdir(cwd)
             if os.isatty(0):
                 fcntl.ioctl(0, termios.TIOCSWINSZ, winsize)
             envdict[b'ELEVATED_SHELL'] = b'1'
             try:
+                logger.debug("ElevatedServer: %s %s" % (argv[0], str(argv)))
                 os.execvpe(argv[0], argv, envdict)
             except FileNotFoundError:
-                print("sudo: Unknown command '{}'".format(os.fsdecode(argv[0])))
+                print("ElevatedServer: sudo: Unknown command '{}'".format(os.fsdecode(argv[0])))
         except BaseException:
             traceback.print_exc()
         finally:
             os._exit(1)
 
     def main_process(self):
+        logger.debug("ElevatedServer: enter main_process")
         self.transfer_loop()
         for fd in set(self.child_fds):
             os.close(fd)
 
-        print('pty closed, getting return value')
+        print('ElevatedServer: pty closed, getting return value')
         (success, exit_status) = os.waitpid(self.child_pid, 0)
         if not success or not os.WIFEXITED(exit_status):
             return_code = 1
-            print('process did not shut down normally, no return value')
+            print('ElevatedServer: process did not shut down normally, no return value')
         else:
             return_code = os.WEXITSTATUS(exit_status)
-            print('process finished with return value ', return_code)
+            print('ElevatedServer: process finished with return value ', return_code)
         self.channel.send_command(CMD_RETURN, struct.pack('i', return_code))
         self.sock.shutdown(socket.SHUT_WR)
 
@@ -148,7 +181,7 @@ class ElevatedServer:
                             fcntl.ioctl(self.child_fds[1], termios.TIOCSWINSZ, data)
                             os.kill(self.child_pid, signal.SIGWINCH)
                         else:
-                            raise ValueError("Unexpected command:", cmd)
+                            raise ValueError("ElevatedServer: Unexpected command:", cmd)
                     else:
                         chunk = os.read(fd, 8192)
                         if not chunk:
@@ -160,7 +193,7 @@ class ElevatedServer:
         except PartialRead:
             pass
         finally:
-            print('Transfer loop terminated')
+            print('ElevatedServer: Transfer loop terminated')
 
     def pty_fork(self, pty_flags):
         """Fork a child process, connecting to a new pty
@@ -196,7 +229,7 @@ class ElevatedServer:
 
 
 class UnprivilegedClient:
-    def main(self, command, visibility, **kwargs):
+    def main(self, command, visibility, debug, **kwargs):
         password = os.urandom(32)
         with tempfile.NamedTemporaryFile("wb") as pwf:
             pwf.write(password)
@@ -214,14 +247,16 @@ class UnprivilegedClient:
                     subprocess.check_call([
                         "cygstart", "--action=runas", visibility_flag,
                         sys.executable, __file__,
-                        '--elevated', 'visible' if visibility else 'hidden',
+                        '--elevated', '--debug' if debug else '', 'visible' if visibility else 'hidden',
                         str(port), pwf.name])
                 except subprocess.CalledProcessError as e:
-                    print("sudo: failed to start elevated process")
+                    print("UnprivilegedClient: sudo: failed to start elevated process")
                     return
 
                 listen_socket.settimeout(5)
+                logger.debug("UnprivilegedClient: start to accept socket")
                 self.sock, acc = listen_socket.accept()
+                logger.debug("UnprivilegedClient: socket accept success")
                 self.channel = MessageChannel(self.sock)
 
             command_bytes = list(map(os.fsencode, command))
@@ -229,12 +264,14 @@ class UnprivilegedClient:
 
     def run(self, password, command):
         with closing(self.sock):
+            logger.debug("UnprivilegedClient: start to send command: %s" % str(command))
             self.channel.send_message(password)
             self.channel.send_message(b'\0'.join(command))
             self.channel.send_message(os.fsencode(os.getcwd()))
             self.channel.send_message(self.get_winsize())
             self.channel.send_message(struct.pack('bbb', os.isatty(0), os.isatty(1), os.isatty(2)))
             self.channel.send_message(b'\0'.join(b'%s=%s' % t for t in os.environb.items()))
+            logger.debug("UnprivilegedClient: send success")
 
             def handle_sigwinch(n, f):
                 # TODO: fix race condition with normal send
@@ -262,7 +299,7 @@ class UnprivilegedClient:
         try:
             cmd, data = self.channel.recv_command()
         except PartialRead:
-            print("sudo: Lost connection to elevated process")
+            print("UnprivilegedClient: sudo: Lost connection to elevated process")
             sys.exit(1)
 
         if cmd == CMD_STDOUT:
@@ -272,7 +309,7 @@ class UnprivilegedClient:
         elif cmd == CMD_RETURN:
             sys.exit(struct.unpack('i', data)[0])
         else:
-            raise ValueError("Unexpected message", cmd)
+            raise ValueError("UnprivilegedClient: Unexpected message", cmd)
 
     @contextmanager
     def raw_term_mode(self):
@@ -310,11 +347,17 @@ def main():
     window_group.add_argument('--visible', action='store_const', dest='visibility', const=2, help="show the elevated console window")
 
     parser.add_argument('--elevated', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--debug', action='store_true', help="show the debug log")
     parser.add_argument('command', nargs=argparse.PARSER)
 
     #args = parser.parse_args()
     args, unknown = parser.parse_known_args()
+    
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        sys.stdout = LoggerWriter()
 
+    logger.debug("Main Parameter: %s" % vars(args))
     if args.elevated:
         ElevatedServer().main(args.command)
     else:

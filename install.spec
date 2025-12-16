@@ -10,6 +10,7 @@ gcc-4.9.2;           install_check 'gcc' 'gcc-4.9.2.tar.gz' && check_net;cd ${MY
 gcc-9.2.0;           install_check 'gcc' 'gcc-9.2.0.tar.gz' && check_net;cd ${MY_VIM_DIR}/deps;wget -c http://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz;install_from_tar 'gcc-.+\.tar\.gz' true '--prefix=/usr/local/gcc --enable-bootstrap --enable-checking=release --enable-languages=c,c++ --disable-multilib';rm -fr gcc-*/;sudo_it "echo 'export PATH=/usr/local/gcc/bin:$PATH' > /etc/profile.d/gcc.sh";source /etc/profile.d/gcc.sh
 glibc-common;        math_bool 'true';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'glibc-common-.+\.rpm' true
 
+socat;               install_check 'socat' 'socat-.+\.tar\.gz$' true;cd ${MY_VIM_DIR}/deps;install_from_tar 'socat-.+\.tar\.gz' true;rm -fr socat-*/
 ppid;                ! have_cmd 'ppid';cd ${MY_VIM_DIR}/tools/app;gcc ppid.c -g -o ppid;emove 'ppid(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/ppid*
 fstat;               ! have_cmd 'fstat';cd ${MY_VIM_DIR}/tools/app;gcc fstat.c -g -o fstat;emove 'fstat(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/fstat*
 perror;              ! have_cmd 'perror';cd ${MY_VIM_DIR}/tools/app;gcc perror.c -g -o perror;emove 'perror(\.exe)?$' ${LOCAL_BIN_DIR};chmod +x ${LOCAL_BIN_DIR}/perror*
@@ -34,7 +35,6 @@ atop;                ! have_cmd 'atop';cd ${MY_VIM_DIR}/deps/packages;install_fr
 iperf3;              install_check 'iperf3' 'iperf3-.+\.rpm$' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'iperf3-.+\.rpm' true
 iproute;             ! have_cmd 'ss';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'iproute-.+\.rpm' true
 rsync;               install_check 'rsync' 'rsync-.+\.rpm$' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'rsync-.+\.rpm' true
-nmap-ncat;           install_check 'nc' 'nmap-ncat-.+\.rpm$' true;cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'nmap-ncat-.+\.rpm' true
 sar;                 ! have_cmd 'sar';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'sysstat-.+\.rpm' true
 
 sudo;                ! file_exist '/usr/libexec/sudo/libsudo_util.so.0';cd ${MY_VIM_DIR}/deps/packages;install_from_rpm 'sudo-.+\.rpm' true

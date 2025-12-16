@@ -149,7 +149,13 @@ function install_check
     fi
 	
     if have_cmd "${xbin}";then
-		local cur_version=$(string_gensub "$(${xbin} --version 2>&1)" "\d+\.\d+(\.\d+)?" | head -n 1)
+		local bin_version
+		bin_version=$(${xbin} --version 2>&1)
+		if [ $? -ne 0 ];then
+			bin_version=$(${xbin} -V 2>&1)
+		fi
+
+		local cur_version=$(string_gensub "${bin_version}" "\d+\.\d+(\.\d+)?" | head -n 1)
 		if [ -z "${cur_version}" ];then
 			cur_version=$(string_gensub "$(${xbin} version 2>&1)" "\d+\.\d+(\.\d+)?" | head -n 1)
 			if [ -z "${cur_version}" ];then
@@ -482,6 +488,7 @@ function install_from_make
         echo_erro "\nUsage: [$@]\n\$1: specify compile directory\n\$2: specify configure args"
         return 1
     fi
+	makedir=$(file_realpath ${makedir})
     echo_file "${LOG_DEBUG}" "make into: { ${makedir} } conf: { ${conf_para} }"
 
     local currdir="$(pwd)"

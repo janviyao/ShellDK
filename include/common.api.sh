@@ -7,7 +7,6 @@
 : ${BASH_WORK_DIR:=}
 : ${GBL_MDAT_PIPE:=}
 : ${GBL_LOGR_PIPE:=}
-: ${GBL_NCAT_PIPE:=}
 : ${GBL_XFER_PIPE:=}
 : ${GBL_CTRL_PIPE:=}
 
@@ -255,21 +254,7 @@ function para_fetch
 
 function export_all
 {
-    local local_pid=$$
-    if have_cmd "ppid";then
-        local ppids=($(ppid))
-        local self_pid=${ppids[1]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[1]}
-            done
-        fi
-        local_pid=${self_pid}
-    fi
-
-    local export_file="/tmp/export.${local_pid}"
+    local export_file="/tmp/export.${BASHPID}"
 
     declare -xp &> ${export_file}
     sed -i 's/declare \-x //g' ${export_file}
@@ -284,124 +269,11 @@ function export_all
 
 function import_all
 {
-    local parent_pid=$$
-    if have_cmd "ppid";then
-        local ppids=($(ppid))
-        local self_pid=${ppids[1]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[1]}
-            done
-        fi
-        parent_pid=${self_pid}
-    fi
-
-    local import_file="/tmp/export.${parent_pid}"
+    local import_file="/tmp/export.${BASHPID}"
     if file_exist "${import_file}";then 
         local import_config=$(< "${import_file}")
         source<(echo "${import_config//\?=/=}")
     fi
-}
-
-function wait_value
-{
-	local -n _wait_val_ref=$1
-	local resp_pipe="$2"
-	local timeout_s="${3:-2}"
-
-	if [ $# -lt 1 ];then
-		echo_erro "\nUsage: [$@]\n\$1: resp_pipe\n\$2: timeout_s"
-		return 1
-	fi
-
-	local try_cnt=6
-	if [[ $(string_start "${timeout_s}" 1) == '+' ]]; then
-		timeout_s=$(string_trim "${timeout_s}" "+" 1)
-		try_cnt=$(math_round ${timeout_s} 2)
-		timeout_s=2
-	fi
-	echo_debug "try_cnt: [${try_cnt}] timeout: [${timeout_s}s] $@"
-
-	#echo_debug "make ack: [${resp_pipe}]"
-	#file_exist "${resp_pipe}" && rm -f ${resp_pipe}
-	mkfifo ${resp_pipe}
-	file_exist "${resp_pipe}" || echo_erro "mkfifo: ${resp_pipe} fail"
-
-	if have_admin && [[ "${USR_NAME}" != "root" ]];then
-		chmod 777 ${resp_pipe}
-	fi
-
-	local ack_fhno=0
-	exec {ack_fhno}<>${resp_pipe}
-
-	local try_old=0
-	while true
-	do
-		#process_run_timeout ${timeout_s} read _wait_val_ref \< ${resp_pipe}\; echo "\"\${_wait_val_ref}\"" \> ${resp_pipe}.result
-		read -t ${timeout_s} _wait_val_ref < ${resp_pipe}
-		echo_debug "(${try_old})read [${_wait_val_ref}] from ${resp_pipe}"
-
-		let try_old++
-		if [ -n "${_wait_val_ref}" -o ${try_old} -eq ${try_cnt} ];then
-			break
-		fi
-	done
-	eval "exec ${ack_fhno}>&-"
-
-	if [ ${try_old} -eq ${try_cnt} ];then
-		echo_debug "wait [${resp_pipe}] failed"
-		return 1
-	fi
-
-	return 0
-}
-
-function send_and_wait
-{
-	local -n _resp_val_ref=$1
-	local _resp_val_refnm=$1
-    local send_body="$2"
-    local send_pipe="$3"
-    local timeout_s="${4:-2}"
-
-    if [ $# -lt 2 ];then
-		echo_erro "\nUsage: [$@]\n\$1: send_body\n\$2: send_pipe\n\$3: timeout_s(default: 2s)"
-        return 1
-    fi
-
-    # the first pid is shell where ppid run
-    local self_pid=$$
-    if have_cmd "ppid";then
-        local ppids=($(ppid))
-        local self_pid=${ppids[1]}
-        if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-            while [ -z "${self_pid}" ]
-            do
-                ppids=($(ppid))
-                self_pid=${ppids[1]}
-            done
-        fi
-    fi
-
-    local ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}"
-    while file_exist "${ack_pipe}"
-    do
-        ack_pipe="${BASH_WORK_DIR}/ack.${self_pid}.${RANDOM}"
-    done
-
-	echo_debug "write [NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
-	process_run_callback '' '' "process_run_with_condition 'test -p ${ack_pipe}' 'echo \"NEED_ACK${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}\" > ${send_pipe}'" &>/dev/null
-
-	wait_value ${_resp_val_refnm} "${ack_pipe}" "${timeout_s}"
-	if [ $? -ne 0 ];then
-		_resp_val_ref=""
-	fi
-
-    #echo_debug "remove: [${ack_pipe}]"
-    rm -f ${ack_pipe}
-    return 0
 }
 
 function input_prompt
@@ -754,6 +626,15 @@ if [ $? -ne 0 ];then
 fi
 
 __MY_SOURCE "INCLUDED_FILE"      $MY_VIM_DIR/include/file.api.sh
+if [ $? -ne 0 ];then
+	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+		return 1
+	else
+		exit 1
+	fi
+fi
+
+__MY_SOURCE "INCLUDED_COMMUNICATE" $MY_VIM_DIR/include/communicate.api.sh
 if [ $? -ne 0 ];then
 	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 		return 1

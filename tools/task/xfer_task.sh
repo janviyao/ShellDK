@@ -5,18 +5,7 @@ mkdir -p ${XFER_WORK_DIR}
 
 XFER_TASK="${XFER_WORK_DIR}/task"
 XFER_WORK="${XFER_WORK_DIR}/work"
-XFER_PIPE="${XFER_WORK_DIR}/pipe"
-XFER_FD=${XFER_FD:-6}
-file_exist "${XFER_PIPE}" || mkfifo ${XFER_PIPE}
-file_exist "${XFER_PIPE}" || echo_erro "mkfifo: ${XFER_PIPE} fail"
-if [ $? -ne 0 ];then
-	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-		return 1
-	else
-		exit 1
-	fi
-fi
-exec {XFER_FD}<>${XFER_PIPE}
+XFER_CHANNEL="${XFER_WORK_DIR}/tcp"
 
 function do_rsync
 {
@@ -253,78 +242,125 @@ function rsync_p2p_from
     return $?
 }
 
+function xfer_send_file
+{
+    local xfer_addr="$1"
+    local xfer_port="$2"
+    local file_name="$3"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfer_addr\n\$2: xfer_port\n\$3: file_name"
+        return 1
+    fi
+	
+	file_name=$(file_realpath ${file_name})
+    if ! test -f "${file_name}";then
+        echo_erro "none file: ${file_name}"
+        return 1
+    fi
+
+    echo_debug "xfer send: [$@]"
+	tcp_send_and_wait "${xfer_addr}" "${xfer_port}" "REMOTE_SEND_FILE${GBL_SPF1}${xfer_port}${GBL_SPF2}${file_name}"
+    if [ $? -ne 0 ];then
+        echo_erro "failed: send msg to remote [${xfer_addr} ${xfer_port}]"
+        return 1
+	fi
+
+	tcp_send_file "${xfer_addr}" "${xfer_port}" "${file_name}"
+    if [ $? -ne 0 ];then
+        echo_erro "failed: send file to remote [${xfer_addr} ${xfer_port} ${file_name}]"
+        return 1
+	fi
+
+    return 0
+}
+
+function xfer_set_var
+{
+    local xfer_addr="$1"
+    local xfer_port="$2"
+    local var_name="$3"
+    local var_valu="$4"
+
+    if [ $# -lt 3 ];then
+        echo_erro "\nUsage: [$@]\n\$1: xfer_addr\n\$2: xfer_port\n\$3: var_name\n\$4: var_value"
+        return 1
+    fi
+
+    if [ -z "${var_valu}" ];then
+        var_valu="$(eval "echo \"\$${var_name}\"")"
+    fi
+
+    echo_debug "xfer_set_var: [$@]" 
+	tcp_send_msg "${xfer_addr}" "${xfer_port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}REMOTE_SET_VAR${GBL_SPF1}${var_name}=${var_valu}"
+    return $?
+}
+
 function xfer_task_ctrl_async
 {
     local _body="$1"
-    local _pipe="${2:-${XFER_PIPE}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${XFER_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: body"
         return 1
     fi
 
-    if ! file_exist "${_pipe}.run";then
-        echo_erro "xfer task [${_pipe}.run] donot run for [$@]"
-        return 1
-    fi
-
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body}" > ${_pipe}
+	local port=$(system_port_ctrl)
+	tcp_send_msg "${LOCAL_IP}" "${port}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body}"
     return 0
 }
 
 function xfer_task_ctrl_sync
 {
     local _body="$1"
-    local _pipe="${2:-${XFER_PIPE}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${XFER_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: body"
         return 1
     fi
 
-    if ! file_exist "${_pipe}.run";then
-        echo_erro "xfer task [${_pipe}.run] donot run for [$@]"
-        return 1
-    fi
-
-    echo_debug "xfer wait for ${_pipe}"
-
-    local send_resp_val=""
-    send_and_wait send_resp_val "${_body}" "${_pipe}" "+${MAX_TIMEOUT}"
+	local port=$(system_port_ctrl)
+	if [[ ${_body} =~ RSYNC ]];then
+		local resp_val
+		tcp_send_and_wait "127.0.0.1" "${port}" "${_body}" resp_val "+${MAX_TIMEOUT}"
+	else
+		tcp_send_and_wait "127.0.0.1" "${port}" "${_body}" "" "+${MAX_TIMEOUT}"
+	fi
     return 0
 }
 
 function _bash_xfer_exit
 { 
+	export TASK_PID=${BASHPID}
     echo_debug "xfer signal exit"
-    if ! file_exist "${XFER_PIPE}.run";then
+    if ! file_exist "${XFER_CHANNEL}.run";then
         echo_debug "xfer task not started but signal EXIT"
         return 0
     fi
 
+    local task_exist=0
     local task_list=($(cat ${XFER_TASK}))
-    local task_line=0
-    while [ ${#task_list[*]} -gt 0 ]
+	local task_pid
+    for task_pid in "${task_list[@]}"
     do
-        local task_pid=${task_list[0]}
         if process_exist "${task_pid}";then
-            let task_line++
+            let task_exist++
         else
             echo_debug "task[${task_pid}] have exited"
         fi
-        unset task_list[0]
     done
 
-    if [ ${task_line} -eq 0 ];then
+	local cur_port=$(system_port_ctrl)
+	if math_is_int "${cur_port}";then
+		process_run_lock 1 system_port_ctrl used-del ${cur_port}
+	fi
+
+    if [ ${task_exist} -eq 0 ];then
         echo_debug "xfer task have exited"
         return 0
     fi
 
     xfer_task_ctrl_sync "EXIT"
-
-    if [ -f ${MY_HOME}/.bash_exit ];then
-        source ${MY_HOME}/.bash_exit
-    fi
 }
 
 function _rsync_callback1
@@ -347,49 +383,61 @@ function _rsync_callback1
 
 function _xfer_thread_main
 {
-    local line
-    while read line
+    while true
     do
-        echo_file "${LOG_DEBUG}" "xfer recv: [${line}] from [${XFER_PIPE}]"
+		if file_expire "${SYSTEM_PORT_USED}" 180;then
+			process_run_lock 1 system_port_ctrl used-update
+		fi
 
-		local -a msg_list=()
-		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
-        local ack_ctrl=${msg_list[0]}
-        local ack_pipe=${msg_list[1]}
-        local ack_body=${msg_list[2]}
+		local port=$(system_port_ctrl)
+		local line=$(tcp_recv_msg ${port})
 
-        echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
-        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! file_exist "${ack_pipe}";then
-                echo_debug "pipe invalid: [${ack_pipe}]"
-                if ! file_exist "${XFER_WORK_DIR}";then
-                    echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
-                    break
-                fi
-                continue
-            fi
-        fi
+		local -a split_list=()
+		array_reset split_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
+        local ack_ctrl=${split_list[0]}
+        local ack_chnl=${split_list[1]}
+        local ack_body=${split_list[2]}
+        echo_file "${LOG_DEBUG}" "ack_ctrl [${ack_ctrl}] ack_channel [${ack_chnl}] ack_body [${ack_body}]"
 
-		local -a req_list=()
-		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
-        local req_ctrl=${req_list[0]}
-        local req_body=${req_list[1]}
-        local req_foot=${req_list[2]}
+		array_reset split_list "$(string_split "${ack_ctrl}" "${GBL_SPF1}")"
+        local recv_ack=${split_list[0]}
+        local data_ack=${split_list[1]}
+
+		if [[ "${recv_ack}" == "RECV_ACK" ]];then
+			array_reset split_list "$(string_split "${ack_chnl}" "${GBL_SPF1}")"
+			local raddr=${split_list[0]}
+			local rport=${split_list[1]}
+
+			echo_debug "write [RECV_ACK] to [${raddr}:${rport}]"
+			tcp_send_msg "${raddr}" "${rport}" "RECV_ACK"
+		fi
+
+		array_reset split_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
+        local req_ctrl=${split_list[0]}
+        local req_body=${split_list[1]}
+        local req_foot=${split_list[2]}
 
         if [[ "${req_ctrl}" == "EXIT" ]];then
-            if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                echo_debug "write [ACK] to [${ack_pipe}]"
-                process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
-            fi
             echo_debug "xfer main exit"
             return 
+        elif [[ "${req_ctrl}" == "REMOTE_SEND_FILE" ]];then
+			array_reset split_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local rport=${split_list[0]}
+            local fname=${split_list[1]}
+            tcp_recv_file "${rport}" "${fname}"
+        elif [[ "${req_ctrl}" == "REMOTE_SET_VAR" ]];then
+			array_reset split_list "$(string_split "${req_body}" "=")"
+            local var_name=${split_list[0]}
+            local var_valu=${split_list[1]}
+
+			eval "local ${var_name}=${var_valu}"
+            mdat_set_var ${var_name}
         elif [[ "${req_ctrl}" == "RSYNC" ]];then
-			local -a val_list=()
-			array_reset val_list "$(string_split "${req_body}" "${GBL_SPF2}")"
-            local xfer_act=${val_list[0]}
-            local xfer_cmd=${val_list[1]}
-            local xfer_src=${val_list[2]}
-            local xfer_des=${val_list[3]}
+			array_reset split_list "$(string_split "${req_body}" "${GBL_SPF2}")"
+            local xfer_act=${split_list[0]}
+            local xfer_cmd=${split_list[1]}
+            local xfer_src=${split_list[2]}
+            local xfer_des=${split_list[3]}
 
             local action=""
             if [[ "${xfer_act}" == "UPDATE" ]];then
@@ -403,14 +451,14 @@ function _xfer_thread_main
             echo_debug "xfer_src: [${xfer_src}]"
             echo_debug "xfer_des: [${xfer_des}]"
 
-			array_reset val_list "$(string_split "${xfer_cmd}" "${GBL_SPF3}")"
-            local cmd_act=${val_list[0]} 
+			array_reset split_list "$(string_split "${xfer_cmd}" "${GBL_SPF3}")"
+            local cmd_act=${split_list[0]} 
 
             if [[ "${cmd_act}" == 'REMOTE' ]];then
-                local remote_user=${val_list[1]} 
-                local remote_pswd=${val_list[2]} 
-                local remote_addr=${val_list[3]} 
-                local remote_xdir=${val_list[4]} 
+                local remote_user=${split_list[1]} 
+                local remote_pswd=${split_list[2]} 
+                local remote_addr=${split_list[3]} 
+                local remote_xdir=${split_list[4]} 
 
                 local cmdstr=$(cat << EOF
                 systype=\$(uname -s | grep -E '^[A-Za-z_]+' -o)
@@ -429,9 +477,13 @@ EOF
                 if [ -n "${remote_xdir}" ];then
                     if ! remote_cmd "${remote_user}" "${remote_pswd}" "${remote_addr}" "${cmdstr}";then
                         echo_erro "remote dir { ${remote_xdir} } not exist"
-                        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                            echo_debug "write [ACK] to [${ack_pipe}]"
-                            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
+                        if [[ "${data_ack}" == "DATA_ACK" ]];then
+							array_reset split_list "$(string_split "${ack_chnl}" "${GBL_SPF1}")"
+							local raddr=${split_list[0]}
+							local rport=${split_list[1]}
+
+							echo_debug "write [DATA_ACK${GBL_ACK_SPF}1] to [${raddr}:${rport}]"
+							tcp_send_msg "${raddr}" "${rport}" "DATA_ACK${GBL_ACK_SPF}1"
                         fi
                         continue
                     fi
@@ -449,19 +501,22 @@ EOF
 				echo "${pid}" > ${XFER_WORK}
 				process_wait ${pid} 1
             fi
-        fi
+		fi
 
-        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            echo_debug "write [ACK] to [${ack_pipe}]"
-            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
-        fi
+		if [[ "${data_ack}" == "DATA_ACK" ]];then
+			array_reset split_list "$(string_split "${ack_chnl}" "${GBL_SPF1}")"
+			local raddr=${split_list[0]}
+			local rport=${split_list[1]}
 
-        echo_file "${LOG_DEBUG}" "xfer wait: [${XFER_PIPE}]"
+			echo_debug "write [DATA_ACK${GBL_ACK_SPF}0] to [${raddr}:${rport}]"
+			tcp_send_msg "${raddr}" "${rport}" "DATA_ACK${GBL_ACK_SPF}0"
+		fi
+
         if ! file_exist "${XFER_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
             break
         fi
-    done < ${XFER_PIPE}
+	done
 }
 
 function _xfer_kill_rsync
@@ -502,11 +557,11 @@ function _xfer_handle_signal
 
 function _xfer_thread
 {
+	export TASK_PID=${BASHPID}
     if ! have_cmd "rsync";then
         if ! install_from_net "rsync" &> /dev/null;then
             if ! install_from_spec "rsync" &> /dev/null;then
                 echo_file "${LOG_ERRO}" "because rsync is not installed, xfer task exit"
-                eval "exec ${XFER_FD}>&-"
                 rm -fr ${XFER_WORK_DIR} 
                 exit 1
             fi
@@ -517,29 +572,20 @@ function _xfer_thread
     trap 'SIGNAL=TERM; _xfer_handle_signal' SIGTERM
     trap 'SIGNAL=KILL; _xfer_handle_signal' SIGKILL
 
-	local self_pid=$(cat ${XFER_TASK})
-	while [ -z "${self_pid}" ]
-	do
-		sleep 1
-		self_pid=$(cat ${XFER_TASK})
-	done
-	export TASK_PID=${self_pid}
-
     if have_cmd "ppid";then
         local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "xfer bg_thread [${ppinfos[*]}] start"
 	else
-        echo_file "${LOG_DEBUG}" "xfer bg_thread [$(process_pid2name ${self_pid})[${self_pid}]] start"
+        echo_file "${LOG_DEBUG}" "xfer bg_thread [$(process_pid2name ${TASK_PID})[${TASK_PID}]] start"
     fi
 
-    touch ${XFER_PIPE}.run
-    echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] ready"
-    echo "${self_pid}" >> ${BASH_MASTER}
+    touch ${XFER_CHANNEL}.run
+    echo_file "${LOG_DEBUG}" "xfer bg_thread[${TASK_PID}] ready"
+    echo "${TASK_PID}" >> ${BASH_MASTER}
     _xfer_thread_main
-    echo_file "${LOG_DEBUG}" "xfer bg_thread[${self_pid}] exit"
-    rm -f ${XFER_PIPE}.run
+    echo_file "${LOG_DEBUG}" "xfer bg_thread[${TASK_PID}] exit"
+    rm -f ${XFER_CHANNEL}.run
 
-    eval "exec ${XFER_FD}>&-"
     rm -fr ${XFER_WORK_DIR} 
     exit 0
 }

@@ -50,9 +50,9 @@ if [ -z "${CMD_EXE}" ];then
     exit 0
 fi
 
-ncat_port=$(ncat_get_port)
+xfer_port=$(system_port_ctrl)
 tmp_file=$(file_temp)
-PKG_MSG="(${CMD_EXE}) &> ${tmp_file}; ncat_send_file ${NCAT_MASTER_ADDR} ${ncat_port} ${tmp_file}; rm -f ${tmp_file}"
+PKG_MSG="(${CMD_EXE}) &> ${tmp_file}; xfer_send_file ${LOCAL_IP} ${xfer_port} ${tmp_file}; rm -f ${tmp_file}"
 
 $MY_VIM_DIR/tools/sshlogin.sh "${HOST_IP}" "${PKG_MSG}" &> /dev/null
 if [ $? -ne 0 ];then

@@ -24,7 +24,6 @@ PASS_ENV="\
 export BTASK_LIST='master';\
 export REMOTE_IP='127.0.0.1';\
 export BASH_WORK_DIR='${BASH_WORK_DIR}';\
-export NCAT_MASTER_ADDR='${NCAT_MASTER_ADDR}';\
 export USR_NAME='${USR_NAME}';\
 export USR_PASSWORD='${USR_PASSWORD}';\
 export MY_VIM_DIR='$MY_VIM_DIR';\

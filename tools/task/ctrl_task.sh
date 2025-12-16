@@ -4,19 +4,7 @@ CTRL_WORK_DIR="${BASH_WORK_DIR}/ctrl"
 mkdir -p ${CTRL_WORK_DIR}
 
 CTRL_TASK="${CTRL_WORK_DIR}/task"
-CTRL_PIPE="${CTRL_WORK_DIR}/pipe"
-CTRL_FD=${CTRL_FD:-6}
-
-file_exist "${CTRL_PIPE}" || mkfifo ${CTRL_PIPE}
-file_exist "${CTRL_PIPE}" || echo_erro "mkfifo: ${CTRL_PIPE} fail"
-if [ $? -ne 0 ];then
-	if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-		return 1
-	else
-		exit 1
-	fi
-fi
-exec {CTRL_FD}<>${CTRL_PIPE}
+CTRL_CHANNEL="${CTRL_WORK_DIR}/ipc"
 
 function ctrl_create_thread
 {
@@ -27,14 +15,14 @@ function ctrl_create_thread
         return 1
     fi
 
-    if ! file_exist "${CTRL_PIPE}.run";then
-        echo_erro "ctrl task [${CTRL_PIPE}.run] donot run for [$@]"
+    if ! file_exist "${CTRL_CHANNEL}.run";then
+        echo_erro "ctrl task [${CTRL_CHANNEL}.run] donot run for [$@]"
         return 1
     fi
     
     echo_file "${LOG_DEBUG}" "create thread: ${_cmdstr}"
     local send_resp_val=""
-    send_and_wait send_resp_val "THREAD_CREATE${GBL_SPF1}${_cmdstr}" "${CTRL_PIPE}"
+    unix_socket_send_and_wait "${CTRL_CHANNEL}" "THREAD_CREATE${GBL_SPF1}${_cmdstr}" send_resp_val
 
     echo "${send_resp_val}"
     return 0
@@ -43,188 +31,146 @@ function ctrl_create_thread
 function ctrl_task_ctrl_async
 {
     local _body="$1"
-    local _pipe="${2:-${CTRL_PIPE}}"
+    local _socket="${2:-${CTRL_CHANNEL}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: socket(default: ${CTRL_CHANNEL})"
         return 1
     fi
 
-    if ! file_exist "${_pipe}.run";then
-        echo_erro "ctrl task [${_pipe}.run] donot run for [$@]"
+    if ! file_exist "${_socket}.run";then
+        echo_erro "ctrl task [${_socket}.run] donot run for [$@]"
         return 1
     fi
     
-    echo "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body}" > ${_pipe}
+	unix_socket_send "${_socket_}" "${GBL_ACK_SPF}${GBL_ACK_SPF}${_body}"
     return 0
 }
 
 function ctrl_task_ctrl_sync
 {
     local _body="$1"
-    local _pipe="${2:-${CTRL_PIPE}}"
+    local _socket="${2:-${CTRL_CHANNEL}}"
 
     if [ $# -lt 1 ];then
-        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: pipe(default: ${CTRL_PIPE})"
+        echo_erro "\nUsage: [$@]\n\$1: _body\n\$2: socket(default: ${CTRL_CHANNEL})"
         return 1
     fi
 
-    if ! file_exist "${_pipe}.run";then
-        echo_erro "ctrl task [${_pipe}.run] donot run for [$@]"
+    if ! file_exist "${_socket}.run";then
+        echo_erro "ctrl task [${_socket}.run] donot run for [$@]"
         return 1
     fi
 
-    local send_resp_val=""
-    send_and_wait send_resp_val "${_body}" "${_pipe}"
+    unix_socket_send_and_wait "${_socket}" "${_body}"
     return 0
 }
 
 function _bash_ctrl_exit
 { 
+	export TASK_PID=${BASHPID}
     echo_debug "ctrl signal exit"
-    if ! file_exist "${CTRL_PIPE}.run";then
+    if ! file_exist "${CTRL_CHANNEL}.run";then
         echo_debug "ctrl task not started but signal EXIT"
         return 0
     fi
     
+    local task_exist=0
     local task_list=($(cat ${CTRL_TASK}))
-    local task_line=0
-    while [ ${#task_list[*]} -gt 0 ]
+	local task_pid
+    for task_pid in "${task_list[@]}"
     do
         local task_pid=${task_list[0]}
         if process_exist "${task_pid}";then
-            let task_line++
+            let task_exist++
         else
             echo_debug "task[${task_pid}] have exited"
         fi
-        unset task_list[0]
     done
 
-    if [ ${task_line} -eq 0 ];then
+    if [ ${task_exist} -eq 0 ];then
         echo_debug "ctrl task have exited"
         return 0
     fi
 
     ctrl_task_ctrl_sync "EXIT"
- 
-    if [ -f ${MY_HOME}/.bash_exit ];then
-        source ${MY_HOME}/.bash_exit
-    fi
 }
 
 function _ctrl_thread_main
 {
-    local index line
-    while read line
+    local index
+    while true
     do
-        echo_file "${LOG_DEBUG}" "ctrl recv: [${line}] from [${CTRL_PIPE}]"
+		local line=$(unix_socket_recv ${CTRL_CHANNEL})
 
-		local -a msg_list=()
-		array_reset msg_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
-        local ack_ctrl=${msg_list[0]}
-        local ack_pipe=${msg_list[1]}
-        local ack_body=${msg_list[2]}
+		local -a split_list=()
+		array_reset split_list "$(string_split "${line}" "${GBL_ACK_SPF}")"
+        local ack_ctrl=${split_list[0]}
+        local ack_chnl=${split_list[1]}
+        local ack_body=${split_list[2]}
+        echo_file "${LOG_DEBUG}" "ack_ctrl [${ack_ctrl}] ack_channel [${ack_chnl}] ack_body [${ack_body}]"
 
-        echo_file "${LOG_DEBUG}" "ack_ctrl: [${ack_ctrl}] ack_pipe: [${ack_pipe}] ack_body: [${ack_body}]"
-        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            if ! file_exist "${ack_pipe}";then
-                echo_erro "pipe invalid: [${ack_pipe}]"
-                if ! file_exist "${CTRL_WORK_DIR}";then
-                    echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
-                    break
-                fi
-                continue
-            fi
-        fi
-        
-		local -a req_list=()
-		array_reset req_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
-        local req_ctrl=${req_list[0]}
-        local req_body=${req_list[1]}
+		array_reset split_list "$(string_split "${ack_ctrl}" "${GBL_SPF1}")"
+        local recv_ack=${split_list[0]}
+        local data_ack=${split_list[1]}
+
+		if [[ "${recv_ack}" == "RECV_ACK" ]];then
+			echo_debug "write [RECV_ACK] to [${ack_chnl}]"
+			unix_socket_send "${ack_chnl}" "RECV_ACK"
+		fi
+
+		array_reset split_list "$(string_split "${ack_body}" "${GBL_SPF1}")"
+        local req_ctrl=${split_list[0]}
+        local req_body=${split_list[1]}
         
         if [[ "${req_ctrl}" == "EXIT" ]];then
-            if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                echo_debug "write [ACK] to [${ack_pipe}]"
-                process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
-            fi
             echo_debug "ctrl main exit"
             return 
         elif [[ "${req_ctrl}" == "THREAD_CREATE" ]];then
             local _cmdstr="${req_body}"
             echo_file "${LOG_DEBUG}" "new thread: ${_cmdstr}"
-            {
-                local ppids=($(ppid))
-                local self_pid=${ppids[1]}
-                if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-                    while [ -z "${self_pid}" ]
-                    do
-                        ppids=($(ppid))
-                        self_pid=${ppids[1]}
-                    done
-                    self_pid=$(process_winpid2pid ${self_pid})
-                fi
-
-                echo_file "${LOG_DEBUG}" "thread[${self_pid}] running: ${_cmdstr}"
-
+			(
+                echo_file "${LOG_DEBUG}" "thread[${BASHPID}] running: ${_cmdstr}"
                 eval "${_cmdstr}"
-                mdat_set "thread-${self_pid}-return" "$?"
+                mdat_set "thread-${BASHPID}-return" "$?"
                 exit 0
-            } &
+			) &
 
             local bgpid=$!
 			disown ${bgpid}
 
-            if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-                echo_debug "write [${bgpid}] to [${ack_pipe}]"
-                process_run_timeout 2 echo \"${bgpid}\" \> ${ack_pipe}
-                if ! file_exist "${CTRL_WORK_DIR}";then
-                    echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
-                    break
-                fi
-                continue
-            fi
+			if [[ "${data_ack}" == "DATA_ACK" ]];then
+				echo_debug "write [DATA_ACK${GBL_ACK_SPF}${bgpid}] to [${ack_chnl}]"
+				unix_socket_send "${ack_chnl}" "DATA_ACK${GBL_ACK_SPF}${bgpid}"
+			fi
         fi
-
-        if [[ "${ack_ctrl}" == "NEED_ACK" ]];then
-            echo_debug "write [ACK] to [${ack_pipe}]"
-            process_run_timeout 2 echo 'ACK' \> ${ack_pipe}
-        fi
-        echo_file "${LOG_DEBUG}" "ctrl wait: [${CTRL_PIPE}]"
 
         if ! file_exist "${CTRL_WORK_DIR}";then
             echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
             break
         fi
-    done < ${CTRL_PIPE}
+    done
 }
 
 function _ctrl_thread
 {
+	export TASK_PID=${BASHPID}
     trap "" SIGINT SIGTERM SIGKILL
-
-	local self_pid=$(cat ${CTRL_TASK})
-	while [ -z "${self_pid}" ]
-	do
-		sleep 1
-		self_pid=$(cat ${CTRL_TASK})
-	done
-	export TASK_PID=${self_pid}
 
     if have_cmd "ppid";then
         local ppinfos=($(ppid -n))
         echo_file "${LOG_DEBUG}" "ctrl bg_thread [${ppinfos[*]}] start"
 	else
-        echo_file "${LOG_DEBUG}" "ctrl bg_thread [$(process_pid2name ${self_pid})[${self_pid}]] start"
+        echo_file "${LOG_DEBUG}" "ctrl bg_thread [$(process_pid2name ${TASK_PID})[${TASK_PID}]] start"
     fi
 
-    touch ${CTRL_PIPE}.run
-    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] ready"
-    echo "${self_pid}" >> ${BASH_MASTER}
+    touch ${CTRL_CHANNEL}.run
+    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${TASK_PID}] ready"
+    echo "${TASK_PID}" >> ${BASH_MASTER}
     _ctrl_thread_main
-    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${self_pid}] exit"
-    rm -f ${CTRL_PIPE}.run
+    echo_file "${LOG_DEBUG}" "ctrl bg_thread[${TASK_PID}] exit"
+    rm -f ${CTRL_CHANNEL}.run
 
-    eval "exec ${CTRL_FD}>&-"
     rm -fr ${CTRL_WORK_DIR} 
     exit 0
 }

@@ -7,7 +7,6 @@ export PS4='$(printf "%02d[%*s] " ${#FUNCNAME[@]} $((15 + ${#FUNCNAME[@]} * 2)) 
 export GOPATH=${MY_HOME}/.local
 export GOROOT=${GOPATH}/go
 export PATH=${PATH}:/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:${MY_HOME}/.local/bin:${GOROOT}/bin:/usr/lib/udev
-export LOCAL_IP=${LOCAL_IP:-"$(get_local_ip)"}
 
 readonly ROOT_PID=$$
 readonly SYSTEM=$(uname -s | grep -E '^[A-Za-z_]+' -o)
@@ -19,6 +18,12 @@ readonly LOCAL_DIR="${MY_HOME}/.local"
 readonly LOCAL_BIN_DIR="${LOCAL_DIR}/bin"
 readonly LOCAL_LIB_DIR="${LOCAL_DIR}/lib"
 readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
+readonly BASH_WORK_DIR="${GBL_USER_DIR}/bash.master.${ROOT_PID}"
+readonly SYSTEM_PORT_USED="${GBL_USER_DIR}/port.used"
+readonly SYSTEM_PORT_NEXT="${GBL_USER_DIR}/port.next"
+readonly SYSTEM_PROT_CURR="${BASH_WORK_DIR}/port.curr"
+readonly LOG_DISABLE="${BASH_WORK_DIR}/bash.log.disable"
+readonly BASH_MASTER="${BASH_WORK_DIR}/taskset"
 
 readonly GBL_INDENT="  "
 readonly GBL_KV_SPF=" "
@@ -54,8 +59,8 @@ alias mywget='function mywget { if [ $# -eq 2 ];then local fname=$2; elif [ $# -
 alias myps='function myps { ps -ef | grep "$@" | grep -v grep | awk "{ print \$2 }" | { local pids=($(cat)); process_info "${pids[*]}" "ppid,pid,user,stat,pcpu,pmem,cmd"; }; }; myps'
 alias unrpm='function rpm_decompress { rpm2cpio $1 | cpio -div; }; rpm_decompress'
 
-alias psgrep='function psgrep { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it ps -eo pid,cmd | awk "{ if (\$1 ~ /$1/ ) print \$0 }"; else sudo_it pgrep -fa $1 | grep -v pgrep; fi; shift; done }; psgrep'
-alias mykill='function mykill { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it kill -9 $1; else sudo_it pkill -e -x -9 $1; fi; shift; done }; mykill'
+alias psgrep='function psgrep { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it ps -ef | awk "{ if (\$2 ~ /$1/ ) { printf \"%s \",\$2; for (i=8; i<=NF; i++) printf \"%s \", \$i; print "\n"; }}"; else sudo_it pgrep -fa $1 | grep -v pgrep; fi; shift; done }; psgrep'
+alias mykill='function mykill { while [ $# -gt 0 ]; do if [[ $1 =~ ^[0-9]+$ ]];then sudo_it kill -9 $1; else sudo_it pkill -x -9 $1; fi; shift; done }; mykill'
 
 alias gbranch='git branch -v'
 alias gstatus='git status'
@@ -79,6 +84,9 @@ unalias grep &> /dev/null || true
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
+LOCAL_IP=${LOCAL_IP:-"$(get_local_ip)"}
+echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"
+mkdir -p ${BASH_WORK_DIR}
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_USER_DIR}
@@ -120,41 +128,54 @@ function __my_bashrc_deps
             fi
         fi
     fi
+
+	if ! have_cmd "socat";then
+		if ! install_from_net "socat" &> /dev/null;then
+			if ! install_from_spec "socat" &> /dev/null;then
+				echo_erro "install { socat } failed"
+				exit 1
+			fi
+		fi
+	fi
 }
-__my_bashrc_deps
 
 function __my_bash_exit
 { 
+	echo_file "${LOG_DEBUG}" "wait for bash exit"
     if [ -f ${MY_HOME}/.bash_exit ];then
         source ${MY_HOME}/.bash_exit
     fi
 
+	local task_idx=0
+	local task_list=($(cat ${BASH_MASTER}))
+	while [ ${#task_list[*]} -gt 0 ]
+	do
+		local task_pid=${task_list[${task_idx}]}
+		if ! process_exist "${task_pid}";then
+			unset task_list[${task_idx}]
+			let task_idx++
+			continue
+		fi
+
+		if [[ "${task_pid}" == "${ROOT_PID}" ]];then
+			unset task_list[${task_idx}]
+			let task_idx++
+			continue
+		fi
+		echo_file "${LOG_DEBUG}" "wait for pid[${task_pid}] exit"
+	done
+
     echo_file "${LOG_DEBUG}" "rm -fr ${BASH_WORK_DIR}"
     rm -fr ${BASH_WORK_DIR} 
 }
+trap "__my_bash_exit" EXIT
 
-if have_cmd "ppid";then
-    ppinfos=($(ppid -n))
-    echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
+if [[ "${SYSTEM}" == "Linux" ]]; then
+	if have_cmd "ppid";then
+		ppinfos=($(ppid -n))
+		echo_file "${LOG_DEBUG}" "pstree [${ppinfos[*]}]"
+	fi
 fi
 
-if __var_defined "BASH_WORK_DIR" && file_exist "${BASH_WORK_DIR}";then
-    echo_file "${LOG_DEBUG}" "share work: ${BASH_WORK_DIR}"
-else
-    file_exist "${BASH_WORK_DIR}" && { echo_file "${LOG_DEBUG}" "remove dir: ${BASH_WORK_DIR}"; rm -fr ${BASH_WORK_DIR}; }
-
-    if string_contain "${BTASK_LIST}" "master";then
-        BASH_WORK_DIR="${GBL_USER_DIR}/bash.master.${ROOT_PID}"
-    else
-        BASH_WORK_DIR="${GBL_USER_DIR}/bash.slaver.${ROOT_PID}"
-    fi
-
-    echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"
-    mkdir -p ${BASH_WORK_DIR} 
-
-    trap "__my_bash_exit" EXIT
-fi
-
-readonly LOG_DISABLE="${BASH_WORK_DIR}/bash.log.disable"
-readonly BASH_MASTER="${BASH_WORK_DIR}/taskset"
 echo "${ROOT_PID}" > ${BASH_MASTER}
+__my_bashrc_deps

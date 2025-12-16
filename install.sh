@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 unset $(printenv | grep -E '^(INCLUDED_|USR_NAME|USR_PASSWORD|BASH_WORK_DIR|MY_VIM_DIR)' | awk -F= '{ print $1 }')
 export MY_VIM_DIR=$(cd $(dirname $0);pwd)
-export BTASK_LIST=${BTASK_LIST:-"mdat,ncat"}
+export BTASK_LIST=${BTASK_LIST:-"mdat"}
 
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc
@@ -223,7 +223,7 @@ function inst_env
         chmod +x ${GBL_USER_DIR}/.askpass.sh 
     fi
 
-	local -a must_deps=("bash" "make" "automake" "autoconf" "gcc" "gcc-c++" "unzip" "m4" "sshpass" "tcl" "expect" "nmap-ncat" "rsync" "iproute" "ncurses-devel")
+	local -a must_deps=("bash" "make" "automake" "autoconf" "gcc" "gcc-c++" "unzip" "m4" "sshpass" "tcl" "expect" "rsync" "iproute" "ncurses-devel")
     if [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
 		must_deps+=("cygutils" "cygrunsrv" "cron" "coreutils" "wget" "tar" "xz" "cpio" "nc" "sed" "findutils" "util-linux" "openssh")
 	fi

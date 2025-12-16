@@ -1,6 +1,9 @@
 #!/bin/bash
 : ${INCLUDED_SYSTEM:=1}
 
+readonly SYSTEM_PORT_MIN=32767
+readonly SYSTEM_PORT_MAX=65535
+
 function have_cmd
 {
     local xcmd="$1"
@@ -275,6 +278,135 @@ function system_decrypt
     else
         echo "${content}"
     fi
+}
+
+function system_port_ctrl
+{
+	local opcode="$1"
+	#echo_file "${LOG_DEBUG}" "paras [$@]"
+	if [ $# -gt 0 ];then
+		shift
+	fi
+
+	local port_val=""
+	case "${opcode}" in
+		alloc)
+			if file_exist "${SYSTEM_PORT_NEXT}";then
+				port_val=$(cat ${SYSTEM_PORT_NEXT})
+			fi
+
+			if math_is_int "${port_val}";then
+				if ! file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
+					process_run_lock 1 system_port_ctrl used-add ${port_val}
+					process_run_lock 1 system_port_ctrl next-inc
+					echo_file "${LOG_DEBUG}" "port [${port_val}] alloced"
+
+					echo "${port_val}"
+					return 0
+				fi
+			fi
+			;;
+		free)
+			port_val="$1"
+			echo_file "${LOG_DEBUG}" "port [${port_val}] freed"
+			process_run_lock 1 system_port_ctrl used-del ${port_val}
+			return 0
+			;;
+		next-set)
+			port_val="$1"
+			echo "${port_val}" > ${SYSTEM_PORT_NEXT}
+			return 0
+			;;
+		next-inc)
+			port_val=$(cat ${SYSTEM_PORT_NEXT})
+			echo "$((port_val + 1))" > ${SYSTEM_PORT_NEXT}
+			return 0
+			;;
+		next-dec)
+			port_val=$(cat ${SYSTEM_PORT_NEXT})
+			echo "$((port_val - 1))" > ${SYSTEM_PORT_NEXT}
+			return 0
+			;;
+		used-add)
+			for port_val in "$@"
+			do
+				if ! file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
+					echo "${port_val}" >> ${SYSTEM_PORT_USED}
+				fi
+			done
+			return 0
+			;;
+		used-del)
+			for port_val in "$@"
+			do
+				if file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
+					file_del ${SYSTEM_PORT_USED} "^${port_val}\s*$" true
+				fi
+			done
+			return 0
+			;;
+		used-update)
+			echo > ${SYSTEM_PORT_USED}.tmp
+			if have_cmd "ss";then
+				echo "======ss" >> ${SYSTEM_PORT_USED}.tmp
+				ss -tuln | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${SYSTEM_PORT_USED}.tmp
+			fi
+
+			if have_cmd "netstat";then
+				echo "======netstat" >> ${SYSTEM_PORT_USED}.tmp
+				#netstat -nap 2>/dev/null | awk '{ print $4 }' &> ${ns_file}
+				if [[ "${SYSTEM}" == "Linux" ]]; then
+					netstat -tunlp 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${SYSTEM_PORT_USED}.tmp
+				elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+					netstat -n 2>/dev/null | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${SYSTEM_PORT_USED}.tmp
+				fi
+			fi
+
+			if have_cmd "lsof";then
+				echo "======lsof" >> ${SYSTEM_PORT_USED}.tmp
+				lsof -i | grep -P "(?<=:)\d+\s+" -o | sort -n -u &>> ${SYSTEM_PORT_USED}.tmp
+			fi
+
+			sort -n -u ${SYSTEM_PORT_USED}.tmp &> ${SYSTEM_PORT_USED}
+			return 0
+			;;
+		*)
+			if file_exist "${SYSTEM_PROT_CURR}";then
+				port_val=$(cat ${SYSTEM_PROT_CURR})
+				if math_is_int "${port_val}";then
+					echo "${port_val}"
+					return 0
+				fi
+			fi
+			;;
+	esac
+
+	echo "" > ${SYSTEM_PROT_CURR}
+	if file_exist "${SYSTEM_PORT_NEXT}";then
+		port_val=$(cat ${SYSTEM_PORT_NEXT})
+		if ! math_is_int "${port_val}";then
+			port_val=${SYSTEM_PORT_MIN}
+		fi
+	else
+		port_val=${SYSTEM_PORT_MIN}
+	fi
+
+	while file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true
+	do
+		port_val=$((port_val + 1))
+		if [ ${port_val} -ge ${SYSTEM_PORT_MAX} ];then
+			port_val=${SYSTEM_PORT_MIN}
+			echo_file "${LOG_DEBUG}" "port reach to max"
+		fi
+	done
+	echo "${port_val}" > ${SYSTEM_PROT_CURR}
+
+	process_run_lock 1 system_port_ctrl used-add ${port_val}
+	process_run_lock 1 system_port_ctrl next-set "$((port_val + 1))"
+	echo_file "${LOG_DEBUG}" "port [${port_val}] generated"
+
+	echo "${port_val}"
+	return 0
 }
 
 function service_ctrl
@@ -1042,6 +1174,11 @@ function get_local_ip
     if [[ "${SYSTEM}" == "Linux" ]]; then
         local local_iparray=($(ifconfig | grep -w inet | awk '{ print $2 }' | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		local local_ip=$(echo "${MY_IP_ADDRESS}" | grep -P "\d+\.\d+\.\d+\.\d+" -o)
+		if [ -n "${local_ip}" ];then
+			echo "${local_ip}"
+			return 0
+		fi
         local local_iparray=($(ipconfig | grep -a -w "IPv4" | grep -P '\d+\.\d+\.\d+\.\d+' -o))
     fi
 
@@ -1063,7 +1200,9 @@ function get_local_ip
         fi
     done
 
-    echo "127.0.0.1"
+	ipaddr="127.0.0.1"
+	echo "${ipaddr}"
+    return 0
 }
 
 function bin_info
