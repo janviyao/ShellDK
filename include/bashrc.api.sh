@@ -84,12 +84,12 @@ unalias grep &> /dev/null || true
 unalias cp &> /dev/null || true
 unalias rm &> /dev/null || true
 
-LOCAL_IP=${LOCAL_IP:-"$(get_local_ip)"}
-echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"
 mkdir -p ${BASH_WORK_DIR}
 mkdir -p ${LOCAL_BIN_DIR}
 mkdir -p ${LOCAL_LIB_DIR}
 mkdir -p ${GBL_USER_DIR}
+LOCAL_IP=${LOCAL_IP:-"$(get_local_ip)"}
+echo_file "${LOG_DEBUG}" "create dir: ${BASH_WORK_DIR}"
 
 function __my_bashrc_deps
 {
