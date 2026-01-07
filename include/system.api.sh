@@ -1,6 +1,7 @@
 #!/bin/bash
 : ${INCLUDED_SYSTEM:=1}
 
+readonly SYSPORT_LOCK_FD=8
 readonly SYSTEM_PORT_MIN=32767
 readonly SYSTEM_PORT_MAX=65535
 
@@ -254,6 +255,46 @@ function write_value
     return 0
 }
 
+function mutex_lock 
+{
+    local lock_id=$1
+
+    if [ $# -ne 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: lock id"
+        return 1
+    fi
+
+	local lock_file="${GBL_BASE_DIR}/shell.lock.${lock_id}"
+
+    eval "exec ${lock_id}> ${lock_file}"
+	if [[ "${SYSTEM}" == "Linux" ]]; then
+		flock -w ${PROMPT_TIMEOUT} -x ${lock_id}      #flock文件锁，-x表示独享锁
+	elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
+		timeout ${PROMPT_TIMEOUT} flock -x ${lock_id} #flock文件锁，-x表示独享锁
+	fi
+
+	if [ $? -ne 0 ];then
+		echo_file "flock ${lock_id} failed"
+		return 1
+	fi
+
+    return 0
+}
+
+function mutex_unlock 
+{
+    local lock_id=$1
+
+    if [ $# -ne 1 ];then
+        echo_erro "\nUsage: [$@]\n\$1: lock id"
+        return 1
+    fi
+
+    flock -u ${lock_id}        # 释放锁
+    eval "exec ${lock_id}>&-"  # 关闭文件描述符
+    return 0
+}
+
 function system_encrypt
 {
     local content="$@"
@@ -288,6 +329,7 @@ function system_port_ctrl
 		shift
 	fi
 
+	mutex_lock ${SYSPORT_LOCK_FD}
 	local port_val=""
 	case "${opcode}" in
 		alloc)
@@ -297,10 +339,11 @@ function system_port_ctrl
 
 			if math_is_int "${port_val}";then
 				if ! file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
-					process_run_lock 1 system_port_ctrl used-add ${port_val}
-					process_run_lock 1 system_port_ctrl next-inc
-					echo_file "${LOG_DEBUG}" "port [${port_val}] alloced"
+					echo "${port_val}" >> ${SYSTEM_PORT_USED}
+					echo "$((port_val + 1))" > ${SYSTEM_PORT_NEXT}
+					mutex_unlock ${SYSPORT_LOCK_FD}
 
+					echo_file "${LOG_DEBUG}" "port [${port_val}] alloced"
 					echo "${port_val}"
 					return 0
 				fi
@@ -309,22 +352,28 @@ function system_port_ctrl
 		free)
 			port_val="$1"
 			echo_file "${LOG_DEBUG}" "port [${port_val}] freed"
-			process_run_lock 1 system_port_ctrl used-del ${port_val}
+			if file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
+				file_del ${SYSTEM_PORT_USED} "^${port_val}\s*$" true
+			fi
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		next-set)
 			port_val="$1"
 			echo "${port_val}" > ${SYSTEM_PORT_NEXT}
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		next-inc)
 			port_val=$(cat ${SYSTEM_PORT_NEXT})
 			echo "$((port_val + 1))" > ${SYSTEM_PORT_NEXT}
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		next-dec)
 			port_val=$(cat ${SYSTEM_PORT_NEXT})
 			echo "$((port_val - 1))" > ${SYSTEM_PORT_NEXT}
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		used-add)
@@ -334,6 +383,7 @@ function system_port_ctrl
 					echo "${port_val}" >> ${SYSTEM_PORT_USED}
 				fi
 			done
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		used-del)
@@ -343,6 +393,7 @@ function system_port_ctrl
 					file_del ${SYSTEM_PORT_USED} "^${port_val}\s*$" true
 				fi
 			done
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		used-update)
@@ -368,6 +419,7 @@ function system_port_ctrl
 			fi
 
 			sort -n -u ${SYSTEM_PORT_USED}.tmp &> ${SYSTEM_PORT_USED}
+			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
 			;;
 		*)
@@ -375,6 +427,7 @@ function system_port_ctrl
 				port_val=$(cat ${SYSTEM_PROT_CURR})
 				if math_is_int "${port_val}";then
 					echo "${port_val}"
+					mutex_unlock ${SYSPORT_LOCK_FD}
 					return 0
 				fi
 			fi
@@ -401,10 +454,13 @@ function system_port_ctrl
 	done
 	echo "${port_val}" > ${SYSTEM_PROT_CURR}
 
-	process_run_lock 1 system_port_ctrl used-add ${port_val}
-	process_run_lock 1 system_port_ctrl next-set "$((port_val + 1))"
-	echo_file "${LOG_DEBUG}" "port [${port_val}] generated"
+	if ! file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
+		echo "${port_val}" >> ${SYSTEM_PORT_USED}
+	fi
+	echo "$((port_val + 1))" > ${SYSTEM_PORT_NEXT}
+	mutex_unlock ${SYSPORT_LOCK_FD}
 
+	echo_file "${LOG_DEBUG}" "port [${port_val}] generated"
 	echo "${port_val}"
 	return 0
 }

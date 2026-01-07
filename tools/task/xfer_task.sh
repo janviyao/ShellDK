@@ -352,7 +352,7 @@ function _bash_xfer_exit
 
 	local cur_port=$(system_port_ctrl)
 	if math_is_int "${cur_port}";then
-		process_run_lock 1 system_port_ctrl used-del ${cur_port}
+		system_port_ctrl used-del ${cur_port}
 	fi
 
     if [ ${task_exist} -eq 0 ];then
@@ -386,7 +386,7 @@ function _xfer_thread_main
     while true
     do
 		if file_expire "${SYSTEM_PORT_USED}" 180;then
-			process_run_lock 1 system_port_ctrl used-update
+			system_port_ctrl used-update
 		fi
 
 		local port=$(system_port_ctrl)

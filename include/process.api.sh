@@ -157,41 +157,23 @@ function process_run_lock
         return 1
     fi
 
-    local lockid=$1
-    shift
+	local lockid=$1
+	shift
 
-    if ! file_exist "${GBL_BASE_DIR}/shell.lock.${lockid}";then
-        touch ${GBL_BASE_DIR}/shell.lock.${lockid}
-        chmod 777 ${GBL_BASE_DIR}/shell.lock.${lockid}
-    fi
-
-    (
-		if [[ "${SYSTEM}" == "Linux" ]]; then
-			flock -w ${PROMPT_TIMEOUT} -x ${lockid}      #flock文件锁，-x表示独享锁
-		elif [[ "${SYSTEM}" == "CYGWIN_NT" ]]; then
-			timeout ${PROMPT_TIMEOUT} flock -x ${lockid} #flock文件锁，-x表示独享锁
+	mutex_lock ${lockid}
+	echo_file "${LOG_DEBUG}" "$@"
+	eval "$@" 
+	local retcode=$?
+	if [ ${retcode} -ne 0 ];then
+		if have_cmd 'perror';then
+			echo_erro "${cmd_str} | errono: ${retcode} | $(perror ${retcode})"
+		else
+			echo_erro "${cmd_str} | errono: ${retcode}"
 		fi
+	fi
+	mutex_unlock ${lockid}
 
-		if [ $? -ne 0 ];then
-			echo_erro "flock ${lockid} failed"
-			return 1
-		fi
-
-        echo_file "${LOG_DEBUG}" "$@"
-
-		eval "$@" 
-		local retcode=$?
-		if [ ${retcode} -ne 0 ];then
-			if have_cmd 'perror';then
-				echo_erro "${cmd_str} | errono: ${retcode} | $(perror ${retcode})"
-			else
-				echo_erro "${cmd_str} | errono: ${retcode}"
-			fi
-		fi
-		return ${retcode}
-    ) {lockid}<>${GBL_BASE_DIR}/shell.lock.${lockid}
-    
-    return $?
+	return ${retcode}
 }
 
 function process_exist
