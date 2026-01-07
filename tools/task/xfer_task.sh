@@ -383,14 +383,19 @@ function _rsync_callback1
 
 function _xfer_thread_main
 {
+	local line port
+
+	if file_expire "${SYSTEM_PORT_USED}" $((60*60*12));then
+		system_port_ctrl used-update
+	fi
+
     while true
     do
-		if file_expire "${SYSTEM_PORT_USED}" 180;then
-			system_port_ctrl used-update
+		port=$(system_port_ctrl)
+		line=$(tcp_recv_msg ${port})
+		if [ $? -ne 0 ];then
+			system_port_ctrl used-add ${port}
 		fi
-
-		local port=$(system_port_ctrl)
-		local line=$(tcp_recv_msg ${port})
 
 		local -a split_list=()
 		array_reset split_list "$(string_split "${line}" "${GBL_ACK_SPF}")"

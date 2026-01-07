@@ -382,6 +382,10 @@ function system_port_ctrl
 				if ! file_contain ${SYSTEM_PORT_USED} "^${port_val}\s*$" true;then
 					echo "${port_val}" >> ${SYSTEM_PORT_USED}
 				fi
+
+				if [[ "$(cat ${SYSTEM_PROT_CURR})" == "${port_val}" ]];then
+					echo "" > ${SYSTEM_PROT_CURR}
+				fi
 			done
 			mutex_unlock ${SYSPORT_LOCK_FD}
 			return 0
