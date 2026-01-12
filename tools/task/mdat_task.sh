@@ -10,7 +10,7 @@ MDAT_CHANNEL="${MDAT_WORK_DIR}/ipc"
 
 function mdat_task_alive
 {
-    if file_exist "${MDAT_CHANNEL}.run";then
+    if [ -n "$(cat ${MDAT_TASK})" ];then
         return 0
     else
         return 1
@@ -49,10 +49,8 @@ function mdat_ctrl_sync
         return 1
     fi
 
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "socket invalid: [${_socket_}]"
-        fi
+    if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
         return 1
     fi
     
@@ -105,10 +103,8 @@ function mdat_key_have
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
+    if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
         return 1
     fi
     
@@ -133,10 +129,8 @@ function mdat_val_have
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
+    if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
         return 1
     fi
     
@@ -180,10 +174,8 @@ function mdat_key_del
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
+    if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
         return 1
     fi
 
@@ -203,10 +195,8 @@ function mdat_val_del
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
+    if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
         return 1
     fi
 
@@ -226,12 +216,10 @@ function mdat_append
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
-        return 1
-    fi
+	if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
+		return 1
+	fi
     
     mdat_ctrl_async "KV_APPEND${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_socket_}"
     return 0
@@ -249,12 +237,10 @@ function mdat_set
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
-        return 1
-    fi
+	if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
+		return 1
+	fi
     
     mdat_ctrl_async "KV_SET${GBL_SPF1}${_xkey_}${GBL_SPF2}${_xval_}" "${_socket_}"
     return 0
@@ -271,12 +257,10 @@ function mdat_get
     fi
 
     echo_file "${LOG_DEBUG}" "$@"
-    if ! file_exist "${_socket_}.run";then
-        if file_exist "${BASH_WORK_DIR}";then
-            echo_erro "mdat task [${_socket_}.run] donot run for [$@]"
-        fi
-        return 1
-    fi
+	if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
+		return 1
+	fi
 
     local send_resp_val=""
     unix_socket_send_and_wait "${_socket_}" "KV_GET${GBL_SPF1}${_xkey_}" send_resp_val
@@ -312,10 +296,10 @@ function _bash_mdat_exit
 { 
 	export TASK_PID=${BASHPID}
     echo_debug "mdat signal exit"
-    if ! file_exist "${MDAT_CHANNEL}.run";then
-        echo_debug "mdat task not started but signal EXIT"
-        return 0
-    fi
+	if [ -z "$(cat ${MDAT_TASK})" ];then
+		echo_warn "mdat task has exited"
+		return 1
+	fi
 
     local task_exist=0
     local task_list=($(cat ${MDAT_TASK}))
@@ -339,6 +323,11 @@ function _bash_mdat_exit
 
 function _mdat_thread_main
 {
+	if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+		echo_file "${LOG_DEBUG}" "bash master has exited"
+		return
+	fi
+
 	local -A _global_map_=()
     while true
     do
@@ -458,10 +447,10 @@ function _mdat_thread_main
             fi
         fi
 
-        if ! file_exist "${MDAT_WORK_DIR}";then
-            echo_file "${LOG_ERRO}" "because master have exited, mdat will exit"
+		if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+            echo_file "${LOG_DEBUG}" "because bash master is exiting, mdat will exit"
             break
-        fi
+		fi
     done
 }
 
@@ -478,12 +467,11 @@ function _mdat_thread
     fi
     #( sudo_it "renice -n -5 -p ${TASK_PID} &> /dev/null" &)
 
-    touch ${MDAT_CHANNEL}.run
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${TASK_PID}] ready"
     echo "${TASK_PID}" >> ${BASH_MASTER}
     _mdat_thread_main
+	echo > ${MDAT_TASK}
     echo_file "${LOG_DEBUG}" "mdat bg_thread[${TASK_PID}] exit"
-    rm -f ${MDAT_CHANNEL}.run
 
     rm -fr ${MDAT_WORK_DIR}
     exit 0

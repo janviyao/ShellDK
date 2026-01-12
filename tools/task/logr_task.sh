@@ -17,10 +17,10 @@ function logr_task_ctrl_async
     fi
 
     #echo_debug "logr_task_ctrl_async: [ctrl: ${_ctrl} msg: ${_body}]" 
-    if ! file_exist "${LOGR_CHANNEL}.run";then
-        echo_erro "logr task [${LOGR_CHANNEL}.run] donot run for [$@]"
-        return 1
-    fi
+	if [ -z "$(cat ${LOGR_TASK})" ];then
+		echo_warn "logr task has exited"
+		return 1
+	fi
 
     local msg="${GBL_ACK_SPF}${GBL_ACK_SPF}${_ctrl}${GBL_SPF1}${_body}"
     if [[ "${msg}" =~ " " ]];then
@@ -42,10 +42,10 @@ function logr_task_ctrl_sync
     fi
 
     #echo_debug "log ato self: [ctrl: ${_ctrl} msg: ${_body}]" 
-    if ! file_exist "${LOGR_CHANNEL}.run";then
-        echo_erro "logr task [${LOGR_CHANNEL}.run] donot run for [$@]"
-        return 1
-    fi
+	if [ -z "$(cat ${LOGR_TASK})" ];then
+		echo_warn "logr task has exited"
+		return 1
+	fi
 
     local msg="${_ctrl}${GBL_SPF1}${_body}"
     if [[ "${msg}" =~ " " ]];then
@@ -60,17 +60,16 @@ function _bash_logr_exit
 {
 	export TASK_PID=${BASHPID}
     echo_debug "logr signal exit" 
-    if ! file_exist "${LOGR_CHANNEL}.run";then
-        echo_debug "logr task not started but signal EXIT"
-        return 0
-    fi
+	if [ -z "$(cat ${LOGR_TASK})" ];then
+		echo_warn "logr task has exited"
+		return 1
+	fi
 
     local task_exist=0
     local task_list=($(cat ${LOGR_TASK}))
 	local task_pid
     for task_pid in "${task_list[@]}"
     do
-        local task_pid=${task_list[0]}
         if process_exist "${task_pid}";then
             let task_exist++
         else
@@ -125,6 +124,11 @@ function _redirect_func
 
 function _logr_thread_main
 {
+	if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+		echo_file "${LOG_DEBUG}" "bash master has exited"
+		return
+	fi
+
     while true
     do
 		local line=$(unix_socket_recv ${LOGR_CHANNEL})
@@ -211,10 +215,10 @@ function _logr_thread_main
             fi
         fi
 
-        if ! file_exist "${LOGR_WORK_DIR}";then
-            echo_file "${LOG_ERRO}" "because master have exited, logr will exit"
+		if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+            echo_file "${LOG_DEBUG}" "because bash master is exiting, logr will exit"
             break
-        fi
+		fi
     done
 }
 
@@ -230,12 +234,11 @@ function _logr_thread
         echo_file "${LOG_DEBUG}" "logr bg_thread [$(process_pid2name ${TASK_PID})[${TASK_PID}]] start"
     fi
 
-    touch ${LOGR_CHANNEL}.run
     echo_file "${LOG_DEBUG}" "logr bg_thread[${TASK_PID}] ready"
     echo "${TASK_PID}" >> ${BASH_MASTER}
     _logr_thread_main
+	echo > ${LOGR_TASK}
     echo_file "${LOG_DEBUG}" "logr bg_thread[${TASK_PID}] exit"
-    rm -f ${LOGR_CHANNEL}.run
 
     rm -fr ${LOGR_WORK_DIR}
     exit 0

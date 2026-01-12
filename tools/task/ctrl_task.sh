@@ -15,8 +15,8 @@ function ctrl_create_thread
         return 1
     fi
 
-    if ! file_exist "${CTRL_CHANNEL}.run";then
-        echo_erro "ctrl task [${CTRL_CHANNEL}.run] donot run for [$@]"
+    if [ -z "$(cat ${CTRL_TASK})" ];then
+		echo_warn "ctrl task has exited"
         return 1
     fi
     
@@ -38,8 +38,8 @@ function ctrl_task_ctrl_async
         return 1
     fi
 
-    if ! file_exist "${_socket}.run";then
-        echo_erro "ctrl task [${_socket}.run] donot run for [$@]"
+    if [ -z "$(cat ${CTRL_TASK})" ];then
+		echo_warn "ctrl task has exited"
         return 1
     fi
     
@@ -57,8 +57,8 @@ function ctrl_task_ctrl_sync
         return 1
     fi
 
-    if ! file_exist "${_socket}.run";then
-        echo_erro "ctrl task [${_socket}.run] donot run for [$@]"
+    if [ -z "$(cat ${CTRL_TASK})" ];then
+		echo_warn "ctrl task has exited"
         return 1
     fi
 
@@ -70,9 +70,9 @@ function _bash_ctrl_exit
 { 
 	export TASK_PID=${BASHPID}
     echo_debug "ctrl signal exit"
-    if ! file_exist "${CTRL_CHANNEL}.run";then
-        echo_debug "ctrl task not started but signal EXIT"
-        return 0
+    if [ -z "$(cat ${CTRL_TASK})" ];then
+		echo_warn "ctrl task has exited"
+        return 1
     fi
     
     local task_exist=0
@@ -80,7 +80,6 @@ function _bash_ctrl_exit
 	local task_pid
     for task_pid in "${task_list[@]}"
     do
-        local task_pid=${task_list[0]}
         if process_exist "${task_pid}";then
             let task_exist++
         else
@@ -98,6 +97,11 @@ function _bash_ctrl_exit
 
 function _ctrl_thread_main
 {
+	if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+		echo_file "${LOG_DEBUG}" "bash master has exited"
+		return
+	fi
+
     local index
     while true
     do
@@ -145,10 +149,10 @@ function _ctrl_thread_main
 			fi
         fi
 
-        if ! file_exist "${CTRL_WORK_DIR}";then
-            echo_file "${LOG_ERRO}" "because master have exited, ctrl will exit"
+		if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+            echo_file "${LOG_DEBUG}" "because bash master is exiting, ctrl will exit"
             break
-        fi
+		fi
     done
 }
 
@@ -164,12 +168,11 @@ function _ctrl_thread
         echo_file "${LOG_DEBUG}" "ctrl bg_thread [$(process_pid2name ${TASK_PID})[${TASK_PID}]] start"
     fi
 
-    touch ${CTRL_CHANNEL}.run
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${TASK_PID}] ready"
     echo "${TASK_PID}" >> ${BASH_MASTER}
     _ctrl_thread_main
+	echo > ${CTRL_TASK}
     echo_file "${LOG_DEBUG}" "ctrl bg_thread[${TASK_PID}] exit"
-    rm -f ${CTRL_CHANNEL}.run
 
     rm -fr ${CTRL_WORK_DIR} 
     exit 0

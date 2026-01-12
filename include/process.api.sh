@@ -780,7 +780,11 @@ function process_pptree
         if math_bool "${show_header}"; then
             show_header=false
         fi
-        
+		
+		if [ ${xpid} -eq 1 ];then
+			continue
+		fi
+
         local ppid_array=($(process_ppid ${xpid}))
         for ppid in "${ppid_array[@]}" 
         do

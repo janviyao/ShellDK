@@ -333,10 +333,10 @@ function _bash_xfer_exit
 { 
 	export TASK_PID=${BASHPID}
     echo_debug "xfer signal exit"
-    if ! file_exist "${XFER_CHANNEL}.run";then
-        echo_debug "xfer task not started but signal EXIT"
-        return 0
-    fi
+	if [ -z "$(cat ${XFER_TASK})" ];then
+		echo_warn "xfer task has exited"
+		return 1
+	fi
 
     local task_exist=0
     local task_list=($(cat ${XFER_TASK}))
@@ -387,6 +387,11 @@ function _xfer_thread_main
 
 	if file_expire "${SYSTEM_PORT_USED}" $((60*60*12));then
 		system_port_ctrl used-update
+	fi
+
+	if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+		echo_file "${LOG_DEBUG}" "bash master has exited"
+		return
 	fi
 
     while true
@@ -517,10 +522,10 @@ EOF
 			tcp_send_msg "${raddr}" "${rport}" "DATA_ACK${GBL_ACK_SPF}0"
 		fi
 
-        if ! file_exist "${XFER_WORK_DIR}";then
-            echo_file "${LOG_ERRO}" "because master have exited, xfer will exit"
+		if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
+            echo_file "${LOG_DEBUG}" "because bash master is exiting, xfer will exit"
             break
-        fi
+		fi
 	done
 }
 
@@ -584,12 +589,11 @@ function _xfer_thread
         echo_file "${LOG_DEBUG}" "xfer bg_thread [$(process_pid2name ${TASK_PID})[${TASK_PID}]] start"
     fi
 
-    touch ${XFER_CHANNEL}.run
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${TASK_PID}] ready"
     echo "${TASK_PID}" >> ${BASH_MASTER}
     _xfer_thread_main
+	echo > ${XFER_TASK}
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${TASK_PID}] exit"
-    rm -f ${XFER_CHANNEL}.run
 
     rm -fr ${XFER_WORK_DIR} 
     exit 0

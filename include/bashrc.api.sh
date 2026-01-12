@@ -21,7 +21,7 @@ readonly BASH_LOG="${GBL_USER_DIR}/bash.log"
 readonly BASH_WORK_DIR="${GBL_USER_DIR}/bash.master.${ROOT_PID}"
 readonly SYSTEM_PORT_USED="${GBL_BASE_DIR}/port.used"
 readonly SYSTEM_PORT_NEXT="${GBL_BASE_DIR}/port.next"
-readonly SYSTEM_PROT_CURR="${GBL_BASE_DIR}/port.curr"
+readonly SYSTEM_PROT_CURR="${BASH_WORK_DIR}/port"
 readonly LOG_DISABLE="${BASH_WORK_DIR}/bash.log.disable"
 readonly BASH_MASTER="${BASH_WORK_DIR}/taskset"
 
@@ -141,7 +141,9 @@ function __my_bashrc_deps
 
 function __my_bash_exit
 { 
+	file_del ${BASH_MASTER} "^${ROOT_PID}\s*$" true
 	echo_file "${LOG_DEBUG}" "wait for bash exit"
+
     if [ -f ${MY_HOME}/.bash_exit ];then
         source ${MY_HOME}/.bash_exit
     fi
@@ -152,12 +154,6 @@ function __my_bash_exit
 	do
 		local task_pid=${task_list[${task_idx}]}
 		if ! process_exist "${task_pid}";then
-			unset task_list[${task_idx}]
-			let task_idx++
-			continue
-		fi
-
-		if [[ "${task_pid}" == "${ROOT_PID}" ]];then
 			unset task_list[${task_idx}]
 			let task_idx++
 			continue
