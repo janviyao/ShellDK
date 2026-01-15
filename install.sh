@@ -3,7 +3,7 @@
 #set -u # variable not exist, then exit
 unset $(printenv | grep -E '^(INCLUDED_|USR_NAME|USR_PASSWORD|BASH_WORK_DIR|MY_VIM_DIR)' | awk -F= '{ print $1 }')
 export MY_VIM_DIR=$(cd $(dirname $0);pwd)
-export BTASK_LIST=${BTASK_LIST:-"mdat"}
+export BTASK_LIST=${BTASK_LIST:-"ctrl"}
 
 unset -f __my_bash_exit
 source $MY_VIM_DIR/bashrc

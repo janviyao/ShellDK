@@ -17,7 +17,7 @@ if [[ ${PRIVATE_VAR} != ${TERM} ]];then
 fi
 
 if [ -z "${BTASK_LIST}" ];then
-    export BTASK_LIST="master,mdat,logr,ctrl,xfer"
+    export BTASK_LIST="master,ctrl,xfer"
 fi
 
 # all variables and functions exported
@@ -93,8 +93,8 @@ if [[ "${SYSTEM}" == "Linux" ]]; then
 	fi
 fi
 
-if [[ "${BTASK_LIST}" =~ "mdat" ]];then
-    __MY_SOURCE "INCLUDED_MDAT" $MY_VIM_DIR/tools/task/mdat_task.sh
+if [[ "${BTASK_LIST}" =~ "ctrl" ]];then
+    __MY_SOURCE "INCLUDED_CTRL" $MY_VIM_DIR/tools/task/ctrl_task.sh
 	if [ $? -ne 0 ];then
 		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
 			return 1
@@ -104,23 +104,8 @@ if [[ "${BTASK_LIST}" =~ "mdat" ]];then
 	fi
 
     old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_mdat_exit & disown; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_mdat_exit & disown" EXIT
-fi
-
-if [[ "${BTASK_LIST}" =~ "logr" ]];then
-    __MY_SOURCE "INCLUDED_LOGR" $MY_VIM_DIR/tools/task/logr_task.sh
-	if [ $? -ne 0 ];then
-		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-			return 1
-		else
-			exit 1
-		fi
-	fi
-
-    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_logr_exit & disown; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_logr_exit & disown" EXIT
+    [ -n "${old_spec}" ] && trap "_bash_ctrl_exit & disown; ${old_spec}" EXIT
+    [ -z "${old_spec}" ] && trap "_bash_ctrl_exit & disown" EXIT
 fi
 
 if [[ "${BTASK_LIST}" =~ "xfer" ]];then
@@ -136,21 +121,6 @@ if [[ "${BTASK_LIST}" =~ "xfer" ]];then
     old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
     [ -n "${old_spec}" ] && trap "_bash_xfer_exit & disown; ${old_spec}" EXIT
     [ -z "${old_spec}" ] && trap "_bash_xfer_exit & disown" EXIT
-fi
-
-if [[ "${BTASK_LIST}" =~ "ctrl" ]];then
-    __MY_SOURCE "INCLUDED_CTRL" $MY_VIM_DIR/tools/task/ctrl_task.sh
-	if [ $? -ne 0 ];then
-		if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-			return 1
-		else
-			exit 1
-		fi
-	fi
-
-    old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)
-    [ -n "${old_spec}" ] && trap "_bash_ctrl_exit & disown; ${old_spec}" EXIT
-    [ -z "${old_spec}" ] && trap "_bash_ctrl_exit & disown" EXIT
 fi
 
 old_spec=$(string_replace "$(string_gensub "$(trap -p | grep EXIT)" "\'.+\'")" "'" "" true)

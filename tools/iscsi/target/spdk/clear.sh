@@ -6,7 +6,7 @@ if process_exist "${ISCSI_APP_NAME}";then
     process_kill "${ISCSI_APP_NAME}"
 fi
 
-REDIRECT_LOG_FILE=$(mdat_get "${ISCSI_APP_LOG}")
+REDIRECT_LOG_FILE=$(kvdb_get "${ISCSI_APP_LOG}")
 if file_exist "${REDIRECT_LOG_FILE}";then
     echo "EXIT" > ${REDIRECT_LOG_FILE}
 fi

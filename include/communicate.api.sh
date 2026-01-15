@@ -20,11 +20,27 @@ function unix_socket_send
 		fi
 	done
 
-	cmd_msg=$(socat -U unix-connect:${socket} EXEC:"echo '$@'" 2>&1)
-	if [ $? -ne 0 ];then
-		echo_erro "send failed: ${cmd_msg}"
-		return 1
+	cmd_msg="$@"
+	if [[ "${cmd_msg}" =~ '  ' ]];then
+		cmd_msg=$(string_replace "${cmd_msg}" "  " "${GBL_2SPACE}")
 	fi
+    echo_file "${LOG_DEBUG}" "unix-socket send [$cmd_msg]"
+
+	local try_cnt=0
+	while true
+	do
+		cmd_msg=$(socat -U unix-connect:${socket} EXEC:"echo '${cmd_msg}'" 2>&1)
+		if [ $? -ne 0 ];then
+			echo_erro "send failed: ${cmd_msg}"
+			if [ ${try_cnt} -gt 3 ];then
+				return 1
+			fi
+			sleep 0.01
+		else
+			break
+		fi
+		let try_cnt++
+	done
 
 	return 0
 }
@@ -41,8 +57,12 @@ function unix_socket_recv
     echo_file "${LOG_DEBUG}" "unix-socket listen [${socket}]"
 	cmd_msg=$(socat -u unix-listen:${socket},reuseaddr SYSTEM:"cat" 2>&1)	
 	if [ $? -ne 0 ];then
-		echo_file "${LOG_ERRO}" "unix-listen failed: ${cmd_msg}"
+		echo_file "${LOG_WARN}" "unix-listen failed: ${cmd_msg}"
 		return 1
+	fi
+
+	if [[ "${cmd_msg}" =~ "${GBL_2SPACE}" ]];then
+		cmd_msg=$(string_replace "${cmd_msg}" "${GBL_2SPACE}" "  ")
 	fi
 
     echo_file "${LOG_DEBUG}" "unix-socket recv [${cmd_msg}]"
@@ -59,7 +79,12 @@ function tcp_send_msg
     echo_file "${LOG_DEBUG}" "tcp send [$@]"
 	shift 2
 
-	cmd_msg=$(socat -U tcp:${addr}:${port} EXEC:"echo '$@'" 2>&1)
+	cmd_msg="$@"
+	if [[ "${cmd_msg}" =~ '  ' ]];then
+		cmd_msg=$(string_replace "${cmd_msg}" "  " "${GBL_2SPACE}")
+	fi
+
+	cmd_msg=$(socat -U tcp:${addr}:${port} EXEC:"echo '${cmd_msg}'" 2>&1)
 	if [ $? -ne 0 ];then
 		echo_erro "send failed: ${cmd_msg}"
 		return 1
@@ -78,6 +103,10 @@ function tcp_recv_msg
 	if [ $? -ne 0 ];then
 		echo_file "${LOG_ERRO}" "tcp-listen failed: ${cmd_msg}"
 		return 1
+	fi
+
+	if [[ "${cmd_msg}" =~ "${GBL_2SPACE}" ]];then
+		cmd_msg=$(string_replace "${cmd_msg}" "${GBL_2SPACE}" "  ")
 	fi
 
     echo_file "${LOG_DEBUG}" "tcp recv [${cmd_msg}]"

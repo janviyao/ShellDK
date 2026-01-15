@@ -441,7 +441,7 @@ function _xfer_thread_main
             local var_valu=${split_list[1]}
 
 			eval "local ${var_name}=${var_valu}"
-            mdat_set_var ${var_name}
+            kvdb_set_var ${var_name}
         elif [[ "${req_ctrl}" == "RSYNC" ]];then
 			array_reset split_list "$(string_split "${req_body}" "${GBL_SPF2}")"
             local xfer_act=${split_list[0]}

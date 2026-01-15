@@ -45,14 +45,14 @@ if math_bool "${TARGET_DEBUG_ON}";then
         ${SUDO} "echo > ${ISCSI_APP_LOG}"
     fi
 
-    REDIRECT_LOG_FILE=$(mdat_get "${ISCSI_APP_LOG}")
+    REDIRECT_LOG_FILE=$(kvdb_get "${ISCSI_APP_LOG}")
     if  file_exist "${REDIRECT_LOG_FILE}";then
         echo "EXIT" > ${REDIRECT_LOG_FILE}
     fi
 
-    logr_task_ctrl_sync "REDIRECT" "${ISCSI_APP_LOG}" 
+    bash_ctrl_sync "LOG_REDIRECT${GBL_SPF1}${ISCSI_APP_LOG}" 
     count=0
-    while ! mdat_key_have "${ISCSI_APP_LOG}"
+    while ! kvdb_key_have "${ISCSI_APP_LOG}"
     do
         echo_info "wait for redirect fini ..."
         sleep 0.1
@@ -62,7 +62,7 @@ if math_bool "${TARGET_DEBUG_ON}";then
         fi
     done
 
-    REDIRECT_LOG_FILE=$(mdat_get "${ISCSI_APP_LOG}")
+    REDIRECT_LOG_FILE=$(kvdb_get "${ISCSI_APP_LOG}")
     if ! file_exist "${REDIRECT_LOG_FILE}";then
         echo_erro "redirect file invalid: { ${REDIRECT_LOG_FILE} }"
         exit 1

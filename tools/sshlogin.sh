@@ -62,7 +62,7 @@ if [ -z "${XFER_PORT}" ];then
 	exit 1
 fi
 
-LOC_ENV="export BTASK_LIST='mdat';export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};"
+LOC_ENV="export BTASK_LIST='ctrl';export USR_NAME='${USR_NAME}';export USR_PASSWORD='${USR_PASSWORD}';export LOCAL_IP=${HOST_IP};export REMOTE_IP=${LOCAL_IP};"
 RET_VAR="sshlogin_ret$$"
 RET_MSG="${RET_VAR}=\$?;xfer_set_var ${LOCAL_IP} ${XFER_PORT} ${RET_VAR} \\\$${RET_VAR}\\\""
 SSH_CMD="(${CMD_EXE}); ${RET_MSG}; exit 0"
@@ -94,7 +94,7 @@ expect << EOF
 EOF
 
 count=0
-while ! mdat_key_have "${RET_VAR}"
+while ! kvdb_key_have "${RET_VAR}"
 do
     sleep 0.1
     let count++
@@ -105,7 +105,7 @@ done
 
 eval "declare ${RET_VAR}=-1"
 if [ ${count} -le 50 ];then
-    mdat_get_var ${RET_VAR}
+    kvdb_get_var ${RET_VAR}
 fi
 
 eval "exit \$${RET_VAR}"

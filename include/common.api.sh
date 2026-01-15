@@ -5,10 +5,8 @@
 : ${USR_NAME:=}
 : ${USR_PASSWORD:=}
 : ${BASH_WORK_DIR:=}
-: ${GBL_MDAT_PIPE:=}
-: ${GBL_LOGR_PIPE:=}
-: ${GBL_XFER_PIPE:=}
 : ${GBL_CTRL_PIPE:=}
+: ${GBL_XFER_PIPE:=}
 
 function __var_defined
 {
@@ -316,8 +314,8 @@ function input_prompt
     fi
 
 	if math_bool "${hide_hint}";then
-		logr_task_ctrl_sync "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
-		logr_task_ctrl_sync "ERASE_LINE"
+		bash_ctrl_sync "CURSOR_MOVE${GBL_SPF1}${x_coord}${GBL_SPF2}${y_coord}"
+		bash_ctrl_sync "ERASE_LINE"
 	fi
 
     if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -345,8 +343,8 @@ function input_prompt
             fi
 
 			if math_bool "${hide_hint}";then
-				logr_task_ctrl_sync "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
-				logr_task_ctrl_sync "ERASE_LINE"
+				bash_ctrl_sync "CURSOR_MOVE${GBL_SPF1}${x_coord}${GBL_SPF2}${y_coord}"
+				bash_ctrl_sync "ERASE_LINE"
 			fi
 
             if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -375,8 +373,8 @@ function input_prompt
                 fi
 
 				if math_bool "${hide_hint}";then
-					logr_task_ctrl_sync "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
-					logr_task_ctrl_sync "ERASE_LINE"
+					bash_ctrl_sync "CURSOR_MOVE${GBL_SPF1}${x_coord}${GBL_SPF2}${y_coord}"
+					bash_ctrl_sync "ERASE_LINE"
 				fi
 
                 if [[ -z "${input_val}" ]] && [[ -n "${dflt_value}" ]];then
@@ -481,9 +479,10 @@ function progress_bar
     local move=${orign}
 	local last=$(math_round "${total} - ${orign}" "${sleep_s}")
     local step=$(math_float "100 / ${last}" 5)
-    
-    logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
-    logr_task_ctrl_async "ERASE_LINE"
+    echo_debug "move[${move}] last[${last}] step[${step}]"
+
+    bash_ctrl_async "CURSOR_MOVE${GBL_SPF1}${x_coord}${GBL_SPF2}${y_coord}"
+    bash_ctrl_async "ERASE_LINE"
     #logr_task_ctrl_async "CURSOR_HIDE"
     
     echo_debug "pos:[${x_coord},${y_coord}] args:[$@]"
@@ -505,17 +504,17 @@ function progress_bar
         index=$(math_mod ${move} 4)
         percentage=$(math_float "${move} * ${step}" 2)
 
-        logr_task_ctrl_async "CURSOR_SAVE"
-        logr_task_ctrl_async "PRINT" "$(printf -- "[%-50s %-.2f%% %s]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
-        logr_task_ctrl_async "CURSOR_RESTORE"
+        bash_ctrl_async "CURSOR_SAVE"
+        bash_ctrl_async "PRINT${GBL_SPF1}$(printf -- "[%-50s %-.2f%% %s]" "${bar_str}" "${percentage}" "${postfix[${index}]}")"
+        bash_ctrl_async "CURSOR_RESTORE"
 
         let move++
         sleep ${sleep_s}
     done
     echo_debug "finish [%${percentage}]"
 
-    logr_task_ctrl_async "CURSOR_MOVE" "${x_coord}${GBL_SPF2}${y_coord}"
-    logr_task_ctrl_async "ERASE_LINE"
+    bash_ctrl_async "CURSOR_MOVE${GBL_SPF1}${x_coord}${GBL_SPF2}${y_coord}"
+    bash_ctrl_async "ERASE_LINE"
     #logr_task_ctrl_async "CURSOR_SHOW"
 }
 
