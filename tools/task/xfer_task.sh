@@ -1,11 +1,30 @@
 #!/bin/bash
 : ${INCLUDED_XFER:=1}
-XFER_WORK_DIR="${BASH_WORK_DIR}/xfer"
+readonly XFER_WORK_DIR="${BASH_WORK_DIR}/xfer"
+readonly SYSTEM_PROT_CURR="${XFER_WORK_DIR}/port"
 mkdir -p ${XFER_WORK_DIR}
 
-XFER_TASK="${XFER_WORK_DIR}/task"
-XFER_WORK="${XFER_WORK_DIR}/work"
-XFER_CHANNEL="${XFER_WORK_DIR}/tcp"
+readonly XFER_TASK="${XFER_WORK_DIR}/task"
+readonly XFER_WORK="${XFER_WORK_DIR}/work"
+readonly XFER_CHANNEL="${XFER_WORK_DIR}/tcp"
+
+function _rsync_callback
+{
+	echo_debug "$@"
+	local retcode="$1"
+	local outfile="$2"
+	shift 2
+	local arg_str="$@"
+
+	if [ ${retcode} -ne 0 ];then
+		echo_warn "failed[${retcode}] { ${arg_str} }"
+	fi
+
+	if file_exist "${outfile}";then
+		cat ${outfile}
+		rm -f ${outfile}
+	fi
+}
 
 function do_rsync
 {
@@ -329,6 +348,41 @@ function xfer_task_ctrl_sync
     return 0
 }
 
+function _xfer_kill_work
+{
+    if file_exist "${XFER_WORK}";then
+        local work_list=($(cat ${XFER_WORK}))	
+		local pid
+        for pid in "${work_list[@]}"
+        do
+			echo_file "${LOG_DEBUG}" "kill xfer work[${pid}]"
+            process_kill ${pid}
+        done
+    fi
+}
+
+function _xfer_handle_signal
+{
+	export TASK_PID=${BASHPID}
+    case "${SIGNAL}" in
+        INT)
+            echo_debug "xfer catch SIGINT"
+            ;;
+        TERM)
+            echo_debug "xfer catch SIGTERM"
+            ;;
+        KILL)
+            echo_debug "xfer catch SIGKILL"
+            ;;
+        *)
+            echo_debug "xfer catch unknown signal: ${SIGNAL}"
+            return 0
+            ;;
+    esac
+	_xfer_kill_work  
+    unset SIGNAL
+}
+
 function _bash_xfer_exit
 { 
 	export TASK_PID=${BASHPID}
@@ -337,6 +391,8 @@ function _bash_xfer_exit
 		echo_warn "xfer task has exited"
 		return 1
 	fi
+
+	_xfer_kill_work
 
     local task_exist=0
     local task_list=($(cat ${XFER_TASK}))
@@ -363,26 +419,9 @@ function _bash_xfer_exit
     xfer_task_ctrl_sync "EXIT"
 }
 
-function _rsync_callback1
+function _xfer_loop
 {
-	echo_debug "$@"
-	local retcode="$1"
-	local outfile="$2"
-	shift 2
-	local arg_str="$@"
-
-	if [ ${retcode} -ne 0 ];then
-		echo_warn "failed[${retcode}] { ${arg_str} }"
-	fi
-
-	if file_exist "${outfile}";then
-		cat ${outfile}
-		rm -f ${outfile}
-	fi
-}
-
-function _xfer_thread_main
-{
+	local pid
 	local line port
 
 	if file_expire "${SYSTEM_PORT_USED}" $((60*60*12));then
@@ -502,15 +541,15 @@ EOF
 
             file_exist "${MY_HOME}/.rsync.exclude" || touch ${MY_HOME}/.rsync.exclude
             if [[ "${cmd_act}" == 'REMOTE' ]];then
-				local pid=$(process_run_callback _rsync_callback1 "xfer callback args" sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
-				echo "${pid}" > ${XFER_WORK}
-				process_wait ${pid} 1
+				pid=$(process_run_callback _rsync_callback "xfer callback args" sshpass -p "\"${remote_pswd}\"" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
             else
                 #file_exist "${xfer_des}" || sudo_it "mkdir -p ${xfer_des}"
-				local pid=$(process_run_callback _rsync_callback1 "xfer callback args" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
-				echo "${pid}" > ${XFER_WORK}
-				process_wait ${pid} 1
+				pid=$(process_run_callback _rsync_callback "xfer callback args" rsync -az ${action} --exclude-from "\"${MY_HOME}/.rsync.exclude\"" --progress ${xfer_src} ${xfer_des} \&\> /dev/tty)
             fi
+
+			echo "${pid}" > ${XFER_WORK}
+			process_wait ${pid} 1
+			rm -f ${XFER_WORK}
 		fi
 
 		if [[ "${data_ack}" == "DATA_ACK" ]];then
@@ -521,51 +560,10 @@ EOF
 			echo_debug "write [DATA_ACK${GBL_ACK_SPF}0] to [${raddr}:${rport}]"
 			tcp_send_msg "${raddr}" "${rport}" "DATA_ACK${GBL_ACK_SPF}0"
 		fi
-
-		if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
-            echo_file "${LOG_DEBUG}" "because bash master is exiting, xfer will exit"
-            break
-		fi
 	done
 }
 
-function _xfer_kill_rsync
-{
-    if file_exist "${XFER_WORK}";then
-        local work_list=($(cat ${XFER_WORK}))
-        echo_file "${LOG_DEBUG}" "kill xfer works[${work_list[*]}]"
-		
-		local pid
-        for pid in "${work_list[@]}"
-        do
-            process_kill ${pid}
-        done
-    fi
-}
-
-function _xfer_handle_signal
-{
-    case "${SIGNAL}" in
-        INT)
-            echo_debug "xfer catch SIGINT"
-            _xfer_kill_rsync  
-            ;;
-        TERM)
-            echo_debug "xfer catch SIGTERM"
-            _xfer_kill_rsync
-            ;;
-        KILL)
-            echo_debug "xfer catch SIGKILL"
-            _xfer_kill_rsync
-            ;;
-        *)
-            echo_debug "xfer catch unknown signal: ${SIGNAL}"
-            ;;
-    esac
-    unset SIGNAL
-}
-
-function _xfer_thread
+function _xfer_main
 {
 	export TASK_PID=${BASHPID}
     if ! have_cmd "rsync";then
@@ -591,7 +589,7 @@ function _xfer_thread
 
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${TASK_PID}] ready"
     echo "${TASK_PID}" >> ${BASH_MASTER}
-    _xfer_thread_main
+    _xfer_loop
 	echo > ${XFER_TASK}
     echo_file "${LOG_DEBUG}" "xfer bg_thread[${TASK_PID}] exit"
 
@@ -600,6 +598,6 @@ function _xfer_thread
 }
 
 ( 
-	_xfer_thread & 
+	_xfer_main & 
     echo "$!" >> ${XFER_TASK}
 )

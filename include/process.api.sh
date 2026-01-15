@@ -43,6 +43,7 @@ function process_wait
         do
             sleep ${stime}
         done
+		echo_debug "[$(process_pid2name "${xpid}")(${xpid})] have exited"
     done
 
     return 0
@@ -283,9 +284,8 @@ function process_kill
             process_signal KILL "${pid_array[@]}" 
 
             local child_pids=($(process_cpid "${pid_array[@]}"))
-            echo_debug "[${pid_array[*]}] have childs: ${child_pids[*]}"
-
             if [ ${#child_pids[*]} -gt 0 ];then
+				echo_debug "[${pid_array[*]}] have childs: ${child_pids[*]}"
                 process_signal KILL "${child_pids[@]}"
                 if [ $? -ne 0 ];then
                     return 1

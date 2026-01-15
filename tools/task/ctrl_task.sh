@@ -2,11 +2,11 @@
 # shell cannot export map or array data to global environment, so design ctrl task
 #
 : ${INCLUDED_CTRL:=1}
-CTRL_WORK_DIR="${BASH_WORK_DIR}/ctrl"
+readonly CTRL_WORK_DIR="${BASH_WORK_DIR}/ctrl"
 mkdir -p ${CTRL_WORK_DIR}
 
-CTRL_TASK="${CTRL_WORK_DIR}/task"
-CTRL_CHANNEL="${CTRL_WORK_DIR}/ipc"
+readonly CTRL_TASK="${CTRL_WORK_DIR}/task"
+readonly CTRL_CHANNEL="${CTRL_WORK_DIR}/ipc"
 
 function _log_redirect_func
 {
@@ -567,11 +567,6 @@ function _ctrl_loop
 				echo_file "${LOG_ERRO}" "log-file { ${req_body} } not exist"
             fi
         fi
-
-		if ! file_contain ${BASH_MASTER} "^${ROOT_PID}\s*$" true;then
-            echo_file "${LOG_DEBUG}" "because bash master is exiting, ctrl will exit"
-            break
-		fi
     done
 }
 

@@ -1,24 +1,14 @@
 #!/bin/bash
 : ${INCLUDED_COMMUNICATE:=1}
 
+readonly UINI_LOCK_FD=6
+
 function unix_socket_send
 {
 	local socket="$1"
-	local cmd_msg
+	local cmd_msg res_msg
     echo_file "${LOG_DEBUG}" "unix-socket send [$@]"
 	shift
-
-	local try_cnt=0
-	while [ ! -S ${socket} ]
-	do
-		echo_file "${LOG_DEBUG}" "wait for socket { ${socket} } ready"
-		sleep 0.2
-		let try_cnt++
-		if [ ${try_cnt} -gt 10 ];then
-			echo_erro "socket { ${socket} } exception"
-			return 1
-		fi
-	done
 
 	cmd_msg="$@"
 	if [[ "${cmd_msg}" =~ '  ' ]];then
@@ -29,17 +19,28 @@ function unix_socket_send
 	local try_cnt=0
 	while true
 	do
-		cmd_msg=$(socat -U unix-connect:${socket} EXEC:"echo '${cmd_msg}'" 2>&1)
+		res_msg=$(socat -U unix-connect:${socket} EXEC:"echo '${cmd_msg}'" 2>&1)
 		if [ $? -ne 0 ];then
-			echo_erro "send failed: ${cmd_msg}"
-			if [ ${try_cnt} -gt 3 ];then
-				return 1
+			if [[ "${res_msg}" =~ "No such file or directory" ]] || [[ "${res_msg}" =~ "Connection refused" ]];then
+				let try_cnt++
+				if [ $((try_cnt % 3)) -eq 0 ];then
+					echo_file "${LOG_WARN}" "wait for unix-socket ${socket} ready"
+				fi
+
+				if [ ${try_cnt} -gt 30 ];then
+					echo_file "${LOG_ERRO}" "send failed: ${res_msg}"
+					return 1
+				fi
+
+				sleep 1
+				continue
 			fi
-			sleep 0.01
+
+			echo_file "${LOG_ERRO}" "send failed: ${res_msg}"
+			return 1
 		else
 			break
 		fi
-		let try_cnt++
 	done
 
 	return 0
@@ -75,7 +76,7 @@ function tcp_send_msg
 {
 	local addr="$1"
 	local port="$2"
-	local cmd_msg
+	local cmd_msg res_msg
     echo_file "${LOG_DEBUG}" "tcp send [$@]"
 	shift 2
 
@@ -83,12 +84,33 @@ function tcp_send_msg
 	if [[ "${cmd_msg}" =~ '  ' ]];then
 		cmd_msg=$(string_replace "${cmd_msg}" "  " "${GBL_2SPACE}")
 	fi
+	
+	local try_cnt=0
+	while true
+	do
+		res_msg=$(socat -U tcp:${addr}:${port} EXEC:"echo '${cmd_msg}'" 2>&1)
+		if [ $? -ne 0 ];then
+			if [[ "${res_msg}" =~ "Connection refused" ]];then
+				let try_cnt++
+				if [ $((try_cnt % 3)) -eq 0 ];then
+					echo_file "${LOG_WARN}" "[${try_cnt}]wait for tcp ${addr}:${port} ready"
+				fi
 
-	cmd_msg=$(socat -U tcp:${addr}:${port} EXEC:"echo '${cmd_msg}'" 2>&1)
-	if [ $? -ne 0 ];then
-		echo_erro "send failed: ${cmd_msg}"
-		return 1
-	fi
+				if [ ${try_cnt} -gt 30 ];then
+					echo_file "${LOG_ERRO}" "send failed: ${res_msg}"
+					return 1
+				fi
+
+				sleep 1
+				continue
+			fi
+
+			echo_file "${LOG_ERRO}" "send failed: ${res_msg}"
+			return 1
+		else
+			break
+		fi
+	done
 
 	return 0
 }
@@ -120,13 +142,35 @@ function tcp_send_file
 	local addr="$1"
 	local port="$2"
 	local file="$3"
-	local cmd_msg
+	local cmd_msg res_msg
     echo_file "${LOG_DEBUG}" "tcp send [$@]"
 
-	cmd_msg=$(socat -U tcp:${addr}:${port} FILE:${file} 2>&1)
-	if [ $? -ne 0 ];then
-		echo_erro "send failed: ${cmd_msg}"
-	fi
+	local try_cnt=0
+	while true
+	do
+		res_msg=$(socat -U tcp:${addr}:${port} FILE:${file} 2>&1)
+		if [ $? -ne 0 ];then
+			if [[ "${res_msg}" =~ "Connection refused" ]];then
+				let try_cnt++
+				if [ $((try_cnt % 3)) -eq 0 ];then
+					echo_file "${LOG_WARN}" "wait for tcp ${addr}:${port} ready"
+				fi
+
+				if [ ${try_cnt} -gt 30 ];then
+					echo_file "${LOG_ERRO}" "send failed: ${res_msg}"
+					return 1
+				fi
+
+				sleep 1
+				continue
+			fi
+
+			echo_file "${LOG_ERRO}" "send failed: ${res_msg}"
+			return 1
+		else
+			break
+		fi
+	done
 
 	return $?
 }
@@ -169,7 +213,7 @@ function unix_socket_send_and_wait
 	echo_debug "write [${ack_str}${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}] to [${send_pipe}]"
 	unix_socket_send "${send_pipe}" "${ack_str}${GBL_ACK_SPF}${ack_pipe}${GBL_ACK_SPF}${send_body}"
 	if [ $? -ne 0 ];then
-		echo_erro "unix_socket_send failed"
+		echo_file "${LOG_ERRO}" "unix_socket_send failed"
 		return 1
 	fi
 	
@@ -231,10 +275,10 @@ function tcp_send_and_wait
 	fi
 
 	local local_port=$(system_port_ctrl alloc)
-	echo_debug "write [${ack_str}${GBL_ACK_SPF}${LOCAL_IP}${GBL_SPF1}${local_port}${GBL_ACK_SPF}${send_body}] to [${send_addr}:${send_port}]"
+	echo_debug "send [${ack_str}${GBL_ACK_SPF}${LOCAL_IP}${GBL_SPF1}${local_port}${GBL_ACK_SPF}${send_body}] to [${send_addr}:${send_port}]"
 	tcp_send_msg "${send_addr}" "${send_port}" "${ack_str}${GBL_ACK_SPF}${LOCAL_IP}${GBL_SPF1}${local_port}${GBL_ACK_SPF}${send_body}"
 	if [ $? -ne 0 ];then
-		echo_erro "tcp_send_msg failed"
+		echo_file "${LOG_ERRO}" "tcp_send_msg failed"
 		return 1
 	fi
 	
